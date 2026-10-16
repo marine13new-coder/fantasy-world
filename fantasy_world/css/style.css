@@ -253,7 +253,7 @@ body, html {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 5px;
-  max-height: 175px;
+  max-height: 230px;
   overflow-y: auto;
 }
 

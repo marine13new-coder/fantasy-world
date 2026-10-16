@@ -49,8 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
     x: player.x,
     y: player.y,
     zoom: 0.95,
-    minZoom: 0.16,
-    maxZoom: 2.6,
+    minZoom: 0.10,
+    maxZoom: 2.8,
     followEntity: player
   };
 
@@ -58,9 +58,9 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedItem = { type: 'entity', data: player };
 
   // 초기 안내 로그
-  entityMgr.log('quest', '👑 아테리아 본토와 대해양, 바다 너머 신대륙(엘븐하임·미라주 사막)이 열렸습니다!', camera.x, camera.y);
-  entityMgr.log('trade', '⛵ 푸른파도 대항구와 신대륙 간 해상 무역 범선 항로가 정식 개통되었습니다.', 154, 152);
-  entityMgr.log('battle', '🏴‍☠️ 대해양 중앙 해골초도 해적선들과 동부 오크 군단이 무역로를 위협하고 있습니다.', 96, 112);
+  entityMgr.log('quest', '👑 480×320 초대형 오픈월드 대륙과 바다 너머 4개 신대륙이 정식 개방되었습니다!', camera.x, camera.y);
+  entityMgr.log('trade', '⛵ 푸른파도 대항구 ↔ 엘븐하임 ↔ 미라주 사막 ↔ 세이렌 산호섬 대양 무역항로가 연결되었습니다.', 235, 195);
+  entityMgr.log('battle', '🐉 서부 천공의 용의 둥지와 대해양 해골초도 해적선단이 대륙 각지를 위협하고 있습니다.', 35, 135);
 
   // 3. 거점 리스트 버튼 동적 생성
   const regionListEl = document.getElementById('regionList');
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 대륙 & 대해양 전체 지도 보기
   document.getElementById('btnZoomContinent').addEventListener('click', () => {
     stopFollow();
-    smoothMoveCamera(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0.18);
+    smoothMoveCamera(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0.13);
   });
 
   // 4. 필터 칩 바인딩

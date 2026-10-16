@@ -298,13 +298,14 @@ class EntityManager {
     }
 
     // (D) 인간 왕국 본토 수비병 & 농부 & 어부
-    const humanTowns = ['solaris', 'goldenwheat', 'bluewave', 'valor_fort'];
+    const humanTowns = ['solaris', 'goldenwheat', 'bluewave', 'valor_fort', 'oakwood', 'windmill_valley', 'st_mare', 'crystal_falls', 'valkyrie_gate'];
     for (const tid of humanTowns) {
       const town = sMap[tid];
-      const count = tid === 'valor_fort' ? 8 : 4;
+      if (!town) continue;
+      const count = (tid === 'valor_fort' || tid === 'valkyrie_gate') ? 8 : (tid === 'solaris' ? 6 : 4);
       for (let i = 0; i < count; i++) {
         this.createEntity({
-          name: `왕국 수비병 ${this.pickName('human')}`,
+          name: `${town.name} 수비병 ${this.pickName('human')}`,
           race: 'human',
           role: 'soldier',
           faction: 'kingdom',
@@ -312,13 +313,14 @@ class EntityManager {
           patrolRoad: i % 2 === 0,
           x: town.x + (Math.random() - 0.5) * 8,
           y: town.y + (Math.random() - 0.5) * 8,
-          hp: 175, maxHp: 175, atk: 19, gold: 70
+          hp: 180, maxHp: 180, atk: 20, gold: 75
         });
       }
     }
+    // 황금밀 대농장 농부
     for (let i = 0; i < 12; i++) {
       this.createEntity({
-        name: `농부 ${this.pickName('human')}`,
+        name: `밀농부 ${this.pickName('human')}`,
         race: 'human',
         role: 'farmer',
         faction: 'kingdom',
@@ -328,9 +330,56 @@ class EntityManager {
         hp: 95, maxHp: 95, atk: 6, gold: 50
       });
     }
+    // 윈드밀 계곡 제분사 & 과수원 농부
+    for (let i = 0; i < 6; i++) {
+      this.createEntity({
+        name: `윈드밀 제분사 ${this.pickName('human')}`,
+        race: 'human',
+        role: 'farmer',
+        customIcon: '💨',
+        faction: 'kingdom',
+        homeId: 'windmill_valley',
+        x: sMap.windmill_valley.x + (Math.random() - 0.5) * 8,
+        y: sMap.windmill_valley.y + (Math.random() - 0.5) * 8,
+        hp: 100, maxHp: 100, atk: 7, gold: 60
+      });
+    }
+    // 오크우드 숲 벌목꾼 & 사냥꾼
+    for (let i = 0; i < 6; i++) {
+      this.createEntity({
+        name: `오크우드 벌목꾼 ${this.pickName('human')}`,
+        race: 'human',
+        role: 'farmer',
+        customIcon: '🪓',
+        subClass: '숲 벌목꾼',
+        faction: 'kingdom',
+        homeId: 'oakwood',
+        x: sMap.oakwood.x + (Math.random() - 0.5) * 8,
+        y: sMap.oakwood.y + (Math.random() - 0.5) * 8,
+        hp: 130, maxHp: 130, atk: 14, gold: 65
+      });
+    }
+    // 크리스탈폴 아케인 학탑 마법사
+    for (let i = 0; i < 5; i++) {
+      this.createEntity({
+        name: `비전 마법사 ${this.pickName('elf')}`,
+        race: 'elf',
+        role: 'soldier',
+        customIcon: '🔮',
+        subClass: '크리스탈폴 아케인 마도사',
+        ranged: true,
+        projColor: '#c084fc',
+        faction: 'kingdom',
+        homeId: 'crystal_falls',
+        x: sMap.crystal_falls.x + (Math.random() - 0.5) * 6,
+        y: sMap.crystal_falls.y + (Math.random() - 0.5) * 6,
+        hp: 160, maxHp: 160, atk: 28, gold: 120
+      });
+    }
+    // 푸른파도 & 세인트 마레 바다어부
     for (let i = 0; i < 10; i++) {
       this.createEntity({
-        name: `바다어부 ${this.pickName('human')}`,
+        name: `대양어부 ${this.pickName('human')}`,
         race: 'human',
         role: 'fisherman',
         faction: 'kingdom',
@@ -338,6 +387,18 @@ class EntityManager {
         x: sMap.bluewave.x + (Math.random() - 0.5) * 8,
         y: sMap.bluewave.y + (Math.random() - 0.5) * 8,
         hp: 95, maxHp: 95, atk: 7, gold: 55
+      });
+    }
+    for (let i = 0; i < 6; i++) {
+      this.createEntity({
+        name: `남해 참치어부 ${this.pickName('human')}`,
+        race: 'human',
+        role: 'fisherman',
+        faction: 'kingdom',
+        homeId: 'st_mare',
+        x: sMap.st_mare.x + (Math.random() - 0.5) * 8,
+        y: sMap.st_mare.y + (Math.random() - 0.5) * 8,
+        hp: 105, maxHp: 105, atk: 8, gold: 65
       });
     }
     for (let i = 0; i < 5; i++) {
@@ -352,10 +413,70 @@ class EntityManager {
         hp: 95, maxHp: 95, atk: 7, gold: 50
       });
     }
+    // 신대륙 달빛 요정 정원 & 스핑크스 피라미드 & 베두인 캠프 & 세이렌 산호섬 & 외로운 등대
+    for (let i = 0; i < 4; i++) {
+      this.createEntity({
+        name: `달빛 드루이드 ${this.pickName('elf')}`,
+        race: 'elf',
+        role: 'soldier',
+        customIcon: '🌙',
+        subClass: '달빛 요정 정원 수호자',
+        ranged: true,
+        projColor: '#c084fc',
+        faction: 'kingdom',
+        homeId: 'fairy_glade',
+        x: sMap.fairy_glade.x + (Math.random() - 0.5) * 6,
+        y: sMap.fairy_glade.y + (Math.random() - 0.5) * 6,
+        hp: 170, maxHp: 170, atk: 24, gold: 95
+      });
+    }
+    for (let i = 0; i < 4; i++) {
+      this.createEntity({
+        name: `베두인 전갈유목민 ${this.pickName('beastkin')}`,
+        race: 'beastkin',
+        role: 'soldier',
+        customIcon: '🎪',
+        subClass: '사막 전갈 수호대',
+        faction: 'kingdom',
+        homeId: 'bedouin_camp',
+        x: sMap.bedouin_camp.x + (Math.random() - 0.5) * 6,
+        y: sMap.bedouin_camp.y + (Math.random() - 0.5) * 6,
+        hp: 180, maxHp: 180, atk: 22, gold: 80
+      });
+    }
+    for (let i = 0; i < 3; i++) {
+      this.createEntity({
+        name: `세이렌 바다정령`,
+        race: 'elf',
+        role: 'soldier',
+        customIcon: '🧜‍♀️',
+        subClass: '산호초 정령',
+        ranged: true,
+        projColor: '#38bdf8',
+        isShip: true,
+        faction: 'neutral',
+        homeId: 'siren_coral',
+        x: sMap.siren_coral.x + (Math.random() - 0.5) * 8,
+        y: sMap.siren_coral.y + (Math.random() - 0.5) * 8,
+        hp: 200, maxHp: 200, atk: 22, gold: 110
+      });
+    }
+    this.createEntity({
+      name: '외로운 등대지기 톰',
+      race: 'human',
+      role: 'soldier',
+      customIcon: '🗼',
+      subClass: '대양 등대 관리자',
+      faction: 'kingdom',
+      homeId: 'lone_beacon',
+      x: sMap.lone_beacon.x,
+      y: sMap.lone_beacon.y,
+      hp: 160, maxHp: 160, atk: 15, gold: 120
+    });
 
-    // 4. 육상 무역 마차 (10팀) & 호위 용병
-    for (let i = 0; i < 10; i++) {
-      const townIds = ['solaris', 'goldenwheat', 'bluewave', 'ironforge', 'silverleaf', 'valor_fort'];
+    // 4. 육상 무역 마차 (16팀) & 호위 용병
+    for (let i = 0; i < 16; i++) {
+      const townIds = ['solaris', 'goldenwheat', 'bluewave', 'ironforge', 'silverleaf', 'valor_fort', 'oakwood', 'windmill_valley', 'st_mare', 'crystal_falls', 'valkyrie_gate'];
       const startTownId = townIds[i % townIds.length];
       const startTown = sMap[startTownId];
       const merchant = this.createEntity({
@@ -384,9 +505,9 @@ class EntityManager {
       });
     }
 
-    // 5. 대해양 무역 범선 (10척) & 해군 전열함 (8척)
-    const ports = ['bluewave', 'elvenheim', 'mirage_oasis'];
-    for (let i = 0; i < 10; i++) {
+    // 5. 대해양 무역 범선 (14척) & 해군 전열함 (10척)
+    const ports = ['bluewave', 'elvenheim', 'mirage_oasis', 'st_mare', 'siren_coral', 'lone_beacon'];
+    for (let i = 0; i < 14; i++) {
       const portId = ports[i % ports.length];
       const pTown = sMap[portId];
       const race = portId === 'elvenheim' ? 'elf' : (portId === 'mirage_oasis' ? 'beastkin' : 'human');
@@ -398,14 +519,14 @@ class EntityManager {
         isShip: true,
         faction: 'kingdom',
         homeId: portId,
-        x: pTown.portWaterX + (Math.random() - 0.5) * 8,
-        y: pTown.portWaterY + (Math.random() - 0.5) * 8,
+        x: (pTown.portWaterX || pTown.x) + (Math.random() - 0.5) * 8,
+        y: (pTown.portWaterY || pTown.y) + (Math.random() - 0.5) * 8,
         hp: 250, maxHp: 250, atk: 18, ranged: true, projColor: '#fde047',
         scale: 1.35,
         gold: 600
       });
     }
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 10; i++) {
       const portId = ports[i % ports.length];
       const pTown = sMap[portId];
       this.createEntity({
@@ -418,15 +539,15 @@ class EntityManager {
         projColor: '#38bdf8',
         faction: 'kingdom',
         homeId: portId,
-        x: pTown.portWaterX + (Math.random() - 0.5) * 12,
-        y: pTown.portWaterY + (Math.random() - 0.5) * 12,
+        x: (pTown.portWaterX || pTown.x) + (Math.random() - 0.5) * 12,
+        y: (pTown.portWaterY || pTown.y) + (Math.random() - 0.5) * 12,
         hp: 340, maxHp: 340, atk: 29,
         scale: 1.45,
         gold: 250
       });
     }
 
-    // 6. 종족별 모험가 파티 (24명)
+    // 6. 종족별 모험가 파티 (32명)
     const advTemplates = [
       { subClass: '인간 소드마스터', race: 'human', atk: 26, hp: 220, ranged: false, projColor: '#60a5fa' },
       { subClass: '엘프 아크메이지', race: 'elf', atk: 30, hp: 160, ranged: true,  projColor: '#f97316' },
@@ -435,9 +556,9 @@ class EntityManager {
       { subClass: '수인 섀도우블레이드', race: 'beastkin', atk: 27, hp: 180, ranged: false, projColor: '#eab308' },
       { subClass: '성전사 팔라딘', race: 'human', atk: 23, hp: 250, ranged: false, projColor: '#facc15' }
     ];
-    for (let i = 0; i < 24; i++) {
+    for (let i = 0; i < 32; i++) {
       const tpl = advTemplates[i % advTemplates.length];
-      const baseTowns = ['solaris', 'valor_fort', 'elvenheim', 'mirage_oasis', 'ironforge'];
+      const baseTowns = ['solaris', 'valor_fort', 'elvenheim', 'mirage_oasis', 'ironforge', 'crystal_falls', 'oakwood', 'valkyrie_gate'];
       const baseTownId = baseTowns[i % baseTowns.length];
       const baseTown = sMap[baseTownId];
       this.createEntity({
@@ -456,7 +577,7 @@ class EntityManager {
       });
     }
 
-    // 7. 🐾 야생 동물 생태계 (총 80마리 이상 방목!)
+    // 7. 🐾 야생 동물 생태계 (총 120마리 이상 방목!)
     this.spawnWildlifeEcosystem();
 
     // 8. 🐉 원소 드래곤 종족 다양화 & 몬스터 군락 스폰
@@ -468,24 +589,24 @@ class EntityManager {
     const sMap = this.world.settlementMap;
 
     const animalSpawns = [
-      // 🦌 사슴 (실버리프 호수 숲 및 솔라리스 근교)
-      { type: 'deer', icon: '🦌', name: '야생 백록', count: 14, x: sMap.silverleaf.x + 8, y: sMap.silverleaf.y - 10, radius: 18, hp: 60, speed: 1.45 },
-      // 🐇 들토끼 (황금밀 농촌 평야)
-      { type: 'rabbit', icon: '🐇', name: '들토끼', count: 12, x: sMap.goldenwheat.x - 8, y: sMap.goldenwheat.y + 6, radius: 14, hp: 30, speed: 1.55 },
-      // 🐄 젖소 (황금밀 농촌 목장)
-      { type: 'cow', icon: '🐄', name: '젖소', count: 8, x: sMap.goldenwheat.x + 8, y: sMap.goldenwheat.y - 6, radius: 8, hp: 120, speed: 0.8 },
+      // 🦌 사슴 (실버리프 호수 숲 및 오크우드)
+      { type: 'deer', icon: '🦌', name: '야생 백록', count: 18, x: sMap.silverleaf.x + 12, y: sMap.silverleaf.y - 12, radius: 24, hp: 60, speed: 1.45 },
+      // 🐇 들토끼 (황금밀 농촌 평야 & 윈드밀 계곡)
+      { type: 'rabbit', icon: '🐇', name: '들토끼', count: 16, x: sMap.goldenwheat.x - 10, y: sMap.goldenwheat.y + 10, radius: 20, hp: 30, speed: 1.55 },
+      // 🐄 젖소 (황금밀 대농장 목장)
+      { type: 'cow', icon: '🐄', name: '젖소', count: 10, x: sMap.goldenwheat.x + 12, y: sMap.goldenwheat.y - 8, radius: 10, hp: 120, speed: 0.8 },
       // 🐑 양 (평원 목초지)
-      { type: 'sheep', icon: '🐑', name: '목초지 양', count: 10, x: sMap.goldenwheat.x - 12, y: sMap.goldenwheat.y - 12, radius: 10, hp: 50, speed: 0.9 },
-      // 🐻 불곰 (북부 산맥 숲)
-      { type: 'bear', icon: '🐻', name: '갈색 불곰', count: 6, x: sMap.ironforge.x - 14, y: sMap.ironforge.y + 12, radius: 14, hp: 180, speed: 1.25, isPredator: true },
-      // 🐐 산양 (북부 험준한 바위산)
-      { type: 'goat', icon: '🐐', name: '바위 산양', count: 8, x: sMap.ironforge.x + 12, y: sMap.ironforge.y - 8, radius: 12, hp: 70, speed: 1.35 },
-      // 🐬 대양 돌고래 (대해양 항로)
-      { type: 'dolphin', icon: '🐬', name: '대양 돌고래', count: 14, x: 130, y: 110, radius: 35, hp: 90, speed: 1.65, isAquatic: true },
+      { type: 'sheep', icon: '🐑', name: '목초지 양', count: 12, x: sMap.goldenwheat.x - 16, y: sMap.goldenwheat.y - 14, radius: 12, hp: 50, speed: 0.9 },
+      // 🐻 불곰 (북부 산맥 & 오크우드 숲)
+      { type: 'bear', icon: '🐻', name: '갈색 불곰', count: 8, x: sMap.oakwood.x + 14, y: sMap.oakwood.y + 12, radius: 18, hp: 180, speed: 1.25, isPredator: true },
+      // 🐐 산양 (북부 험준한 바위산 & 천공 고원)
+      { type: 'goat', icon: '🐐', name: '바위 산양', count: 12, x: sMap.ironforge.x + 16, y: sMap.ironforge.y - 12, radius: 16, hp: 70, speed: 1.35 },
+      // 🐬 대양 돌고래 (대해양 항로 & 세이렌 산호섬)
+      { type: 'dolphin', icon: '🐬', name: '대양 돌고래', count: 20, x: 145, y: 160, radius: 55, hp: 90, speed: 1.65, isAquatic: true },
       // 🐢 거대 바다거북 (신대륙 산호초 근해)
-      { type: 'turtle', icon: '🐢', name: '거대 바다거북', count: 6, x: sMap.elvenheim.x + 22, y: sMap.elvenheim.y + 16, radius: 18, hp: 160, speed: 0.75, isAquatic: true },
-      // 🐪 사막 낙타 (미라주 오아시스 모래 언덕)
-      { type: 'camel', icon: '🐪', name: '사막 낙타', count: 8, x: sMap.mirage_oasis.x - 12, y: sMap.mirage_oasis.y - 10, radius: 16, hp: 130, speed: 1.15 }
+      { type: 'turtle', icon: '🐢', name: '거대 바다거북', count: 10, x: sMap.siren_coral.x + 10, y: sMap.siren_coral.y + 8, radius: 22, hp: 160, speed: 0.75, isAquatic: true },
+      // 🐪 사막 낙타 (미라주 오아시스 & 베두인 캠프)
+      { type: 'camel', icon: '🐪', name: '사막 낙타', count: 14, x: sMap.mirage_oasis.x - 14, y: sMap.mirage_oasis.y - 14, radius: 24, hp: 130, speed: 1.15 }
     ];
 
     for (const sp of animalSpawns) {
@@ -500,7 +621,7 @@ class EntityManager {
           animalType: sp.type,
           customIcon: sp.icon,
           isAquatic: !!sp.isAquatic,
-          isShip: !!sp.isAquatic, // 물에서 헤엄치도록 설정
+          isShip: !!sp.isAquatic,
           isPredator: !!sp.isPredator,
           faction: 'neutral',
           x: Math.max(4, Math.min(WORLD_WIDTH - 4, ax)),
@@ -539,25 +660,25 @@ class EntityManager {
       thought: '🔥 용암 분화구 상공을 선회하며 화염 브레스를 머금는 중'
     });
 
-    // 2. 빙결 프로스트 드레이크 (북부 설산 유적)
+    // 2. 빙결 프로스트 드레이크 (극서부 천공 용의 둥지 고원)
     this.createEntity({
-      name: '빙결룡 글라키에스 (설산 고룡)',
+      name: '빙결룡 글라키에스 (천공 고룡)',
       race: 'dragon',
       role: 'dragon',
       dragonType: 'frost',
       subClass: '빙결 냉기 고룡',
       customIcon: '🐉',
       faction: 'monster',
-      homeId: 'dragon_ruins',
+      homeId: 'dragon_eyrie',
       ranged: true,
       projColor: '#38bdf8',
-      x: sMap.dragon_ruins.x,
-      y: sMap.dragon_ruins.y,
+      x: sMap.dragon_eyrie.x,
+      y: sMap.dragon_eyrie.y,
       hp: 620, maxHp: 620, atk: 43, gold: 320, scale: 1.75,
-      thought: '❄️ 만년설 봉우리에서 매서운 눈보라 브레스를 뿜는 중'
+      thought: '❄️ 구름 위 천공 절벽에서 매서운 눈보라 브레스를 뿜는 중'
     });
 
-    // 3. 대해양 폭풍 뇌룡 (소용돌이 해역)
+    // 3. 대해양 폭풍 뇌룡 (남부 대해양 산호초 해역)
     this.createEntity({
       name: '폭풍뇌룡 볼타 (대양 해룡)',
       race: 'dragon',
@@ -566,39 +687,39 @@ class EntityManager {
       subClass: '대해양 뇌전 해룡',
       customIcon: '🐉',
       faction: 'monster',
-      homeId: 'pirate_cove',
+      homeId: 'siren_coral',
       isShip: true,
       ranged: true,
       projColor: '#facc15',
-      x: 108,
-      y: 92,
+      x: sMap.siren_coral.x + 12,
+      y: sMap.siren_coral.y - 15,
       hp: 550, maxHp: 550, atk: 40, gold: 300, scale: 1.70,
       thought: '⚡ 폭풍우를 몰고 다니며 뇌전 브레스를 방전하는 중'
     });
 
-    // 4. 숲의 에메랄드 와이번 (그림자 숲 깊은 곳)
+    // 4. 숲의 에메랄드 와이번 (오크우드 깊은 숲)
     this.createEntity({
       name: '에메랄드 와이번 실바누스',
       race: 'dragon',
       role: 'dragon',
       dragonType: 'poison',
-      subClass: '그림자 숲 맹독 고룡',
+      subClass: '오크우드 맹독 고룡',
       customIcon: '🐉',
       faction: 'monster',
-      homeId: 'goblin_camp',
+      homeId: 'oakwood',
       ranged: true,
       projColor: '#22c55e',
-      x: sMap.goblin_camp.x - 8,
-      y: sMap.goblin_camp.y - 6,
+      x: sMap.oakwood.x + 8,
+      y: sMap.oakwood.y + 10,
       hp: 490, maxHp: 490, atk: 37, gold: 260, scale: 1.65,
-      thought: '🌲 그림자 숲 상공에서 독성 숨결을 뿜어내는 중'
+      thought: '🌲 고목 참나무 상공에서 독성 숨결을 뿜어내는 중'
     });
 
     // 일반 몬스터들 스폰
-    this.spawnMonstersForLair('goblin_camp', 14);
-    this.spawnMonstersForLair('orc_stronghold', 14);
-    this.spawnMonstersForLair('dragon_ruins', 8);
-    this.spawnMonstersForLair('pirate_cove', 12);
+    this.spawnMonstersForLair('goblin_camp', 16);
+    this.spawnMonstersForLair('orc_stronghold', 16);
+    this.spawnMonstersForLair('obsidian_necropolis', 14);
+    this.spawnMonstersForLair('pirate_cove', 14);
     this.spawnMonstersForLair('volcano_isle', 8);
   }
 
@@ -785,9 +906,14 @@ class EntityManager {
         { name: '오크 광전사', race: 'orc', monsterType: 'orc_berserker', icon: '🪓', hp: 220, atk: 26, gold: 55, scale: 1.25 },
         { name: '오크 샤먼', race: 'orc', monsterType: 'orc_shaman', icon: '🔮', hp: 140, atk: 23, gold: 48, ranged: true, projColor: '#c084fc', scale: 1.05 }
       ],
-      dragon_ruins: [
-        { name: '고대 해골기사', race: 'undead', monsterType: 'skeleton', icon: '💀', hp: 200, atk: 24, gold: 60, scale: 1.1 },
-        { name: '심연의 망령마법사', race: 'undead', monsterType: 'lich', icon: '👻', hp: 170, atk: 29, gold: 75, ranged: true, projColor: '#38bdf8', scale: 1.15 }
+      obsidian_necropolis: [
+        { name: '망령 흑기사', race: 'undead', monsterType: 'death_knight', icon: '💀', hp: 280, atk: 28, gold: 120, ranged: false, scale: 1.25 },
+        { name: '해골 궁수', race: 'undead', monsterType: 'skeleton_archer', icon: '🏹', hp: 140, atk: 22, gold: 60, ranged: true, projColor: '#a855f7', scale: 1.05 },
+        { name: '강령술 리치 군주', race: 'undead', monsterType: 'lich', icon: '👻', hp: 380, atk: 35, gold: 240, ranged: true, projColor: '#c084fc', scale: 1.4 }
+      ],
+      dragon_eyrie: [
+        { name: '새끼 빙결 드래곤', race: 'dragon', monsterType: 'wyvern', icon: '🐉', hp: 320, atk: 28, gold: 150, ranged: true, projColor: '#38bdf8', scale: 1.3 },
+        { name: '천공 바위 가고일', race: 'monster', monsterType: 'gargoyle', icon: '🗿', hp: 240, atk: 24, gold: 80, ranged: false, scale: 1.15 }
       ],
       pirate_cove: [
         { name: '블랙비어드 해적선', race: 'human', monsterType: 'pirate_ship', icon: '🏴‍☠️', hp: 230, atk: 22, gold: 90, isShip: true, ranged: true, projColor: '#f97316', scale: 1.35 },
@@ -1557,13 +1683,14 @@ class EntityManager {
 
   updateMerchantAI(e, dt, isNight) {
     const sMap = this.world.settlementMap;
-    const mainlandTowns = ['solaris', 'goldenwheat', 'bluewave', 'ironforge', 'silverleaf', 'valor_fort'];
+    const mainlandTowns = ['solaris', 'goldenwheat', 'bluewave', 'ironforge', 'silverleaf', 'valor_fort', 'oakwood', 'windmill_valley', 'st_mare', 'crystal_falls', 'valkyrie_gate'];
 
     if (!e.tradeRoute) {
       let curTown = sMap[e.homeId] || sMap.solaris;
       let minDist = 999;
       for (const tid of mainlandTowns) {
         const t = sMap[tid];
+        if (!t) continue;
         const d = Math.hypot(t.x - e.x, t.y - e.y);
         if (d < minDist) {
           minDist = d;
@@ -1572,15 +1699,15 @@ class EntityManager {
       }
 
       let bestGood = 'wheat';
-      if (curTown.id === 'goldenwheat') bestGood = 'wheat';
-      else if (curTown.id === 'bluewave') bestGood = (curTown.stocks.spices > 8 ? 'spices' : 'fish');
-      else if (curTown.id === 'ironforge') bestGood = (curTown.stocks.weapons > 15 ? 'weapons' : 'ore');
-      else if (curTown.id === 'silverleaf') bestGood = 'herbs';
+      if (curTown.id === 'goldenwheat' || curTown.id === 'windmill_valley') bestGood = 'wheat';
+      else if (curTown.id === 'bluewave' || curTown.id === 'st_mare') bestGood = (curTown.stocks.spices > 8 ? 'spices' : 'fish');
+      else if (curTown.id === 'ironforge' || curTown.id === 'valkyrie_gate') bestGood = (curTown.stocks.weapons > 15 ? 'weapons' : 'ore');
+      else if (curTown.id === 'silverleaf' || curTown.id === 'crystal_falls') bestGood = 'herbs';
       else if (curTown.id === 'solaris') bestGood = 'gems';
       else bestGood = 'weapons';
 
       const candidates = mainlandTowns.filter(id => id !== curTown.id);
-      const destId = (curTown.id !== 'solaris' && Math.random() < 0.55)
+      const destId = (curTown.id !== 'solaris' && Math.random() < 0.45)
         ? 'solaris'
         : candidates[Math.floor(Math.random() * candidates.length)];
 
@@ -1626,7 +1753,7 @@ class EntityManager {
 
   updateSeaMerchantAI(e, dt) {
     const sMap = this.world.settlementMap;
-    const ports = ['bluewave', 'elvenheim', 'mirage_oasis'];
+    const ports = ['bluewave', 'elvenheim', 'mirage_oasis', 'st_mare', 'siren_coral', 'lone_beacon'];
 
     if (!e.tradeRoute) {
       let curPort = sMap[e.homeId] || sMap.bluewave;
@@ -1634,7 +1761,7 @@ class EntityManager {
 
       let bestGood = 'fish';
       if (curPort.id === 'mirage_oasis') bestGood = 'spices';
-      else if (curPort.id === 'elvenheim') bestGood = 'herbs';
+      else if (curPort.id === 'elvenheim' || curPort.id === 'siren_coral') bestGood = 'gems';
       else bestGood = 'weapons';
 
       const destCandidates = ports.filter(id => id !== curPort.id);
@@ -1650,12 +1777,14 @@ class EntityManager {
     }
 
     const dest = sMap[e.tradeRoute.toId];
-    e.targetX = dest.portWaterX;
-    e.targetY = dest.portWaterY;
+    const targetPx = dest.portWaterX || dest.x;
+    const targetPy = dest.portWaterY || dest.y;
+    e.targetX = targetPx;
+    e.targetY = targetPy;
     e.state = 'sailing';
     e.thought = `⛵ [${dest.name}] 행 대양 무역선: ${GOODS_KR[e.tradeRoute.good]} ${e.tradeRoute.amount}상자 항해 운송 중`;
 
-    if (Math.hypot(e.x - dest.portWaterX, e.y - dest.portWaterY) < 4.5) {
+    if (Math.hypot(e.x - targetPx, e.y - targetPy) < 4.5) {
       const { good, amount, fromId } = e.tradeRoute;
       const fromPort = sMap[fromId];
       const unitPrice = (dest.prices && dest.prices[good]) ? dest.prices[good] : 45;
