@@ -147,12 +147,26 @@
     <button id="btnInteractSettlement" class="prompt-action-btn">상호작용 (F)</button>
   </div>
 
+  <!-- 좌/우 사이드바 토글 픽셀 버튼 -->
+  <button id="btnToggleLeftSidebar" class="sidebar-toggle-btn left" title="대륙 거점 & 소식통 패널 (Tab)">◀</button>
+  <button id="btnToggleRightSidebar" class="sidebar-toggle-btn right" title="상세 정보 & 미니맵 패널 (M)">▶</button>
+
   <!-- 좌측 거점 빠른 이동 & 필터 패널 -->
   <aside id="leftSidebar">
     <div class="panel-card">
       <div class="panel-header">
-        <h2>🗺️ 대륙 & 신대륙 거점</h2>
-        <button id="btnZoomContinent" class="mini-btn" title="전체 대륙 & 대양 보기 (M)">전체 지도</button>
+        <h2>🗺️ 5대 대륙 & 해협 거점</h2>
+        <button id="btnZoomContinent" class="mini-btn" title="전체 대륙 & 대양 보기">전체 지도</button>
+      </div>
+      <!-- 대륙별 필터 탭 -->
+      <div class="continent-tabs" id="continentTabs">
+        <button class="c-tab active" data-continent="all">전체</button>
+        <button class="c-tab" data-continent="central">중앙</button>
+        <button class="c-tab" data-continent="west">서부</button>
+        <button class="c-tab" data-continent="north">북부</button>
+        <button class="c-tab" data-continent="south">남부</button>
+        <button class="c-tab" data-continent="east">동부</button>
+        <button class="c-tab" data-continent="strait">해협</button>
       </div>
       <div id="regionList" class="region-list">
         <!-- JS에서 동적 생성 -->
@@ -161,32 +175,31 @@
 
     <div class="panel-card">
       <div class="panel-header">
-        <h2>🔍 종족 & 생태계 하이라이트 필터</h2>
+        <h2>🔍 종족 & 생태계 하이라이트</h2>
       </div>
       <div class="filter-grid">
-        <button class="filter-chip active" data-filter="all">전체 보기</button>
-        <button class="filter-chip" data-filter="animal">🐾 야생동물</button>
+        <button class="filter-chip active" data-filter="all">전체</button>
+        <button class="filter-chip" data-filter="animal">🐾 동물</button>
         <button class="filter-chip" data-filter="dragon">🐉 드래곤</button>
-        <button class="filter-chip" data-filter="elf">🧝 엘프족</button>
+        <button class="filter-chip" data-filter="elf">🧝 엘프</button>
         <button class="filter-chip" data-filter="dwarf">⛏️ 드워프</button>
-        <button class="filter-chip" data-filter="beastkin">🐱 수인족</button>
-        <button class="filter-chip" data-filter="merchant">🐎⛵ 상단/무역선</button>
-        <button class="filter-chip" data-filter="soldier">🛡️🚢 병사/해군</button>
-        <button class="filter-chip" data-filter="adventurer">⚔️ 모험가/용병</button>
-        <button class="filter-chip" data-filter="farmer">🌾 농부/약초사</button>
-        <button class="filter-chip" data-filter="fisherman">🎣 어부</button>
-        <button class="filter-chip" data-filter="monster">👹 몬스터/해적</button>
+        <button class="filter-chip" data-filter="beastkin">🐱 수인</button>
+        <button class="filter-chip" data-filter="merchant">🐎⛵ 상단</button>
+        <button class="filter-chip" data-filter="soldier">🛡️🚢 군대</button>
+        <button class="filter-chip" data-filter="adventurer">⚔️ 모험가</button>
+        <button class="filter-chip" data-filter="farmer">🌾 농어민</button>
+        <button class="filter-chip" data-filter="monster">👹 몬스터</button>
       </div>
       <div class="quick-actions">
-        <button id="btnFindRandomMerchant" class="action-btn">⛵ 무역 중인 선단/상인 추적</button>
-        <button id="btnFindBattle" class="action-btn danger">⚔️ 육상·해상 전투 현장 이동</button>
+        <button id="btnFindRandomMerchant" class="action-btn">⛵ 무역 선단/상인 추적</button>
+        <button id="btnFindBattle" class="action-btn danger">⚔️ 전투 현장 이동</button>
       </div>
     </div>
 
     <!-- 실시간 세계 사건 로그 -->
     <div class="panel-card log-card">
       <div class="panel-header">
-        <h2>📜 실시간 대륙 & 대양 소식통</h2>
+        <h2>📜 대륙 & 대양 소식통</h2>
       </div>
       <div id="eventLogList" class="event-log-list"></div>
     </div>
@@ -194,23 +207,33 @@
 
   <!-- 우측 상세 정보창 (선택된 NPC / 거점 정보 & 경제 현황) -->
   <aside id="rightSidebar">
+    <!-- 미니맵 (상단 배치) -->
+    <div class="panel-card minimap-card">
+      <div class="panel-header">
+        <h2>🧭 레이더 미니맵</h2>
+        <span id="zoomLevelText">0.9x</span>
+      </div>
+      <div class="minimap-wrapper">
+        <canvas id="minimapCanvas" width="270" height="180"></canvas>
+      </div>
+    </div>
+
     <!-- 선택된 개체/거점 상세 카드 -->
     <div class="panel-card inspector-card" id="inspectorPanel">
       <div class="panel-header">
         <h2 id="inspectorTitle">👆 개체 또는 거점 선택</h2>
-        <button id="btnFollowTarget" class="mini-btn hidden">🎥 카메라 추적</button>
+        <button id="btnFollowTarget" class="mini-btn hidden">🎥 추적</button>
       </div>
       <div id="inspectorContent" class="inspector-content">
         <p class="empty-hint">
           맵 위의 <strong>상인, 범선, 해군, 모험가, 몬스터, 해적</strong> 또는 <strong>도시·항구 건물</strong>을 클릭하면 상세 상태와 무역품, 행선지를 실시간으로 관찰할 수 있습니다.
         </p>
         <div class="controls-guide">
-          <div><span>WASD / 우클릭</span> 영웅 이동 및 적 타겟 공격</div>
-          <div><span>Space / R</span> 탈것 전환 (백마 🏇 / 비룡 비행 🐉 / 도보 🚶)</div>
-          <div><span>B / C / I</span> 영지 건축(B) · 용병단(C) · 장비/가방(I)</div>
-          <div><span>F 키</span> 정착지 상호작용 (교역·장비강화·체력회복)</div>
-          <div><span>Q / E 키</span> 천공의 심판 광역벼락 / 질주·순풍</div>
-          <div><span>드래그 / 휠</span> 카메라 자유 이동 및 줌인/아웃</div>
+          <div><span>WASD / 우클릭</span> 영웅 이동 및 공격</div>
+          <div><span>Space / R</span> 탈것 전환 (백마 🏇 / 비룡 🐉 / 도보 🚶)</div>
+          <div><span>1 ~ 4 / Q</span> 스킬 4종 & 천공심판</div>
+          <div><span>E / F / J</span> 질주가속 · 도시교역 · 바다낚시</div>
+          <div><span>B / C / I / K / U</span> 건축 · 용병 · 가방 · 제작 · 스탯</div>
         </div>
       </div>
     </div>
@@ -218,30 +241,19 @@
     <!-- 거점별 시세 및 경제 요약 -->
     <div class="panel-card">
       <div class="panel-header">
-        <h2>⚖️ 대륙 & 신대륙 교역 현황</h2>
+        <h2>⚖️ 특산품 시세 & 무역</h2>
       </div>
       <div id="economyTableContainer" class="economy-container">
         <!-- JS에서 실시간 업데이트 -->
       </div>
     </div>
-
-    <!-- 미니맵 -->
-    <div class="panel-card minimap-card">
-      <div class="panel-header">
-        <h2>🧭 전 대륙 & 대해양 미니맵</h2>
-        <span id="zoomLevelText">줌: 0.9x</span>
-      </div>
-      <div class="minimap-wrapper">
-        <canvas id="minimapCanvas" width="270" height="190"></canvas>
-      </div>
-    </div>
   </aside>
 
-  <!-- 하단 플레이어 조작 & 왕국 칙령 컨트롤 도크 (Game Action Bar) -->
+  <!-- 하단 플레이어 조작 & 핫바 (Clean RPG Action Bar) -->
   <footer id="bottomControlDock">
-    <!-- 플레이어 조작 모드 바 -->
+    <!-- 1. 영웅 카드 -->
     <div class="dock-section player-dock">
-      <button id="btnTogglePlayer" class="hero-btn active">
+      <button id="btnTogglePlayer" class="hero-btn active" title="내 영웅 시점 포커스">
         <span class="hero-icon">🌟</span>
         <div>
           <div class="hero-name-row">
@@ -252,101 +264,114 @@
             <div class="mini-bar hp" title="생명력 (HP)"><div id="dockHeroHpFill" style="width: 100%"></div></div>
             <div class="mini-bar exp" title="경험치 (EXP)"><div id="dockHeroExpFill" style="width: 0%"></div></div>
           </div>
-          <div id="heroStatusText" class="hero-sub">조작 활성화 (WASD / 우클릭)</div>
+          <div id="heroStatusText" class="hero-sub">WASD 이동</div>
         </div>
       </button>
+    </div>
 
-      <div class="skill-slots">
-        <button class="skill-btn" id="btnToggleMount" title="탈것 변경: 백마 질주 🏇 / 고대 비룡 비행 🐉 / 도보 🚶 (단축키 Space 또는 R)">
+    <!-- 2. 주력 전투 & 기동 스킬 핫바 (Combat Skills) -->
+    <div class="dock-section combat-dock">
+      <div class="skill-slots main-skills">
+        <button class="skill-btn mount" id="btnToggleMount" title="탈것 변경: 백마 질주 🏇 / 고대 비룡 비행 🐉 / 도보 🚶 (Space / R)">
           <span class="key-badge">Space</span>
           <span class="skill-icon" id="mountIcon">🏇</span>
           <span class="skill-name" id="mountName">백마</span>
         </button>
-        <button class="skill-btn" id="btnSkill1" title="질풍의 회오리검: 주변 5.8타일 적에게 넉백 및 광역 물리 피해 (단축키 1)">
+        <button class="skill-btn" id="btnSkill1" title="질풍의 회오리검 (1)">
           <span class="key-badge">1</span>
           <span class="skill-icon">🌪️</span>
-          <span class="skill-name">회오리검</span>
+          <span class="skill-name">회오리</span>
         </button>
-        <button class="skill-btn" id="btnSkill2" title="혹한의 서리폭풍: 주변 7.2타일 적 4초간 완전 동결 및 냉기 피해 (단축키 2)">
+        <button class="skill-btn" id="btnSkill2" title="혹한의 서리폭풍 (2)">
           <span class="key-badge">2</span>
           <span class="skill-icon">❄️</span>
           <span class="skill-name">서리폭풍</span>
         </button>
-        <button class="skill-btn" id="btnSkill3" title="멸망의 메테오: 전방 6타일에 치명적인 대폭발 화염 메테오 투하 (단축키 3)">
+        <button class="skill-btn" id="btnSkill3" title="멸망의 메테오 (3)">
           <span class="key-badge">3</span>
           <span class="skill-icon">☄️</span>
           <span class="skill-name">메테오</span>
         </button>
-        <button class="skill-btn" id="btnSkill4" title="전방위 일제포격: 360도 방향으로 12발의 함포/대포 탄막 일제 사격 (단축키 4)">
+        <button class="skill-btn" id="btnSkill4" title="전방위 일제포격 (4)">
           <span class="key-badge">4</span>
           <span class="skill-icon">💣</span>
           <span class="skill-name">일제포격</span>
         </button>
-        <button class="skill-btn" id="btnSkillJ" title="바다/강가 낚시: 물가에서 낚싯대를 드리우고 입질 시 낚아채기 (단축키 J)">
-          <span class="key-badge">J</span>
-          <span class="skill-icon">🎣</span>
-          <span class="skill-name">바다낚시</span>
-        </button>
-        <button class="skill-btn" id="btnSkillQ" title="천공의 심판: 주변 적에게 광역 벼락 타격 (단축키 Q)">
+        <button class="skill-btn" id="btnSkillQ" title="천공의 심판: 광역 벼락 (Q)">
           <span class="key-badge">Q</span>
           <span class="skill-icon">⚡</span>
-          <span class="skill-name">천공심판</span>
+          <span class="skill-name">천공벼락</span>
         </button>
-        <button class="skill-btn" id="btnSkillE" title="채집 & 질주 가속: 자원 채집 및 6초간 이동속도 대폭 증가 (단축키 E)">
+        <button class="skill-btn" id="btnSkillE" title="채집 & 질주 가속 (E)">
           <span class="key-badge">E</span>
           <span class="skill-icon">⛏️</span>
-          <span class="skill-name">채집/질주</span>
-        </button>
-        <button class="skill-btn" id="btnSkillF" title="도시 교역 & 장비 강화: 인근 마을/항구에서 특산물 매각 및 공격력 영구 강화 (단축키 F)">
-          <span class="key-badge">F</span>
-          <span class="skill-icon">🪙</span>
-          <span class="skill-name">교역/강화</span>
-        </button>
-        <button class="skill-btn" id="btnSkillK" title="왕립 대장간 & 연금술 제작: 미스릴 무기/방패/엔진/영약 제작 (단축키 K)">
-          <span class="key-badge">K</span>
-          <span class="skill-icon">🔨</span>
-          <span class="skill-name">대장간제작</span>
-        </button>
-        <button class="skill-btn" id="btnSkillU" title="영웅 스탯 분배: 레벨업 스탯 포인트 투자 (단축키 U)">
-          <span class="key-badge">U</span>
-          <span class="skill-icon">📊</span>
-          <span class="skill-name">스탯강화</span>
-        </button>
-        <button class="skill-btn" id="btnSkillT" title="수호 펫 소환/휴식: 아기 비룡 샬롯 동행 (단축키 T)">
-          <span class="key-badge">T</span>
-          <span class="skill-icon">🐲</span>
-          <span class="skill-name">수호펫</span>
-        </button>
-        <button class="skill-btn" id="btnToggleBuild" title="영지 건축 모드: 감시탑, 선착장, 왕실성채, 대농장 건설 (단축키 B)">
-          <span class="key-badge">B</span>
-          <span class="skill-icon">🏗️</span>
-          <span class="skill-name">영지건축</span>
-        </button>
-        <button class="skill-btn" id="btnToggleCompanions" title="정예 호위 용병단 소집 및 지휘 (단축키 C)">
-          <span class="key-badge">C</span>
-          <span class="skill-icon">👥</span>
-          <span class="skill-name">호위용병</span>
-        </button>
-        <button class="skill-btn" id="btnToggleInventory" title="캐릭터 장비 & 인벤토리 가방 열기 (단축키 I)">
-          <span class="key-badge">I</span>
-          <span class="skill-icon">🎒</span>
-          <span class="skill-name">장비/가방</span>
+          <span class="skill-name">질주/채집</span>
         </button>
       </div>
     </div>
 
-    <!-- 왕국 군주 칙령 바 (Ruler Commands) -->
+    <!-- 3. 유틸리티 & RPG 기능 메뉴 핫바 (Utility Skills) -->
+    <div class="dock-section utility-dock">
+      <div class="skill-slots util-skills">
+        <button class="skill-btn util" id="btnSkillF" title="도시 교역 & 장비 강화 (F)">
+          <span class="key-badge">F</span>
+          <span class="skill-icon">🪙</span>
+          <span class="skill-name">교역</span>
+        </button>
+        <button class="skill-btn util" id="btnSkillK" title="대장간 & 연금술 제작 (K)">
+          <span class="key-badge">K</span>
+          <span class="skill-icon">🔨</span>
+          <span class="skill-name">제작</span>
+        </button>
+        <button class="skill-btn util" id="btnSkillU" title="영웅 스탯 분배 (U)">
+          <span class="key-badge">U</span>
+          <span class="skill-icon">📊</span>
+          <span class="skill-name">스탯</span>
+        </button>
+        <button class="skill-btn util" id="btnSkillT" title="수호 펫 소환/휴식 (T)">
+          <span class="key-badge">T</span>
+          <span class="skill-icon">🐲</span>
+          <span class="skill-name">수호펫</span>
+        </button>
+        <button class="skill-btn util" id="btnSkillJ" title="바다/강가 낚시 (J)">
+          <span class="key-badge">J</span>
+          <span class="skill-icon">🎣</span>
+          <span class="skill-name">낚시</span>
+        </button>
+        <button class="skill-btn util" id="btnToggleBuild" title="영지 건축 모드 (B)">
+          <span class="key-badge">B</span>
+          <span class="skill-icon">🏗️</span>
+          <span class="skill-name">건축</span>
+        </button>
+        <button class="skill-btn util" id="btnToggleCompanions" title="정예 호위 용병단 (C)">
+          <span class="key-badge">C</span>
+          <span class="skill-icon">👥</span>
+          <span class="skill-name">용병</span>
+        </button>
+        <button class="skill-btn util" id="btnToggleInventory" title="장비 & 인벤토리 가방 (I)">
+          <span class="key-badge">I</span>
+          <span class="skill-icon">🎒</span>
+          <span class="skill-name">가방</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 4. 왕국 군주 칙령 토글 팝업 (Ruler Decrees) -->
     <div class="dock-section ruler-dock">
-      <div class="ruler-title">👑 군주 칙령</div>
-      <button id="btnDispatchFleet" class="ruler-btn" title="푸른파도 대항구와 신대륙에서 특무 황금 무역선단 일제 출항">
-        <span>⛵</span> 무역선단 출항
+      <button id="btnToggleRulerMenu" class="ruler-toggle-btn" title="왕국 군주 칙령 발동">
+        <span>👑</span> 칙령
       </button>
-      <button id="btnDispatchCrusade" class="ruler-btn danger" title="발로르 요새의 성전사 원정대와 왕립 해군 함대를 적 본거지로 진격">
-        <span>⚔️</span> 대토벌군 출정
-      </button>
-      <button id="btnCastBlessing" class="ruler-btn gold" title="전 대륙 농작물 100% 즉시 수확 + 주민/플레이어 전체 회복 + 번영 골드 지급">
-        <span>✨</span> 여신의 대축복
-      </button>
+      <div id="rulerMenuPopup" class="ruler-popup hidden">
+        <button id="btnDispatchFleet" class="ruler-btn" title="푸른파도 대항구와 신대륙에서 특무 황금 무역선단 일제 출항">
+          <span>⛵</span> 무역선단 출항
+        </button>
+        <button id="btnDispatchCrusade" class="ruler-btn danger" title="발로르 요새의 성전사 원정대와 왕립 해군 함대를 적 본거지로 진격">
+          <span>⚔️</span> 대토벌군 출정
+        </button>
+        <button id="btnCastBlessing" class="ruler-btn gold" title="전 대륙 농작물 100% 즉시 수확 + 주민/플레이어 전체 회복 + 번영 골드 지급">
+          <span>✨</span> 여신의 대축복
+        </button>
+      </div>
     </div>
   </footer>
 
@@ -534,11 +559,12 @@
   </div>
 
   <!-- 스크립트 로드 -->
-  <script src="js/audio.js?v=13"></script>
-  <script src="js/world_gen.js?v=13"></script>
-  <script src="js/entities.js?v=13"></script>
-  <script src="js/rpg_systems.js?v=13"></script>
-  <script src="js/renderer.js?v=13"></script>
-  <script src="js/main.js?v=13"></script>
+  <script src="js/audio.js?v=14"></script>
+  <script src="js/world_gen.js?v=14"></script>
+  <script src="js/entities.js?v=14"></script>
+  <script src="js/rpg_systems.js?v=14"></script>
+  <script src="js/pixel_sprites.js?v=14"></script>
+  <script src="js/renderer.js?v=14"></script>
+  <script src="js/main.js?v=14"></script>
 </body>
 </html>

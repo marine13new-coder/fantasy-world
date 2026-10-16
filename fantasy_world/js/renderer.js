@@ -860,6 +860,71 @@ class WorldRenderer {
     const sc = e.scale;
     const sy = py - bounce;
 
+    // Tiny RPG 16x16 / 24x24 정밀 픽셀 아트 매트릭스 엔진 우선 렌더링
+    if (window.PixelSprites && window.PixelSprites.isReady) {
+      // 1. 플레이어 고대 비룡 비행 탑승 특수 렌더링
+      if (e.role === 'player' && e.isFlying && e.mount === 'dragon') {
+        // 지면 거대 그림자
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+        ctx.fillRect(px - 14 * sc, py + 16 * sc, 28 * sc, 6 * sc);
+
+        // 공중 상승 오프셋 (-14px) 및 날개 펄럭임
+        const flyY = sy - 14 * sc;
+        const flap = Math.round(Math.sin(timeSec * 7.5) * 5 * sc);
+
+        // 붉은 비룡 동체 및 머리/꼬리
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(px - 10 * sc, flyY - 4 * sc, 20 * sc, 9 * sc);
+        ctx.fillRect(px - 18 * sc, flyY - 1 * sc, 9 * sc, 4 * sc);
+        ctx.fillRect(px + 8 * sc, flyY - 9 * sc, 8 * sc, 8 * sc);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(px + 13 * sc, flyY - 8 * sc, 2 * sc, 2 * sc);
+
+        // 불타는 날개
+        ctx.fillStyle = '#b91c1c';
+        ctx.fillRect(px - 16 * sc, flyY - 12 * sc + flap, 12 * sc, 3 * sc);
+        ctx.fillRect(px + 4 * sc, flyY - 12 * sc + flap, 12 * sc, 3 * sc);
+        ctx.fillStyle = '#f97316';
+        ctx.globalAlpha = 0.75;
+        ctx.fillRect(px - 14 * sc, flyY - 10 * sc + flap, 10 * sc, 6 * sc);
+        ctx.fillRect(px + 6 * sc, flyY - 10 * sc + flap, 10 * sc, 6 * sc);
+        ctx.globalAlpha = 1.0;
+
+        // 비룡 등 위의 플레이어
+        ctx.fillStyle = '#1d4ed8';
+        ctx.fillRect(px - 2 * sc, flyY - 11 * sc, 5 * sc, 8 * sc);
+        ctx.fillStyle = '#fed7aa';
+        ctx.fillRect(px - 1 * sc, flyY - 14 * sc, 4 * sc, 4 * sc);
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(px - 2 * sc, flyY - 16 * sc, 6 * sc, 2 * sc);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(px + 4 * sc, flyY - 17 * sc, 2 * sc, 9 * sc);
+        return;
+      }
+
+      // 2. 플레이어 백마 탑승 특수 렌더링
+      if (e.role === 'player' && e.mount === 'horse') {
+        window.PixelSprites.draw(ctx, { ...e, animalType: 'horse', role: 'animal' }, px, py + 2 * sc, bounce, timeSec);
+        // 말 위에 탑승한 플레이어 상체
+        ctx.fillStyle = '#dc2626'; // 망토
+        ctx.fillRect(px - 6 * sc, sy - 11 * sc, 3 * sc, 8 * sc);
+        ctx.fillStyle = '#1d4ed8'; // 블루 갑주
+        ctx.fillRect(px - 3 * sc, sy - 12 * sc, 6 * sc, 7 * sc);
+        ctx.fillStyle = '#fed7aa'; // 얼굴
+        ctx.fillRect(px - 2 * sc, sy - 16 * sc, 4 * sc, 4 * sc);
+        ctx.fillStyle = '#facc15'; // 황금 왕관
+        ctx.fillRect(px - 3 * sc, sy - 18 * sc, 6 * sc, 2 * sc);
+        ctx.fillStyle = '#fef08a'; // 전설검
+        ctx.fillRect(px + 4 * sc, sy - 16 * sc, 2 * sc, 9 * sc);
+        return;
+      }
+
+      // 3. 모든 영웅/NPC/몬스터/야생동물 정밀 픽셀 아트 매트릭스 렌더링
+      window.PixelSprites.draw(ctx, e, px, py, bounce, timeSec);
+      return;
+    }
+
+    // [Fallback 레거시 렌더링]
     // 바닥 픽셀 그림자
     ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
     ctx.fillRect(px - 5 * sc, py + 4 * sc, 10 * sc, 3 * sc);

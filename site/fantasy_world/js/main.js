@@ -76,11 +76,23 @@ function startFantasyWorld() {
   entityMgr.log('trade', '⛵ 푸른파도 대항구 ↔ 엘븐하임 ↔ 미라주 사막 ↔ 세이렌 산호섬 대양 무역항로가 연결되었습니다.', 235, 195);
   entityMgr.log('battle', '🐉 서부 천공의 용의 둥지와 대해양 해골초도 해적선단이 대륙 각지를 위협하고 있습니다.', 35, 135);
 
-  // 3. 거점 리스트 버튼 동적 생성
+  // 3. 거점 리스트 버튼 동적 생성 및 대륙 분류
+  function getSettlementContinent(s) {
+    if (s.continent) return s.continent;
+    const straitIds = ['beacon_island', 'pirate_cove', 'siren_reef', 'siren_coral', 'kraken_depths', 'shipwreck_graveyard'];
+    if (straitIds.includes(s.id)) return 'strait';
+    if (s.x < 140) return 'west';
+    if (s.x > 330) return 'east';
+    if (s.y < 85) return 'north';
+    if (s.y > 235) return 'south';
+    return 'central';
+  }
+
   const regionListEl = document.getElementById('regionList');
   for (const s of world.settlements) {
     const btn = document.createElement('button');
     btn.className = 'region-btn' + (s.danger ? ' danger' : '');
+    btn.dataset.continent = getSettlementContinent(s);
     btn.innerHTML = `<span>${s.icon}</span> <span>${s.name}</span>`;
     btn.addEventListener('click', () => {
       stopFollow();
@@ -89,6 +101,46 @@ function startFantasyWorld() {
       updateInspectorUI();
     });
     regionListEl.appendChild(btn);
+  }
+
+  // 대륙별 필터 탭 바인딩
+  const continentTabs = document.querySelectorAll('#continentTabs .c-tab');
+  continentTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      continentTabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const target = tab.dataset.continent;
+      document.querySelectorAll('#regionList .region-btn').forEach(btn => {
+        if (target === 'all' || btn.dataset.continent === target) {
+          btn.style.display = '';
+        } else {
+          btn.style.display = 'none';
+        }
+      });
+    });
+  });
+
+  // 좌/우 사이드바 토글 픽셀 버튼 바인딩
+  const btnToggleLeftSidebar = document.getElementById('btnToggleLeftSidebar');
+  const leftSidebar = document.getElementById('leftSidebar');
+  if (btnToggleLeftSidebar && leftSidebar) {
+    btnToggleLeftSidebar.addEventListener('click', () => {
+      leftSidebar.classList.toggle('collapsed');
+      const isCol = leftSidebar.classList.contains('collapsed');
+      btnToggleLeftSidebar.classList.toggle('collapsed', isCol);
+      btnToggleLeftSidebar.textContent = isCol ? '▶' : '◀';
+    });
+  }
+
+  const btnToggleRightSidebar = document.getElementById('btnToggleRightSidebar');
+  const rightSidebar = document.getElementById('rightSidebar');
+  if (btnToggleRightSidebar && rightSidebar) {
+    btnToggleRightSidebar.addEventListener('click', () => {
+      rightSidebar.classList.toggle('collapsed');
+      const isCol = rightSidebar.classList.contains('collapsed');
+      btnToggleRightSidebar.classList.toggle('collapsed', isCol);
+      btnToggleRightSidebar.textContent = isCol ? '◀' : '▶';
+    });
   }
 
   // 대륙 & 대해양 전체 지도 보기
@@ -677,10 +729,49 @@ function startFantasyWorld() {
     }
   }
 
-  // 군주 칙령 바인딩
-  document.getElementById('btnDispatchFleet').addEventListener('click', () => entityMgr.dispatchTradeFleet());
-  document.getElementById('btnDispatchCrusade').addEventListener('click', () => entityMgr.dispatchCrusade());
-  document.getElementById('btnCastBlessing').addEventListener('click', () => entityMgr.castDivineBlessing());
+  // 군주 칙령 토글 팝업 바인딩
+  const btnToggleRulerMenu = document.getElementById('btnToggleRulerMenu');
+  const rulerMenuPopup = document.getElementById('rulerMenuPopup');
+  if (btnToggleRulerMenu && rulerMenuPopup) {
+    btnToggleRulerMenu.addEventListener('click', (e) => {
+      e.stopPropagation();
+      rulerMenuPopup.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!rulerMenuPopup.contains(e.target) && e.target !== btnToggleRulerMenu) {
+        rulerMenuPopup.classList.add('hidden');
+      }
+    });
+  }
+
+  function closeRulerPopup() {
+    if (rulerMenuPopup) rulerMenuPopup.classList.add('hidden');
+  }
+
+  const btnDispatchFleet = document.getElementById('btnDispatchFleet');
+  if (btnDispatchFleet) {
+    btnDispatchFleet.addEventListener('click', () => {
+      closeRulerPopup();
+      entityMgr.dispatchTradeFleet();
+    });
+  }
+
+  const btnDispatchCrusade = document.getElementById('btnDispatchCrusade');
+  if (btnDispatchCrusade) {
+    btnDispatchCrusade.addEventListener('click', () => {
+      closeRulerPopup();
+      entityMgr.dispatchCrusade();
+    });
+  }
+
+  const btnCastBlessing = document.getElementById('btnCastBlessing');
+  if (btnCastBlessing) {
+    btnCastBlessing.addEventListener('click', () => {
+      closeRulerPopup();
+      entityMgr.castDivineBlessing();
+    });
+  }
 
   // 7. 카메라 추적 제어
   const followBanner = document.getElementById('followBanner');
@@ -855,6 +946,11 @@ function startFantasyWorld() {
       toggleStatsModal();
     } else if (e.code === 'KeyT') {
       entityMgr.togglePetCompanion();
+    } else if (e.code === 'Tab') {
+      e.preventDefault();
+      if (btnToggleLeftSidebar) btnToggleLeftSidebar.click();
+    } else if (e.code === 'BracketRight' || e.code === 'Backquote') {
+      if (btnToggleRightSidebar) btnToggleRightSidebar.click();
     } else if (e.code === 'KeyH') {
       document.body.classList.toggle('cinematic-mode');
     } else if (e.code === 'F11') {

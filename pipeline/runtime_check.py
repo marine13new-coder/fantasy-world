@@ -49,8 +49,8 @@ def runtime_check(game_dir: Path) -> tuple[Path | None, list[str], bool]:
     src = (game_dir / "index.html").read_text(encoding="utf-8")
     inst = game_dir / "_instrumented.html"
     inst.write_text(_instrument(src), encoding="utf-8")
-    file_url = inst.as_uri()
-    shot = game_dir / "screenshot.png"
+    file_url = inst.resolve().as_uri()
+    shot = (game_dir / "screenshot.png").resolve()
 
     errors: list[str] = []
     try:
