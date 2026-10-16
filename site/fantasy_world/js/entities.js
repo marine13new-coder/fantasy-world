@@ -884,6 +884,35 @@ class EntityManager {
       thought: '🌲 고목 참나무 상공에서 독성 숨결을 뿜어내는 중'
     });
 
+    // 5. 🐉 용족 성역 수호병 & 드라고니안 전사단 (Dragonkin Warriors)
+    const dragonkinSpawns = [
+      { name: '드라고니안 용혈 전사', loc: sMap.dragon_eyrie, sub: '천공 화염 용기병', type: 'fire', color: '#f97316' },
+      { name: '드라고니안 서리 수호병', loc: sMap.celestial_haven, sub: '천공 빙룡 수호자', type: 'frost', color: '#38bdf8' },
+      { name: '드라고니안 뇌전 주술사', loc: sMap.dragon_ruins, sub: '고대 뇌룡 사제', type: 'thunder', color: '#facc15' },
+      { name: '드라고니안 흑암 척후병', loc: sMap.dragon_graveyard, sub: '용골 암영 파수병', type: 'shadow', color: '#c084fc' }
+    ];
+    for (const dk of dragonkinSpawns) {
+      if (!dk.loc) continue;
+      for (let i = 0; i < 4; i++) {
+        this.createEntity({
+          name: `${dk.name} ${i + 1}`,
+          race: 'dragonkin',
+          role: 'soldier',
+          dragonType: dk.type,
+          subClass: dk.sub,
+          customIcon: '🐲',
+          faction: 'neutral',
+          homeId: dk.loc.id,
+          ranged: true,
+          projColor: dk.color,
+          x: dk.loc.x + (Math.random() - 0.5) * 8,
+          y: dk.loc.y + (Math.random() - 0.5) * 8,
+          hp: 340, maxHp: 340, atk: 32, gold: 180, scale: 1.25,
+          thought: `🐲 고대 용족의 영지를 수호하며 비룡의 비상을 보좌하는 중`
+        });
+      }
+    }
+
     // 일반 몬스터들 스폰
     this.spawnMonstersForLair('goblin_camp', 16);
     this.spawnMonstersForLair('orc_stronghold', 16);

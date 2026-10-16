@@ -913,40 +913,213 @@ class WorldRenderer {
     ctx.fillRect(px + 1 * sc, sy - 18 * sc, 5 * sc, 3 * sc);
   }
 
-  // (B) 4대 고대 드래곤 픽셀아트
+  // (B) 4대 고대 드래곤 & 전설 비룡 픽셀아트 (Epic Cinema-Grade Pixel Dragon Engine)
   drawSpriteDragon(ctx, px, py, bounce, e, timeSec) {
-    const sc = e.scale;
-    const flap = Math.round(Math.sin(e.wingsPhase) * 6);
-    const dColor = e.dragonType === 'frost'
-      ? '#0284c7'
-      : (e.dragonType === 'thunder' ? '#ca8a04' : (e.dragonType === 'poison' ? '#15803d' : '#b91c1c'));
-    const bellyColor = e.dragonType === 'frost' ? '#bae6fd' : '#fef08a';
+    this.drawEpicDragon(ctx, px, py, e, timeSec, false);
+  }
 
-    // 몸체 & 꼬리
-    ctx.fillStyle = dColor;
-    ctx.fillRect(px - 7 * sc, py - 6 * sc - bounce, 14 * sc, 12 * sc);
-    ctx.fillRect(px - 14 * sc, py + 2 * sc - bounce, 8 * sc, 4 * sc); // 꼬리
-    ctx.fillRect(px + 5 * sc, py - 12 * sc - bounce, 7 * sc, 7 * sc); // 머리
-    ctx.fillStyle = bellyColor;
-    ctx.fillRect(px - 4 * sc, py - 3 * sc - bounce, 8 * sc, 8 * sc); // 배 비늘
+  drawEpicDragon(ctx, px, py, e, timeSec, isMountedPlayer = false) {
+    const sc = (e.scale || 1.0) * (isMountedPlayer ? 1.4 : 1.25);
+    const facingLeft = isMountedPlayer ? (e.vx < -0.1) : (e.vx < -0.05);
+    const dir = facingLeft ? -1 : 1;
 
-    // 빛나는 슬릿 눈
-    ctx.fillStyle = '#fef08a';
-    ctx.fillRect(px + 9 * sc, py - 10 * sc - bounce, 2 * sc, 2 * sc);
+    // 4대 원소별 고유 비늘 및 이펙트 팔레트
+    let mainColor = '#dc2626';     // 화염 기본 (Red)
+    let darkColor = '#7f1d1d';
+    let hornColor = '#facc15';
+    let eyeColor = '#fef08a';
+    let coreColor = '#f97316';
+    let webColor = 'rgba(239, 68, 68, 0.65)';
+    let auraColor = '#ef4444';
+    let breathColor = '#f97316';
 
-    // 날개 2단 박쥐 골격
-    ctx.fillStyle = dColor;
-    ctx.fillRect(px - 22 * sc, py - 16 * sc + flap * sc, 16 * sc, 3 * sc);
-    ctx.fillRect(px + 4 * sc, py - 16 * sc + flap * sc, 16 * sc, 3 * sc);
-    ctx.fillStyle = e.projColor;
-    ctx.globalAlpha = 0.55;
-    ctx.fillRect(px - 20 * sc, py - 13 * sc + flap * sc, 14 * sc, 8 * sc);
-    ctx.fillRect(px + 6 * sc, py - 13 * sc + flap * sc, 14 * sc, 8 * sc);
+    if (e.dragonType === 'frost') {
+      mainColor = '#0284c7';
+      darkColor = '#0c4a6e';
+      hornColor = '#bae6fd';
+      eyeColor = '#38bdf8';
+      coreColor = '#7dd3fc';
+      webColor = 'rgba(56, 189, 248, 0.65)';
+      auraColor = '#38bdf8';
+      breathColor = '#bae6fd';
+    } else if (e.dragonType === 'thunder') {
+      mainColor = '#ca8a04';
+      darkColor = '#713f12';
+      hornColor = '#fef08a';
+      eyeColor = '#ffffff';
+      coreColor = '#facc15';
+      webColor = 'rgba(250, 204, 21, 0.65)';
+      auraColor = '#eab308';
+      breathColor = '#fde047';
+    } else if (e.dragonType === 'poison' || e.dragonType === 'shadow') {
+      mainColor = '#581c87';
+      darkColor = '#2e1065';
+      hornColor = '#c084fc';
+      eyeColor = '#e879f9';
+      coreColor = '#9333ea';
+      webColor = 'rgba(192, 132, 252, 0.65)';
+      auraColor = '#a855f7';
+      breathColor = '#c084fc';
+    }
+
+    const altitude = isMountedPlayer ? 18 * sc : 12 * sc;
+    const dy = py - altitude;
+    const wingFlap = Math.sin(timeSec * 7 + (e.id || 0)) * 9 * sc;
+
+    ctx.save();
+
+    // 1. 거대 비행 그림자 (Immense Ground Shadow)
+    ctx.fillStyle = 'rgba(11, 15, 25, 0.35)';
+    ctx.beginPath();
+    ctx.ellipse(px, py + 8 * sc, 26 * sc, 8 * sc, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. 후방 날개 (Back Wing - Behind Body)
+    const backWingY = dy - 18 * sc - wingFlap * 0.8;
+    ctx.fillStyle = darkColor;
+    ctx.fillRect(px - dir * 6 * sc, backWingY, dir * -24 * sc, 4 * sc);
+    ctx.fillRect(px - dir * 18 * sc, backWingY - 6 * sc, dir * -14 * sc, 3 * sc);
+    ctx.fillStyle = webColor;
+    ctx.fillRect(px - dir * 8 * sc, backWingY + 3 * sc, dir * -26 * sc, 14 * sc);
+
+    // 3. 역동적인 뱀장어형 파동 꼬리 (Serpentine Sine Wave Tail)
+    for (let seg = 1; seg <= 5; seg++) {
+      const tailX = px - dir * (8 + seg * 5) * sc;
+      const tailWave = Math.sin(timeSec * 5 + seg * 0.8) * 4 * sc;
+      const tailY = dy + (2 + seg * 2) * sc + tailWave;
+      const segSize = Math.max(3, (7 - seg)) * sc;
+      ctx.fillStyle = mainColor;
+      ctx.fillRect(tailX, tailY, segSize, segSize);
+      ctx.fillStyle = hornColor;
+      ctx.fillRect(tailX, tailY - 2 * sc, 2 * sc, 2 * sc);
+    }
+    const endWave = Math.sin(timeSec * 5 + 4.5) * 4 * sc;
+    ctx.fillStyle = hornColor;
+    ctx.fillRect(px - dir * 36 * sc, dy + 11 * sc + endWave, 6 * sc, 4 * sc);
+
+    // 4. 주 동체 & 가슴 장갑 (Chest Scutes & Core)
+    ctx.fillStyle = darkColor;
+    ctx.fillRect(px - 14 * sc, dy - 10 * sc, 28 * sc, 18 * sc);
+    ctx.fillStyle = mainColor;
+    ctx.fillRect(px - 12 * sc, dy - 8 * sc, 24 * sc, 15 * sc);
+
+    // 가슴 흉갑 비늘 & 맥동하는 심장 코어
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(px - dir * 4 * sc, dy - 4 * sc, 10 * sc, 11 * sc);
+    ctx.fillStyle = coreColor;
+    const corePulse = (Math.sin(timeSec * 6) + 1) * 0.5;
+    ctx.globalAlpha = 0.7 + corePulse * 0.3;
+    ctx.fillRect(px - dir * 2 * sc, dy - 2 * sc, 6 * sc, 7 * sc);
     ctx.globalAlpha = 1.0;
 
-    // 입김 파티클
-    ctx.fillStyle = e.projColor;
-    ctx.fillRect(px + 12 * sc + Math.round(Math.sin(timeSec * 8) * 3), py - 9 * sc, 3 * sc, 3 * sc);
+    // 5. 드래곤 목과 머리 (Dragon Neck & Horned Skull)
+    const headX = px + dir * 14 * sc;
+    const headY = dy - 14 * sc;
+
+    ctx.fillStyle = mainColor;
+    ctx.fillRect(px + dir * 6 * sc, dy - 10 * sc, dir * 8 * sc, 10 * sc);
+
+    ctx.fillStyle = darkColor;
+    ctx.fillRect(headX - (dir < 0 ? 16 * sc : 0), headY, 16 * sc, 11 * sc);
+    ctx.fillStyle = mainColor;
+    ctx.fillRect(headX - (dir < 0 ? 14 * sc : -2 * sc), headY + 2 * sc, 13 * sc, 8 * sc);
+
+    // 거대한 갈퀴형 드래곤 뿔 (Dual Sweeping Horns)
+    ctx.fillStyle = hornColor;
+    ctx.fillRect(headX - dir * 4 * sc, headY - 8 * sc, 4 * sc, 8 * sc);
+    ctx.fillRect(headX - dir * 8 * sc, headY - 14 * sc, 3 * sc, 7 * sc);
+    ctx.fillRect(headX - dir * 13 * sc, headY - 18 * sc, 2 * sc, 5 * sc);
+
+    // 턱 & 이빨 (Jaws & Fangs)
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(headX + dir * 4 * sc, headY + 7 * sc, dir * 8 * sc, 3 * sc);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(headX + dir * 6 * sc, headY + 6 * sc, 2 * sc, 2 * sc);
+    ctx.fillRect(headX + dir * 9 * sc, headY + 6 * sc, 2 * sc, 2 * sc);
+
+    // 맹렬한 안광 (Glow Slit Eyes)
+    ctx.fillStyle = eyeColor;
+    ctx.fillRect(headX + dir * 3 * sc, headY + 2 * sc, 3 * sc, 3 * sc);
+    ctx.fillStyle = '#0b0f19';
+    ctx.fillRect(headX + dir * 4 * sc, headY + 2 * sc, 1 * sc, 3 * sc);
+
+    // 6. 전방 거대 날개 (Front Wing)
+    const frontWingY = dy - 16 * sc + wingFlap;
+    ctx.fillStyle = mainColor;
+    ctx.fillRect(px - dir * 4 * sc, frontWingY, dir * 28 * sc, 5 * sc);
+    ctx.fillRect(px + dir * 20 * sc, frontWingY - 10 * sc, dir * 18 * sc, 4 * sc);
+    ctx.fillStyle = hornColor;
+    ctx.fillRect(px + dir * 20 * sc, frontWingY - 12 * sc, 3 * sc, 3 * sc);
+    ctx.fillRect(px + dir * 36 * sc, frontWingY - 8 * sc, 3 * sc, 3 * sc);
+
+    ctx.fillStyle = webColor;
+    ctx.fillRect(px - dir * 2 * sc, frontWingY + 4 * sc, dir * 34 * sc, 18 * sc);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+    ctx.fillRect(px + dir * 4 * sc, frontWingY + 5 * sc, dir * 26 * sc, 2 * sc);
+
+    // 7. 발톱 & 다리 (Razor Talons)
+    ctx.fillStyle = mainColor;
+    ctx.fillRect(px - 6 * sc, dy + 6 * sc, 6 * sc, 8 * sc);
+    ctx.fillRect(px + 4 * sc, dy + 6 * sc, 6 * sc, 8 * sc);
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(px - 7 * sc, dy + 13 * sc, 3 * sc, 3 * sc);
+    ctx.fillRect(px - 3 * sc, dy + 13 * sc, 3 * sc, 3 * sc);
+    ctx.fillRect(px + 3 * sc, dy + 13 * sc, 3 * sc, 3 * sc);
+    ctx.fillRect(px + 7 * sc, dy + 13 * sc, 3 * sc, 3 * sc);
+
+    // 8. 플레이어 탑승 시 (Hero Riding the Dragon)
+    if (isMountedPlayer) {
+      ctx.fillStyle = '#ca8a04';
+      ctx.fillRect(px - 5 * sc, dy - 12 * sc, 10 * sc, 4 * sc);
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(px, dy - 14 * sc);
+      ctx.lineTo(headX, headY + 3 * sc);
+      ctx.stroke();
+
+      const heroY = dy - 18 * sc;
+      const capeFlap = Math.round(Math.sin(timeSec * 8) * 3 * sc);
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(px - dir * 10 * sc, heroY + 2 * sc, dir * 8 * sc, 10 * sc + capeFlap);
+      ctx.fillStyle = '#1d4ed8';
+      ctx.fillRect(px - 3 * sc, heroY - 2 * sc, 7 * sc, 8 * sc);
+      ctx.fillStyle = '#fed7aa';
+      ctx.fillRect(px - 2 * sc, heroY - 7 * sc, 5 * sc, 5 * sc);
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(px - 3 * sc, heroY - 10 * sc, 7 * sc, 3 * sc);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(px + dir * 6 * sc, heroY - 13 * sc, 2 * sc, 12 * sc);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px + dir * 5 * sc, heroY - 8 * sc, 4 * sc, 2 * sc);
+    }
+
+    // 9. 드래곤 브레스 & 원소 파티클 (Dragon Breath)
+    const isBreathing = (e.state === 'combat') || (isMountedPlayer && (Math.sin(timeSec * 4) > 0.3));
+    if (isBreathing) {
+      const bX = headX + dir * 12 * sc;
+      const bY = headY + 6 * sc;
+      for (let p = 1; p <= 6; p++) {
+        const pProg = (timeSec * 8 + p * 0.16) % 1.0;
+        const pxPos = bX + dir * pProg * 42 * sc;
+        const pyPos = bY + (Math.sin(timeSec * 15 + p) * 6 * pProg) * sc;
+        const pRadius = Math.max(2, Math.round(3 + pProg * 8 * sc));
+        ctx.fillStyle = (p % 2 === 0) ? '#ffffff' : breathColor;
+        ctx.globalAlpha = Math.max(0, 1 - pProg * 0.8);
+        ctx.beginPath();
+        ctx.arc(pxPos, pyPos, pRadius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1.0;
+    } else {
+      const smokeProg = (timeSec * 2) % 1.0;
+      ctx.fillStyle = auraColor;
+      ctx.globalAlpha = 0.6 * (1 - smokeProg);
+      ctx.fillRect(headX + dir * 13 * sc, headY + 3 * sc - smokeProg * 8 * sc, 3 * sc, 3 * sc);
+      ctx.globalAlpha = 1.0;
+    }
+
+    ctx.restore();
   }
 
   // (C) 육상 상단 마차 픽셀아트
@@ -989,41 +1162,7 @@ class WorldRenderer {
     if (window.PixelSprites && window.PixelSprites.isReady) {
       // 1. 플레이어 고대 비룡 비행 탑승 특수 렌더링
       if (e.role === 'player' && e.isFlying && e.mount === 'dragon') {
-        // 지면 거대 그림자
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
-        ctx.fillRect(px - 14 * sc, py + 16 * sc, 28 * sc, 6 * sc);
-
-        // 공중 상승 오프셋 (-14px) 및 날개 펄럭임
-        const flyY = sy - 14 * sc;
-        const flap = Math.round(Math.sin(timeSec * 7.5) * 5 * sc);
-
-        // 붉은 비룡 동체 및 머리/꼬리
-        ctx.fillStyle = '#dc2626';
-        ctx.fillRect(px - 10 * sc, flyY - 4 * sc, 20 * sc, 9 * sc);
-        ctx.fillRect(px - 18 * sc, flyY - 1 * sc, 9 * sc, 4 * sc);
-        ctx.fillRect(px + 8 * sc, flyY - 9 * sc, 8 * sc, 8 * sc);
-        ctx.fillStyle = '#fef08a';
-        ctx.fillRect(px + 13 * sc, flyY - 8 * sc, 2 * sc, 2 * sc);
-
-        // 불타는 날개
-        ctx.fillStyle = '#b91c1c';
-        ctx.fillRect(px - 16 * sc, flyY - 12 * sc + flap, 12 * sc, 3 * sc);
-        ctx.fillRect(px + 4 * sc, flyY - 12 * sc + flap, 12 * sc, 3 * sc);
-        ctx.fillStyle = '#f97316';
-        ctx.globalAlpha = 0.75;
-        ctx.fillRect(px - 14 * sc, flyY - 10 * sc + flap, 10 * sc, 6 * sc);
-        ctx.fillRect(px + 6 * sc, flyY - 10 * sc + flap, 10 * sc, 6 * sc);
-        ctx.globalAlpha = 1.0;
-
-        // 비룡 등 위의 플레이어
-        ctx.fillStyle = '#1d4ed8';
-        ctx.fillRect(px - 2 * sc, flyY - 11 * sc, 5 * sc, 8 * sc);
-        ctx.fillStyle = '#fed7aa';
-        ctx.fillRect(px - 1 * sc, flyY - 14 * sc, 4 * sc, 4 * sc);
-        ctx.fillStyle = '#facc15';
-        ctx.fillRect(px - 2 * sc, flyY - 16 * sc, 6 * sc, 2 * sc);
-        ctx.fillStyle = '#fef08a';
-        ctx.fillRect(px + 4 * sc, flyY - 17 * sc, 2 * sc, 9 * sc);
+        this.drawEpicDragon(ctx, px, py, e, timeSec, true);
         return;
       }
 

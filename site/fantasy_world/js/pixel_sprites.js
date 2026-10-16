@@ -513,6 +513,28 @@
       "..#oo#....#oo#..",
       "..####....####.."
     ],
+    dragonkin_warrior: [
+      "....#......#....",
+      "...#y#....#y#...",
+      "....#y####y#....",
+      "....#yRRRRe#....",
+      "...#RRRRRRRe#...",
+      "...#e#ee##ef#...",
+      "...#eeeeffff#...",
+      "....#f##ff##....",
+      ".....#R####R#...",
+      "...#RRbBBbRR#...",
+      "..#RR#bBBb#RR#..",
+      "..#Re#bYYb#Re#F.",
+      "..#e#bbBBbb#e#wh",
+      "..#e#bbBBbb#e#wh",
+      "...##bbBBbb##Fwh",
+      "...#ssss##ssss#.",
+      "...#ssss#..#ssss",
+      "..#hhhh#....#hhh",
+      ".#RR#........#RR",
+      ".###..........##"
+    ],
     orc: [
       "....########....",
       "..##g1g2g1g2##..",
@@ -748,6 +770,7 @@
         return frame === 1 ? 'hero_walk_1' : 'hero_walk_0';
       }
       if (e.role === 'king') return 'king';
+      if (e.race === 'dragonkin') return 'dragonkin_warrior';
       if (e.role === 'royal_guard' || e.role === 'guard') return 'guard';
       if (e.role === 'soldier') return 'knight';
 
