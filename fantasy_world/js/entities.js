@@ -137,10 +137,10 @@ class QuestSystem {
       };
     } else if (type === 'scout') {
       const scouts = [
-        { name: '천공 용의 고원', loc: sMap.sky_dragon_eyrie || { x: 425, y: 175 }, desc: '구름 위 떠있는 고대 드래곤 둥지를 비행 탐색하여 룬 제단을 확인하십시오.', icon: '☁️', gold: 1800, fame: 50 },
-        { name: '스핑크스 피라미드', loc: sMap.sphinx_pyramid || { x: 310, y: 255 }, desc: '사막 한가운데 자리잡은 미지의 황금 피라미드 유적을 정찰하십시오.', icon: '🏛️', gold: 1600, fame: 40 },
-        { name: '론 비컨 고도 등대', loc: sMap.lone_beacon || { x: 455, y: 215 }, desc: '대해양 동단 고도에 위치한 전설의 등대 불빛을 확인하십시오.', icon: '🗼', gold: 1900, fame: 50 },
-        { name: '요정의 숲 세계수 성소', loc: sMap.fairy_glade || { x: 145, y: 245 }, desc: '엘프 연합 영지 깊숙한 곳의 신비로운 세계수 성소를 순례하십시오.', icon: '🧚', gold: 1500, fame: 35 }
+        { name: '천공 용의 고원', loc: sMap.dragon_eyrie || sMap.sky_dragon_eyrie || { x: 38, y: 145 }, desc: '구름 위 떠있는 고대 드래곤 둥지를 비행 탐색하여 룬 제단을 확인하십시오.', icon: '☁️', gold: 1800, fame: 50 },
+        { name: '스핑크스 피라미드', loc: sMap.sphinx_pyramid || { x: 58, y: 245 }, desc: '사막 한가운데 자리잡은 미지의 황금 피라미드 유적을 정찰하십시오.', icon: '🏛️', gold: 1600, fame: 40 },
+        { name: '론 비컨 고도 등대', loc: sMap.lone_beacon || { x: 162, y: 145 }, desc: '황금해협 북단 고도에 위치한 전설의 등대 불빛을 확인하십시오.', icon: '🗼', gold: 1900, fame: 50 },
+        { name: '요정의 숲 세계수 성소', loc: sMap.fairy_glade || { x: 55, y: 65 }, desc: '엘프 연합 영지 깊숙한 곳의 신비로운 세계수 성소를 순례하십시오.', icon: '🧚', gold: 1500, fame: 35 }
       ];
       const t = scouts[Math.floor(Math.random() * scouts.length)];
       q = {

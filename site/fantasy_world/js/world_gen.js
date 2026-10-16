@@ -1,10 +1,15 @@
 // ============================================================================
-// world_gen.js - 초대형 오픈월드 (480x320 타일)
-// 동부 아테리아 제국 본토 + 중앙 대양 & 산호 군도 + 서부 엘븐하임 & 황금 사막 신대륙 + 극서부 천공 용의 고원
+// world_gen.js - 5대 대륙 초대형 오픈월드 (480x320 타일, 15,360px x 10,240px)
+// [1] 중앙 아테리아 제국 본토 (솔라리스·푸른파도항·황금밀밭·아이언포지·발로르요새)
+// [2] 서부 실바니아 요정림 & 미라주 사막 제국 & 천공 용의 고원 (엘븐하임·오아시스·피라미드)
+// [3] 북부 노스펠름 혹한 영구동토 대륙 (서리거인 성채·세인트마레 포구·발키리 관문·오크 요새)
+// [4] 남부 드라코니아 화염·용족 대륙 (흑요석 화산·용골 묘지·마그마 지하용광로·세이렌 산호섬)
+// [5] 동부 신비 & 네크로폴리스 대륙 (흑요석 강령술 묘지·속삭이는 숲·수정동굴·용의 유적·난파선 해구)
+// [해양] 4대 좁은 해협 (황금해협·서리해협·용족해협·비전해협) 및 광활한 4대 외해 대양
 // ============================================================================
 
-const WORLD_WIDTH = 480;  // 가로 480 타일 (15,360px 대형 오픈월드)
-const WORLD_HEIGHT = 320; // 세로 320 타일 (10,240px)
+const WORLD_WIDTH = 480;  // 가로 480 타일
+const WORLD_HEIGHT = 320; // 세로 320 타일
 const WORLD_SIZE = WORLD_WIDTH; // 하위 호환
 const TILE_SIZE = 32;
 
@@ -36,7 +41,7 @@ const TILE = {
 
 const TILE_INFO = {
   [TILE.DEEP_WATER]:   { name: '대해양 (심해)', color: '#091b2c', miniColor: '#091b2c', walkable: false, naval: true },
-  [TILE.WATER]:        { name: '연안/강/호수', color: '#1d4ed8', miniColor: '#2563eb', walkable: false, naval: true },
+  [TILE.WATER]:        { name: '연안/해협/호수', color: '#1d4ed8', miniColor: '#2563eb', walkable: false, naval: true },
   [TILE.SAND]:         { name: '황금 모래해변', color: '#d6be86', miniColor: '#d6be86', walkable: true, naval: false },
   [TILE.GRASS]:        { name: '초원', color: '#386934', miniColor: '#386934', walkable: true, naval: false },
   [TILE.MEADOW]:       { name: '비옥한 평야', color: '#477d40', miniColor: '#477d40', walkable: true, naval: false },
@@ -44,10 +49,10 @@ const TILE_INFO = {
   [TILE.DARK_FOREST]:  { name: '그림자 침엽수림', color: '#182922', miniColor: '#15241e', walkable: true, naval: false },
   [TILE.HILLS]:        { name: '구릉지', color: '#575446', miniColor: '#575446', walkable: true, naval: false },
   [TILE.MOUNTAIN]:     { name: '험준한 암벽 산맥', color: '#413f3d', miniColor: '#413f3d', walkable: false, naval: false },
-  [TILE.SNOW]:         { name: '만년설 봉우리', color: '#cbd5e1', miniColor: '#e2e8f0', walkable: false, naval: false },
+  [TILE.SNOW]:         { name: '만년설 빙하 봉우리', color: '#cbd5e1', miniColor: '#e2e8f0', walkable: false, naval: false },
   [TILE.BADLANDS]:     { name: '붉은 황무지', color: '#663e2f', miniColor: '#663e2f', walkable: true, naval: false },
   [TILE.FARMLAND]:     { name: '비옥한 경작지', color: '#684f2b', miniColor: '#85662f', walkable: true, naval: false },
-  [TILE.ROAD]:         { name: '왕국 포장 가도', color: '#978770', miniColor: '#b4a187', walkable: true, naval: false },
+  [TILE.ROAD]:         { name: '대륙 포장 가도', color: '#978770', miniColor: '#b4a187', walkable: true, naval: false },
   [TILE.BRIDGE]:       { name: '견고한 교량', color: '#7c5332', miniColor: '#98653e', walkable: true, naval: true },
   [TILE.CASTLE_FLOOR]: { name: '성채 석재 광장', color: '#717882', miniColor: '#8c95a3', walkable: true, naval: false },
   [TILE.DOCK]:         { name: '항구 목조 부두', color: '#714b29', miniColor: '#855831', walkable: true, naval: true },
@@ -122,22 +127,19 @@ function fbm(noiseFn, x, y, octaves = 4) {
   return total / maxVal;
 }
 
-// 본토 X 오프셋 (동부 대륙 위치)
-const MAINLAND_OFFSET_X = 180;
-
 function generateWorld() {
   const elevNoise = createNoise2D(10101);
   const moistNoise = createNoise2D(20202);
   const detailNoise = createNoise2D(30303);
 
   const tiles = new Uint8Array(WORLD_WIDTH * WORLD_HEIGHT);
-  // deco: 0:없음, 1:참나무, 2:침엽수, 3:들꽃, 4:바위, 5:야자수/선인장, 6:벚꽃/요정나무, 7:단풍나무, 8:빛나는수정
+  // deco: 0:없음, 1:참나무, 2:침엽수, 3:들꽃, 4:바위, 5:야자수/선인장, 6:요정나무, 7:단풍나무, 8:빛나는수정
   const deco = new Uint8Array(WORLD_WIDTH * WORLD_HEIGHT);
 
   const idx = (x, y) => y * WORLD_WIDTH + x;
   const inBounds = (x, y) => x >= 0 && x < WORLD_WIDTH && y >= 0 && y < WORLD_HEIGHT;
 
-  // 1. 대륙 & 해양 윤곽 생성
+  // 1. 5대 대륙 및 4대 해협 & 광활한 외해 대양 생성
   for (let y = 0; y < WORLD_HEIGHT; y++) {
     for (let x = 0; x < WORLD_WIDTH; x++) {
       const nx = x / WORLD_WIDTH;
@@ -146,176 +148,184 @@ function generateWorld() {
       const m = fbm(moistNoise, nx * 7.0, ny * 5.5, 3);
       const d = detailNoise(nx * 32, ny * 26);
 
+      // 5대 대륙 타원 거리 함수 (유사한 대륙 크기 & 황금 밸런스 배치)
+      const dCentral = Math.hypot((x - 240) / 66, (y - 160) / 54);
+      const dWest = Math.hypot((x - 80) / 64, (y - 160) / 116);
+      const dNorth = Math.hypot((x - 240) / 114, (y - 44) / 32);
+      const dSouth = Math.hypot((x - 240) / 114, (y - 276) / 32);
+      const dEast = Math.hypot((x - 400) / 64, (y - 160) / 116);
+
+      // 해협 중간 징검다리 섬 & 환초
+      const dBeacon = Math.hypot(x - 162, y - 145);
+      const dPirate = Math.hypot(x - 158, y - 185);
+      const dSiren = Math.hypot(x - 140, y - 255);
+      const dShipwreck = Math.hypot(x - 340, y - 225);
+
+      let maxE = 0;
+      let region = 'central';
+
+      // [1] 중앙 대륙 (아테리아 제국)
+      if (dCentral < 1.0) {
+        let e = (1 - dCentral) * 0.78 + nVal * 0.35;
+        // 솔라리스 왕도 주변 비옥한 평야 분지 보정
+        const dSolaris = Math.hypot(x - 240, y - 160);
+        if (dSolaris < 35) e = 0.42 + (nVal - 0.5) * 0.15;
+        if (e > maxE) { maxE = e; region = 'central'; }
+      }
+      // [2] 서부 대륙 (실바니아 요정림 & 미라주 사막 제국)
+      if (dWest < 1.0) {
+        const e = (1 - dWest) * 0.78 + nVal * 0.35;
+        if (e > maxE) { maxE = e; region = 'west'; }
+      }
+      // [3] 북부 대륙 (노스펠름 혹한 영구동토)
+      if (dNorth < 1.0) {
+        const e = (1 - dNorth) * 0.78 + nVal * 0.35;
+        if (e > maxE) { maxE = e; region = 'north'; }
+      }
+      // [4] 남부 대륙 (드라코니아 화산 & 용족 성역)
+      if (dSouth < 1.0) {
+        const e = (1 - dSouth) * 0.78 + nVal * 0.35;
+        if (e > maxE) { maxE = e; region = 'south'; }
+      }
+      // [5] 동부 대륙 (신비 & 네크로폴리스 대륙)
+      if (dEast < 1.0) {
+        const e = (1 - dEast) * 0.78 + nVal * 0.35;
+        if (e > maxE) { maxE = e; region = 'east'; }
+      }
+
+      // [해협 징검다리 섬]
+      if (dBeacon < 11) {
+        const e = (1 - dBeacon / 11) * 0.70 + nVal * 0.35;
+        if (e > maxE) { maxE = e; region = 'beacon'; }
+      }
+      if (dPirate < 13) {
+        const e = (1 - dPirate / 13) * 0.70 + nVal * 0.35;
+        if (e > maxE) { maxE = e; region = 'pirate'; }
+      }
+      if (dSiren < 14) {
+        const e = (1 - dSiren / 14) * 0.68 + nVal * 0.35;
+        if (e > maxE) { maxE = e; region = 'siren'; }
+      }
+      if (dShipwreck < 12) {
+        const e = (1 - dShipwreck / 12) * 0.65 + nVal * 0.35;
+        if (e > maxE) { maxE = e; region = 'shipwreck'; }
+      }
+
+      // 수심 및 타일 결정
       let t = TILE.DEEP_WATER;
 
-      // [A] 동부 아테리아 대륙 (x: 190 ~ 475)
-      if (x >= 180) {
-        const mx = (x - MAINLAND_OFFSET_X) / (WORLD_WIDTH - MAINLAND_OFFSET_X);
-        const my = y / WORLD_HEIGHT;
-        const edgeDistX = Math.min(Math.max(0, (mx - 0.04) / 0.14), (1 - mx) / 0.05, 1);
-        const edgeDistY = Math.min(my / 0.08, (1 - my) / 0.09, 1);
-        const islandMask = Math.min(edgeDistX, edgeDistY);
-        let e = nVal * 0.76 + islandMask * 0.38 - 0.12;
-
-        // 서해안 푸른파도 항구 만(Bay)
-        const distPortBay = Math.hypot(x - (MAINLAND_OFFSET_X + 35), y - 195);
-        if (distPortBay < 42) {
-          e -= (1 - distPortBay / 42) * 0.40;
-        }
-        // 북부 철벽산맥 융기
-        const distNorthMtn = Math.hypot((x - (MAINLAND_OFFSET_X + 155)) * 0.75, (y - 45) * 1.3);
-        if (distNorthMtn < 68) {
-          e += (1 - distNorthMtn / 68) * 0.45;
-        }
-        // 중앙 평원 보정
-        const distPlains = Math.hypot(x - (MAINLAND_OFFSET_X + 120), y - 165);
-        if (distPlains < 70) {
-          e = e * 0.42 + 0.30;
-        }
-
-        if (e < 0.20) t = TILE.DEEP_WATER;
-        else if (e < 0.27) t = TILE.WATER;
-        else if (e < 0.305) t = TILE.SAND;
-        else if (e > 0.76) t = TILE.SNOW;
-        else if (e > 0.65) t = TILE.MOUNTAIN;
-        else if (e > 0.55) t = TILE.HILLS;
-        else {
-          // 동남부 몬스터/단풍/황무지
-          if (x > MAINLAND_OFFSET_X + 210 && y > 180) {
-            t = m < 0.45 ? TILE.BADLANDS : TILE.AUTUMN_WOOD;
-          } else if (x > MAINLAND_OFFSET_X + 180 && y <= 180) {
-            t = m > 0.52 ? TILE.DARK_FOREST : TILE.HILLS;
+      if (maxE < 0.22) {
+        t = TILE.DEEP_WATER;
+      } else if (maxE < 0.28) {
+        t = (region === 'siren' || region === 'shipwreck') ? TILE.CORAL : TILE.WATER;
+      } else if (maxE < 0.31) {
+        t = TILE.SAND;
+      } else {
+        // 대륙별 독창적 기후 및 지형
+        if (region === 'north') {
+          // 북부 혹한 노스펠름
+          if (maxE > 0.68) t = TILE.SNOW;
+          else if (maxE > 0.54) t = TILE.MOUNTAIN;
+          else if (maxE > 0.44) t = TILE.HILLS;
+          else t = m > 0.45 ? TILE.DARK_FOREST : TILE.SNOW;
+        } else if (region === 'south') {
+          // 남부 화염 드라코니아
+          if (maxE > 0.65) t = TILE.LAVA;
+          else if (maxE > 0.52) t = TILE.MOUNTAIN;
+          else if (maxE > 0.40) t = TILE.BADLANDS;
+          else t = m > 0.50 ? TILE.AUTUMN_WOOD : TILE.BADLANDS;
+        } else if (region === 'west') {
+          // 서부 실바니아(북) & 미라주 사막(남) & 천공 고원(서)
+          if (y < 145) {
+            if (x < 42 && maxE > 0.58) t = TILE.SNOW;
+            else if (x < 52 && maxE > 0.48) t = TILE.MOUNTAIN;
+            else if (maxE > 0.40) t = TILE.ELVEN_FOREST;
+            else t = m > 0.42 ? TILE.ELVEN_FOREST : TILE.MEADOW;
+          } else if (y > 175) {
+            if (maxE > 0.60) t = TILE.HILLS;
+            else t = TILE.DESERT;
           } else {
-            if (m > 0.65) t = TILE.FOREST;
-            else if (m > 0.45) t = TILE.MEADOW;
-            else t = TILE.GRASS;
+            t = TILE.BADLANDS;
           }
+        } else if (region === 'east') {
+          // 동부 신비 & 흑요석 네크로폴리스
+          if (maxE > 0.65) t = TILE.MOUNTAIN;
+          else if (maxE > 0.52) t = TILE.HILLS;
+          else if (y < 130) t = m > 0.5 ? TILE.DARK_FOREST : TILE.SWAMP;
+          else t = m > 0.45 ? TILE.AUTUMN_WOOD : TILE.FOREST;
+        } else if (region === 'beacon') {
+          t = TILE.CASTLE_FLOOR;
+        } else if (region === 'pirate') {
+          t = TILE.BADLANDS;
+        } else {
+          // 중앙 아테리아 제국 본토
+          if (y < 132 && maxE > 0.52) t = TILE.MOUNTAIN; // 북부 철벽산맥
+          else if (y < 138 && maxE > 0.45) t = TILE.HILLS;
+          else if (maxE > 0.66) t = TILE.MOUNTAIN;
+          else if (maxE > 0.54) t = TILE.HILLS;
+          else if (y > 185 && maxE < 0.48) t = TILE.FARMLAND; // 남부 비옥한 곡창지대
+          else if (m > 0.58) t = TILE.FOREST;
+          else if (m > 0.38) t = TILE.MEADOW;
+          else t = TILE.GRASS;
         }
-      }
-
-      // [B] 서부 신대륙 북쪽: 요정과 세계수의 섬 '엘븐하임' (x=65, y=75)
-      const distElven = Math.hypot((x - 65) * 0.82, (y - 75) * 0.95);
-      if (distElven < 54) {
-        const eElv = (1 - distElven / 50) * 0.70 + nVal * 0.38;
-        if (eElv > 0.35) {
-          t = m > 0.38 ? TILE.ELVEN_FOREST : TILE.MEADOW;
-          if (distElven < 12 && eElv > 0.65) t = TILE.MEADOW;
-        } else if (eElv > 0.28) {
-          t = TILE.SAND;
-        } else if (eElv > 0.21) {
-          t = TILE.WATER;
-        }
-      }
-
-      // [C] 서부 신대륙 남쪽: 황금 사막 제국 '미라주 오아시스' (x=65, y=235)
-      const distDesert = Math.hypot((x - 65) * 0.80, (y - 235) * 0.90);
-      if (distDesert < 60) {
-        const eDes = (1 - distDesert / 54) * 0.72 + nVal * 0.38;
-        if (eDes > 0.70) {
-          t = TILE.HILLS;
-        } else if (eDes > 0.34) {
-          t = TILE.DESERT;
-          const dOasis = Math.hypot(x - 65, y - 235);
-          if (dOasis < 7.5) t = TILE.WATER;
-          else if (dOasis < 13.5) t = TILE.MEADOW;
-        } else if (eDes > 0.28) {
-          t = TILE.SAND;
-        } else if (eDes > 0.21) {
-          t = TILE.WATER;
-        }
-      }
-
-      // [D] 극서부 천공 용의 둥지 고원 (x=35, y=135)
-      const distSkyPeaks = Math.hypot((x - 35) * 0.90, (y - 135) * 1.1);
-      if (distSkyPeaks < 28) {
-        const eSky = (1 - distSkyPeaks / 26) * 0.85 + nVal * 0.35;
-        if (eSky > 0.72) t = TILE.SNOW;
-        else if (eSky > 0.58) t = TILE.MOUNTAIN;
-        else if (eSky > 0.42) t = TILE.HILLS;
-        else if (eSky > 0.30) t = TILE.SAND;
-        else if (eSky > 0.22) t = TILE.WATER;
-      }
-
-      // [E] 중앙 대해양 섬들
-      // 해골초도 해적 요새 (x=150, y=165)
-      const distPirate = Math.hypot((x - 150) * 1.0, (y - 165) * 1.1);
-      if (distPirate < 22) {
-        const ePir = (1 - distPirate / 20) * 0.70 + nVal * 0.35;
-        if (ePir > 0.44) t = TILE.BADLANDS;
-        else if (ePir > 0.32) t = TILE.SAND;
-        else if (ePir > 0.21) t = TILE.WATER;
-      }
-
-      // 흑요석 화산도 (x=160, y=55)
-      const distVolcano = Math.hypot((x - 160) * 1.0, (y - 55) * 1.15);
-      if (distVolcano < 22) {
-        const eVol = (1 - distVolcano / 20) * 0.75 + nVal * 0.32;
-        if (distVolcano < 5.0) t = TILE.LAVA;
-        else if (eVol > 0.55) t = TILE.MOUNTAIN;
-        else if (eVol > 0.36) t = TILE.BADLANDS;
-        else if (eVol > 0.22) t = TILE.WATER;
-      }
-
-      // 세이렌 산호섬 (x=140, y=255)
-      const distCoral = Math.hypot((x - 140) * 0.95, (y - 255) * 1.05);
-      if (distCoral < 24) {
-        const eCoral = (1 - distCoral / 22) * 0.65 + nVal * 0.35;
-        if (eCoral > 0.48) t = TILE.MEADOW;
-        else if (eCoral > 0.36) t = TILE.SAND;
-        else if (eCoral > 0.24) t = TILE.CORAL;
-        else if (eCoral > 0.18) t = TILE.WATER;
-      }
-
-      // 외로운 등대섬 (x=185, y=115)
-      const distBeacon = Math.hypot((x - 185) * 1.0, (y - 115) * 1.1);
-      if (distBeacon < 12) {
-        const eBea = (1 - distBeacon / 11) * 0.70 + nVal * 0.35;
-        if (eBea > 0.40) t = TILE.CASTLE_FLOOR;
-        else if (eBea > 0.28) t = TILE.SAND;
-        else if (eBea > 0.20) t = TILE.WATER;
       }
 
       tiles[idx(x, y)] = t;
 
       // 자연 장식물 배치
-      if (t === TILE.FOREST && d > 0.36) deco[idx(x, y)] = 1; // 참나무
-      else if (t === TILE.DARK_FOREST && d > 0.33) deco[idx(x, y)] = 2; // 침엽수
-      else if (t === TILE.MEADOW && d > 0.68) deco[idx(x, y)] = 3; // 들꽃
-      else if ((t === TILE.HILLS || t === TILE.BADLANDS) && d > 0.68) deco[idx(x, y)] = 4; // 바위
-      else if ((t === TILE.DESERT || t === TILE.SAND) && d > 0.75) deco[idx(x, y)] = 5; // 사막 야자수/선인장
-      else if (t === TILE.ELVEN_FOREST && d > 0.34) deco[idx(x, y)] = 6; // 요정 벚꽃나무
-      else if (t === TILE.AUTUMN_WOOD && d > 0.35) deco[idx(x, y)] = 7; // 단풍나무
-      else if (t === TILE.SNOW && d > 0.70) deco[idx(x, y)] = 8; // 빛나는 얼음 결정
+      if (t === TILE.FOREST && d > 0.36) deco[idx(x, y)] = 1;
+      else if (t === TILE.DARK_FOREST && d > 0.33) deco[idx(x, y)] = 2;
+      else if (t === TILE.MEADOW && d > 0.68) deco[idx(x, y)] = 3;
+      else if ((t === TILE.HILLS || t === TILE.BADLANDS) && d > 0.68) deco[idx(x, y)] = 4;
+      else if ((t === TILE.DESERT || t === TILE.SAND) && d > 0.75) deco[idx(x, y)] = 5;
+      else if (t === TILE.ELVEN_FOREST && d > 0.34) deco[idx(x, y)] = 6;
+      else if (t === TILE.AUTUMN_WOOD && d > 0.35) deco[idx(x, y)] = 7;
+      else if (t === TILE.SNOW && d > 0.70) deco[idx(x, y)] = 8;
     }
   }
 
-  // 2. 본토 호수 & 강줄기 생성
-  // (1) 실버리프 호수 (중심: x=MAINLAND_OFFSET_X + 85, y=110)
-  const lakeCenter = { x: MAINLAND_OFFSET_X + 85, y: 110 };
-  for (let y = lakeCenter.y - 20; y <= lakeCenter.y + 20; y++) {
-    for (let x = lakeCenter.x - 26; x <= lakeCenter.x + 26; x++) {
+  // 2. 호수 및 강줄기
+  // (1) 실버리프 호수 (중앙 대륙 중심: 220, 138)
+  const lakeCenter = { x: 220, y: 138 };
+  for (let y = lakeCenter.y - 8; y <= lakeCenter.y + 8; y++) {
+    for (let x = lakeCenter.x - 12; x <= lakeCenter.x + 12; x++) {
       if (!inBounds(x, y)) continue;
-      const dist = Math.hypot((x - lakeCenter.x) * 0.85, (y - lakeCenter.y) * 1.1);
-      if (dist < 15.0) {
-        tiles[idx(x, y)] = dist < 8.0 ? TILE.DEEP_WATER : TILE.WATER;
+      const dist = Math.hypot((x - lakeCenter.x) * 0.9, (y - lakeCenter.y) * 1.1);
+      if (dist < 7.0) {
+        tiles[idx(x, y)] = TILE.WATER;
         deco[idx(x, y)] = 0;
-      } else if (dist < 17.5 && tiles[idx(x, y)] !== TILE.WATER) {
+      } else if (dist < 9.0 && tiles[idx(x, y)] !== TILE.WATER) {
         tiles[idx(x, y)] = TILE.SAND;
         deco[idx(x, y)] = 0;
       }
     }
   }
 
+  // (2) 사막 오아시스 호수 (서부 대륙 중심: 72, 230 주변)
+  const oasisCenter = { x: 72, y: 230 };
+  for (let y = oasisCenter.y - 6; y <= oasisCenter.y + 6; y++) {
+    for (let x = oasisCenter.x - 8; x <= oasisCenter.x + 8; x++) {
+      if (!inBounds(x, y)) continue;
+      const dist = Math.hypot(x - oasisCenter.x, y - oasisCenter.y);
+      if (dist < 3.5) {
+        tiles[idx(x, y)] = TILE.WATER;
+        deco[idx(x, y)] = 0;
+      } else if (dist < 6.0) {
+        tiles[idx(x, y)] = TILE.MEADOW;
+      }
+    }
+  }
+
   // 강줄기 조각 헬퍼
-  function carveRiver(points, width = 2.4) {
+  function carveRiver(points, width = 2.0) {
     for (let i = 0; i < points.length - 1; i++) {
       const p0 = points[i];
       const p1 = points[i + 1];
       const steps = Math.ceil(Math.hypot(p1.x - p0.x, p1.y - p0.y) * 2);
       for (let s = 0; s <= steps; s++) {
         const t = s / steps;
-        const cx = p0.x + (p1.x - p0.x) * t + Math.sin(t * Math.PI * 2) * 1.8;
-        const cy = p0.y + (p1.y - p0.y) * t + Math.cos(t * Math.PI * 2) * 1.2;
+        const cx = p0.x + (p1.x - p0.x) * t;
+        const cy = p0.y + (p1.y - p0.y) * t;
         const r = Math.ceil(width + 1);
         for (let dy = -r; dy <= r; dy++) {
           for (let dx = -r; dx <= r; dx++) {
@@ -332,216 +342,179 @@ function generateWorld() {
     }
   }
 
-  // 북부 산맥 -> 호수 -> 서해안 하구 강줄기
+  // 중앙 대륙 산맥 -> 호수 -> 황금해협 서해안 하구 강줄기
   carveRiver([
-    { x: MAINLAND_OFFSET_X + 150, y: 50 },
-    { x: MAINLAND_OFFSET_X + 115, y: 80 },
+    { x: 245, y: 125 },
+    { x: 232, y: 132 },
     { x: lakeCenter.x, y: lakeCenter.y },
-    { x: MAINLAND_OFFSET_X + 80, y: 155 },
-    { x: MAINLAND_OFFSET_X + 50, y: 195 }
-  ], 2.4);
+    { x: 205, y: 150 },
+    { x: 182, y: 165 }
+  ], 1.8);
 
-  // 남부 농업 평원 관개 수로 강줄기
-  carveRiver([
-    { x: MAINLAND_OFFSET_X + 180, y: 190 },
-    { x: MAINLAND_OFFSET_X + 140, y: 220 },
-    { x: MAINLAND_OFFSET_X + 100, y: 250 },
-    { x: MAINLAND_OFFSET_X + 60, y: 275 }
-  ], 2.2);
-
-  // 3. 전체 20+ 거점 정의
+  // 3. 5대 대륙 33개 거점 정의
   const settlements = [
-    // [동부 본토]
+    // ------------------------------------------------------------------------
+    // [1] 중앙 제국 대륙 (아테리아 제국 본토)
+    // ------------------------------------------------------------------------
     {
       id: 'solaris',
       name: '왕도 솔라리스',
-      subtitle: '아테리아 왕국 수도 · 왕궁 & 중앙 대광장',
+      subtitle: '아테리아 제국 수도 · 황제궁 & 중앙 대광장',
       icon: '👑',
       type: 'capital',
       faction: 'kingdom',
-      x: MAINLAND_OFFSET_X + 120,
-      y: 150,
+      x: 240,
+      y: 155,
       radius: 20,
-      gold: 12000,
-      stocks: { wheat: 60, fish: 50, ore: 40, weapons: 45, herbs: 40, gems: 30, spices: 25 },
+      gold: 14000,
+      stocks: { wheat: 70, fish: 50, ore: 45, weapons: 50, herbs: 45, gems: 35, spices: 30 },
       prices: { wheat: 18, fish: 20, ore: 28, weapons: 65, herbs: 24, gems: 95, spices: 110 },
-      description: '아테리아 국왕과 성기사단이 머무는 대륙 최대의 성채 수도입니다.'
-    },
-    {
-      id: 'goldenwheat',
-      name: '황금밀 대농장',
-      subtitle: '본토 최대 곡창지대 · 거대 풍차 & 대농경지',
-      icon: '🌾',
-      type: 'farming',
-      faction: 'kingdom',
-      x: MAINLAND_OFFSET_X + 135,
-      y: 220,
-      radius: 16,
-      gold: 3800,
-      stocks: { wheat: 200, fish: 20, ore: 10, weapons: 12, herbs: 80, gems: 5, spices: 4 },
-      prices: { wheat: 7, fish: 24, ore: 32, weapons: 62, herbs: 12, gems: 85, spices: 95 },
-      description: '끝없이 펼쳐진 황금빛 밀밭과 약초밭을 일구는 평화로운 농촌입니다.'
+      description: '5대 대륙의 중심인 아테리아 제국의 수도로 황실 근위대와 성기사단이 주둔합니다.'
     },
     {
       id: 'bluewave',
       name: '푸른파도 대항구',
-      subtitle: '서해안 해상무역 허브 · 해군 기지 & 어시장',
+      subtitle: '황금해협 서해안 관문 · 제국 해군 사령부 & 원양 어시장',
       icon: '⚓',
       type: 'port',
       faction: 'kingdom',
       isPort: true,
-      portWaterX: MAINLAND_OFFSET_X + 35,
-      portWaterY: 195,
-      x: MAINLAND_OFFSET_X + 58,
-      y: 195,
+      portWaterX: 176,
+      portWaterY: 165,
+      x: 190,
+      y: 165,
       radius: 16,
-      gold: 6800,
-      stocks: { wheat: 40, fish: 180, ore: 20, weapons: 25, herbs: 25, gems: 35, spices: 30 },
+      gold: 7800,
+      stocks: { wheat: 50, fish: 190, ore: 25, weapons: 30, herbs: 30, gems: 40, spices: 35 },
       prices: { wheat: 20, fish: 8, ore: 32, weapons: 58, herbs: 22, gems: 75, spices: 85 },
-      description: '본토와 바다 너머 신대륙(엘븐하임·미라주 사막·군도)을 잇는 관문 대항구입니다.'
+      description: '황금해협을 가로질러 4대 대륙(실바니아·노스펠름·드라코니아·네크로폴리스)으로 출항하는 대항구입니다.'
     },
     {
       id: 'ironforge',
       name: '아이언포지 드워프 광산성채',
-      subtitle: '북부 철벽산맥 · 대용광로 & 미스릴 대장간',
+      subtitle: '중앙 북부 철벽산맥 · 대용광로 & 미스릴 대장간',
       icon: '⛏️',
       type: 'mining',
       faction: 'kingdom',
-      x: MAINLAND_OFFSET_X + 155,
-      y: 65,
+      x: 245,
+      y: 125,
       radius: 14,
-      gold: 5200,
-      stocks: { wheat: 20, fish: 15, ore: 190, weapons: 85, herbs: 12, gems: 45, spices: 5 },
+      gold: 5800,
+      stocks: { wheat: 25, fish: 15, ore: 210, weapons: 95, herbs: 15, gems: 50, spices: 8 },
       prices: { wheat: 25, fish: 26, ore: 10, weapons: 35, herbs: 26, gems: 58, spices: 105 },
-      description: '험준한 북부 산맥 자락의 광산 요새로, 마정석과 철을 채굴하고 전설의 무기를 단조합니다.'
+      description: '험준한 북부 산맥 자락의 광산 요새로 드워프 장인들이 전설의 무기를 단조합니다.'
     },
     {
-      id: 'silverleaf',
-      name: '실버리프 호수마을',
-      subtitle: '에메랄드 호숫가 · 민물 낚시터와 약초 공방',
-      icon: '🌲',
-      type: 'lakeside',
+      id: 'goldenwheat',
+      name: '황금밀 대농장',
+      subtitle: '중앙 남부 대곡창지대 · 거대 풍차 & 대농경지',
+      icon: '🌾',
+      type: 'farming',
       faction: 'kingdom',
-      x: MAINLAND_OFFSET_X + 85,
-      y: 130,
-      radius: 13,
-      gold: 3200,
-      stocks: { wheat: 35, fish: 110, ore: 12, weapons: 15, herbs: 120, gems: 12, spices: 8 },
-      prices: { wheat: 16, fish: 10, ore: 28, weapons: 55, herbs: 9, gems: 80, spices: 90 },
-      description: '맑은 실버리프 호수 남쪽에 위치한 마을로, 호수 어부들과 약초꾼들이 살아갑니다.'
+      x: 240,
+      y: 195,
+      radius: 16,
+      gold: 4200,
+      stocks: { wheat: 240, fish: 20, ore: 12, weapons: 15, herbs: 85, gems: 6, spices: 5 },
+      prices: { wheat: 7, fish: 24, ore: 32, weapons: 62, herbs: 12, gems: 85, spices: 95 },
+      description: '끝없이 펼쳐진 황금빛 밀밭과 약초밭을 일구는 제국의 생명줄입니다.'
     },
     {
       id: 'valor_fort',
       name: '발로르 최전방 요새',
-      subtitle: '동부 전선 방어기지 · 성전사 기사단 주둔지',
+      subtitle: '중앙 동부 관문 방어기지 · 성전사 기사단 주둔지',
       icon: '🛡️',
       type: 'fortress',
       faction: 'kingdom',
-      x: MAINLAND_OFFSET_X + 200,
-      y: 150,
+      x: 285,
+      y: 160,
       radius: 15,
-      gold: 5600,
-      stocks: { wheat: 45, fish: 30, ore: 40, weapons: 90, herbs: 40, gems: 25, spices: 10 },
+      gold: 6200,
+      stocks: { wheat: 50, fish: 30, ore: 45, weapons: 95, herbs: 40, gems: 25, spices: 12 },
       prices: { wheat: 22, fish: 22, ore: 20, weapons: 46, herbs: 28, gems: 70, spices: 95 },
-      description: '동부 황무지와 그림자 숲의 몬스터 침공을 막아내는 최전선 성채입니다.'
+      description: '동부 신비 대륙과 흑요석 네크로폴리스의 위협을 감시하는 국경 방벽입니다.'
     },
     {
-      id: 'oakwood',
-      name: '오크우드 벌목 마을',
-      subtitle: '중남부 참나무 숲 · 목재 제재소 & 숲 사냥꾼 길드',
-      icon: '🪓',
-      type: 'forest_village',
+      id: 'silverleaf',
+      name: '실버리프 호수마을',
+      subtitle: '중앙 에메랄드 호숫가 · 민물 낚시터와 약초 공방',
+      icon: '🌲',
+      type: 'lakeside',
       faction: 'kingdom',
-      x: MAINLAND_OFFSET_X + 185,
-      y: 220,
+      x: 206,
+      y: 142,
       radius: 13,
-      gold: 3100,
-      stocks: { wheat: 30, fish: 15, ore: 20, weapons: 22, herbs: 75, gems: 10, spices: 12 },
-      prices: { wheat: 16, fish: 22, ore: 26, weapons: 52, herbs: 14, gems: 75, spices: 85 },
-      description: '거대한 고목 참나무를 가공하고 숲 짐승을 추적하는 사냥꾼과 벌목꾼들의 터전입니다.'
-    },
-    {
-      id: 'windmill_valley',
-      name: '윈드밀 방앗간 계곡',
-      subtitle: '서남부 강변 분지 · 수차 방앗간 & 과수원',
-      icon: '💨',
-      type: 'farming',
-      faction: 'kingdom',
-      x: MAINLAND_OFFSET_X + 95,
-      y: 250,
-      radius: 12,
-      gold: 2700,
-      stocks: { wheat: 140, fish: 30, ore: 8, weapons: 10, herbs: 60, gems: 6, spices: 15 },
-      prices: { wheat: 9, fish: 18, ore: 30, weapons: 60, herbs: 14, gems: 80, spices: 80 },
-      description: '시원한 강바람을 이용해 물레방아와 풍차로 밀가루를 빻고 사과 과수원을 가꿉니다.'
-    },
-    {
-      id: 'st_mare',
-      name: '세인트 마레 어촌 포구',
-      subtitle: '남부 해안 곶 · 원양 참치 어장 & 진주 채취소',
-      icon: '🎣',
-      type: 'port',
-      faction: 'kingdom',
-      isPort: true,
-      portWaterX: MAINLAND_OFFSET_X + 45,
-      portWaterY: 280,
-      x: MAINLAND_OFFSET_X + 65,
-      y: 280,
-      radius: 12,
-      gold: 3500,
-      stocks: { wheat: 25, fish: 160, ore: 10, weapons: 15, herbs: 18, gems: 45, spices: 20 },
-      prices: { wheat: 22, fish: 7, ore: 34, weapons: 60, herbs: 24, gems: 65, spices: 85 },
-      description: '따뜻한 남해 바다의 원양 어선들이 정박하는 평화로운 어촌입니다.'
+      gold: 3600,
+      stocks: { wheat: 40, fish: 130, ore: 15, weapons: 18, herbs: 130, gems: 15, spices: 10 },
+      prices: { wheat: 16, fish: 10, ore: 28, weapons: 55, herbs: 9, gems: 80, spices: 90 },
+      description: '맑은 실버리프 호숫가에 위치한 호수 어부들과 약초꾼들의 평화로운 마을입니다.'
     },
     {
       id: 'crystal_falls',
       name: '크리스탈폴 아케인 학탑',
-      subtitle: '북서부 호수 폭포 상류 · 대마법사 의회',
+      subtitle: '중앙 북서부 호수 폭포 상류 · 대마법사 의회',
       icon: '🔮',
       type: 'magic_spire',
       faction: 'kingdom',
-      x: MAINLAND_OFFSET_X + 70,
-      y: 70,
+      x: 215,
+      y: 120,
       radius: 12,
-      gold: 5800,
-      stocks: { wheat: 25, fish: 20, ore: 30, weapons: 50, herbs: 90, gems: 85, spices: 30 },
+      gold: 6200,
+      stocks: { wheat: 30, fish: 20, ore: 35, weapons: 55, herbs: 95, gems: 90, spices: 35 },
       prices: { wheat: 24, fish: 22, ore: 24, weapons: 45, herbs: 15, gems: 50, spices: 75 },
-      description: '폭포수 위에 솟아오른 룬 수정 마법탑으로 비전 마법을 연구합니다.'
+      description: '룬 수정 마법탑으로 에테르 에너지를 연구하는 마법사들의 본거지입니다.'
     },
     {
-      id: 'valkyrie_gate',
-      name: '발키리 협곡 관문',
-      subtitle: '북동부 설산 협곡 요새 · 국경 수비대',
-      icon: '🏰',
-      type: 'fortress',
+      id: 'oakwood',
+      name: '오크우드 벌목 마을',
+      subtitle: '중앙 동남부 참나무 숲 · 목재 제재소 & 숲 사냥꾼 길드',
+      icon: '🪓',
+      type: 'forest_village',
       faction: 'kingdom',
-      x: MAINLAND_OFFSET_X + 225,
-      y: 80,
+      x: 270,
+      y: 185,
+      radius: 13,
+      gold: 3400,
+      stocks: { wheat: 35, fish: 15, ore: 22, weapons: 25, herbs: 80, gems: 12, spices: 15 },
+      prices: { wheat: 16, fish: 22, ore: 26, weapons: 52, herbs: 14, gems: 75, spices: 85 },
+      description: '거대한 고목 참나무를 가공하고 숲 짐승을 추적하는 사냥꾼들의 터전입니다.'
+    },
+    {
+      id: 'windmill_valley',
+      name: '윈드밀 방앗간 계곡',
+      subtitle: '중앙 서남부 강변 분지 · 수차 방앗간 & 과수원',
+      icon: '💨',
+      type: 'farming',
+      faction: 'kingdom',
+      x: 215,
+      y: 190,
       radius: 12,
-      gold: 4400,
-      stocks: { wheat: 30, fish: 15, ore: 45, weapons: 70, herbs: 20, gems: 20, spices: 5 },
-      prices: { wheat: 24, fish: 25, ore: 18, weapons: 42, herbs: 30, gems: 70, spices: 100 },
-      description: '북부 설산과 동부 황무지 사이의 험난한 협곡을 방어하는 철벽 관문입니다.'
+      gold: 3100,
+      stocks: { wheat: 160, fish: 35, ore: 10, weapons: 12, herbs: 65, gems: 8, spices: 18 },
+      prices: { wheat: 9, fish: 18, ore: 30, weapons: 60, herbs: 14, gems: 80, spices: 80 },
+      description: '시원한 강바람을 이용해 수차와 풍차로 곡물을 빻고 과수를 재배합니다.'
     },
 
-    // [서부 신대륙]
+    // ------------------------------------------------------------------------
+    // [2] 서부 신대륙 (실바니아 요정림 & 미라주 사막 제국 & 천공 용의 고원)
+    // ------------------------------------------------------------------------
     {
       id: 'elvenheim',
       name: '신대륙 엘븐하임 성소',
-      subtitle: '북서 요정 대륙 · 세계수 이그드라실 & 대성역',
+      subtitle: '서부 요정 영지 · 세계수 이그드라실 & 대성역',
       icon: '🌸',
       type: 'overseas_elven',
       faction: 'kingdom',
       isPort: true,
-      portWaterX: 105,
-      portWaterY: 75,
-      x: 65,
-      y: 75,
+      portWaterX: 102,
+      portWaterY: 80,
+      x: 75,
+      y: 80,
       radius: 16,
-      gold: 8900,
-      stocks: { wheat: 40, fish: 35, ore: 20, weapons: 50, herbs: 240, gems: 80, spices: 60 },
+      gold: 9500,
+      stocks: { wheat: 45, fish: 40, ore: 22, weapons: 55, herbs: 260, gems: 90, spices: 65 },
       prices: { wheat: 22, fish: 20, ore: 36, weapons: 52, herbs: 6, gems: 42, spices: 65 },
-      description: '대해양 건너 신비로운 엘프와 정령들의 대륙입니다. 세계수의 영약을 수출합니다.'
+      description: '황금해협 건너 서부 신대륙의 요정과 정령들의 성역입니다. 세계수의 영약을 수출합니다.'
     },
     {
       id: 'fairy_glade',
@@ -550,29 +523,59 @@ function generateWorld() {
       icon: '🌙',
       type: 'overseas_elven',
       faction: 'kingdom',
-      x: 45,
-      y: 45,
+      x: 55,
+      y: 65,
       radius: 12,
-      gold: 4200,
-      stocks: { wheat: 20, fish: 25, ore: 10, weapons: 30, herbs: 180, gems: 90, spices: 40 },
+      gold: 4600,
+      stocks: { wheat: 22, fish: 25, ore: 12, weapons: 32, herbs: 190, gems: 95, spices: 45 },
       prices: { wheat: 25, fish: 22, ore: 40, weapons: 60, herbs: 5, gems: 38, spices: 70 },
       description: '달빛이 내려앉는 신성한 정원으로 마법 약초와 축복의 이슬이 샘솟습니다.'
     },
     {
+      id: 'celestial_haven',
+      name: '천공의 룬 비행섬',
+      subtitle: '서부 상공 부유석 군도 · 고대 천공 수호자 성역',
+      icon: '☁️',
+      type: 'dragon_sanctuary',
+      faction: 'dragon',
+      x: 42,
+      y: 100,
+      radius: 12,
+      gold: 14500,
+      stocks: { wheat: 15, fish: 20, ore: 65, weapons: 75, herbs: 95, gems: 340, spices: 75 },
+      prices: { wheat: 42, fish: 35, ore: 18, weapons: 70, herbs: 18, gems: 24, spices: 50 },
+      description: '대기권 구름 위에 둥둥 떠 있는 마력 부유섬으로 천공의 비룡을 만날 수 있습니다.'
+    },
+    {
+      id: 'dragon_eyrie',
+      name: '천공의 용의 둥지 고원',
+      subtitle: '구름 위 천공 절벽 · 4대 고대 원소 드래곤의 성소',
+      icon: '🐉',
+      type: 'dragon_sanctuary',
+      faction: 'neutral',
+      x: 38,
+      y: 145,
+      radius: 15,
+      gold: 16000,
+      stocks: { wheat: 10, fish: 15, ore: 85, weapons: 65, herbs: 55, gems: 270, spices: 55 },
+      prices: { wheat: 40, fish: 35, ore: 15, weapons: 80, herbs: 20, gems: 25, spices: 60 },
+      description: '구름을 뚫고 솟은 천공의 고원으로 불·얼음·번개·숲의 드래곤들이 비상합니다.'
+    },
+    {
       id: 'mirage_oasis',
       name: '황금사막 미라주 오아시스',
-      subtitle: '남서 사막 제국 · 황금 술탄국 대교역항',
+      subtitle: '서남 사막 제국 · 황금 술탄국 대교역항',
       icon: '🏜️',
       type: 'overseas_desert',
       faction: 'kingdom',
       isPort: true,
-      portWaterX: 110,
-      portWaterY: 235,
-      x: 65,
-      y: 235,
+      portWaterX: 105,
+      portWaterY: 230,
+      x: 72,
+      y: 230,
       radius: 17,
-      gold: 9800,
-      stocks: { wheat: 25, fish: 20, ore: 40, weapons: 35, herbs: 30, gems: 150, spices: 260 },
+      gold: 10500,
+      stocks: { wheat: 30, fish: 25, ore: 45, weapons: 40, herbs: 35, gems: 160, spices: 280 },
       prices: { wheat: 30, fish: 28, ore: 24, weapons: 68, herbs: 28, gems: 35, spices: 12 },
       description: '사막 한가운데 피어난 거대 오아시스 교역 도시로 진귀한 향신료와 유물이 모입니다.'
     },
@@ -583,11 +586,11 @@ function generateWorld() {
       icon: '🏛️',
       type: 'overseas_desert',
       faction: 'kingdom',
-      x: 40,
-      y: 275,
+      x: 58,
+      y: 245,
       radius: 13,
-      gold: 6500,
-      stocks: { wheat: 15, fish: 10, ore: 30, weapons: 40, herbs: 15, gems: 180, spices: 110 },
+      gold: 7000,
+      stocks: { wheat: 15, fish: 10, ore: 35, weapons: 45, herbs: 18, gems: 195, spices: 120 },
       prices: { wheat: 35, fish: 35, ore: 26, weapons: 72, herbs: 35, gems: 30, spices: 20 },
       description: '천년 전 고대 왕조의 유물과 보물이 잠들어 있는 거대한 석조 피라미드입니다.'
     },
@@ -598,268 +601,353 @@ function generateWorld() {
       icon: '🎪',
       type: 'overseas_desert',
       faction: 'kingdom',
-      x: 40,
-      y: 195,
+      x: 48,
+      y: 205,
       radius: 12,
-      gold: 4800,
-      stocks: { wheat: 20, fish: 15, ore: 25, weapons: 35, herbs: 20, gems: 90, spices: 160 },
+      gold: 5200,
+      stocks: { wheat: 22, fish: 16, ore: 28, weapons: 38, herbs: 22, gems: 95, spices: 175 },
       prices: { wheat: 32, fish: 30, ore: 28, weapons: 65, herbs: 26, gems: 42, spices: 15 },
       description: '낙타를 몰고 사막을 횡단하는 수인족 유목민들의 활기찬 이동식 천막 시장입니다.'
-    },
-
-    // [극서부 천공 고원]
-    {
-      id: 'dragon_eyrie',
-      name: '천공의 용의 둥지 고원',
-      subtitle: '구름 위 천공 절벽 · 4대 고대 원소 드래곤의 성소',
-      icon: '🐉',
-      type: 'dragon_sanctuary',
-      faction: 'neutral',
-      x: 35,
-      y: 135,
-      radius: 15,
-      gold: 15000,
-      stocks: { wheat: 10, fish: 15, ore: 80, weapons: 60, herbs: 50, gems: 250, spices: 50 },
-      prices: { wheat: 40, fish: 35, ore: 15, weapons: 80, herbs: 20, gems: 25, spices: 60 },
-      description: '구름을 뚫고 솟은 천공의 고원으로 불·얼음·번개·숲의 드래곤들이 비상합니다.'
-    },
-
-    // [중앙 대양 및 군도]
-    {
-      id: 'pirate_cove',
-      name: '해골초도 대해적 성채',
-      subtitle: '대해양 중앙 암초섬 · 해적선단 연합 본거지',
-      icon: '🏴‍☠️',
-      type: 'monster_lair',
-      faction: 'monster',
-      isPort: true,
-      portWaterX: 135,
-      portWaterY: 165,
-      x: 150,
-      y: 165,
-      radius: 13,
-      gold: 8200,
-      stocks: { wheat: 30, fish: 70, ore: 30, weapons: 80, herbs: 20, gems: 80, spices: 70 },
-      prices: { wheat: 28, fish: 15, ore: 30, weapons: 45, herbs: 30, gems: 50, spices: 50 },
-      description: '검은 깃발을 내건 해적들이 무역선을 습격하고 약탈품을 집결시키는 거점입니다.',
-      danger: true
-    },
-    {
-      id: 'volcano_isle',
-      name: '흑요석 화산 군도',
-      subtitle: '북부 화산섬 · 심해 크라켄 둥지 & 펄펄 끓는 용암',
-      icon: '🌋',
-      type: 'monster_lair',
-      faction: 'monster',
-      x: 160,
-      y: 55,
-      radius: 12,
-      gold: 5500,
-      stocks: { wheat: 5, fish: 30, ore: 90, weapons: 40, herbs: 5, gems: 110, spices: 30 },
-      prices: { wheat: 45, fish: 20, ore: 12, weapons: 65, herbs: 45, gems: 40, spices: 70 },
-      description: '붉은 용암이 바다로 흘러내리는 화산 군도로 크라켄과 화염 야수가 서식합니다.',
-      danger: true
-    },
-    {
-      id: 'siren_coral',
-      name: '세이렌 산호섬',
-      subtitle: '남부 대해양 에메랄드 환초 · 심해 진주 & 침몰선 유적',
-      icon: '🧜‍♀️',
-      type: 'coral_isle',
-      faction: 'neutral',
-      isPort: true,
-      portWaterX: 155,
-      portWaterY: 255,
-      x: 140,
-      y: 255,
-      radius: 12,
-      gold: 4800,
-      stocks: { wheat: 15, fish: 130, ore: 15, weapons: 20, herbs: 35, gems: 140, spices: 50 },
-      prices: { wheat: 28, fish: 9, ore: 35, weapons: 60, herbs: 20, gems: 45, spices: 60 },
-      description: '환상적인 산호초로 둘러싸인 무인도로 심해 진주와 돌고래 떼가 노닙니다.'
-    },
-    {
-      id: 'lone_beacon',
-      name: '외로운 등대섬',
-      subtitle: '대해양 횡단 관문 · 거대 회전 등대 & 보급소',
-      icon: '🗼',
-      type: 'beacon_isle',
-      faction: 'kingdom',
-      isPort: true,
-      portWaterX: 175,
-      portWaterY: 115,
-      x: 185,
-      y: 115,
-      radius: 9,
-      gold: 3200,
-      stocks: { wheat: 35, fish: 60, ore: 15, weapons: 20, herbs: 20, gems: 25, spices: 20 },
-      prices: { wheat: 22, fish: 14, ore: 30, weapons: 55, herbs: 22, gems: 70, spices: 75 },
-      description: '밤바다를 밝히는 거대한 등대가 서 있어 험난한 대양을 건너는 선박들의 길잡이가 됩니다.'
-    },
-
-    // [남동부 몬스터 위험지대]
-    {
-      id: 'orc_stronghold',
-      name: '오크 혈투 대요새',
-      subtitle: '동남부 황무지 · 붉은 오크 군단 본진',
-      icon: '👹',
-      type: 'monster_lair',
-      faction: 'monster',
-      x: MAINLAND_OFFSET_X + 240,
-      y: 240,
-      radius: 14,
-      gold: 6800,
-      stocks: { wheat: 10, fish: 10, ore: 70, weapons: 110, herbs: 10, gems: 40, spices: 5 },
-      prices: { wheat: 30, fish: 30, ore: 14, weapons: 28, herbs: 35, gems: 55, spices: 90 },
-      description: '강력한 쇠몽둥이와 전투 도끼로 무장한 오크 군단 요새입니다.',
-      danger: true
     },
     {
       id: 'goblin_camp',
       name: '고블린 소굴 야영지',
-      subtitle: '남동부 암석 구릉 · 도적단 군락',
+      subtitle: '서부 대륙 중앙 구릉 · 도적단 군락',
       icon: '👺',
       type: 'monster_lair',
       faction: 'monster',
-      x: MAINLAND_OFFSET_X + 215,
-      y: 275,
+      x: 100,
+      y: 160,
       radius: 12,
-      gold: 3600,
-      stocks: { wheat: 15, fish: 12, ore: 35, weapons: 50, herbs: 25, gems: 55, spices: 10 },
+      gold: 3800,
+      stocks: { wheat: 15, fish: 12, ore: 38, weapons: 55, herbs: 25, gems: 60, spices: 15 },
       prices: { wheat: 26, fish: 26, ore: 20, weapons: 40, herbs: 25, gems: 45, spices: 70 },
-      description: '반짝이는 보물을 탐하며 숲길을 지나가는 여행자를 노립니다.',
-      danger: true
-    },
-    {
-      id: 'obsidian_necropolis',
-      name: '흑요석 강령술 묘지',
-      subtitle: '동부 저주받은 고분군 · 언데드 리치 군주',
-      icon: '💀',
-      type: 'monster_lair',
-      faction: 'monster',
-      x: MAINLAND_OFFSET_X + 255,
-      y: 180,
-      radius: 13,
-      gold: 7200,
-      stocks: { wheat: 0, fish: 0, ore: 50, weapons: 60, herbs: 10, gems: 130, spices: 10 },
-      prices: { wheat: 40, fish: 40, ore: 20, weapons: 50, herbs: 40, gems: 35, spices: 80 },
-      description: '죽은 자들의 뼈와 망령 기사들이 배회하는 공포의 묘지입니다.',
+      description: '반짝이는 보물을 탐하며 사막과 숲길을 지나는 상단을 노리는 고블린 소굴입니다.',
       danger: true
     },
 
-    // [신규 확장 신화 유적 & 거점]
-    {
-      id: 'atlantis_ruins',
-      name: '아틀란티스 해저 침몰신전',
-      subtitle: '대해양 심해 고대 문명 · 인어 왕국 성역 & 흑진주 제단',
-      icon: '🔱',
-      type: 'coral_isle',
-      faction: 'merfolk',
-      isPort: true,
-      portWaterX: 205,
-      portWaterY: 70,
-      x: 195,
-      y: 70,
-      radius: 14,
-      gold: 9200,
-      stocks: { wheat: 10, fish: 220, ore: 30, weapons: 40, herbs: 40, gems: 280, spices: 80 },
-      prices: { wheat: 35, fish: 6, ore: 30, weapons: 55, herbs: 20, gems: 30, spices: 60 },
-      description: '바다 깊숙이 잠겨있던 고대 해양 제국의 신전으로 전설의 삼지창과 진주가 잠들어 있습니다.'
-    },
+    // ------------------------------------------------------------------------
+    // [3] 북부 혹한 대륙 (노스펠름 만년설 영구동토)
+    // ------------------------------------------------------------------------
     {
       id: 'frost_citadel',
       name: '서리 거인의 얼음 성채',
-      subtitle: '극북 만년설산 영구동토 · 빙룡과 서리 거인족 본거지',
+      subtitle: '극북 빙하 영구동토 · 빙룡과 서리 거인족 본거지',
       icon: '❄️',
       type: 'fortress',
       faction: 'monster',
-      x: MAINLAND_OFFSET_X + 250,
-      y: 28,
+      x: 240,
+      y: 32,
       radius: 13,
-      gold: 8500,
-      stocks: { wheat: 5, fish: 40, ore: 80, weapons: 95, herbs: 25, gems: 120, spices: 10 },
+      gold: 9000,
+      stocks: { wheat: 5, fish: 45, ore: 85, weapons: 100, herbs: 28, gems: 130, spices: 12 },
       prices: { wheat: 45, fish: 20, ore: 15, weapons: 45, herbs: 30, gems: 45, spices: 85 },
       description: '혹한의 칼바람이 몰아치는 빙하 성채로 서리 거인과 얼음 드래곤이 지키고 있습니다.',
       danger: true
     },
     {
-      id: 'dragon_graveyard',
-      name: '용들의 안식처 묘지',
-      subtitle: '남동부 화염 고원 · 거대 용골 암석과 불꽃 정령',
-      icon: '🦴',
+      id: 'st_mare',
+      name: '세인트 마레 어촌 포구',
+      subtitle: '북방 빙해 포구 · 원양 참치 어장 & 진주 채취소',
+      icon: '🎣',
+      type: 'port',
+      faction: 'kingdom',
+      isPort: true,
+      portWaterX: 165,
+      portWaterY: 66,
+      x: 165,
+      y: 52,
+      radius: 12,
+      gold: 3800,
+      stocks: { wheat: 28, fish: 175, ore: 12, weapons: 18, herbs: 20, gems: 50, spices: 22 },
+      prices: { wheat: 22, fish: 7, ore: 34, weapons: 60, herbs: 24, gems: 65, spices: 85 },
+      description: '혹한의 빙해 바다를 항해하는 원양 어선들이 정박하는 북방 어촌입니다.'
+    },
+    {
+      id: 'valkyrie_gate',
+      name: '발키리 협곡 관문',
+      subtitle: '북부 설산 협곡 요새 · 노스펠름 국경 수비대',
+      icon: '🏰',
+      type: 'fortress',
+      faction: 'kingdom',
+      x: 205,
+      y: 50,
+      radius: 12,
+      gold: 4800,
+      stocks: { wheat: 32, fish: 18, ore: 50, weapons: 75, herbs: 22, gems: 24, spices: 6 },
+      prices: { wheat: 24, fish: 25, ore: 18, weapons: 42, herbs: 30, gems: 70, spices: 100 },
+      description: '북부 설산과 서리 거인의 남하를 방어하는 철벽 협곡 관문입니다.'
+    },
+    {
+      id: 'orc_stronghold',
+      name: '오크 혈투 대요새',
+      subtitle: '북동부 붉은 암벽 · 붉은 오크 군단 본진',
+      icon: '👹',
       type: 'monster_lair',
       faction: 'monster',
-      x: MAINLAND_OFFSET_X + 245,
-      y: 290,
-      radius: 13,
-      gold: 7800,
-      stocks: { wheat: 5, fish: 10, ore: 120, weapons: 80, herbs: 15, gems: 160, spices: 40 },
-      prices: { wheat: 40, fish: 35, ore: 12, weapons: 50, herbs: 35, gems: 40, spices: 75 },
-      description: '수천 년 동안 쓰러진 고대 드래곤들의 뼈가 산을 이루며 강력한 용족의 화염 에너지가 감돕니다.',
+      x: 315,
+      y: 45,
+      radius: 14,
+      gold: 7200,
+      stocks: { wheat: 12, fish: 12, ore: 75, weapons: 115, herbs: 12, gems: 45, spices: 6 },
+      prices: { wheat: 30, fish: 30, ore: 14, weapons: 28, herbs: 35, gems: 55, spices: 90 },
+      description: '강력한 쇠몽둥이와 전투 도끼로 무장한 오크 군단의 철벽 요새입니다.',
+      danger: true
+    },
+
+    // ------------------------------------------------------------------------
+    // [4] 남부 화염 대륙 (드라코니아 화산 & 용족 성역)
+    // ------------------------------------------------------------------------
+    {
+      id: 'volcano_isle',
+      name: '흑요석 화산 군도',
+      subtitle: '남부 화산 정상 · 심해 크라켄 둥지 & 화염 드래곤 분화구',
+      icon: '🌋',
+      type: 'monster_lair',
+      faction: 'monster',
+      x: 175,
+      y: 280,
+      radius: 12,
+      gold: 6000,
+      stocks: { wheat: 6, fish: 32, ore: 95, weapons: 45, herbs: 6, gems: 120, spices: 35 },
+      prices: { wheat: 45, fish: 20, ore: 12, weapons: 65, herbs: 45, gems: 40, spices: 70 },
+      description: '붉은 용암이 바다로 흘러내리는 화산 지대로 고대 화염룡과 용암 정령이 서식합니다.',
       danger: true
     },
     {
-      id: 'celestial_haven',
-      name: '천공의 룬 비행섬',
-      subtitle: '서부 상공 부유석 군도 · 고대 천공 수호자 성역',
-      icon: '☁️',
-      type: 'dragon_sanctuary',
-      faction: 'dragon',
-      x: 28,
-      y: 95,
-      radius: 12,
-      gold: 14000,
-      stocks: { wheat: 15, fish: 20, ore: 60, weapons: 70, herbs: 90, gems: 320, spices: 70 },
-      prices: { wheat: 42, fish: 35, ore: 18, weapons: 70, herbs: 18, gems: 24, spices: 50 },
-      description: '대기권 구름 위에 둥둥 떠 있는 마력 부유섬으로 천공의 비룡을 만날 수 있습니다.'
+      id: 'dragon_graveyard',
+      name: '용들의 안식처 묘지',
+      subtitle: '남부 화염 고원 · 거대 용골 암석과 불꽃 정령',
+      icon: '🦴',
+      type: 'monster_lair',
+      faction: 'monster',
+      x: 240,
+      y: 285,
+      radius: 13,
+      gold: 8200,
+      stocks: { wheat: 6, fish: 12, ore: 130, weapons: 85, herbs: 18, gems: 170, spices: 45 },
+      prices: { wheat: 40, fish: 35, ore: 12, weapons: 50, herbs: 35, gems: 40, spices: 75 },
+      description: '수천 년 동안 쓰러진 고대 드래곤들의 뼈가 산을 이루며 강력한 마력이 감돕니다.',
+      danger: true
     },
     {
       id: 'magma_underforge',
       name: '마그마 심연 지하용광로',
-      subtitle: '동부 화산 지하 분화구 · 심연 드워프 대장장이 은신처',
+      subtitle: '남부 화산 지하 분화구 · 심연 드워프 대장장이 은신처',
       icon: '🔥',
       type: 'mining',
       faction: 'dwarf',
-      x: MAINLAND_OFFSET_X + 265,
-      y: 195,
+      x: 305,
+      y: 275,
       radius: 12,
-      gold: 8900,
-      stocks: { wheat: 15, fish: 10, ore: 240, weapons: 140, herbs: 10, gems: 90, spices: 20 },
+      gold: 9200,
+      stocks: { wheat: 16, fish: 12, ore: 250, weapons: 150, herbs: 12, gems: 95, spices: 22 },
       prices: { wheat: 35, fish: 30, ore: 8, weapons: 30, herbs: 35, gems: 55, spices: 80 },
-      description: '지하 마그마의 열기로 신화급 룬 무기를 제련하는 은둔 드워프 대장장이들의 비밀 용광로입니다.'
+      description: '지하 마그마의 열기로 신화급 룬 무기를 제련하는 심연 드워프 대장장이들의 비밀 용광로입니다.'
+    },
+    {
+      id: 'siren_coral',
+      name: '세이렌 산호섬',
+      subtitle: '남서 대양 에메랄드 환초 · 심해 진주 & 침몰선 유적',
+      icon: '🧜‍♀️',
+      type: 'coral_isle',
+      faction: 'neutral',
+      isPort: true,
+      portWaterX: 140,
+      portWaterY: 245,
+      x: 140,
+      y: 255,
+      radius: 12,
+      gold: 5200,
+      stocks: { wheat: 18, fish: 140, ore: 18, weapons: 22, herbs: 38, gems: 150, spices: 55 },
+      prices: { wheat: 28, fish: 9, ore: 35, weapons: 60, herbs: 20, gems: 45, spices: 60 },
+      description: '환상적인 산호초로 둘러싸인 무인도로 심해 진주와 돌고래 떼가 노닙니다.'
+    },
+
+    // ------------------------------------------------------------------------
+    // [5] 동부 신비 대륙 (네크로폴리스 & 수정 신비 대륙)
+    // ------------------------------------------------------------------------
+    {
+      id: 'obsidian_necropolis',
+      name: '흑요석 강령술 묘지',
+      subtitle: '동부 저주받은 고분군 · 언데드 리치 군주 본거지',
+      icon: '💀',
+      type: 'monster_lair',
+      faction: 'monster',
+      x: 415,
+      y: 85,
+      radius: 13,
+      gold: 7600,
+      stocks: { wheat: 0, fish: 0, ore: 55, weapons: 65, herbs: 12, gems: 140, spices: 12 },
+      prices: { wheat: 40, fish: 40, ore: 20, weapons: 50, herbs: 40, gems: 35, spices: 80 },
+      description: '죽은 자들의 뼈와 망령 기사들이 배회하는 공포의 흑요석 묘지입니다.',
+      danger: true
+    },
+    {
+      id: 'whispering_woods',
+      name: '속삭이는 마법 숲',
+      subtitle: '동부 신비 대륙 침엽수림 · 고대 드루이드 성소',
+      icon: '🌲',
+      type: 'forest_village',
+      faction: 'kingdom',
+      x: 375,
+      y: 100,
+      radius: 13,
+      gold: 4800,
+      stocks: { wheat: 30, fish: 20, ore: 25, weapons: 30, herbs: 140, gems: 80, spices: 30 },
+      prices: { wheat: 20, fish: 22, ore: 28, weapons: 55, herbs: 10, gems: 60, spices: 75 },
+      description: '바람이 불면 나무들이 속삭이며 고대 마법의 지혜를 전해주는 신비로운 숲입니다.'
+    },
+    {
+      id: 'crystal_caverns',
+      name: '수정 동굴 성소',
+      subtitle: '동부 대륙 중앙 자수정 동굴 · 비전 수정 채굴소',
+      icon: '💎',
+      type: 'magic_spire',
+      faction: 'kingdom',
+      x: 415,
+      y: 155,
+      radius: 14,
+      gold: 8400,
+      stocks: { wheat: 20, fish: 15, ore: 90, weapons: 50, herbs: 50, gems: 260, spices: 40 },
+      prices: { wheat: 28, fish: 26, ore: 18, weapons: 50, herbs: 22, gems: 30, spices: 80 },
+      description: '거대한 보랏빛 비전 수정이 자라나는 신비 동굴로 강력한 마법 도구를 제작합니다.'
+    },
+    {
+      id: 'dragon_ruins',
+      name: '용의 계곡 고대 신전',
+      subtitle: '동부 남단 단풍 고원 · 고대 황금 드래곤 제단',
+      icon: '🏛️',
+      type: 'dragon_sanctuary',
+      faction: 'monster',
+      x: 420,
+      y: 220,
+      radius: 14,
+      gold: 9800,
+      stocks: { wheat: 15, fish: 15, ore: 80, weapons: 70, herbs: 30, gems: 210, spices: 50 },
+      prices: { wheat: 35, fish: 30, ore: 16, weapons: 60, herbs: 30, gems: 32, spices: 70 },
+      description: '고대 황금룡을 숭배하던 거대 신전 유적으로 고대 마법 유물이 잠들어 있습니다.',
+      danger: true
+    },
+    {
+      id: 'sunken_shipwreck',
+      name: '난파선 해구',
+      subtitle: '남동 대해양 암초해역 · 전설의 보물선 침몰지',
+      icon: '⛵',
+      type: 'coral_isle',
+      faction: 'neutral',
+      isPort: true,
+      portWaterX: 335,
+      portWaterY: 215,
+      x: 340,
+      y: 225,
+      radius: 13,
+      gold: 8800,
+      stocks: { wheat: 10, fish: 180, ore: 35, weapons: 50, herbs: 20, gems: 220, spices: 60 },
+      prices: { wheat: 35, fish: 6, ore: 28, weapons: 52, herbs: 28, gems: 32, spices: 65 },
+      description: '과거 거대 상선들이 암초에 걸려 침몰한 해역으로 잠수부들이 보물을 인양합니다.'
+    },
+
+    // ------------------------------------------------------------------------
+    // [6] 해협 및 바다의 관문/성역
+    // ------------------------------------------------------------------------
+    {
+      id: 'lone_beacon',
+      name: '외로운 등대섬',
+      subtitle: '황금해협 북단 관문 · 거대 회전 등대 & 해상 보급소',
+      icon: '🗼',
+      type: 'beacon_isle',
+      faction: 'kingdom',
+      isPort: true,
+      portWaterX: 162,
+      portWaterY: 135,
+      x: 162,
+      y: 145,
+      radius: 10,
+      gold: 3600,
+      stocks: { wheat: 40, fish: 70, ore: 18, weapons: 24, herbs: 24, gems: 30, spices: 25 },
+      prices: { wheat: 22, fish: 14, ore: 30, weapons: 55, herbs: 22, gems: 70, spices: 75 },
+      description: '밤바다를 밝히는 거대한 등대가 서 있어 험난한 해협을 건너는 선박들의 길잡이가 됩니다.'
+    },
+    {
+      id: 'pirate_cove',
+      name: '해골초도 대해적 성채',
+      subtitle: '황금해협 남단 암초섬 · 해적선단 연합 본거지',
+      icon: '🏴‍☠️',
+      type: 'monster_lair',
+      faction: 'monster',
+      isPort: true,
+      portWaterX: 150,
+      portWaterY: 185,
+      x: 158,
+      y: 185,
+      radius: 13,
+      gold: 8800,
+      stocks: { wheat: 35, fish: 80, ore: 35, weapons: 85, herbs: 25, gems: 90, spices: 75 },
+      prices: { wheat: 28, fish: 15, ore: 30, weapons: 45, herbs: 30, gems: 50, spices: 50 },
+      description: '검은 깃발을 내건 해적들이 무역선을 습격하고 약탈품을 집결시키는 거점입니다.',
+      danger: true
+    },
+    {
+      id: 'atlantis_ruins',
+      name: '아틀란티스 해저 침몰신전',
+      subtitle: '용족해협 심해 고대 문명 · 인어 왕국 성역 & 삼지창 제단',
+      icon: '🔱',
+      type: 'coral_isle',
+      faction: 'merfolk',
+      isPort: true,
+      portWaterX: 240,
+      portWaterY: 228,
+      x: 240,
+      y: 228,
+      radius: 14,
+      gold: 11000,
+      stocks: { wheat: 10, fish: 260, ore: 35, weapons: 45, herbs: 45, gems: 320, spices: 90 },
+      prices: { wheat: 35, fish: 6, ore: 30, weapons: 55, herbs: 20, gems: 30, spices: 60 },
+      description: '중앙 대륙과 화염 대륙 사이 해협 심해에 잠긴 고대 해양 제국의 신전입니다.'
     }
   ];
 
   const settlementMap = {};
   for (const s of settlements) settlementMap[s.id] = s;
 
-  // 4. 가도 및 도로망 연결 (도로망 확장)
+  // 4. 가도 및 도로망 연결 (각 대륙 내부 완결형 도로망)
   const roadLinks = [
-    // 본토 가도
+    // [중앙 대륙 내부 도로]
     ['solaris', 'goldenwheat'],
     ['solaris', 'bluewave'],
     ['solaris', 'ironforge'],
     ['solaris', 'silverleaf'],
     ['solaris', 'valor_fort'],
-    ['goldenwheat', 'bluewave'],
     ['goldenwheat', 'oakwood'],
     ['goldenwheat', 'windmill_valley'],
-    ['windmill_valley', 'st_mare'],
     ['bluewave', 'silverleaf'],
-    ['bluewave', 'st_mare'],
     ['silverleaf', 'crystal_falls'],
     ['ironforge', 'crystal_falls'],
-    ['ironforge', 'valkyrie_gate'],
-    ['valor_fort', 'valkyrie_gate'],
     ['valor_fort', 'oakwood'],
-    // 몬스터 전선 연결
-    ['valor_fort', 'obsidian_necropolis'],
-    ['oakwood', 'orc_stronghold'],
-    ['st_mare', 'goblin_camp'],
-    // 서부 신대륙 내부 가도
+
+    // [서부 대륙 내부 도로]
     ['elvenheim', 'fairy_glade'],
+    ['elvenheim', 'celestial_haven'],
+    ['celestial_haven', 'dragon_eyrie'],
+    ['dragon_eyrie', 'goblin_camp'],
+    ['goblin_camp', 'bedouin_camp'],
+    ['bedouin_camp', 'mirage_oasis'],
     ['mirage_oasis', 'sphinx_pyramid'],
-    ['mirage_oasis', 'bedouin_camp']
+
+    // [북부 노스펠름 대륙 도로]
+    ['st_mare', 'valkyrie_gate'],
+    ['valkyrie_gate', 'frost_citadel'],
+    ['frost_citadel', 'orc_stronghold'],
+
+    // [남부 드라코니아 대륙 도로]
+    ['volcano_isle', 'dragon_graveyard'],
+    ['dragon_graveyard', 'magma_underforge'],
+
+    // [동부 신비 대륙 도로]
+    ['whispering_woods', 'obsidian_necropolis'],
+    ['whispering_woods', 'crystal_caverns'],
+    ['crystal_caverns', 'dragon_ruins']
   ];
 
   function carveRoad(fromS, toS) {
@@ -900,16 +988,20 @@ function generateWorld() {
     }
   }
 
-  // 5. 해상 무역 항로 정의 (점선 렌더링용)
+  // 5. 4대 해협 및 대양을 가로지르는 해상 무역 항로 (점선 렌더링용)
   const seaRoutes = [
-    { fromId: 'bluewave', toId: 'elvenheim', name: '북서 요정항로' },
-    { fromId: 'bluewave', toId: 'mirage_oasis', name: '남서 황금향신료항로' },
-    { fromId: 'bluewave', toId: 'lone_beacon', name: '대양 등대항로' },
+    { fromId: 'bluewave', toId: 'lone_beacon', name: '황금해협 북부 항로' },
     { fromId: 'lone_beacon', toId: 'elvenheim', name: '등대-엘븐하임 항로' },
-    { fromId: 'st_mare', toId: 'siren_coral', name: '세이렌 환초항로' },
-    { fromId: 'siren_coral', toId: 'mirage_oasis', name: '남부 사막횡단항로' },
     { fromId: 'bluewave', toId: 'pirate_cove', name: '해골초도 위험항로' },
-    { fromId: 'lone_beacon', toId: 'volcano_isle', name: '북해 화산항로' }
+    { fromId: 'pirate_cove', toId: 'mirage_oasis', name: '미라주 오아시스 횡단항로' },
+    { fromId: 'bluewave', toId: 'st_mare', name: '북방 빙해항로' },
+    { fromId: 'st_mare', toId: 'lone_beacon', name: '노스펠름 해협항로' },
+    { fromId: 'bluewave', toId: 'atlantis_ruins', name: '아틀란티스 심해항로' },
+    { fromId: 'atlantis_ruins', toId: 'volcano_isle', name: '화산군도 흑요석항로' },
+    { fromId: 'atlantis_ruins', toId: 'siren_coral', name: '세이렌 산호환초항로' },
+    { fromId: 'siren_coral', toId: 'mirage_oasis', name: '남서 대양쾌속항로' },
+    { fromId: 'atlantis_ruins', toId: 'sunken_shipwreck', name: '난파선 해구항로' },
+    { fromId: 'sunken_shipwreck', toId: 'dragon_ruins', name: '용의 계곡 유적항로' }
   ];
 
   // 6. 건물 & 랜드마크 생성
@@ -926,20 +1018,19 @@ function generateWorld() {
     }
   }
 
-  // 솔라리스 왕도 건물들
+  // [중앙 대륙 건물들]
   const capital = settlementMap.solaris;
-  addBuilding({ id: 'sol_palace', settlementId: 'solaris', name: '아테리아 왕궁', type: 'palace', x: capital.x, y: capital.y - 4, w: 7, h: 5, color: '#fef08a', roofColor: '#b45309', icon: '👑' });
+  addBuilding({ id: 'sol_palace', settlementId: 'solaris', name: '아테리아 제국 황궁', type: 'palace', x: capital.x, y: capital.y - 4, w: 7, h: 5, color: '#fef08a', roofColor: '#b45309', icon: '👑' });
   addBuilding({ id: 'sol_cathedral', settlementId: 'solaris', name: '빛의 대성당', type: 'temple', x: capital.x - 7, y: capital.y - 1, w: 5, h: 4, color: '#93c5fd', roofColor: '#1d4ed8', icon: '⛪' });
-  addBuilding({ id: 'sol_market', settlementId: 'solaris', name: '왕도 중앙 대시장', type: 'market', x: capital.x + 6, y: capital.y + 1, w: 6, h: 4, color: '#fed7aa', roofColor: '#ea580c', icon: '⚖️' });
-  addBuilding({ id: 'sol_barracks', settlementId: 'solaris', name: '왕립 근위대 병영', type: 'barracks', x: capital.x - 6, y: capital.y + 6, w: 5, h: 4, color: '#cbd5e1', roofColor: '#334155', icon: '🛡️' });
+  addBuilding({ id: 'sol_market', settlementId: 'solaris', name: '제국 중앙 대시장', type: 'market', x: capital.x + 6, y: capital.y + 1, w: 6, h: 4, color: '#fed7aa', roofColor: '#ea580c', icon: '⚖️' });
+  addBuilding({ id: 'sol_barracks', settlementId: 'solaris', name: '황실 근위대 병영', type: 'barracks', x: capital.x - 6, y: capital.y + 6, w: 5, h: 4, color: '#cbd5e1', roofColor: '#334155', icon: '🛡️' });
   addBuilding({ id: 'sol_tavern', settlementId: 'solaris', name: '황금 사자 주점 & 여관', type: 'tavern', x: capital.x + 5, y: capital.y + 7, w: 4, h: 3, color: '#fde68a', roofColor: '#b45309', icon: '🍺' });
 
-  // 황금밀 대농장
   const farm = settlementMap.goldenwheat;
   addBuilding({ id: 'gw_mill', settlementId: 'goldenwheat', name: '황금 풍차 방앗간', type: 'windmill', x: farm.x - 4, y: farm.y - 3, w: 4, h: 4, color: '#fef08a', roofColor: '#b45309', icon: '💨' });
   addBuilding({ id: 'gw_granary', settlementId: 'goldenwheat', name: '곡물 저장소 & 농업 조합', type: 'market', x: farm.x + 4, y: farm.y + 2, w: 5, h: 3, color: '#fed7aa', roofColor: '#ea580c', icon: '🌾' });
 
-  // 농작물 패치 생성
+  // 농경지 패치
   const farmPlots = [];
   for (let dy = -10; dy <= 10; dy++) {
     for (let dx = -12; dx <= 12; dx++) {
@@ -953,26 +1044,13 @@ function generateWorld() {
     }
   }
 
-  // 윈드밀 방앗간 계곡 농경지
   const wValley = settlementMap.windmill_valley;
   addBuilding({ id: 'wv_mill', settlementId: 'windmill_valley', name: '윈드밀 수차 방앗간', type: 'windmill', x: wValley.x, y: wValley.y - 2, w: 4, h: 4, color: '#fef08a', roofColor: '#b45309', icon: '💨' });
-  for (let dy = -6; dy <= 6; dy++) {
-    for (let dx = -7; dx <= 7; dx++) {
-      const fx = wValley.x + dx;
-      const fy = wValley.y + dy;
-      if (inBounds(fx, fy) && Math.hypot(dx, dy) < 6.5 && (dx !== 0 || dy !== 0)) {
-        tiles[idx(fx, fy)] = TILE.FARMLAND;
-        deco[idx(fx, fy)] = 0;
-        farmPlots.push({ x: fx, y: fy, growth: 40 + Math.random() * 60, cropType: '향신료' });
-      }
-    }
-  }
 
-  // 푸른파도 대항구
   const port = settlementMap.bluewave;
-  addBuilding({ id: 'bw_shipyard', settlementId: 'bluewave', name: '왕립 조선소 & 등대', type: 'shipyard', x: port.x - 4, y: port.y - 3, w: 5, h: 4, color: '#93c5fd', roofColor: '#1d4ed8', icon: '⚓' });
+  addBuilding({ id: 'bw_shipyard', settlementId: 'bluewave', name: '제국 해군 조선소', type: 'shipyard', x: port.x - 4, y: port.y - 3, w: 5, h: 4, color: '#93c5fd', roofColor: '#1d4ed8', icon: '⚓' });
   addBuilding({ id: 'bw_market', settlementId: 'bluewave', name: '해상무역 어시장', type: 'market', x: port.x + 3, y: port.y + 3, w: 5, h: 3, color: '#fed7aa', roofColor: '#ea580c', icon: '🐟' });
-  addBuilding({ id: 'bw_navy', settlementId: 'bluewave', name: '왕립 해군 제독부', type: 'barracks', x: port.x + 3, y: port.y - 6, w: 4, h: 3, color: '#60a5fa', roofColor: '#1e3a8a', icon: '🚢' });
+  addBuilding({ id: 'bw_navy', settlementId: 'bluewave', name: '제국 해군 제독부', type: 'barracks', x: port.x + 3, y: port.y - 6, w: 4, h: 3, color: '#60a5fa', roofColor: '#1e3a8a', icon: '🚢' });
 
   // 부두 타일 & 낚시터
   const fishingSpots = [];
@@ -990,53 +1068,6 @@ function generateWorld() {
     }
   }
 
-  // 세인트 마레 어촌 부두 & 낚시터
-  const stMare = settlementMap.st_mare;
-  addBuilding({ id: 'sm_fishhouse', settlementId: 'st_mare', name: '세인트 마레 어선 조합', type: 'market', x: stMare.x, y: stMare.y - 2, w: 4, h: 3, color: '#38bdf8', roofColor: '#0369a1', icon: '🎣' });
-  for (let dy = -4; dy <= 4; dy += 2) {
-    for (let dx = -10; dx <= -6; dx++) {
-      const tx = stMare.x + dx;
-      const ty = stMare.y + dy;
-      if (inBounds(tx, ty)) {
-        tiles[idx(tx, ty)] = TILE.DOCK;
-        deco[idx(tx, ty)] = 0;
-        if (dx === -10) {
-          fishingSpots.push({ x: tx, y: ty, waterX: tx - 2, waterY: ty, settlementId: 'st_mare', isBoat: true });
-        }
-      }
-    }
-  }
-
-  // 엘븐하임 성소 건물들
-  const elvenTown = settlementMap.elvenheim;
-  addBuilding({ id: 'elv_tree', settlementId: 'elvenheim', name: '세계수 이그드라실 성소', type: 'palace', x: elvenTown.x, y: elvenTown.y - 3, w: 6, h: 5, color: '#2dd4bf', roofColor: '#0f766e', icon: '🌸' });
-  addBuilding({ id: 'elv_spire', settlementId: 'elvenheim', name: '별빛 아카나 마법학탑', type: 'guild', x: elvenTown.x - 6, y: elvenTown.y + 2, w: 4, h: 4, color: '#c084fc', roofColor: '#6b21a8', icon: '🔮' });
-  addBuilding({ id: 'elv_market', settlementId: 'elvenheim', name: '엘프 영약·보석 교역소', type: 'market', x: elvenTown.x + 6, y: elvenTown.y + 2, w: 4, h: 3, color: '#34d399', roofColor: '#065f46', icon: '💎' });
-
-  // 달빛 요정 정원
-  const fairyGlade = settlementMap.fairy_glade;
-  addBuilding({ id: 'fairy_shrine', settlementId: 'fairy_glade', name: '달빛 요정의 제단', type: 'temple', x: fairyGlade.x, y: fairyGlade.y, w: 4, h: 4, color: '#c084fc', roofColor: '#7e22ce', icon: '🌙' });
-
-  // 미라주 오아시스 건물들
-  const desertTown = settlementMap.mirage_oasis;
-  addBuilding({ id: 'mir_palace', settlementId: 'mirage_oasis', name: '황금 술탄의 신기루 궁전', type: 'palace', x: desertTown.x, y: desertTown.y - 5, w: 6, h: 5, color: '#facc15', roofColor: '#b45309', icon: '🕌' });
-  addBuilding({ id: 'mir_bazaar', settlementId: 'mirage_oasis', name: '미라주 대바자르 (향신료·유물 시장)', type: 'market', x: desertTown.x + 6, y: desertTown.y + 2, w: 5, h: 4, color: '#f97316', roofColor: '#9a3412', icon: '🌶️' });
-
-  // 스핑크스 피라미드 & 베두인 캠프
-  const sphinx = settlementMap.sphinx_pyramid;
-  addBuilding({ id: 'sph_pyramid', settlementId: 'sphinx_pyramid', name: '고대 태양왕의 대피라미드', type: 'temple', x: sphinx.x, y: sphinx.y, w: 7, h: 6, color: '#eab308', roofColor: '#713f12', icon: '🏛️' });
-  const bedouin = settlementMap.bedouin_camp;
-  addBuilding({ id: 'bed_bazaar', settlementId: 'bedouin_camp', name: '베두인 전갈 오아시스 천막', type: 'market', x: bedouin.x, y: bedouin.y, w: 4, h: 4, color: '#fb923c', roofColor: '#9a3412', icon: '🎪' });
-
-  // 천공의 용의 둥지
-  const dragonNest = settlementMap.dragon_eyrie;
-  addBuilding({ id: 'drag_shrine', settlementId: 'dragon_eyrie', name: '천공의 고대 드래곤 제단', type: 'lair', x: dragonNest.x, y: dragonNest.y, w: 6, h: 5, color: '#a855f7', roofColor: '#4c1d95', icon: '🐉' });
-
-  // 실버리프 호수 산장
-  const lakeTown = settlementMap.silverleaf;
-  addBuilding({ id: 'sl_lodge', settlementId: 'silverleaf', name: '실버리프 호수 산장 & 교역소', type: 'market', x: lakeTown.x, y: lakeTown.y, w: 4, h: 3, color: '#34d399', roofColor: '#065f46', icon: '🌲' });
-
-  // 아이언포지 드워프 광산성채
   const mineTown = settlementMap.ironforge;
   addBuilding({ id: 'if_forge', settlementId: 'ironforge', name: '드워프 대용광로 & 대장간', type: 'forge', x: mineTown.x, y: mineTown.y - 2, w: 5, h: 4, color: '#f97316', roofColor: '#7c2d12', icon: '⚒️' });
   addBuilding({ id: 'if_market', settlementId: 'ironforge', name: '광물·무기 교역소', type: 'market', x: mineTown.x - 5, y: mineTown.y + 3, w: 4, h: 3, color: '#94a3b8', roofColor: '#334155', icon: '⛏️' });
@@ -1056,9 +1087,8 @@ function generateWorld() {
     }
   }
 
-  // 발로르 요새 & 오크우드 & 크리스탈폴 & 발키리 관문
   const fort = settlementMap.valor_fort;
-  addBuilding({ id: 'vf_keep', settlementId: 'valor_fort', name: '발로르 변경 사령부', type: 'barracks', x: fort.x, y: fort.y - 3, w: 5, h: 4, color: '#60a5fa', roofColor: '#1e3a8a', icon: '🛡️' });
+  addBuilding({ id: 'vf_keep', settlementId: 'valor_fort', name: '발로르 사령부', type: 'barracks', x: fort.x, y: fort.y - 3, w: 5, h: 4, color: '#60a5fa', roofColor: '#1e3a8a', icon: '🛡️' });
   addBuilding({ id: 'vf_merc', settlementId: 'valor_fort', name: '붉은매 용병단 & 모험가 길드', type: 'guild', x: fort.x - 5, y: fort.y + 3, w: 4, h: 3, color: '#f43f5e', roofColor: '#881337', icon: '⚔️' });
 
   const oakwood = settlementMap.oakwood;
@@ -1067,78 +1097,143 @@ function generateWorld() {
   const cFalls = settlementMap.crystal_falls;
   addBuilding({ id: 'cf_spire', settlementId: 'crystal_falls', name: '크리스탈폴 비전 학탑', type: 'guild', x: cFalls.x, y: cFalls.y, w: 4, h: 5, color: '#c084fc', roofColor: '#581c87', icon: '🔮' });
 
-  const vGate = settlementMap.valkyrie_gate;
-  addBuilding({ id: 'vg_bastion', settlementId: 'valkyrie_gate', name: '발키리 협곡 철벽 관문', type: 'barracks', x: vGate.x, y: vGate.y, w: 5, h: 4, color: '#94a3b8', roofColor: '#1e293b', icon: '🏰' });
+  const lakeTown = settlementMap.silverleaf;
+  addBuilding({ id: 'sl_lodge', settlementId: 'silverleaf', name: '실버리프 호수 산장 & 교역소', type: 'market', x: lakeTown.x, y: lakeTown.y, w: 4, h: 3, color: '#34d399', roofColor: '#065f46', icon: '🌲' });
 
-  // 해양 및 위험지대 건물들
-  const pirate = settlementMap.pirate_cove;
-  addBuilding({ id: 'pir_fort', settlementId: 'pirate_cove', name: '블랙비어드 대해적 성채', type: 'lair', x: pirate.x, y: pirate.y, w: 5, h: 4, color: '#334155', roofColor: '#0f172a', icon: '🏴‍☠️' });
+  // [서부 신대륙 건물들]
+  const elvenTown = settlementMap.elvenheim;
+  addBuilding({ id: 'elv_tree', settlementId: 'elvenheim', name: '세계수 이그드라실 성소', type: 'palace', x: elvenTown.x, y: elvenTown.y - 3, w: 6, h: 5, color: '#2dd4bf', roofColor: '#0f766e', icon: '🌸' });
+  addBuilding({ id: 'elv_spire', settlementId: 'elvenheim', name: '별빛 아카나 마법학탑', type: 'guild', x: elvenTown.x - 6, y: elvenTown.y + 2, w: 4, h: 4, color: '#c084fc', roofColor: '#6b21a8', icon: '🔮' });
+  addBuilding({ id: 'elv_market', settlementId: 'elvenheim', name: '엘프 영약·보석 교역소', type: 'market', x: elvenTown.x + 6, y: elvenTown.y + 2, w: 4, h: 3, color: '#34d399', roofColor: '#065f46', icon: '💎' });
 
-  const volcano = settlementMap.volcano_isle;
-  addBuilding({ id: 'vol_altar', settlementId: 'volcano_isle', name: '심해 크라켄 & 화산 제단', type: 'lair', x: volcano.x, y: volcano.y + 3, w: 5, h: 4, color: '#dc2626', roofColor: '#450a0a', icon: '🌋' });
+  const fairyGlade = settlementMap.fairy_glade;
+  addBuilding({ id: 'fairy_shrine', settlementId: 'fairy_glade', name: '달빛 요정의 제단', type: 'temple', x: fairyGlade.x, y: fairyGlade.y, w: 4, h: 4, color: '#c084fc', roofColor: '#7e22ce', icon: '🌙' });
 
-  const beacon = settlementMap.lone_beacon;
-  addBuilding({ id: 'lb_tower', settlementId: 'lone_beacon', name: '외로운 회전 등대', type: 'shipyard', x: beacon.x, y: beacon.y, w: 4, h: 5, color: '#fef08a', roofColor: '#1e3a8a', icon: '🗼' });
+  const desertTown = settlementMap.mirage_oasis;
+  addBuilding({ id: 'mir_palace', settlementId: 'mirage_oasis', name: '황금 술탄의 신기루 궁전', type: 'palace', x: desertTown.x, y: desertTown.y - 5, w: 6, h: 5, color: '#facc15', roofColor: '#b45309', icon: '🕌' });
+  addBuilding({ id: 'mir_bazaar', settlementId: 'mirage_oasis', name: '미라주 대바자르', type: 'market', x: desertTown.x + 6, y: desertTown.y + 2, w: 5, h: 4, color: '#f97316', roofColor: '#9a3412', icon: '🌶️' });
 
-  const siren = settlementMap.siren_coral;
-  addBuilding({ id: 'sr_temple', settlementId: 'siren_coral', name: '세이렌 진주 산호 신전', type: 'temple', x: siren.x, y: siren.y, w: 4, h: 4, color: '#38bdf8', roofColor: '#0369a1', icon: '🧜‍♀️' });
+  const sphinx = settlementMap.sphinx_pyramid;
+  addBuilding({ id: 'sph_pyramid', settlementId: 'sphinx_pyramid', name: '고대 태양왕의 대피라미드', type: 'temple', x: sphinx.x, y: sphinx.y, w: 7, h: 6, color: '#eab308', roofColor: '#713f12', icon: '🏛️' });
 
-  const orc = settlementMap.orc_stronghold;
-  addBuilding({ id: 'orc_keep', settlementId: 'orc_stronghold', name: '오크 대족장의 피의 요새', type: 'lair', x: orc.x, y: orc.y, w: 5, h: 4, color: '#b91c1c', roofColor: '#3f1d1d', icon: '👹' });
+  const bedouin = settlementMap.bedouin_camp;
+  addBuilding({ id: 'bed_bazaar', settlementId: 'bedouin_camp', name: '베두인 전갈 오아시스 천막', type: 'market', x: bedouin.x, y: bedouin.y, w: 4, h: 4, color: '#fb923c', roofColor: '#9a3412', icon: '🎪' });
+
+  const dragonNest = settlementMap.dragon_eyrie;
+  addBuilding({ id: 'drag_shrine', settlementId: 'dragon_eyrie', name: '천공의 고대 드래곤 제단', type: 'lair', x: dragonNest.x, y: dragonNest.y, w: 6, h: 5, color: '#a855f7', roofColor: '#4c1d95', icon: '🐉' });
+
+  const celHaven = settlementMap.celestial_haven;
+  addBuilding({ id: 'ch_spire', settlementId: 'celestial_haven', name: '천공 비행 룬 탑', type: 'guild', x: celHaven.x, y: celHaven.y, w: 5, h: 5, color: '#c084fc', roofColor: '#6b21a8', icon: '☁️' });
 
   const gob = settlementMap.goblin_camp;
   addBuilding({ id: 'gob_camp', settlementId: 'goblin_camp', name: '고블린 도적 야영지', type: 'lair', x: gob.x, y: gob.y, w: 4, h: 3, color: '#dc2626', roofColor: '#450a0a', icon: '👺' });
 
+  // [북부 노스펠름 건물들]
+  const frostCit = settlementMap.frost_citadel;
+  addBuilding({ id: 'fc_keep', settlementId: 'frost_citadel', name: '서리 거인 얼음 요새', type: 'lair', x: frostCit.x, y: frostCit.y, w: 6, h: 5, color: '#e0f2fe', roofColor: '#38bdf8', icon: '❄️' });
+
+  const stMare = settlementMap.st_mare;
+  addBuilding({ id: 'sm_fishhouse', settlementId: 'st_mare', name: '세인트 마레 어선 조합', type: 'market', x: stMare.x, y: stMare.y - 2, w: 4, h: 3, color: '#38bdf8', roofColor: '#0369a1', icon: '🎣' });
+
+  const vGate = settlementMap.valkyrie_gate;
+  addBuilding({ id: 'vg_bastion', settlementId: 'valkyrie_gate', name: '발키리 협곡 철벽 관문', type: 'barracks', x: vGate.x, y: vGate.y, w: 5, h: 4, color: '#94a3b8', roofColor: '#1e293b', icon: '🏰' });
+
+  const orc = settlementMap.orc_stronghold;
+  addBuilding({ id: 'orc_keep', settlementId: 'orc_stronghold', name: '오크 대족장의 피의 요새', type: 'lair', x: orc.x, y: orc.y, w: 5, h: 4, color: '#b91c1c', roofColor: '#3f1d1d', icon: '👹' });
+
+  // [남부 드라코니아 건물들]
+  const volcano = settlementMap.volcano_isle;
+  addBuilding({ id: 'vol_altar', settlementId: 'volcano_isle', name: '심해 크라켄 & 화산 제단', type: 'lair', x: volcano.x, y: volcano.y + 3, w: 5, h: 4, color: '#dc2626', roofColor: '#450a0a', icon: '🌋' });
+
+  const dragonGrave = settlementMap.dragon_graveyard;
+  addBuilding({ id: 'dg_altar', settlementId: 'dragon_graveyard', name: '용골 흑마법 제단', type: 'lair', x: dragonGrave.x, y: dragonGrave.y, w: 5, h: 4, color: '#78350f', roofColor: '#451a03', icon: '🦴' });
+
+  const magmaForge = settlementMap.magma_underforge;
+  addBuilding({ id: 'mu_foundry', settlementId: 'magma_underforge', name: '심연 마그마 대주조소', type: 'forge', x: magmaForge.x, y: magmaForge.y, w: 5, h: 4, color: '#dc2626', roofColor: '#7f1d1d', icon: '🔥' });
+
+  const siren = settlementMap.siren_coral;
+  addBuilding({ id: 'sr_temple', settlementId: 'siren_coral', name: '세이렌 진주 산호 신전', type: 'temple', x: siren.x, y: siren.y, w: 4, h: 4, color: '#38bdf8', roofColor: '#0369a1', icon: '🧜‍♀️' });
+
+  // [동부 신비 & 네크로폴리스 건물들]
   const necro = settlementMap.obsidian_necropolis;
   addBuilding({ id: 'nec_tomb', settlementId: 'obsidian_necropolis', name: '강령술 리치 군주의 영묘', type: 'lair', x: necro.x, y: necro.y, w: 5, h: 4, color: '#475569', roofColor: '#0f172a', icon: '💀' });
 
-  // 5대 신규 신화 유적 건물
+  const whisWood = settlementMap.whispering_woods;
+  addBuilding({ id: 'ww_lodge', settlementId: 'whispering_woods', name: '속삭이는 숲 마법 산장', type: 'market', x: whisWood.x, y: whisWood.y, w: 4, h: 3, color: '#10b981', roofColor: '#064e3b', icon: '🌲' });
+
+  const crystalCav = settlementMap.crystal_caverns;
+  addBuilding({ id: 'cc_shrine', settlementId: 'crystal_caverns', name: '수정 동굴 비전 성소', type: 'guild', x: crystalCav.x, y: crystalCav.y, w: 5, h: 4, color: '#c084fc', roofColor: '#581c87', icon: '💎' });
+
+  const dragRuins = settlementMap.dragon_ruins;
+  addBuilding({ id: 'dr_temple', settlementId: 'dragon_ruins', name: '용의 계곡 고대 신전', type: 'lair', x: dragRuins.x, y: dragRuins.y, w: 6, h: 5, color: '#f59e0b', roofColor: '#78350f', icon: '🏛️' });
+
+  const shipwreck = settlementMap.sunken_shipwreck;
+  addBuilding({ id: 'ss_wreck', settlementId: 'sunken_shipwreck', name: '전설의 해적선 갈레온 침몰 잔해', type: 'shipyard', x: shipwreck.x, y: shipwreck.y, w: 5, h: 4, color: '#78350f', roofColor: '#1c1917', icon: '⛵' });
+
+  // [해협 관문 & 성역 건물들]
+  const beacon = settlementMap.lone_beacon;
+  addBuilding({ id: 'lb_tower', settlementId: 'lone_beacon', name: '외로운 회전 등대', type: 'shipyard', x: beacon.x, y: beacon.y, w: 4, h: 5, color: '#fef08a', roofColor: '#1e3a8a', icon: '🗼' });
+
+  const pirate = settlementMap.pirate_cove;
+  addBuilding({ id: 'pir_fort', settlementId: 'pirate_cove', name: '블랙비어드 대해적 성채', type: 'lair', x: pirate.x, y: pirate.y, w: 5, h: 4, color: '#334155', roofColor: '#0f172a', icon: '🏴‍☠️' });
+
   const atlantis = settlementMap.atlantis_ruins;
-  if (atlantis) addBuilding({ id: 'atl_temple', settlementId: 'atlantis_ruins', name: '아틀란티스 해저 신전', type: 'temple', x: atlantis.x, y: atlantis.y, w: 6, h: 5, color: '#0284c7', roofColor: '#075985', icon: '🔱' });
+  addBuilding({ id: 'atl_temple', settlementId: 'atlantis_ruins', name: '아틀란티스 해저 신전', type: 'temple', x: atlantis.x, y: atlantis.y, w: 6, h: 5, color: '#0284c7', roofColor: '#075985', icon: '🔱' });
 
-  const frostCit = settlementMap.frost_citadel;
-  if (frostCit) addBuilding({ id: 'fc_keep', settlementId: 'frost_citadel', name: '서리 거인 얼음 요새', type: 'lair', x: frostCit.x, y: frostCit.y, w: 6, h: 5, color: '#e0f2fe', roofColor: '#38bdf8', icon: '❄️' });
-
-  const dragonGrave = settlementMap.dragon_graveyard;
-  if (dragonGrave) addBuilding({ id: 'dg_altar', settlementId: 'dragon_graveyard', name: '용골 흑마법 제단', type: 'lair', x: dragonGrave.x, y: dragonGrave.y, w: 5, h: 4, color: '#78350f', roofColor: '#451a03', icon: '🦴' });
-
-  const celHaven = settlementMap.celestial_haven;
-  if (celHaven) addBuilding({ id: 'ch_spire', settlementId: 'celestial_haven', name: '천공 비행 룬 탑', type: 'guild', x: celHaven.x, y: celHaven.y, w: 5, h: 5, color: '#c084fc', roofColor: '#6b21a8', icon: '☁️' });
-
-  const magmaForge = settlementMap.magma_underforge;
-  if (magmaForge) addBuilding({ id: 'mu_foundry', settlementId: 'magma_underforge', name: '심연 마그마 대주조소', type: 'forge', x: magmaForge.x, y: magmaForge.y, w: 5, h: 4, color: '#dc2626', roofColor: '#7f1d1d', icon: '🔥' });
-
-  // 🐾 채집 & 채광 자원 노드 (Resource Nodes)
+  // 7. 5대 대륙 자원 노드 (채집 & 채광 & 발굴 140+ 개소)
   const resourceNodes = [];
-  // 1. 미스릴 & 황금 광맥 (28개소)
-  for (let i = 0; i < 28; i++) {
-    const angle = (i / 28) * Math.PI * 2;
-    const rx = Math.round(MAINLAND_OFFSET_X + 155 + Math.cos(angle) * (15 + (i % 6) * 12));
-    const ry = Math.round(65 + Math.sin(angle) * (15 + (i % 6) * 10));
-    if (inBounds(rx, ry) && tiles[idx(rx, ry)] !== TILE.DEEP_WATER && tiles[idx(rx, ry)] !== TILE.WATER) {
-      resourceNodes.push({ id: 'res_mine_' + i, type: 'mine', x: rx, y: ry, name: i % 2 === 0 ? '⛏️ 미스릴 광맥' : '⛏️ 황금 광맥', resource: i % 2 === 0 ? 'ore' : 'gold', amount: 5, maxAmount: 5, respawn: 0 });
-    }
-  }
-  // 2. 고대 벌목 참나무 (32개소)
-  for (let i = 0; i < 32; i++) {
-    const rx = Math.round(MAINLAND_OFFSET_X + 160 + (Math.sin(i * 1.7) * 45));
-    const ry = Math.round(210 + (Math.cos(i * 1.3) * 35));
-    if (inBounds(rx, ry) && (tiles[idx(rx, ry)] === TILE.FOREST || tiles[idx(rx, ry)] === TILE.MEADOW || tiles[idx(rx, ry)] === TILE.GRASS || tiles[idx(rx, ry)] === TILE.AUTUMN_WOOD)) {
-      resourceNodes.push({ id: 'res_tree_' + i, type: 'tree', x: rx, y: ry, name: '🌲 고대 참나무', resource: 'wood', amount: 5, maxAmount: 5, respawn: 0 });
-    }
-  }
-  // 3. 세계수 영약초 (26개소)
-  for (let i = 0; i < 26; i++) {
-    const rx = Math.round(65 + (Math.sin(i * 2.1) * 25));
-    const ry = Math.round(75 + (Math.cos(i * 1.9) * 25));
-    if (inBounds(rx, ry) && tiles[idx(rx, ry)] !== TILE.DEEP_WATER && tiles[idx(rx, ry)] !== TILE.WATER) {
-      resourceNodes.push({ id: 'res_herb_' + i, type: 'herb', x: rx, y: ry, name: '🌿 세계수 영약초', resource: 'herbs', amount: 5, maxAmount: 5, respawn: 0 });
-    }
-  }
-  // 4. 심해 진주 조개 (22개소)
+  // (1) 중앙 대륙: 미스릴 & 황금 광맥 (22개소)
   for (let i = 0; i < 22; i++) {
-    const rx = Math.round(140 + (Math.sin(i * 1.4) * 22));
-    const ry = Math.round(255 + (Math.cos(i * 1.4) * 22));
+    const rx = Math.round(245 + Math.cos(i * 1.5) * (8 + (i % 5) * 6));
+    const ry = Math.round(125 + Math.sin(i * 1.5) * (8 + (i % 5) * 5));
+    if (inBounds(rx, ry) && tiles[idx(rx, ry)] !== TILE.DEEP_WATER && tiles[idx(rx, ry)] !== TILE.WATER) {
+      resourceNodes.push({ id: 'res_mine_c_' + i, type: 'mine', x: rx, y: ry, name: i % 2 === 0 ? '⛏️ 미스릴 광맥' : '⛏️ 황금 광맥', resource: i % 2 === 0 ? 'ore' : 'gold', amount: 5, maxAmount: 5, respawn: 0 });
+    }
+  }
+  // (2) 중앙 대륙: 고대 벌목 참나무 (24개소)
+  for (let i = 0; i < 24; i++) {
+    const rx = Math.round(270 + Math.sin(i * 1.7) * 25);
+    const ry = Math.round(185 + Math.cos(i * 1.3) * 20);
+    if (inBounds(rx, ry) && (tiles[idx(rx, ry)] === TILE.FOREST || tiles[idx(rx, ry)] === TILE.MEADOW || tiles[idx(rx, ry)] === TILE.GRASS)) {
+      resourceNodes.push({ id: 'res_tree_c_' + i, type: 'tree', x: rx, y: ry, name: '🌲 고대 참나무', resource: 'wood', amount: 5, maxAmount: 5, respawn: 0 });
+    }
+  }
+  // (3) 서부 신대륙: 세계수 영약초 (26개소)
+  for (let i = 0; i < 26; i++) {
+    const rx = Math.round(75 + Math.sin(i * 2.1) * 22);
+    const ry = Math.round(80 + Math.cos(i * 1.9) * 22);
+    if (inBounds(rx, ry) && tiles[idx(rx, ry)] !== TILE.DEEP_WATER && tiles[idx(rx, ry)] !== TILE.WATER) {
+      resourceNodes.push({ id: 'res_herb_w_' + i, type: 'herb', x: rx, y: ry, name: '🌿 세계수 영약초', resource: 'herbs', amount: 5, maxAmount: 5, respawn: 0 });
+    }
+  }
+  // (4) 서부 신대륙: 사막 황금 향신료 선인장 (20개소)
+  for (let i = 0; i < 20; i++) {
+    const rx = Math.round(72 + Math.sin(i * 1.8) * 24);
+    const ry = Math.round(230 + Math.cos(i * 1.6) * 20);
+    if (inBounds(rx, ry) && tiles[idx(rx, ry)] === TILE.DESERT) {
+      resourceNodes.push({ id: 'res_spice_w_' + i, type: 'spice', x: rx, y: ry, name: '🌵 황금 사막 선인장', resource: 'spices', amount: 5, maxAmount: 5, respawn: 0 });
+    }
+  }
+  // (5) 북부 노스펠름: 영구동토 빙정석 (18개소)
+  for (let i = 0; i < 18; i++) {
+    const rx = Math.round(240 + Math.sin(i * 1.9) * 30);
+    const ry = Math.round(35 + Math.cos(i * 1.5) * 12);
+    if (inBounds(rx, ry) && (tiles[idx(rx, ry)] === TILE.SNOW || tiles[idx(rx, ry)] === TILE.MOUNTAIN)) {
+      resourceNodes.push({ id: 'res_ice_n_' + i, type: 'mine', x: rx, y: ry, name: '❄️ 영구동토 빙정석', resource: 'gems', amount: 5, maxAmount: 5, respawn: 0 });
+    }
+  }
+  // (6) 남부 드라코니아: 심연 흑요석 광맥 (18개소)
+  for (let i = 0; i < 18; i++) {
+    const rx = Math.round(305 + Math.sin(i * 1.9) * 20);
+    const ry = Math.round(275 + Math.cos(i * 1.7) * 12);
+    if (inBounds(rx, ry) && tiles[idx(rx, ry)] !== TILE.DEEP_WATER && tiles[idx(rx, ry)] !== TILE.WATER) {
+      resourceNodes.push({ id: 'res_obs_s_' + i, type: 'mine', x: rx, y: ry, name: '🔥 심연 흑요석 광맥', resource: 'ore', amount: 5, maxAmount: 5, respawn: 0 });
+    }
+  }
+  // (7) 남서 산호환초 & 심해 진주 조개 (22개소)
+  for (let i = 0; i < 22; i++) {
+    const rx = Math.round(140 + Math.sin(i * 1.4) * 22);
+    const ry = Math.round(255 + Math.cos(i * 1.4) * 22);
     if (inBounds(rx, ry) && (tiles[idx(rx, ry)] === TILE.WATER || tiles[idx(rx, ry)] === TILE.SAND || tiles[idx(rx, ry)] === TILE.CORAL)) {
       resourceNodes.push({ id: 'res_clam_' + i, type: 'clam', x: rx, y: ry, name: '🦪 심해 진주조개', resource: 'gems', amount: 5, maxAmount: 5, respawn: 0 });
     }
@@ -1175,6 +1270,7 @@ function generateWorld() {
 }
 
 window.WORLD_WIDTH = WORLD_WIDTH;
+// 하위 호환
 window.WORLD_HEIGHT = WORLD_HEIGHT;
 window.WORLD_SIZE = WORLD_WIDTH;
 window.TILE_SIZE = TILE_SIZE;
