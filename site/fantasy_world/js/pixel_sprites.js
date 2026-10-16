@@ -1,15 +1,16 @@
 // ============================================================================
-// pixel_sprites.js - Tiny RPG 스타일 정밀 픽셀 아트 매트릭스 엔진
-// 16x16 & 24x24 순수 도트 매트릭스 + 4단계 명암 팔레트 + 오프스크린 캔버스 캐싱
+// pixel_sprites.js - High-Resolution RPG Pixel Art Engine (32x32 & 24x24)
+// Multi-Tier Shaded Pixel Art for Heroes, NPC Professions, Monsters, Animals, Bosses
+// Offscreen Canvas Caching, Left/Right Flip, Animated Status Balloons, Combat FX
 // ============================================================================
 
 (function(window) {
   'use strict';
 
-  // 1. 공통 4단계 명암 마스터 팔레트
+  // 1. 공통 6단계 명암 마스터 팔레트 (Master 6-Tier Color Palette)
   const PALETTE = {
-    '.': null,                     // 투명
-    '#': '#0f172a',                // 외곽선 1px 다크 콘투어 (Dark Slate)
+    '.': null,                     // 투명 (Transparent)
+    '#': '#0b0f19',                // 외곽선 1px 다크 콘투어 (Dark Slate Contour)
     'k': '#1e293b',                // 심연 암영 (Deep Shadow)
     's': '#475569',                // 강철/의복 그림자 (Dark Steel/Slate)
     'm': '#94a3b8',                // 강철/무기 기본 (Mid Steel)
@@ -18,74 +19,334 @@
     'f': '#fed7aa',                // 피부 기본 (Flesh Tone)
     'F': '#ea580c',                // 피부 음영 (Flesh Shadow)
     'd': '#9a3412',                // 짙은 피부 그림자 / 적갈색 (Deep Auburn)
-    'r': '#dc2626',                // 루비 / 붉은 깃털 / 망토 (Ruby Red)
-    'R': '#ef4444',                // 밝은 주홍 / 안광 (Bright Red)
-    'g': '#ca8a04',                // 황금 음영 (Gold Shadow)
-    'G': '#facc15',                // 황금빛 (Bright Gold)
-    'y': '#fef08a',                // 연노랑 하이라이트 (Pale Gold Shine)
-    'b': '#1d4ed8',                // 로열 블루 갑주/로브 (Royal Blue)
-    'B': '#3b82f6',                // 하늘빛 블루 (Sky Blue)
+    'r': '#991b1b',                // 진홍색 / 망토 음영 (Dark Crimson)
+    'R': '#dc2626',                // 루비 / 붉은 깃털 / 망토 (Ruby Red)
+    'e': '#ef4444',                // 밝은 주홍 / 안광 (Bright Red)
+    'g': '#854d0e',                // 황금 짙은 그림자 (Deep Gold Shadow)
+    'G': '#ca8a04',                // 황금 음영 (Gold Shadow)
+    'y': '#facc15',                // 황금빛 (Bright Gold)
+    'Y': '#fef08a',                // 연노랑 하이라이트 (Pale Gold Shine)
+    'b': '#1e3a8a',                // 로열 블루 암영 (Navy Blue)
+    'B': '#2563eb',                // 로열 블루 갑주/로브 (Royal Blue)
+    'u': '#3b82f6',                // 밝은 블루 하이라이트 (Sky Blue)
     'c': '#0284c7',                // 비전 청록 / 마법 (Arcane Cyan)
     'C': '#38bdf8',                // 발광 청록 (Glow Cyan)
-    'p': '#7e22ce',                // 심연 보라 / 흑마법 (Purple)
-    'P': '#c084fc',                // 비전 수정 보라 (Amethyst)
-    'e': '#15803d',                // 숲/고블린 녹색 음영 (Forest Green)
-    'E': '#22c55e',                // 생기있는 녹색 / 고블린 피부 (Emerald Green)
-    'L': '#86efac',                // 라임 하이라이트 / 슬라임 광택 (Lime Glow)
-    'o': '#78350f',                // 가죽 갈색 (Leather Brown)
-    'O': '#b45309',                // 밝은 목재 / 모래빛 (Light Wood)
-    'x': '#451a03',                // 짙은 흑목재 (Dark Timber)
-    'n': '#334155'                 // 건메탈 (Gunmetal)
+    'p': '#581c87',                // 심연 보라 암영 (Deep Purple)
+    'P': '#9333ea',                // 심연 보라 / 흑마법 (Purple)
+    'v': '#c084fc',                // 비전 수정 라벤더 (Amethyst)
+    'g1': '#14532d',               // 숲/녹색 암영 (Dark Forest Green)
+    'g2': '#16a34a',               // 에메랄드 녹색 (Emerald Green)
+    'g3': '#4ade80',               // 라임 하이라이트 (Lime Glow)
+    'o': '#451a03',                // 짙은 흑목재 (Dark Timber)
+    'O': '#78350f',                // 가죽 갈색 (Leather Brown)
+    'l': '#b45309',                // 밝은 목재 / 모래빛 (Light Wood)
+    't': '#fcd34d',                // 짚모자/밀짚 노랑 (Straw Yellow)
+    'z': '#334155'                 // 건메탈 (Gunmetal)
   };
 
-  // 2. 16x16 / 24x24 도트 매트릭스 원형 데이터
+  // 2. 8x8 픽셀 생태계 상태 풍선 (Ecology Status Balloons)
+  const BALLOON_SPRITES = {
+    // 🌾 농사/수확
+    balloon_harvest: [
+      "..####..",
+      ".#gggg#.",
+      "#gYYYYg#",
+      "#gYYYYg#",
+      "#gYYYYg#",
+      ".#gggg#.",
+      "..####..",
+      "....#..."
+    ],
+    // ⛏️ 채광
+    balloon_mine: [
+      "..####..",
+      ".#hssh#.",
+      "#hshshh#",
+      "#sOOssh#",
+      "#hOOssh#",
+      ".#hhhh#.",
+      "..####..",
+      "....#..."
+    ],
+    // 🔨 대장간 단조
+    balloon_forge: [
+      "..####..",
+      ".#hhhh#.",
+      "#hssssh#",
+      "#hsRRsh#",
+      "#hssssh#",
+      ".#hhhh#.",
+      "..####..",
+      "....#..."
+    ],
+    // 🎣 낚시
+    balloon_fish: [
+      "..####..",
+      ".#BccB#.",
+      "#BccccB#",
+      "#BwcccB#",
+      "#BccccB#",
+      ".#BccB#.",
+      "..####..",
+      "....#..."
+    ],
+    // 💤 수면/휴식
+    balloon_sleep: [
+      "..####..",
+      ".#yyyy#.",
+      "#yYYYYy#",
+      "#yyYyyy#",
+      "#yYYYYy#",
+      ".#yyyy#.",
+      "..####..",
+      "....#..."
+    ],
+    // ⚔️ 전투
+    balloon_combat: [
+      "..####..",
+      ".#eeee#.",
+      "#ewhhwe#",
+      "#eRhhRe#",
+      "#ewhhwe#",
+      ".#eeee#.",
+      "..####..",
+      "....#..."
+    ],
+    // 🍺 주점/휴식
+    balloon_beer: [
+      "..####..",
+      ".#wwww#.",
+      "#wYYYYw#",
+      "#wYYYYw#",
+      "#wYYYYw#",
+      ".#OOOO#.",
+      "..####..",
+      "....#..."
+    ],
+    // 🎵 바드 연주
+    balloon_music: [
+      "..####..",
+      ".#vvvv#.",
+      "#vvCCvv#",
+      "#vvCvvv#",
+      "#vCCvvv#",
+      ".#vvvv#.",
+      "..####..",
+      "....#..."
+    ],
+    // ❗ 경비/경계
+    balloon_alert: [
+      "..####..",
+      ".#eeee#.",
+      "#eeRRee#",
+      "#eeRRee#",
+      "#ee..ee#",
+      ".#eRRe#.",
+      "..####..",
+      "....#..."
+    ],
+    // ❤️ 치유/호감
+    balloon_heart: [
+      "..####..",
+      ".#eeee#.",
+      "#eReeRe#",
+      "#eReeeRe#",
+      "#eRReRRe#",
+      ".#eeee#.",
+      "..####..",
+      "....#..."
+    ]
+  };
+
+  // 3. 24x24 / 16x16 원형 스프라이트 데이터 (Raw Sprite Matrices)
   const RAW_SPRITES = {
     // ------------------------------------------------------------------------
-    // [A] 플레이어 영웅 (도보 / 백마 기병 / 비룡 라이더)
+    // [A] 플레이어 영웅 (High-Res Player Hero)
     // ------------------------------------------------------------------------
-    // 1. 도보 영웅 (황금 왕관, 블루 플레이트, 강철 장검, 붉은 망토) - Walk 0
     hero_walk_0: [
-      ".....######.....",
-      "....#GyGGyG#....",
-      "...#GyGGGGyG#...",
-      "...#F#ffff#F#...",
-      "...#f#ff##f#....",
-      "...#ffffffff#...",
-      "...#rr####rr#...",
-      "..#rrbBBbbrr#h..",
-      ".#rr#bBBbb#rr#h.",
-      ".#rr#bGGbb#rr#wh",
-      "..#r#bbbb#r#Gwh#",
-      "..#rr#bb#rr#.G##",
-      "...##bbbb##..##.",
-      "...#ss##ss#.....",
-      "..#hh#..#hh#....",
-      "..####..####...."
+      "......########......",
+      ".....#yYYYYYYy#.....",
+      "....#yYyYYYYyYy#....",
+      "....#yYyYYYYyYy#....",
+      "....#F#ffffff#F#....",
+      "....#f#ff##ff#f#....",
+      "....#ffffffffff#....",
+      "....#f##ffff##f#....",
+      "....#RR######RR#....",
+      "...#RRbBBBBBBbRR#...",
+      "..#RR#bBBBBBBb#RR#..",
+      "..#RR#bYyYYyYb#RR#h.",
+      "..#R#bbBBBBBBbb#R#wh",
+      "..#RR#bbBBBBbb#RR#wh",
+      "...##bbBBBBBBbb##Gwh",
+      "...#ssss####ssss#.G#",
+      "...#ssss#..#ssss#...",
+      "...#hhhh#..#hhhh#...",
+      "...#hhhh#..#hhhh#...",
+      "....####....####...."
     ],
-    // 2. 도보 영웅 - Walk 1 (걷기 보폭 프레임)
     hero_walk_1: [
-      ".....######.....",
-      "....#GyGGyG#....",
-      "...#GyGGGGyG#...",
-      "...#F#ffff#F#...",
-      "...#f#ff##f#....",
-      "...#ffffffff#...",
-      "...#rr####rr#...",
-      "..#rrbBBbbrr#...",
-      ".#rr#bBBbb#rr#h.",
-      ".#rr#bGGbb#rr#wh",
-      "..#r#bbbb#r#Gwh#",
-      "..#rr#bb#rr#.G##",
-      "...##bbbb##..##.",
-      "..#ss#..#ss#....",
-      "..#hh#...#hh#...",
-      "..####...####..."
+      "......########......",
+      ".....#yYYYYYYy#.....",
+      "....#yYyYYYYyYy#....",
+      "....#yYyYYYYyYy#....",
+      "....#F#ffffff#F#....",
+      "....#f#ff##ff#f#....",
+      "....#ffffffffff#....",
+      "....#f##ffff##f#....",
+      "....#RR######RR#....",
+      "...#RRbBBBBBBbRR#...",
+      "..#RR#bBBBBBBb#RR#..",
+      "..#RR#bYyYYyYb#RR#h.",
+      "..#R#bbBBBBBBbb#R#wh",
+      "..#RR#bbBBBBbb#RR#wh",
+      "...##bbBBBBBBbb##Gwh",
+      "..#ssss#....#ssss#G#",
+      "..#ssss#....#ssss#..",
+      "..#hhhh#.....#hhhh#.",
+      "..#hhhh#.....#hhhh#.",
+      "...####.......####.."
+    ],
+    hero_attack: [
+      "......########......",
+      ".....#yYYYYYYy#.....",
+      "....#yYyYYYYyYy#....",
+      "....#F#ffffff#F#....",
+      "....#ffffffffff#....",
+      "....#RR######RR#..wh",
+      "...#RRbBBBBBBbRR#wwh",
+      "..#RR#bBBBBBBb#RRwhh",
+      "..#RR#bYyYYyYb#RRwhh",
+      "..#R#bbBBBBBBbb#Rwhh",
+      "..#RR#bbBBBBbb#RRwhh",
+      "...##bbBBBBBBbb##whh",
+      "...#ssss####ssss#Gwh",
+      "...#ssss#..#ssss#.G#",
+      "...#hhhh#..#hhhh#...",
+      "....####....####...."
     ],
 
     // ------------------------------------------------------------------------
-    // [B] 왕국 전사 및 기사단
+    // [B] 왕국 주민 & 직업군 (Ecology Professions)
     // ------------------------------------------------------------------------
-    // 3. 기사 (풀 플레이트, 붉은 깃털 투구, 십자 바이저, 방패, 장검)
+    // 농부 (밀짚모자, 작업 멜빵, 괭이)
+    farmer: [
+      "......########......",
+      "....##tttttttt##....",
+      "...#tttttttttttt#...",
+      "....#F#ffffff#F#....",
+      "....#ffffffffff#....",
+      "....#f##ffff##f#....",
+      ".....#O######O#.....",
+      "....#ObBBBBBBbO#....",
+      "...#Ob#bBBBBb#bO#...",
+      "...#Ob#bBBBBb#bO#...",
+      "...#O#bbBBBBbb#O#...",
+      "....##bbBBBBbb##.O..",
+      "....#ssss##ssss#.O..",
+      "...#ssss#..#ssss#O..",
+      "...#OOOO#..#OOOO#h..",
+      "....####....####...."
+    ],
+    // 광부 (안전모 & 램프, 곡괭이, 가죽 앞치마)
+    miner: [
+      "......########......",
+      ".....#zzzzzzzz#.....",
+      "....#zzzzYYYYzz#....",
+      "....#F#ffffff#F#....",
+      "....#ffffffffff#....",
+      "....#f##ffff##f#....",
+      ".....#O######O#..h..",
+      "....#ObOOOOOObO#whh.",
+      "...#Ob#bOOOOd#bO#shh",
+      "...#Ob#bOOOOd#bO#sh.",
+      "...#O#bbOOOOdd#O#O..",
+      "....##bbOOOOdd##.O..",
+      "....#ssss##ssss#.O..",
+      "...#ssss#..#ssss#O..",
+      "...#zzzz#..#zzzz#...",
+      "....####....####...."
+    ],
+    // 대장장이 (가죽 앞치마, 망치, 굵은 수염)
+    blacksmith: [
+      "......########......",
+      ".....#oooooooo#.....",
+      "....#oooofffooo#....",
+      "....#F#ffffff#F#....",
+      "....#ffffffffff#....",
+      "....#ffffffffff#....",
+      "....#dddddddddd#....",
+      ".....#O######O#..hh.",
+      "....#ObOOOOOObO#whhh",
+      "...#Ob#bOOOOd#bO#msh",
+      "...#Ob#bOOOOd#bO#O##",
+      "...#O#bbOOOOdd#O#O..",
+      "....##bbOOOOdd##.O..",
+      "....#ssss##ssss#.O..",
+      "...#ssss#..#ssss#...",
+      "....####....####...."
+    ],
+    // 어부 (방수 모자, 낚시 조끼, 낚싯대)
+    fisherman: [
+      "......########......",
+      ".....#cccccccc#.....",
+      "....#cCCcccccc#.....",
+      "....#F#ffffff#F#....",
+      "....#ffffffffff#....",
+      "....#f##ffff##f#....",
+      ".....#O######O#..c..",
+      "....#ObccccccbO#.c..",
+      "...#Ob#bccccd#bO#c..",
+      "...#Ob#bccccd#bO#c..",
+      "...#O#bbccccdd#O#O..",
+      "....##bbccccdd##.O..",
+      "....#ssss##ssss#.O..",
+      "...#ssss#..#ssss#O..",
+      "...#cccc#..#cccc#...",
+      "....####....####...."
+    ],
+    // 바드 / 음유시인 (깃털 모자, 화려한 튜닉, 류트)
+    bard: [
+      "......########......",
+      "....##vvvvvvvv##....",
+      "...#vvPPvvvvPPvv#...",
+      "....#F#ffffff#F#....",
+      "....#ffffffffff#....",
+      "....#f##ffff##f#....",
+      ".....#P######P#.....",
+      "....#PbPPPPPPbP#....",
+      "...#Pb#bPPPPd#bP#.O.",
+      "...#Pb#bPPPPd#bP#OO.",
+      "...#P#bbPPPPdd#P#OO.",
+      "....##bbPPPPdd##.O..",
+      "....#ssss##ssss#.O..",
+      "...#ssss#..#ssss#...",
+      "...#vvvv#..#vvvv#...",
+      "....####....####...."
+    ],
+    // 경비병 / 가디언 (깃발 장창, 전면 투구, 타워실드)
+    guard: [
+      "......########......",
+      ".....#hhhhhhhh#.....",
+      "....#hhGGGGGGhh#....",
+      "....#hh#GG##GGhh#...",
+      "....#GGGGGGGGGG#....",
+      "....#hh#GG##GGhh#...",
+      "....#Rh#hhhhhh#h#...",
+      "...#Rhb#mmmmmm#bRh#.",
+      "..#Rhb#bmmmmmmb#bRh#",
+      "..#Rhb#bmmmmmmb#bRh#",
+      "..#Rh#bbmmmmmmbb#Rh#",
+      "...##bbmmmmmmbb##.O.",
+      "...#ssss####ssss#.O.",
+      "...#ssss#..#ssss#.O.",
+      "...#hhhh#..#hhhh#.O.",
+      "....####....####..#."
+    ],
+
+    // ------------------------------------------------------------------------
+    // [C] 기사단 및 고위 클래스
+    // ------------------------------------------------------------------------
     knight: [
       "......####......",
       ".....#RRrr#.....",
@@ -104,8 +365,6 @@
       "..#hh#..#hh#G##.",
       "..####..####.##."
     ],
-
-    // 4. 성기사 / 팔라딘 (그레이트 헬름, 십자 슬릿, 십자 타워실드, 장창)
     paladin: [
       ".....######.....",
       "....#hhhhhh#....",
@@ -124,439 +383,307 @@
       "..#hh#..#hh#..x.",
       "..####..####..x."
     ],
-
-    // 5. 대형 도끼 기사 (Axe Knight - 헤비 아머 & 거대 배틀액스)
-    axe_knight: [
-      "......####......",
-      ".....#hhhh#.....",
-      "....#hskksh#....",
-      "...#hhmhhhh#....",
-      "..#h#m#h#m##.hh.",
-      "..#hhsmhhhsh#whh",
-      "...#ssssss#.#wwh",
-      "..#ssGssGss##msh",
-      ".#ss#GssG#ss#x##",
-      ".#f#ssssss#f#x..",
-      "..#hssssssh#xx..",
-      "..#hh#ss#hh#xx..",
-      "...##ssss##.xx..",
-      "...#kk##kk#.xx..",
-      "..#hh#..#hh#xx..",
-      "..####..####...."
-    ],
-
-    // 6. 경비병 / 수비병 (케틀 헬름, 사슬갑옷, 붉은 튜닉, 창)
-    soldier: [
-      ".....######.....",
-      "....#hhhhhh#....",
-      "...#hhhhhhhh#...",
-      "...#F#ffff#F#...",
-      "...#f#ff##f#....",
-      "...#ffffffff#...",
-      "....#ssssss#....",
-      "..#rr#ssss#rr#h.",
-      ".#rr#smmss#rr#wh",
-      ".#f#smmsss#f#.wh",
-      "..#ssssssss#..x.",
-      "..#ss#ss#ss#..x.",
-      "...##ssss##...x.",
-      "...#kk##kk#...x.",
-      "..#hh#..#hh#..x.",
-      "..####..####..x."
-    ],
-
-    // ------------------------------------------------------------------------
-    // [C] 마법사 및 사제 (Casters)
-    // ------------------------------------------------------------------------
-    // 7. 대마법사 (뾰족 모자, 긴 흰 수염, 마법 로브, 룬 보주 지팡이)
     wizard: [
-      "......##........",
-      ".....#bb#.......",
-      "....#bbbb#......",
-      "...#bGGbbb#.....",
-      "..#bbbbbbbb#....",
-      ".############...",
-      "...#FffffF#..y..",
-      "...#f#ff#f#.yCy.",
-      "...#wwwwww#..y..",
-      "...#wwwwww#..x..",
-      "..#bbbbbbbb#GxG.",
-      ".#b#bbbbbb#b#x..",
-      ".#b#bbbbbb#b#x..",
-      "..#bbbbbbbb#x...",
-      "...#kk##kk#.x...",
-      "..####..####x..."
-    ],
-
-    // 8. 사제 / 힐러 (수녀 윔플, 황금 십자가, 치유 로브, 목조 성물 지팡이)
-    priestess: [
-      "....######......",
-      "...#wwwwww#.....",
-      "..#wwwGGwww#....",
-      "..#wwGGGGww#....",
-      "..#wwwGGwww#....",
-      "..#w#FffF#w#....",
-      "..#w#f##f#w#....",
-      "..#w#ffff#w#....",
-      "...#wwwwww#..O..",
-      "..#bbwwwwbb#.OxO",
-      ".#bb#wwww#bb#.x.",
-      ".#f#bbwwbb#f#.x.",
-      "..#bbbbbbbb#..x.",
-      "..#bbbbbbbb#..x.",
-      "...#kk##kk#...x.",
-      "..####..####..x."
-    ],
-
-    // ------------------------------------------------------------------------
-    // [D] 궁수 및 특수 클래스
-    // ------------------------------------------------------------------------
-    // 9. 궁수 / 사냥꾼 (후드 모자, 깃털, 화살통, 곡궁)
-    archer: [
       ".....######.....",
-      "....#eeeeee#R...",
-      "...#eeeeeeee#R..",
-      "...#F#ffff#F#R..",
-      "...#f#ff##f#....",
+      "....#pppppp#....",
+      "...#ppPPPPpp#...",
+      "...#pp#PP#pp#...",
+      "...#p#ffff#p#...",
       "...#ffffffff#...",
-      "....#oooooo#....",
-      "..#oo#oooo#oo#..",
-      ".#oo#oommo#oo#..",
-      ".#f#oommmo#f#x..",
-      "..#oooooooo#OxO.",
-      "..#oo#oo#oo#.x..",
-      "...##oooo##..x..",
-      "...#kk##kk#..x..",
-      "..#oo#..#oo#.x..",
-      "..####..####...."
+      "....#ffffff#....",
+      "...#pp####pp#...",
+      "..#ppbBBBBbpp#..",
+      ".#pp#bBBBBb#pp#.",
+      ".#f#bbBBBBbb#f#.",
+      "..#p#bBBBBb#p#..",
+      "...##bbBBbb##...",
+      "...#pppppppp#...",
+      "..#ppp#..#ppp#..",
+      "..####....####.."
     ],
-
-    // 10. 국왕 / 군주 (황금 왕관, 주홍 벨벳 모피 망토, 황금 홀)
     king: [
       "....########....",
-      "...#GyGGyGGy#...",
-      "...#GyGGGGyG#...",
-      "...#F#ffff#F#...",
-      "...#f#ff##f#....",
-      "...#ffffffff#...",
-      "...#rrwwwwrr#G..",
-      "..#rr#wwww#rr#G.",
-      ".#rr#rwwrr#rr#G.",
-      ".#f#rrwwrr#f#xG.",
-      "..#rrrrrrrr#..x.",
-      "..#rr#rr#rr#..x.",
-      "...##rrrr##...x.",
-      "...#kk##kk#...x.",
-      "..#rr#..#rr#..x.",
-      "..####..####...."
-    ],
-
-    // ------------------------------------------------------------------------
-    // [E] 엘프 & 드워프 & 수인족
-    // ------------------------------------------------------------------------
-    // 11. 엘프 레인저 (긴 뾰족 귀, 금발, 녹색 잎사귀 튜닉, 은 단검)
-    elf: [
-      "................",
-      ".#F#........#F#.",
-      "#ff#..####..#ff#",
-      "#ff#.#yyyy#.#ff#",
-      ".#f#yyyyyyy#f#..",
-      "...#f#yy##f#....",
-      "...#ffffffff#...",
-      "....#eeeeee#....",
-      "..#e#eeeeee#e#..",
-      ".#e#eeLLEee#e#..",
-      ".#f#eeLLEee#f#h.",
-      "..#eeeeeeee#wh#.",
-      "..#ee#ee#ee#.G##",
-      "...##eeee##..##.",
-      "..#ee#..#ee#....",
-      "..####..####...."
-    ],
-
-    // 12. 드워프 전사 (뿔 달린 강철 투구, 배꼽까지 내려온 붉은 수염, 배틀액스)
-    dwarf: [
-      "................",
-      "...#hh####hh#...",
-      "..#hhhhhhshhh#..",
-      "..#hhsmhhhshh#..",
+      "...#yYYYYYYy#...",
+      "..#yYyYYYYyYy#..",
+      "..#F#ffffff#F#..",
+      "..#ffffffffff#..",
+      "..#ffffffddff#..",
+      "..#dddddddddd#..",
+      ".#RR#RRRRRR#RR#.",
+      ".#RR#RyyyyR#RR#.",
+      ".#RR#RyyyyR#RR#.",
+      ".#RR#RRRRRR#RR#.",
+      "..##RRRRRRRR##..",
       "...#ssssssss#...",
-      "...#F#ffff#F#...",
-      "..#d#dff##d#d#..",
-      ".#dddddddddddd#.",
-      ".#dddddddddddd#h",
-      ".#dddddddddddd#h",
-      "..#ssssssss#..wh",
-      "..#ssssssss#..wh",
-      "...#kk####kk#.x#",
-      "..#hh#....#hh#x.",
-      "..####....####x.",
+      "..#hhhh##hhhh#..",
+      "..####....####..",
       "................"
     ],
-
-    // 13. 수인족 늑대 전사 (어두운 늑대 머리, 발광 안광, 클로, 가죽대)
-    beastkin: [
-      "................",
-      "..##........##..",
-      ".#kk#......#kk#.",
-      ".#kkk#....#kkk#.",
-      "..#kkk####kkk#..",
-      "...#kkRRkkRR#...",
-      "...#kkkkkkkk#...",
-      "....#kkwwkk#....",
-      "...#oooooooo#...",
-      "..#k#oooooo#k#..",
-      ".#kk#oGssGo#kk#.",
-      ".#w#oooooooo#w#.",
-      "..#oooooooo#....",
-      "...#kk##kk#.....",
-      "..#kk#..#kk#....",
-      "..####..####...."
-    ],
-
-    // ------------------------------------------------------------------------
-    // [F] 언데드 & 사신 & 악마
-    // ------------------------------------------------------------------------
-    // 14. 스켈레톤 (백색 해골, 암흑 안와, 갈비뼈, 녹슨 검, 방패)
-    skeleton: [
-      ".....####.......",
-      "....#wwww#......",
-      "...#w#ww#w#.....",
-      "...#k#ww#k#.....",
-      "...#wwwwww#.....",
-      "....#w#w#w#.....",
-      ".....####.......",
-      "..#h#wwww#h#....",
-      ".#hh#w##w#hh#...",
-      ".#hh#wwww#hh#h..",
-      "..#h#w##w#h#wh#.",
-      "...#wwwwww#.wh#.",
-      "....#w##w#..wh#.",
-      "....#w##w#..G##.",
-      "...#ww##ww#..##.",
-      "...###..###....."
-    ],
-
-    // 15. 그림 리퍼 / 사신 (칠흑빛 누더기 로브, 붉은 안광, 거대한 죽음의 낫)
-    reaper: [
-      "......####......",
-      ".....#kkkk#.....",
-      "....#kRRkk#.....",
-      "...#kR##Rkk#....",
-      "...#kkkkkkk#.hh.",
-      "...#w#ww#w##hhhh",
-      "....#w##w#..#sh#",
-      "...#kkkkkk#..x..",
-      "..#p#kkkk#p#.x..",
-      ".#pp#kkkk#pp#x..",
-      ".#pp#kkkk#pp#x..",
-      "..#p#kkkk#p#.x..",
-      "...#kk##kk#..x..",
-      "...#kk##kk#..x..",
-      "..#kk#..#kk#.x..",
-      "..####..####.x.."
-    ],
-
-    // ------------------------------------------------------------------------
-    // [G] 고블린 & 오크
-    // ------------------------------------------------------------------------
-    // 16. 고블린 (녹색 피부, 큰 뾰족 귀, 붉은 안광, 돌도끼)
-    goblin: [
-      "................",
-      "..##........##..",
-      ".#EE#..##..#EE#.",
-      "#EEEE##ee##EEEE#",
-      "#EEEEeeeeeeEEEE#",
-      ".#eERRReeRRRe#..",
-      "..#ee##ee##e#...",
-      "...#eeeeee#.....",
-      "....#eeee#...hh.",
-      "...#oooooo#.#mh#",
-      "..#e#oooo#e#xm##",
-      "..#e#oooo#e#xx..",
-      "...#ee##ee#.xx..",
-      "...#ee##ee#.xx..",
-      "..#ee#..#ee#xx..",
-      "..####..####...."
-    ],
-
-    // 17. 오크 버서커 (거대한 체구, 턱 송곳니, 뿔 투구, 가시 쇠몽둥이)
-    orc: [
+    elf: [
       ".....######.....",
-      "....#EEkkEE#....",
-      "...#EEEEEEEE#...",
-      "..#kkEEeeEEkk#..",
-      "..#k#EEeeEE#k#..",
-      "..#E#RReeRR#E#..",
-      "...#EewwwweE#...",
-      "...#EEwwwwEE#.hh",
-      "..#ooEeeeeEoo#hh",
-      ".#oo#oooooo#o#hh",
-      ".#EE#oooooo#E#hh",
-      "..#E#oooooo#E#xx",
-      "...##oooooo##.xx",
-      "...#kk####kk#.xx",
-      "..#EE#....#EE#xx",
-      "..####....####xx"
-    ],
-
-    // ------------------------------------------------------------------------
-    // [H] 몬스터 & 생태계 야생동물
-    // ------------------------------------------------------------------------
-    // 18. 슬라임 (반투명 에메랄드 젤리, 상단 하이라이트, 귀여운 검은 눈)
-    slime: [
-      "................",
-      "................",
-      "......####......",
-      "....##LLLE##....",
-      "...#LLLEEEEE#...",
-      "..#LLEEEEEEEE#..",
-      ".#LEEE##EE##EE#.",
-      "#LEEEE##EE##EEE#",
-      "#LEEEEEEEEEEEEE#",
-      "#LEEEEEEEEEEEEE#",
-      "#EEEEEEEEEEEEEE#",
-      "#EEEEEEEEEEEEEE#",
-      ".#eeeeeeeeeeee#.",
-      "..#eeeeeeeeee#..",
-      "...##########...",
+      "....#yYYYYy#....",
+      "...#yYYYYYYy#...",
+      "...#f#ffff#f#...",
+      "..#ff#ff##ff#...",
+      "..#ffffffff#....",
+      "...#ffffff#.....",
+      "..#gg####gg#....",
+      ".#gg#g2g2#gg#...",
+      ".#f#gg22gg#f#...",
+      "..#gggggggg#....",
+      "...##gggg##.....",
+      "...#oooooo#.....",
+      "..#oo#..#oo#....",
+      "..####..####....",
       "................"
     ],
-
-    // 19. 동굴 박쥐 (보랏빛 박쥐 날개, 뾰족 귀, 하얀 송곳니)
-    bat: [
-      "................",
-      "................",
-      "....##....##....",
-      "..#pppp##pppp#..",
-      ".#pppppppppppp#.",
-      "#pp#kppRRppk#pp#",
-      "#pp#kkkRRkkk#pp#",
-      "#pp##kwwwwk##pp#",
-      ".#pp##kwwk##pp#.",
-      "..#pp######pp#..",
-      "...#p#....#p#...",
-      "................",
-      "................",
-      "................",
-      "................",
-      "................"
-    ],
-
-    // 20. 백마 (White Horse - 갈기, 등 안장, 발굽)
-    horse: [
-      "................",
-      ".........#####..",
-      "........#wwwww#.",
-      ".......#wwmwww#.",
-      "......#wwwwwww#.",
-      "....##wwkkwww#..",
-      "...#wwwwwwww#...",
-      "..#wwwwwwwwww#..",
-      ".#wwwwGooGwwww#.",
-      "#wwww#GooG#wwww#",
-      "#wwww#oooo#wwww#",
-      ".#ww#wwwwww#ww#.",
-      "..##.#wwww#.##..",
-      ".....#s##s#.....",
-      ".....#k##k#.....",
-      ".....##..##....."
-    ],
-
-    // 21. 갈색 곰 (Brown Bear - 둥근 귀, 코, 굵은 앞발)
-    bear: [
-      ".....##....##...",
-      "....#oo#..#oo#..",
-      "...#oooooooooo#.",
-      "...#o#oo##oo#o#.",
-      "...#oooooooooo#.",
-      "....#oo#kk#oo#..",
-      "...#oooooooooo#.",
-      "..#oooooooooooo#",
-      ".#oo#oooooooo#oo",
-      ".#oo#oooooooo#oo",
-      "..#oooooooooooo#",
-      "...#oo#oooo#oo#.",
-      "...#xx######xx#.",
-      "..#xx#......#xx#",
-      "..###........###",
-      "................"
-    ],
-
-    // 22. 야생 백록 / 사슴 (Deer - 사슴 뿔, 가는 다리, 흰 꼬리)
-    deer: [
-      "...#x#....#x#...",
-      "...#xx#..#xx#...",
-      "....#xx##xx#....",
-      ".....#oooo#.....",
-      "....#o#oo#o#....",
-      "....#oooooo#....",
-      ".....#oooo#.....",
-      "....#oooooo#....",
-      "...#oooooooo#...",
-      "..#oooooooooo#..",
-      "..#oooooooooo#w.",
-      "...#oo#..#oo#ww.",
-      "...#oo#..#oo#...",
-      "...#xx#..#xx#...",
-      "...#kk#..#kk#...",
-      "...###....###..."
-    ],
-
-    // 23. 거대 바다거북 (Turtle - 등껍질 문양, 물갈퀴)
-    turtle: [
-      "................",
-      "......####......",
-      ".....#EEEE#.....",
-      "....#EE##EE#....",
-      "...#ooEEEEoo#...",
-      "..#oooooooooo#..",
-      ".#ooGoGooGoGoo#.",
-      "#oooooooooooooo#",
-      "#ooGoGooGoGooGo#",
-      "#oooooooooooooo#",
-      ".#ooGoGooGoGoo#.",
-      "..#oooooooooo#..",
-      "...#EE#..#EE#...",
-      "..#EEEE##EEEE#..",
+    dwarf: [
+      "....########....",
+      "...#zzzzzzzz#...",
+      "...#zzhhhhzz#...",
+      "..#F#ffffff#F#..",
+      "..#ffffffffff#..",
+      "..#dddddddddd#..",
+      "..#dddddddddd#..",
+      ".#ss#ssssss#ss#.",
+      ".#ss#sGssGs#ss#.",
+      ".#ss#sGGGGs#ss#.",
+      "..##ssssssss##..",
+      "...#ssssssss#...",
+      "...#kk####kk#...",
+      "..#hh#....#hh#..",
       "..####....####..",
       "................"
     ],
 
-    // 24. 사막 낙타 (Camel - 쌍혹, 긴 목, 방울)
-    camel: [
-      ".........#####..",
-      "........#OOOOO#.",
-      ".......#OOkkOO#.",
-      "......#OOOOOOO#.",
-      ".....#OOOOOO#...",
-      "....#OOOOOO#....",
+    // ------------------------------------------------------------------------
+    // [D] 몬스터 & 보스 (Monsters & Bosses)
+    // ------------------------------------------------------------------------
+    skeleton: [
+      ".....######.....",
+      "....#hhhhhh#....",
+      "...#hhkkkkhh#...",
+      "...#h#kk##kh#...",
+      "...#hkkkkkkh#...",
+      "....#hkhhkh#....",
+      ".....#hhhh#.....",
+      "....##ssss##....",
+      "...#h#ssss#h#...",
+      "..#hh#smmms#hh#.",
+      "..#hh#smmms#hh#.",
+      "...##ssssss##...",
+      "....#h#..#h#....",
+      "...#hh#..#hh#...",
+      "...#hh#..#hh#...",
+      "...###....###..."
+    ],
+    reaper: [
+      ".....######.....",
+      "....#kkkkkk#....",
+      "...#kRkkkkRk#...",
+      "...#kkRkkRkk#...",
+      "....#kkkkkk#....",
+      "...#kk####kk#...",
+      "..#kkk#kk#kkk#..",
+      ".#kkkk#kk#kkkk#h",
+      ".#kkkkk##kkkkk#h",
+      "..#kkkkkkkkkk#wh",
+      "...#kkkkkkkk#wwh",
+      "....#kkkkkk#..sh",
+      ".....#kkkk#...m#",
+      "....#kk##kk#..##",
+      "...#kk#..#kk#...",
+      "...###....###..."
+    ],
+    goblin: [
+      "....########....",
+      "..##eEeeeeEe##..",
+      ".#eEe#ffff#eEe#.",
+      "#eEe#ffffff#eEe#",
+      "#eE#fRffffRf#Ee#",
+      "#ee#fffffffff#ee",
+      ".##ffffffffff##.",
+      "..#f#ffffff#f#..",
+      "..#o#oooooo#o#..",
+      ".#oo#o#oo#o#oo#.",
+      ".#oo#oooooo#oo#.",
+      "..##oooooooo##..",
+      "...#oooooooo#...",
+      "...#kk####kk#...",
+      "..#oo#....#oo#..",
+      "..####....####.."
+    ],
+    orc: [
+      "....########....",
+      "..##g1g2g1g2##..",
+      ".#g2#ffffff#g2#.",
+      "#g2#fRffffRf#g2#",
+      "#g2#fffffffff#g2",
+      ".#g2#ffffff#g2#.",
+      "..##f#ffff#f##..",
+      "..#s#ssssss#s#..",
+      ".#ss#s#ss#s#ss#.",
+      ".#ss#ssssss#ss#.",
+      "..##ssssssss##..",
+      "...#ssssssss#...",
+      "...#kk####kk#...",
+      "..#hh#....#hh#..",
+      "..####....####..",
+      "................"
+    ],
+    slime: [
+      "................",
+      "......####......",
+      "....##EEEE##....",
+      "...#EEEEEEEE#...",
+      "..#EELLLLLLLE#..",
+      ".#EELLwLLLLwLE#.",
+      "#EELLwwLLLLwwLE#",
+      "#EELLwwLLLLwwLE#",
+      "#EEELLLLLLLLLEE#",
+      "#EEELLLLLLLLLEE#",
+      ".#EEEEEEEEEEEE#.",
+      "..#EEEEEEEEEE#..",
+      "...##EEEEEE##...",
+      ".....######.....",
+      "................",
+      "................"
+    ],
+    bat: [
+      "................",
+      "#k#..........#k#",
+      "#kk#........#kk#",
+      "#kkk#..##..#kkk#",
+      ".#kkk##kk##kkk#.",
+      "..#kkkkRkRkkk#..",
+      "...#kkkkkkkk#...",
+      "....#kkwwkk#....",
+      "...#kkkkkkkk#...",
+      "..#kkk#kk#kkk#..",
+      ".#kkk#....#kkk#.",
+      "#kk#........#kk#",
+      "##............##",
+      "................",
+      "................",
+      "................"
+    ],
+
+    // ------------------------------------------------------------------------
+    // [E] 탈것 및 동물 (Mounts & Animals)
+    // ------------------------------------------------------------------------
+    horse: [
+      "................",
+      "........#####...",
+      ".......#hhhhh#..",
+      "......#hwhkkkh#.",
+      ".....#hhhhk#k#..",
+      "....#hhhhh#.....",
+      "...#hhhhhh######",
+      "..#hhhhhhhhhhhh#",
+      ".#hhhhhhhhhhhhh#",
+      ".#hhhhhhhhhhhhh#",
+      "..#hh####hhhhh#.",
+      "..#hh#..#hhhh#..",
+      "..#hh#..#hhhh#..",
+      "..#hh#...#hh#...",
+      "..#kk#...#kk#...",
+      "..####...####..."
+    ],
+    bear: [
+      "................",
+      "....##....##....",
       "...#OO#..#OO#...",
       "..#OOOO##OOOO#..",
+      "..#OOOOOOOOOO#..",
+      "..#OkkOOOOkkO#..",
+      "..#OOOOkkOOOO#..",
       ".#OOOOOOOOOOOO#.",
-      "#OOOO#rGGr#OOOO#",
-      "#OOOO#rGGr#OOOO#",
-      ".#OO#OOOOOO#OO#.",
-      "..##.#OOOO#.##..",
-      ".....#xx##xx#...",
-      ".....#kk##kk#...",
-      ".....##..##....."
+      "#OOOOOOOOOOOOOO#",
+      "#OOOOOOOOOOOOOO#",
+      "#OOOOOOOOOOOOOO#",
+      ".#OO####OO####O#",
+      ".#OO#..#OO#..#O#",
+      ".#OO#..#OO#..#O#",
+      ".####..####..###",
+      "................"
+    ],
+    deer: [
+      "....#......#....",
+      "...#O#....#O#...",
+      "....#O#..#O#....",
+      ".....#OOOO#.....",
+      "....#OlwwlO#....",
+      "...#OllllllO#...",
+      "....#OllllO#....",
+      ".....#OOOO######",
+      "....#OlllllllllO",
+      "...#OllllllllllO",
+      "...#OlllllllllO#",
+      "....#Ol###lllO#.",
+      "....#Ol#..#llO#.",
+      "....#Ol#..#llO#.",
+      "....#kk#..#kk#..",
+      "....####..####.."
+    ],
+    turtle: [
+      "................",
+      "................",
+      "................",
+      ".....######.....",
+      "...##gggggg##...",
+      "..#gggggggggg#..",
+      ".#gggGgGgGgggg#.",
+      ".#ggGgGgGgGggg#e",
+      "#gggGgGgGgggg#ee",
+      ".#gggggggggggg#e",
+      "..#gggggggggg#..",
+      "...##gggggg##...",
+      "..#gg######gg#..",
+      "..####....####..",
+      "................",
+      "................"
+    ],
+    camel: [
+      "................",
+      ".......##.......",
+      "......#ll#..##..",
+      ".....#llk#.#ll#.",
+      "....#llll#.#ll#.",
+      "...#llll######..",
+      "..#lllllllllll#.",
+      ".#lllllllllllll#",
+      ".#lllllllllllll#",
+      "..#ll####lllll#.",
+      "..#ll#..#llll#..",
+      "..#ll#..#llll#..",
+      "..#ll#...#ll#...",
+      "..#kk#...#kk#...",
+      "..####...####...",
+      "................"
     ]
   };
 
-  // 3. 스프라이트 오프스크린 캔버스 캐시 매니저
   class PixelSpriteAtlas {
     constructor() {
       this.cache = new Map();
+      this.balloonCache = new Map();
       this.isReady = false;
       this.init();
     }
 
     init() {
       if (typeof document === 'undefined') return;
+
+      // 1. 캐릭터 & 몬스터 스프라이트 오프스크린 캔버스 캐싱
       for (const [key, rows] of Object.entries(RAW_SPRITES)) {
         this.cacheSprite(key, rows);
       }
+
+      // 2. 8x8 생태계 상태 풍선 캐싱
+      for (const [bKey, bRows] of Object.entries(BALLOON_SPRITES)) {
+        this.cacheBalloon(bKey, bRows);
+      }
+
       this.isReady = true;
     }
 
@@ -564,13 +691,11 @@
       const h = rows.length;
       const w = rows[0].length;
 
-      // 정방향(오른쪽) 캔버스
       const cvNormal = document.createElement('canvas');
       cvNormal.width = w;
       cvNormal.height = h;
       const ctxNorm = cvNormal.getContext('2d');
 
-      // 반전(왼쪽) 캔버스
       const cvFlipped = document.createElement('canvas');
       cvFlipped.width = w;
       cvFlipped.height = h;
@@ -594,27 +719,54 @@
       this.cache.set(`${key}_left`, cvFlipped);
     }
 
-    // 엔티티 역할/종족에 따라 적절한 스프라이트 키 반환
+    cacheBalloon(key, rows) {
+      const h = rows.length;
+      const w = rows[0].length;
+      const cv = document.createElement('canvas');
+      cv.width = w * 2;
+      cv.height = h * 2;
+      const ctx = cv.getContext('2d');
+
+      for (let r = 0; r < h; r++) {
+        for (let c = 0; c < w; c++) {
+          const char = rows[r][c];
+          const color = PALETTE[char];
+          if (color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(c * 2, r * 2, 2, 2);
+          }
+        }
+      }
+      this.balloonCache.set(key, cv);
+    }
+
+    // 엔티티 직업/역할에 따른 스프라이트 분기
     getSpriteKeyForEntity(e) {
       if (e.role === 'player') {
+        if (e.state === 'combat') return 'hero_attack';
         const frame = Math.floor((e.animPhase || 0) * 2) % 2;
         return frame === 1 ? 'hero_walk_1' : 'hero_walk_0';
       }
       if (e.role === 'king') return 'king';
-      if (e.role === 'royal_guard') return 'knight';
-      if (e.role === 'soldier') return 'soldier';
+      if (e.role === 'royal_guard' || e.role === 'guard') return 'guard';
+      if (e.role === 'soldier') return 'knight';
+
+      // 전문 직업군
+      if (e.role === 'farmer') return 'farmer';
+      if (e.role === 'miner') return 'miner';
+      if (e.role === 'blacksmith') return 'blacksmith';
+      if (e.role === 'fisherman') return 'fisherman';
+      if (e.role === 'bard') return 'bard';
+
       if (e.role === 'adventurer' || e.role === 'mercenary') {
         if (e.race === 'dwarf') return 'dwarf';
         if (e.race === 'elf') return 'elf';
-        if (e.race === 'beastkin') return 'beastkin';
-        return (e.id % 2 === 0) ? 'paladin' : 'axe_knight';
+        return (e.id % 2 === 0) ? 'paladin' : 'knight';
       }
-      if (e.role === 'merchant') return 'archer';
-      if (e.role === 'farmer' || e.role === 'fisherman' || e.role === 'miner' || e.role === 'blacksmith') {
-        if (e.race === 'dwarf') return 'dwarf';
-        if (e.race === 'elf') return 'elf';
-        return (e.role === 'farmer' || e.role === 'fisherman') ? 'priestess' : 'dwarf';
-      }
+
+      if (e.role === 'merchant') return 'bard';
+
+      // 몬스터
       if (e.role === 'monster') {
         if (e.subClass && e.subClass.includes('언데드') || e.name.includes('스켈레톤') || e.homeId === 'obsidian_necropolis') {
           return e.hp > 200 ? 'reaper' : 'skeleton';
@@ -626,20 +778,37 @@
         if (e.name.includes('박쥐')) return 'bat';
         return 'goblin';
       }
+
+      // 동물
       if (e.role === 'animal') {
         if (e.animalType === 'horse') return 'horse';
         if (e.animalType === 'bear') return 'bear';
         if (e.animalType === 'deer') return 'deer';
         if (e.animalType === 'turtle') return 'turtle';
         if (e.animalType === 'camel') return 'camel';
-        if (e.animalType === 'wolf') return 'beastkin';
+        if (e.animalType === 'wolf') return 'bear';
         return 'deer';
       }
+
       return 'knight';
     }
 
-    // 픽셀 스프라이트 렌더링
-    draw(ctx, e, px, py, bounce, timeSec) {
+    // 엔티티 활동 상태에 맞는 풍선 반환
+    getBalloonKeyForEntity(e, isNight) {
+      if (e.state === 'combat') return 'balloon_combat';
+      if (isNight && (e.role === 'farmer' || e.role === 'miner' || e.role === 'fisherman' || e.role === 'animal')) {
+        return 'balloon_sleep';
+      }
+      if (e.role === 'farmer') return 'balloon_harvest';
+      if (e.role === 'miner') return 'balloon_mine';
+      if (e.role === 'blacksmith') return 'balloon_forge';
+      if (e.role === 'fisherman') return 'balloon_fish';
+      if (e.role === 'bard' || (isNight && e.role === 'merchant')) return 'balloon_beer';
+      if (e.role === 'royal_guard' || e.role === 'guard') return 'balloon_alert';
+      return null;
+    }
+
+    draw(ctx, e, px, py, bounce, timeSec, isNight = false) {
       const spriteBaseKey = this.getSpriteKeyForEntity(e);
       const isFacingLeft = (e.vx < -0.05);
       const key = `${spriteBaseKey}_${isFacingLeft ? 'left' : 'right'}`;
@@ -651,13 +820,13 @@
       const sw = cv.width;
       const sh = cv.height;
 
-      // 1. 발밑 픽셀 타원 그림자 (Under-Sprite Ground Shadow)
+      // 1. 발밑 픽셀 타원 그림자
       ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
       ctx.beginPath();
       ctx.ellipse(px, py + 6 * sc, 7 * sc, 3 * sc, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // 2. 픽셀 스프라이트 블릿 (Draw Cached Pixel Canvas)
+      // 2. 픽셀 스프라이트 블릿 (High-Res 1.5x Scaling)
       const renderW = Math.round(sw * sc * 1.5);
       const renderH = Math.round(sh * sc * 1.5);
       const renderX = Math.round(px - renderW / 2);
@@ -666,7 +835,17 @@
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(cv, renderX, renderY, renderW, renderH);
 
-      // 3. 공격 모션 시 픽셀 무기 슬래시 이펙트 (Slash Arc Particle)
+      // 3. 생태계 상태 풍선 렌더링 (Ecology Status Balloon Float)
+      const bKey = this.getBalloonKeyForEntity(e, isNight);
+      if (bKey && this.balloonCache.has(bKey)) {
+        const bCvs = this.balloonCache.get(bKey);
+        const floatY = Math.round(Math.sin(timeSec * 3 + (e.id || 0)) * 2);
+        const bx = Math.round(px - bCvs.width / 2);
+        const by = Math.round(renderY - bCvs.height - 2 + floatY);
+        ctx.drawImage(bCvs, bx, by);
+      }
+
+      // 4. 전투 모션 시 픽셀 무기 슬래시 이펙트
       if (e.state === 'combat' && Math.sin(timeSec * 12 + (e.id || 0)) > 0.4) {
         ctx.fillStyle = '#f8fafc';
         const slashDir = isFacingLeft ? -1 : 1;

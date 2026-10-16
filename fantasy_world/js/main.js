@@ -431,27 +431,43 @@ function startFantasyWorld() {
     const slotShieldName = document.getElementById('slotShieldName');
     const slotArmorName = document.getElementById('slotArmorName');
     const slotRelicName = document.getElementById('slotRelicName');
+    const slotWeaponIcon = document.getElementById('slotWeaponIcon');
+    const slotShieldIcon = document.getElementById('slotShieldIcon');
+    const slotArmorIcon = document.getElementById('slotArmorIcon');
+    const slotRelicIcon = document.getElementById('slotRelicIcon');
 
     if (slotWeaponName) slotWeaponName.textContent = rpg.equipment.weapon ? rpg.equipment.weapon.name : '장착 안됨';
     if (slotShieldName) slotShieldName.textContent = rpg.equipment.shield ? rpg.equipment.shield.name : '장착 안됨';
     if (slotArmorName) slotArmorName.textContent = rpg.equipment.armor ? rpg.equipment.armor.name : '장착 안됨';
     if (slotRelicName) slotRelicName.textContent = rpg.equipment.relic ? rpg.equipment.relic.name : '장착 안됨';
 
+    if (window.PixelItems) {
+      if (slotWeaponIcon) slotWeaponIcon.innerHTML = `<img class="pixel-item-icon" src="${PixelItems.getDataUrl(rpg.equipment.weapon ? rpg.equipment.weapon.id : 'sword_steel')}" alt="무기">`;
+      if (slotShieldIcon) slotShieldIcon.innerHTML = `<img class="pixel-item-icon" src="${PixelItems.getDataUrl(rpg.equipment.shield ? rpg.equipment.shield.id : 'shield_iron')}" alt="방패">`;
+      if (slotArmorIcon) slotArmorIcon.innerHTML = `<img class="pixel-item-icon" src="${PixelItems.getDataUrl(rpg.equipment.armor ? rpg.equipment.armor.id : 'armor_plate')}" alt="갑옷">`;
+      if (slotRelicIcon) slotRelicIcon.innerHTML = `<img class="pixel-item-icon" src="${PixelItems.getDataUrl(rpg.equipment.relic ? rpg.equipment.relic.id : 'crown_royal')}" alt="유물">`;
+    }
+
     const grid = document.getElementById('backpackGrid');
     if (grid) {
       grid.innerHTML = '';
       const items = [
-        { icon: '💎', name: '심해 보석', count: p.inventory.gems || 0 },
-        { icon: '🌶️', name: '황금 향신료', count: p.inventory.spices || 0 },
-        { icon: '🌾', name: '황금 밀', count: p.inventory.wheat || 0 },
-        { icon: '⛏️', name: '미스릴 원석', count: p.inventory.ore || 0 },
-        { icon: '🌿', name: '세계수 약초', count: p.inventory.herbs || 0 },
-        { icon: '⚔️', name: '여분 무기', count: p.inventory.weapons || 0 }
+        { key: 'gem', icon: '💎', name: '심해 보석', count: p.inventory.gems || 0 },
+        { key: 'spices', icon: '🌶️', name: '황금 향신료', count: p.inventory.spices || 0 },
+        { key: 'wheat', icon: '🌾', name: '황금 밀', count: p.inventory.wheat || 0 },
+        { key: 'ore', icon: '⛏️', name: '미스릴 원석', count: p.inventory.ore || 0 },
+        { key: 'herbs', icon: '🌿', name: '세계수 약초', count: p.inventory.herbs || 0 },
+        { key: 'weapons', icon: '⚔️', name: '여분 무기', count: p.inventory.weapons || 0 },
+        { key: 'wood', icon: '🪵', name: '고목 목재', count: p.inventory.wood || 0 },
+        { key: 'fish', icon: '🐟', name: '원양 생선', count: p.inventory.fish || 0 }
       ];
       items.forEach(it => {
         const div = document.createElement('div');
         div.className = 'backpack-item';
-        div.innerHTML = `<span>${it.icon}</span> <span>${it.name}: <strong>${it.count}</strong></span>`;
+        const iconHtml = window.PixelItems
+          ? `<img class="pixel-item-icon" src="${PixelItems.getDataUrl(it.key)}" alt="${it.name}">`
+          : `<span>${it.icon}</span>`;
+        div.innerHTML = `${iconHtml} <span>${it.name}: <strong>${it.count}</strong></span>`;
         grid.appendChild(div);
       });
     }
@@ -520,9 +536,13 @@ function startFantasyWorld() {
         reqsHtml += `<span class="req-tag ${has ? 'ready' : 'lack'}">${resLabel} ${count}개 (보유: ${cur})</span>`;
       }
 
+      const itemIconHtml = window.PixelItems
+        ? `<img class="pixel-item-icon recipe-pixel-icon" src="${PixelItems.getDataUrl(r.id)}" alt="${r.name}">`
+        : `<span class="recipe-icon">${r.icon}</span>`;
+
       item.innerHTML = `
         <div class="recipe-left">
-          <span class="recipe-icon">${r.icon}</span>
+          ${itemIconHtml}
           <div class="recipe-details">
             <span class="recipe-name">${r.name}</span>
             <span class="recipe-desc">${r.desc}</span>

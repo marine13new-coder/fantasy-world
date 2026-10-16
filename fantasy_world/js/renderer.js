@@ -252,6 +252,7 @@ class WorldRenderer {
     const { width: cw, height: ch } = this.canvas;
     const ts = TILE_SIZE;
 
+    this.lastWorldTime = worldTime;
     ctx.imageSmoothingEnabled = false; // 픽셀 아트 레더링 유지
 
     ctx.clearRect(0, 0, cw, ch);
@@ -578,103 +579,227 @@ class WorldRenderer {
     const py = Math.round(b.y * ts);
     const bw = Math.round(b.w * ts);
     const bh = Math.round(b.h * ts);
+    const isNight = worldTime ? (worldTime.hour >= 19 || worldTime.hour < 6) : false;
 
-    // 픽셀 그림자
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-    ctx.fillRect(px - bw / 2 + 3, py + bh / 2, bw - 2, 4);
+    // 1. 발밑 그림자 (Pixel Drop Shadow)
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+    ctx.fillRect(px - bw / 2 + 2, py + bh / 2, bw - 2, 5);
 
-    // 픽셀 외벽 (벽돌 패턴)
-    ctx.fillStyle = b.color;
-    ctx.fillRect(px - bw / 2, py - bh / 2, bw, bh);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-    ctx.fillRect(px - bw / 2, py + bh / 2 - 4, bw, 4);
-
-    // 픽셀 지붕 (박공 지붕 삼각형)
-    ctx.fillStyle = b.roofColor;
-    ctx.beginPath();
-    ctx.moveTo(px - bw / 2 - 4, py - bh / 2);
-    ctx.lineTo(px, py - bh / 2 - 16);
-    ctx.lineTo(px + bw / 2 + 4, py - bh / 2);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
-    ctx.fillRect(px - bw / 4, py - bh / 2 - 8, bw / 2, 2); // 지붕 하이라이트 라인
-
-    // 창문 (밤에는 따스한 호박색 픽셀 조명)
-    const isNight = worldTime.hour >= 19 || worldTime.hour < 6;
-    if (isNight && zoom > 0.45) {
-      ctx.fillStyle = '#f59e0b';
-      ctx.fillRect(px - bw / 4 - 3, py - 4, 6, 8);
-      ctx.fillRect(px + bw / 4 - 3, py - 4, 6, 8);
-      ctx.fillStyle = '#fef3c7';
-      ctx.fillRect(px - bw / 4 - 2, py - 3, 2, 2);
-      ctx.fillRect(px + bw / 4 - 2, py - 3, 2, 2);
-    } else if (zoom > 0.5) {
+    // 2. 건물 유형별 정밀 픽셀 건축 렌더링
+    if (b.type === 'palace' || b.type === 'capital_keep') {
+      // [황궁/성채] 3단 성벽, 배틀먼트 요철, 성문, 황실 사자 깃발
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(px - bw / 2, py - bh / 2, bw, bh);
       ctx.fillStyle = '#334155';
-      ctx.fillRect(px - bw / 4 - 3, py - 4, 6, 8);
-      ctx.fillRect(px + bw / 4 - 3, py - 4, 6, 8);
-    }
+      ctx.fillRect(px - bw / 2 + 2, py - bh / 2 + 2, bw - 4, bh - 4);
 
-    // 굴뚝 & 모락모락 픽셀 연기
-    if (b.type === 'forge' || b.type === 'tavern' || b.type === 'market') {
+      // 성벽 배틀먼트 요철
+      for (let bx = px - bw / 2; bx <= px + bw / 2 - 6; bx += 8) {
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(bx, py - bh / 2 - 4, 5, 4);
+      }
+      // 중앙 아치형 성문
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - 6, py + bh / 2 - 12, 12, 12);
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(px - 5, py + bh / 2 - 11, 10, 11);
+
+      // 황금 원뿔 첨탑
+      ctx.fillStyle = '#ca8a04';
+      ctx.beginPath();
+      ctx.moveTo(px - bw / 2, py - bh / 2);
+      ctx.lineTo(px - bw / 2 + 6, py - bh / 2 - 16);
+      ctx.lineTo(px - bw / 2 + 12, py - bh / 2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(px + bw / 2 - 12, py - bh / 2);
+      ctx.lineTo(px + bw / 2 - 6, py - bh / 2 - 16);
+      ctx.lineTo(px + bw / 2, py - bh / 2);
+      ctx.closePath();
+      ctx.fill();
+
+      // 펄럭이는 황실 깃발
+      const flap = Math.round(Math.sin(timeSec * 4 + b.x) * 2);
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(px - 2, py - bh / 2 - 20, 8 + flap, 6);
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(px + 1, py - bh / 2 - 18, 2, 2);
+    } else if (b.type === 'temple' || b.type === 'cathedral') {
+      // [대성당/신전] 고딕 장미창, 스테인드글라스, 십자가 첨탑
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(px - bw / 2, py - bh / 2, bw, bh);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(px - bw / 2 + 3, py - bh / 2 + 3, bw - 6, bh - 6);
+
+      // 고딕 삼각 지붕
+      ctx.fillStyle = '#1e3a8a';
+      ctx.beginPath();
+      ctx.moveTo(px - bw / 2 - 4, py - bh / 2);
+      ctx.lineTo(px, py - bh / 2 - 20);
+      ctx.lineTo(px + bw / 2 + 4, py - bh / 2);
+      ctx.closePath();
+      ctx.fill();
+
+      // 원형 장미창 (스테인드글라스 발광)
+      ctx.fillStyle = isNight ? '#38bdf8' : '#e0f2fe';
+      ctx.beginPath();
+      ctx.arc(px, py - bh / 4, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#f43f5e';
+      ctx.fillRect(px - 2, py - bh / 4 - 2, 4, 4);
+
+      // 황금 십자가
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(px - 1, py - bh / 2 - 28, 2, 8);
+      ctx.fillRect(px - 4, py - bh / 2 - 25, 8, 2);
+    } else if (b.type === 'magic_spire' || b.type === 'guild') {
+      // [아케인 학탑] 나선형 룬 마법탑 + 공중 부유 비전 수정구
+      ctx.fillStyle = '#3b0764';
+      ctx.fillRect(px - bw / 3, py - bh / 2, (bw * 2) / 3, bh);
+      ctx.fillStyle = '#7e22ce';
+      ctx.fillRect(px - bw / 3 + 2, py - bh / 2 + 2, (bw * 2) / 3 - 4, bh - 4);
+
+      // 공중 부유 아케인 수정구
+      const orbY = py - bh / 2 - 16 + Math.round(Math.sin(timeSec * 3 + b.x) * 4);
+      ctx.fillStyle = '#c084fc';
+      ctx.beginPath();
+      ctx.arc(px, orbY, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 1, orbY - 2, 2, 2);
+
+      // 궤도 회전 마법 파편
+      const orbAng = timeSec * 4;
+      const ox = px + Math.cos(orbAng) * 12;
+      const oy = orbY + Math.sin(orbAng) * 5;
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(ox - 1, oy - 1, 3, 3);
+    } else if (b.type === 'forge') {
+      // [대장간] 석조 벽체 + 타오르는 화로 + 연기 굴뚝 + 야외 모루
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(px - bw / 2, py - bh / 2, bw, bh);
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(px - bw / 2 - 3, py - bh / 2 - 10, bw + 6, 10);
+
+      // 타오르는 화로
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(px - 6, py + bh / 4 - 4, 12, 8);
+      ctx.fillStyle = '#fde047';
+      ctx.fillRect(px - 3, py + bh / 4 - 2, 6, 4);
+
+      // 굴뚝 연기 & 불씨 파티클
       const chX = px + Math.round(bw / 3);
       const chY = py - Math.round(bh / 2) - 10;
       ctx.fillStyle = '#334155';
-      ctx.fillRect(chX - 2, chY, 5, 10);
-
+      ctx.fillRect(chX - 2, chY - 6, 6, 8);
       for (let s = 1; s <= 3; s++) {
         const sProg = ((timeSec * 1.5 + s * 0.33) % 1.0);
         const sx = chX + Math.round(Math.sin(timeSec * 2 + s) * 4);
-        const sy = Math.round(chY - sProg * 26);
+        const sy = Math.round(chY - 6 - sProg * 26);
         const sr = Math.max(2, Math.round(3 + sProg * 4));
         ctx.fillStyle = `rgba(226, 232, 240, ${Math.max(0, 0.45 * (1 - sProg))})`;
         ctx.fillRect(sx - sr / 2, sy - sr / 2, sr, sr);
       }
-    }
+      // 야외 강철 모루
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px + bw / 2 + 2, py + bh / 4, 7, 5);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(px + bw / 2 + 1, py + bh / 4 - 2, 9, 3);
+    } else if (b.type === 'windmill') {
+      // [풍차] 원형 석조 베이스 + 회전 4날 캔버스 날개
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(px - bw / 2, py - bh / 2, bw, bh);
+      ctx.fillStyle = '#b45309';
+      ctx.beginPath();
+      ctx.moveTo(px - bw / 2 - 2, py - bh / 2);
+      ctx.lineTo(px, py - bh / 2 - 12);
+      ctx.lineTo(px + bw / 2 + 2, py - bh / 2);
+      ctx.closePath();
+      ctx.fill();
 
-    // 회전하는 픽셀 풍차
-    if (b.type === 'windmill') {
-      const cx = px;
-      const cy = py - 4;
+      // 회전 날개
       ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(timeSec * 1.6);
+      ctx.translate(px, py - 4);
+      ctx.rotate(timeSec * 1.8);
       ctx.fillStyle = '#78350f';
       ctx.fillRect(-2, -36, 4, 72);
       ctx.fillRect(-36, -2, 72, 4);
-
       ctx.fillStyle = '#fef3c7';
       ctx.fillRect(2, -34, 10, 24);
       ctx.fillRect(2, 10, 10, 24);
       ctx.fillRect(-34, 2, 24, 10);
       ctx.fillRect(10, -12, 24, 10);
       ctx.restore();
-    }
+    } else if (b.type === 'tavern') {
+      // [여관/주점] 튜더 양식 목조 기둥 + 매달린 맥주잔 간판
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillRect(px - bw / 2, py - bh / 2, bw, bh);
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(px - bw / 2, py - bh / 2, 3, bh);
+      ctx.fillRect(px + bw / 2 - 3, py - bh / 2, 3, bh);
+      ctx.fillRect(px - 1, py - bh / 2, 3, bh);
 
-    // 펄럭이는 픽셀 깃발
-    if (b.type === 'barracks' || b.type === 'palace') {
-      const fx = px;
-      const fy = py - Math.round(bh / 2) - 16;
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(fx, fy - 12, 2, 12);
-      const flap = Math.round(Math.sin(timeSec * 4 + b.x) * 2);
-      ctx.fillStyle = b.roofColor;
-      ctx.fillRect(fx + 2, fy - 12, 8 + flap, 6);
-    }
+      ctx.fillStyle = '#b45309';
+      ctx.beginPath();
+      ctx.moveTo(px - bw / 2 - 4, py - bh / 2);
+      ctx.lineTo(px, py - bh / 2 - 15);
+      ctx.lineTo(px + bw / 2 + 4, py - bh / 2);
+      ctx.closePath();
+      ctx.fill();
 
-    if (zoom > 0.45) {
-      ctx.font = '18px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(b.icon, px, py + 4);
-
-      if (zoom > 0.82) {
-        ctx.font = 'bold 11px Pretendard, sans-serif';
-        ctx.fillStyle = '#f8fafc';
-        ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-        ctx.lineWidth = 3;
-        ctx.strokeText(b.name, px, py - Math.round(bh / 2) - 18);
-        ctx.fillText(b.name, px, py - Math.round(bh / 2) - 18);
+      // 맥주잔 간판
+      ctx.fillStyle = '#ca8a04';
+      ctx.fillRect(px + bw / 2 + 1, py - 6, 7, 6);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(px + bw / 2 + 3, py - 5, 3, 4);
+    } else if (b.type === 'market') {
+      // [시장/바자르] 줄무늬 차양막 + 과일/곡물 상자
+      ctx.fillStyle = '#fed7aa';
+      ctx.fillRect(px - bw / 2, py - bh / 2, bw, bh);
+      const awW = bw + 6;
+      for (let ax = 0; ax < awW; ax += 6) {
+        ctx.fillStyle = (ax / 6) % 2 === 0 ? '#ef4444' : '#ffffff';
+        ctx.fillRect(px - awW / 2 + ax, py - bh / 2 - 6, 6, 8);
       }
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(px - bw / 3, py + bh / 4, 8, 5);
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(px - bw / 3 + 1, py + bh / 4 - 2, 6, 2);
+    } else {
+      // 기본 정밀 가옥
+      ctx.fillStyle = b.color || '#cbd5e1';
+      ctx.fillRect(px - bw / 2, py - bh / 2, bw, bh);
+      ctx.fillStyle = b.roofColor || '#78350f';
+      ctx.beginPath();
+      ctx.moveTo(px - bw / 2 - 4, py - bh / 2);
+      ctx.lineTo(px, py - bh / 2 - 14);
+      ctx.lineTo(px + bw / 2 + 4, py - bh / 2);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // 창문 조명 (야간 호박색 발광 / 주간 틴트)
+    if (zoom > 0.45) {
+      const winColor = isNight ? '#f59e0b' : '#334155';
+      ctx.fillStyle = winColor;
+      ctx.fillRect(px - bw / 4 - 3, py - 3, 6, 7);
+      ctx.fillRect(px + bw / 4 - 3, py - 3, 6, 7);
+      if (isNight) {
+        ctx.fillStyle = '#fef3c7';
+        ctx.fillRect(px - bw / 4 - 2, py - 2, 2, 2);
+        ctx.fillRect(px + bw / 4 - 2, py - 2, 2, 2);
+      }
+    }
+
+    // 이름 라벨
+    if (zoom > 0.82) {
+      ctx.font = 'bold 11px Pretendard, sans-serif';
+      ctx.fillStyle = '#f8fafc';
+      ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+      ctx.lineWidth = 3;
+      ctx.strokeText(b.name, px, py - Math.round(bh / 2) - 18);
+      ctx.fillText(b.name, px, py - Math.round(bh / 2) - 18);
     }
   }
 
@@ -903,8 +1028,9 @@ class WorldRenderer {
       }
 
       // 2. 플레이어 백마 탑승 특수 렌더링
+      const isNight = (this.lastWorldTime && (this.lastWorldTime.hour >= 20 || this.lastWorldTime.hour < 5));
       if (e.role === 'player' && e.mount === 'horse') {
-        window.PixelSprites.draw(ctx, { ...e, animalType: 'horse', role: 'animal' }, px, py + 2 * sc, bounce, timeSec);
+        window.PixelSprites.draw(ctx, { ...e, animalType: 'horse', role: 'animal' }, px, py + 2 * sc, bounce, timeSec, isNight);
         // 말 위에 탑승한 플레이어 상체
         ctx.fillStyle = '#dc2626'; // 망토
         ctx.fillRect(px - 6 * sc, sy - 11 * sc, 3 * sc, 8 * sc);
@@ -920,7 +1046,7 @@ class WorldRenderer {
       }
 
       // 3. 모든 영웅/NPC/몬스터/야생동물 정밀 픽셀 아트 매트릭스 렌더링
-      window.PixelSprites.draw(ctx, e, px, py, bounce, timeSec);
+      window.PixelSprites.draw(ctx, e, px, py, bounce, timeSec, isNight);
       return;
     }
 
