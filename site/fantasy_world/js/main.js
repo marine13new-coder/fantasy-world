@@ -162,6 +162,111 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnSkillE').addEventListener('click', () => entityMgr.triggerPlayerSkill('E'));
   document.getElementById('btnSkillF').addEventListener('click', () => entityMgr.triggerPlayerSkill('F'));
 
+  // 탈것 변경 버튼
+  const btnToggleMount = document.getElementById('btnToggleMount');
+  const mountIconEl = document.getElementById('mountIcon');
+  const mountNameEl = document.getElementById('mountName');
+
+  btnToggleMount.addEventListener('click', () => {
+    entityMgr.togglePlayerMount();
+    updateMountUI();
+  });
+
+  function updateMountUI() {
+    if (!mountIconEl || !mountNameEl) return;
+    if (player.isShip) {
+      mountIconEl.textContent = '⛵';
+      mountNameEl.textContent = '특무범선';
+    } else if (player.isFlying && player.mount === 'dragon') {
+      mountIconEl.textContent = '🐉';
+      mountNameEl.textContent = '고대비룡';
+    } else if (player.mount === 'horse') {
+      mountIconEl.textContent = '🏇';
+      mountNameEl.textContent = '왕실백마';
+    } else {
+      mountIconEl.textContent = '🚶';
+      mountNameEl.textContent = '도보탐험';
+    }
+  }
+
+  // 퀘스트 HUD 컨트롤
+  const questCategoryEl = document.getElementById('questCategory');
+  const questTitleEl = document.getElementById('questTitle');
+  const questDescEl = document.getElementById('questDesc');
+  const questProgressBarFill = document.getElementById('questProgressBarFill');
+  const questProgressText = document.getElementById('questProgressText');
+  const questDistanceEl = document.getElementById('questDistance');
+  const questRewardEl = document.getElementById('questReward');
+  const btnNewQuest = document.getElementById('btnNewQuest');
+  const btnToggleQuestHud = document.getElementById('btnToggleQuestHud');
+  const questBodyEl = document.getElementById('questBody');
+
+  btnToggleQuestHud.addEventListener('click', () => {
+    questBodyEl.classList.toggle('collapsed');
+    btnToggleQuestHud.textContent = questBodyEl.classList.contains('collapsed') ? '➕' : '➖';
+  });
+
+  btnNewQuest.addEventListener('click', () => {
+    if (entityMgr.questSystem) {
+      entityMgr.questSystem.generateNewQuest();
+      updateQuestHudUI();
+    }
+  });
+
+  function updateQuestHudUI() {
+    if (!entityMgr.questSystem || !entityMgr.questSystem.activeQuest) return;
+    const q = entityMgr.questSystem.activeQuest;
+    if (questCategoryEl) questCategoryEl.textContent = q.category;
+    if (questTitleEl) questTitleEl.textContent = q.title;
+    if (questDescEl) questDescEl.textContent = q.desc;
+
+    const progPct = Math.min(100, Math.round((q.progress / q.maxProgress) * 100));
+    if (questProgressBarFill) questProgressBarFill.style.width = `${progPct}%`;
+    if (questProgressText) questProgressText.textContent = `${progPct}%`;
+
+    const distTiles = Math.hypot(q.targetX - player.x, q.targetY - player.y);
+    const distMeters = Math.round(distTiles * 10);
+    const dx = q.targetX - player.x;
+    const dy = q.targetY - player.y;
+    let dir = '';
+    if (dy < -4) dir += '북';
+    if (dy > 4) dir += '남';
+    if (dx > 4) dir += '동';
+    if (dx < -4) dir += '서';
+    if (!dir) dir = '근접';
+    if (questDistanceEl) questDistanceEl.textContent = `🧭 ${distMeters}m ${dir}쪽 (${q.targetName})`;
+    if (questRewardEl) questRewardEl.textContent = `💰 +${q.goldReward.toLocaleString()} G · 🌟 명성 +${q.fameReward}`;
+  }
+
+  // 정착지 상호작용 프롬프트 배너
+  const settlementPromptEl = document.getElementById('settlementPrompt');
+  const promptSettlementNameEl = document.getElementById('promptSettlementName');
+  const btnInteractSettlement = document.getElementById('btnInteractSettlement');
+
+  btnInteractSettlement.addEventListener('click', () => {
+    entityMgr.interactWithNearestSettlement();
+  });
+
+  function updateSettlementPromptUI() {
+    let nearest = null;
+    let minDist = 7.5;
+    for (const s of world.settlements) {
+      if (s.faction === 'kingdom') {
+        const d = Math.hypot(s.x - player.x, s.y - player.y);
+        if (d < minDist) {
+          minDist = d;
+          nearest = s;
+        }
+      }
+    }
+    if (nearest) {
+      settlementPromptEl.classList.remove('hidden');
+      promptSettlementNameEl.textContent = `${nearest.name}`;
+    } else {
+      settlementPromptEl.classList.add('hidden');
+    }
+  }
+
   // 군주 칙령 바인딩
   document.getElementById('btnDispatchFleet').addEventListener('click', () => entityMgr.dispatchTradeFleet());
   document.getElementById('btnDispatchCrusade').addEventListener('click', () => entityMgr.dispatchCrusade());
@@ -297,13 +402,21 @@ document.addEventListener('DOMContentLoaded', () => {
       entityMgr.triggerPlayerSkill('E');
     } else if (e.code === 'KeyF') {
       entityMgr.triggerPlayerSkill('F');
+    } else if (e.code === 'KeyR') {
+      entityMgr.togglePlayerMount();
+      updateMountUI();
     } else if (e.code === 'KeyP') {
       isPlayerControlActive = !isPlayerControlActive;
       if (isPlayerControlActive) startFollow(player);
       updatePlayerControlUI();
     } else if (e.code === 'Space') {
       e.preventDefault();
-      setWorldSpeed(worldTime.speed === 0 ? prevNonZeroSpeed : 0);
+      if (isPlayerControlActive) {
+        entityMgr.togglePlayerMount();
+        updateMountUI();
+      } else {
+        setWorldSpeed(worldTime.speed === 0 ? prevNonZeroSpeed : 0);
+      }
     } else if (e.code === 'KeyM') {
       stopFollow();
       smoothMoveCamera(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0.18);
@@ -611,10 +724,13 @@ document.addEventListener('DOMContentLoaded', () => {
     renderer.render(camera, worldTime, filterCategory, selectedItem, now / 1000);
 
     uiTick += rawDt;
-    if (uiTick > 0.3) {
+    if (uiTick > 0.25) {
       uiTick = 0;
       updateTopHudUI();
       updateEconomyTableUI();
+      updateQuestHudUI();
+      updateSettlementPromptUI();
+      updateMountUI();
       if (selectedItem) updateInspectorUI();
     }
 

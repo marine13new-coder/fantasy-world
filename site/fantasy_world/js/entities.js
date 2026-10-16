@@ -67,6 +67,162 @@ const RACE_LABELS = {
 
 let NEXT_ENTITY_ID = 1;
 
+// ============================================================================
+// 왕국 의뢰소 & 현상금 퀘스트 시스템 (Quest & Bounty System)
+// ============================================================================
+class QuestSystem {
+  constructor(world, em) {
+    this.world = world;
+    this.em = em;
+    this.activeQuest = null;
+    this.completedCount = 0;
+    this.questTypes = ['bounty', 'trade', 'scout', 'gather'];
+    this.generateNewQuest();
+  }
+
+  generateNewQuest() {
+    const sMap = this.world.settlementMap;
+    const settlements = Object.values(sMap);
+    const friendlySettlements = settlements.filter(s => s.faction !== 'monster');
+
+    const type = this.questTypes[Math.floor(Math.random() * this.questTypes.length)];
+    let q = null;
+
+    if (type === 'bounty') {
+      const targets = [
+        { name: '화염룡 이그니스', loc: sMap.volcano_isle || { x: 390, y: 285 }, desc: '남방 화산섬에서 대륙을 위협하는 고대 화염룡을 토벌하십시오.', icon: '🐉', gold: 3500, fame: 80 },
+        { name: '검은수염 해적 제독', loc: sMap.pirate_cove || { x: 195, y: 235 }, desc: '해적 소굴에 진입하여 약탈 선단을 지휘하는 해적 제독을 격침하십시오.', icon: '🏴‍☠️', gold: 2600, fame: 60 },
+        { name: '오크 대군주 그롬쉬', loc: sMap.orc_stronghold || { x: 265, y: 72 }, desc: '오크 요새의 전쟁군주를 쓰러뜨려 왕국 북방 국경을 수호하십시오.', icon: '👹', gold: 2200, fame: 55 },
+        { name: '스켈레톤 리치 아자젤', loc: sMap.obsidian_necropolis || { x: 420, y: 55 }, desc: '흑암 네크로폴리스의 사령술사를 처단하여 언데드 군단을 잠재우십시오.', icon: '💀', gold: 2800, fame: 70 }
+      ];
+      const t = targets[Math.floor(Math.random() * targets.length)];
+      q = {
+        id: 'q_' + Date.now(),
+        type: 'bounty',
+        category: '토벌',
+        title: `${t.name} 토벌`,
+        targetName: t.name,
+        targetX: t.loc.x,
+        targetY: t.loc.y,
+        progress: 0,
+        maxProgress: 1,
+        desc: t.desc,
+        goldReward: t.gold,
+        fameReward: t.fame,
+        icon: t.icon
+      };
+    } else if (type === 'trade') {
+      const origin = friendlySettlements[Math.floor(Math.random() * friendlySettlements.length)];
+      let dest = friendlySettlements[Math.floor(Math.random() * friendlySettlements.length)];
+      while (dest.id === origin.id && friendlySettlements.length > 1) {
+        dest = friendlySettlements[Math.floor(Math.random() * friendlySettlements.length)];
+      }
+      const goods = ['🌾 황금 밀알', '💎 심해 진주', '🌿 세계수 비약', '🌶️ 황금 향신료', '⚔️ 미스릴 무기'];
+      const good = goods[Math.floor(Math.random() * goods.length)];
+      q = {
+        id: 'q_' + Date.now(),
+        type: 'trade',
+        category: '무역',
+        title: `${dest.name} 특산품 수송`,
+        targetName: dest.name,
+        targetX: dest.x,
+        targetY: dest.y,
+        originName: origin.name,
+        progress: 0,
+        maxProgress: 1,
+        desc: `[${origin.name}]에서 조달한 ${good}을 [${dest.name}] 시장으로 안전하게 수송하십시오.`,
+        goldReward: 2000 + Math.floor(Math.random() * 800),
+        fameReward: 45,
+        icon: '⛵'
+      };
+    } else if (type === 'scout') {
+      const scouts = [
+        { name: '천공 용의 고원', loc: sMap.sky_dragon_eyrie || { x: 425, y: 175 }, desc: '구름 위 떠있는 고대 드래곤 둥지를 비행 탐색하여 룬 제단을 확인하십시오.', icon: '☁️', gold: 1800, fame: 50 },
+        { name: '스핑크스 피라미드', loc: sMap.sphinx_pyramid || { x: 310, y: 255 }, desc: '사막 한가운데 자리잡은 미지의 황금 피라미드 유적을 정찰하십시오.', icon: '🏛️', gold: 1600, fame: 40 },
+        { name: '론 비컨 고도 등대', loc: sMap.lone_beacon || { x: 455, y: 215 }, desc: '대해양 동단 고도에 위치한 전설의 등대 불빛을 확인하십시오.', icon: '🗼', gold: 1900, fame: 50 },
+        { name: '요정의 숲 세계수 성소', loc: sMap.fairy_glade || { x: 145, y: 245 }, desc: '엘프 연합 영지 깊숙한 곳의 신비로운 세계수 성소를 순례하십시오.', icon: '🧚', gold: 1500, fame: 35 }
+      ];
+      const t = scouts[Math.floor(Math.random() * scouts.length)];
+      q = {
+        id: 'q_' + Date.now(),
+        type: 'scout',
+        category: '탐사',
+        title: `${t.name} 정찰`,
+        targetName: t.name,
+        targetX: t.loc.x,
+        targetY: t.loc.y,
+        progress: 0,
+        maxProgress: 1,
+        desc: t.desc,
+        goldReward: t.gold,
+        fameReward: t.fame,
+        icon: t.icon
+      };
+    } else {
+      const dest = friendlySettlements[Math.floor(Math.random() * friendlySettlements.length)];
+      q = {
+        id: 'q_' + Date.now(),
+        type: 'gather',
+        category: '보급',
+        title: `${dest.name} 긴급 보급 의뢰`,
+        targetName: dest.name,
+        targetX: dest.x,
+        targetY: dest.y,
+        progress: 0,
+        maxProgress: 1,
+        desc: `전쟁과 무역으로 소진된 식량과 비약을 [${dest.name}] 수비대에 지원하십시오.`,
+        goldReward: 1500 + Math.floor(Math.random() * 500),
+        fameReward: 35,
+        icon: '📦'
+      };
+    }
+
+    this.activeQuest = q;
+    return q;
+  }
+
+  update(dt, player) {
+    if (!this.activeQuest || !player) return;
+    const q = this.activeQuest;
+    const dist = Math.hypot(player.x - q.targetX, player.y - q.targetY);
+
+    if (q.type === 'bounty') {
+      if (dist < 6.5) {
+        q.progress = Math.min(q.maxProgress, q.progress + dt * 0.45);
+        if (q.progress >= q.maxProgress) {
+          this.completeQuest(player);
+        }
+      }
+    } else {
+      if (dist < 5.0) {
+        q.progress = q.maxProgress;
+        this.completeQuest(player);
+      }
+    }
+  }
+
+  completeQuest(player) {
+    if (!this.activeQuest) return;
+    const q = this.activeQuest;
+    this.completedCount++;
+
+    player.gold += q.goldReward;
+    player.fame = (player.fame || 0) + q.fameReward;
+    player.atk += 3;
+    player.maxHp += 25;
+    player.hp = player.maxHp;
+
+    this.em.addEffect(player.x, player.y, 8.5, '#facc15', 1.6);
+    this.em.addFloatingText(player.x, player.y - 1.8, `🎉 의뢰 완료! +${q.goldReward}G · 명성+${q.fameReward}`, '#fde047', 2.8);
+    this.em.addFloatingText(player.x, player.y - 2.8, `⚔️ 영웅 능력치 강화! (공격력+3, 체력+25)`, '#4ade80', 2.8);
+
+    this.em.log('quest', `🏆 [의뢰 완료] '${q.title}' 완수! (+${q.goldReward}G, 명성 +${q.fameReward})`, player.x, player.y);
+
+    const nextQ = this.generateNewQuest();
+    this.em.log('quest', `📜 새로운 왕국 의뢰 발령: ${nextQ.title}`, player.x, player.y);
+  }
+}
+
 class EntityManager {
   constructor(world, onEventLog) {
     this.world = world;
@@ -77,6 +233,7 @@ class EntityManager {
     this.specialEffects = [];
     this.activeBattles = 0;
     this.player = null;
+    this.questSystem = new QuestSystem(this.world, this);
   }
 
   log(type, text, x, y) {
@@ -740,15 +897,69 @@ class EntityManager {
       x: cap.x,
       y: cap.y + 2,
       hp: 520, maxHp: 520, atk: 44, gold: 1200, level: 5, scale: 1.35,
-      thought: '🕹️ 직접 조작 중 (WASD 이동 / 우클릭 이동·공격 / Q·E·F 스킬)'
+      thought: '🕹️ 직접 조작 중 (WASD 이동 / Space 탈것 / 우클릭 이동·공격 / Q·E·F 스킬)'
     });
+    this.player.mount = 'horse';
+    this.player.isFlying = false;
+    this.player.fame = 0;
+    this.player.icon = '🏇';
+    this.player.speed = 2.65;
     this.addEffect(this.player.x, this.player.y, 5, '#facc15', 1.0);
-    this.log('quest', '🌟 플레이어 영웅이 아테리아 대륙에 강림했습니다!', this.player.x, this.player.y);
+    this.log('quest', '🌟 플레이어 영웅이 아테리아 대륙에 강림했습니다! (백마 탑승)', this.player.x, this.player.y);
     return this.player;
+  }
+
+  togglePlayerMount() {
+    const p = this.spawnOrGetPlayer();
+    if (p.isShip) {
+      this.addFloatingText(p.x, p.y - 1.2, '⚓ 바다 위에서는 항해 중입니다! 부두(DOCK)나 모래 해변(SAND)으로 전진해 상륙하세요.', '#f87171', 1.8);
+      return;
+    }
+
+    if (p.mount === 'horse') {
+      // 백마 -> 비룡
+      p.mount = 'dragon';
+      p.isFlying = true;
+      p.speed = 3.65;
+      p.icon = '🐉';
+      this.addEffect(p.x, p.y, 6.0, '#ef4444', 0.8);
+      this.addFloatingText(p.x, p.y - 1.6, '🐉 고대 비룡 탑승! 구름 위로 날아오릅니다 (전 지형 자유 비행)', '#f87171', 2.2);
+      this.log('quest', '🐉 플레이어가 고대 비룡을 타고 창공으로 날아올랐습니다!', p.x, p.y);
+    } else if (p.mount === 'dragon') {
+      // 비룡 -> 도보 (착륙 지형 검사)
+      const tx = Math.floor(p.x);
+      const ty = Math.floor(p.y);
+      const tile = this.world.getTile(tx, ty);
+      if (tile === TILE.DEEP_WATER || tile === TILE.WATER || tile === TILE.LAVA || tile === TILE.MOUNTAIN_HIGH) {
+        this.addFloatingText(p.x, p.y - 1.2, '⚠️ 물/용암/높은 산 위에서는 착륙할 수 없습니다! 안전한 평지로 날아가세요.', '#f87171', 1.8);
+        return;
+      }
+      p.mount = 'none';
+      p.isFlying = false;
+      p.speed = 1.95;
+      p.icon = '🌟';
+      this.addEffect(p.x, p.y, 3.0, '#94a3b8', 0.6);
+      this.addFloatingText(p.x, p.y - 1.2, '🚶 도보 모드로 전환했습니다.', '#cbd5e1', 1.5);
+      this.log('quest', '🚶 플레이어가 지상에 착륙하여 도보로 걷습니다.', p.x, p.y);
+    } else {
+      // 도보 -> 백마
+      p.mount = 'horse';
+      p.isFlying = false;
+      p.speed = 2.65;
+      p.icon = '🏇';
+      this.addEffect(p.x, p.y, 4.0, '#facc15', 0.6);
+      this.addFloatingText(p.x, p.y - 1.2, '🏇 왕실 백마에 탑승했습니다! (육상 질주)', '#fde047', 1.6);
+      this.log('quest', '🏇 플레이어가 왕실 백마에 올라타 질주합니다.', p.x, p.y);
+    }
   }
 
   triggerPlayerSkill(skillKey) {
     const p = this.spawnOrGetPlayer();
+    if (skillKey === 'SPACE' || skillKey === 'R' || skillKey === 'mount') {
+      this.togglePlayerMount();
+      return;
+    }
+
     if (skillKey === 'Q') {
       this.addEffect(p.x, p.y, 11, '#f97316', 0.85);
       let hitCount = 0;
@@ -775,33 +986,39 @@ class EntityManager {
       this.addEffect(p.x, p.y, 4.5, '#38bdf8', 0.7);
       this.addFloatingText(p.x, p.y - 1.4, '💨 질주 가속 & 생명력 회복!', '#38bdf8', 1.4);
     } else if (skillKey === 'F') {
-      let nearestTown = null;
-      let minDist = 18;
-      for (const s of this.world.settlements) {
-        if (s.faction === 'kingdom') {
-          const d = Math.hypot(s.x - p.x, s.y - p.y);
-          if (d < minDist) {
-            minDist = d;
-            nearestTown = s;
-          }
+      this.interactWithNearestSettlement();
+    }
+  }
+
+  interactWithNearestSettlement() {
+    const p = this.spawnOrGetPlayer();
+    let nearestTown = null;
+    let minDist = 18;
+    for (const s of this.world.settlements) {
+      if (s.faction === 'kingdom') {
+        const d = Math.hypot(s.x - p.x, s.y - p.y);
+        if (d < minDist) {
+          minDist = d;
+          nearestTown = s;
         }
       }
-      if (nearestTown) {
-        const invGain = (p.inventory.gems || 0) * 80 + (p.inventory.spices || 0) * 90;
-        p.inventory.gems = 0;
-        p.inventory.spices = 0;
-        const tradeProfit = 250 + invGain;
-        p.gold += tradeProfit;
-        p.level++;
-        p.maxHp += 40;
-        p.hp = p.maxHp;
-        p.atk += 6;
-        this.addEffect(p.x, p.y, 5, '#4ade80', 0.8);
-        this.addFloatingText(p.x, p.y - 1.5, `🪙 교역 +${tradeProfit}G & Lv.${p.level} 장비 강화!`, '#4ade80', 1.8);
-        this.log('trade', `🌟 플레이어가 [${nearestTown.name}]에서 교역 및 장비 강화를 마쳐 Lv.${p.level}(공격력 ${p.atk})이 되었습니다!`, p.x, p.y);
-      } else {
-        this.addFloatingText(p.x, p.y - 1.4, '⚠️ 근처 왕국 도시/항구에서 사용 가능합니다', '#fca5a5', 1.4);
-      }
+    }
+    if (nearestTown) {
+      const invGain = (p.inventory.gems || 0) * 80 + (p.inventory.spices || 0) * 90;
+      p.inventory.gems = 0;
+      p.inventory.spices = 0;
+      const tradeProfit = 280 + invGain;
+      p.gold += tradeProfit;
+      p.level++;
+      p.maxHp += 40;
+      p.hp = p.maxHp;
+      p.atk += 6;
+      p.fame = (p.fame || 0) + 10;
+      this.addEffect(p.x, p.y, 6.0, '#4ade80', 1.0);
+      this.addFloatingText(p.x, p.y - 1.5, `🪙 [${nearestTown.name}] 교역 +${tradeProfit}G & 무기 강화 (Lv.${p.level})`, '#4ade80', 2.0);
+      this.log('trade', `🌟 플레이어가 [${nearestTown.name}]에서 특산물 매각 및 무기 강화를 완료했습니다! (Lv.${p.level}, 공격력 ${p.atk})`, p.x, p.y);
+    } else {
+      this.addFloatingText(p.x, p.y - 1.4, '⚠️ 인근 왕국 도시나 항구 근처에서 상호작용 가능합니다', '#fca5a5', 1.4);
     }
   }
 
@@ -1018,6 +1235,11 @@ class EntityManager {
   update(dt, worldTime, playerInput) {
     const isNight = worldTime.hour >= 21 || worldTime.hour < 5;
     let battleCount = 0;
+
+    // 왕국 의뢰 및 현상금 퀘스트 진행도 갱신
+    if (this.questSystem && this.player) {
+      this.questSystem.update(dt, this.player);
+    }
 
     // 농작물 성장
     for (const plot of this.world.farmPlots) {
@@ -1352,10 +1574,20 @@ class EntityManager {
         return false;
       };
 
-      // 대각선 이동 시도 -> 실패 시 X 단독 또는 Y 단독 슬라이딩 이동
-      if (!tryMove(moveX, moveY)) {
-        if (!tryMove(moveX, 0)) {
-          tryMove(0, moveY);
+      // 비룡 비행 모드 또는 육/해상 지형 이동
+      if (p.isFlying) {
+        p.x = Math.max(2, Math.min(WORLD_WIDTH - 3, p.x + moveX));
+        p.y = Math.max(2, Math.min(WORLD_HEIGHT - 3, p.y + moveY));
+        p.animPhase = (p.animPhase || 0) + dt * 7;
+        if (Math.random() < 0.12) {
+          this.addEffect(p.x, p.y, 0.7, '#f97316', 0.25);
+        }
+      } else {
+        // 대각선 이동 시도 -> 실패 시 X 단독 또는 Y 단독 슬라이딩 이동
+        if (!tryMove(moveX, moveY)) {
+          if (!tryMove(moveX, 0)) {
+            tryMove(0, moveY);
+          }
         }
       }
 
@@ -1363,9 +1595,13 @@ class EntityManager {
       p.y = Math.max(2, Math.min(WORLD_HEIGHT - 3, p.y));
       p.targetX = p.x;
       p.targetY = p.y;
-      p.thought = p.isShip
-        ? '⛵ 전용 범선으로 대해양 및 신대륙 항해 중!'
-        : '🌟 대륙을 직접 탐험 중 (Q:심판 / E:질주 / F:도시교역)';
+      p.thought = p.isFlying
+        ? '🐉 고대 비룡을 타고 창공 비행 중! (Space:착륙 / WASD:비행)'
+        : (p.isShip
+          ? '⛵ 전용 범선으로 대해양 및 군도 항해 중!'
+          : (p.mount === 'horse'
+            ? '🏇 왕실 백마를 타고 대륙 질주 중! (Space:비룡비행)'
+            : '🚶 도보로 대륙 탐험 중 (Space:백마탑승)'));
     } else {
       this.moveTowardTarget(p, dt * boostMult);
     }

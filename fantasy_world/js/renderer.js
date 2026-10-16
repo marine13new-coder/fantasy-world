@@ -433,7 +433,17 @@ class WorldRenderer {
     // 12. 거점 이름표
     this.drawSettlementLabels(ctx, ts, camera.zoom, selectedItem);
 
+    // 12.5. 퀘스트 목표 지점 천공 빔 & 비컨
+    if (this.entityMgr.questSystem && this.entityMgr.questSystem.activeQuest) {
+      this.drawQuestBeacon(ctx, ts, timeSec, this.entityMgr.questSystem.activeQuest);
+    }
+
     ctx.restore();
+
+    // 12.6. 화면 나침반 네비게이션 가이드 화살표
+    if (this.entityMgr.player && this.entityMgr.questSystem && this.entityMgr.questSystem.activeQuest) {
+      this.drawQuestNavigationCompass(ctx, camera, cw, ch, timeSec, this.entityMgr.player, this.entityMgr.questSystem.activeQuest);
+    }
 
     // 13. 대기 및 날씨 조명 오버레이
     this.drawAtmosphereOverlay(ctx, cw, ch, worldTime, timeSec);
@@ -788,34 +798,97 @@ class WorldRenderer {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
     ctx.fillRect(px - 5 * sc, py + 4 * sc, 10 * sc, 3 * sc);
 
-    // [플레이어 영웅] 황금 관 + 파란 튜닉 + 붉은 망토 + 전설검
+    // [플레이어 영웅] 탈것(비룡 비행 / 백마 질주 / 도보)에 따른 픽셀아트 렌더링
     if (e.role === 'player') {
-      // 붉은 망토
-      ctx.fillStyle = '#dc2626';
-      ctx.fillRect(px - 6 * sc, sy - 8 * sc, 3 * sc, 10 * sc);
+      // 1. 고대 비룡 탑승 비행 모드
+      if (e.isFlying && e.mount === 'dragon') {
+        // 지면 거대 그림자
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+        ctx.fillRect(px - 14 * sc, py + 16 * sc, 28 * sc, 6 * sc);
 
-      // 백마 탑승 (육상 모드)
-      ctx.fillStyle = '#f8fafc';
-      ctx.fillRect(px - 7 * sc, sy - 3 * sc, 14 * sc, 8 * sc);
-      ctx.fillRect(px + 4 * sc, sy - 8 * sc, 5 * sc, 6 * sc); // 말 머리
-      ctx.fillStyle = '#b45309';
-      ctx.fillRect(px - 2 * sc, sy - 4 * sc, 5 * sc, 3 * sc); // 안장
+        // 공중 상승 오프셋 (-14px) 및 날개 펄럭임
+        const flyY = sy - 14 * sc;
+        const flap = Math.round(Math.sin(timeSec * 7.5) * 5 * sc);
 
-      // 영웅 본체
-      ctx.fillStyle = '#1d4ed8'; // 로열 블루 갑주
-      ctx.fillRect(px - 3 * sc, sy - 11 * sc, 6 * sc, 7 * sc);
+        // 붉은 비룡 동체 및 머리/꼬리
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(px - 10 * sc, flyY - 4 * sc, 20 * sc, 9 * sc);
+        ctx.fillRect(px - 18 * sc, flyY - 1 * sc, 9 * sc, 4 * sc); // 꼬리
+        ctx.fillRect(px + 8 * sc, flyY - 9 * sc, 8 * sc, 8 * sc);  // 용 머리
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(px + 13 * sc, flyY - 8 * sc, 2 * sc, 2 * sc); // 안광
+
+        // 불타는 날개
+        ctx.fillStyle = '#b91c1c';
+        ctx.fillRect(px - 16 * sc, flyY - 12 * sc + flap, 12 * sc, 3 * sc);
+        ctx.fillRect(px + 4 * sc, flyY - 12 * sc + flap, 12 * sc, 3 * sc);
+        ctx.fillStyle = '#f97316';
+        ctx.globalAlpha = 0.75;
+        ctx.fillRect(px - 14 * sc, flyY - 10 * sc + flap, 10 * sc, 6 * sc);
+        ctx.fillRect(px + 6 * sc, flyY - 10 * sc + flap, 10 * sc, 6 * sc);
+        ctx.globalAlpha = 1.0;
+
+        // 비룡 등 위의 플레이어
+        ctx.fillStyle = '#1d4ed8'; // 로열 블루 갑주
+        ctx.fillRect(px - 2 * sc, flyY - 11 * sc, 5 * sc, 8 * sc);
+        ctx.fillStyle = '#fed7aa'; // 얼굴
+        ctx.fillRect(px - 1 * sc, flyY - 14 * sc, 4 * sc, 4 * sc);
+        ctx.fillStyle = '#facc15'; // 황금 관
+        ctx.fillRect(px - 2 * sc, flyY - 16 * sc, 6 * sc, 2 * sc);
+        // 전설검
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(px + 4 * sc, flyY - 17 * sc, 2 * sc, 9 * sc);
+        return;
+      }
+
+      // 2. 왕실 백마 탑승 모드
+      if (e.mount === 'horse') {
+        // 붉은 망토
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(px - 6 * sc, sy - 8 * sc, 3 * sc, 10 * sc);
+
+        // 백마
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(px - 7 * sc, sy - 3 * sc, 14 * sc, 8 * sc);
+        ctx.fillRect(px + 4 * sc, sy - 8 * sc, 5 * sc, 6 * sc); // 말 머리
+        ctx.fillStyle = '#b45309';
+        ctx.fillRect(px - 2 * sc, sy - 4 * sc, 5 * sc, 3 * sc); // 안장
+
+        // 영웅 본체
+        ctx.fillStyle = '#1d4ed8'; // 로열 블루 갑주
+        ctx.fillRect(px - 3 * sc, sy - 11 * sc, 6 * sc, 7 * sc);
+        ctx.fillStyle = '#fed7aa'; // 얼굴
+        ctx.fillRect(px - 2 * sc, sy - 15 * sc, 4 * sc, 4 * sc);
+        ctx.fillStyle = '#facc15'; // 황금 왕관
+        ctx.fillRect(px - 3 * sc, sy - 17 * sc, 6 * sc, 2 * sc);
+        ctx.fillRect(px - 2 * sc, sy - 18 * sc, 1 * sc, 1 * sc);
+        ctx.fillRect(px + 1 * sc, sy - 18 * sc, 1 * sc, 1 * sc);
+
+        // 전설검
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(px + 4 * sc, sy - 14 * sc, 2 * sc, 8 * sc);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(px + 4 * sc, sy - 16 * sc, 2 * sc, 3 * sc);
+        return;
+      }
+
+      // 3. 도보 탐험 모드
+      ctx.fillStyle = '#dc2626'; // 망토
+      ctx.fillRect(px - 5 * sc, sy - 5 * sc, 3 * sc, 8 * sc);
+
+      const leg = Math.round(Math.sin(timeSec * 10) * 2 * sc);
+      ctx.fillStyle = '#1e293b'; // 바지/다리
+      ctx.fillRect(px - 3 * sc, sy + 1 * sc, 2 * sc, 5 * sc + leg);
+      ctx.fillRect(px + 1 * sc, sy + 1 * sc, 2 * sc, 5 * sc - leg);
+
+      ctx.fillStyle = '#1d4ed8'; // 갑주
+      ctx.fillRect(px - 3 * sc, sy - 6 * sc, 6 * sc, 7 * sc);
       ctx.fillStyle = '#fed7aa'; // 얼굴
-      ctx.fillRect(px - 2 * sc, sy - 15 * sc, 4 * sc, 4 * sc);
-      ctx.fillStyle = '#facc15'; // 황금 왕관
-      ctx.fillRect(px - 3 * sc, sy - 17 * sc, 6 * sc, 2 * sc);
-      ctx.fillRect(px - 2 * sc, sy - 18 * sc, 1 * sc, 1 * sc);
-      ctx.fillRect(px + 1 * sc, sy - 18 * sc, 1 * sc, 1 * sc);
-
-      // 전설검
-      ctx.fillStyle = '#fef08a';
-      ctx.fillRect(px + 4 * sc, sy - 14 * sc, 2 * sc, 8 * sc);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(px + 4 * sc, sy - 16 * sc, 2 * sc, 3 * sc);
+      ctx.fillRect(px - 2 * sc, sy - 10 * sc, 4 * sc, 4 * sc);
+      ctx.fillStyle = '#facc15'; // 황금 관
+      ctx.fillRect(px - 3 * sc, sy - 12 * sc, 6 * sc, 2 * sc);
+      ctx.fillStyle = '#fef08a'; // 검
+      ctx.fillRect(px + 3 * sc, sy - 8 * sc, 2 * sc, 7 * sc);
       return;
     }
 
@@ -1084,6 +1157,20 @@ class WorldRenderer {
       mCtx.stroke();
     }
 
+    // 퀘스트 목표 위치 반짝이는 황금 별 표시
+    if (this.entityMgr.questSystem && this.entityMgr.questSystem.activeQuest) {
+      const q = this.entityMgr.questSystem.activeQuest;
+      const qx = q.targetX * scaleX;
+      const qy = q.targetY * scaleY;
+      mCtx.fillStyle = '#facc15';
+      mCtx.beginPath();
+      mCtx.arc(qx, qy, 4.5, 0, Math.PI * 2);
+      mCtx.fill();
+      mCtx.strokeStyle = '#ffffff';
+      mCtx.lineWidth = 1.5;
+      mCtx.stroke();
+    }
+
     const viewTilesW = (cw / camera.zoom) / TILE_SIZE;
     const viewTilesH = (ch / camera.zoom) / TILE_SIZE;
     mCtx.strokeStyle = '#ffffff';
@@ -1094,6 +1181,91 @@ class WorldRenderer {
       viewTilesW * scaleX,
       viewTilesH * scaleY
     );
+  }
+
+  // 퀘스트 타겟 천공 빔 & 비컨
+  drawQuestBeacon(ctx, ts, timeSec, q) {
+    const bx = Math.round(q.targetX * ts);
+    const by = Math.round(q.targetY * ts);
+
+    // 지면 황금 펄스 링
+    const pulse = (Math.sin(timeSec * 4) + 1) * 0.5;
+    ctx.save();
+    ctx.strokeStyle = '#facc15';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(bx, by, 16 + pulse * 14, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 수직 빛기둥 (천공의 빔)
+    const grad = ctx.createLinearGradient(bx, by, bx, by - 120);
+    grad.addColorStop(0, 'rgba(250, 204, 21, 0.45)');
+    grad.addColorStop(1, 'rgba(250, 204, 21, 0.0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(bx - 6, by - 120, 12, 120);
+
+    // 상공 퀘스트 마커 배지
+    const bobY = Math.round(Math.sin(timeSec * 5) * 4);
+    ctx.font = 'bold 12px Pretendard, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+    ctx.fillRect(bx - 45, by - 52 + bobY, 90, 22);
+    ctx.strokeStyle = '#facc15';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(bx - 45, by - 52 + bobY, 90, 22);
+    ctx.fillStyle = '#fde047';
+    ctx.fillText(`⭐ ${q.category}`, bx, by - 37 + bobY);
+    ctx.restore();
+  }
+
+  // 화면 나침반 네비게이션 가이드 화살표
+  drawQuestNavigationCompass(ctx, camera, cw, ch, timeSec, p, q) {
+    const distTiles = Math.hypot(q.targetX - p.x, q.targetY - p.y);
+    if (distTiles < 3.2) return; // 목표에 매우 근접 시 나침반 숨김
+
+    // 플레이어의 현재 화면 좌표
+    const px = cw / 2 + (p.x - camera.x) * (TILE_SIZE * camera.zoom);
+    const py = ch / 2 + (p.y - camera.y) * (TILE_SIZE * camera.zoom);
+
+    const angle = Math.atan2(q.targetY - p.y, q.targetX - p.x);
+    const orbitR = 48;
+    const arrowX = px + Math.cos(angle) * orbitR;
+    const arrowY = py + Math.sin(angle) * orbitR;
+
+    // 화면 영역 내부일 때만 화살표 렌더링
+    if (arrowX >= 25 && arrowX <= cw - 25 && arrowY >= 25 && arrowY <= ch - 25) {
+      ctx.save();
+      ctx.translate(arrowX, arrowY);
+      ctx.rotate(angle);
+
+      // 황금빛 픽셀 화살표
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.moveTo(11, 0);
+      ctx.lineTo(-7, -6);
+      ctx.lineTo(-4, 0);
+      ctx.lineTo(-7, 6);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
+
+      // 거리 텍스트 배지
+      ctx.save();
+      ctx.font = 'bold 10px Pretendard, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+      ctx.fillRect(arrowX - 22, arrowY + 12, 44, 15);
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(arrowX - 22, arrowY + 12, 44, 15);
+      ctx.fillStyle = '#fde047';
+      ctx.fillText(`${Math.round(distTiles * 10)}m`, arrowX, arrowY + 23);
+      ctx.restore();
+    }
   }
 }
 

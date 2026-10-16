@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>크로니클 오브 아테리아 (Chronicles of Aetheria) - 오픈월드 판타지 생태계 & 항해 시뮬레이션</title>
-  <link rel="stylesheet" href="css/style.css?v=6" />
+  <link rel="stylesheet" href="css/style.css?v=7" />
 </head>
 <body>
   <!-- 메인 월드 캔버스 -->
@@ -69,6 +69,44 @@
     </div>
   </header>
 
+  <!-- 플로팅 퀘스트 & 현상금 HUD 카드 -->
+  <div id="questHud" class="quest-card">
+    <div class="quest-header">
+      <div class="quest-title-row">
+        <span class="quest-badge">📜 왕국 의뢰</span>
+        <span id="questCategory" class="quest-cat-tag">토벌</span>
+      </div>
+      <div class="quest-actions">
+        <button id="btnNewQuest" class="quest-action-btn" title="다른 의뢰로 교체">🔄 교체</button>
+        <button id="btnToggleQuestHud" class="quest-action-btn" title="접기/펼치기">➖</button>
+      </div>
+    </div>
+    <div id="questBody" class="quest-body">
+      <div id="questTitle" class="quest-title">화산섬의 화염 드래곤 토벌</div>
+      <div id="questDesc" class="quest-desc">신대륙 남방 화산섬에서 출몰하는 고대 화염룡을 토벌하십시오.</div>
+      <div class="quest-progress-row">
+        <div class="quest-progress-bar">
+          <div id="questProgressBarFill" class="progress-fill" style="width: 0%"></div>
+        </div>
+        <span id="questProgressText">0%</span>
+      </div>
+      <div class="quest-meta-row">
+        <span id="questDistance" class="quest-dist">🧭 185m 남동쪽</span>
+        <span id="questReward" class="quest-reward">💰 +2,500 G · 🌟 명성 +50</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 정착지 진입 시 상호작용 배너 -->
+  <div id="settlementPrompt" class="settlement-prompt hidden">
+    <span class="prompt-icon">🏛️</span>
+    <div class="prompt-info">
+      <div id="promptSettlementName" class="prompt-title">푸른파도 대항구</div>
+      <div class="prompt-desc">도시 교역 & 장비 강화 & 체력 회복 [F 키]</div>
+    </div>
+    <button id="btnInteractSettlement" class="prompt-action-btn">상호작용 (F)</button>
+  </div>
+
   <!-- 좌측 거점 빠른 이동 & 필터 패널 -->
   <aside id="leftSidebar">
     <div class="panel-card">
@@ -127,10 +165,11 @@
           맵 위의 <strong>상인, 범선, 해군, 모험가, 몬스터, 해적</strong> 또는 <strong>도시·항구 건물</strong>을 클릭하면 상세 상태와 무역품, 행선지를 실시간으로 관찰할 수 있습니다.
         </p>
         <div class="controls-guide">
-          <div><span>🖱️ 드래그 / 방향키</span> 카메라 자유 이동</div>
-          <div><span>🖱️ 휠 스크롤</span> 줌인 / 줌아웃 (신대륙 ↔ 디테일)</div>
-          <div><span>🖱️ 우클릭</span> 플레이어 이동 및 타겟 공격</div>
-          <div><span>P / 플레이어 버튼</span> 내 영웅 캐릭터 소환 및 조작</div>
+          <div><span>WASD / 우클릭</span> 영웅 이동 및 적 타겟 공격</div>
+          <div><span>Space / R</span> 탈것 전환 (백마 🏇 / 비룡 비행 🐉 / 도보 🚶)</div>
+          <div><span>F 키</span> 정착지 상호작용 (교역·장비강화·체력회복)</div>
+          <div><span>Q / E 키</span> 천공의 심판 광역벼락 / 질주·순풍</div>
+          <div><span>드래그 / 휠</span> 카메라 자유 이동 및 줌인/아웃</div>
         </div>
       </div>
     </div>
@@ -170,6 +209,11 @@
       </button>
 
       <div class="skill-slots">
+        <button class="skill-btn" id="btnToggleMount" title="탈것 변경: 백마 질주 🏇 / 고대 비룡 비행 🐉 / 도보 🚶 (단축키 Space 또는 R)">
+          <span class="key-badge">Space</span>
+          <span class="skill-icon" id="mountIcon">🏇</span>
+          <span class="skill-name" id="mountName">백마</span>
+        </button>
         <button class="skill-btn" id="btnSkillQ" title="천공의 심판: 주변 적에게 광역 벼락 타격 (단축키 Q)">
           <span class="key-badge">Q</span>
           <span class="skill-icon">⚡</span>
@@ -210,9 +254,9 @@
   </div>
 
   <!-- 스크립트 로드 -->
-  <script src="js/world_gen.js?v=6"></script>
-  <script src="js/entities.js?v=6"></script>
-  <script src="js/renderer.js?v=6"></script>
-  <script src="js/main.js?v=6"></script>
+  <script src="js/world_gen.js?v=7"></script>
+  <script src="js/entities.js?v=7"></script>
+  <script src="js/renderer.js?v=7"></script>
+  <script src="js/main.js?v=7"></script>
 </body>
 </html>
