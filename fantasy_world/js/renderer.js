@@ -265,10 +265,20 @@ class WorldRenderer {
       ctx.restore();
     }
 
-    // 7. 엔티티 (NPC, 해상 범선, 해군, 해적선, 플레이어) 렌더링
+    function checkEntityFilter(e, filter) {
+      if (filter === 'all' || e.role === 'player') return true;
+      if (filter === 'animal') return e.role === 'animal';
+      if (filter === 'dragon') return e.role === 'dragon';
+      if (filter === 'elf') return e.race === 'elf';
+      if (filter === 'dwarf') return e.race === 'dwarf';
+      if (filter === 'beastkin') return e.race === 'beastkin';
+      return e.category === filter || e.role === filter;
+    }
+
+    // 7. 엔티티 (NPC, 해상 범선, 해군, 해적선, 플레이어, 동물, 드래곤) 렌더링
     for (const e of this.entityMgr.entities) {
       if (e.x < minTx || e.x > maxTx || e.y < minTy || e.y > maxTy) continue;
-      const isFilteredOut = filterCategory !== 'all' && e.category !== filterCategory && e.role !== 'player';
+      const isFilteredOut = !checkEntityFilter(e, filterCategory);
       const isSelected = selectedItem && selectedItem.type === 'entity' && selectedItem.data.id === e.id;
       this.drawEntity(ctx, e, ts, timeSec, camera.zoom, isFilteredOut, isSelected);
     }
@@ -428,7 +438,7 @@ class WorldRenderer {
       ctx.ellipse(px, py + 4, 22 * e.scale, 10 * e.scale, 0, 0, Math.PI * 2);
       ctx.stroke();
 
-      if (e.monsterType !== 'kraken' && e.monsterType !== 'sea_serpent') {
+      if (e.monsterType !== 'kraken' && e.monsterType !== 'sea_serpent' && e.role !== 'animal' && e.role !== 'dragon') {
         // 선체(Hull)
         ctx.fillStyle = e.faction === 'monster' ? '#1e293b' : '#78350f';
         ctx.beginPath();
@@ -449,7 +459,43 @@ class WorldRenderer {
       }
     }
 
-    // (B) 육상 상인 짐마차(Wagon)
+    // (B) 🐉 거대한 고대 드래곤 전용 렌더링 (거대한 날개짓 & 원소 오라)
+    if (e.role === 'dragon') {
+      const wingFlap = Math.sin(e.wingsPhase) * 16;
+      const wingSpan = 26 * e.scale;
+      // 원소 오라
+      ctx.fillStyle = e.projColor;
+      ctx.globalAlpha = 0.22;
+      ctx.beginPath();
+      ctx.arc(px, py - 6, 28 * e.scale, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = isFilteredOut ? 0.22 : 1.0;
+
+      // 거대한 날개 (좌/우)
+      ctx.fillStyle = e.dragonType === 'frost' ? '#0284c7' : (e.dragonType === 'thunder' ? '#ca8a04' : (e.dragonType === 'poison' ? '#15803d' : '#991b1b'));
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1.5;
+
+      // 좌측 날개
+      ctx.beginPath();
+      ctx.moveTo(px - 4, py - 6);
+      ctx.lineTo(px - wingSpan, py - 18 + wingFlap);
+      ctx.lineTo(px - wingSpan * 0.7, py + 8 + wingFlap * 0.4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // 우측 날개
+      ctx.beginPath();
+      ctx.moveTo(px + 4, py - 6);
+      ctx.lineTo(px + wingSpan, py - 18 + wingFlap);
+      ctx.lineTo(px + wingSpan * 0.7, py + 8 + wingFlap * 0.4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // (C) 육상 상인 짐마차(Wagon)
     if (e.hasWagon && !e.isShip) {
       const wx = px - (e.vx >= 0 ? 16 : -16);
       const wy = py + 2;
@@ -468,20 +514,32 @@ class WorldRenderer {
       ctx.fill();
     }
 
-    // 캐릭터 그림자 & 바디
-    if (!e.isShip || e.monsterType === 'kraken' || e.monsterType === 'sea_serpent') {
+    // 캐릭터 / 동물 바디
+    if ((!e.isShip || e.monsterType === 'kraken' || e.monsterType === 'sea_serpent' || e.role === 'animal') && e.role !== 'dragon') {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
       ctx.beginPath();
       ctx.ellipse(px, py + 5, 8 * e.scale, 4 * e.scale, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      const r = 9.5 * e.scale;
+      // 종족별 고유 비주얼 오라
+      if (e.race === 'elf' && zoom > 0.6) {
+        ctx.strokeStyle = 'rgba(45, 212, 191, 0.45)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(px, py - 4 - bounce, 12 * e.scale, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (e.race === 'dwarf' && zoom > 0.6) {
+        ctx.fillStyle = '#64748b'; // 드워프 강철 투구 장식
+        ctx.fillRect(px - 6 * e.scale, py - 13 * e.scale - bounce, 12 * e.scale, 4);
+      }
+
+      const r = (e.role === 'animal' ? 7.5 : 9.5) * e.scale;
       ctx.fillStyle = e.color;
       ctx.beginPath();
       ctx.arc(px, py - 4 - bounce, r, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = e.faction === 'monster' ? '#450a0a' : '#0f172a';
-      ctx.lineWidth = 1.8;
+      ctx.strokeStyle = e.faction === 'monster' ? '#450a0a' : (e.role === 'animal' ? '#065f46' : '#0f172a');
+      ctx.lineWidth = 1.6;
       ctx.stroke();
     }
 
@@ -500,19 +558,19 @@ class WorldRenderer {
       ctx.fillText(e.icon, px, py - (e.isShip ? 8 : 4) - bounce);
     }
 
-    if ((e.hp < e.maxHp || isSelected || e.role === 'player') && zoom > 0.40) {
-      const bw = 26 * e.scale;
-      const bh = 4;
+    if ((e.hp < e.maxHp || isSelected || e.role === 'player' || e.role === 'dragon') && zoom > 0.40) {
+      const bw = (e.role === 'dragon' ? 38 : 26) * e.scale;
+      const bh = e.role === 'dragon' ? 5 : 4;
       const bx = px - bw / 2;
-      const by = py - 21 * e.scale - bounce;
+      const by = py - (e.role === 'dragon' ? 26 : 21) * e.scale - bounce;
       ctx.fillStyle = 'rgba(0,0,0,0.75)';
       ctx.fillRect(bx, by, bw, bh);
       const hpRatio = Math.max(0, e.hp / e.maxHp);
-      ctx.fillStyle = e.faction === 'monster' ? '#ef4444' : (e.role === 'player' ? '#facc15' : '#22c55e');
+      ctx.fillStyle = e.faction === 'monster' ? '#ef4444' : (e.role === 'player' ? '#facc15' : (e.role === 'animal' ? '#10b981' : '#22c55e'));
       ctx.fillRect(bx, by, bw * hpRatio, bh);
     }
 
-    if ((zoom > 0.90 || isSelected || e.role === 'player') && !isFilteredOut) {
+    if ((zoom > 0.90 || isSelected || e.role === 'player' || e.role === 'dragon') && !isFilteredOut) {
       ctx.font = 'bold 10.5px Pretendard, sans-serif';
       ctx.textAlign = 'center';
       ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
@@ -624,11 +682,20 @@ class WorldRenderer {
     mCtx.drawImage(this.minimapBaseCanvas, 0, 0, mw, mh);
 
     for (const e of this.entityMgr.entities) {
-      if (filterCategory !== 'all' && e.category !== filterCategory && e.role !== 'player') continue;
+      if (filterCategory !== 'all') {
+        const match = (filterCategory === 'animal' && e.role === 'animal') ||
+                      (filterCategory === 'dragon' && e.role === 'dragon') ||
+                      (filterCategory === 'elf' && e.race === 'elf') ||
+                      (filterCategory === 'dwarf' && e.race === 'dwarf') ||
+                      (filterCategory === 'beastkin' && e.race === 'beastkin') ||
+                      (e.category === filterCategory || e.role === filterCategory) ||
+                      (e.role === 'player');
+        if (!match) continue;
+      }
       mCtx.fillStyle = e.role === 'player'
         ? '#ffffff'
-        : (e.faction === 'monster' ? '#ef4444' : (e.category === 'merchant' ? '#facc15' : '#38bdf8'));
-      const sz = e.role === 'player' ? 4 : (e.category === 'merchant' ? 2.5 : 2);
+        : (e.role === 'dragon' ? '#f97316' : (e.role === 'animal' ? '#34d399' : (e.faction === 'monster' ? '#ef4444' : (e.category === 'merchant' ? '#facc15' : '#38bdf8'))));
+      const sz = (e.role === 'player' || e.role === 'dragon') ? 4 : (e.category === 'merchant' ? 2.5 : 1.8);
       mCtx.fillRect(e.x * scaleX - sz / 2, e.y * scaleY - sz / 2, sz, sz);
     }
 

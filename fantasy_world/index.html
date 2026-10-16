@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>크로니클 오브 아테리아 (Chronicles of Aetheria) - 오픈월드 판타지 생태계 & 항해 시뮬레이션</title>
-  <link rel="stylesheet" href="css/style.css?v=2" />
+  <link rel="stylesheet" href="css/style.css?v=3" />
 </head>
 <body>
   <!-- 메인 월드 캔버스 -->
@@ -46,6 +46,10 @@
         <span>👥 주민/영웅</span>
         <strong id="statNpcCount">0</strong>
       </div>
+      <div class="stat-pill" title="대륙 및 바다의 야생 동물 수">
+        <span>🐾 동물</span>
+        <strong id="statAnimalCount">0</strong>
+      </div>
       <div class="stat-pill" title="육상 마차 및 해상 무역 범선 수">
         <span>⛵ 무역 상단</span>
         <strong id="statCaravanCount">0</strong>
@@ -79,16 +83,20 @@
 
     <div class="panel-card">
       <div class="panel-header">
-        <h2>🔍 개체 하이라이트 필터</h2>
+        <h2>🔍 종족 & 생태계 하이라이트 필터</h2>
       </div>
       <div class="filter-grid">
         <button class="filter-chip active" data-filter="all">전체 보기</button>
+        <button class="filter-chip" data-filter="animal">🐾 야생동물</button>
+        <button class="filter-chip" data-filter="dragon">🐉 드래곤</button>
+        <button class="filter-chip" data-filter="elf">🧝 엘프족</button>
+        <button class="filter-chip" data-filter="dwarf">⛏️ 드워프</button>
+        <button class="filter-chip" data-filter="beastkin">🐱 수인족</button>
         <button class="filter-chip" data-filter="merchant">🐎⛵ 상단/무역선</button>
         <button class="filter-chip" data-filter="soldier">🛡️🚢 병사/해군</button>
         <button class="filter-chip" data-filter="adventurer">⚔️ 모험가/용병</button>
         <button class="filter-chip" data-filter="farmer">🌾 농부/약초사</button>
         <button class="filter-chip" data-filter="fisherman">🎣 어부</button>
-        <button class="filter-chip" data-filter="miner">⛏️ 광부/대장장이</button>
         <button class="filter-chip" data-filter="monster">👹 몬스터/해적</button>
       </div>
       <div class="quick-actions">
@@ -202,9 +210,9 @@
   </div>
 
   <!-- 스크립트 로드 -->
-  <script src="js/world_gen.js?v=2"></script>
-  <script src="js/entities.js?v=2"></script>
-  <script src="js/renderer.js?v=2"></script>
-  <script src="js/main.js?v=2"></script>
+  <script src="js/world_gen.js?v=3"></script>
+  <script src="js/entities.js?v=3"></script>
+  <script src="js/renderer.js?v=3"></script>
+  <script src="js/main.js?v=3"></script>
 </body>
 </html>

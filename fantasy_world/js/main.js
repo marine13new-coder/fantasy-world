@@ -322,7 +322,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let pickedEntity = null;
     let minEntDist = 2.4 / Math.max(0.4, Math.min(1.2, camera.zoom));
     for (const ent of entityMgr.entities) {
-      if (filterCategory !== 'all' && ent.category !== filterCategory && ent.role !== 'player') continue;
+      if (filterCategory !== 'all') {
+        const match = (filterCategory === 'animal' && ent.role === 'animal') ||
+                      (filterCategory === 'dragon' && ent.role === 'dragon') ||
+                      (filterCategory === 'elf' && ent.race === 'elf') ||
+                      (filterCategory === 'dwarf' && ent.race === 'dwarf') ||
+                      (filterCategory === 'beastkin' && ent.race === 'beastkin') ||
+                      (ent.category === filterCategory || ent.role === filterCategory) ||
+                      (ent.role === 'player');
+        if (!match) continue;
+      }
       const d = Math.hypot(ent.x - wx, ent.y - wy);
       if (d < minEntDist) {
         minEntDist = d;
@@ -378,7 +387,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (selectedItem.type === 'entity') {
       const e = selectedItem.data;
       btnFollowTarget.classList.remove('hidden');
-      titleEl.textContent = e.role === 'player' ? '🌟 플레이어 영웅 상태창' : '👤 개체 상세 정보';
+      titleEl.textContent = e.role === 'player'
+        ? '🌟 플레이어 영웅 상태창'
+        : (e.role === 'animal' ? '🐾 야생 동물 정보' : (e.role === 'dragon' ? '🐉 고대 드래곤 정보' : '👤 개체 상세 정보'));
 
       const hpPct = Math.max(0, Math.min(100, Math.round((e.hp / e.maxHp) * 100)));
       const home = world.settlementMap[e.homeId];
@@ -387,12 +398,15 @@ document.addEventListener('DOMContentLoaded', () => {
         .map(([k, count]) => `<span class="inv-tag">${GOODS_KR[k] || k}: ${count}</span>`)
         .join('');
 
+      const raceName = RACE_LABELS[e.race] || '인간';
+      const factionName = e.faction === 'monster' ? '몬스터/해적' : (e.faction === 'neutral' ? '중립 생태계' : '아테리아 연합');
+
       contentEl.innerHTML = `
         <div class="detail-header">
           <div class="detail-avatar">${e.icon}</div>
           <div>
             <div class="detail-name">${e.name}</div>
-            <div class="detail-role">${e.subClass} · Lv.${e.level} (${e.faction === 'monster' ? '몬스터/해적' : '아테리아 왕국'})</div>
+            <div class="detail-role">[${raceName}] ${e.subClass} · Lv.${e.level} (${factionName})</div>
           </div>
         </div>
         <div class="bar-row">
@@ -401,22 +415,22 @@ document.addEventListener('DOMContentLoaded', () => {
             <strong>${Math.ceil(e.hp)} / ${e.maxHp}</strong>
           </div>
           <div class="progress-track">
-            <div class="progress-fill" style="width:${hpPct}%; background:${e.faction === 'monster' ? '#ef4444' : (e.role === 'player' ? '#facc15' : '#22c55e')};"></div>
+            <div class="progress-fill" style="width:${hpPct}%; background:${e.faction === 'monster' ? '#ef4444' : (e.role === 'player' ? '#facc15' : (e.role === 'animal' ? '#10b981' : '#22c55e'))};"></div>
           </div>
         </div>
         <div style="margin: 6px 0; padding: 6px 8px; background: rgba(250, 204, 21, 0.1); border-left: 3px solid #facc15; border-radius: 4px; color: #fef08a; font-size: 11.5px;">
           ${e.thought}
         </div>
         <div class="detail-grid">
-          <div class="detail-kv"><span>소속 거점</span><strong>${home ? home.name : '방랑'}</strong></div>
+          <div class="detail-kv"><span>종족</span><strong>${raceName}</strong></div>
+          <div class="detail-kv"><span>소속/서식지</span><strong>${home ? home.name : (e.role === 'animal' ? '대자연' : '방랑')}</strong></div>
           <div class="detail-kv"><span>보유 골드</span><strong style="color:#facc15;">🪙 ${e.gold.toLocaleString()} G</strong></div>
-          <div class="detail-kv"><span>전투 공격력</span><strong>⚔️ ${e.atk}</strong></div>
-          <div class="detail-kv"><span>처치(토벌) 수</span><strong>🏆 ${e.kills}회</strong></div>
+          <div class="detail-kv"><span>전투력(공격력)</span><strong>⚔️ ${e.atk}</strong></div>
         </div>
-        <div style="margin-top:7px; font-size:11px; color:#94a3b8;">보유 물자 및 교역품:</div>
-        <div class="inv-tags">
-          ${invItems || '<span class="inv-tag" style="color:#64748b;">보유 물품 없음</span>'}
-        </div>
+        ${invItems ? `
+          <div style="margin-top:7px; font-size:11px; color:#94a3b8;">보유 물자 및 교역품:</div>
+          <div class="inv-tags">${invItems}</div>
+        ` : ''}
       `;
     } else if (selectedItem.type === 'settlement') {
       const s = selectedItem.data;
@@ -500,12 +514,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('weatherIcon').textContent = wInfo.icon;
     document.getElementById('weatherText').textContent = wInfo.text;
 
+    const animals = entityMgr.entities.filter(e => e.role === 'animal');
     const npcs = entityMgr.entities.filter(e => e.faction === 'kingdom');
     const caravans = entityMgr.entities.filter(e => e.role === 'merchant' || e.role === 'sea_merchant');
     const monsters = entityMgr.entities.filter(e => e.faction === 'monster');
     const entityGold = entityMgr.entities.reduce((acc, e) => acc + (e.gold || 0), 0);
     const townGold = world.settlements.reduce((acc, s) => acc + (s.gold || 0), 0);
 
+    const elAnimal = document.getElementById('statAnimalCount');
+    if (elAnimal) elAnimal.textContent = animals.length;
     document.getElementById('statNpcCount').textContent = npcs.length;
     document.getElementById('statCaravanCount').textContent = caravans.length;
     document.getElementById('statMonsterCount').textContent = monsters.length;
