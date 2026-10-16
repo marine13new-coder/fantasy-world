@@ -903,8 +903,10 @@ class EntityManager {
     for (let i = this.entities.length - 1; i >= 0; i--) {
       const e = this.entities[i];
       if (e.hp <= 0) {
-        this.handleEntityDeath(e);
-        this.entities.splice(i, 1);
+        const shouldRemove = this.handleEntityDeath(e);
+        if (shouldRemove) {
+          this.entities.splice(i, 1);
+        }
         continue;
       }
 
@@ -1292,8 +1294,9 @@ class EntityManager {
       e.targetY = e.y;
       e.combatTarget = null;
       e.thought = e.isShip ? '⚓ 조선소에서 선체 수리 후 재출항' : '🏥 치료소에서 회복 후 복귀 중';
-      this.entities.push(e);
+      return false; // 왕국 주민/영웅은 마을에서 부활하여 존속
     }
+    return true; // 몬스터/해적은 사망 시 배열에서 제거
   }
 
   updateKingAI(e, dt, isNight) {

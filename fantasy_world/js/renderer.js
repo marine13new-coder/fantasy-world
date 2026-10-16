@@ -151,19 +151,31 @@ class WorldRenderer {
     ctx.scale(camera.zoom, camera.zoom);
     ctx.translate(-camera.x * ts, -camera.y * ts);
 
-    const worldPxW = this.world.width * ts;
-    const worldPxH = this.world.height * ts;
-    ctx.drawImage(this.terrainCanvas, 0, 0, worldPxW, worldPxH);
-
-    // 1. 대해양 해상 무역 항로 점선 표시 (전략 뷰 및 중간 뷰)
-    this.drawSeaRoutes(ctx, ts, timeSec);
-
     const halfW = (cw / 2 / camera.zoom) / ts + 4;
     const halfH = (ch / 2 / camera.zoom) / ts + 4;
     const minTx = Math.max(0, Math.floor(camera.x - halfW));
-    const maxTx = Math.min(this.world.width - 1, Math.ceil(camera.x + halfW));
+    const maxTx = Math.min(this.world.width, Math.ceil(camera.x + halfW));
     const minTy = Math.max(0, Math.floor(camera.y - halfH));
-    const maxTy = Math.min(this.world.height - 1, Math.ceil(camera.y + halfH));
+    const maxTy = Math.min(this.world.height, Math.ceil(camera.y + halfH));
+
+    // 최적화: 전체 4760x3360 캔버스를 매 프레임 그리지 않고 현재 화면에 보이는 영역만 슬라이싱 렌더링
+    const s = this.bakeScale;
+    const sx = minTx * s;
+    const sy = minTy * s;
+    const sw = Math.min(this.terrainCanvas.width - sx, (maxTx - minTx) * s);
+    const sh = Math.min(this.terrainCanvas.height - sy, (maxTy - minTy) * s);
+
+    const dx = minTx * ts;
+    const dy = minTy * ts;
+    const dw = (maxTx - minTx) * ts;
+    const dh = (maxTy - minTy) * ts;
+
+    if (sw > 0 && sh > 0) {
+      ctx.drawImage(this.terrainCanvas, sx, sy, sw, sh, dx, dy, dw, dh);
+    }
+
+    // 1. 대해양 해상 무역 항로 점선 표시 (전략 뷰 및 중간 뷰)
+    this.drawSeaRoutes(ctx, ts, timeSec);
 
     // 2. 농작물 렌더링
     if (camera.zoom > 0.30) {
@@ -279,7 +291,7 @@ class WorldRenderer {
     for (const e of this.entityMgr.entities) {
       if (e.x < minTx || e.x > maxTx || e.y < minTy || e.y > maxTy) continue;
       const isFilteredOut = !checkEntityFilter(e, filterCategory);
-      const isSelected = selectedItem && selectedItem.type === 'entity' && selectedItem.data.id === e.id;
+      const isSelected = selectedItem && selectedItem.type === 'entity' && selectedItem.data && selectedItem.data.id === e.id;
       this.drawEntity(ctx, e, ts, timeSec, camera.zoom, isFilteredOut, isSelected);
     }
 

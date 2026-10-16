@@ -13,9 +13,22 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
 
-  // 1. 월드 및 엔티티 매니저 초기화
+  // 1. 월드 및 시뮬레이션 상태 초기화
   const world = generateWorld();
   const eventLogs = [];
+
+  const worldTime = {
+    day: 1,
+    seasonIndex: 0,
+    seasons: ['봄', '여름', '가을', '겨울'],
+    hour: 8,
+    minute: 0,
+    speed: 1,
+    weather: 'clear',
+    weatherTimer: 35
+  };
+
+  let camera = null;
 
   const entityMgr = new EntityManager(world, (logItem) => {
     eventLogs.unshift(logItem);
@@ -32,24 +45,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // 2. 카메라 및 시뮬레이션 상태
   let isPlayerControlActive = true;
 
-  const camera = {
+  camera = {
     x: player.x,
     y: player.y,
     zoom: 0.95,
     minZoom: 0.16,
     maxZoom: 2.6,
     followEntity: player
-  };
-
-  const worldTime = {
-    day: 1,
-    seasonIndex: 0,
-    seasons: ['봄', '여름', '가을', '겨울'],
-    hour: 8,
-    minute: 0,
-    speed: 1,
-    weather: 'clear',
-    weatherTimer: 35
   };
 
   let filterCategory = 'all';
@@ -357,9 +359,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // 9. UI 업데이트
   function renderEventLogUI() {
     const container = document.getElementById('eventLogList');
+    if (!container) return;
+    const h = (typeof worldTime !== 'undefined' && worldTime) ? worldTime.hour : 8;
+    const m = (typeof worldTime !== 'undefined' && worldTime) ? Math.floor(worldTime.minute) : 0;
     container.innerHTML = eventLogs.slice(0, 22).map((item, idx) => `
       <div class="log-item ${item.type}" data-idx="${idx}">
-        <span class="log-time">[${String(worldTime.hour).padStart(2, '0')}:${String(Math.floor(worldTime.minute)).padStart(2, '0')}]</span>
+        <span class="log-time">[${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}]</span>
         ${item.text}
       </div>
     `).join('');
@@ -367,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
     container.querySelectorAll('.log-item').forEach(el => {
       el.addEventListener('click', () => {
         const item = eventLogs[Number(el.dataset.idx)];
-        if (item && item.x != null) {
+        if (item && item.x != null && camera) {
           stopFollow();
           smoothMoveCamera(item.x, item.y, Math.max(camera.zoom, 1.05));
         }
@@ -514,18 +519,27 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('weatherIcon').textContent = wInfo.icon;
     document.getElementById('weatherText').textContent = wInfo.text;
 
-    const animals = entityMgr.entities.filter(e => e.role === 'animal');
-    const npcs = entityMgr.entities.filter(e => e.faction === 'kingdom');
-    const caravans = entityMgr.entities.filter(e => e.role === 'merchant' || e.role === 'sea_merchant');
-    const monsters = entityMgr.entities.filter(e => e.faction === 'monster');
-    const entityGold = entityMgr.entities.reduce((acc, e) => acc + (e.gold || 0), 0);
+    let animalCount = 0;
+    let npcCount = 0;
+    let caravanCount = 0;
+    let monsterCount = 0;
+    let entityGold = 0;
+    const ents = entityMgr.entities;
+    for (let i = 0; i < ents.length; i++) {
+      const e = ents[i];
+      if (e.role === 'animal') animalCount++;
+      if (e.faction === 'kingdom') npcCount++;
+      if (e.role === 'merchant' || e.role === 'sea_merchant') caravanCount++;
+      if (e.faction === 'monster') monsterCount++;
+      entityGold += (e.gold || 0);
+    }
     const townGold = world.settlements.reduce((acc, s) => acc + (s.gold || 0), 0);
 
     const elAnimal = document.getElementById('statAnimalCount');
-    if (elAnimal) elAnimal.textContent = animals.length;
-    document.getElementById('statNpcCount').textContent = npcs.length;
-    document.getElementById('statCaravanCount').textContent = caravans.length;
-    document.getElementById('statMonsterCount').textContent = monsters.length;
+    if (elAnimal) elAnimal.textContent = animalCount;
+    document.getElementById('statNpcCount').textContent = npcCount;
+    document.getElementById('statCaravanCount').textContent = caravanCount;
+    document.getElementById('statMonsterCount').textContent = monsterCount;
     document.getElementById('statBattleCount').textContent = entityMgr.activeBattles;
     document.getElementById('statTotalGold').textContent = (entityGold + townGold).toLocaleString();
   }
