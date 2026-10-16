@@ -416,7 +416,19 @@ function startFantasyWorld() {
   }
 
   if (btnToggleInventory) btnToggleInventory.addEventListener('click', toggleInventory);
-  if (btnCloseInventory) btnCloseInventory.addEventListener('click', () => inventoryModalEl.classList.add('hidden'));
+  if (btnCloseInventory) {
+    btnCloseInventory.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (inventoryModalEl) inventoryModalEl.classList.add('hidden');
+    });
+  }
+  if (inventoryModalEl) {
+    inventoryModalEl.addEventListener('click', (e) => {
+      if (e.target === inventoryModalEl) {
+        inventoryModalEl.classList.add('hidden');
+      }
+    });
+  }
 
   // 군주 칙령 바인딩
   document.getElementById('btnDispatchFleet').addEventListener('click', () => entityMgr.dispatchTradeFleet());

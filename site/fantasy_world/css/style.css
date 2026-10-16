@@ -14,6 +14,17 @@ body, html {
   color: #e8e4d9;
 }
 
+/* 범용 숨김 클래스 */
+.hidden,
+.modal-overlay.hidden,
+.boss-bar-container.hidden,
+.settlement-prompt.hidden,
+.build-palette.hidden,
+.follow-banner.hidden,
+.mini-btn.hidden {
+  display: none !important;
+}
+
 #worldCanvas {
   position: absolute;
   top: 0;
@@ -1126,15 +1137,25 @@ body, html {
 }
 
 .close-btn {
-  background: none;
-  border: none;
-  color: #94a3b8;
-  font-size: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #cbd5e1;
+  font-size: 16px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  transition: all 0.15s;
 }
 
 .close-btn:hover {
+  background: rgba(239, 68, 68, 0.45);
+  border-color: #ef4444;
   color: #fff;
+  transform: scale(1.08);
 }
 
 .build-options {
