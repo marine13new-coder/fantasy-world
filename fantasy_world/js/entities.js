@@ -913,12 +913,61 @@ class EntityManager {
       }
     }
 
-    // 일반 몬스터들 스폰
+    // 5대 대륙 고유 몬스터 생태계 스폰 (전 대륙 몬스터 거점 활성화)
     this.spawnMonstersForLair('goblin_camp', 16);
     this.spawnMonstersForLair('orc_stronghold', 16);
     this.spawnMonstersForLair('obsidian_necropolis', 14);
+    this.spawnMonstersForLair('pyramid_tomb', 14);
     this.spawnMonstersForLair('pirate_cove', 14);
-    this.spawnMonstersForLair('volcano_isle', 8);
+    this.spawnMonstersForLair('volcano_isle', 10);
+    this.spawnMonstersForLair('molten_forge', 10);
+    this.spawnMonstersForLair('glacier_camp', 12);
+    this.spawnMonstersForLair('whispering_grove', 12);
+    this.spawnMonstersForLair('dragon_eyrie', 10);
+
+    // 주요 도시 및 성역에 고유 NPC (사제, 방랑 상인, 성전 십자군) 스폰
+    const sol = sMap.solaris;
+    if (sol) {
+      this.createEntity({
+        name: '대주교 발레리우스',
+        race: 'human',
+        role: 'priest',
+        subClass: '루미나스 대성당 수석 사제',
+        customIcon: '✨',
+        faction: 'kingdom',
+        homeId: 'solaris',
+        x: sol.x + 2,
+        y: sol.y - 3,
+        hp: 250, maxHp: 250, atk: 15, gold: 500, scale: 1.15,
+        thought: '✝️ 대성당에서 왕국의 평화와 모험가의 무운을 축복하는 중'
+      });
+      this.createEntity({
+        name: '방랑 대상인 마르코',
+        race: 'human',
+        role: 'merchant',
+        subClass: '대륙 횡단 거상',
+        customIcon: '🎒',
+        faction: 'kingdom',
+        homeId: 'solaris',
+        x: sol.x - 3,
+        y: sol.y + 2,
+        hp: 200, maxHp: 200, atk: 12, gold: 1500, scale: 1.15,
+        thought: '🎒 5대 대륙 특산품과 전설의 보물들을 짊어지고 거래처를 물색하는 중'
+      });
+      this.createEntity({
+        name: '성전 기사단장 가웨인',
+        race: 'human',
+        role: 'crusader',
+        subClass: '태양의 십자군 사령관',
+        customIcon: '🛡️',
+        faction: 'kingdom',
+        homeId: 'solaris',
+        x: sol.x + 4,
+        y: sol.y + 1,
+        hp: 420, maxHp: 420, atk: 35, gold: 800, scale: 1.25,
+        thought: '🛡️ 성스러운 십자가 문양의 갑주를 빛내며 왕국을 수호하는 중'
+      });
+    }
   }
 
   // 플레이어 소환
@@ -1355,25 +1404,47 @@ class EntityManager {
       orc_stronghold: [
         { name: '오크 전사', race: 'orc', monsterType: 'orc', icon: '👹', hp: 175, atk: 21, gold: 40, scale: 1.15 },
         { name: '오크 광전사', race: 'orc', monsterType: 'orc_berserker', icon: '🪓', hp: 220, atk: 26, gold: 55, scale: 1.25 },
-        { name: '오크 샤먼', race: 'orc', monsterType: 'orc_shaman', icon: '🔮', hp: 140, atk: 23, gold: 48, ranged: true, projColor: '#c084fc', scale: 1.05 }
+        { name: '오크 주술샤먼', race: 'orc', monsterType: 'orc_shaman', icon: '🔮', hp: 140, atk: 23, gold: 48, ranged: true, projColor: '#c084fc', scale: 1.05 }
       ],
       obsidian_necropolis: [
-        { name: '망령 흑기사', race: 'undead', monsterType: 'death_knight', icon: '💀', hp: 280, atk: 28, gold: 120, ranged: false, scale: 1.25 },
+        { name: '망령 흑기사', race: 'undead', monsterType: 'reaper', icon: '💀', hp: 280, atk: 28, gold: 120, ranged: false, scale: 1.25 },
         { name: '해골 궁수', race: 'undead', monsterType: 'skeleton_archer', icon: '🏹', hp: 140, atk: 22, gold: 60, ranged: true, projColor: '#a855f7', scale: 1.05 },
+        { name: '고대 스켈레톤 병사', race: 'undead', monsterType: 'skeleton', icon: '💀', hp: 160, atk: 20, gold: 50, ranged: false, scale: 1.1 },
         { name: '강령술 리치 군주', race: 'undead', monsterType: 'lich', icon: '👻', hp: 380, atk: 35, gold: 240, ranged: true, projColor: '#c084fc', scale: 1.4 }
       ],
+      pyramid_tomb: [
+        { name: '고대 파라오 미라', race: 'undead', monsterType: 'mummy', icon: '📜', hp: 250, atk: 25, gold: 110, scale: 1.15 },
+        { name: '사막 맹독 전갈', race: 'monster', monsterType: 'scorpion', icon: '🦂', hp: 190, atk: 23, gold: 80, scale: 1.2 },
+        { name: '사막 모래 리치', race: 'undead', monsterType: 'lich', icon: '👻', hp: 340, atk: 32, gold: 190, ranged: true, projColor: '#facc15', scale: 1.35 }
+      ],
+      glacier_camp: [
+        { name: '혹한의 설원 예티', race: 'monster', monsterType: 'yeti', icon: '🦍', hp: 360, atk: 33, gold: 170, scale: 1.35 },
+        { name: '만년설 얼음골렘', race: 'monster', monsterType: 'ice_golem', icon: '🧊', hp: 320, atk: 29, gold: 140, scale: 1.3 },
+        { name: '은빛 서리 늑대', race: 'animal', monsterType: 'wolf_frost', icon: '🐺', hp: 160, atk: 22, gold: 65, scale: 1.05 }
+      ],
+      whispering_grove: [
+        { name: '숲의 고대 거신 트렌트', race: 'monster', monsterType: 'treant', icon: '🌲', hp: 420, atk: 31, gold: 200, scale: 1.4 },
+        { name: '폭풍 바람 하피', race: 'monster', monsterType: 'harpy', icon: '🦅', hp: 180, atk: 24, gold: 85, ranged: true, projColor: '#38bdf8', scale: 1.1 },
+        { name: '원시림 맹독 슬라임', race: 'monster', monsterType: 'slime', icon: '🧪', hp: 130, atk: 18, gold: 40, scale: 1.0 }
+      ],
       dragon_eyrie: [
-        { name: '새끼 빙결 드래곤', race: 'dragon', monsterType: 'wyvern', icon: '🐉', hp: 320, atk: 28, gold: 150, ranged: true, projColor: '#38bdf8', scale: 1.3 },
-        { name: '천공 바위 가고일', race: 'monster', monsterType: 'gargoyle', icon: '🗿', hp: 240, atk: 24, gold: 80, ranged: false, scale: 1.15 }
+        { name: '천공 화염 용족전사', race: 'dragonkin', monsterType: 'dragonkin', icon: '🐲', hp: 340, atk: 32, gold: 160, ranged: true, projColor: '#f97316', scale: 1.25 },
+        { name: '지옥 헬하운드', race: 'monster', monsterType: 'hellhound', icon: '🐕‍🦺', hp: 220, atk: 27, gold: 95, scale: 1.1 },
+        { name: '암벽 가고일', race: 'monster', monsterType: 'harpy', icon: '🗿', hp: 240, atk: 24, gold: 80, ranged: false, scale: 1.15 }
       ],
       pirate_cove: [
-        { name: '블랙비어드 해적선', race: 'human', monsterType: 'pirate_ship', icon: '🏴‍☠️', hp: 230, atk: 22, gold: 90, isShip: true, ranged: true, projColor: '#f97316', scale: 1.35 },
-        { name: '해골단 쾌속약탈선', race: 'human', monsterType: 'pirate_raider', icon: '☠️', hp: 180, atk: 19, gold: 70, isShip: true, ranged: true, projColor: '#ef4444', scale: 1.2 }
+        { name: '블랙비어드 대해적 선장', race: 'human', monsterType: 'pirate_captain', icon: '🏴‍☠️', hp: 290, atk: 29, gold: 180, scale: 1.25 },
+        { name: '바다 칼잡이 해적', race: 'human', monsterType: 'pirate_captain', icon: '⚔️', hp: 180, atk: 20, gold: 75, scale: 1.05 },
+        { name: '해골단 쾌속약탈선', race: 'human', monsterType: 'pirate_raider', icon: '☠️', hp: 220, atk: 22, gold: 90, isShip: true, ranged: true, projColor: '#ef4444', scale: 1.25 }
       ],
       volcano_isle: [
-        { name: '심해 괴수 크라켄', race: 'monster', monsterType: 'kraken', icon: '🦑', hp: 480, atk: 35, gold: 220, isShip: true, ranged: true, projColor: '#a855f7', scale: 1.6 },
-        { name: '바다 해룡 서펜트', race: 'monster', monsterType: 'sea_serpent', icon: '🐍', hp: 260, atk: 26, gold: 110, isShip: true, ranged: true, projColor: '#38bdf8', scale: 1.35 },
-        { name: '흑요석 화염골렘', race: 'monster', monsterType: 'lava_golem', icon: '🌋', hp: 310, atk: 30, gold: 130, isShip: false, ranged: true, projColor: '#ef4444', scale: 1.4 }
+        { name: '흑요석 화염골렘', race: 'monster', monsterType: 'fire_golem', icon: '🌋', hp: 350, atk: 33, gold: 160, isShip: false, scale: 1.4 },
+        { name: '지옥 불꽃사냥개', race: 'monster', monsterType: 'hellhound', icon: '🐕‍🦺', hp: 230, atk: 28, gold: 100, scale: 1.15 },
+        { name: '화염 용족 전사', race: 'dragonkin', monsterType: 'dragonkin', icon: '🐲', hp: 320, atk: 30, gold: 140, scale: 1.25 }
+      ],
+      molten_forge: [
+        { name: '용암 거신 골렘', race: 'monster', monsterType: 'fire_golem', icon: '🌋', hp: 380, atk: 35, gold: 190, scale: 1.45 },
+        { name: '불타는 지옥견', race: 'monster', monsterType: 'hellhound', icon: '🔥', hp: 240, atk: 29, gold: 110, scale: 1.15 }
       ]
     };
 

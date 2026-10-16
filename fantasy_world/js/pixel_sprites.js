@@ -1674,6 +1674,852 @@
       "..####....####..",
       "................"
     ]
+,
+
+  // 1. 고블린 궁수 (Goblin Archer - Leather hood, wooden recurve bow, green poison arrow)
+  goblin_archer_down_0: [
+    "....########....",
+    "..##LEEEEEEL##..",
+    ".#LE#effffe#EL#.",
+    "#LE#effffff#eEL#",
+    "#EE#ffffffff#EE#",
+    "..#f#ffffff#f#..",
+    "..#o#oooooo#o#.#",
+    ".#oo#o#oo#o#oo#l",
+    ".#oo#oooooo#oo#l",
+    "..##oooooooo##ll",
+    "...#oooooooo#..l",
+    "...#kk####kk#..l",
+    "..#oo#....#oo#.#",
+    "..####....####.."
+  ],
+  goblin_archer_down_1: [
+    "....########....",
+    "..##LEEEEEEL##..",
+    ".#LE#effffe#EL#.",
+    "#LE#effffff#eEL#",
+    "#EE#ffffffff#EE#",
+    "..#f#ffffff#f#..",
+    "..#o#oooooo#o#.#",
+    ".#oo#o#oo#o#oo#l",
+    ".#oo#oooooo#oo#l",
+    "..##oooooooo##ll",
+    "...#oooooooo#..l",
+    "..#kk#....#kk#.l",
+    "..#oo#....#oo#.#",
+    "..####....####.."
+  ],
+  goblin_archer_attack: [
+    "....########....",
+    "..##LEEEEEEL##..",
+    ".#LE#effffe#EL#.",
+    "#EE#ffffffff#EE#",
+    "..#f#ffffff#f#..",
+    "..#o#oooooo#o#..",
+    ".#oo#o#oo#o#oo##",
+    "..##oooooooo#lll",
+    "...#oooooooo#hLL",
+    "..#kk####kk##lll",
+    "..#oo#..#oo#..##",
+    "..####..####...."
+  ],
+
+  // 2. 오크 샤먼 (Orc Shaman - Horned skull mask, purple robes, bone staff with amethyst flame)
+  orc_shaman_down_0: [
+    "....########....",
+    "...#xxxxkxxx#...",
+    "..#xxee#k#eex#..",
+    "..#xxxxk#kxxx#..",
+    "..#xxxxkkkxxx#..",
+    "...##P####P##...",
+    "..#p#pPPPPp#p#..",
+    ".#p#pPvPPvPp#p#v",
+    ".#p#pPPPPPPp#p#P",
+    ".#p#pPvPPvPp#p#x",
+    "..##pPPPPPPp##.x",
+    "...#pPPPPPPp#..x",
+    "...#pppppppp#..x",
+    "..#ppp#..#ppp#.#",
+    "..####....####.."
+  ],
+  orc_shaman_down_1: [
+    "....########....",
+    "...#xxxxkxxx#...",
+    "..#xxee#k#eex#..",
+    "..#xxxxk#kxxx#..",
+    "..#xxxxkkkxxx#..",
+    "...##P####P##...",
+    "..#p#pPPPPp#p#..",
+    ".#p#pPvPPvPp#p#v",
+    ".#p#pPPPPPPp#p#P",
+    ".#p#pPvPPvPp#p#x",
+    "..##pPPPPPPp##.x",
+    "...#pPPPPPPp#..x",
+    "...#pppppppp#..x",
+    ".#ppp#....#ppp##",
+    ".####......####."
+  ],
+  orc_shaman_attack: [
+    "....########..#v",
+    "...#xxxxkxxx#vvv",
+    "..#xxee#k#eex#vv",
+    "..#xxxxkkkxxx#vv",
+    "...##P####P##.vP",
+    "..#p#pPPPPp#p#xP",
+    ".#p#pPvPPvPp#p#x",
+    "..##pPPPPPPp##.x",
+    "...#pPPPPPPp#..x",
+    "...#pppppppp#..x",
+    "..#ppp####ppp#.#",
+    "..####....####.."
+  ],
+
+  // 3. 화염 골렘 (Fire Golem - Obsidian rock body, bright magma veins & fist)
+  fire_golem_down_0: [
+    ".....######.....",
+    "....#kReeek#....",
+    "...#keeeeeek#...",
+    "..#kRFkkkkFRk#..",
+    "..#keF#ee#Fek#..",
+    "..#keeeFkeek#...",
+    "...#keeeFek#....",
+    ".##kReeeFeeRk##.",
+    "#RFkReeeFeeRkFR#",
+    "#eFkeeeFeeeekFe#",
+    "#eFkeeeFeeeekFe#",
+    "#RFkeeeeeeeekFR#",
+    ".##kRkFFFFkRk##.",
+    "...#kkk##kkk#...",
+    "..#kFk#..#kFk#..",
+    "..####....####.."
+  ],
+  fire_golem_down_1: [
+    ".....######.....",
+    "....#kReeek#....",
+    "...#keeeeeek#...",
+    "..#kRFkkkkFRk#..",
+    "..#keF#ee#Fek#..",
+    "..#keeeFkeek#...",
+    "...#keeeFek#....",
+    ".##kReeeFeeRk##.",
+    "#RFkReeeFeeRkFR#",
+    "#eFkeeeFeeeekFe#",
+    "#eFkeeeFeeeekFe#",
+    "#RFkeeeeeeeekFR#",
+    ".##kRkFFFFkRk##.",
+    "..#kkk#..#kkk#..",
+    ".#kFk#....#kFk#.",
+    ".####......####."
+  ],
+  fire_golem_attack: [
+    ".....######.....",
+    "....#kReeek#....",
+    "...#keeeeeek#FfR",
+    "..#keF#ee#Fek#eF",
+    "..#keeeFkeek##eF",
+    ".##kReeeFeeRkeee",
+    "#RFkeeeFeeeekeee",
+    "#eFkeeeFeeeekFfe",
+    ".##kRkFFFFkRk###",
+    "...#kkk##kkk#...",
+    "..#kFk#..#kFk#..",
+    "..####....####.."
+  ],
+
+  // 4. 얼음 골렘 (Ice Golem - Sharp glacial ice crystal titan)
+  ice_golem_down_0: [
+    ".....######.....",
+    "....#cCCCcc#....",
+    "...#cCCCCCCc#...",
+    "..#cChkkkkhCc#..",
+    "..#cC#ww#ww#Cc#.",
+    "..#cCCChCCCCc#..",
+    "...#cChhhCc#....",
+    ".##cCCCChhCCc##.",
+    "#ChcCCCCChCCchC#",
+    "#CucChhhhhhCcuC#",
+    "#CucChhhhhhCcuC#",
+    "#ChcCCCCCCCCchC#",
+    ".##cChhhhhhCc##.",
+    "...#ccc##ccc#...",
+    "..#cCc#..#cCc#..",
+    "..####....####.."
+  ],
+  ice_golem_down_1: [
+    ".....######.....",
+    "....#cCCCcc#....",
+    "...#cCCCCCCc#...",
+    "..#cChkkkkhCc#..",
+    "..#cC#ww#ww#Cc#.",
+    "..#cCCChCCCCc#..",
+    "...#cChhhCc#....",
+    ".##cCCCChhCCc##.",
+    "#ChcCCCCChCCchC#",
+    "#CucChhhhhhCcuC#",
+    "#CucChhhhhhCcuC#",
+    "#ChcCCCCCCCCchC#",
+    ".##cChhhhhhCc##.",
+    "..#ccc#..#ccc#..",
+    ".#cCc#....#cCc#.",
+    ".####......####."
+  ],
+  ice_golem_attack: [
+    ".....######..#w#",
+    "....#cCCCcc#hCww",
+    "...#cCCCCCCc#Chw",
+    "..#cC#ww#ww#cChw",
+    ".##cCCCChhCCcChw",
+    "#ChcCCCCChCCChC#",
+    "#CucChhhhhhCc###",
+    ".##cChhhhhhCc#..",
+    "...#ccc##ccc#...",
+    "..#cCc#..#cCc#..",
+    "..####....####.."
+  ],
+
+  // 5. 설원 예티 (Yeti - Giant shaggy white arctic ape beast)
+  yeti_down_0: [
+    ".....######.....",
+    "....#wwwwww#....",
+    "...#whhhkhhw#...",
+    "...#whkeeehw#...",
+    "...#wkkkkkkw#...",
+    "...#whhhhkhw#...",
+    "..#wwwhhhhwww#..",
+    ".#www#whhw#www#.",
+    ".#sww#whhw#wws#.",
+    ".#swwhhhhhhwws#.",
+    ".#swwhhhhhhwws#.",
+    "..##whhhhhh##...",
+    "...#wwh##hww#...",
+    "...#wwh..hww#...",
+    "..#www#..#www#..",
+    "..####....####.."
+  ],
+  yeti_down_1: [
+    ".....######.....",
+    "....#wwwwww#....",
+    "...#whhhkhhw#...",
+    "...#whkeeehw#...",
+    "...#wkkkkkkw#...",
+    "...#whhhhkhw#...",
+    "..#wwwhhhhwww#..",
+    ".#www#whhw#www#.",
+    ".#sww#whhw#wws#.",
+    ".#swwhhhhhhwws#.",
+    ".#swwhhhhhhwws#.",
+    "..##whhhhhh##...",
+    "..#wwh#..#hww#..",
+    ".#www#....#www#.",
+    ".####......####."
+  ],
+  yeti_attack: [
+    ".....######..##.",
+    "....#wwwwww#hsww",
+    "...#whhhkhhw#sww",
+    "...#whkeeehw#sww",
+    "...#wkkkkkkw#sww",
+    "..#wwwhhhhwww###",
+    ".#www#whhw#www#.",
+    ".#swwhhhhhhwws#.",
+    "..##whhhhhh##...",
+    "...#wwh##hww#...",
+    "..#www#..#www#..",
+    "..####....####.."
+  ],
+
+  // 6. 트렌트 / 나무 정령 (Treant - Ancient mossy tree guardian)
+  treant_down_0: [
+    "..#o#......#o#..",
+    ".#oDo#....#oDo#.",
+    "..#oDE####EDo#..",
+    "...#oDEEEEDo#...",
+    "....#oDyyDo#....",
+    "...#ooDEEDoo#...",
+    "..#o#oDEEDo#o#..",
+    ".#oDo#oDDo#oDo#.",
+    ".#oDE#oDDo#EDo#.",
+    ".#oDE#oooo#EDo#.",
+    "..#o#oDooDo#o#..",
+    "...##oDooDo##...",
+    "...#oo####oo#...",
+    "...#o#....#o#...",
+    "..#oo#....#oo#..",
+    "..####....####.."
+  ],
+  treant_down_1: [
+    "..#o#......#o#..",
+    ".#oDo#....#oDo#.",
+    "..#oDE####EDo#..",
+    "...#oDEEEEDo#...",
+    "....#oDyyDo#....",
+    "...#ooDEEDoo#...",
+    "..#o#oDEEDo#o#..",
+    ".#oDo#oDDo#oDo#.",
+    ".#oDE#oDDo#EDo#.",
+    ".#oDE#oooo#EDo#.",
+    "..#o#oDooDo#o#..",
+    "...##oDooDo##...",
+    "..#oo#....#oo#..",
+    ".#oo#......#oo#.",
+    ".####......####."
+  ],
+  treant_attack: [
+    "..#o#......#o#..",
+    ".#oDo#....#oDo#.",
+    "..#oDE####EDo#..",
+    "...#oDyyDo#..#oD",
+    "...#ooDEEDoo#oDo",
+    "..#o#oDEEDo#oEDo",
+    ".#oDo#oDDo#oEDo#",
+    ".#oDE#oooo#oEDo#",
+    "..##oDooDo###...",
+    "...#oo####oo#...",
+    "..#oo#....#oo#..",
+    "..####....####.."
+  ],
+
+  // 7. 사막 미라 (Mummy - Desiccated linen wrappings, glowing amber eyes)
+  mummy_down_0: [
+    ".....######.....",
+    "....#tttttt#....",
+    "...#ttkkkktt#...",
+    "...#t#ee##et#...",
+    "...#tkkkkkkt#...",
+    "....#ttlltt#....",
+    ".....#tttt#.....",
+    "....##llll##....",
+    "...#t#llll#t#...",
+    "..#tt#ltttl#tt#.",
+    "..#tt#ltttl#tt#.",
+    "...##llllll##...",
+    "....#t#..#t#....",
+    "...#tt#..#tt#...",
+    "...#tt#..#tt#...",
+    "...###....###..."
+  ],
+  mummy_down_1: [
+    ".....######.....",
+    "....#tttttt#....",
+    "...#ttkkkktt#...",
+    "...#t#ee##et#...",
+    "...#tkkkkkkt#...",
+    "....#ttlltt#....",
+    ".....#tttt#.....",
+    "....##llll##....",
+    "...#t#llll#t#...",
+    "..#tt#ltttl#tt#.",
+    "..#tt#ltttl#tt#.",
+    "...##llllll##...",
+    "...#t#....#t#...",
+    "..#tt#....#tt#..",
+    "..#tt#....#tt#..",
+    "..###......###.."
+  ],
+  mummy_attack: [
+    ".....######..#t.",
+    "....#tttttt#ttY.",
+    "...#ttkkkktt#tY.",
+    "...#t#ee##et#tY.",
+    "....#ttlltt##tY.",
+    "....##llll##.tY.",
+    "...#t#llll#t#tY.",
+    "..#tt#ltttl#tY..",
+    "...##llllll##...",
+    "....#t####t#....",
+    "...#tt#..#tt#...",
+    "...###....###..."
+  ],
+
+  // 8. 거대 전갈 (Giant Scorpion - Golden brown chitin, front claws & venom tail stinger)
+  scorpion_down_0: [
+    ".......#L#......",
+    "......#lEl#.....",
+    ".....#ll#ll#....",
+    "....#lll#lll#...",
+    "...#llll#llll#..",
+    "..#lllllllll#...",
+    ".#llkkllkkll#...",
+    "#ll#ee##ee#ll#..",
+    "#ll#llllll#ll#..",
+    "#ll#llllll#ll#..",
+    ".#llllllllll#...",
+    "..#lll##lll#....",
+    ".#ll#....#ll#...",
+    ".###......###..."
+  ],
+  scorpion_down_1: [
+    ".......#L#......",
+    "......#lEl#.....",
+    ".....#ll#ll#....",
+    "....#lll#lll#...",
+    "...#llll#llll#..",
+    "..#lllllllll#...",
+    ".#llkkllkkll#...",
+    "#ll#ee##ee#ll#..",
+    "#ll#llllll#ll#..",
+    "#ll#llllll#ll#..",
+    ".#llllllllll#...",
+    "..#lll##lll#....",
+    "..#ll#..#ll#....",
+    "..###....###...."
+  ],
+  scorpion_attack: [
+    ".......#L#..#L#.",
+    "......#lEl##lEl#",
+    ".....#llll#llll#",
+    "....#llllllllll#",
+    "...#llllllllll#.",
+    ".#llkkllkkll#...",
+    "#ll#ee##ee#ll#..",
+    "#ll#llllll#ll#..",
+    "#ll#llllll#ll#..",
+    ".#llllllllll#...",
+    "..#lll##lll#....",
+    ".#ll#....#ll#...",
+    ".###......###..."
+  ],
+
+  // 9. 리치 (Lich - Dark purple hooded necromancer lord with green soul flame)
+  lich_down_0: [
+    ".....######.....",
+    "....#pPyyPp#....",
+    "...#pxxxxkxp#...",
+    "...#pxeekexxp#..",
+    "...#pxxkkxxp#...",
+    "....#pPkkPp#....",
+    "...#pP####Pp#...",
+    "..#pp#pPPp#pp#..",
+    ".#pp#pPvPPp#pp#.",
+    ".#x#pPvPPvPp#x#.",
+    "..#p#pPPPPp#p#..",
+    "...##pPPPPp##...",
+    "...#pppppppp#...",
+    "..#ppp#..#ppp#..",
+    "..####....####.."
+  ],
+  lich_down_1: [
+    ".....######.....",
+    "....#pPyyPp#....",
+    "...#pxxxxkxp#...",
+    "...#pxeekexxp#..",
+    "...#pxxkkxxp#...",
+    "....#pPkkPp#....",
+    "...#pP####Pp#...",
+    "..#pp#pPPp#pp#..",
+    ".#pp#pPvPPp#pp#.",
+    ".#x#pPvPPvPp#x#.",
+    "..#p#pPPPPp#p#..",
+    "...##pPPPPp##...",
+    "...#pppppppp#...",
+    ".#ppp#....#ppp#.",
+    ".####......####."
+  ],
+  lich_attack: [
+    ".....######...#L",
+    "....#pPyyPp#.LLL",
+    "...#pxxxxkxp#LLL",
+    "...#pxeekexxp#LL",
+    "....#pPkkPp##LLL",
+    "...#pP####Pp#kLL",
+    "..#pp#pPPp#pp#k#",
+    ".#x#pPvPPvPp#x#.",
+    "..#p#pPPPPp#p#..",
+    "...##pPPPPp##...",
+    "...#pppppppp#...",
+    "..#ppp####ppp#..",
+    "..####....####.."
+  ],
+
+  // 10. 지옥 사냥개 (Hellhound - Obsidian black body with blazing flame mane & tail)
+  hellhound_walk_0: [
+    "................",
+    ".......####.....",
+    "......#kkkk#....",
+    ".....#kweee#....",
+    "....#kkkkwk#....",
+    "...#kkkkkkkk####",
+    "..#kFFRReekkRRkk",
+    ".#kkFeeeFFeekkFF",
+    ".#kFFRRFFRRkkFFk",
+    "..#kk####kkkkk#.",
+    "..#kk#..#kkkk#..",
+    "..#kk#..#kkkk#..",
+    "..#rr#...#rr#...",
+    "..#kk#...#kk#...",
+    "..####...####...",
+    "................"
+  ],
+  hellhound_walk_1: [
+    "................",
+    ".......####.....",
+    "......#kkkk#....",
+    ".....#kweee#....",
+    "....#kkkkwk#....",
+    "...#kkkkkkkk####",
+    "..#kFFRReekkRRkk",
+    ".#kkFeeeFFeekkFF",
+    ".#kFFRRFFRRkkFFk",
+    "..#kk####kkkkk#.",
+    "..#kk#...#kk#...",
+    "..#kk#....#kk#..",
+    "..#rr#....#rr#..",
+    "..#kk#....#kk#..",
+    "..####....####..",
+    "................"
+  ],
+  hellhound_attack: [
+    "................",
+    "........####....",
+    ".......#kkkk#...",
+    "......#kweee#...",
+    ".....#kkwewk#...",
+    "....#kkkkkkkk###",
+    "..##kFFRReekkRR#",
+    ".#kkFeeeFFeekkFF",
+    "..#kk####kkkkk#.",
+    "..#rr#..#rr#....",
+    "..#kk#..#kk#....",
+    "..####..####....",
+    "................",
+    "................",
+    "................",
+    "................"
+  ],
+
+  // 11. 서리 늑대 (Frost Wolf - Silver white pelt with bright cyan eyes)
+  wolf_frost_walk_0: [
+    "................",
+    ".......####.....",
+    "......#hhhh#....",
+    ".....#hwCCh#....",
+    "....#hhhhwh#....",
+    "...#hhhhhhhh####",
+    "..#hhhhhhhhhhhh#",
+    ".#hhhhhhhhhhhhh#",
+    ".#hhhhhhhhhhhhh#",
+    "..#hh####hhhhh#.",
+    "..#hh#..#hhhh#..",
+    "..#hh#..#hhhh#..",
+    "..#mm#...#mm#...",
+    "..#ss#...#ss#...",
+    "..####...####...",
+    "................"
+  ],
+  wolf_frost_walk_1: [
+    "................",
+    ".......####.....",
+    "......#hhhh#....",
+    ".....#hwCCh#....",
+    "....#hhhhwh#....",
+    "...#hhhhhhhh####",
+    "..#hhhhhhhhhhhh#",
+    ".#hhhhhhhhhhhhh#",
+    ".#hhhhhhhhhhhhh#",
+    "..#hh####hhhhh#.",
+    "..#hh#...#hh#...",
+    "..#hh#....#hh#..",
+    "..#mm#....#mm#..",
+    "..#ss#....#ss#..",
+    "..####....####..",
+    "................"
+  ],
+  wolf_frost_attack: [
+    "................",
+    "........####....",
+    ".......#hhhh#...",
+    "......#hwCCh#...",
+    ".....#hhwewh#...",
+    "....#hhhhhhhh###",
+    "..##hhhhhhhhhhh#",
+    ".#hhhhhhhhhhhhh#",
+    "..#hh####hhhhh#.",
+    "..#mm#..#mm#....",
+    "..#ss#..#ss#....",
+    "..####..####....",
+    "................",
+    "................",
+    "................",
+    "................"
+  ],
+
+  // 12. 해적 선장 (Pirate Captain - Black tricorne hat, eyepatch, crimson coat, cutlass)
+  pirate_captain_down_0: [
+    "......########......",
+    "....##kkkkkkkk##....",
+    "...#kkkkkkkkkkkk#...",
+    "...#kkkkkwkkkkkk#...",
+    "....#F#ffffff#F#....",
+    "....#f#k##fff#f#....",
+    "....#ffffffffff#....",
+    "....#f##ffff##f#....",
+    "....#RR######RR#....",
+    "...#RRkRRRRRRkRR#...",
+    "..#RR#kRRRRRRk#RR#..",
+    "..#RR#kYkYYkYk#RR#h.",
+    "..#R#kkRRRRRRkk#R#wh",
+    "..#RR#kkRRRRkk#RR#wh",
+    "...##kkRRRRRRkk##Gwh",
+    "...#ssss####ssss#.G#",
+    "...#ssss#..#ssss#...",
+    "...#kkkk#..#kkkk#...",
+    "...#kkkk#..#kkkk#...",
+    "....####....####...."
+  ],
+  pirate_captain_down_1: [
+    "......########......",
+    "....##kkkkkkkk##....",
+    "...#kkkkkkkkkkkk#...",
+    "...#kkkkkwkkkkkk#...",
+    "....#F#ffffff#F#....",
+    "....#f#k##fff#f#....",
+    "....#ffffffffff#....",
+    "....#f##ffff##f#....",
+    "....#RR######RR#....",
+    "...#RRkRRRRRRkRR#...",
+    "..#RR#kRRRRRRk#RR#..",
+    "..#RR#kYkYYkYk#RR#h.",
+    "..#R#kkRRRRRRkk#R#wh",
+    "..#RR#kkRRRRkk#RR#wh",
+    "...##kkRRRRRRkk##Gwh",
+    "..#ssss#....#ssss#G#",
+    "..#ssss#....#ssss#..",
+    "..#kkkk#.....#kkkk#.",
+    "..#kkkk#.....#kkkk#.",
+    "...####.......####.."
+  ],
+  pirate_captain_attack: [
+    "......########......",
+    "....##kkkkkkkk##....",
+    "...#kkkkkkkkkkkk#...",
+    "...#kkkkkwkkkkkk#...",
+    "....#ffffffffff#....",
+    "....#RR######RR#..wh",
+    "...#RRkRRRRRRkRR#wwh",
+    "..#RR#kRRRRRRk#RRwhh",
+    "..#R#kkRRRRRRkk#Rwhh",
+    "...##kkRRRRRRkk##whh",
+    "...#ssss####ssss#Gwh",
+    "...#kkkk#..#kkkk#.G#",
+    "....####....####...."
+  ],
+
+  // 13. 방랑 상인 (Traveling Merchant - Sturdy leather coat, giant backpack with supplies, coin pouch)
+  merchant_down_0: [
+    "......########......",
+    ".....#llllllll#.....",
+    "....#llffffllll#....",
+    "....#F#ffffff#F#....",
+    "....#ffffffffff#....",
+    "....#f##ffff##f#....",
+    "....#OO######OO#....",
+    "...#OOoOOOOOOoOO#...",
+    "..#OO#oOOOOOOo#OO#..",
+    "..#OO#oYgGGgYo#OO#..",
+    "..#O#ooOOOOOOoo#O#y.",
+    "..#OO#ooOOOOoo#OO#yy",
+    "...##ooOOOOOOoo##yG#",
+    "...#ssss####ssss#.##",
+    "...#ssss#..#ssss#...",
+    "...#OOOO#..#OOOO#...",
+    "...#OOOO#..#OOOO#...",
+    "....####....####...."
+  ],
+  merchant_down_1: [
+    "......########......",
+    ".....#llllllll#.....",
+    "....#llffffllll#....",
+    "....#F#ffffff#F#....",
+    "....#ffffffffff#....",
+    "....#f##ffff##f#....",
+    "....#OO######OO#....",
+    "...#OOoOOOOOOoOO#...",
+    "..#OO#oOOOOOOo#OO#..",
+    "..#OO#oYgGGgYo#OO#..",
+    "..#O#ooOOOOOOoo#O#y.",
+    "..#OO#ooOOOOoo#OO#yy",
+    "...##ooOOOOOOoo##yG#",
+    "..#ssss#....#ssss#.G",
+    "..#ssss#....#ssss#..",
+    "..#OOOO#.....#OOOO#.",
+    "..#OOOO#.....#OOOO#.",
+    "...####.......####.."
+  ],
+
+  // 14. 성직자 / 사제 (Priest / Cleric - Holy white & gold cassock, mitre, holy silver rod)
+  priest_down_0: [
+    ".....######.....",
+    "....#wYYYYw#....",
+    "...#wwYYYYww#...",
+    "...#ww#YY#ww#...",
+    "...#w#ffff#w#...",
+    "...#ffffffff#...",
+    "....#ffffff#....",
+    "...#ww####ww#...",
+    "..#wwhYYYYhww#..",
+    ".#ww#hYYYYh#ww#.",
+    ".#f#hhYYYYhh#f#.",
+    "..#w#hYYYYh#w#..",
+    "...##hhYYhh##...",
+    "...#wwwwwwww#...",
+    "..#www#..#www#..",
+    "..####....####.."
+  ],
+  priest_down_1: [
+    ".....######.....",
+    "....#wYYYYw#....",
+    "...#wwYYYYww#...",
+    "...#ww#YY#ww#...",
+    "...#w#ffff#w#...",
+    "...#ffffffff#...",
+    "....#ffffff#....",
+    "...#ww####ww#...",
+    "..#wwhYYYYhww#..",
+    ".#ww#hYYYYh#ww#.",
+    ".#f#hhYYYYhh#f#.",
+    "..#w#hYYYYh#w#..",
+    "...##hhYYhh##...",
+    "...#wwwwwwww#...",
+    ".#www#....#www#.",
+    ".####......####."
+  ],
+
+  // 15. 성전 십자군 (Crusader Knight - Pure white surcoat with bold red heraldic cross)
+  crusader_down_0: [
+    "......####......",
+    ".....#hhhh#.....",
+    "....#hskksh#....",
+    "...#hhmhhhh#....",
+    "..#h#m#h#m##....",
+    "..#hhsmhhhsh#...",
+    "...#ssssss#.....",
+    "..#wwwhhhhww#...",
+    ".#ww#wRRRRw#ww#.",
+    ".#f#wwRRRRww#f#h",
+    "..#hwwRRRRwwh#wh",
+    "..#hh#wRRw#hh#wh",
+    "...##ssssss##.wh",
+    "...#kk##kk#.wh#.",
+    "..#hh#..#hh#G##.",
+    "..####..####.##."
+  ],
+  crusader_down_1: [
+    "......####......",
+    ".....#hhhh#.....",
+    "....#hskksh#....",
+    "...#hhmhhhh#....",
+    "..#h#m#h#m##....",
+    "..#hhsmhhhsh#...",
+    "...#ssssss#.....",
+    "..#wwwhhhhww#...",
+    ".#ww#wRRRRw#ww#.",
+    ".#f#wwRRRRww#f#h",
+    "..#hwwRRRRwwh#wh",
+    "..#hh#wRRw#hh#wh",
+    "...##ssssss##.wh",
+    "..#kk#..#kk#wh#.",
+    "..#hh#...#hh#G##",
+    "..####...####.##"
+  ],
+
+  harpy_down_0: [
+    "..#p#......#p#..",
+    ".#pp#......#pp#.",
+    "#ppp#..##..#ppp#",
+    "#pppp##pp##pppp#",
+    ".#pppf#ff#fppp#.",
+    "..#ppffffffpp#..",
+    "...#ffffffff#...",
+    "....#ff##ff#....",
+    "...#PffffffP#...",
+    "..#PP######PP#..",
+    ".#PP#......#PP#.",
+    ".#P#........#P#.",
+    "..#yy#....#yy#..",
+    "..####....####.."
+  ],
+  harpy_down_1: [
+    "................",
+    ".......##.......",
+    ".....##pp##.....",
+    "...##pppppp##...",
+    ".##ppppffpppp##.",
+    "#ppppffffffpppp#",
+    ".##ffffffffff##.",
+    "...#ffffffff#...",
+    "....#ff##ff#....",
+    "...#PffffffP#...",
+    "..#PP######PP#..",
+    "..#yy#....#yy#..",
+    "..####....####..",
+    "................"
+  ],
+  harpy_attack: [
+    "..#p#......#p#..",
+    ".#pp#..##..#pp#.",
+    "#ppp#.#ff#.#ppp#",
+    ".#ppffffffffpp#.",
+    "..#ffffffffff#..",
+    "...#ffffffff#...",
+    "...#PffffffP#...",
+    "..#PP######PP#..",
+    ".#PP#......#PP#.",
+    ".#P#........#P#.",
+    ".#yyy#....#yyy#.",
+    ".#####....#####.",
+    "................",
+    "................"
+  ],
+  skeleton_archer_down_0: [
+    ".....######.....",
+    "....#xxxxxx#....",
+    "...#xxkkkkxx#...",
+    "...#x#ee##ex#...",
+    "...#xkkkkkkx#...",
+    "....#xkhhkx#....",
+    ".....#xxxx#...#.",
+    "....##ssss##..#l",
+    "...#x#ssss#x#.ll",
+    "..#xx#smmms#xxll",
+    "..#xx#smmms#xx#l",
+    "...##ssssss##..#",
+    "....#x#..#x#....",
+    "...#xx#..#xx#...",
+    "...#xx#..#xx#...",
+    "...###....###..."
+  ],
+  skeleton_archer_down_1: [
+    ".....######.....",
+    "....#xxxxxx#....",
+    "...#xxkkkkxx#...",
+    "...#x#ee##ex#...",
+    "...#xkkkkkkx#...",
+    "....#xkhhkx#....",
+    ".....#xxxx#...#.",
+    "....##ssss##..#l",
+    "...#x#ssss#x#.ll",
+    "..#xx#smmms#xxll",
+    "..#xx#smmms#xx#l",
+    "...##ssssss##..#",
+    "...#x#....#x#...",
+    "..#xx#....#xx#..",
+    "..#xx#....#xx#..",
+    "..###......###.."
+  ],
+  skeleton_archer_attack: [
+    ".....######.....",
+    "....#xxxxxx#....",
+    "...#xxkkkkxx#...",
+    "...#x#ee##ex#...",
+    "....#xkhhkx#....",
+    "....##ssss##..#.",
+    "...#x#ssss#x#lll",
+    "..#xx#smmms#xhLL",
+    "...##ssssss##lll",
+    "....#x####x#..#.",
+    "...#xx#..#xx#...",
+    "...###....###..."
+  ],
   };
 
   class PixelSpriteAtlas {
@@ -1757,42 +2603,86 @@
       this.balloonCache.set(key, cv);
     }
 
-    // 엔티티 베이스 스프라이트 식별
+    // 엔티티 베이스 스프라이트 정밀 분류 (Every creature is distinct!)
     getBaseKeyForEntity(e) {
       if (e.role === 'player') return 'hero';
       if (e.role === 'king') return 'king';
-      if (e.race === 'dragonkin') return 'dragonkin';
+      if (e.role === 'priest' || e.role === 'cleric' || (e.subClass && e.subClass.includes('사제'))) return 'priest';
+      if (e.role === 'merchant') return 'merchant';
+      if (e.race === 'dragonkin' || e.role === 'dragonkin') return 'dragonkin';
       if (e.role === 'royal_guard' || e.role === 'guard') return 'guard';
-      if (e.role === 'soldier') return 'knight';
+      if (e.role === 'crusader') return 'crusader';
+      if (e.role === 'soldier') {
+        if (e.homeId && (e.homeId.includes('necropolis') || e.homeId.includes('obsidian'))) return 'skeleton';
+        return (e.id % 3 === 0) ? 'crusader' : ((e.id % 2 === 0) ? 'guard' : 'knight');
+      }
 
       // 전문 직업군
       if (e.role === 'farmer') return 'farmer';
       if (e.role === 'miner') return 'miner';
       if (e.role === 'blacksmith') return 'blacksmith';
       if (e.role === 'fisherman') return 'fisherman';
-      if (e.role === 'bard' || e.role === 'merchant') return 'bard';
+      if (e.role === 'bard') return 'bard';
 
       if (e.role === 'adventurer' || e.role === 'mercenary') {
         if (e.race === 'dwarf') return 'dwarf';
         if (e.race === 'elf') return 'elf';
-        return (e.id % 2 === 0) ? 'paladin' : 'knight';
+        if (e.race === 'undead') return 'skeleton';
+        return (e.id % 2 === 0) ? 'paladin' : 'crusader';
       }
 
-      // 몬스터
+      // 몬스터 정밀 세부 분류 (Individual Visual Identity)
       if (e.role === 'monster') {
         const name = e.name || '';
         const sub = e.subClass || '';
-        if (sub.includes('언데드') || name.includes('스켈레톤') || e.homeId === 'obsidian_necropolis') {
-          return e.hp > 200 ? 'reaper' : 'skeleton';
-        }
-        if (sub.includes('오크') || e.homeId === 'orc_stronghold') {
-          return 'orc';
-        }
+        const mtype = e.monsterType || '';
+
+        // 1. 해골 / 리치 / 사신 언데드 군단
+        if (mtype === 'lich' || name.includes('리치') || sub.includes('리치')) return 'lich';
+        if (mtype === 'reaper' || name.includes('사신') || name.includes('리퍼') || name.includes('망령 흑기사')) return 'reaper';
+        if (mtype === 'skeleton_archer' || name.includes('해골 궁수') || (sub.includes('언데드') && name.includes('궁수'))) return 'skeleton_archer_down';
+        if (mtype === 'skeleton' || name.includes('스켈레톤') || name.includes('해골') || sub.includes('언데드') || e.homeId === 'obsidian_necropolis') return 'skeleton';
+
+        // 2. 미라 & 사막 괴수
+        if (mtype === 'mummy' || name.includes('미라') || name.includes('머미')) return 'mummy';
+        if (mtype === 'scorpion' || name.includes('전갈') || name.includes('스콜피온')) return 'scorpion';
+
+        // 3. 골렘 (화염 / 얼음)
+        if (mtype === 'lava_golem' || mtype === 'fire_golem' || name.includes('화염골렘') || name.includes('용암골렘') || name.includes('화염 골렘')) return 'fire_golem';
+        if (mtype === 'ice_golem' || name.includes('얼음골렘') || name.includes('빙결골렘') || name.includes('얼음 골렘')) return 'ice_golem';
+
+        // 4. 설원 / 한대 괴수
+        if (mtype === 'yeti' || name.includes('예티') || name.includes('설인')) return 'yeti';
+        if (mtype === 'wolf_frost' || name.includes('서리 늑대') || name.includes('빙결 늑대')) return 'wolf_frost';
+
+        // 5. 원시림 / 자연 정령 & 비행 마수
+        if (mtype === 'treant' || name.includes('트렌트') || name.includes('나무 정령') || name.includes('세계수')) return 'treant';
+        if (mtype === 'harpy' || name.includes('하피') || name.includes('가고일') || mtype === 'gargoyle') return 'harpy';
+
+        // 6. 마수 & 지옥견
+        if (mtype === 'hellhound' || name.includes('지옥') || name.includes('헬하운드') || name.includes('케르베로스')) return 'hellhound';
+
+        // 7. 오크 부족 (전사 / 샤먼)
+        if (mtype === 'orc_shaman' || name.includes('샤먼') || name.includes('주술사')) return 'orc_shaman';
+        if (mtype === 'orc' || mtype === 'orc_berserker' || sub.includes('오크') || name.includes('오크') || e.homeId === 'orc_stronghold') return 'orc';
+
+        // 8. 고블린 부족 (도적 / 덫사냥꾼)
+        if (mtype === 'goblin_archer' || name.includes('사냥꾼') || name.includes('궁수')) return 'goblin_archer';
+        if (mtype === 'goblin' || name.includes('고블린') || e.homeId === 'goblin_camp') return 'goblin';
+
+        // 9. 대해적 선단
+        if (mtype === 'pirate_captain' || name.includes('해적선장') || name.includes('블랙비어드')) return 'pirate_captain';
+        if (mtype === 'pirate_raider' || mtype === 'pirate_sailor' || name.includes('해적') || e.homeId === 'pirate_cove') return 'pirate_captain';
+
+        // 10. 용족
+        if (e.race === 'dragonkin' || name.includes('용족') || name.includes('드래고니안')) return 'dragonkin';
+
+        // 11. 기타
         if (name.includes('슬라임')) return 'slime';
         if (name.includes('박쥐')) return 'bat';
-        if (name.includes('사신') || name.includes('리퍼') || name.includes('망령')) return 'reaper';
-        if (name.includes('늑대') || name.includes('울프')) return 'wolf';
-        return 'goblin';
+        if (name.includes('늑대')) return 'wolf';
+
+        return (e.id % 4 === 0) ? 'orc' : ((e.id % 3 === 0) ? 'skeleton' : ((e.id % 2 === 0) ? 'goblin_archer' : 'goblin'));
       }
 
       // 동물
@@ -1800,7 +2690,7 @@
         const at = e.animalType;
         if (at === 'horse') return 'horse';
         if (at === 'bear') return 'bear';
-        if (at === 'wolf') return 'wolf';
+        if (at === 'wolf') return (e.name && (e.name.includes('서리') || e.name.includes('빙결'))) ? 'wolf_frost' : 'wolf';
         if (at === 'deer') return 'deer';
         if (at === 'turtle') return 'turtle';
         if (at === 'camel') return 'camel';
@@ -1977,13 +2867,27 @@
       } else if (e.role === 'soldier' || e.role === 'guard') {
         weaponId = 'sword_steel';
         shieldId = 'shield_iron';
+      } else if (e.role === 'crusader') {
+        weaponId = 'sword_steel';
+        shieldId = 'shield_iron';
+      } else if (e.role === 'priest' || e.role === 'cleric') {
+        weaponId = 'lance_holy';
       } else if (e.role === 'adventurer' || e.role === 'mercenary') {
-        weaponId = (e.race === 'dwarf') ? 'axe_battle' : ((e.race === 'elf') ? 'bow_hunter' : 'sword_steel');
+        weaponId = (e.race === 'dwarf') ? 'axe_battle' : ((e.race === 'elf') ? 'bow_frost' : 'sword_steel');
       } else if (e.role === 'monster') {
-        if (e.name && e.name.includes('오크')) weaponId = 'axe_battle';
-        else if (e.name && e.name.includes('스켈레톤')) weaponId = 'sword_steel';
-        else if (e.name && e.name.includes('고블린')) weaponId = 'dagger_poison';
-        else if (e.name && e.name.includes('용족')) weaponId = 'sword_flame';
+        const name = e.name || '';
+        const mtype = e.monsterType || '';
+        if (mtype === 'orc_shaman' || name.includes('샤먼')) weaponId = 'staff_arcane';
+        else if (mtype === 'orc' || mtype === 'orc_berserker' || name.includes('오크')) weaponId = 'axe_battle';
+        else if (mtype === 'skeleton_archer' || name.includes('궁수')) weaponId = 'bow_frost';
+        else if (mtype === 'skeleton' || name.includes('스켈레톤')) weaponId = 'sword_steel';
+        else if (mtype === 'goblin_archer') weaponId = 'bow_elven';
+        else if (mtype === 'goblin' || name.includes('고블린')) weaponId = 'dagger_poison';
+        else if (mtype === 'reaper' || name.includes('사신') || name.includes('리퍼')) weaponId = 'scythe_shadow';
+        else if (mtype === 'lich' || name.includes('리치')) weaponId = 'staff_arcane';
+        else if (mtype === 'pirate_captain' || name.includes('해적')) weaponId = 'saber_pirate';
+        else if (e.race === 'dragonkin' || name.includes('용족')) weaponId = 'sword_flame';
+        else if (mtype === 'treant' || name.includes('트렌트')) weaponId = 'staff_nature';
       }
 
       if (!weaponId) return;
@@ -2012,9 +2916,11 @@
         // 화려한 픽셀 참격 궤적 (Slash Arc Particle Trail)
         ctx.save();
         let slashColor = '#f8fafc';
-        if (weaponId.includes('flame')) slashColor = '#f97316';
-        else if (weaponId.includes('excalibur')) slashColor = '#38bdf8';
-        else if (weaponId.includes('poison')) slashColor = '#4ade80';
+        if (weaponId.includes('flame') || weaponId.includes('magma')) slashColor = '#f97316';
+        else if (weaponId.includes('excalibur') || weaponId.includes('frost')) slashColor = '#38bdf8';
+        else if (weaponId.includes('poison') || weaponId.includes('nature')) slashColor = '#4ade80';
+        else if (weaponId.includes('shadow') || weaponId.includes('arcane')) slashColor = '#c084fc';
+        else if (weaponId.includes('holy') || weaponId.includes('gold')) slashColor = '#facc15';
 
         ctx.strokeStyle = slashColor;
         ctx.lineWidth = 2 * sc;
@@ -2034,11 +2940,9 @@
         // 대기 / 이동 모션: 자연스럽게 손에 쥐거나 옆구리에 찬 모습
         ctx.translate(handX, handY);
         if (dir === 'up') {
-          // 등 뒤에 멘 검
           ctx.rotate(isLeft ? 0.4 : -0.4);
           ctx.drawImage(wCvs, -4 * sc, -14 * sc, 14 * sc, 14 * sc);
         } else {
-          // 측면/정면 하향 파지
           ctx.rotate(isLeft ? -0.35 : 0.35);
           ctx.drawImage(wCvs, -4 * sc, -12 * sc, 15 * sc, 15 * sc);
         }
