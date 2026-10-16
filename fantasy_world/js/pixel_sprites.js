@@ -153,9 +153,6 @@
 
   // 3. 4방향 & 멀티프레임 원형 스프라이트 데이터 (Raw Sprite Matrices)
   const RAW_SPRITES = {
-    // ------------------------------------------------------------------------
-    // [A] 플레이어 영웅 (Hero - Down / Up / Side / Attack)
-    // ------------------------------------------------------------------------
     hero_down_0: [
       "......########......",
       ".....#yYYYYYYy#.....",
@@ -204,17 +201,21 @@
       "......########......",
       ".....#yYYYYYYy#.....",
       "....#yYyYYYYyYy#....",
+      "....#yYyYYYYyYy#....",
       "....#F#ffffff#F#....",
+      "....#f#ff##ff#f#....",
       "....#ffffffffff#....",
+      "....#f##ffff##f#....",
       "....#RR######RR#..wh",
       "...#RRbBBBBBBbRR#wwh",
       "..#RR#bBBBBBBb#RRwhh",
       "..#RR#bYyYYyYb#RRwhh",
       "..#R#bbBBBBBBbb#Rwhh",
       "..#RR#bbBBBBbb#RRwhh",
-      "...##bbBBBBBBbb##whh",
+      "...##bbBBBBBBbb##Gwh",
       "...#ssss####ssss#Gwh",
       "...#ssss#..#ssss#.G#",
+      "...#hhhh#..#hhhh#...",
       "...#hhhh#..#hhhh#...",
       "....####....####...."
     ],
@@ -276,8 +277,12 @@
       "..#RRRRRRRRRRRRRR#..",
       "..#RRRRRRYYRRRRRR#..",
       "..#RRRRRRRRRRRRRR#..",
+      "..#RRRRRRRRRRRRRR#..",
       "...##RRRRRRRRRR##...",
       "...#ssss####ssss#...",
+      "...#ssss#..#ssss#...",
+      "...#hhhh#..#hhhh#...",
+      "...#hhhh#..#hhhh#...",
       "....####....####...."
     ],
     hero_side_0: [
@@ -328,24 +333,24 @@
       "......#######.......",
       ".....#yYYYYYY#......",
       "....#yYYYYYYy#......",
+      "....#yYyYYYYy#......",
       "....#ffffff##.......",
+      "....#ffff##f#.......",
       "....#ffffffff#......",
+      "....#ffffff##.......",
       "...#RRbBBBBb########",
       "..#RR#bBBBBb#wwwhhhh",
       "..#R#bbBBBBb#wwwhhhh",
       "..#RR#bbBBBb#wwwhhhh",
       "...##bbBBBBb#GGGG###",
-      "..#ssss#ssss#.......",
-      "..#hhhh#hhhh#.......",
-      "...####.####........",
-      "....................",
-      "....................",
+      "...#ssss####........",
+      "...#ssss#...........",
+      "...#ssss#...........",
+      "...#hhhh#...........",
+      "...#hhhh#...........",
+      "....####............",
       "...................."
     ],
-
-    // ------------------------------------------------------------------------
-    // [B] 기사단 및 고위 수호자 (Knights, Guards, Paladins, Wizards)
-    // ------------------------------------------------------------------------
     knight_down_0: [
       "......####......",
       ".....#RRrr#.....",
@@ -397,7 +402,8 @@
       "...##ssss##.....",
       "..#kk####kk#....",
       "..#hh#..#hh#....",
-      "..####..####...."
+      "..####..####....",
+      "..####..####.##."
     ],
     knight_up_0: [
       "......####......",
@@ -450,7 +456,8 @@
       "...##ssss##.....",
       "...#kk##kk#.....",
       "..#hh#..#hh#....",
-      "..####..####...."
+      "..####..####....",
+      "..####..####.##."
     ],
     knight_side_1: [
       "......####......",
@@ -467,7 +474,8 @@
       "...##ssss##.....",
       "..#kk#..#kk#....",
       "..#hh#...#hh#...",
-      "..####...####..."
+      "..####...####...",
+      "..####..####.##."
     ],
     knight_side_attack: [
       "......####......",
@@ -482,9 +490,11 @@
       "...##ssss##.....",
       "..#kk####kk#....",
       "..#hh#..#hh#....",
-      "..####..####...."
+      "..####..####....",
+      "...#kk##kk#.wh#.",
+      "..#hh#..#hh#G##.",
+      "..####..####.##."
     ],
-
     guard_down_0: [
       "......########......",
       ".....#hhhhhhhh#.....",
@@ -533,9 +543,12 @@
       "...##bbmmmmmmbb##.O.",
       "...#ssss####ssss#.O.",
       "...#hhhh#..#hhhh#.O.",
+      "....####....####..#.",
+      "...#ssss####ssss#.O.",
+      "...#ssss#..#ssss#.O.",
+      "...#hhhh#..#hhhh#.O.",
       "....####....####..#."
     ],
-
     paladin_down_0: [
       ".....######.....",
       "....#hhhhhh#....",
@@ -585,9 +598,11 @@
       "...##hhhhhh##...",
       "..#kk####kk#....",
       "..#hh#..#hh#....",
-      "..####..####...."
+      "..####..####....",
+      "...#kk##kk#...x.",
+      "..#hh#..#hh#..x.",
+      "..####..####..x."
     ],
-
     wizard_down_0: [
       ".....######.....",
       "....#pppppp#....",
@@ -636,12 +651,12 @@
       "...##bbBBbb##...",
       "...#pppppppp#...",
       "..#ppp####ppp#..",
+      "..####....####..",
+      "...##bbBBbb##...",
+      "...#pppppppp#...",
+      "..#ppp#..#ppp#..",
       "..####....####.."
     ],
-
-    // ------------------------------------------------------------------------
-    // [C] 주민 직업군 (Ecology Professions & Action Motions)
-    // ------------------------------------------------------------------------
     farmer_down_0: [
       "......########......",
       "....##tttttttt##....",
@@ -690,9 +705,12 @@
       "....##bbBBBBbb##....",
       "....#ssss##ssss#....",
       "...#OOOO#..#OOOO#...",
+      "....####....####....",
+      "....#ssss##ssss#.O..",
+      "...#ssss#..#ssss#O..",
+      "...#OOOO#..#OOOO#h..",
       "....####....####...."
     ],
-
     miner_down_0: [
       "......########......",
       ".....#zzzzzzzz#.....",
@@ -740,9 +758,13 @@
       "....##bbOOOOdd##....",
       "....#ssss##ssss#....",
       "...#zzzz#..#zzzz#...",
+      "....####....####....",
+      "....##bbOOOOdd##.O..",
+      "....#ssss##ssss#.O..",
+      "...#ssss#..#ssss#O..",
+      "...#zzzz#..#zzzz#...",
       "....####....####...."
     ],
-
     blacksmith_down_0: [
       "......########......",
       ".....#oooooooo#.....",
@@ -790,9 +812,13 @@
       "....##bbOOOOdd##....",
       "....#ssss##ssss#....",
       "...#ssss#..#ssss#...",
+      "....####....####....",
+      "...#O#bbOOOOdd#O#O..",
+      "....##bbOOOOdd##.O..",
+      "....#ssss##ssss#.O..",
+      "...#ssss#..#ssss#...",
       "....####....####...."
     ],
-
     fisherman_down_0: [
       "......########......",
       ".....#cccccccc#.....",
@@ -840,9 +866,13 @@
       "....##bbccccdd##.O..",
       "....#ssss##ssss#....",
       "...#cccc#..#cccc#...",
+      "....####....####....",
+      "....##bbccccdd##.O..",
+      "....#ssss##ssss#.O..",
+      "...#ssss#..#ssss#O..",
+      "...#cccc#..#cccc#...",
       "....####....####...."
     ],
-
     bard_down_0: [
       "......########......",
       "....##vvvvvvvv##....",
@@ -890,9 +920,13 @@
       "....##bbPPPPdd##....",
       "....#ssss##ssss#....",
       "...#vvvv#..#vvvv#...",
+      "....####....####....",
+      "....##bbPPPPdd##.O..",
+      "....#ssss##ssss#.O..",
+      "...#ssss#..#ssss#...",
+      "...#vvvv#..#vvvv#...",
       "....####....####...."
     ],
-
     king_down_0: [
       "....########....",
       "...#yYYYYYYy#...",
@@ -929,7 +963,6 @@
       ".####......####.",
       "................"
     ],
-
     elf_down_0: [
       ".....######.....",
       "....#yYYYYy#....",
@@ -978,9 +1011,12 @@
       "...##DDDD##..#l.",
       "...#oooooo#..#l.",
       "..#oo####oo#....",
-      "..####..####...."
+      "..####..####....",
+      "...#oooooo#.....",
+      "..#oo#..#oo#....",
+      "..####..####....",
+      "................"
     ],
-
     dwarf_down_0: [
       "....########....",
       "...#zzzzzzzz#...",
@@ -1028,13 +1064,13 @@
       "...#ssssssss#...",
       "..#kk####kk#....",
       "..#hh#..#hh#....",
-      "..####..####...."
+      "..####..####....",
+      "...#ssssssss#...",
+      "...#kk####kk#...",
+      "..#hh#....#hh#..",
+      "..####....####..",
+      "................"
     ],
-
-    // ------------------------------------------------------------------------
-    // [D] 몬스터 & 보스 (Monsters: Walk cycles, Attacks, Recoil)
-    // ------------------------------------------------------------------------
-    // 1. 오크 전사 (Orc Warrior - Heavy Dual Axe Cleave)
     orc_down_0: [
       "....########....",
       "..##DEEEDEED##..",
@@ -1084,10 +1120,11 @@
       "...#ssssssss#...",
       "..#kk####kk#....",
       "..#hh#..#hh#....",
-      "..####..####...."
+      "..####..####....",
+      "..#hh#....#hh#..",
+      "..####....####..",
+      "................"
     ],
-
-    // 2. 스켈레톤 (Skeleton Warrior - Bone Sword Thrust)
     skeleton_down_0: [
       ".....######.....",
       "....#xxxxxx#....",
@@ -1136,10 +1173,12 @@
       "...##ssssss##G##",
       "....#x####x#....",
       "...#xx#..#xx#...",
+      "...###....###...",
+      "....#x#..#x#....",
+      "...#xx#..#xx#...",
+      "...#xx#..#xx#...",
       "...###....###..."
     ],
-
-    // 3. 고블린 도적 (Goblin Rogue - Poison Dagger Flurry)
     goblin_down_0: [
       "....########....",
       "..##LEEEEEEL##..",
@@ -1188,10 +1227,12 @@
       "...#oooooooo##L#",
       "..#kk####kk#....",
       "..#oo#..#oo#....",
-      "..####..####...."
+      "..####..####....",
+      "...#oooooooo#...",
+      "...#kk####kk#...",
+      "..#oo#....#oo#..",
+      "..####....####.."
     ],
-
-    // 4. 용족 전사 (Dragonkin Warrior - Flame Greatsword Cleave)
     dragonkin_down_0: [
       "....#......#....",
       "...#y#....#y#...",
@@ -1250,10 +1291,14 @@
       "...#ssss##ssss#.",
       "..#hhhh#..#hhhh#",
       ".#RR#........#RR",
+      ".###..........##",
+      "...##bbBBbb##Fwh",
+      "...#ssss##ssss#.",
+      "...#ssss#..#ssss",
+      "..#hhhh#....#hhh",
+      ".#RR#........#RR",
       ".###..........##"
     ],
-
-    // 5. 슬라임 (Slime - Squash & Wobble & Surge)
     slime_0: [
       "................",
       "......####......",
@@ -1308,8 +1353,6 @@
       "................",
       "................"
     ],
-
-    // 6. 박쥐 (Cave Bat - Wing Flap Cycle)
     bat_0: [
       "................",
       "#k#..........#k#",
@@ -1364,8 +1407,6 @@
       "................",
       "................"
     ],
-
-    // 7. 사신 / 언데드 군주 (Reaper - Scythe Cleave)
     reaper_0: [
       ".....######.....",
       "....#kkkkkk#....",
@@ -1414,10 +1455,12 @@
       "...#kkkkkkkk#...",
       "....#kk####kk#..",
       "...#kk#....#kk#.",
-      "...###......###."
+      "...###......###.",
+      ".....#kkkk#...m#",
+      "....#kk##kk#..##",
+      "...#kk#..#kk#...",
+      "...###....###..."
     ],
-
-    // 8. 야생 늑대 (Wolf - Quadrupedal Stride & Pounce)
     wolf_walk_0: [
       "................",
       ".......####.....",
@@ -1472,10 +1515,6 @@
       "................",
       "................"
     ],
-
-    // ------------------------------------------------------------------------
-    // [E] 탈것 및 동물 (Mounts & Animals)
-    // ------------------------------------------------------------------------
     horse_walk_0: [
       "................",
       "........#####...",
@@ -1512,7 +1551,6 @@
       "..#kk#....#kk#..",
       "..####....####..."
     ],
-
     bear_walk_0: [
       "................",
       "....##....##....",
@@ -1561,9 +1599,12 @@
       ".#OO####OO####O#",
       ".#OO#..#OO#..#O#",
       ".####..####..###",
+      "................",
+      ".#OO#..#OO#..#O#",
+      ".#OO#..#OO#..#O#",
+      ".####..####..###",
       "................"
     ],
-
     deer_walk_0: [
       "....#......#....",
       "...#O#....#O#...",
@@ -1600,7 +1641,6 @@
       "...#kk#....#kk#.",
       "...####....####."
     ],
-
     turtle_walk_0: [
       "................",
       "................",
@@ -1637,7 +1677,6 @@
       "................",
       "................"
     ],
-
     camel_walk_0: [
       "................",
       ".......##.......",
@@ -1673,853 +1712,863 @@
       "..#kk#....#kk#..",
       "..####....####..",
       "................"
+    ],
+    goblin_archer_down_0: [
+      "....########....",
+      "..##LEEEEEEL##..",
+      ".#LE#effffe#EL#.",
+      "#LE#effffff#eEL#",
+      "#EE#ffffffff#EE#",
+      "..#f#ffffff#f#..",
+      "..#o#oooooo#o#.#",
+      ".#oo#o#oo#o#oo#l",
+      ".#oo#oooooo#oo#l",
+      "..##oooooooo##ll",
+      "...#oooooooo#..l",
+      "...#kk####kk#..l",
+      "..#oo#....#oo#.#",
+      "..####....####.."
+    ],
+    goblin_archer_down_1: [
+      "....########....",
+      "..##LEEEEEEL##..",
+      ".#LE#effffe#EL#.",
+      "#LE#effffff#eEL#",
+      "#EE#ffffffff#EE#",
+      "..#f#ffffff#f#..",
+      "..#o#oooooo#o#.#",
+      ".#oo#o#oo#o#oo#l",
+      ".#oo#oooooo#oo#l",
+      "..##oooooooo##ll",
+      "...#oooooooo#..l",
+      "..#kk#....#kk#.l",
+      "..#oo#....#oo#.#",
+      "..####....####.."
+    ],
+    goblin_archer_attack: [
+      "....########....",
+      "..##LEEEEEEL##..",
+      ".#LE#effffe#EL#.",
+      "#EE#ffffffff#EE#",
+      "..#f#ffffff#f#..",
+      "..#o#oooooo#o#..",
+      ".#oo#o#oo#o#oo##",
+      "..##oooooooo#lll",
+      "...#oooooooo#hLL",
+      "..#kk####kk##lll",
+      "..#oo#..#oo#..##",
+      "..####..####....",
+      "..#oo#....#oo#.#",
+      "..####....####.."
+    ],
+    orc_shaman_down_0: [
+      "....########....",
+      "...#xxxxkxxx#...",
+      "..#xxee#k#eex#..",
+      "..#xxxxk#kxxx#..",
+      "..#xxxxkkkxxx#..",
+      "...##P####P##...",
+      "..#p#pPPPPp#p#..",
+      ".#p#pPvPPvPp#p#v",
+      ".#p#pPPPPPPp#p#P",
+      ".#p#pPvPPvPp#p#x",
+      "..##pPPPPPPp##.x",
+      "...#pPPPPPPp#..x",
+      "...#pppppppp#..x",
+      "..#ppp#..#ppp#.#",
+      "..####....####.."
+    ],
+    orc_shaman_down_1: [
+      "....########....",
+      "...#xxxxkxxx#...",
+      "..#xxee#k#eex#..",
+      "..#xxxxk#kxxx#..",
+      "..#xxxxkkkxxx#..",
+      "...##P####P##...",
+      "..#p#pPPPPp#p#..",
+      ".#p#pPvPPvPp#p#v",
+      ".#p#pPPPPPPp#p#P",
+      ".#p#pPvPPvPp#p#x",
+      "..##pPPPPPPp##.x",
+      "...#pPPPPPPp#..x",
+      "...#pppppppp#..x",
+      ".#ppp#....#ppp##",
+      ".####......####."
+    ],
+    orc_shaman_attack: [
+      "....########..#v",
+      "...#xxxxkxxx#vvv",
+      "..#xxee#k#eex#vv",
+      "..#xxxxkkkxxx#vv",
+      "...##P####P##.vP",
+      "..#p#pPPPPp#p#xP",
+      ".#p#pPvPPvPp#p#x",
+      "..##pPPPPPPp##.x",
+      "...#pPPPPPPp#..x",
+      "...#pppppppp#..x",
+      "..#ppp####ppp#.#",
+      "..####....####..",
+      "...#pppppppp#..x",
+      "..#ppp#..#ppp#.#",
+      "..####....####.."
+    ],
+    fire_golem_down_0: [
+      ".....######.....",
+      "....#kReeek#....",
+      "...#keeeeeek#...",
+      "..#kRFkkkkFRk#..",
+      "..#keF#ee#Fek#..",
+      "..#keeeFkeek#...",
+      "...#keeeFek#....",
+      ".##kReeeFeeRk##.",
+      "#RFkReeeFeeRkFR#",
+      "#eFkeeeFeeeekFe#",
+      "#eFkeeeFeeeekFe#",
+      "#RFkeeeeeeeekFR#",
+      ".##kRkFFFFkRk##.",
+      "...#kkk##kkk#...",
+      "..#kFk#..#kFk#..",
+      "..####....####.."
+    ],
+    fire_golem_down_1: [
+      ".....######.....",
+      "....#kReeek#....",
+      "...#keeeeeek#...",
+      "..#kRFkkkkFRk#..",
+      "..#keF#ee#Fek#..",
+      "..#keeeFkeek#...",
+      "...#keeeFek#....",
+      ".##kReeeFeeRk##.",
+      "#RFkReeeFeeRkFR#",
+      "#eFkeeeFeeeekFe#",
+      "#eFkeeeFeeeekFe#",
+      "#RFkeeeeeeeekFR#",
+      ".##kRkFFFFkRk##.",
+      "..#kkk#..#kkk#..",
+      ".#kFk#....#kFk#.",
+      ".####......####."
+    ],
+    fire_golem_attack: [
+      ".....######.....",
+      "....#kReeek#....",
+      "...#keeeeeek#FfR",
+      "..#keF#ee#Fek#eF",
+      "..#keeeFkeek##eF",
+      ".##kReeeFeeRkeee",
+      "#RFkeeeFeeeekeee",
+      "#eFkeeeFeeeekFfe",
+      ".##kRkFFFFkRk###",
+      "...#kkk##kkk#...",
+      "..#kFk#..#kFk#..",
+      "..####....####..",
+      ".##kRkFFFFkRk##.",
+      "...#kkk##kkk#...",
+      "..#kFk#..#kFk#..",
+      "..####....####.."
+    ],
+    ice_golem_down_0: [
+      ".....######.....",
+      "....#cCCCcc#....",
+      "...#cCCCCCCc#...",
+      "..#cChkkkkhCc#..",
+      "..#cC#ww#ww#Cc#.",
+      "..#cCCChCCCCc#..",
+      "...#cChhhCc#....",
+      ".##cCCCChhCCc##.",
+      "#ChcCCCCChCCchC#",
+      "#CucChhhhhhCcuC#",
+      "#CucChhhhhhCcuC#",
+      "#ChcCCCCCCCCchC#",
+      ".##cChhhhhhCc##.",
+      "...#ccc##ccc#...",
+      "..#cCc#..#cCc#..",
+      "..####....####.."
+    ],
+    ice_golem_down_1: [
+      ".....######.....",
+      "....#cCCCcc#....",
+      "...#cCCCCCCc#...",
+      "..#cChkkkkhCc#..",
+      "..#cC#ww#ww#Cc#.",
+      "..#cCCChCCCCc#..",
+      "...#cChhhCc#....",
+      ".##cCCCChhCCc##.",
+      "#ChcCCCCChCCchC#",
+      "#CucChhhhhhCcuC#",
+      "#CucChhhhhhCcuC#",
+      "#ChcCCCCCCCCchC#",
+      ".##cChhhhhhCc##.",
+      "..#ccc#..#ccc#..",
+      ".#cCc#....#cCc#.",
+      ".####......####."
+    ],
+    ice_golem_attack: [
+      ".....######..#w#",
+      "....#cCCCcc#hCww",
+      "...#cCCCCCCc#Chw",
+      "..#cC#ww#ww#cChw",
+      ".##cCCCChhCCcChw",
+      "#ChcCCCCChCCChC#",
+      "#CucChhhhhhCc###",
+      ".##cChhhhhhCc#..",
+      "...#ccc##ccc#...",
+      "..#cCc#..#cCc#..",
+      "..####....####..",
+      "#ChcCCCCCCCCchC#",
+      ".##cChhhhhhCc##.",
+      "...#ccc##ccc#...",
+      "..#cCc#..#cCc#..",
+      "..####....####.."
+    ],
+    yeti_down_0: [
+      ".....######.....",
+      "....#wwwwww#....",
+      "...#whhhkhhw#...",
+      "...#whkeeehw#...",
+      "...#wkkkkkkw#...",
+      "...#whhhhkhw#...",
+      "..#wwwhhhhwww#..",
+      ".#www#whhw#www#.",
+      ".#sww#whhw#wws#.",
+      ".#swwhhhhhhwws#.",
+      ".#swwhhhhhhwws#.",
+      "..##whhhhhh##...",
+      "...#wwh##hww#...",
+      "...#wwh..hww#...",
+      "..#www#..#www#..",
+      "..####....####.."
+    ],
+    yeti_down_1: [
+      ".....######.....",
+      "....#wwwwww#....",
+      "...#whhhkhhw#...",
+      "...#whkeeehw#...",
+      "...#wkkkkkkw#...",
+      "...#whhhhkhw#...",
+      "..#wwwhhhhwww#..",
+      ".#www#whhw#www#.",
+      ".#sww#whhw#wws#.",
+      ".#swwhhhhhhwws#.",
+      ".#swwhhhhhhwws#.",
+      "..##whhhhhh##...",
+      "..#wwh#..#hww#..",
+      ".#www#....#www#.",
+      ".####......####.",
+      "..####....####.."
+    ],
+    yeti_attack: [
+      ".....######..##.",
+      "....#wwwwww#hsww",
+      "...#whhhkhhw#sww",
+      "...#whkeeehw#sww",
+      "...#wkkkkkkw#sww",
+      "..#wwwhhhhwww###",
+      ".#www#whhw#www#.",
+      ".#swwhhhhhhwws#.",
+      "..##whhhhhh##...",
+      "...#wwh##hww#...",
+      "..#www#..#www#..",
+      "..####....####..",
+      "...#wwh##hww#...",
+      "...#wwh..hww#...",
+      "..#www#..#www#..",
+      "..####....####.."
+    ],
+    treant_down_0: [
+      "..#o#......#o#..",
+      ".#oDo#....#oDo#.",
+      "..#oDE####EDo#..",
+      "...#oDEEEEDo#...",
+      "....#oDyyDo#....",
+      "...#ooDEEDoo#...",
+      "..#o#oDEEDo#o#..",
+      ".#oDo#oDDo#oDo#.",
+      ".#oDE#oDDo#EDo#.",
+      ".#oDE#oooo#EDo#.",
+      "..#o#oDooDo#o#..",
+      "...##oDooDo##...",
+      "...#oo####oo#...",
+      "...#o#....#o#...",
+      "..#oo#....#oo#..",
+      "..####....####.."
+    ],
+    treant_down_1: [
+      "..#o#......#o#..",
+      ".#oDo#....#oDo#.",
+      "..#oDE####EDo#..",
+      "...#oDEEEEDo#...",
+      "....#oDyyDo#....",
+      "...#ooDEEDoo#...",
+      "..#o#oDEEDo#o#..",
+      ".#oDo#oDDo#oDo#.",
+      ".#oDE#oDDo#EDo#.",
+      ".#oDE#oooo#EDo#.",
+      "..#o#oDooDo#o#..",
+      "...##oDooDo##...",
+      "..#oo#....#oo#..",
+      ".#oo#......#oo#.",
+      ".####......####.",
+      "..####....####.."
+    ],
+    treant_attack: [
+      "..#o#......#o#..",
+      ".#oDo#....#oDo#.",
+      "..#oDE####EDo#..",
+      "...#oDyyDo#..#oD",
+      "...#ooDEEDoo#oDo",
+      "..#o#oDEEDo#oEDo",
+      ".#oDo#oDDo#oEDo#",
+      ".#oDE#oooo#oEDo#",
+      "..##oDooDo###...",
+      "...#oo####oo#...",
+      "..#oo#....#oo#..",
+      "..####....####..",
+      "...#oo####oo#...",
+      "...#o#....#o#...",
+      "..#oo#....#oo#..",
+      "..####....####.."
+    ],
+    mummy_down_0: [
+      ".....######.....",
+      "....#tttttt#....",
+      "...#ttkkkktt#...",
+      "...#t#ee##et#...",
+      "...#tkkkkkkt#...",
+      "....#ttlltt#....",
+      ".....#tttt#.....",
+      "....##llll##....",
+      "...#t#llll#t#...",
+      "..#tt#ltttl#tt#.",
+      "..#tt#ltttl#tt#.",
+      "...##llllll##...",
+      "....#t#..#t#....",
+      "...#tt#..#tt#...",
+      "...#tt#..#tt#...",
+      "...###....###..."
+    ],
+    mummy_down_1: [
+      ".....######.....",
+      "....#tttttt#....",
+      "...#ttkkkktt#...",
+      "...#t#ee##et#...",
+      "...#tkkkkkkt#...",
+      "....#ttlltt#....",
+      ".....#tttt#.....",
+      "....##llll##....",
+      "...#t#llll#t#...",
+      "..#tt#ltttl#tt#.",
+      "..#tt#ltttl#tt#.",
+      "...##llllll##...",
+      "...#t#....#t#...",
+      "..#tt#....#tt#..",
+      "..#tt#....#tt#..",
+      "..###......###.."
+    ],
+    mummy_attack: [
+      ".....######..#t.",
+      "....#tttttt#ttY.",
+      "...#ttkkkktt#tY.",
+      "...#t#ee##et#tY.",
+      "....#ttlltt##tY.",
+      "....##llll##.tY.",
+      "...#t#llll#t#tY.",
+      "..#tt#ltttl#tY..",
+      "...##llllll##...",
+      "....#t####t#....",
+      "...#tt#..#tt#...",
+      "...###....###...",
+      "....#t#..#t#....",
+      "...#tt#..#tt#...",
+      "...#tt#..#tt#...",
+      "...###....###..."
+    ],
+    scorpion_down_0: [
+      ".......#L#......",
+      "......#lEl#.....",
+      ".....#ll#ll#....",
+      "....#lll#lll#...",
+      "...#llll#llll#..",
+      "..#lllllllll#...",
+      ".#llkkllkkll#...",
+      "#ll#ee##ee#ll#..",
+      "#ll#llllll#ll#..",
+      "#ll#llllll#ll#..",
+      ".#llllllllll#...",
+      "..#lll##lll#....",
+      ".#ll#....#ll#...",
+      ".###......###..."
+    ],
+    scorpion_down_1: [
+      ".......#L#......",
+      "......#lEl#.....",
+      ".....#ll#ll#....",
+      "....#lll#lll#...",
+      "...#llll#llll#..",
+      "..#lllllllll#...",
+      ".#llkkllkkll#...",
+      "#ll#ee##ee#ll#..",
+      "#ll#llllll#ll#..",
+      "#ll#llllll#ll#..",
+      ".#llllllllll#...",
+      "..#lll##lll#....",
+      "..#ll#..#ll#....",
+      "..###....###...."
+    ],
+    scorpion_attack: [
+      ".......#L#..#L#.",
+      "......#lEl##lEl#",
+      ".....#llll#llll#",
+      "....#llllllllll#",
+      "...#llllllllll#.",
+      ".#llkkllkkll#...",
+      "#ll#ee##ee#ll#..",
+      "#ll#llllll#ll#..",
+      "#ll#llllll#ll#..",
+      ".#llllllllll#...",
+      "..#lll##lll#....",
+      ".#ll#....#ll#...",
+      ".###......###...",
+      ".###......###..."
+    ],
+    lich_down_0: [
+      ".....######.....",
+      "....#pPyyPp#....",
+      "...#pxxxxkxp#...",
+      "...#pxeekexxp#..",
+      "...#pxxkkxxp#...",
+      "....#pPkkPp#....",
+      "...#pP####Pp#...",
+      "..#pp#pPPp#pp#..",
+      ".#pp#pPvPPp#pp#.",
+      ".#x#pPvPPvPp#x#.",
+      "..#p#pPPPPp#p#..",
+      "...##pPPPPp##...",
+      "...#pppppppp#...",
+      "..#ppp#..#ppp#..",
+      "..####....####.."
+    ],
+    lich_down_1: [
+      ".....######.....",
+      "....#pPyyPp#....",
+      "...#pxxxxkxp#...",
+      "...#pxeekexxp#..",
+      "...#pxxkkxxp#...",
+      "....#pPkkPp#....",
+      "...#pP####Pp#...",
+      "..#pp#pPPp#pp#..",
+      ".#pp#pPvPPp#pp#.",
+      ".#x#pPvPPvPp#x#.",
+      "..#p#pPPPPp#p#..",
+      "...##pPPPPp##...",
+      "...#pppppppp#...",
+      ".#ppp#....#ppp#.",
+      ".####......####."
+    ],
+    lich_attack: [
+      ".....######...#L",
+      "....#pPyyPp#.LLL",
+      "...#pxxxxkxp#LLL",
+      "...#pxeekexxp#LL",
+      "....#pPkkPp##LLL",
+      "...#pP####Pp#kLL",
+      "..#pp#pPPp#pp#k#",
+      ".#x#pPvPPvPp#x#.",
+      "..#p#pPPPPp#p#..",
+      "...##pPPPPp##...",
+      "...#pppppppp#...",
+      "..#ppp####ppp#..",
+      "..####....####..",
+      "..#ppp#..#ppp#..",
+      "..####....####.."
+    ],
+    hellhound_walk_0: [
+      "................",
+      ".......####.....",
+      "......#kkkk#....",
+      ".....#kweee#....",
+      "....#kkkkwk#....",
+      "...#kkkkkkkk####",
+      "..#kFFRReekkRRkk",
+      ".#kkFeeeFFeekkFF",
+      ".#kFFRRFFRRkkFFk",
+      "..#kk####kkkkk#.",
+      "..#kk#..#kkkk#..",
+      "..#kk#..#kkkk#..",
+      "..#rr#...#rr#...",
+      "..#kk#...#kk#...",
+      "..####...####...",
+      "................"
+    ],
+    hellhound_walk_1: [
+      "................",
+      ".......####.....",
+      "......#kkkk#....",
+      ".....#kweee#....",
+      "....#kkkkwk#....",
+      "...#kkkkkkkk####",
+      "..#kFFRReekkRRkk",
+      ".#kkFeeeFFeekkFF",
+      ".#kFFRRFFRRkkFFk",
+      "..#kk####kkkkk#.",
+      "..#kk#...#kk#...",
+      "..#kk#....#kk#..",
+      "..#rr#....#rr#..",
+      "..#kk#....#kk#..",
+      "..####....####..",
+      "................"
+    ],
+    hellhound_attack: [
+      "................",
+      "........####....",
+      ".......#kkkk#...",
+      "......#kweee#...",
+      ".....#kkwewk#...",
+      "....#kkkkkkkk###",
+      "..##kFFRReekkRR#",
+      ".#kkFeeeFFeekkFF",
+      "..#kk####kkkkk#.",
+      "..#rr#..#rr#....",
+      "..#kk#..#kk#....",
+      "..####..####....",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    wolf_frost_walk_0: [
+      "................",
+      ".......####.....",
+      "......#hhhh#....",
+      ".....#hwCCh#....",
+      "....#hhhhwh#....",
+      "...#hhhhhhhh####",
+      "..#hhhhhhhhhhhh#",
+      ".#hhhhhhhhhhhhh#",
+      ".#hhhhhhhhhhhhh#",
+      "..#hh####hhhhh#.",
+      "..#hh#..#hhhh#..",
+      "..#hh#..#hhhh#..",
+      "..#mm#...#mm#...",
+      "..#ss#...#ss#...",
+      "..####...####...",
+      "................"
+    ],
+    wolf_frost_walk_1: [
+      "................",
+      ".......####.....",
+      "......#hhhh#....",
+      ".....#hwCCh#....",
+      "....#hhhhwh#....",
+      "...#hhhhhhhh####",
+      "..#hhhhhhhhhhhh#",
+      ".#hhhhhhhhhhhhh#",
+      ".#hhhhhhhhhhhhh#",
+      "..#hh####hhhhh#.",
+      "..#hh#...#hh#...",
+      "..#hh#....#hh#..",
+      "..#mm#....#mm#..",
+      "..#ss#....#ss#..",
+      "..####....####..",
+      "................"
+    ],
+    wolf_frost_attack: [
+      "................",
+      "........####....",
+      ".......#hhhh#...",
+      "......#hwCCh#...",
+      ".....#hhwewh#...",
+      "....#hhhhhhhh###",
+      "..##hhhhhhhhhhh#",
+      ".#hhhhhhhhhhhhh#",
+      "..#hh####hhhhh#.",
+      "..#mm#..#mm#....",
+      "..#ss#..#ss#....",
+      "..####..####....",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    pirate_captain_down_0: [
+      "......########......",
+      "....##kkkkkkkk##....",
+      "...#kkkkkkkkkkkk#...",
+      "...#kkkkkwkkkkkk#...",
+      "....#F#ffffff#F#....",
+      "....#f#k##fff#f#....",
+      "....#ffffffffff#....",
+      "....#f##ffff##f#....",
+      "....#RR######RR#....",
+      "...#RRkRRRRRRkRR#...",
+      "..#RR#kRRRRRRk#RR#..",
+      "..#RR#kYkYYkYk#RR#h.",
+      "..#R#kkRRRRRRkk#R#wh",
+      "..#RR#kkRRRRkk#RR#wh",
+      "...##kkRRRRRRkk##Gwh",
+      "...#ssss####ssss#.G#",
+      "...#ssss#..#ssss#...",
+      "...#kkkk#..#kkkk#...",
+      "...#kkkk#..#kkkk#...",
+      "....####....####...."
+    ],
+    pirate_captain_down_1: [
+      "......########......",
+      "....##kkkkkkkk##....",
+      "...#kkkkkkkkkkkk#...",
+      "...#kkkkkwkkkkkk#...",
+      "....#F#ffffff#F#....",
+      "....#f#k##fff#f#....",
+      "....#ffffffffff#....",
+      "....#f##ffff##f#....",
+      "....#RR######RR#....",
+      "...#RRkRRRRRRkRR#...",
+      "..#RR#kRRRRRRk#RR#..",
+      "..#RR#kYkYYkYk#RR#h.",
+      "..#R#kkRRRRRRkk#R#wh",
+      "..#RR#kkRRRRkk#RR#wh",
+      "...##kkRRRRRRkk##Gwh",
+      "..#ssss#....#ssss#G#",
+      "..#ssss#....#ssss#..",
+      "..#kkkk#.....#kkkk#.",
+      "..#kkkk#.....#kkkk#.",
+      "...####.......####.."
+    ],
+    pirate_captain_attack: [
+      "......########......",
+      "....##kkkkkkkk##....",
+      "...#kkkkkkkkkkkk#...",
+      "...#kkkkkwkkkkkk#...",
+      "....#ffffffffff#....",
+      "....#RR######RR#..wh",
+      "...#RRkRRRRRRkRR#wwh",
+      "..#RR#kRRRRRRk#RRwhh",
+      "..#R#kkRRRRRRkk#Rwhh",
+      "...##kkRRRRRRkk##whh",
+      "...#ssss####ssss#Gwh",
+      "...#kkkk#..#kkkk#.G#",
+      "....####....####....",
+      "..#RR#kkRRRRkk#RR#wh",
+      "...##kkRRRRRRkk##Gwh",
+      "...#ssss####ssss#.G#",
+      "...#ssss#..#ssss#...",
+      "...#kkkk#..#kkkk#...",
+      "...#kkkk#..#kkkk#...",
+      "....####....####...."
+    ],
+    merchant_down_0: [
+      "......########......",
+      ".....#llllllll#.....",
+      "....#llffffllll#....",
+      "....#F#ffffff#F#....",
+      "....#ffffffffff#....",
+      "....#f##ffff##f#....",
+      "....#OO######OO#....",
+      "...#OOoOOOOOOoOO#...",
+      "..#OO#oOOOOOOo#OO#..",
+      "..#OO#oYgGGgYo#OO#..",
+      "..#O#ooOOOOOOoo#O#y.",
+      "..#OO#ooOOOOoo#OO#yy",
+      "...##ooOOOOOOoo##yG#",
+      "...#ssss####ssss#.##",
+      "...#ssss#..#ssss#...",
+      "...#OOOO#..#OOOO#...",
+      "...#OOOO#..#OOOO#...",
+      "....####....####...."
+    ],
+    merchant_down_1: [
+      "......########......",
+      ".....#llllllll#.....",
+      "....#llffffllll#....",
+      "....#F#ffffff#F#....",
+      "....#ffffffffff#....",
+      "....#f##ffff##f#....",
+      "....#OO######OO#....",
+      "...#OOoOOOOOOoOO#...",
+      "..#OO#oOOOOOOo#OO#..",
+      "..#OO#oYgGGgYo#OO#..",
+      "..#O#ooOOOOOOoo#O#y.",
+      "..#OO#ooOOOOoo#OO#yy",
+      "...##ooOOOOOOoo##yG#",
+      "..#ssss#....#ssss#.G",
+      "..#ssss#....#ssss#..",
+      "..#OOOO#.....#OOOO#.",
+      "..#OOOO#.....#OOOO#.",
+      "...####.......####.."
+    ],
+    priest_down_0: [
+      ".....######.....",
+      "....#wYYYYw#....",
+      "...#wwYYYYww#...",
+      "...#ww#YY#ww#...",
+      "...#w#ffff#w#...",
+      "...#ffffffff#...",
+      "....#ffffff#....",
+      "...#ww####ww#...",
+      "..#wwhYYYYhww#..",
+      ".#ww#hYYYYh#ww#.",
+      ".#f#hhYYYYhh#f#.",
+      "..#w#hYYYYh#w#..",
+      "...##hhYYhh##...",
+      "...#wwwwwwww#...",
+      "..#www#..#www#..",
+      "..####....####.."
+    ],
+    priest_down_1: [
+      ".....######.....",
+      "....#wYYYYw#....",
+      "...#wwYYYYww#...",
+      "...#ww#YY#ww#...",
+      "...#w#ffff#w#...",
+      "...#ffffffff#...",
+      "....#ffffff#....",
+      "...#ww####ww#...",
+      "..#wwhYYYYhww#..",
+      ".#ww#hYYYYh#ww#.",
+      ".#f#hhYYYYhh#f#.",
+      "..#w#hYYYYh#w#..",
+      "...##hhYYhh##...",
+      "...#wwwwwwww#...",
+      ".#www#....#www#.",
+      ".####......####."
+    ],
+    crusader_down_0: [
+      "......####......",
+      ".....#hhhh#.....",
+      "....#hskksh#....",
+      "...#hhmhhhh#....",
+      "..#h#m#h#m##....",
+      "..#hhsmhhhsh#...",
+      "...#ssssss#.....",
+      "..#wwwhhhhww#...",
+      ".#ww#wRRRRw#ww#.",
+      ".#f#wwRRRRww#f#h",
+      "..#hwwRRRRwwh#wh",
+      "..#hh#wRRw#hh#wh",
+      "...##ssssss##.wh",
+      "...#kk##kk#.wh#.",
+      "..#hh#..#hh#G##.",
+      "..####..####.##."
+    ],
+    crusader_down_1: [
+      "......####......",
+      ".....#hhhh#.....",
+      "....#hskksh#....",
+      "...#hhmhhhh#....",
+      "..#h#m#h#m##....",
+      "..#hhsmhhhsh#...",
+      "...#ssssss#.....",
+      "..#wwwhhhhww#...",
+      ".#ww#wRRRRw#ww#.",
+      ".#f#wwRRRRww#f#h",
+      "..#hwwRRRRwwh#wh",
+      "..#hh#wRRw#hh#wh",
+      "...##ssssss##.wh",
+      "..#kk#..#kk#wh#.",
+      "..#hh#...#hh#G##",
+      "..####...####.##"
+    ],
+    harpy_down_0: [
+      "..#p#......#p#..",
+      ".#pp#......#pp#.",
+      "#ppp#..##..#ppp#",
+      "#pppp##pp##pppp#",
+      ".#pppf#ff#fppp#.",
+      "..#ppffffffpp#..",
+      "...#ffffffff#...",
+      "....#ff##ff#....",
+      "...#PffffffP#...",
+      "..#PP######PP#..",
+      ".#PP#......#PP#.",
+      ".#P#........#P#.",
+      "..#yy#....#yy#..",
+      "..####....####.."
+    ],
+    harpy_down_1: [
+      "................",
+      ".......##.......",
+      ".....##pp##.....",
+      "...##pppppp##...",
+      ".##ppppffpppp##.",
+      "#ppppffffffpppp#",
+      ".##ffffffffff##.",
+      "...#ffffffff#...",
+      "....#ff##ff#....",
+      "...#PffffffP#...",
+      "..#PP######PP#..",
+      "..#yy#....#yy#..",
+      "..####....####..",
+      "................"
+    ],
+    harpy_attack: [
+      "..#p#......#p#..",
+      ".#pp#..##..#pp#.",
+      "#ppp#.#ff#.#ppp#",
+      ".#ppffffffffpp#.",
+      "..#ffffffffff#..",
+      "...#ffffffff#...",
+      "...#PffffffP#...",
+      "..#PP######PP#..",
+      ".#PP#......#PP#.",
+      ".#P#........#P#.",
+      ".#yyy#....#yyy#.",
+      ".#####....#####.",
+      "................",
+      "................"
+    ],
+    skeleton_archer_down_0: [
+      ".....######.....",
+      "....#xxxxxx#....",
+      "...#xxkkkkxx#...",
+      "...#x#ee##ex#...",
+      "...#xkkkkkkx#...",
+      "....#xkhhkx#....",
+      ".....#xxxx#...#.",
+      "....##ssss##..#l",
+      "...#x#ssss#x#.ll",
+      "..#xx#smmms#xxll",
+      "..#xx#smmms#xx#l",
+      "...##ssssss##..#",
+      "....#x#..#x#....",
+      "...#xx#..#xx#...",
+      "...#xx#..#xx#...",
+      "...###....###..."
+    ],
+    skeleton_archer_down_1: [
+      ".....######.....",
+      "....#xxxxxx#....",
+      "...#xxkkkkxx#...",
+      "...#x#ee##ex#...",
+      "...#xkkkkkkx#...",
+      "....#xkhhkx#....",
+      ".....#xxxx#...#.",
+      "....##ssss##..#l",
+      "...#x#ssss#x#.ll",
+      "..#xx#smmms#xxll",
+      "..#xx#smmms#xx#l",
+      "...##ssssss##..#",
+      "...#x#....#x#...",
+      "..#xx#....#xx#..",
+      "..#xx#....#xx#..",
+      "..###......###.."
+    ],
+    skeleton_archer_attack: [
+      ".....######.....",
+      "....#xxxxxx#....",
+      "...#xxkkkkxx#...",
+      "...#x#ee##ex#...",
+      "....#xkhhkx#....",
+      "....##ssss##..#.",
+      "...#x#ssss#x#lll",
+      "..#xx#smmms#xhLL",
+      "...##ssssss##lll",
+      "....#x####x#..#.",
+      "...#xx#..#xx#...",
+      "...###....###...",
+      "....#x#..#x#....",
+      "...#xx#..#xx#...",
+      "...#xx#..#xx#...",
+      "...###....###..."
     ]
-,
-
-  // 1. 고블린 궁수 (Goblin Archer - Leather hood, wooden recurve bow, green poison arrow)
-  goblin_archer_down_0: [
-    "....########....",
-    "..##LEEEEEEL##..",
-    ".#LE#effffe#EL#.",
-    "#LE#effffff#eEL#",
-    "#EE#ffffffff#EE#",
-    "..#f#ffffff#f#..",
-    "..#o#oooooo#o#.#",
-    ".#oo#o#oo#o#oo#l",
-    ".#oo#oooooo#oo#l",
-    "..##oooooooo##ll",
-    "...#oooooooo#..l",
-    "...#kk####kk#..l",
-    "..#oo#....#oo#.#",
-    "..####....####.."
-  ],
-  goblin_archer_down_1: [
-    "....########....",
-    "..##LEEEEEEL##..",
-    ".#LE#effffe#EL#.",
-    "#LE#effffff#eEL#",
-    "#EE#ffffffff#EE#",
-    "..#f#ffffff#f#..",
-    "..#o#oooooo#o#.#",
-    ".#oo#o#oo#o#oo#l",
-    ".#oo#oooooo#oo#l",
-    "..##oooooooo##ll",
-    "...#oooooooo#..l",
-    "..#kk#....#kk#.l",
-    "..#oo#....#oo#.#",
-    "..####....####.."
-  ],
-  goblin_archer_attack: [
-    "....########....",
-    "..##LEEEEEEL##..",
-    ".#LE#effffe#EL#.",
-    "#EE#ffffffff#EE#",
-    "..#f#ffffff#f#..",
-    "..#o#oooooo#o#..",
-    ".#oo#o#oo#o#oo##",
-    "..##oooooooo#lll",
-    "...#oooooooo#hLL",
-    "..#kk####kk##lll",
-    "..#oo#..#oo#..##",
-    "..####..####...."
-  ],
-
-  // 2. 오크 샤먼 (Orc Shaman - Horned skull mask, purple robes, bone staff with amethyst flame)
-  orc_shaman_down_0: [
-    "....########....",
-    "...#xxxxkxxx#...",
-    "..#xxee#k#eex#..",
-    "..#xxxxk#kxxx#..",
-    "..#xxxxkkkxxx#..",
-    "...##P####P##...",
-    "..#p#pPPPPp#p#..",
-    ".#p#pPvPPvPp#p#v",
-    ".#p#pPPPPPPp#p#P",
-    ".#p#pPvPPvPp#p#x",
-    "..##pPPPPPPp##.x",
-    "...#pPPPPPPp#..x",
-    "...#pppppppp#..x",
-    "..#ppp#..#ppp#.#",
-    "..####....####.."
-  ],
-  orc_shaman_down_1: [
-    "....########....",
-    "...#xxxxkxxx#...",
-    "..#xxee#k#eex#..",
-    "..#xxxxk#kxxx#..",
-    "..#xxxxkkkxxx#..",
-    "...##P####P##...",
-    "..#p#pPPPPp#p#..",
-    ".#p#pPvPPvPp#p#v",
-    ".#p#pPPPPPPp#p#P",
-    ".#p#pPvPPvPp#p#x",
-    "..##pPPPPPPp##.x",
-    "...#pPPPPPPp#..x",
-    "...#pppppppp#..x",
-    ".#ppp#....#ppp##",
-    ".####......####."
-  ],
-  orc_shaman_attack: [
-    "....########..#v",
-    "...#xxxxkxxx#vvv",
-    "..#xxee#k#eex#vv",
-    "..#xxxxkkkxxx#vv",
-    "...##P####P##.vP",
-    "..#p#pPPPPp#p#xP",
-    ".#p#pPvPPvPp#p#x",
-    "..##pPPPPPPp##.x",
-    "...#pPPPPPPp#..x",
-    "...#pppppppp#..x",
-    "..#ppp####ppp#.#",
-    "..####....####.."
-  ],
-
-  // 3. 화염 골렘 (Fire Golem - Obsidian rock body, bright magma veins & fist)
-  fire_golem_down_0: [
-    ".....######.....",
-    "....#kReeek#....",
-    "...#keeeeeek#...",
-    "..#kRFkkkkFRk#..",
-    "..#keF#ee#Fek#..",
-    "..#keeeFkeek#...",
-    "...#keeeFek#....",
-    ".##kReeeFeeRk##.",
-    "#RFkReeeFeeRkFR#",
-    "#eFkeeeFeeeekFe#",
-    "#eFkeeeFeeeekFe#",
-    "#RFkeeeeeeeekFR#",
-    ".##kRkFFFFkRk##.",
-    "...#kkk##kkk#...",
-    "..#kFk#..#kFk#..",
-    "..####....####.."
-  ],
-  fire_golem_down_1: [
-    ".....######.....",
-    "....#kReeek#....",
-    "...#keeeeeek#...",
-    "..#kRFkkkkFRk#..",
-    "..#keF#ee#Fek#..",
-    "..#keeeFkeek#...",
-    "...#keeeFek#....",
-    ".##kReeeFeeRk##.",
-    "#RFkReeeFeeRkFR#",
-    "#eFkeeeFeeeekFe#",
-    "#eFkeeeFeeeekFe#",
-    "#RFkeeeeeeeekFR#",
-    ".##kRkFFFFkRk##.",
-    "..#kkk#..#kkk#..",
-    ".#kFk#....#kFk#.",
-    ".####......####."
-  ],
-  fire_golem_attack: [
-    ".....######.....",
-    "....#kReeek#....",
-    "...#keeeeeek#FfR",
-    "..#keF#ee#Fek#eF",
-    "..#keeeFkeek##eF",
-    ".##kReeeFeeRkeee",
-    "#RFkeeeFeeeekeee",
-    "#eFkeeeFeeeekFfe",
-    ".##kRkFFFFkRk###",
-    "...#kkk##kkk#...",
-    "..#kFk#..#kFk#..",
-    "..####....####.."
-  ],
-
-  // 4. 얼음 골렘 (Ice Golem - Sharp glacial ice crystal titan)
-  ice_golem_down_0: [
-    ".....######.....",
-    "....#cCCCcc#....",
-    "...#cCCCCCCc#...",
-    "..#cChkkkkhCc#..",
-    "..#cC#ww#ww#Cc#.",
-    "..#cCCChCCCCc#..",
-    "...#cChhhCc#....",
-    ".##cCCCChhCCc##.",
-    "#ChcCCCCChCCchC#",
-    "#CucChhhhhhCcuC#",
-    "#CucChhhhhhCcuC#",
-    "#ChcCCCCCCCCchC#",
-    ".##cChhhhhhCc##.",
-    "...#ccc##ccc#...",
-    "..#cCc#..#cCc#..",
-    "..####....####.."
-  ],
-  ice_golem_down_1: [
-    ".....######.....",
-    "....#cCCCcc#....",
-    "...#cCCCCCCc#...",
-    "..#cChkkkkhCc#..",
-    "..#cC#ww#ww#Cc#.",
-    "..#cCCChCCCCc#..",
-    "...#cChhhCc#....",
-    ".##cCCCChhCCc##.",
-    "#ChcCCCCChCCchC#",
-    "#CucChhhhhhCcuC#",
-    "#CucChhhhhhCcuC#",
-    "#ChcCCCCCCCCchC#",
-    ".##cChhhhhhCc##.",
-    "..#ccc#..#ccc#..",
-    ".#cCc#....#cCc#.",
-    ".####......####."
-  ],
-  ice_golem_attack: [
-    ".....######..#w#",
-    "....#cCCCcc#hCww",
-    "...#cCCCCCCc#Chw",
-    "..#cC#ww#ww#cChw",
-    ".##cCCCChhCCcChw",
-    "#ChcCCCCChCCChC#",
-    "#CucChhhhhhCc###",
-    ".##cChhhhhhCc#..",
-    "...#ccc##ccc#...",
-    "..#cCc#..#cCc#..",
-    "..####....####.."
-  ],
-
-  // 5. 설원 예티 (Yeti - Giant shaggy white arctic ape beast)
-  yeti_down_0: [
-    ".....######.....",
-    "....#wwwwww#....",
-    "...#whhhkhhw#...",
-    "...#whkeeehw#...",
-    "...#wkkkkkkw#...",
-    "...#whhhhkhw#...",
-    "..#wwwhhhhwww#..",
-    ".#www#whhw#www#.",
-    ".#sww#whhw#wws#.",
-    ".#swwhhhhhhwws#.",
-    ".#swwhhhhhhwws#.",
-    "..##whhhhhh##...",
-    "...#wwh##hww#...",
-    "...#wwh..hww#...",
-    "..#www#..#www#..",
-    "..####....####.."
-  ],
-  yeti_down_1: [
-    ".....######.....",
-    "....#wwwwww#....",
-    "...#whhhkhhw#...",
-    "...#whkeeehw#...",
-    "...#wkkkkkkw#...",
-    "...#whhhhkhw#...",
-    "..#wwwhhhhwww#..",
-    ".#www#whhw#www#.",
-    ".#sww#whhw#wws#.",
-    ".#swwhhhhhhwws#.",
-    ".#swwhhhhhhwws#.",
-    "..##whhhhhh##...",
-    "..#wwh#..#hww#..",
-    ".#www#....#www#.",
-    ".####......####."
-  ],
-  yeti_attack: [
-    ".....######..##.",
-    "....#wwwwww#hsww",
-    "...#whhhkhhw#sww",
-    "...#whkeeehw#sww",
-    "...#wkkkkkkw#sww",
-    "..#wwwhhhhwww###",
-    ".#www#whhw#www#.",
-    ".#swwhhhhhhwws#.",
-    "..##whhhhhh##...",
-    "...#wwh##hww#...",
-    "..#www#..#www#..",
-    "..####....####.."
-  ],
-
-  // 6. 트렌트 / 나무 정령 (Treant - Ancient mossy tree guardian)
-  treant_down_0: [
-    "..#o#......#o#..",
-    ".#oDo#....#oDo#.",
-    "..#oDE####EDo#..",
-    "...#oDEEEEDo#...",
-    "....#oDyyDo#....",
-    "...#ooDEEDoo#...",
-    "..#o#oDEEDo#o#..",
-    ".#oDo#oDDo#oDo#.",
-    ".#oDE#oDDo#EDo#.",
-    ".#oDE#oooo#EDo#.",
-    "..#o#oDooDo#o#..",
-    "...##oDooDo##...",
-    "...#oo####oo#...",
-    "...#o#....#o#...",
-    "..#oo#....#oo#..",
-    "..####....####.."
-  ],
-  treant_down_1: [
-    "..#o#......#o#..",
-    ".#oDo#....#oDo#.",
-    "..#oDE####EDo#..",
-    "...#oDEEEEDo#...",
-    "....#oDyyDo#....",
-    "...#ooDEEDoo#...",
-    "..#o#oDEEDo#o#..",
-    ".#oDo#oDDo#oDo#.",
-    ".#oDE#oDDo#EDo#.",
-    ".#oDE#oooo#EDo#.",
-    "..#o#oDooDo#o#..",
-    "...##oDooDo##...",
-    "..#oo#....#oo#..",
-    ".#oo#......#oo#.",
-    ".####......####."
-  ],
-  treant_attack: [
-    "..#o#......#o#..",
-    ".#oDo#....#oDo#.",
-    "..#oDE####EDo#..",
-    "...#oDyyDo#..#oD",
-    "...#ooDEEDoo#oDo",
-    "..#o#oDEEDo#oEDo",
-    ".#oDo#oDDo#oEDo#",
-    ".#oDE#oooo#oEDo#",
-    "..##oDooDo###...",
-    "...#oo####oo#...",
-    "..#oo#....#oo#..",
-    "..####....####.."
-  ],
-
-  // 7. 사막 미라 (Mummy - Desiccated linen wrappings, glowing amber eyes)
-  mummy_down_0: [
-    ".....######.....",
-    "....#tttttt#....",
-    "...#ttkkkktt#...",
-    "...#t#ee##et#...",
-    "...#tkkkkkkt#...",
-    "....#ttlltt#....",
-    ".....#tttt#.....",
-    "....##llll##....",
-    "...#t#llll#t#...",
-    "..#tt#ltttl#tt#.",
-    "..#tt#ltttl#tt#.",
-    "...##llllll##...",
-    "....#t#..#t#....",
-    "...#tt#..#tt#...",
-    "...#tt#..#tt#...",
-    "...###....###..."
-  ],
-  mummy_down_1: [
-    ".....######.....",
-    "....#tttttt#....",
-    "...#ttkkkktt#...",
-    "...#t#ee##et#...",
-    "...#tkkkkkkt#...",
-    "....#ttlltt#....",
-    ".....#tttt#.....",
-    "....##llll##....",
-    "...#t#llll#t#...",
-    "..#tt#ltttl#tt#.",
-    "..#tt#ltttl#tt#.",
-    "...##llllll##...",
-    "...#t#....#t#...",
-    "..#tt#....#tt#..",
-    "..#tt#....#tt#..",
-    "..###......###.."
-  ],
-  mummy_attack: [
-    ".....######..#t.",
-    "....#tttttt#ttY.",
-    "...#ttkkkktt#tY.",
-    "...#t#ee##et#tY.",
-    "....#ttlltt##tY.",
-    "....##llll##.tY.",
-    "...#t#llll#t#tY.",
-    "..#tt#ltttl#tY..",
-    "...##llllll##...",
-    "....#t####t#....",
-    "...#tt#..#tt#...",
-    "...###....###..."
-  ],
-
-  // 8. 거대 전갈 (Giant Scorpion - Golden brown chitin, front claws & venom tail stinger)
-  scorpion_down_0: [
-    ".......#L#......",
-    "......#lEl#.....",
-    ".....#ll#ll#....",
-    "....#lll#lll#...",
-    "...#llll#llll#..",
-    "..#lllllllll#...",
-    ".#llkkllkkll#...",
-    "#ll#ee##ee#ll#..",
-    "#ll#llllll#ll#..",
-    "#ll#llllll#ll#..",
-    ".#llllllllll#...",
-    "..#lll##lll#....",
-    ".#ll#....#ll#...",
-    ".###......###..."
-  ],
-  scorpion_down_1: [
-    ".......#L#......",
-    "......#lEl#.....",
-    ".....#ll#ll#....",
-    "....#lll#lll#...",
-    "...#llll#llll#..",
-    "..#lllllllll#...",
-    ".#llkkllkkll#...",
-    "#ll#ee##ee#ll#..",
-    "#ll#llllll#ll#..",
-    "#ll#llllll#ll#..",
-    ".#llllllllll#...",
-    "..#lll##lll#....",
-    "..#ll#..#ll#....",
-    "..###....###...."
-  ],
-  scorpion_attack: [
-    ".......#L#..#L#.",
-    "......#lEl##lEl#",
-    ".....#llll#llll#",
-    "....#llllllllll#",
-    "...#llllllllll#.",
-    ".#llkkllkkll#...",
-    "#ll#ee##ee#ll#..",
-    "#ll#llllll#ll#..",
-    "#ll#llllll#ll#..",
-    ".#llllllllll#...",
-    "..#lll##lll#....",
-    ".#ll#....#ll#...",
-    ".###......###..."
-  ],
-
-  // 9. 리치 (Lich - Dark purple hooded necromancer lord with green soul flame)
-  lich_down_0: [
-    ".....######.....",
-    "....#pPyyPp#....",
-    "...#pxxxxkxp#...",
-    "...#pxeekexxp#..",
-    "...#pxxkkxxp#...",
-    "....#pPkkPp#....",
-    "...#pP####Pp#...",
-    "..#pp#pPPp#pp#..",
-    ".#pp#pPvPPp#pp#.",
-    ".#x#pPvPPvPp#x#.",
-    "..#p#pPPPPp#p#..",
-    "...##pPPPPp##...",
-    "...#pppppppp#...",
-    "..#ppp#..#ppp#..",
-    "..####....####.."
-  ],
-  lich_down_1: [
-    ".....######.....",
-    "....#pPyyPp#....",
-    "...#pxxxxkxp#...",
-    "...#pxeekexxp#..",
-    "...#pxxkkxxp#...",
-    "....#pPkkPp#....",
-    "...#pP####Pp#...",
-    "..#pp#pPPp#pp#..",
-    ".#pp#pPvPPp#pp#.",
-    ".#x#pPvPPvPp#x#.",
-    "..#p#pPPPPp#p#..",
-    "...##pPPPPp##...",
-    "...#pppppppp#...",
-    ".#ppp#....#ppp#.",
-    ".####......####."
-  ],
-  lich_attack: [
-    ".....######...#L",
-    "....#pPyyPp#.LLL",
-    "...#pxxxxkxp#LLL",
-    "...#pxeekexxp#LL",
-    "....#pPkkPp##LLL",
-    "...#pP####Pp#kLL",
-    "..#pp#pPPp#pp#k#",
-    ".#x#pPvPPvPp#x#.",
-    "..#p#pPPPPp#p#..",
-    "...##pPPPPp##...",
-    "...#pppppppp#...",
-    "..#ppp####ppp#..",
-    "..####....####.."
-  ],
-
-  // 10. 지옥 사냥개 (Hellhound - Obsidian black body with blazing flame mane & tail)
-  hellhound_walk_0: [
-    "................",
-    ".......####.....",
-    "......#kkkk#....",
-    ".....#kweee#....",
-    "....#kkkkwk#....",
-    "...#kkkkkkkk####",
-    "..#kFFRReekkRRkk",
-    ".#kkFeeeFFeekkFF",
-    ".#kFFRRFFRRkkFFk",
-    "..#kk####kkkkk#.",
-    "..#kk#..#kkkk#..",
-    "..#kk#..#kkkk#..",
-    "..#rr#...#rr#...",
-    "..#kk#...#kk#...",
-    "..####...####...",
-    "................"
-  ],
-  hellhound_walk_1: [
-    "................",
-    ".......####.....",
-    "......#kkkk#....",
-    ".....#kweee#....",
-    "....#kkkkwk#....",
-    "...#kkkkkkkk####",
-    "..#kFFRReekkRRkk",
-    ".#kkFeeeFFeekkFF",
-    ".#kFFRRFFRRkkFFk",
-    "..#kk####kkkkk#.",
-    "..#kk#...#kk#...",
-    "..#kk#....#kk#..",
-    "..#rr#....#rr#..",
-    "..#kk#....#kk#..",
-    "..####....####..",
-    "................"
-  ],
-  hellhound_attack: [
-    "................",
-    "........####....",
-    ".......#kkkk#...",
-    "......#kweee#...",
-    ".....#kkwewk#...",
-    "....#kkkkkkkk###",
-    "..##kFFRReekkRR#",
-    ".#kkFeeeFFeekkFF",
-    "..#kk####kkkkk#.",
-    "..#rr#..#rr#....",
-    "..#kk#..#kk#....",
-    "..####..####....",
-    "................",
-    "................",
-    "................",
-    "................"
-  ],
-
-  // 11. 서리 늑대 (Frost Wolf - Silver white pelt with bright cyan eyes)
-  wolf_frost_walk_0: [
-    "................",
-    ".......####.....",
-    "......#hhhh#....",
-    ".....#hwCCh#....",
-    "....#hhhhwh#....",
-    "...#hhhhhhhh####",
-    "..#hhhhhhhhhhhh#",
-    ".#hhhhhhhhhhhhh#",
-    ".#hhhhhhhhhhhhh#",
-    "..#hh####hhhhh#.",
-    "..#hh#..#hhhh#..",
-    "..#hh#..#hhhh#..",
-    "..#mm#...#mm#...",
-    "..#ss#...#ss#...",
-    "..####...####...",
-    "................"
-  ],
-  wolf_frost_walk_1: [
-    "................",
-    ".......####.....",
-    "......#hhhh#....",
-    ".....#hwCCh#....",
-    "....#hhhhwh#....",
-    "...#hhhhhhhh####",
-    "..#hhhhhhhhhhhh#",
-    ".#hhhhhhhhhhhhh#",
-    ".#hhhhhhhhhhhhh#",
-    "..#hh####hhhhh#.",
-    "..#hh#...#hh#...",
-    "..#hh#....#hh#..",
-    "..#mm#....#mm#..",
-    "..#ss#....#ss#..",
-    "..####....####..",
-    "................"
-  ],
-  wolf_frost_attack: [
-    "................",
-    "........####....",
-    ".......#hhhh#...",
-    "......#hwCCh#...",
-    ".....#hhwewh#...",
-    "....#hhhhhhhh###",
-    "..##hhhhhhhhhhh#",
-    ".#hhhhhhhhhhhhh#",
-    "..#hh####hhhhh#.",
-    "..#mm#..#mm#....",
-    "..#ss#..#ss#....",
-    "..####..####....",
-    "................",
-    "................",
-    "................",
-    "................"
-  ],
-
-  // 12. 해적 선장 (Pirate Captain - Black tricorne hat, eyepatch, crimson coat, cutlass)
-  pirate_captain_down_0: [
-    "......########......",
-    "....##kkkkkkkk##....",
-    "...#kkkkkkkkkkkk#...",
-    "...#kkkkkwkkkkkk#...",
-    "....#F#ffffff#F#....",
-    "....#f#k##fff#f#....",
-    "....#ffffffffff#....",
-    "....#f##ffff##f#....",
-    "....#RR######RR#....",
-    "...#RRkRRRRRRkRR#...",
-    "..#RR#kRRRRRRk#RR#..",
-    "..#RR#kYkYYkYk#RR#h.",
-    "..#R#kkRRRRRRkk#R#wh",
-    "..#RR#kkRRRRkk#RR#wh",
-    "...##kkRRRRRRkk##Gwh",
-    "...#ssss####ssss#.G#",
-    "...#ssss#..#ssss#...",
-    "...#kkkk#..#kkkk#...",
-    "...#kkkk#..#kkkk#...",
-    "....####....####...."
-  ],
-  pirate_captain_down_1: [
-    "......########......",
-    "....##kkkkkkkk##....",
-    "...#kkkkkkkkkkkk#...",
-    "...#kkkkkwkkkkkk#...",
-    "....#F#ffffff#F#....",
-    "....#f#k##fff#f#....",
-    "....#ffffffffff#....",
-    "....#f##ffff##f#....",
-    "....#RR######RR#....",
-    "...#RRkRRRRRRkRR#...",
-    "..#RR#kRRRRRRk#RR#..",
-    "..#RR#kYkYYkYk#RR#h.",
-    "..#R#kkRRRRRRkk#R#wh",
-    "..#RR#kkRRRRkk#RR#wh",
-    "...##kkRRRRRRkk##Gwh",
-    "..#ssss#....#ssss#G#",
-    "..#ssss#....#ssss#..",
-    "..#kkkk#.....#kkkk#.",
-    "..#kkkk#.....#kkkk#.",
-    "...####.......####.."
-  ],
-  pirate_captain_attack: [
-    "......########......",
-    "....##kkkkkkkk##....",
-    "...#kkkkkkkkkkkk#...",
-    "...#kkkkkwkkkkkk#...",
-    "....#ffffffffff#....",
-    "....#RR######RR#..wh",
-    "...#RRkRRRRRRkRR#wwh",
-    "..#RR#kRRRRRRk#RRwhh",
-    "..#R#kkRRRRRRkk#Rwhh",
-    "...##kkRRRRRRkk##whh",
-    "...#ssss####ssss#Gwh",
-    "...#kkkk#..#kkkk#.G#",
-    "....####....####...."
-  ],
-
-  // 13. 방랑 상인 (Traveling Merchant - Sturdy leather coat, giant backpack with supplies, coin pouch)
-  merchant_down_0: [
-    "......########......",
-    ".....#llllllll#.....",
-    "....#llffffllll#....",
-    "....#F#ffffff#F#....",
-    "....#ffffffffff#....",
-    "....#f##ffff##f#....",
-    "....#OO######OO#....",
-    "...#OOoOOOOOOoOO#...",
-    "..#OO#oOOOOOOo#OO#..",
-    "..#OO#oYgGGgYo#OO#..",
-    "..#O#ooOOOOOOoo#O#y.",
-    "..#OO#ooOOOOoo#OO#yy",
-    "...##ooOOOOOOoo##yG#",
-    "...#ssss####ssss#.##",
-    "...#ssss#..#ssss#...",
-    "...#OOOO#..#OOOO#...",
-    "...#OOOO#..#OOOO#...",
-    "....####....####...."
-  ],
-  merchant_down_1: [
-    "......########......",
-    ".....#llllllll#.....",
-    "....#llffffllll#....",
-    "....#F#ffffff#F#....",
-    "....#ffffffffff#....",
-    "....#f##ffff##f#....",
-    "....#OO######OO#....",
-    "...#OOoOOOOOOoOO#...",
-    "..#OO#oOOOOOOo#OO#..",
-    "..#OO#oYgGGgYo#OO#..",
-    "..#O#ooOOOOOOoo#O#y.",
-    "..#OO#ooOOOOoo#OO#yy",
-    "...##ooOOOOOOoo##yG#",
-    "..#ssss#....#ssss#.G",
-    "..#ssss#....#ssss#..",
-    "..#OOOO#.....#OOOO#.",
-    "..#OOOO#.....#OOOO#.",
-    "...####.......####.."
-  ],
-
-  // 14. 성직자 / 사제 (Priest / Cleric - Holy white & gold cassock, mitre, holy silver rod)
-  priest_down_0: [
-    ".....######.....",
-    "....#wYYYYw#....",
-    "...#wwYYYYww#...",
-    "...#ww#YY#ww#...",
-    "...#w#ffff#w#...",
-    "...#ffffffff#...",
-    "....#ffffff#....",
-    "...#ww####ww#...",
-    "..#wwhYYYYhww#..",
-    ".#ww#hYYYYh#ww#.",
-    ".#f#hhYYYYhh#f#.",
-    "..#w#hYYYYh#w#..",
-    "...##hhYYhh##...",
-    "...#wwwwwwww#...",
-    "..#www#..#www#..",
-    "..####....####.."
-  ],
-  priest_down_1: [
-    ".....######.....",
-    "....#wYYYYw#....",
-    "...#wwYYYYww#...",
-    "...#ww#YY#ww#...",
-    "...#w#ffff#w#...",
-    "...#ffffffff#...",
-    "....#ffffff#....",
-    "...#ww####ww#...",
-    "..#wwhYYYYhww#..",
-    ".#ww#hYYYYh#ww#.",
-    ".#f#hhYYYYhh#f#.",
-    "..#w#hYYYYh#w#..",
-    "...##hhYYhh##...",
-    "...#wwwwwwww#...",
-    ".#www#....#www#.",
-    ".####......####."
-  ],
-
-  // 15. 성전 십자군 (Crusader Knight - Pure white surcoat with bold red heraldic cross)
-  crusader_down_0: [
-    "......####......",
-    ".....#hhhh#.....",
-    "....#hskksh#....",
-    "...#hhmhhhh#....",
-    "..#h#m#h#m##....",
-    "..#hhsmhhhsh#...",
-    "...#ssssss#.....",
-    "..#wwwhhhhww#...",
-    ".#ww#wRRRRw#ww#.",
-    ".#f#wwRRRRww#f#h",
-    "..#hwwRRRRwwh#wh",
-    "..#hh#wRRw#hh#wh",
-    "...##ssssss##.wh",
-    "...#kk##kk#.wh#.",
-    "..#hh#..#hh#G##.",
-    "..####..####.##."
-  ],
-  crusader_down_1: [
-    "......####......",
-    ".....#hhhh#.....",
-    "....#hskksh#....",
-    "...#hhmhhhh#....",
-    "..#h#m#h#m##....",
-    "..#hhsmhhhsh#...",
-    "...#ssssss#.....",
-    "..#wwwhhhhww#...",
-    ".#ww#wRRRRw#ww#.",
-    ".#f#wwRRRRww#f#h",
-    "..#hwwRRRRwwh#wh",
-    "..#hh#wRRw#hh#wh",
-    "...##ssssss##.wh",
-    "..#kk#..#kk#wh#.",
-    "..#hh#...#hh#G##",
-    "..####...####.##"
-  ],
-
-  harpy_down_0: [
-    "..#p#......#p#..",
-    ".#pp#......#pp#.",
-    "#ppp#..##..#ppp#",
-    "#pppp##pp##pppp#",
-    ".#pppf#ff#fppp#.",
-    "..#ppffffffpp#..",
-    "...#ffffffff#...",
-    "....#ff##ff#....",
-    "...#PffffffP#...",
-    "..#PP######PP#..",
-    ".#PP#......#PP#.",
-    ".#P#........#P#.",
-    "..#yy#....#yy#..",
-    "..####....####.."
-  ],
-  harpy_down_1: [
-    "................",
-    ".......##.......",
-    ".....##pp##.....",
-    "...##pppppp##...",
-    ".##ppppffpppp##.",
-    "#ppppffffffpppp#",
-    ".##ffffffffff##.",
-    "...#ffffffff#...",
-    "....#ff##ff#....",
-    "...#PffffffP#...",
-    "..#PP######PP#..",
-    "..#yy#....#yy#..",
-    "..####....####..",
-    "................"
-  ],
-  harpy_attack: [
-    "..#p#......#p#..",
-    ".#pp#..##..#pp#.",
-    "#ppp#.#ff#.#ppp#",
-    ".#ppffffffffpp#.",
-    "..#ffffffffff#..",
-    "...#ffffffff#...",
-    "...#PffffffP#...",
-    "..#PP######PP#..",
-    ".#PP#......#PP#.",
-    ".#P#........#P#.",
-    ".#yyy#....#yyy#.",
-    ".#####....#####.",
-    "................",
-    "................"
-  ],
-  skeleton_archer_down_0: [
-    ".....######.....",
-    "....#xxxxxx#....",
-    "...#xxkkkkxx#...",
-    "...#x#ee##ex#...",
-    "...#xkkkkkkx#...",
-    "....#xkhhkx#....",
-    ".....#xxxx#...#.",
-    "....##ssss##..#l",
-    "...#x#ssss#x#.ll",
-    "..#xx#smmms#xxll",
-    "..#xx#smmms#xx#l",
-    "...##ssssss##..#",
-    "....#x#..#x#....",
-    "...#xx#..#xx#...",
-    "...#xx#..#xx#...",
-    "...###....###..."
-  ],
-  skeleton_archer_down_1: [
-    ".....######.....",
-    "....#xxxxxx#....",
-    "...#xxkkkkxx#...",
-    "...#x#ee##ex#...",
-    "...#xkkkkkkx#...",
-    "....#xkhhkx#....",
-    ".....#xxxx#...#.",
-    "....##ssss##..#l",
-    "...#x#ssss#x#.ll",
-    "..#xx#smmms#xxll",
-    "..#xx#smmms#xx#l",
-    "...##ssssss##..#",
-    "...#x#....#x#...",
-    "..#xx#....#xx#..",
-    "..#xx#....#xx#..",
-    "..###......###.."
-  ],
-  skeleton_archer_attack: [
-    ".....######.....",
-    "....#xxxxxx#....",
-    "...#xxkkkkxx#...",
-    "...#x#ee##ex#...",
-    "....#xkhhkx#....",
-    "....##ssss##..#.",
-    "...#x#ssss#x#lll",
-    "..#xx#smmms#xhLL",
-    "...##ssssss##lll",
-    "....#x####x#..#.",
-    "...#xx#..#xx#...",
-    "...###....###..."
-  ],
   };
 
   class PixelSpriteAtlas {
@@ -2773,19 +2822,18 @@
       }
 
       const isFacingLeft = (dir === 'left');
-      const isAttacking = (e.state === 'combat') || ((e.attackCooldown || 0) > 0.25);
+      const isAttacking = (e.state === 'combat') || ((e.attackCooldown || 0) > 0.3);
       const isMoving = Math.abs(e.vx || 0) > 0.08 || Math.abs(e.vy || 0) > 0.08;
 
-      // 2. 애니메이션 프레임 산출
+      // 2. 애니메이션 프레임 산출 (보행 시 균형 잡힌 0/1 스텝)
       let animFrame = '0';
       if (isAttacking) {
         animFrame = 'attack';
       } else if (isMoving) {
-        const step = Math.floor(((e.animPhase || 0) * 1.8)) % 2;
+        const step = Math.floor(((e.animPhase || 0) * 1.5)) % 2;
         animFrame = step === 1 ? '1' : '0';
       } else if (e.role === 'farmer' || e.role === 'miner' || e.role === 'blacksmith' || e.role === 'fisherman' || e.role === 'bard') {
-        // 주간 직업 작업 액션
-        if (!isNight && Math.sin(timeSec * 2.5 + (e.id || 0)) > 0.2) {
+        if (!isNight && Math.sin(timeSec * 2.0 + (e.id || 0)) > 0.3) {
           animFrame = 'action';
         }
       }
@@ -2798,30 +2846,35 @@
       const sw = cv.width;
       const sh = cv.height;
 
-      // 4. 발밑 픽셀 타원 그림자
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.42)';
+      // 4. 발밑 정밀 픽셀 타원 그림자 (지면에 견고하게 접지)
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.40)';
       ctx.beginPath();
-      ctx.ellipse(px, py + 6 * sc, 7 * sc, 3 * sc, 0, 0, Math.PI * 2);
+      ctx.ellipse(px, py + 5 * sc, 7 * sc, 3 * sc, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // 5. 공격 돌진(Lunge) 및 피격 흔들림(Stagger) 오프셋
+      // 5. 공격 시 부드러운 1~2px 전진 런지 & 피격 시 1px 부드러운 스태거 (지터링 제거)
       let offsetX = 0;
       let offsetY = 0;
 
       if (isAttacking) {
-        const lunge = Math.sin(timeSec * 16 + (e.id || 0)) * 4.5 * sc;
-        if (dir === 'down') offsetY += Math.max(0, lunge);
-        else if (dir === 'up') offsetY -= Math.max(0, lunge);
-        else if (dir === 'left') offsetX -= Math.max(0, lunge);
-        else if (dir === 'right') offsetX += Math.max(0, lunge);
+        // 공격 시 부드럽게 앞으로 1.5px 숙이는 안정된 공격 전진
+        const lunge = 1.5 * sc;
+        if (dir === 'down') offsetY += lunge;
+        else if (dir === 'up') offsetY -= lunge;
+        else if (dir === 'left') offsetX -= lunge;
+        else if (dir === 'right') offsetX += lunge;
       }
 
       if (e.hitTimer && e.hitTimer > 0) {
-        offsetX += (Math.sin(timeSec * 45) * 3 * sc);
-        offsetY += (Math.cos(timeSec * 45) * 2 * sc);
+        // 피격 시 넉백 방향으로 부드럽게 1~2px 후퇴
+        const flinch = (e.hitTimer / 0.25) * 2.0 * sc;
+        if (dir === 'down') offsetY -= flinch;
+        else if (dir === 'up') offsetY += flinch;
+        else if (dir === 'left') offsetX += flinch;
+        else if (dir === 'right') offsetX -= flinch;
       }
 
-      // 6. 스프라이트 블릿 (High-Res 1.5x Scaling)
+      // 6. 스프라이트 블릿 (High-Res 1.5x Scaling, Zero-Pop 고정 높이)
       const renderW = Math.round(sw * sc * 1.5);
       const renderH = Math.round(sh * sc * 1.5);
       const renderX = Math.round(px - renderW / 2 + offsetX);
@@ -2830,22 +2883,62 @@
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(cv, renderX, renderY, renderW, renderH);
 
-      // 7. 피격 플래시 이펙트 (Hit Flash Overlay)
+      // 7. 피격 시 선명한 적색 플래시 틴트
       if (e.hitTimer && e.hitTimer > 0) {
         ctx.save();
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.38)';
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.40)';
         ctx.fillRect(renderX, renderY, renderW, renderH);
         ctx.restore();
       }
 
-      // 8. 동적 무기 & 방패 오버레이 (Dynamic Weapon / Shield Hand Overlay)
-      this.drawEquippedGear(ctx, e, px + offsetX, py + offsetY, bounce, dir, isAttacking, timeSec, sc);
+      // 8. 공격 시 전방 크리스피 픽셀 참격 궤적 (캐릭터 전면을 가리지 않고 전방에만 선명하게 발도)
+      if (isAttacking) {
+        ctx.save();
+        const sideSign = isFacingLeft ? -1 : 1;
+        let slashColor = '#f8fafc';
+        if (baseKey === 'dragonkin' || baseKey === 'fire_golem' || baseKey === 'hellhound') slashColor = '#f97316';
+        else if (baseKey === 'ice_golem' || baseKey === 'yeti' || baseKey === 'wolf_frost') slashColor = '#38bdf8';
+        else if (baseKey === 'lich' || baseKey === 'reaper' || baseKey === 'orc_shaman') slashColor = '#c084fc';
+        else if (baseKey === 'goblin' || baseKey === 'goblin_archer' || baseKey === 'treant' || baseKey === 'slime') slashColor = '#4ade80';
 
-      // 9. 생태계 상태 풍선 렌더링 (Ecology Status Balloon Float)
+        // 참격 호 (Crisp Crescent Slash Arc)
+        ctx.strokeStyle = slashColor;
+        ctx.lineWidth = 2.0 * sc;
+        ctx.beginPath();
+        const arcCenterX = px + (dir === 'left' ? -10 : (dir === 'right' ? 10 : 0)) * sc;
+        const arcCenterY = py - 8 * sc - bounce + (dir === 'down' ? 6 : (dir === 'up' ? -6 : 0)) * sc;
+        const startAng = isFacingLeft ? Math.PI * 0.7 : -Math.PI * 0.3;
+        const endAng = isFacingLeft ? Math.PI * 1.3 : Math.PI * 0.3;
+        ctx.arc(arcCenterX, arcCenterY, 12 * sc, startAng, endAng, isFacingLeft);
+        ctx.stroke();
+
+        // 픽셀 스파크 파편 2개
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(arcCenterX + sideSign * 8 * sc, arcCenterY - 4 * sc, 2 * sc, 2 * sc);
+        ctx.fillRect(arcCenterX + sideSign * 11 * sc, arcCenterY + 2 * sc, 1.5 * sc, 1.5 * sc);
+        ctx.restore();
+      }
+
+      // 9. 방패 장착 캐릭터 (성기사 / 근위병 / 십자군): 반대편 손에 방패 픽셀 블릿
+      if ((baseKey === 'crusader' || baseKey === 'guard' || (baseKey === 'hero' && e.hasShield)) && (dir === 'down' || dir === 'left' || dir === 'right')) {
+        if (window.PixelItems) {
+          const sCvs = window.PixelItems.getCanvas('shield_iron');
+          if (sCvs) {
+            ctx.save();
+            const sideSign = isFacingLeft ? -1 : 1;
+            const shieldX = px - sideSign * 8 * sc;
+            const shieldY = py - 12 * sc - bounce;
+            ctx.drawImage(sCvs, shieldX - 5 * sc, shieldY, 11 * sc, 11 * sc);
+            ctx.restore();
+          }
+        }
+      }
+
+      // 10. 생태계 상태 풍선 렌더링 (Ecology Status Balloon Float)
       const bKey = this.getBalloonKeyForEntity(e, isNight);
       if (bKey && this.balloonCache.has(bKey)) {
         const bCvs = this.balloonCache.get(bKey);
-        const floatY = Math.round(Math.sin(timeSec * 3 + (e.id || 0)) * 2);
+        const floatY = Math.round(Math.sin(timeSec * 2.5 + (e.id || 0)) * 2);
         const bx = Math.round(px - bCvs.width / 2);
         const by = Math.round(renderY - bCvs.height - 2 + floatY);
         ctx.drawImage(bCvs, bx, by);
