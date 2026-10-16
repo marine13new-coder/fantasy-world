@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>크로니클 오브 아테리아 (Chronicles of Aetheria) - 오픈월드 판타지 생태계 시뮬레이션</title>
+  <title>크로니클 오브 아테리아 (Chronicles of Aetheria) - 오픈월드 판타지 생태계 & 항해 시뮬레이션</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -15,8 +15,8 @@
     <div class="hud-brand">
       <span class="crown-icon">👑</span>
       <div>
-        <h1>아테리아 대륙 연대기</h1>
-        <span class="subtitle">살아 숨쉬는 판타지 세계 시뮬레이션 · 샌드박스</span>
+        <h1>아테리아 대륙 & 대양 연대기</h1>
+        <span class="subtitle">본토 · 대해양 · 바다 너머 신대륙 (엘븐하임 & 미라주 사막)</span>
       </div>
     </div>
 
@@ -33,7 +33,7 @@
         <span id="weatherText">맑음</span>
       </div>
       <div class="speed-controls">
-        <button class="speed-btn" data-speed="0" title="일시정지 (Space)">⏸</button>
+        <button class="speed-btn" data-speed="0" title="일시정지">⏸</button>
         <button class="speed-btn active" data-speed="1" title="1배속">1x</button>
         <button class="speed-btn" data-speed="2" title="2배속">2x</button>
         <button class="speed-btn" data-speed="4" title="4배속">4x</button>
@@ -42,19 +42,19 @@
     </div>
 
     <div class="hud-stats">
-      <div class="stat-pill" title="전체 활동 중인 인간/엘프/드워프 NPC 수">
+      <div class="stat-pill" title="전체 왕국 주민 및 영웅 수">
         <span>👥 주민/영웅</span>
         <strong id="statNpcCount">0</strong>
       </div>
-      <div class="stat-pill" title="현재 도시 간 이동 중인 상단 및 마차">
-        <span>🐎 무역 상단</span>
+      <div class="stat-pill" title="육상 마차 및 해상 무역 범선 수">
+        <span>⛵ 무역 상단</span>
         <strong id="statCaravanCount">0</strong>
       </div>
-      <div class="stat-pill" title="대륙 내 서식 중인 몬스터 수">
-        <span>👹 몬스터</span>
+      <div class="stat-pill" title="서식 중인 몬스터 및 해적 수">
+        <span>👹 몬스터/해적</span>
         <strong id="statMonsterCount">0</strong>
       </div>
-      <div class="stat-pill" title="현재 진행 중인 교전 수">
+      <div class="stat-pill" title="현재 육상·해상 교전 수">
         <span>⚔️ 교전</span>
         <strong id="statBattleCount">0</strong>
       </div>
@@ -69,8 +69,8 @@
   <aside id="leftSidebar">
     <div class="panel-card">
       <div class="panel-header">
-        <h2>🗺️ 대륙 주요 거점 이동</h2>
-        <button id="btnZoomContinent" class="mini-btn" title="대륙 전체 보기 (키보드 M)">전체 지도</button>
+        <h2>🗺️ 대륙 & 신대륙 거점</h2>
+        <button id="btnZoomContinent" class="mini-btn" title="전체 대륙 & 대양 보기 (M)">전체 지도</button>
       </div>
       <div id="regionList" class="region-list">
         <!-- JS에서 동적 생성 -->
@@ -83,24 +83,24 @@
       </div>
       <div class="filter-grid">
         <button class="filter-chip active" data-filter="all">전체 보기</button>
-        <button class="filter-chip" data-filter="merchant">🐎 상인/마차</button>
-        <button class="filter-chip" data-filter="soldier">🛡️ 병사/근위대</button>
+        <button class="filter-chip" data-filter="merchant">🐎⛵ 상단/무역선</button>
+        <button class="filter-chip" data-filter="soldier">🛡️🚢 병사/해군</button>
         <button class="filter-chip" data-filter="adventurer">⚔️ 모험가/용병</button>
-        <button class="filter-chip" data-filter="farmer">🌾 농부</button>
+        <button class="filter-chip" data-filter="farmer">🌾 농부/약초사</button>
         <button class="filter-chip" data-filter="fisherman">🎣 어부</button>
         <button class="filter-chip" data-filter="miner">⛏️ 광부/대장장이</button>
-        <button class="filter-chip" data-filter="monster">👹 몬스터</button>
+        <button class="filter-chip" data-filter="monster">👹 몬스터/해적</button>
       </div>
       <div class="quick-actions">
-        <button id="btnFindRandomMerchant" class="action-btn">🐎 무역 중인 상인 따라가기</button>
-        <button id="btnFindBattle" class="action-btn danger">⚔️ 현재 전투 현장으로 이동</button>
+        <button id="btnFindRandomMerchant" class="action-btn">⛵ 무역 중인 선단/상인 추적</button>
+        <button id="btnFindBattle" class="action-btn danger">⚔️ 육상·해상 전투 현장 이동</button>
       </div>
     </div>
 
     <!-- 실시간 세계 사건 로그 -->
     <div class="panel-card log-card">
       <div class="panel-header">
-        <h2>📜 실시간 대륙 소식통</h2>
+        <h2>📜 실시간 대륙 & 대양 소식통</h2>
       </div>
       <div id="eventLogList" class="event-log-list"></div>
     </div>
@@ -116,13 +116,13 @@
       </div>
       <div id="inspectorContent" class="inspector-content">
         <p class="empty-hint">
-          맵 위의 <strong>상인, 병사, 모험가, 농부, 어부, 몬스터</strong> 또는 <strong>성·마을 건물</strong>을 클릭하면 상세 상태와 인벤토리, 행선지를 실시간으로 관찰할 수 있습니다.
+          맵 위의 <strong>상인, 범선, 해군, 모험가, 몬스터, 해적</strong> 또는 <strong>도시·항구 건물</strong>을 클릭하면 상세 상태와 무역품, 행선지를 실시간으로 관찰할 수 있습니다.
         </p>
         <div class="controls-guide">
-          <div><span>🖱️ 드래그 / WASD</span> 카메라 이동</div>
-          <div><span>🖱️ 휠 스크롤</span> 줌인 / 줌아웃 (전략 뷰 ↔ 근접 뷰)</div>
-          <div><span>🖱️ 좌클릭</span> 개체·마을 상세 관찰</div>
-          <div><span>Space</span> 일시정지 / 재생</div>
+          <div><span>🖱️ 드래그 / 방향키</span> 카메라 자유 이동</div>
+          <div><span>🖱️ 휠 스크롤</span> 줌인 / 줌아웃 (신대륙 ↔ 디테일)</div>
+          <div><span>🖱️ 우클릭</span> 플레이어 이동 및 타겟 공격</div>
+          <div><span>P / 플레이어 버튼</span> 내 영웅 캐릭터 소환 및 조작</div>
         </div>
       </div>
     </div>
@@ -130,7 +130,7 @@
     <!-- 거점별 시세 및 경제 요약 -->
     <div class="panel-card">
       <div class="panel-header">
-        <h2>⚖️ 거점 교역 & 물자 현황</h2>
+        <h2>⚖️ 대륙 & 신대륙 교역 현황</h2>
       </div>
       <div id="economyTableContainer" class="economy-container">
         <!-- JS에서 실시간 업데이트 -->
@@ -140,14 +140,60 @@
     <!-- 미니맵 -->
     <div class="panel-card minimap-card">
       <div class="panel-header">
-        <h2>🧭 대륙 미니맵</h2>
-        <span id="zoomLevelText">줌: 1.0x</span>
+        <h2>🧭 전 대륙 & 대해양 미니맵</h2>
+        <span id="zoomLevelText">줌: 0.9x</span>
       </div>
       <div class="minimap-wrapper">
-        <canvas id="minimapCanvas" width="240" height="240"></canvas>
+        <canvas id="minimapCanvas" width="270" height="190"></canvas>
       </div>
     </div>
   </aside>
+
+  <!-- 하단 플레이어 조작 & 왕국 칙령 컨트롤 도크 (Game Action Bar) -->
+  <footer id="bottomControlDock">
+    <!-- 플레이어 조작 모드 바 -->
+    <div class="dock-section player-dock">
+      <button id="btnTogglePlayer" class="hero-btn active">
+        <span class="hero-icon">🌟</span>
+        <div>
+          <div class="hero-label">내 캐릭터 (플레이어)</div>
+          <div id="heroStatusText" class="hero-sub">조작 활성화 (WASD / 우클릭)</div>
+        </div>
+      </button>
+
+      <div class="skill-slots">
+        <button class="skill-btn" id="btnSkillQ" title="천공의 심판: 주변 적에게 광역 벼락 타격 (단축키 Q)">
+          <span class="key-badge">Q</span>
+          <span class="skill-icon">⚡</span>
+          <span class="skill-name">천공의 심판</span>
+        </button>
+        <button class="skill-btn" id="btnSkillE" title="질주 & 순풍 가속: 6초간 이동속도 대폭 증가 & 체력 회복 (단축키 E)">
+          <span class="key-badge">E</span>
+          <span class="skill-icon">💨</span>
+          <span class="skill-name">질주/순풍</span>
+        </button>
+        <button class="skill-btn" id="btnSkillF" title="도시 교역 & 장비 강화: 인근 마을/항구에서 특산물 매각 및 공격력 영구 강화 (단축키 F)">
+          <span class="key-badge">F</span>
+          <span class="skill-icon">🪙</span>
+          <span class="skill-name">교역/강화</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 왕국 군주 칙령 바 (Ruler Commands) -->
+    <div class="dock-section ruler-dock">
+      <div class="ruler-title">👑 군주 칙령</div>
+      <button id="btnDispatchFleet" class="ruler-btn" title="푸른파도 대항구와 신대륙에서 특무 황금 무역선단 일제 출항">
+        <span>⛵</span> 무역선단 출항
+      </button>
+      <button id="btnDispatchCrusade" class="ruler-btn danger" title="발로르 요새의 성전사 원정대와 왕립 해군 함대를 적 본거지로 진격">
+        <span>⚔️</span> 대토벌군 출정
+      </button>
+      <button id="btnCastBlessing" class="ruler-btn gold" title="전 대륙 농작물 100% 즉시 수확 + 주민/플레이어 전체 회복 + 번영 골드 지급">
+        <span>✨</span> 여신의 대축복
+      </button>
+    </div>
+  </footer>
 
   <!-- 하단 카메라 추적 배너 -->
   <div id="followBanner" class="follow-banner hidden">

@@ -1,5 +1,5 @@
 // ============================================================================
-// main.js - 메인 시뮬레이션 루프, 자유 카메라 컨트롤, UI 인터랙션, 이벤트 피드
+// main.js - 메인 시뮬레이션 루프, 플레이어 직접 조작(RPG/항해 모드), 군주 칙령, UI 인터랙션
 // ============================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -24,16 +24,21 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   entityMgr.spawnInitialPopulation();
 
+  // 플레이어 캐릭터 생성
+  const player = entityMgr.spawnOrGetPlayer();
+
   const renderer = new WorldRenderer(canvas, minimapCanvas, world, entityMgr);
 
-  // 2. 카메라 & 월드 시간 상태
+  // 2. 카메라 및 시뮬레이션 상태
+  let isPlayerControlActive = true;
+
   const camera = {
-    x: world.settlementMap.solaris.x,
-    y: world.settlementMap.solaris.y,
-    zoom: 0.9,
-    minZoom: 0.18,
-    maxZoom: 2.5,
-    followEntity: null
+    x: player.x,
+    y: player.y,
+    zoom: 0.95,
+    minZoom: 0.16,
+    maxZoom: 2.6,
+    followEntity: player
   };
 
   const worldTime = {
@@ -43,19 +48,19 @@ document.addEventListener('DOMContentLoaded', () => {
     hour: 8,
     minute: 0,
     speed: 1,
-    weather: 'clear', // 'clear', 'cloudy', 'rain'
+    weather: 'clear',
     weatherTimer: 35
   };
 
   let filterCategory = 'all';
-  let selectedItem = null; // { type: 'entity' | 'settlement', data: ... }
+  let selectedItem = { type: 'entity', data: player };
 
-  // 초기 환영 로그
-  entityMgr.log('quest', '👑 아테리아 대륙의 새로운 아침이 밝았습니다. 왕도와 각 마을의 상인·농부·어부·모험가들이 일과를 시작합니다!', camera.x, camera.y);
-  entityMgr.log('trade', '🐎 왕도 솔라리스와 황금밀 마을, 푸른파도 항구, 아이언포지 광산 간 무역 마차 운행이 개시되었습니다.', 96, 110);
-  entityMgr.log('battle', '⚔️ 동부 발로르 변경 요새의 용병단과 모험가들이 오크 요새 및 고블린 군락 토벌에 나섰습니다.', 154, 116);
+  // 초기 안내 로그
+  entityMgr.log('quest', '👑 아테리아 본토와 대해양, 바다 너머 신대륙(엘븐하임·미라주 사막)이 열렸습니다!', camera.x, camera.y);
+  entityMgr.log('trade', '⛵ 푸른파도 대항구와 신대륙 간 해상 무역 범선 항로가 정식 개통되었습니다.', 154, 152);
+  entityMgr.log('battle', '🏴‍☠️ 대해양 중앙 해골초도 해적선들과 동부 오크 군단이 무역로를 위협하고 있습니다.', 96, 112);
 
-  // 3. 좌측 거점 이동 버튼 생성
+  // 3. 거점 리스트 버튼 동적 생성
   const regionListEl = document.getElementById('regionList');
   for (const s of world.settlements) {
     const btn = document.createElement('button');
@@ -70,10 +75,10 @@ document.addEventListener('DOMContentLoaded', () => {
     regionListEl.appendChild(btn);
   }
 
-  // 대륙 전체 지도 보기 버튼
+  // 대륙 & 대해양 전체 지도 보기
   document.getElementById('btnZoomContinent').addEventListener('click', () => {
     stopFollow();
-    smoothMoveCamera(WORLD_SIZE / 2, WORLD_SIZE / 2, 0.22);
+    smoothMoveCamera(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0.18);
   });
 
   // 4. 필터 칩 바인딩
@@ -85,9 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 무역 중인 상인 따라가기 버튼
+  // 무역 상단/선단 추적
   document.getElementById('btnFindRandomMerchant').addEventListener('click', () => {
-    const merchants = entityMgr.entities.filter(e => e.role === 'merchant');
+    const merchants = entityMgr.entities.filter(e => e.role === 'merchant' || e.role === 'sea_merchant');
     if (merchants.length > 0) {
       const pick = merchants[Math.floor(Math.random() * merchants.length)];
       selectedItem = { type: 'entity', data: pick };
@@ -97,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 현재 전투 현장으로 이동 버튼
+  // 전투 현장 이동
   document.getElementById('btnFindBattle').addEventListener('click', () => {
     const fighters = entityMgr.entities.filter(e => e.state === 'combat' && e.faction === 'kingdom');
     if (fighters.length > 0) {
@@ -107,19 +112,17 @@ document.addEventListener('DOMContentLoaded', () => {
       camera.zoom = Math.max(camera.zoom, 1.2);
       updateInspectorUI();
     } else {
-      // 전투가 없으면 변경 요새나 오크 전선으로 이동
-      const orc = world.settlementMap.orc_stronghold;
+      const pirate = world.settlementMap.pirate_cove;
       stopFollow();
-      smoothMoveCamera((orc.x + 154) / 2, (orc.y + 116) / 2, 0.95);
+      smoothMoveCamera(pirate.x, pirate.y, 0.95);
     }
   });
 
-  // 5. 배속 조절 버튼
+  // 5. 배속 조절
   let prevNonZeroSpeed = 1;
   document.querySelectorAll('.speed-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const spd = Number(btn.dataset.speed);
-      setWorldSpeed(spd);
+      setWorldSpeed(Number(btn.dataset.speed));
     });
   });
 
@@ -131,7 +134,38 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 6. 카메라 추적 제어
+  // 6. 플레이어 컨트롤 및 스킬 바인딩
+  const btnTogglePlayer = document.getElementById('btnTogglePlayer');
+  const heroStatusText = document.getElementById('heroStatusText');
+
+  function updatePlayerControlUI() {
+    btnTogglePlayer.classList.toggle('active', isPlayerControlActive);
+    heroStatusText.textContent = isPlayerControlActive
+      ? '직접 조작 중 (WASD / 우클릭)'
+      : '자유 관찰 모드 (P 키로 전환)';
+  }
+
+  btnTogglePlayer.addEventListener('click', () => {
+    isPlayerControlActive = !isPlayerControlActive;
+    if (isPlayerControlActive) {
+      startFollow(player);
+      camera.zoom = Math.max(camera.zoom, 1.1);
+      selectedItem = { type: 'entity', data: player };
+      updateInspectorUI();
+    }
+    updatePlayerControlUI();
+  });
+
+  document.getElementById('btnSkillQ').addEventListener('click', () => entityMgr.triggerPlayerSkill('Q'));
+  document.getElementById('btnSkillE').addEventListener('click', () => entityMgr.triggerPlayerSkill('E'));
+  document.getElementById('btnSkillF').addEventListener('click', () => entityMgr.triggerPlayerSkill('F'));
+
+  // 군주 칙령 바인딩
+  document.getElementById('btnDispatchFleet').addEventListener('click', () => entityMgr.dispatchTradeFleet());
+  document.getElementById('btnDispatchCrusade').addEventListener('click', () => entityMgr.dispatchCrusade());
+  document.getElementById('btnCastBlessing').addEventListener('click', () => entityMgr.castDivineBlessing());
+
+  // 7. 카메라 추적 제어
   const followBanner = document.getElementById('followBanner');
   const followBannerText = document.getElementById('followBannerText');
   const btnFollowTarget = document.getElementById('btnFollowTarget');
@@ -161,18 +195,30 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('zoomLevelText').textContent = `줌: ${camera.zoom.toFixed(2)}x`;
   }
 
-  // 7. 마우스 드래그, 휠 줌, 클릭 선택 이벤트
+  // 8. 마우스 및 키보드 입력 제어
+  const keys = {};
   let isDragging = false;
   let dragStartX = 0;
   let dragStartY = 0;
   let dragMoved = false;
 
+  canvas.addEventListener('contextmenu', (e) => {
+    e.preventDefault(); // 우클릭 메뉴 차단
+    // 우클릭으로 플레이어 이동 또는 타겟팅
+    const wx = camera.x + (e.clientX - canvas.width / 2) / (TILE_SIZE * camera.zoom);
+    const wy = camera.y + (e.clientY - canvas.height / 2) / (TILE_SIZE * camera.zoom);
+    player.targetX = Math.max(2, Math.min(WORLD_WIDTH - 3, wx));
+    player.targetY = Math.max(2, Math.min(WORLD_HEIGHT - 3, wy));
+    entityMgr.addEffect(player.targetX, player.targetY, 1.8, '#facc15', 0.45);
+  });
+
   canvas.addEventListener('mousedown', (e) => {
-    if (e.button !== 0) return;
-    isDragging = true;
-    dragMoved = false;
-    dragStartX = e.clientX;
-    dragStartY = e.clientY;
+    if (e.button === 0) {
+      isDragging = true;
+      dragMoved = false;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+    }
   });
 
   window.addEventListener('mousemove', (e) => {
@@ -181,12 +227,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const dy = e.clientY - dragStartY;
     if (Math.hypot(dx, dy) > 4) {
       dragMoved = true;
-      stopFollow();
+      if (camera.followEntity !== player) stopFollow();
     }
     camera.x -= dx / (TILE_SIZE * camera.zoom);
     camera.y -= dy / (TILE_SIZE * camera.zoom);
-    camera.x = Math.max(0, Math.min(WORLD_SIZE, camera.x));
-    camera.y = Math.max(0, Math.min(WORLD_SIZE, camera.y));
+    camera.x = Math.max(0, Math.min(WORLD_WIDTH, camera.x));
+    camera.y = Math.max(0, Math.min(WORLD_HEIGHT, camera.y));
     dragStartX = e.clientX;
     dragStartY = e.clientY;
   });
@@ -203,7 +249,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const zoomFactor = e.deltaY < 0 ? 1.14 : 0.88;
     const nextZoom = Math.max(camera.minZoom, Math.min(camera.maxZoom, camera.zoom * zoomFactor));
 
-    // 마우스 커서 위치 기준 줌 보정
     if (!camera.followEntity) {
       const wxBefore = camera.x + (e.clientX - canvas.width / 2) / (TILE_SIZE * camera.zoom);
       const wyBefore = camera.y + (e.clientY - canvas.height / 2) / (TILE_SIZE * camera.zoom);
@@ -219,15 +264,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('zoomLevelText').textContent = `줌: ${camera.zoom.toFixed(2)}x`;
   }, { passive: false });
 
-  // 미니맵 클릭/드래그 카메라 이동
+  // 미니맵 클릭/드래그 이동
   let miniDragging = false;
   function moveCameraFromMinimap(e) {
     const rect = minimapCanvas.getBoundingClientRect();
-    const mx = ((e.clientX - rect.left) / rect.width) * WORLD_SIZE;
-    const my = ((e.clientY - rect.top) / rect.height) * WORLD_SIZE;
+    const mx = ((e.clientX - rect.left) / rect.width) * WORLD_WIDTH;
+    const my = ((e.clientY - rect.top) / rect.height) * WORLD_HEIGHT;
     stopFollow();
-    camera.x = Math.max(0, Math.min(WORLD_SIZE, mx));
-    camera.y = Math.max(0, Math.min(WORLD_SIZE, my));
+    camera.x = Math.max(0, Math.min(WORLD_WIDTH, mx));
+    camera.y = Math.max(0, Math.min(WORLD_HEIGHT, my));
   }
   minimapCanvas.addEventListener('mousedown', (e) => {
     miniDragging = true;
@@ -240,34 +285,44 @@ document.addEventListener('DOMContentLoaded', () => {
     miniDragging = false;
   });
 
-  // 키보드 단축키 (WASD, 화살표, Space, M, ESC)
-  const keys = {};
+  // 키보드 단축키
   window.addEventListener('keydown', (e) => {
     keys[e.code] = true;
-    if (e.code === 'Space') {
+
+    if (e.code === 'KeyQ') {
+      entityMgr.triggerPlayerSkill('Q');
+    } else if (e.code === 'KeyE') {
+      entityMgr.triggerPlayerSkill('E');
+    } else if (e.code === 'KeyF') {
+      entityMgr.triggerPlayerSkill('F');
+    } else if (e.code === 'KeyP') {
+      isPlayerControlActive = !isPlayerControlActive;
+      if (isPlayerControlActive) startFollow(player);
+      updatePlayerControlUI();
+    } else if (e.code === 'Space') {
       e.preventDefault();
       setWorldSpeed(worldTime.speed === 0 ? prevNonZeroSpeed : 0);
     } else if (e.code === 'KeyM') {
       stopFollow();
-      smoothMoveCamera(WORLD_SIZE / 2, WORLD_SIZE / 2, 0.22);
+      smoothMoveCamera(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0.18);
     } else if (e.code === 'Escape') {
       stopFollow();
     }
   });
+
   window.addEventListener('keyup', (e) => {
     keys[e.code] = false;
   });
 
-  // 캔버스 클릭 시 NPC 또는 거점 선택
+  // 클릭 시 대상 선택
   function handleCanvasClick(clientX, clientY) {
     const wx = camera.x + (clientX - canvas.width / 2) / (TILE_SIZE * camera.zoom);
     const wy = camera.y + (clientY - canvas.height / 2) / (TILE_SIZE * camera.zoom);
 
-    // 1. 가장 가까운 엔티티 검사
     let pickedEntity = null;
-    let minEntDist = 2.2 / Math.max(0.4, Math.min(1.2, camera.zoom));
+    let minEntDist = 2.4 / Math.max(0.4, Math.min(1.2, camera.zoom));
     for (const ent of entityMgr.entities) {
-      if (filterCategory !== 'all' && ent.category !== filterCategory) continue;
+      if (filterCategory !== 'all' && ent.category !== filterCategory && ent.role !== 'player') continue;
       const d = Math.hypot(ent.x - wx, ent.y - wy);
       if (d < minEntDist) {
         minEntDist = d;
@@ -281,7 +336,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // 2. 거점 클릭 검사
     for (const s of world.settlements) {
       if (Math.hypot(s.x - wx, s.y - wy) <= s.radius) {
         selectedItem = { type: 'settlement', data: s };
@@ -291,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 8. UI 업데이트 함수들
+  // 9. UI 업데이트
   function renderEventLogUI() {
     const container = document.getElementById('eventLogList');
     container.innerHTML = eventLogs.slice(0, 22).map((item, idx) => `
@@ -324,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (selectedItem.type === 'entity') {
       const e = selectedItem.data;
       btnFollowTarget.classList.remove('hidden');
-      titleEl.textContent = '👤 인물 / 개체 상세 정보';
+      titleEl.textContent = e.role === 'player' ? '🌟 플레이어 영웅 상태창' : '👤 개체 상세 정보';
 
       const hpPct = Math.max(0, Math.min(100, Math.round((e.hp / e.maxHp) * 100)));
       const home = world.settlementMap[e.homeId];
@@ -338,7 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="detail-avatar">${e.icon}</div>
           <div>
             <div class="detail-name">${e.name}</div>
-            <div class="detail-role">${e.subClass} · Lv.${e.level} (${e.faction === 'monster' ? '몬스터 군단' : '아테리아 왕국'})</div>
+            <div class="detail-role">${e.subClass} · Lv.${e.level} (${e.faction === 'monster' ? '몬스터/해적' : '아테리아 왕국'})</div>
           </div>
         </div>
         <div class="bar-row">
@@ -347,19 +401,19 @@ document.addEventListener('DOMContentLoaded', () => {
             <strong>${Math.ceil(e.hp)} / ${e.maxHp}</strong>
           </div>
           <div class="progress-track">
-            <div class="progress-fill" style="width:${hpPct}%; background:${e.faction === 'monster' ? '#ef4444' : '#22c55e'};"></div>
+            <div class="progress-fill" style="width:${hpPct}%; background:${e.faction === 'monster' ? '#ef4444' : (e.role === 'player' ? '#facc15' : '#22c55e')};"></div>
           </div>
         </div>
         <div style="margin: 6px 0; padding: 6px 8px; background: rgba(250, 204, 21, 0.1); border-left: 3px solid #facc15; border-radius: 4px; color: #fef08a; font-size: 11.5px;">
           ${e.thought}
         </div>
         <div class="detail-grid">
-          <div class="detail-kv"><span>소속 거점</span><strong>${home ? home.name : '-'}</strong></div>
-          <div class="detail-kv"><span>보유 골드</span><strong style="color:#facc15;">🪙 ${e.gold} G</strong></div>
+          <div class="detail-kv"><span>소속 거점</span><strong>${home ? home.name : '방랑'}</strong></div>
+          <div class="detail-kv"><span>보유 골드</span><strong style="color:#facc15;">🪙 ${e.gold.toLocaleString()} G</strong></div>
           <div class="detail-kv"><span>전투 공격력</span><strong>⚔️ ${e.atk}</strong></div>
           <div class="detail-kv"><span>처치(토벌) 수</span><strong>🏆 ${e.kills}회</strong></div>
         </div>
-        <div style="margin-top:7px; font-size:11px; color:#94a3b8;">보유 물자 및 전리품:</div>
+        <div style="margin-top:7px; font-size:11px; color:#94a3b8;">보유 물자 및 교역품:</div>
         <div class="inv-tags">
           ${invItems || '<span class="inv-tag" style="color:#64748b;">보유 물품 없음</span>'}
         </div>
@@ -367,11 +421,11 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (selectedItem.type === 'settlement') {
       const s = selectedItem.data;
       btnFollowTarget.classList.add('hidden');
-      titleEl.textContent = '🏰 거점 / 영지 상세 정보';
+      titleEl.textContent = '🏰 거점 / 항구 상세 정보';
 
       const citizens = entityMgr.entities.filter(e => e.homeId === s.id).length;
       const stockTags = Object.entries(s.stocks || {})
-        .map(([k, v]) => `<span class="inv-tag">${GOODS_KR[k]}: <strong>${v}</strong> (${s.prices?.[k] || '-'}G)</span>`)
+        .map(([k, v]) => `<span class="inv-tag">${GOODS_KR[k] || k}: <strong>${v}</strong> (${s.prices?.[k] || '-'}G)</span>`)
         .join('');
 
       contentEl.innerHTML = `
@@ -385,10 +439,10 @@ document.addEventListener('DOMContentLoaded', () => {
         <p style="font-size:11.5px; color:#cbd5e1; margin-bottom:8px;">${s.description}</p>
         <div class="detail-grid">
           <div class="detail-kv"><span>영지 금고</span><strong style="color:#facc15;">🪙 ${s.gold.toLocaleString()} G</strong></div>
-          <div class="detail-kv"><span>소속 주민/병력</span><strong>👥 ${citizens}명</strong></div>
+          <div class="detail-kv"><span>상주 주민/함선</span><strong>👥 ${citizens}명</strong></div>
         </div>
         ${stockTags ? `
-          <div style="margin-top:7px; font-size:11px; color:#94a3b8;">비축 교역 물자 (시세):</div>
+          <div style="margin-top:7px; font-size:11px; color:#94a3b8;">특산물 비축량 & 현지 시세:</div>
           <div class="inv-tags">${stockTags}</div>
         ` : ''}
       `;
@@ -404,8 +458,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="econ-stocks">
           <span title="밀">🌾${s.stocks.wheat || 0}</span>
           <span title="생선">🐟${s.stocks.fish || 0}</span>
-          <span title="광석">⛏️${s.stocks.ore || 0}</span>
-          <span title="무기">⚔️${s.stocks.weapons || 0}</span>
+          <span title="향신료">🌶️${s.stocks.spices || 0}</span>
+          <span title="보석">💎${s.stocks.gems || 0}</span>
         </div>
       </div>
     `).join('');
@@ -440,14 +494,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const weatherMap = {
       clear:  { icon: '🌤️', text: '맑음' },
       cloudy: { icon: '⛅', text: '구름 조금' },
-      rain:   { icon: '🌧️', text: '봄비 내림' }
+      rain:   { icon: '🌧️', text: '대양의 비' }
     };
     const wInfo = weatherMap[worldTime.weather] || weatherMap.clear;
     document.getElementById('weatherIcon').textContent = wInfo.icon;
     document.getElementById('weatherText').textContent = wInfo.text;
 
     const npcs = entityMgr.entities.filter(e => e.faction === 'kingdom');
-    const caravans = entityMgr.entities.filter(e => e.role === 'merchant');
+    const caravans = entityMgr.entities.filter(e => e.role === 'merchant' || e.role === 'sea_merchant');
     const monsters = entityMgr.entities.filter(e => e.faction === 'monster');
     const entityGold = entityMgr.entities.reduce((acc, e) => acc + (e.gold || 0), 0);
     const townGold = world.settlements.reduce((acc, s) => acc + (s.gold || 0), 0);
@@ -459,12 +513,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('statTotalGold').textContent = (entityGold + townGold).toLocaleString();
   }
 
-  // 초기 UI 렌더링
   renderEventLogUI();
   updateEconomyTableUI();
   updateTopHudUI();
+  updatePlayerControlUI();
 
-  // 9. 메인 애니메이션 & 시뮬레이션 루프
+  // 10. 메인 루프
   let lastTime = performance.now();
   let uiTick = 0;
 
@@ -472,20 +526,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const rawDt = Math.min(0.05, (now - lastTime) / 1000);
     lastTime = now;
 
-    // 키보드 카메라 이동 처리
-    const panSpeed = (28 / camera.zoom) * rawDt;
-    if (keys['KeyW'] || keys['ArrowUp']) { stopFollow(); camera.y -= panSpeed; }
-    if (keys['KeyS'] || keys['ArrowDown']) { stopFollow(); camera.y += panSpeed; }
-    if (keys['KeyA'] || keys['ArrowLeft']) { stopFollow(); camera.x -= panSpeed; }
-    if (keys['KeyD'] || keys['ArrowRight']) { stopFollow(); camera.x += panSpeed; }
+    // 플레이어 입력 벡터 계산
+    const playerInput = { dx: 0, dy: 0 };
+    if (isPlayerControlActive) {
+      if (keys['KeyW'] || keys['ArrowUp']) playerInput.dy -= 1;
+      if (keys['KeyS'] || keys['ArrowDown']) playerInput.dy += 1;
+      if (keys['KeyA'] || keys['ArrowLeft']) playerInput.dx -= 1;
+      if (keys['KeyD'] || keys['ArrowRight']) playerInput.dx += 1;
+    } else {
+      // 자유 카메라 이동
+      const panSpeed = (32 / camera.zoom) * rawDt;
+      if (keys['KeyW'] || keys['ArrowUp']) { stopFollow(); camera.y -= panSpeed; }
+      if (keys['KeyS'] || keys['ArrowDown']) { stopFollow(); camera.y += panSpeed; }
+      if (keys['KeyA'] || keys['ArrowLeft']) { stopFollow(); camera.x -= panSpeed; }
+      if (keys['KeyD'] || keys['ArrowRight']) { stopFollow(); camera.x += panSpeed; }
+    }
 
-    camera.x = Math.max(0, Math.min(WORLD_SIZE, camera.x));
-    camera.y = Math.max(0, Math.min(WORLD_SIZE, camera.y));
+    camera.x = Math.max(0, Math.min(WORLD_WIDTH, camera.x));
+    camera.y = Math.max(0, Math.min(WORLD_HEIGHT, camera.y));
 
     // 시뮬레이션 시간 진행
     const simDt = rawDt * worldTime.speed;
     if (simDt > 0) {
-      worldTime.minute += simDt * 8; // 1초당 게임 내 8분 진행 (1배속 기준)
+      worldTime.minute += simDt * 8;
       if (worldTime.minute >= 60) {
         worldTime.minute -= 60;
         worldTime.hour++;
@@ -498,7 +561,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      // 날씨 변화
       worldTime.weatherTimer -= simDt;
       if (worldTime.weatherTimer <= 0) {
         worldTime.weatherTimer = 45 + Math.random() * 40;
@@ -506,19 +568,17 @@ document.addEventListener('DOMContentLoaded', () => {
         worldTime.weather = r < 0.65 ? 'clear' : (r < 0.85 ? 'cloudy' : 'rain');
       }
 
-      entityMgr.update(simDt, worldTime);
+      entityMgr.update(simDt, worldTime, playerInput);
     }
 
-    // 카메라 추적 대상이 있으면 부드럽게 따라가기
+    // 카메라 추적 (플레이어 조작 중에는 플레이어를 부드럽게 팔로우)
     if (camera.followEntity) {
       camera.x += (camera.followEntity.x - camera.x) * 0.15;
       camera.y += (camera.followEntity.y - camera.y) * 0.15;
     }
 
-    // 월드 렌더링
     renderer.render(camera, worldTime, filterCategory, selectedItem, now / 1000);
 
-    // 주기적 UI 갱신 (0.3초 마다)
     uiTick += rawDt;
     if (uiTick > 0.3) {
       uiTick = 0;

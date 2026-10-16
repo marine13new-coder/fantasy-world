@@ -1,5 +1,5 @@
 // ============================================================================
-// renderer.js - 멀티 줌 레벨(전략 대륙 뷰 ↔ 근접 디테일 뷰) 2D 캔버스 렌더러
+// renderer.js - 다중 대륙(본토·대해양·신대륙), 해상 범선, 해전 포격, 플레이어 이펙트 렌더러
 // ============================================================================
 
 class WorldRenderer {
@@ -11,8 +11,7 @@ class WorldRenderer {
     this.world = world;
     this.entityMgr = entityMgr;
 
-    // 정적 지형 오프스크린 캐시 (성능 최적화)
-    this.bakeScale = 16; // 타일 당 16px로 베이킹 (3840 x 3840)
+    this.bakeScale = 14; // 340x240 타일 베이킹 (4760 x 3360)
     this.terrainCanvas = document.createElement('canvas');
     this.terrainCanvas.width = world.width * this.bakeScale;
     this.terrainCanvas.height = world.height * this.bakeScale;
@@ -36,7 +35,6 @@ class WorldRenderer {
         const t = tiles[idx];
         const info = TILE_INFO[t] || TILE_INFO[TILE.GRASS];
 
-        // 미세한 타일 체커보드 톤 변화
         tCtx.fillStyle = info.color;
         tCtx.fillRect(x * s, y * s, s, s);
 
@@ -45,13 +43,12 @@ class WorldRenderer {
           tCtx.fillRect(x * s, y * s, s, s);
         }
 
-        // 가도 및 다리 디테일
         if (t === TILE.ROAD) {
           tCtx.fillStyle = '#85755e';
           tCtx.fillRect(x * s + 2, y * s + 2, s - 4, s - 4);
           tCtx.fillStyle = '#a89982';
-          tCtx.fillRect(x * s + 4, y * s + 4, 4, 4);
-          tCtx.fillRect(x * s + 9, y * s + 9, 4, 4);
+          tCtx.fillRect(x * s + 3, y * s + 3, 3, 3);
+          tCtx.fillRect(x * s + 8, y * s + 8, 3, 3);
         } else if (t === TILE.BRIDGE) {
           tCtx.fillStyle = '#5c3a1e';
           tCtx.fillRect(x * s, y * s, s, s);
@@ -67,12 +64,12 @@ class WorldRenderer {
           tCtx.fillStyle = '#334155';
           tCtx.fillRect(x * s, y * s, s, s);
           tCtx.fillStyle = '#94a3b8';
-          tCtx.fillRect(x * s + 2, y * s + 2, s - 4, s - 6);
+          tCtx.fillRect(x * s + 2, y * s + 2, s - 4, s - 5);
         } else if (t === TILE.DOCK) {
           tCtx.fillStyle = '#78502b';
           tCtx.fillRect(x * s, y * s, s, s);
           tCtx.fillStyle = '#54361b';
-          tCtx.fillRect(x * s, y * s + 6, s, 2);
+          tCtx.fillRect(x * s, y * s + 5, s, 2);
         } else if (t === TILE.FARMLAND) {
           tCtx.fillStyle = '#594222';
           tCtx.fillRect(x * s, y * s, s, s);
@@ -80,51 +77,60 @@ class WorldRenderer {
           for (let r = 2; r < s; r += 4) {
             tCtx.fillRect(x * s + 1, y * s + r, s - 2, 2);
           }
+        } else if (t === TILE.LAVA) {
+          tCtx.fillStyle = '#f97316';
+          tCtx.fillRect(x * s + 3, y * s + 3, s - 6, s - 6);
         }
 
-        // 자연 장식물 (나무, 바위, 야생화)
         const d = deco[idx];
         if (d === 1) {
           // 참나무
-          tCtx.fillStyle = 'rgba(0,0,0,0.28)';
-          tCtx.beginPath();
-          tCtx.arc(x * s + 9, y * s + 11, 6, 0, Math.PI * 2);
-          tCtx.fill();
           tCtx.fillStyle = '#1e4620';
           tCtx.beginPath();
-          tCtx.arc(x * s + 8, y * s + 8, 6.5, 0, Math.PI * 2);
+          tCtx.arc(x * s + 7, y * s + 7, 5.5, 0, Math.PI * 2);
           tCtx.fill();
           tCtx.fillStyle = '#2e6b30';
           tCtx.beginPath();
-          tCtx.arc(x * s + 6.5, y * s + 6.5, 4.2, 0, Math.PI * 2);
+          tCtx.arc(x * s + 6, y * s + 6, 3.5, 0, Math.PI * 2);
           tCtx.fill();
         } else if (d === 2) {
           // 그림자 숲 침엽수
           tCtx.fillStyle = '#11221c';
           tCtx.beginPath();
-          tCtx.moveTo(x * s + 8, y * s + 1);
-          tCtx.lineTo(x * s + 14, y * s + 14);
-          tCtx.lineTo(x * s + 2, y * s + 14);
+          tCtx.moveTo(x * s + 7, y * s + 1);
+          tCtx.lineTo(x * s + 13, y * s + 13);
+          tCtx.lineTo(x * s + 1, y * s + 13);
           tCtx.closePath();
           tCtx.fill();
         } else if (d === 3) {
-          // 야생화
           tCtx.fillStyle = (x + y) % 3 === 0 ? '#facc15' : '#f472b6';
-          tCtx.fillRect(x * s + 5, y * s + 5, 3, 3);
-          tCtx.fillRect(x * s + 10, y * s + 9, 3, 3);
+          tCtx.fillRect(x * s + 4, y * s + 4, 3, 3);
+          tCtx.fillRect(x * s + 9, y * s + 8, 3, 3);
         } else if (d === 4) {
-          // 바위/광석
           tCtx.fillStyle = '#64748b';
           tCtx.beginPath();
-          tCtx.arc(x * s + 8, y * s + 9, 5.5, 0, Math.PI * 2);
+          tCtx.arc(x * s + 7, y * s + 8, 4.8, 0, Math.PI * 2);
           tCtx.fill();
-          tCtx.fillStyle = '#94a3b8';
+        } else if (d === 5) {
+          // 사막 야자수 / 선인장
+          tCtx.fillStyle = '#15803d';
           tCtx.beginPath();
-          tCtx.arc(x * s + 6.5, y * s + 7.5, 3, 0, Math.PI * 2);
+          tCtx.arc(x * s + 7, y * s + 6, 4.5, 0, Math.PI * 2);
+          tCtx.fill();
+          tCtx.fillStyle = '#4ade80';
+          tCtx.fillRect(x * s + 6, y * s + 4, 2, 5);
+        } else if (d === 6) {
+          // 엘븐하임 신비의 벚꽃/요정수
+          tCtx.fillStyle = '#0f766e';
+          tCtx.beginPath();
+          tCtx.arc(x * s + 7, y * s + 7, 5.8, 0, Math.PI * 2);
+          tCtx.fill();
+          tCtx.fillStyle = (x + y) % 2 === 0 ? '#f472b6' : '#5eead4';
+          tCtx.beginPath();
+          tCtx.arc(x * s + 6, y * s + 5.5, 3.6, 0, Math.PI * 2);
           tCtx.fill();
         }
 
-        // 미니맵 픽셀 기록
         mCtx.fillStyle = info.miniColor;
         mCtx.fillRect(x, y, 1, 1);
       }
@@ -137,21 +143,21 @@ class WorldRenderer {
     const ts = TILE_SIZE;
 
     ctx.clearRect(0, 0, cw, ch);
-    ctx.fillStyle = '#081729';
+    ctx.fillStyle = '#071526';
     ctx.fillRect(0, 0, cw, ch);
 
     ctx.save();
-    // 카메라 변환 (화면 중앙 기준 줌 및 위치 이동)
     ctx.translate(cw / 2, ch / 2);
     ctx.scale(camera.zoom, camera.zoom);
     ctx.translate(-camera.x * ts, -camera.y * ts);
 
-    // 1. 베이크된 대륙 지형 캔버스 그리기
     const worldPxW = this.world.width * ts;
     const worldPxH = this.world.height * ts;
     ctx.drawImage(this.terrainCanvas, 0, 0, worldPxW, worldPxH);
 
-    // 현재 카메라 뷰포트 경계 (타일 단위 컬링용)
+    // 1. 대해양 해상 무역 항로 점선 표시 (전략 뷰 및 중간 뷰)
+    this.drawSeaRoutes(ctx, ts, timeSec);
+
     const halfW = (cw / 2 / camera.zoom) / ts + 4;
     const halfH = (ch / 2 / camera.zoom) / ts + 4;
     const minTx = Math.max(0, Math.floor(camera.x - halfW));
@@ -159,8 +165,8 @@ class WorldRenderer {
     const minTy = Math.max(0, Math.floor(camera.y - halfH));
     const maxTy = Math.min(this.world.height - 1, Math.ceil(camera.y + halfH));
 
-    // 2. 경작지 작물 성장 렌더링 (황금밀, 약초, 호박)
-    if (camera.zoom > 0.32) {
+    // 2. 농작물 렌더링
+    if (camera.zoom > 0.30) {
       for (const plot of this.world.farmPlots) {
         if (plot.x < minTx || plot.x > maxTx || plot.y < minTy || plot.y > maxTy) continue;
         const px = plot.x * ts;
@@ -168,9 +174,9 @@ class WorldRenderer {
         const ratio = plot.growth / 100;
         const sway = Math.sin(timeSec * 3 + plot.x * 0.7) * 2.2 * ratio;
 
-        ctx.fillStyle = plot.cropType === '약초'
-          ? '#34d399'
-          : (ratio > 0.75 ? '#facc15' : '#84cc16');
+        ctx.fillStyle = plot.cropType === '향신료'
+          ? '#fb923c'
+          : (plot.cropType === '약초' ? '#2dd4bf' : (ratio > 0.75 ? '#facc15' : '#84cc16'));
 
         const h = Math.max(4, ratio * 16);
         for (let c = 6; c <= 24; c += 8) {
@@ -179,21 +185,19 @@ class WorldRenderer {
       }
     }
 
-    // 3. 어부들의 고기잡이배 & 광산 광맥 반짝임 렌더링
+    // 3. 어부들의 고기잡이배 & 광산 광맥
     for (const sp of this.world.fishingSpots) {
       if (!sp.isBoat) continue;
       if (sp.x < minTx || sp.x > maxTx || sp.y < minTy || sp.y > maxTy) continue;
       const bx = sp.x * ts + ts / 2;
       const by = sp.y * ts + ts / 2 + Math.sin(timeSec * 2.5 + sp.x) * 2.5;
 
-      // 물결 파문
       ctx.strokeStyle = 'rgba(186, 230, 253, 0.45)';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.ellipse(bx, by + 3, 20, 9, 0, 0, Math.PI * 2);
       ctx.stroke();
 
-      // 목선 본체
       ctx.fillStyle = '#78350f';
       ctx.beginPath();
       ctx.ellipse(bx, by, 17, 8, 0, 0, Math.PI * 2);
@@ -214,13 +218,13 @@ class WorldRenderer {
       ctx.fill();
     }
 
-    // 4. 성채, 왕궁, 풍차, 시장, 대장간 등 주요 건물 렌더링
+    // 4. 주요 건물 렌더링
     for (const b of this.world.buildings) {
       if (b.x + b.w < minTx || b.x - b.w > maxTx || b.y + b.h < minTy || b.y - b.h > maxTy) continue;
       this.drawBuilding(ctx, b, ts, timeSec, camera.zoom, worldTime);
     }
 
-    // 5. 어부들의 낚싯줄과 찌(Bobber) 렌더링
+    // 5. 어부들의 낚싯줄과 찌
     if (camera.zoom > 0.35) {
       for (const e of this.entityMgr.entities) {
         if (e.fishingLine && e.x >= minTx && e.x <= maxTx && e.y >= minTy && e.y <= maxTy) {
@@ -236,39 +240,49 @@ class WorldRenderer {
           ctx.quadraticCurveTo((ex + wx) / 2, Math.min(ey, wy) - 18, wx, wy);
           ctx.stroke();
 
-          // 빨간 낚시 찌
           ctx.fillStyle = '#ef4444';
           ctx.beginPath();
           ctx.arc(wx, wy, 3.5, 0, Math.PI * 2);
           ctx.fill();
-
-          // 물결 원
-          ctx.strokeStyle = 'rgba(125, 211, 252, 0.55)';
-          ctx.beginPath();
-          ctx.arc(wx, wy, 6 + (timeSec * 6 % 6), 0, Math.PI * 2);
-          ctx.stroke();
         }
       }
     }
 
-    // 6. 엔티티 (NPC, 상단 마차, 병사, 모험가, 몬스터) 렌더링
+    // 6. 광역 마법 & 왕국 개입 특수 이펙트 렌더링
+    for (const fx of this.entityMgr.specialEffects) {
+      const progress = fx.age / fx.duration;
+      const curR = fx.radius * ts * (0.3 + progress * 0.7);
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - progress);
+      ctx.strokeStyle = fx.color;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(fx.x * ts, fx.y * ts, curR, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = fx.color;
+      ctx.globalAlpha = Math.max(0, (1 - progress) * 0.25);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // 7. 엔티티 (NPC, 해상 범선, 해군, 해적선, 플레이어) 렌더링
     for (const e of this.entityMgr.entities) {
       if (e.x < minTx || e.x > maxTx || e.y < minTy || e.y > maxTy) continue;
-      const isFilteredOut = filterCategory !== 'all' && e.category !== filterCategory;
+      const isFilteredOut = filterCategory !== 'all' && e.category !== filterCategory && e.role !== 'player';
       const isSelected = selectedItem && selectedItem.type === 'entity' && selectedItem.data.id === e.id;
       this.drawEntity(ctx, e, ts, timeSec, camera.zoom, isFilteredOut, isSelected);
     }
 
-    // 7. 마법 탄환 / 화살 투사체 렌더링
+    // 8. 투사체 렌더링
     for (const p of this.entityMgr.projectiles) {
       ctx.fillStyle = p.color;
       ctx.beginPath();
-      ctx.arc(p.x * ts, p.y * ts - 8, 4.5, 0, Math.PI * 2);
+      ctx.arc(p.x * ts, p.y * ts - 8, 5, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // 8. 플로팅 데미지 & 골드 텍스트 렌더링
-    if (camera.zoom > 0.38) {
+    // 9. 플로팅 텍스트 렌더링
+    if (camera.zoom > 0.32) {
       ctx.font = 'bold 12px Pretendard, sans-serif';
       ctx.textAlign = 'center';
       for (const ft of this.entityMgr.floatingTexts) {
@@ -276,21 +290,44 @@ class WorldRenderer {
         const alpha = Math.max(0, 1 - ft.age / ft.duration);
         ctx.fillStyle = ft.color;
         ctx.globalAlpha = alpha;
-        ctx.fillText(ft.text, ft.x * ts, ft.y * ts - 16);
+        ctx.fillText(ft.text, ft.x * ts, ft.y * ts - 18);
       }
       ctx.globalAlpha = 1.0;
     }
 
-    // 9. 거점 이름 배너 (줌아웃 전략 뷰 및 일반 뷰 모두 가독성 있게 표시)
+    // 10. 거점 배너 렌더링
     this.drawSettlementBanners(ctx, ts, camera.zoom, selectedItem);
 
     ctx.restore();
 
-    // 10. 밤/새벽 시간대 조명 효과 및 날씨 파티클
+    // 11. 밤/날씨 오버레이 & 미니맵
     this.drawAtmosphereOverlay(ctx, cw, ch, worldTime, timeSec);
-
-    // 11. 미니맵 업데이트
     this.renderMinimap(camera, cw, ch, filterCategory);
+  }
+
+  drawSeaRoutes(ctx, ts, timeSec) {
+    const sMap = this.world.settlementMap;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.28)';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([12, 10]);
+    ctx.lineDashOffset = -timeSec * 18;
+
+    for (const sr of this.world.seaRoutes) {
+      const a = sMap[sr.from];
+      const b = sMap[sr.to];
+      if (!a || !b) continue;
+      ctx.beginPath();
+      ctx.moveTo(a.portWaterX * ts, a.portWaterY * ts);
+      ctx.quadraticCurveTo(
+        ((a.portWaterX + b.portWaterX) / 2) * ts,
+        ((a.portWaterY + b.portWaterY) / 2 - 14) * ts,
+        b.portWaterX * ts,
+        b.portWaterY * ts
+      );
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   drawBuilding(ctx, b, ts, timeSec, zoom, worldTime) {
@@ -300,31 +337,25 @@ class WorldRenderer {
     const ph = b.h * ts;
     const isNight = worldTime.hour >= 20 || worldTime.hour < 6;
 
-    // 건물 그림자
     ctx.fillStyle = 'rgba(0, 0, 0, 0.38)';
     ctx.fillRect(px + 6, py + 8, pw, ph);
 
-    // 외벽
     ctx.fillStyle = b.color;
     ctx.fillRect(px, py, pw, ph);
 
-    // 지붕
     ctx.fillStyle = b.roofColor;
     ctx.fillRect(px + 3, py + 3, pw - 6, ph - 10);
 
-    // 테두리
     ctx.strokeStyle = '#1e293b';
     ctx.lineWidth = 2;
     ctx.strokeRect(px, py, pw, ph);
 
-    // 밤 시간대 창문 불빛
     if (isNight && b.type !== 'lair') {
       ctx.fillStyle = '#fde047';
       ctx.fillRect(px + 8, py + ph - 9, 6, 5);
       ctx.fillRect(px + pw - 14, py + ph - 9, 6, 5);
     }
 
-    // 황금밀 마을 대풍차 회전 날개 연출
     if (b.id === 'gw_mill') {
       const cx = b.x * ts;
       const cy = b.y * ts;
@@ -345,13 +376,12 @@ class WorldRenderer {
       ctx.restore();
     }
 
-    // 건물 아이콘 & 이름 (가까이 줌인했을 때 표시)
-    if (zoom > 0.55) {
+    if (zoom > 0.50) {
       ctx.font = '18px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(b.icon, b.x * ts, b.y * ts + 4);
 
-      if (zoom > 0.85) {
+      if (zoom > 0.82) {
         ctx.font = 'bold 11px Pretendard, sans-serif';
         ctx.fillStyle = '#f8fafc';
         ctx.strokeStyle = 'rgba(0,0,0,0.8)';
@@ -366,35 +396,71 @@ class WorldRenderer {
     const px = e.x * ts;
     const py = e.y * ts;
     const bounce = (Math.abs(e.vx) > 0.05 || Math.abs(e.vy) > 0.05)
-      ? Math.abs(Math.sin(e.animPhase)) * 4
+      ? Math.abs(Math.sin(e.animPhase)) * (e.isShip ? 2.5 : 4)
       : 0;
 
     ctx.save();
     if (isFilteredOut) ctx.globalAlpha = 0.22;
 
-    // 선택된 개체 강조 오라
+    // 플레이어 영웅 황금 오라
+    if (e.role === 'player') {
+      ctx.strokeStyle = '#fde047';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(px, py - 2, 22 + Math.sin(timeSec * 6) * 3, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
     if (isSelected) {
       ctx.strokeStyle = '#facc15';
       ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.arc(px, py, 18 * e.scale, 0, Math.PI * 2);
+      ctx.arc(px, py, 20 * e.scale, 0, Math.PI * 2);
       ctx.stroke();
     }
 
-    // 상인인 경우 짐마차(Wagon) 먼저 그리기
-    if (e.hasWagon) {
+    // (A) 해상 범선 / 해군 함대 / 해적선 / 바다 괴수 렌더링
+    if (e.isShip) {
+      // 물결 파문
+      ctx.strokeStyle = 'rgba(186, 230, 253, 0.55)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.ellipse(px, py + 4, 22 * e.scale, 10 * e.scale, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      if (e.monsterType !== 'kraken' && e.monsterType !== 'sea_serpent') {
+        // 선체(Hull)
+        ctx.fillStyle = e.faction === 'monster' ? '#1e293b' : '#78350f';
+        ctx.beginPath();
+        ctx.ellipse(px, py - bounce, 20 * e.scale, 9 * e.scale, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // 돛(Sail)
+        ctx.fillStyle = e.role === 'player'
+          ? '#fde047'
+          : (e.faction === 'monster' ? '#991b1b' : (e.role === 'navy' ? '#38bdf8' : '#fef3c7'));
+        ctx.beginPath();
+        ctx.arc(px, py - 8 - bounce, 11 * e.scale, Math.PI, 0);
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
+
+    // (B) 육상 상인 짐마차(Wagon)
+    if (e.hasWagon && !e.isShip) {
       const wx = px - (e.vx >= 0 ? 16 : -16);
       const wy = py + 2;
       ctx.fillStyle = 'rgba(0,0,0,0.35)';
       ctx.fillRect(wx - 12, wy - 4, 24, 14);
-      // 마차 몸체와 천막
       ctx.fillStyle = '#92400e';
       ctx.fillRect(wx - 11, wy - 8, 22, 12);
       ctx.fillStyle = '#fef3c7';
       ctx.beginPath();
       ctx.arc(wx, wy - 8, 10, Math.PI, 0);
       ctx.fill();
-      // 바퀴
       ctx.fillStyle = '#451a03';
       ctx.beginPath();
       ctx.arc(wx - 7, wy + 4, 4, 0, Math.PI * 2);
@@ -402,73 +468,68 @@ class WorldRenderer {
       ctx.fill();
     }
 
-    // 그림자
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
-    ctx.beginPath();
-    ctx.ellipse(px, py + 5, 8 * e.scale, 4 * e.scale, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 캐릭터 원형 바디
-    const r = 9.5 * e.scale;
-    ctx.fillStyle = e.color;
-    ctx.beginPath();
-    ctx.arc(px, py - 4 - bounce, r, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = e.faction === 'monster' ? '#450a0a' : '#0f172a';
-    ctx.lineWidth = 1.8;
-    ctx.stroke();
-
-    // 전투 중일 때 검격/이펙트 링 표시
-    if (e.state === 'combat') {
-      ctx.strokeStyle = 'rgba(239, 68, 68, 0.75)';
-      ctx.lineWidth = 1.8;
+    // 캐릭터 그림자 & 바디
+    if (!e.isShip || e.monsterType === 'kraken' || e.monsterType === 'sea_serpent') {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
       ctx.beginPath();
-      ctx.arc(px, py - 4, r + 4 + Math.sin(timeSec * 12) * 2, 0, Math.PI * 2);
+      ctx.ellipse(px, py + 5, 8 * e.scale, 4 * e.scale, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      const r = 9.5 * e.scale;
+      ctx.fillStyle = e.color;
+      ctx.beginPath();
+      ctx.arc(px, py - 4 - bounce, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = e.faction === 'monster' ? '#450a0a' : '#0f172a';
+      ctx.lineWidth = 1.8;
       ctx.stroke();
     }
 
-    // 아이콘 표시
-    if (zoom > 0.35) {
+    if (e.state === 'combat') {
+      ctx.strokeStyle = 'rgba(239, 68, 68, 0.8)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(px, py - 4, 13 * e.scale + Math.sin(timeSec * 12) * 2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    if (zoom > 0.30) {
       ctx.font = `${Math.round(13 * e.scale)}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(e.icon, px, py - 4 - bounce);
+      ctx.fillText(e.icon, px, py - (e.isShip ? 8 : 4) - bounce);
     }
 
-    // 체력바 (체력이 깎였거나 전투 중이거나 선택된 경우)
-    if ((e.hp < e.maxHp || isSelected) && zoom > 0.45) {
-      const bw = 24 * e.scale;
+    if ((e.hp < e.maxHp || isSelected || e.role === 'player') && zoom > 0.40) {
+      const bw = 26 * e.scale;
       const bh = 4;
       const bx = px - bw / 2;
-      const by = py - 19 * e.scale - bounce;
-      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      const by = py - 21 * e.scale - bounce;
+      ctx.fillStyle = 'rgba(0,0,0,0.75)';
       ctx.fillRect(bx, by, bw, bh);
       const hpRatio = Math.max(0, e.hp / e.maxHp);
-      ctx.fillStyle = e.faction === 'monster' ? '#ef4444' : '#22c55e';
+      ctx.fillStyle = e.faction === 'monster' ? '#ef4444' : (e.role === 'player' ? '#facc15' : '#22c55e');
       ctx.fillRect(bx, by, bw * hpRatio, bh);
     }
 
-    // 근접 줌 또는 선택 시 이름 & 말풍선 표시
-    if ((zoom > 0.95 || isSelected) && !isFilteredOut) {
+    if ((zoom > 0.90 || isSelected || e.role === 'player') && !isFilteredOut) {
       ctx.font = 'bold 10.5px Pretendard, sans-serif';
       ctx.textAlign = 'center';
       ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
       ctx.lineWidth = 3;
-      ctx.strokeText(e.name, px, py + 15);
-      ctx.fillStyle = e.faction === 'monster' ? '#fca5a5' : '#f8fafc';
-      ctx.fillText(e.name, px, py + 15);
+      ctx.strokeText(e.name, px, py + 16);
+      ctx.fillStyle = e.role === 'player' ? '#fde047' : (e.faction === 'monster' ? '#fca5a5' : '#f8fafc');
+      ctx.fillText(e.name, px, py + 16);
 
-      // 선택되었거나 아주 가까이 확대한 경우 현재 행동/생각 말풍선 표시
-      if (isSelected || zoom > 1.35) {
+      if (isSelected || zoom > 1.30 || e.role === 'player') {
         const bubbleText = e.thought;
         ctx.font = '10px Pretendard, sans-serif';
         const tw = ctx.measureText(bubbleText).width + 12;
         const bx = px - tw / 2;
-        const by = py - 36 * e.scale - bounce;
+        const by = py - 38 * e.scale - bounce;
 
         ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
-        ctx.strokeStyle = isSelected ? '#facc15' : 'rgba(255,255,255,0.25)';
+        ctx.strokeStyle = (isSelected || e.role === 'player') ? '#facc15' : 'rgba(255,255,255,0.25)';
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.roundRect(bx, by, tw, 17, 6);
@@ -490,7 +551,7 @@ class WorldRenderer {
       const isSelected = selectedItem && selectedItem.type === 'settlement' && selectedItem.data.id === s.id;
 
       ctx.save();
-      const fontSize = zoom < 0.45 ? Math.round(14 / Math.max(0.22, zoom)) : 14;
+      const fontSize = zoom < 0.42 ? Math.round(13.5 / Math.max(0.18, zoom)) : 14;
       ctx.font = `bold ${fontSize}px Pretendard, sans-serif`;
       const label = `${s.icon} ${s.name}`;
       const tw = ctx.measureText(label).width + 20;
@@ -529,7 +590,6 @@ class WorldRenderer {
       ctx.fillRect(0, 0, cw, ch);
     }
 
-    // 비 또는 꽃잎/반딧불이 날씨 효과
     if (worldTime.weather === 'rain') {
       ctx.strokeStyle = 'rgba(147, 197, 253, 0.38)';
       ctx.lineWidth = 1.2;
@@ -542,7 +602,6 @@ class WorldRenderer {
       }
       ctx.stroke();
     } else if (darkness > 0.25) {
-      // 밤 시간대 반딧불이 파티클
       ctx.fillStyle = 'rgba(250, 204, 21, 0.55)';
       for (let i = 0; i < 35; i++) {
         const fx = (i * 271 + Math.sin(timeSec + i) * 35) % cw;
@@ -558,39 +617,40 @@ class WorldRenderer {
     const mCtx = this.minimapCtx;
     const mw = this.minimapCanvas.width;
     const mh = this.minimapCanvas.height;
+    const scaleX = mw / this.world.width;
+    const scaleY = mh / this.world.height;
 
     mCtx.clearRect(0, 0, mw, mh);
     mCtx.drawImage(this.minimapBaseCanvas, 0, 0, mw, mh);
 
-    // 엔티티 점 표시
     for (const e of this.entityMgr.entities) {
-      if (filterCategory !== 'all' && e.category !== filterCategory) continue;
-      mCtx.fillStyle = e.faction === 'monster' ? '#ef4444' : (e.role === 'merchant' ? '#facc15' : '#38bdf8');
-      const sz = e.role === 'merchant' ? 3 : 2;
-      mCtx.fillRect(e.x - sz / 2, e.y - sz / 2, sz, sz);
+      if (filterCategory !== 'all' && e.category !== filterCategory && e.role !== 'player') continue;
+      mCtx.fillStyle = e.role === 'player'
+        ? '#ffffff'
+        : (e.faction === 'monster' ? '#ef4444' : (e.category === 'merchant' ? '#facc15' : '#38bdf8'));
+      const sz = e.role === 'player' ? 4 : (e.category === 'merchant' ? 2.5 : 2);
+      mCtx.fillRect(e.x * scaleX - sz / 2, e.y * scaleY - sz / 2, sz, sz);
     }
 
-    // 거점 포인트 표시
     for (const s of this.world.settlements) {
       mCtx.fillStyle = s.faction === 'monster' ? '#dc2626' : '#fde047';
       mCtx.beginPath();
-      mCtx.arc(s.x, s.y, 3.5, 0, Math.PI * 2);
+      mCtx.arc(s.x * scaleX, s.y * scaleY, 3, 0, Math.PI * 2);
       mCtx.fill();
       mCtx.strokeStyle = '#000';
       mCtx.lineWidth = 1;
       mCtx.stroke();
     }
 
-    // 현재 카메라 뷰포트 사각형 표시
     const viewTilesW = (cw / camera.zoom) / TILE_SIZE;
     const viewTilesH = (ch / camera.zoom) / TILE_SIZE;
     mCtx.strokeStyle = '#ffffff';
     mCtx.lineWidth = 1.5;
     mCtx.strokeRect(
-      camera.x - viewTilesW / 2,
-      camera.y - viewTilesH / 2,
-      viewTilesW,
-      viewTilesH
+      (camera.x - viewTilesW / 2) * scaleX,
+      (camera.y - viewTilesH / 2) * scaleY,
+      viewTilesW * scaleX,
+      viewTilesH * scaleY
     );
   }
 }
