@@ -374,84 +374,6 @@ class WorldRenderer {
           tCtx.fillRect(px + (h % 4) + 1, py + ((h >> 2) % 4) + 1, 2, 1);
         }
 
-        // 3. 고해상도 픽셀 자연 식생 & 오브젝트 데코
-        const d = deco[idx];
-        if (d === 1) {
-          // [참나무] 3단계 볼륨 음영 잎사귀 + 발밑 그림자
-          tCtx.fillStyle = 'rgba(15, 23, 42, 0.45)';
-          tCtx.fillRect(px + 2, py + 6, 5, 2);
-          tCtx.fillStyle = '#451a03'; // 나무줄기
-          tCtx.fillRect(px + 3, py + 5, 2, 3);
-          tCtx.fillStyle = '#14532d'; // 심층 암녹색 잎
-          tCtx.fillRect(px + 1, py + 1, 6, 5);
-          tCtx.fillStyle = '#16a34a'; // 에메랄드 중심 잎
-          tCtx.fillRect(px + 2, py, 4, 4);
-          tCtx.fillStyle = '#4ade80'; // 햇빛 받는 하이라이트
-          tCtx.fillRect(px + 2, py, 2, 2);
-        } else if (d === 2) {
-          // [침엽수] 3단 피라미드 솔잎
-          tCtx.fillStyle = 'rgba(15, 23, 42, 0.40)';
-          tCtx.fillRect(px + 2, py + 6, 5, 2);
-          tCtx.fillStyle = '#27190d';
-          tCtx.fillRect(px + 3, py + 6, 2, 2);
-          tCtx.fillStyle = '#064e3b';
-          tCtx.fillRect(px + 1, py + 4, 6, 3);
-          tCtx.fillRect(px + 2, py + 2, 4, 2);
-          tCtx.fillStyle = '#059669';
-          tCtx.fillRect(px + 3, py, 2, 2);
-        } else if (d === 3) {
-          // [야생화 무리]
-          tCtx.fillStyle = (h % 2 === 0) ? '#f43f5e' : '#facc15';
-          tCtx.fillRect(px + 3, py + 3, 2, 2);
-          tCtx.fillStyle = '#ffffff';
-          tCtx.fillRect(px + 4, py + 3, 1, 1);
-        } else if (d === 4) {
-          // [자연 바위]
-          tCtx.fillStyle = '#27272a';
-          tCtx.fillRect(px + 1, py + 4, 6, 3);
-          tCtx.fillStyle = '#71717a';
-          tCtx.fillRect(px + 2, py + 3, 4, 3);
-          tCtx.fillStyle = '#cbd5e1';
-          tCtx.fillRect(px + 2, py + 3, 2, 1);
-        } else if (d === 5) {
-          // [야자수 / 선인장]
-          tCtx.fillStyle = '#78350f';
-          tCtx.fillRect(px + 3, py + 3, 2, 5);
-          tCtx.fillStyle = '#15803d';
-          tCtx.fillRect(px + 1, py + 1, 6, 2);
-          tCtx.fillRect(px + 3, py, 2, 3);
-        } else if (d === 6) {
-          // [요정 벚꽃나무]
-          tCtx.fillStyle = 'rgba(15, 23, 42, 0.40)';
-          tCtx.fillRect(px + 2, py + 6, 5, 2);
-          tCtx.fillStyle = '#3b2512';
-          tCtx.fillRect(px + 3, py + 5, 2, 3);
-          tCtx.fillStyle = '#db2777';
-          tCtx.fillRect(px + 1, py + 1, 6, 5);
-          tCtx.fillStyle = '#f472b6';
-          tCtx.fillRect(px + 2, py, 4, 4);
-          tCtx.fillStyle = '#fbcfe8';
-          tCtx.fillRect(px + 2, py, 2, 2);
-        } else if (d === 7) {
-          // [단풍나무]
-          tCtx.fillStyle = '#451a03';
-          tCtx.fillRect(px + 3, py + 5, 2, 3);
-          tCtx.fillStyle = '#991b1b';
-          tCtx.fillRect(px + 1, py + 1, 6, 5);
-          tCtx.fillStyle = '#ea580c';
-          tCtx.fillRect(px + 2, py, 4, 4);
-          tCtx.fillStyle = '#facc15';
-          tCtx.fillRect(px + 2, py, 2, 1);
-        } else if (d === 8) {
-          // [빛나는 비전 수정]
-          tCtx.fillStyle = '#0284c7';
-          tCtx.fillRect(px + 3, py + 1, 2, 6);
-          tCtx.fillStyle = '#38bdf8';
-          tCtx.fillRect(px + 2, py + 3, 4, 2);
-          tCtx.fillStyle = '#ffffff';
-          tCtx.fillRect(px + 3, py + 2, 1, 2);
-        }
-
         // 미니맵 픽셀
         mCtx.fillStyle = info.miniColor;
         mCtx.fillRect(x, y, 1, 1);
@@ -498,6 +420,11 @@ class WorldRenderer {
 
     if (sw > 0 && sh > 0) {
       ctx.drawImage(this.terrainCanvas, sx, sy, sw, sh, dx, dy, dw, dh);
+    }
+
+    // 1.5. 강/호수 3D 절벽 암벽, 흙길 자갈/잔디 오버행, 코블스톤 광장 디테일 렌더링
+    if (camera.zoom > 0.28) {
+      this.drawEnhancedTerrainFeatures(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
     }
 
     // 2. 동적 해안선 픽셀 파도 거품 애니메이션
@@ -554,6 +481,11 @@ class WorldRenderer {
       ctx.fillRect(mx - 5, my - 5, 10, 10);
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(mx - 3, my - 3, 3, 3);
+    }
+
+    // 5.5. 16/32비트 고품질 픽셀 자연 식생 & 환경 소품 (대형 참나무, 침엽수, 그루터기, 통나무, 울타리, 꽃밭, 모닥불, 유적, 버섯) + 다이렉셔널 드롭 섀도우
+    if (camera.zoom > 0.25) {
+      this.drawDetailedPixelProps(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
     }
 
     // 6. 건물 렌더링 (픽셀 기와, 회전 풍차, 굴뚝 연기, 밤 조명)
@@ -731,6 +663,612 @@ class WorldRenderer {
     this.renderMinimap(camera, cw, ch, filterCategory);
   }
 
+  // 🏔️ [1.5] 강/호수 3D 절벽 암벽, 흙길 자갈/잔디 오버행, 코블스톤 광장 디테일 렌더러 (Images 2, 3, 5)
+  drawEnhancedTerrainFeatures(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec) {
+    const { width, height, tiles } = this.world;
+
+    function pHash(tx, ty) {
+      let h = (tx * 374761393) ^ (ty * 668265263);
+      h = (h ^ (h >>> 13)) * 1274126177;
+      return (h ^ (h >>> 16)) >>> 0;
+    }
+
+    for (let ty = minTy; ty <= maxTy; ty++) {
+      for (let tx = minTx; tx <= maxTx; tx++) {
+        const idx = ty * width + tx;
+        const t = tiles[idx];
+        const px = tx * ts;
+        const py = ty * ts;
+        const h = pHash(tx, ty);
+
+        // A. 물과 접하는 육지의 3D 입체 절벽 암벽 지층 (Cliff Rock Strata - Images 2, 3, 5)
+        const isWater = (t === TILE.WATER || t === TILE.DEEP_WATER);
+        if (!isWater) {
+          const tDown = ty < height - 1 ? tiles[(ty + 1) * width + tx] : t;
+          const tLeft = tx > 0 ? tiles[ty * width + (tx - 1)] : t;
+          const tRight = tx < width - 1 ? tiles[ty * width + (tx + 1)] : t;
+
+          if (tDown === TILE.WATER || tDown === TILE.DEEP_WATER) {
+            // 남쪽 절벽 단면 (3D Rock Strata & Water Foam)
+            // 1. 잔디 오버행 림 (Overhanging grass rim)
+            ctx.fillStyle = (t === TILE.SAND || t === TILE.DESERT) ? '#fde68a' : (t === TILE.SNOW ? '#f1f5f9' : '#4ade80');
+            ctx.fillRect(px, py + ts - 2, ts, 2);
+
+            // 2. 수직 바위 절벽 단면 (Vertical Rock Strata)
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(px, py + ts, ts, 7);
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(px, py + ts + 1, ts, 5);
+
+            // 수직 바위 절리 크랙 (Vertical rock cracks & chiseled grooves)
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(px + 4, py + ts + 1, 2, 5);
+            ctx.fillRect(px + 14, py + ts + 2, 2, 4);
+            ctx.fillRect(px + 23, py + ts + 1, 2, 5);
+
+            // 암석 하이라이트 에지
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(px + 1, py + ts + 1, 3, 1);
+            ctx.fillRect(px + 10, py + ts + 1, 3, 1);
+            ctx.fillRect(px + 19, py + ts + 1, 3, 1);
+
+            // 3. 수면 접점부 깊은 물그림자 & 하얀 포말 거품 물결
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(px, py + ts + 6, ts, 2);
+
+            const foamWave = Math.floor(Math.sin(timeSec * 3 + tx * 0.8) * 1.5);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+            ctx.fillRect(px + 2 + foamWave, py + ts + 7, ts - 4, 1);
+            ctx.fillRect(px + 5 - foamWave, py + ts + 8, ts - 10, 1);
+          }
+
+          if (tLeft === TILE.WATER || tLeft === TILE.DEEP_WATER) {
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(px, py, 2, ts);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+            ctx.fillRect(px + 2, py, 1, ts);
+          }
+          if (tRight === TILE.WATER || tRight === TILE.DEEP_WATER) {
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(px + ts - 2, py, 2, ts);
+          }
+        }
+
+        // B. 유기적인 흙길 & 오솔길 자갈 디테일 (Organic Dirt Paths - Images 1, 3, 4)
+        if (t === TILE.ROAD) {
+          // 길 테두리에 잔디 침범 효과 (Grass Encroaching Tufts)
+          ctx.fillStyle = '#16a34a';
+          if (h % 3 === 0) {
+            ctx.fillRect(px, py, 4, 3);
+            ctx.fillRect(px + 18, py, 5, 2);
+            ctx.fillRect(px + 8, py + ts - 3, 6, 3);
+          } else if (h % 3 === 1) {
+            ctx.fillRect(px + ts - 4, py, 4, 3);
+            ctx.fillRect(px + 4, py + ts - 3, 5, 3);
+            ctx.fillRect(px, py + 12, 3, 6);
+          } else {
+            ctx.fillRect(px + 12, py, 4, 2);
+            ctx.fillRect(px + ts - 3, py + 14, 3, 5);
+          }
+
+          // 흩뿌려진 조약돌 & 자갈 (Pebbles & Stones)
+          ctx.fillStyle = '#78716c';
+          ctx.fillRect(px + (h % 18) + 6, py + ((h >> 3) % 18) + 6, 3, 2);
+          ctx.fillStyle = '#d6d3d1';
+          ctx.fillRect(px + (h % 18) + 6, py + ((h >> 3) % 18) + 6, 1, 1);
+
+          if (h % 2 === 0) {
+            ctx.fillStyle = '#57534e';
+            ctx.fillRect(px + ((h >> 2) % 16) + 8, py + ((h >> 5) % 16) + 8, 2, 2);
+            ctx.fillStyle = '#a8a29e';
+            ctx.fillRect(px + ((h >> 2) % 16) + 8, py + ((h >> 5) % 16) + 8, 1, 1);
+          }
+        }
+
+        // C. 정착지 중앙 광장 성채 석판 바닥 (Cobblestone Plaza - Image 2)
+        if (t === TILE.CASTLE_FLOOR) {
+          ctx.fillStyle = '#334155'; // 줄눈
+          ctx.fillRect(px + 15, py, 2, ts);
+          ctx.fillRect(px, py + 15, ts, 2);
+
+          ctx.fillStyle = '#94a3b8'; // 석판 볼륨
+          ctx.fillRect(px + 2, py + 2, 12, 1);
+          ctx.fillRect(px + 2, py + 2, 1, 12);
+          ctx.fillRect(px + 18, py + 2, 12, 1);
+          ctx.fillRect(px + 18, py + 2, 1, 12);
+          ctx.fillRect(px + 2, py + 18, 12, 1);
+          ctx.fillRect(px + 2, py + 18, 1, 12);
+          ctx.fillRect(px + 18, py + 18, 12, 1);
+          ctx.fillRect(px + 18, py + 18, 1, 12);
+        }
+
+        // D. 목조 다리 디테일 (Wooden Bridge with Planks & Posts - Images 2, 3, 5)
+        if (t === TILE.BRIDGE) {
+          const isHoriz = (tiles[ty * width + Math.max(0, tx - 1)] === TILE.ROAD || tiles[ty * width + Math.min(width - 1, tx + 1)] === TILE.ROAD);
+          if (isHoriz) {
+            ctx.fillStyle = '#27190d';
+            ctx.fillRect(px, py, ts, 4);
+            ctx.fillRect(px, py + ts - 4, ts, 4);
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(px, py + 1, ts, 2);
+            ctx.fillRect(px, py + ts - 3, ts, 2);
+
+            ctx.fillStyle = '#451a03';
+            ctx.fillRect(px + 2, py - 2, 4, 7);
+            ctx.fillRect(px + ts - 6, py - 2, 4, 7);
+            ctx.fillRect(px + 2, py + ts - 5, 4, 7);
+            ctx.fillRect(px + ts - 6, py + ts - 5, 4, 7);
+          } else {
+            ctx.fillStyle = '#27190d';
+            ctx.fillRect(px, py, 4, ts);
+            ctx.fillRect(px + ts - 4, py, 4, ts);
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(px + 1, py, 2, ts);
+            ctx.fillRect(px + ts - 3, py, 2, ts);
+
+            ctx.fillStyle = '#451a03';
+            ctx.fillRect(px - 2, py + 2, 7, 4);
+            ctx.fillRect(px - 2, py + ts - 6, 7, 4);
+            ctx.fillRect(px + ts - 5, py + 2, 7, 4);
+            ctx.fillRect(px + ts - 5, py + ts - 6, 7, 4);
+          }
+        }
+      }
+    }
+  }
+
+  // 🌲 [5.5] 16/32비트 고품질 픽셀 자연 식생 & 환경 소품 렌더러 (Images 1, 2, 3, 4, 5)
+  drawDetailedPixelProps(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec) {
+    const { width, deco } = this.world;
+
+    for (let ty = minTy; ty <= maxTy; ty++) {
+      for (let tx = minTx; tx <= maxTx; tx++) {
+        const idx = ty * width + tx;
+        const d = deco[idx];
+        if (!d) continue;
+
+        const px = tx * ts;
+        const py = ty * ts;
+
+        // 1. 공통 다이렉셔널 드롭 섀도우 (Directional Drop Shadow - Image 4)
+        if (d === 1 || d === 2 || d === 6 || d === 7 || d === 8) {
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.40)';
+          ctx.beginPath();
+          ctx.ellipse(px + ts / 2 + 7, py + ts / 2 + 8, 15, 8, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (d === 4 || d === 9 || d === 10 || d === 12 || d === 13) {
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+          ctx.beginPath();
+          ctx.ellipse(px + ts / 2 + 4, py + ts / 2 + 5, 10, 5, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // 2. 오브젝트별 정밀 픽셀아트 스프라이트
+        switch (d) {
+          case 1: {
+            // 🌳 [대형 고대 참나무] (Grand Oak - Images 1, 3, 4)
+            const cx = px + ts / 2;
+            const cy = py + ts - 4;
+            const sway = Math.round(Math.sin(timeSec * 2.0 + tx * 0.5) * 1.5);
+
+            // 뿌리 & 줄기
+            ctx.fillStyle = '#27190d';
+            ctx.fillRect(cx - 7, cy - 2, 14, 4);
+            ctx.fillStyle = '#451a03';
+            ctx.fillRect(cx - 5, cy - 14, 10, 14);
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(cx - 3, cy - 12, 3, 10);
+            ctx.fillRect(cx + 2, cy - 10, 2, 8);
+            ctx.fillStyle = '#4d7c0f';
+            ctx.fillRect(cx - 5, cy - 4, 3, 3);
+
+            // 잎사귀 볼륨 (3구 구형 클러스터)
+            const leafY = cy - 22;
+            const drawLeafCluster = (lx, ly, rad) => {
+              ctx.fillStyle = '#14532d';
+              ctx.beginPath();
+              ctx.arc(lx + sway, ly, rad, 0, Math.PI * 2);
+              ctx.fill();
+
+              ctx.fillStyle = '#16a34a';
+              ctx.beginPath();
+              ctx.arc(lx + sway, ly - 2, rad - 2, 0, Math.PI * 2);
+              ctx.fill();
+
+              ctx.fillStyle = '#22c55e';
+              ctx.beginPath();
+              ctx.arc(lx + sway - 1, ly - 4, rad - 4, 0, Math.PI * 2);
+              ctx.fill();
+
+              ctx.fillStyle = '#86efac';
+              ctx.beginPath();
+              ctx.arc(lx + sway - 2, ly - 6, Math.max(2, rad - 6), 0, Math.PI * 2);
+              ctx.fill();
+            };
+
+            drawLeafCluster(cx - 9, leafY + 3, 11);
+            drawLeafCluster(cx + 9, leafY + 3, 11);
+            drawLeafCluster(cx, leafY - 6, 13);
+
+            ctx.fillStyle = '#451a03';
+            ctx.fillRect(cx - 2, leafY + 4, 4, 6);
+            break;
+          }
+
+          case 2: {
+            // 🌲 [고산 침엽수] (Pine / Conifer - Images 2, 5)
+            const cx = px + ts / 2;
+            const cy = py + ts - 3;
+            ctx.fillStyle = '#27190d';
+            ctx.fillRect(cx - 3, cy - 8, 6, 8);
+
+            const drawPineSkirt = (sy, w, h) => {
+              ctx.fillStyle = '#064e3b';
+              ctx.beginPath();
+              ctx.moveTo(cx, sy - h);
+              ctx.lineTo(cx - w, sy);
+              ctx.lineTo(cx + w, sy);
+              ctx.closePath();
+              ctx.fill();
+
+              ctx.fillStyle = '#059669';
+              ctx.beginPath();
+              ctx.moveTo(cx, sy - h);
+              ctx.lineTo(cx - w + 3, sy - 1);
+              ctx.lineTo(cx + w - 3, sy - 1);
+              ctx.closePath();
+              ctx.fill();
+
+              ctx.fillStyle = '#34d399';
+              ctx.fillRect(cx - 1, sy - h, 2, 2);
+              ctx.fillRect(cx - w + 2, sy - 2, 2, 2);
+              ctx.fillRect(cx + w - 4, sy - 2, 2, 2);
+            };
+
+            drawPineSkirt(cy - 6, 14, 10);
+            drawPineSkirt(cy - 13, 11, 9);
+            drawPineSkirt(cy - 20, 8, 8);
+            break;
+          }
+
+          case 3: {
+            // 🌸 [야생화 무리] (Wildflower Patches - Images 1, 3, 5)
+            const flowers = [
+              { ox: 6, oy: 8, col: '#facc15', cCol: '#ffffff' },
+              { ox: 14, oy: 5, col: '#ffffff', cCol: '#facc15' },
+              { ox: 22, oy: 9, col: '#f472b6', cCol: '#fef08a' },
+              { ox: 9, oy: 18, col: '#f43f5e', cCol: '#ffffff' },
+              { ox: 18, oy: 19, col: '#facc15', cCol: '#ffffff' },
+              { ox: 25, oy: 16, col: '#ffffff', cCol: '#facc15' }
+            ];
+            for (const f of flowers) {
+              ctx.fillStyle = '#16a34a';
+              ctx.fillRect(px + f.ox, py + f.oy + 2, 1, 3);
+              ctx.fillStyle = f.col;
+              ctx.fillRect(px + f.ox - 1, py + f.oy - 1, 3, 3);
+              ctx.fillStyle = f.cCol;
+              ctx.fillRect(px + f.ox, py + f.oy, 1, 1);
+            }
+            break;
+          }
+
+          case 4: {
+            // 🪨 [자연 화강암 바위] (Granite Boulder - Images 1, 3, 4)
+            const bx = px + 4;
+            const by = py + 7;
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(bx, by + 2, 24, 16);
+            ctx.fillRect(bx + 2, by, 20, 20);
+
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(bx + 2, by + 4, 20, 14);
+
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(bx + 4, by + 2, 14, 12);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(bx + 6, by + 2, 10, 6);
+
+            ctx.fillStyle = '#f1f5f9';
+            ctx.fillRect(bx + 7, by + 2, 5, 2);
+
+            ctx.fillStyle = '#65a30d';
+            ctx.fillRect(bx + 4, by + 12, 6, 3);
+            ctx.fillRect(bx + 14, by + 13, 5, 2);
+            break;
+          }
+
+          case 5: {
+            // 🌴 [야자수 / 선인장]
+            const cx = px + ts / 2;
+            const cy = py + ts - 2;
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(cx - 2, cy - 20, 4, 20);
+            ctx.fillStyle = '#a16207';
+            ctx.fillRect(cx - 2, cy - 16, 4, 2);
+            ctx.fillRect(cx - 2, cy - 8, 4, 2);
+
+            ctx.fillStyle = '#15803d';
+            ctx.fillRect(cx - 14, cy - 22, 12, 4);
+            ctx.fillRect(cx + 2, cy - 22, 12, 4);
+            ctx.fillRect(cx - 10, cy - 26, 20, 4);
+            ctx.fillStyle = '#4ade80';
+            ctx.fillRect(cx - 8, cy - 24, 16, 2);
+            break;
+          }
+
+          case 6: {
+            // 🌸 [요정 벚꽃 신목] (Sacred Elven Cherry)
+            const cx = px + ts / 2;
+            const cy = py + ts - 4;
+            ctx.fillStyle = '#451a03';
+            ctx.fillRect(cx - 4, cy - 14, 8, 14);
+
+            ctx.fillStyle = '#db2777';
+            ctx.beginPath();
+            ctx.arc(cx, cy - 20, 13, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#f472b6';
+            ctx.beginPath();
+            ctx.arc(cx - 1, cy - 22, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fbcfe8';
+            ctx.beginPath();
+            ctx.arc(cx - 2, cy - 24, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            const petalX = cx + Math.sin(timeSec * 3 + tx) * 8;
+            const petalY = cy - 10 + (timeSec * 15 + ty * 3) % 18;
+            ctx.fillStyle = '#fbcfe8';
+            ctx.fillRect(petalX, petalY, 2, 2);
+            break;
+          }
+
+          case 7: {
+            // 🍁 [단풍나무] (Autumn Maple)
+            const cx = px + ts / 2;
+            const cy = py + ts - 4;
+            ctx.fillStyle = '#451a03';
+            ctx.fillRect(cx - 4, cy - 14, 8, 14);
+
+            ctx.fillStyle = '#991b1b';
+            ctx.beginPath();
+            ctx.arc(cx, cy - 20, 13, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ea580c';
+            ctx.beginPath();
+            ctx.arc(cx - 1, cy - 22, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.arc(cx - 2, cy - 24, 6, 0, Math.PI * 2);
+            ctx.fill();
+            break;
+          }
+
+          case 8: {
+            // 💎 [비전 마력 수정 첨탑] (Arcane Crystal Spire)
+            const cx = px + ts / 2;
+            const cy = py + ts - 3;
+            ctx.fillStyle = '#3b0764';
+            ctx.fillRect(cx - 5, cy - 18, 10, 18);
+            ctx.fillStyle = '#7e22ce';
+            ctx.fillRect(cx - 3, cy - 16, 6, 16);
+            ctx.fillStyle = '#c084fc';
+            ctx.fillRect(cx - 1, cy - 14, 3, 14);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(cx, cy - 12, 1, 8);
+            break;
+          }
+
+          case 9: {
+            // 🪵 [이끼 낀 나이테 그루터기] (Tree Stump - Images 1, 3, 5)
+            const cx = px + ts / 2;
+            const cy = py + ts / 2 + 2;
+
+            ctx.fillStyle = '#27190d';
+            ctx.fillRect(cx - 9, cy + 4, 18, 5);
+            ctx.fillStyle = '#451a03';
+            ctx.fillRect(cx - 7, cy - 2, 14, 8);
+
+            ctx.fillStyle = '#78350f';
+            ctx.beginPath();
+            ctx.ellipse(cx, cy - 2, 7, 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#b45309';
+            ctx.beginPath();
+            ctx.ellipse(cx, cy - 2, 5, 3, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#fef3c7';
+            ctx.beginPath();
+            ctx.ellipse(cx, cy - 2, 2, 1.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#27190d';
+            ctx.fillRect(cx, cy - 3, 3, 1);
+            ctx.fillStyle = '#65a30d';
+            ctx.fillRect(cx - 6, cy + 2, 3, 3);
+            ctx.fillRect(cx + 4, cy + 3, 2, 2);
+            break;
+          }
+
+          case 10: {
+            // 🪵 [쓰러진 고목 / 통나무] (Fallen Timber Log - Images 3, 5)
+            const lx = px + 4;
+            const ly = py + 12;
+
+            ctx.fillStyle = '#27190d';
+            ctx.fillRect(lx, ly, 24, 9);
+            ctx.fillStyle = '#451a03';
+            ctx.fillRect(lx + 1, ly + 1, 22, 7);
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(lx + 3, ly + 2, 18, 3);
+
+            ctx.fillStyle = '#b45309';
+            ctx.beginPath();
+            ctx.ellipse(lx + 2, ly + 4, 2.5, 3.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#1e1b4b';
+            ctx.fillRect(lx + 1, ly + 3, 2, 2);
+
+            ctx.fillStyle = '#65a30d';
+            ctx.fillRect(lx + 8, ly - 1, 5, 2);
+            ctx.fillStyle = '#ea580c';
+            ctx.fillRect(lx + 15, ly - 2, 4, 2);
+            break;
+          }
+
+          case 11: {
+            // 🪜 [목조 울타리] (Wooden Fence - Images 1, 2)
+            const cx = px + ts / 2;
+            const cy = py + ts / 2;
+
+            ctx.fillStyle = '#451a03';
+            ctx.fillRect(px, cy - 3, ts, 3);
+            ctx.fillRect(px, cy + 3, ts, 3);
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(px, cy - 2, ts, 1);
+            ctx.fillRect(px, cy + 4, ts, 1);
+
+            ctx.fillStyle = '#27190d';
+            ctx.fillRect(cx - 4, cy - 8, 8, 16);
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(cx - 3, cy - 7, 6, 14);
+            ctx.fillStyle = '#b45309';
+            ctx.fillRect(cx - 2, cy - 6, 2, 12);
+            break;
+          }
+
+          case 12: {
+            // 🔥 [자연 모닥불 & 화로] (Campfire with embers - Images 1, 2)
+            const cx = px + ts / 2;
+            const cy = py + ts / 2 + 2;
+
+            const stones = [
+              { ox: -8, oy: 0 }, { ox: -6, oy: -5 }, { ox: 0, oy: -7 },
+              { ox: 6, oy: -5 }, { ox: 8, oy: 0 }, { ox: 6, oy: 5 },
+              { ox: 0, oy: 7 }, { ox: -6, oy: 5 }
+            ];
+            for (const s of stones) {
+              ctx.fillStyle = '#334155';
+              ctx.fillRect(cx + s.ox - 2, cy + s.oy - 2, 4, 4);
+              ctx.fillStyle = '#94a3b8';
+              ctx.fillRect(cx + s.ox - 1, cy + s.oy - 1, 2, 2);
+            }
+
+            ctx.fillStyle = '#1c1917';
+            ctx.fillRect(cx - 4, cy - 3, 8, 6);
+            ctx.fillStyle = '#ea580c';
+            ctx.fillRect(cx - 3, cy - 2, 6, 4);
+
+            const flicker = Math.sin(timeSec * 8 + tx) * 2;
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.moveTo(cx - 4, cy + 1);
+            ctx.lineTo(cx, cy - 8 + flicker);
+            ctx.lineTo(cx + 4, cy + 1);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#fde047';
+            ctx.beginPath();
+            ctx.moveTo(cx - 2, cy);
+            ctx.lineTo(cx, cy - 5 + flicker);
+            ctx.lineTo(cx + 2, cy);
+            ctx.closePath();
+            ctx.fill();
+
+            const sparkY = cy - 9 - ((timeSec * 20 + tx) % 12);
+            ctx.fillStyle = '#fef08a';
+            ctx.fillRect(cx + flicker, sparkY, 1.5, 1.5);
+            break;
+          }
+
+          case 13: {
+            // 🏛️ [고대 룬 유적 기둥] (Ancient Rune Pillars - Images 1, 2)
+            const cx = px + ts / 2;
+            const cy = py + ts - 4;
+
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(cx - 8, cy - 2, 16, 5);
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(cx - 7, cy - 1, 14, 3);
+
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(cx - 5, cy - 22, 10, 20);
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(cx - 4, cy - 21, 8, 19);
+
+            const pulse = 0.5 + Math.sin(timeSec * 3 + tx) * 0.4;
+            ctx.fillStyle = `rgba(56, 189, 248, ${pulse})`;
+            ctx.fillRect(cx - 2, cy - 18, 4, 2);
+            ctx.fillRect(cx - 1, cy - 14, 2, 4);
+            ctx.fillRect(cx - 2, cy - 8, 4, 2);
+
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(cx - 5, cy - 22, 3, 2);
+            break;
+          }
+
+          case 14: {
+            // 🪷 [수련 & 연꽃] (Water Lilies - Images 3, 5)
+            const cx = px + ts / 2;
+            const cy = py + ts / 2;
+            const bob = Math.sin(timeSec * 2.5 + tx) * 1.5;
+
+            ctx.fillStyle = '#15803d';
+            ctx.beginPath();
+            ctx.arc(cx, cy + bob, 7, 0.3, Math.PI * 1.8);
+            ctx.lineTo(cx, cy + bob);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#22c55e';
+            ctx.beginPath();
+            ctx.arc(cx - 1, cy - 1 + bob, 5, 0.3, Math.PI * 1.8);
+            ctx.lineTo(cx - 1, cy - 1 + bob);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#f472b6';
+            ctx.fillRect(cx - 2, cy - 4 + bob, 4, 4);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(cx - 1, cy - 3 + bob, 2, 2);
+            ctx.fillStyle = '#facc15';
+            ctx.fillRect(cx, cy - 2 + bob, 1, 1);
+            break;
+          }
+
+          case 15: {
+            // 🍄 [숲속 야생 버섯 군락] (Forest Mushrooms - Images 1, 4)
+            const mush = [
+              { ox: 8, oy: 14, r: 4, col: '#ef4444' },
+              { ox: 16, oy: 10, r: 3, col: '#b45309' },
+              { ox: 22, oy: 16, r: 3, col: '#ef4444' }
+            ];
+            for (const m of mush) {
+              ctx.fillStyle = '#f1f5f9';
+              ctx.fillRect(px + m.ox - 1, py + m.oy, 2, 5);
+              ctx.fillStyle = m.col;
+              ctx.beginPath();
+              ctx.arc(px + m.ox, py + m.oy, m.r, Math.PI, 0);
+              ctx.closePath();
+              ctx.fill();
+              if (m.col === '#ef4444') {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(px + m.ox - 1, py + m.oy - 2, 1, 1);
+                ctx.fillRect(px + m.ox + 1, py + m.oy - 1, 1, 1);
+              }
+            }
+            break;
+          }
+        }
+      }
+    }
+  }
+
   // 픽셀 해안선 파도 거품 애니메이션
   drawPixelShorelines(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec) {
     const wave = Math.floor((Math.sin(timeSec * 2.8) + 1) * 2); // 0, 1, 2, 3 정수 픽셀 스텝
@@ -866,20 +1404,44 @@ class WorldRenderer {
       ctx.fillRect(px - 1, py - bh / 2 - 28, 2, 8);
       ctx.fillRect(px - 4, py - bh / 2 - 25, 8, 2);
     } else if (b.type === 'magic_spire' || b.type === 'guild') {
-      // [아케인 학탑] 나선형 룬 마법탑 + 공중 부유 비전 수정구
-      ctx.fillStyle = '#3b0764';
+      // [아케인 마법탑 / 비전 관문] 고대 룬 석조 아치 + 회전하는 마력 소용돌이 포털 & 공중 부유 수정
+      ctx.fillStyle = '#1e1b4b';
       ctx.fillRect(px - bw / 3, py - bh / 2, (bw * 2) / 3, bh);
-      ctx.fillStyle = '#7e22ce';
+      ctx.fillStyle = '#4338ca';
       ctx.fillRect(px - bw / 3 + 2, py - bh / 2 + 2, (bw * 2) / 3 - 4, bh - 4);
 
-      // 공중 부유 아케인 수정구
-      const orbY = py - bh / 2 - 16 + Math.round(Math.sin(timeSec * 3 + b.x) * 4);
-      ctx.fillStyle = '#c084fc';
+      // 석조 룬 기둥 아치문
+      ctx.fillStyle = '#312e81';
+      ctx.fillRect(px - 10, py + bh / 2 - 16, 20, 16);
+      // 회전하는 비전 차원문 (Arcane Portal Vortex)
+      const pR = 7;
+      ctx.save();
       ctx.beginPath();
-      ctx.arc(px, orbY, 6, 0, Math.PI * 2);
+      ctx.arc(px, py + bh / 2 - 8, pR, 0, Math.PI * 2);
+      ctx.fillStyle = '#6366f1';
       ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(px - 1, orbY - 2, 2, 2);
+      // 포털 내부 회전 룬 소용돌이
+      for (let r = 0; r < 4; r++) {
+        const rAng = timeSec * 4 + (r * Math.PI / 2);
+        const rx = px + Math.cos(rAng) * 4;
+        const ry = (py + bh / 2 - 8) + Math.sin(rAng) * 3;
+        ctx.fillStyle = r % 2 === 0 ? '#38bdf8' : '#e0e7ff';
+        ctx.fillRect(rx - 1, ry - 1, 2, 2);
+      }
+      ctx.restore();
+
+      // 공중 부유 아케인 수정구 (Levitating Crystal Spire)
+      const orbY = py - bh / 2 - 16 + Math.round(Math.sin(timeSec * 3 + b.x) * 4);
+      ctx.fillStyle = '#a855f7';
+      ctx.beginPath();
+      ctx.moveTo(px, orbY - 8);
+      ctx.lineTo(px + 6, orbY);
+      ctx.lineTo(px, orbY + 8);
+      ctx.lineTo(px - 6, orbY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#f3e8ff';
+      ctx.fillRect(px - 2, orbY - 3, 4, 6);
 
       // 궤도 회전 마법 파편
       const orbAng = timeSec * 4;
@@ -888,17 +1450,19 @@ class WorldRenderer {
       ctx.fillStyle = '#38bdf8';
       ctx.fillRect(ox - 1, oy - 1, 3, 3);
     } else if (b.type === 'forge') {
-      // [대장간] 석조 벽체 + 타오르는 화로 + 연기 굴뚝 + 야외 모루
+      // [대장간] 석조 벽체 + 타오르는 화로 + 연기 굴뚝 + 야외 모루 & 땔감
       ctx.fillStyle = '#78350f';
       ctx.fillRect(px - bw / 2, py - bh / 2, bw, bh);
       ctx.fillStyle = '#451a03';
       ctx.fillRect(px - bw / 2 - 3, py - bh / 2 - 10, bw + 6, 10);
 
-      // 타오르는 화로
+      // 타오르는 화로 (Furnace Hearth)
+      ctx.fillStyle = '#1c1917';
+      ctx.fillRect(px - 7, py + bh / 4 - 5, 14, 10);
       ctx.fillStyle = '#ef4444';
-      ctx.fillRect(px - 6, py + bh / 4 - 4, 12, 8);
+      ctx.fillRect(px - 5, py + bh / 4 - 3, 10, 7);
       ctx.fillStyle = '#fde047';
-      ctx.fillRect(px - 3, py + bh / 4 - 2, 6, 4);
+      ctx.fillRect(px - 3, py + bh / 4 - 1, 6, 4);
 
       // 굴뚝 연기 & 불씨 파티클
       const chX = px + Math.round(bw / 3);
@@ -913,11 +1477,139 @@ class WorldRenderer {
         ctx.fillStyle = `rgba(226, 232, 240, ${Math.max(0, 0.45 * (1 - sProg))})`;
         ctx.fillRect(sx - sr / 2, sy - sr / 2, sr, sr);
       }
-      // 야외 강철 모루
+      // 야외 강철 모루 + 달궈진 철괴
       ctx.fillStyle = '#0f172a';
       ctx.fillRect(px + bw / 2 + 2, py + bh / 4, 7, 5);
       ctx.fillStyle = '#94a3b8';
       ctx.fillRect(px + bw / 2 + 1, py + bh / 4 - 2, 9, 3);
+      ctx.fillStyle = '#f97316';
+      ctx.fillRect(px + bw / 2 + 3, py + bh / 4 - 3, 4, 2);
+
+      // 쌓여있는 장작더미 (Firewood Stack)
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(px - bw / 2 - 8, py + bh / 4, 6, 3);
+      ctx.fillRect(px - bw / 2 - 7, py + bh / 4 - 3, 5, 3);
+    } else if (b.type === 'barracks') {
+      // [요새 / 관문 / 병영] 석조 블록 벽돌, 배틀먼트 총안, 철제 쇠창살 성문, 횃불
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(px - bw / 2, py - bh / 2, bw, bh);
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(px - bw / 2 + 2, py - bh / 2 + 2, bw - 4, bh - 4);
+
+      // 성벽 벽돌 줄눈
+      ctx.fillStyle = '#1e293b';
+      for (let row = py - bh / 2 + 4; row < py + bh / 2 - 4; row += 6) {
+        ctx.fillRect(px - bw / 2 + 2, row, bw - 4, 1);
+      }
+
+      // 성벽 상단 배틀먼트 (Crenellations)
+      for (let bx = px - bw / 2; bx <= px + bw / 2 - 5; bx += 7) {
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(bx, py - bh / 2 - 5, 5, 5);
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(bx + 1, py - bh / 2 - 3, 3, 3);
+      }
+
+      // 철제 격자 성문 (Iron Portcullis Gate)
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - 7, py + bh / 2 - 13, 14, 13);
+      ctx.fillStyle = '#64748b';
+      for (let bar = px - 5; bar <= px + 5; bar += 3) {
+        ctx.fillRect(bar, py + bh / 2 - 12, 1, 12);
+      }
+      ctx.fillRect(px - 6, py + bh / 2 - 8, 12, 2);
+
+      // 관문 양옆 벽걸이 횃불
+      const fl1 = Math.round(Math.sin(timeSec * 8 + b.x) * 1.5);
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(px - 10, py + bh / 2 - 10, 2, 5);
+      ctx.fillRect(px + 8, py + bh / 2 - 10, 2, 5);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(px - 10, py + bh / 2 - 12 + fl1, 3, 3);
+      ctx.fillRect(px + 8, py + bh / 2 - 12 - fl1, 3, 3);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(px - 9, py + bh / 2 - 11 + fl1, 2, 2);
+      ctx.fillRect(px + 9, py + bh / 2 - 11 - fl1, 2, 2);
+    } else if (b.type === 'lair') {
+      // [마왕성 / 네크로폴리스 영묘 / 고대 제단] 흑요석 균열 석조, 악마 뿔 첨탑, 붉은 영혼의 화로
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - bw / 2, py - bh / 2, bw, bh);
+      ctx.fillStyle = '#1e1b4b';
+      ctx.fillRect(px - bw / 2 + 2, py - bh / 2 + 2, bw - 4, bh - 4);
+
+      // 벽돌 균열 마법 발광
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(px - 4, py - 6, 2, 8);
+      ctx.fillRect(px - 2, py + 2, 6, 1);
+      ctx.fillRect(px + 4, py - 2, 2, 6);
+
+      // 뾰족한 흑요석 가시 뿔 (Spiked Demon Spires)
+      ctx.fillStyle = '#020617';
+      ctx.beginPath();
+      ctx.moveTo(px - bw / 2, py - bh / 2);
+      ctx.lineTo(px - bw / 2 - 3, py - bh / 2 - 14);
+      ctx.lineTo(px - bw / 2 + 6, py - bh / 2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(px + bw / 2 - 6, py - bh / 2);
+      ctx.lineTo(px + bw / 2 + 3, py - bh / 2 - 14);
+      ctx.lineTo(px + bw / 2, py - bh / 2);
+      ctx.closePath();
+      ctx.fill();
+
+      // 중앙 심연의 악마 눈 / 영혼의 불꽃 (Soul Eye Portal)
+      const eyeGlow = 0.6 + Math.sin(timeSec * 4) * 0.35;
+      ctx.fillStyle = `rgba(168, 85, 247, ${eyeGlow})`;
+      ctx.beginPath();
+      ctx.arc(px, py - bh / 6, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(px - 1, py - bh / 6 - 3, 2, 6);
+    } else if (b.type === 'shipyard') {
+      if (b.name.includes('등대') || b.id === 'lb_tower') {
+        // [외로운 회전 등대] 줄무늬 원통형 탑 + 회전 탐조등 광원
+        ctx.fillStyle = '#991b1b';
+        ctx.fillRect(px - 6, py - bh / 2, 12, bh);
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(px - 5, py - bh / 2 + 4, 10, 5);
+        ctx.fillRect(px - 5, py - bh / 2 + 14, 10, 5);
+
+        // 등대 유리 랜턴 돔
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(px - 8, py - bh / 2 - 7, 16, 7);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(px - 6, py - bh / 2 - 6, 12, 5);
+
+        // 회전 광선 (Rotating Beacon Light Beam)
+        ctx.save();
+        const beamAng = timeSec * 2.2;
+        ctx.translate(px, py - bh / 2 - 3);
+        ctx.rotate(beamAng);
+        ctx.fillStyle = 'rgba(254, 240, 138, 0.35)';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(40, -14);
+        ctx.lineTo(40, 14);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      } else {
+        // [조선소 / 난파선 잔해] 목조 골조 & 크레인 도르래 & 선박 용골
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(px - bw / 2, py - bh / 2, bw, bh);
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(px - bw / 2 + 2, py - bh / 2 + 2, bw - 4, bh - 4);
+
+        // 크레인 및 도르래 밧줄
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(px + bw / 2 - 4, py - bh / 2 - 12, 3, 14);
+        ctx.fillRect(px + bw / 2 - 10, py - bh / 2 - 12, 8, 2);
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(px + bw / 2 - 10, py - bh / 2 - 10, 1, 8);
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(px + bw / 2 - 12, py - bh / 2 - 2, 5, 5); // 매달린 화물
+      }
     } else if (b.type === 'windmill') {
       // [풍차] 원형 석조 베이스 + 회전 4날 캔버스 날개
       ctx.fillStyle = '#cbd5e1';
@@ -966,18 +1658,39 @@ class WorldRenderer {
       ctx.fillStyle = '#fef08a';
       ctx.fillRect(px + bw / 2 + 3, py - 5, 3, 4);
     } else if (b.type === 'market') {
-      // [시장/바자르] 줄무늬 차양막 + 과일/곡물 상자
+      // [시장 / 바자르 가판대] 줄무늬 차양막 + 물결 밑단 + 상품 상자 & 나무통
       ctx.fillStyle = '#fed7aa';
       ctx.fillRect(px - bw / 2, py - bh / 2, bw, bh);
-      const awW = bw + 6;
+      const awW = bw + 8;
+      // 교차 빨강/하양 줄무늬 차양
       for (let ax = 0; ax < awW; ax += 6) {
-        ctx.fillStyle = (ax / 6) % 2 === 0 ? '#ef4444' : '#ffffff';
-        ctx.fillRect(px - awW / 2 + ax, py - bh / 2 - 6, 6, 8);
+        ctx.fillStyle = (ax / 6) % 2 === 0 ? '#ef4444' : '#f8fafc';
+        ctx.fillRect(px - awW / 2 + ax, py - bh / 2 - 7, 6, 9);
+        // 물결 스캘럽 처마
+        ctx.fillRect(px - awW / 2 + ax + 1, py - bh / 2 + 2, 4, 2);
       }
+      // 목재 가판 테이블
+      ctx.fillStyle = '#92400e';
+      ctx.fillRect(px - bw / 2 - 2, py + bh / 4 - 2, bw + 4, 3);
+
+      // 과일 상자 (사과)
       ctx.fillStyle = '#78350f';
-      ctx.fillRect(px - bw / 3, py + bh / 4, 8, 5);
+      ctx.fillRect(px - bw / 3 - 3, py + bh / 4 + 1, 8, 6);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(px - bw / 3 - 2, py + bh / 4, 6, 3);
+
+      // 곡물/채소 상자
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(px + 2, py + bh / 4 + 1, 8, 6);
       ctx.fillStyle = '#eab308';
-      ctx.fillRect(px - bw / 3 + 1, py + bh / 4 - 2, 6, 2);
+      ctx.fillRect(px + 3, py + bh / 4, 6, 3);
+
+      // 옆에 놓인 오크통 (Wine/Ale Barrel)
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(px + bw / 2 + 2, py + bh / 4 - 1, 7, 9);
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(px + bw / 2 + 2, py + bh / 4 + 1, 7, 1);
+      ctx.fillRect(px + bw / 2 + 2, py + bh / 4 + 6, 7, 1);
     } else {
       // 기본 정밀 가옥
       ctx.fillStyle = b.color || '#cbd5e1';

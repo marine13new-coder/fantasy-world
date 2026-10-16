@@ -287,15 +287,37 @@ function generateWorld() {
 
       tiles[idx(x, y)] = t;
 
-      // 자연 장식물 배치
-      if (t === TILE.FOREST && d > 0.36) deco[idx(x, y)] = 1;
-      else if (t === TILE.DARK_FOREST && d > 0.33) deco[idx(x, y)] = 2;
-      else if (t === TILE.MEADOW && d > 0.68) deco[idx(x, y)] = 3;
-      else if ((t === TILE.HILLS || t === TILE.BADLANDS || t === TILE.TUNDRA || t === TILE.OBSIDIAN) && d > 0.68) deco[idx(x, y)] = 4;
-      else if ((t === TILE.DESERT || t === TILE.SAND) && d > 0.75) deco[idx(x, y)] = 5;
-      else if (t === TILE.ELVEN_FOREST && d > 0.34) deco[idx(x, y)] = 6;
-      else if (t === TILE.AUTUMN_WOOD && d > 0.35) deco[idx(x, y)] = 7;
-      else if ((t === TILE.SNOW || t === TILE.CRYSTAL_CAVE) && d > 0.70) deco[idx(x, y)] = 8;
+      // 자연 장식물 정밀 배치 (1:참나무, 2:침엽수, 3:야생화, 4:바위, 5:야자/선인장, 6:요정수, 7:단풍, 8:수정, 9:그루터기, 10:통나무, 11:울타리, 12:모닥불, 13:룬유적, 14:수련, 15:버섯)
+      if (t === TILE.FOREST) {
+        if (d > 0.40) deco[idx(x, y)] = 1; // 대형 참나무
+        else if (d > 0.36) deco[idx(x, y)] = 9; // 이끼 낀 그루터기
+        else if (d > 0.33) deco[idx(x, y)] = 15; // 야생 버섯 군락
+        else if (d > 0.30) deco[idx(x, y)] = 10; // 쓰러진 통나무
+      } else if (t === TILE.DARK_FOREST) {
+        if (d > 0.36) deco[idx(x, y)] = 2; // 침엽수림
+        else if (d > 0.32) deco[idx(x, y)] = 10; // 고목 통나무
+      } else if (t === TILE.MEADOW || t === TILE.GRASS) {
+        if (d > 0.72) deco[idx(x, y)] = 3; // 형형색색 야생화 군락
+        else if (d > 0.67) deco[idx(x, y)] = 1; // 단독 풍성한 참나무
+        else if (d > 0.64) deco[idx(x, y)] = 4; // 자연 입체 바위
+        else if (d > 0.61) deco[idx(x, y)] = 9; // 나이테 그루터기
+        else if (d > 0.58) deco[idx(x, y)] = 15; // 들판 버섯
+      } else if (t === TILE.FARMLAND) {
+        if (d > 0.70) deco[idx(x, y)] = 11; // 목조 울타리
+      } else if (t === TILE.HILLS || t === TILE.BADLANDS || t === TILE.TUNDRA || t === TILE.OBSIDIAN) {
+        if (d > 0.60) deco[idx(x, y)] = 4; // 거대 화강암 바위
+        else if (d > 0.56) deco[idx(x, y)] = 13; // 고대 룬 유적 기둥
+      } else if (t === TILE.DESERT || t === TILE.SAND) {
+        if (d > 0.74) deco[idx(x, y)] = 5; // 오아시스 야자수 & 선인장
+      } else if (t === TILE.ELVEN_FOREST) {
+        if (d > 0.38) deco[idx(x, y)] = 6; // 요정 벚꽃나무
+        else if (d > 0.33) deco[idx(x, y)] = 13; // 발광 엘프 룬 성소
+      } else if (t === TILE.AUTUMN_WOOD) {
+        if (d > 0.38) deco[idx(x, y)] = 7; // 붉은 단풍나무
+        else if (d > 0.33) deco[idx(x, y)] = 10; // 단풍 낙엽 통나무
+      } else if (t === TILE.SNOW || t === TILE.CRYSTAL_CAVE) {
+        if (d > 0.68) deco[idx(x, y)] = 8; // 비전 마력 수정 첨탑
+      }
     }
   }
 
