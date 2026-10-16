@@ -1,5 +1,5 @@
 // ============================================================================
-// world_gen.js - 5대 대륙 초대형 오픈월드 (480x320 타일, 15,360px x 10,240px)
+// world_gen.js - 5대 대륙 초대형 오픈월드 (640x400 타일, 20,480px x 12,800px)
 // [1] 중앙 아테리아 제국 본토 (솔라리스·푸른파도항·황금밀밭·아이언포지·발로르요새)
 // [2] 서부 실바니아 요정림 & 미라주 사막 제국 & 천공 용의 고원 (엘븐하임·오아시스·피라미드)
 // [3] 북부 노스펠름 혹한 영구동토 대륙 (서리거인 성채·세인트마레 포구·발키리 관문·오크 요새)
@@ -8,8 +8,8 @@
 // [해양] 4대 좁은 해협 (황금해협·서리해협·용족해협·비전해협) 및 광활한 4대 외해 대양
 // ============================================================================
 
-const WORLD_WIDTH = 480;  // 가로 480 타일
-const WORLD_HEIGHT = 320; // 세로 320 타일
+const WORLD_WIDTH = 640;  // 가로 640 타일
+const WORLD_HEIGHT = 400; // 세로 400 타일
 const WORLD_SIZE = WORLD_WIDTH; // 하위 호환
 const TILE_SIZE = 32;
 
@@ -36,7 +36,11 @@ const TILE = {
   LAVA: 19,
   CORAL: 20,
   AUTUMN_WOOD: 21,
-  SWAMP: 22
+  SWAMP: 22,
+  TUNDRA: 23,
+  OBSIDIAN: 24,
+  CRYSTAL_CAVE: 25,
+  OASIS_WATER: 26
 };
 
 const TILE_INFO = {
@@ -62,7 +66,11 @@ const TILE_INFO = {
   [TILE.LAVA]:         { name: '펄펄 끓는 용암', color: '#dc2626', miniColor: '#ef4444', walkable: false, naval: false },
   [TILE.CORAL]:        { name: '산호초 환초', color: '#0ea5e9', miniColor: '#38bdf8', walkable: false, naval: true },
   [TILE.AUTUMN_WOOD]:  { name: '붉은 단풍나무 숲', color: '#7c2d12', miniColor: '#c2410c', walkable: true, naval: false },
-  [TILE.SWAMP]:        { name: '안개 낀 늪지대', color: '#2e3a23', miniColor: '#3f4f30', walkable: true, naval: false }
+  [TILE.SWAMP]:        { name: '안개 낀 늪지대', color: '#2e3a23', miniColor: '#3f4f30', walkable: true, naval: false },
+  [TILE.TUNDRA]:       { name: '영구동토 툰드라', color: '#607274', miniColor: '#94a3b8', walkable: true, naval: false },
+  [TILE.OBSIDIAN]:     { name: '흑요석 화산암대', color: '#1c1917', miniColor: '#292524', walkable: true, naval: false },
+  [TILE.CRYSTAL_CAVE]: { name: '비전 수정 광맥', color: '#581c87', miniColor: '#a855f7', walkable: true, naval: false },
+  [TILE.OASIS_WATER]:  { name: '오아시스 에메랄드 담수', color: '#0d9488', miniColor: '#14b8a6', walkable: false, naval: true }
 };
 
 class SeededRNG {
@@ -139,7 +147,7 @@ function generateWorld() {
   const idx = (x, y) => y * WORLD_WIDTH + x;
   const inBounds = (x, y) => x >= 0 && x < WORLD_WIDTH && y >= 0 && y < WORLD_HEIGHT;
 
-  // 1. 5대 대륙 및 4대 해협 & 광활한 외해 대양 생성
+  // 1. 5대 대륙 및 4대 해협 & 광활한 외해 대양 생성 (640x400 초대형 맵)
   for (let y = 0; y < WORLD_HEIGHT; y++) {
     for (let x = 0; x < WORLD_WIDTH; x++) {
       const nx = x / WORLD_WIDTH;
@@ -149,17 +157,17 @@ function generateWorld() {
       const d = detailNoise(nx * 32, ny * 26);
 
       // 5대 대륙 타원 거리 함수 (유사한 대륙 크기 & 황금 밸런스 배치)
-      const dCentral = Math.hypot((x - 240) / 66, (y - 160) / 54);
-      const dWest = Math.hypot((x - 80) / 64, (y - 160) / 116);
-      const dNorth = Math.hypot((x - 240) / 114, (y - 44) / 32);
-      const dSouth = Math.hypot((x - 240) / 114, (y - 276) / 32);
-      const dEast = Math.hypot((x - 400) / 64, (y - 160) / 116);
+      const dCentral = Math.hypot((x - 320) / 88, (y - 200) / 68);
+      const dWest = Math.hypot((x - 110) / 85, (y - 200) / 145);
+      const dNorth = Math.hypot((x - 320) / 152, (y - 58) / 40);
+      const dSouth = Math.hypot((x - 320) / 152, (y - 342) / 40);
+      const dEast = Math.hypot((x - 530) / 85, (y - 200) / 145);
 
       // 해협 중간 징검다리 섬 & 환초
-      const dBeacon = Math.hypot(x - 162, y - 145);
-      const dPirate = Math.hypot(x - 158, y - 185);
-      const dSiren = Math.hypot(x - 140, y - 255);
-      const dShipwreck = Math.hypot(x - 340, y - 225);
+      const dBeacon = Math.hypot(x - 216, y - 180);
+      const dPirate = Math.hypot(x - 210, y - 232);
+      const dSiren = Math.hypot(x - 185, y - 320);
+      const dShipwreck = Math.hypot(x - 455, y - 280);
 
       let maxE = 0;
       let region = 'central';
@@ -168,8 +176,8 @@ function generateWorld() {
       if (dCentral < 1.0) {
         let e = (1 - dCentral) * 0.78 + nVal * 0.35;
         // 솔라리스 왕도 주변 비옥한 평야 분지 보정
-        const dSolaris = Math.hypot(x - 240, y - 160);
-        if (dSolaris < 35) e = 0.42 + (nVal - 0.5) * 0.15;
+        const dSolaris = Math.hypot(x - 320, y - 195);
+        if (dSolaris < 45) e = 0.42 + (nVal - 0.5) * 0.15;
         if (e > maxE) { maxE = e; region = 'central'; }
       }
       // [2] 서부 대륙 (실바니아 요정림 & 미라주 사막 제국)
@@ -194,20 +202,20 @@ function generateWorld() {
       }
 
       // [해협 징검다리 섬]
-      if (dBeacon < 11) {
-        const e = (1 - dBeacon / 11) * 0.70 + nVal * 0.35;
+      if (dBeacon < 14) {
+        const e = (1 - dBeacon / 14) * 0.70 + nVal * 0.35;
         if (e > maxE) { maxE = e; region = 'beacon'; }
       }
-      if (dPirate < 13) {
-        const e = (1 - dPirate / 13) * 0.70 + nVal * 0.35;
+      if (dPirate < 16) {
+        const e = (1 - dPirate / 16) * 0.70 + nVal * 0.35;
         if (e > maxE) { maxE = e; region = 'pirate'; }
       }
-      if (dSiren < 14) {
-        const e = (1 - dSiren / 14) * 0.68 + nVal * 0.35;
+      if (dSiren < 18) {
+        const e = (1 - dSiren / 18) * 0.68 + nVal * 0.35;
         if (e > maxE) { maxE = e; region = 'siren'; }
       }
-      if (dShipwreck < 12) {
-        const e = (1 - dShipwreck / 12) * 0.65 + nVal * 0.35;
+      if (dShipwreck < 15) {
+        const e = (1 - dShipwreck / 15) * 0.65 + nVal * 0.35;
         if (e > maxE) { maxE = e; region = 'shipwreck'; }
       }
 
@@ -227,31 +235,38 @@ function generateWorld() {
           if (maxE > 0.68) t = TILE.SNOW;
           else if (maxE > 0.54) t = TILE.MOUNTAIN;
           else if (maxE > 0.44) t = TILE.HILLS;
-          else t = m > 0.45 ? TILE.DARK_FOREST : TILE.SNOW;
+          else {
+            if (m > 0.60) t = TILE.DARK_FOREST;
+            else if (m > 0.35) t = TILE.TUNDRA;
+            else t = TILE.SNOW;
+          }
         } else if (region === 'south') {
           // 남부 화염 드라코니아
           if (maxE > 0.65) t = TILE.LAVA;
-          else if (maxE > 0.52) t = TILE.MOUNTAIN;
-          else if (maxE > 0.40) t = TILE.BADLANDS;
+          else if (maxE > 0.54) t = TILE.OBSIDIAN;
+          else if (maxE > 0.44) t = TILE.MOUNTAIN;
+          else if (maxE > 0.36) t = TILE.BADLANDS;
           else t = m > 0.50 ? TILE.AUTUMN_WOOD : TILE.BADLANDS;
         } else if (region === 'west') {
           // 서부 실바니아(북) & 미라주 사막(남) & 천공 고원(서)
-          if (y < 145) {
-            if (x < 42 && maxE > 0.58) t = TILE.SNOW;
-            else if (x < 52 && maxE > 0.48) t = TILE.MOUNTAIN;
+          if (y < 180) {
+            if (x < 55 && maxE > 0.58) t = TILE.SNOW;
+            else if (x < 70 && maxE > 0.48) t = TILE.MOUNTAIN;
             else if (maxE > 0.40) t = TILE.ELVEN_FOREST;
             else t = m > 0.42 ? TILE.ELVEN_FOREST : TILE.MEADOW;
-          } else if (y > 175) {
+          } else if (y > 220) {
             if (maxE > 0.60) t = TILE.HILLS;
             else t = TILE.DESERT;
           } else {
             t = TILE.BADLANDS;
           }
         } else if (region === 'east') {
-          // 동부 신비 & 흑요석 네크로폴리스
+          // 동부 신비 & 흑요석 네크로폴리스 & 비전 수정
           if (maxE > 0.65) t = TILE.MOUNTAIN;
           else if (maxE > 0.52) t = TILE.HILLS;
-          else if (y < 130) t = m > 0.5 ? TILE.DARK_FOREST : TILE.SWAMP;
+          else if (Math.hypot(x - 555, y - 195) < 18) t = TILE.CRYSTAL_CAVE;
+          else if (Math.hypot(x - 555, y - 105) < 22) t = (m > 0.4 ? TILE.OBSIDIAN : TILE.DARK_FOREST);
+          else if (y < 165) t = m > 0.5 ? TILE.DARK_FOREST : TILE.SWAMP;
           else t = m > 0.45 ? TILE.AUTUMN_WOOD : TILE.FOREST;
         } else if (region === 'beacon') {
           t = TILE.CASTLE_FLOOR;
@@ -259,11 +274,11 @@ function generateWorld() {
           t = TILE.BADLANDS;
         } else {
           // 중앙 아테리아 제국 본토
-          if (y < 132 && maxE > 0.52) t = TILE.MOUNTAIN; // 북부 철벽산맥
-          else if (y < 138 && maxE > 0.45) t = TILE.HILLS;
+          if (y < 165 && maxE > 0.52) t = TILE.MOUNTAIN; // 북부 철벽산맥
+          else if (y < 172 && maxE > 0.45) t = TILE.HILLS;
           else if (maxE > 0.66) t = TILE.MOUNTAIN;
           else if (maxE > 0.54) t = TILE.HILLS;
-          else if (y > 185 && maxE < 0.48) t = TILE.FARMLAND; // 남부 비옥한 곡창지대
+          else if (y > 230 && maxE < 0.48) t = TILE.FARMLAND; // 남부 비옥한 곡창지대
           else if (m > 0.58) t = TILE.FOREST;
           else if (m > 0.38) t = TILE.MEADOW;
           else t = TILE.GRASS;
@@ -276,41 +291,41 @@ function generateWorld() {
       if (t === TILE.FOREST && d > 0.36) deco[idx(x, y)] = 1;
       else if (t === TILE.DARK_FOREST && d > 0.33) deco[idx(x, y)] = 2;
       else if (t === TILE.MEADOW && d > 0.68) deco[idx(x, y)] = 3;
-      else if ((t === TILE.HILLS || t === TILE.BADLANDS) && d > 0.68) deco[idx(x, y)] = 4;
+      else if ((t === TILE.HILLS || t === TILE.BADLANDS || t === TILE.TUNDRA || t === TILE.OBSIDIAN) && d > 0.68) deco[idx(x, y)] = 4;
       else if ((t === TILE.DESERT || t === TILE.SAND) && d > 0.75) deco[idx(x, y)] = 5;
       else if (t === TILE.ELVEN_FOREST && d > 0.34) deco[idx(x, y)] = 6;
       else if (t === TILE.AUTUMN_WOOD && d > 0.35) deco[idx(x, y)] = 7;
-      else if (t === TILE.SNOW && d > 0.70) deco[idx(x, y)] = 8;
+      else if ((t === TILE.SNOW || t === TILE.CRYSTAL_CAVE) && d > 0.70) deco[idx(x, y)] = 8;
     }
   }
 
   // 2. 호수 및 강줄기
-  // (1) 실버리프 호수 (중앙 대륙 중심: 220, 138)
-  const lakeCenter = { x: 220, y: 138 };
-  for (let y = lakeCenter.y - 8; y <= lakeCenter.y + 8; y++) {
-    for (let x = lakeCenter.x - 12; x <= lakeCenter.x + 12; x++) {
+  // (1) 실버리프 호수 (중앙 대륙 중심: 275, 178 주변)
+  const lakeCenter = { x: 295, y: 172 };
+  for (let y = lakeCenter.y - 10; y <= lakeCenter.y + 10; y++) {
+    for (let x = lakeCenter.x - 15; x <= lakeCenter.x + 15; x++) {
       if (!inBounds(x, y)) continue;
       const dist = Math.hypot((x - lakeCenter.x) * 0.9, (y - lakeCenter.y) * 1.1);
-      if (dist < 7.0) {
+      if (dist < 9.0) {
         tiles[idx(x, y)] = TILE.WATER;
         deco[idx(x, y)] = 0;
-      } else if (dist < 9.0 && tiles[idx(x, y)] !== TILE.WATER) {
+      } else if (dist < 11.5 && tiles[idx(x, y)] !== TILE.WATER) {
         tiles[idx(x, y)] = TILE.SAND;
         deco[idx(x, y)] = 0;
       }
     }
   }
 
-  // (2) 사막 오아시스 호수 (서부 대륙 중심: 72, 230 주변)
-  const oasisCenter = { x: 72, y: 230 };
-  for (let y = oasisCenter.y - 6; y <= oasisCenter.y + 6; y++) {
-    for (let x = oasisCenter.x - 8; x <= oasisCenter.x + 8; x++) {
+  // (2) 사막 오아시스 호수 (서부 대륙 중심: 96, 290 주변)
+  const oasisCenter = { x: 96, y: 290 };
+  for (let y = oasisCenter.y - 8; y <= oasisCenter.y + 8; y++) {
+    for (let x = oasisCenter.x - 10; x <= oasisCenter.x + 10; x++) {
       if (!inBounds(x, y)) continue;
       const dist = Math.hypot(x - oasisCenter.x, y - oasisCenter.y);
-      if (dist < 3.5) {
-        tiles[idx(x, y)] = TILE.WATER;
+      if (dist < 5.0) {
+        tiles[idx(x, y)] = TILE.OASIS_WATER;
         deco[idx(x, y)] = 0;
-      } else if (dist < 6.0) {
+      } else if (dist < 8.0) {
         tiles[idx(x, y)] = TILE.MEADOW;
       }
     }
@@ -344,12 +359,12 @@ function generateWorld() {
 
   // 중앙 대륙 산맥 -> 호수 -> 황금해협 서해안 하구 강줄기
   carveRiver([
-    { x: 245, y: 125 },
-    { x: 232, y: 132 },
+    { x: 325, y: 155 },
+    { x: 310, y: 165 },
     { x: lakeCenter.x, y: lakeCenter.y },
-    { x: 205, y: 150 },
-    { x: 182, y: 165 }
-  ], 1.8);
+    { x: 275, y: 188 },
+    { x: 245, y: 205 }
+  ], 2.2);
 
   // 3. 5대 대륙 33개 거점 정의
   const settlements = [
@@ -363,9 +378,9 @@ function generateWorld() {
       icon: '👑',
       type: 'capital',
       faction: 'kingdom',
-      x: 240,
-      y: 155,
-      radius: 20,
+      x: 320,
+      y: 195,
+      radius: 24,
       gold: 14000,
       stocks: { wheat: 70, fish: 50, ore: 45, weapons: 50, herbs: 45, gems: 35, spices: 30 },
       prices: { wheat: 18, fish: 20, ore: 28, weapons: 65, herbs: 24, gems: 95, spices: 110 },
@@ -379,11 +394,11 @@ function generateWorld() {
       type: 'port',
       faction: 'kingdom',
       isPort: true,
-      portWaterX: 176,
-      portWaterY: 165,
-      x: 190,
-      y: 165,
-      radius: 16,
+      portWaterX: 235,
+      portWaterY: 205,
+      x: 255,
+      y: 205,
+      radius: 18,
       gold: 7800,
       stocks: { wheat: 50, fish: 190, ore: 25, weapons: 30, herbs: 30, gems: 40, spices: 35 },
       prices: { wheat: 20, fish: 8, ore: 32, weapons: 58, herbs: 22, gems: 75, spices: 85 },
@@ -396,9 +411,9 @@ function generateWorld() {
       icon: '⛏️',
       type: 'mining',
       faction: 'kingdom',
-      x: 245,
-      y: 125,
-      radius: 14,
+      x: 325,
+      y: 155,
+      radius: 16,
       gold: 5800,
       stocks: { wheat: 25, fish: 15, ore: 210, weapons: 95, herbs: 15, gems: 50, spices: 8 },
       prices: { wheat: 25, fish: 26, ore: 10, weapons: 35, herbs: 26, gems: 58, spices: 105 },
@@ -411,9 +426,9 @@ function generateWorld() {
       icon: '🌾',
       type: 'farming',
       faction: 'kingdom',
-      x: 240,
-      y: 195,
-      radius: 16,
+      x: 320,
+      y: 245,
+      radius: 18,
       gold: 4200,
       stocks: { wheat: 240, fish: 20, ore: 12, weapons: 15, herbs: 85, gems: 6, spices: 5 },
       prices: { wheat: 7, fish: 24, ore: 32, weapons: 62, herbs: 12, gems: 85, spices: 95 },
@@ -426,9 +441,9 @@ function generateWorld() {
       icon: '🛡️',
       type: 'fortress',
       faction: 'kingdom',
-      x: 285,
-      y: 160,
-      radius: 15,
+      x: 380,
+      y: 200,
+      radius: 16,
       gold: 6200,
       stocks: { wheat: 50, fish: 30, ore: 45, weapons: 95, herbs: 40, gems: 25, spices: 12 },
       prices: { wheat: 22, fish: 22, ore: 20, weapons: 46, herbs: 28, gems: 70, spices: 95 },
@@ -441,9 +456,9 @@ function generateWorld() {
       icon: '🌲',
       type: 'lakeside',
       faction: 'kingdom',
-      x: 206,
-      y: 142,
-      radius: 13,
+      x: 275,
+      y: 178,
+      radius: 15,
       gold: 3600,
       stocks: { wheat: 40, fish: 130, ore: 15, weapons: 18, herbs: 130, gems: 15, spices: 10 },
       prices: { wheat: 16, fish: 10, ore: 28, weapons: 55, herbs: 9, gems: 80, spices: 90 },
@@ -456,9 +471,9 @@ function generateWorld() {
       icon: '🔮',
       type: 'magic_spire',
       faction: 'kingdom',
-      x: 215,
-      y: 120,
-      radius: 12,
+      x: 285,
+      y: 150,
+      radius: 14,
       gold: 6200,
       stocks: { wheat: 30, fish: 20, ore: 35, weapons: 55, herbs: 95, gems: 90, spices: 35 },
       prices: { wheat: 24, fish: 22, ore: 24, weapons: 45, herbs: 15, gems: 50, spices: 75 },
@@ -471,9 +486,9 @@ function generateWorld() {
       icon: '🪓',
       type: 'forest_village',
       faction: 'kingdom',
-      x: 270,
-      y: 185,
-      radius: 13,
+      x: 360,
+      y: 230,
+      radius: 15,
       gold: 3400,
       stocks: { wheat: 35, fish: 15, ore: 22, weapons: 25, herbs: 80, gems: 12, spices: 15 },
       prices: { wheat: 16, fish: 22, ore: 26, weapons: 52, herbs: 14, gems: 75, spices: 85 },
@@ -486,9 +501,9 @@ function generateWorld() {
       icon: '💨',
       type: 'farming',
       faction: 'kingdom',
-      x: 215,
-      y: 190,
-      radius: 12,
+      x: 285,
+      y: 238,
+      radius: 14,
       gold: 3100,
       stocks: { wheat: 160, fish: 35, ore: 10, weapons: 12, herbs: 65, gems: 8, spices: 18 },
       prices: { wheat: 9, fish: 18, ore: 30, weapons: 60, herbs: 14, gems: 80, spices: 80 },
@@ -506,11 +521,11 @@ function generateWorld() {
       type: 'overseas_elven',
       faction: 'kingdom',
       isPort: true,
-      portWaterX: 102,
-      portWaterY: 80,
-      x: 75,
-      y: 80,
-      radius: 16,
+      portWaterX: 136,
+      portWaterY: 100,
+      x: 100,
+      y: 100,
+      radius: 18,
       gold: 9500,
       stocks: { wheat: 45, fish: 40, ore: 22, weapons: 55, herbs: 260, gems: 90, spices: 65 },
       prices: { wheat: 22, fish: 20, ore: 36, weapons: 52, herbs: 6, gems: 42, spices: 65 },
@@ -523,9 +538,9 @@ function generateWorld() {
       icon: '🌙',
       type: 'overseas_elven',
       faction: 'kingdom',
-      x: 55,
-      y: 65,
-      radius: 12,
+      x: 75,
+      y: 80,
+      radius: 14,
       gold: 4600,
       stocks: { wheat: 22, fish: 25, ore: 12, weapons: 32, herbs: 190, gems: 95, spices: 45 },
       prices: { wheat: 25, fish: 22, ore: 40, weapons: 60, herbs: 5, gems: 38, spices: 70 },
@@ -538,9 +553,9 @@ function generateWorld() {
       icon: '☁️',
       type: 'dragon_sanctuary',
       faction: 'dragon',
-      x: 42,
-      y: 100,
-      radius: 12,
+      x: 55,
+      y: 125,
+      radius: 14,
       gold: 14500,
       stocks: { wheat: 15, fish: 20, ore: 65, weapons: 75, herbs: 95, gems: 340, spices: 75 },
       prices: { wheat: 42, fish: 35, ore: 18, weapons: 70, herbs: 18, gems: 24, spices: 50 },
@@ -553,9 +568,9 @@ function generateWorld() {
       icon: '🐉',
       type: 'dragon_sanctuary',
       faction: 'neutral',
-      x: 38,
-      y: 145,
-      radius: 15,
+      x: 50,
+      y: 180,
+      radius: 16,
       gold: 16000,
       stocks: { wheat: 10, fish: 15, ore: 85, weapons: 65, herbs: 55, gems: 270, spices: 55 },
       prices: { wheat: 40, fish: 35, ore: 15, weapons: 80, herbs: 20, gems: 25, spices: 60 },
@@ -569,11 +584,11 @@ function generateWorld() {
       type: 'overseas_desert',
       faction: 'kingdom',
       isPort: true,
-      portWaterX: 105,
-      portWaterY: 230,
-      x: 72,
-      y: 230,
-      radius: 17,
+      portWaterX: 140,
+      portWaterY: 290,
+      x: 96,
+      y: 290,
+      radius: 18,
       gold: 10500,
       stocks: { wheat: 30, fish: 25, ore: 45, weapons: 40, herbs: 35, gems: 160, spices: 280 },
       prices: { wheat: 30, fish: 28, ore: 24, weapons: 68, herbs: 28, gems: 35, spices: 12 },
@@ -586,9 +601,9 @@ function generateWorld() {
       icon: '🏛️',
       type: 'overseas_desert',
       faction: 'kingdom',
-      x: 58,
-      y: 245,
-      radius: 13,
+      x: 78,
+      y: 310,
+      radius: 15,
       gold: 7000,
       stocks: { wheat: 15, fish: 10, ore: 35, weapons: 45, herbs: 18, gems: 195, spices: 120 },
       prices: { wheat: 35, fish: 35, ore: 26, weapons: 72, herbs: 35, gems: 30, spices: 20 },
@@ -601,9 +616,9 @@ function generateWorld() {
       icon: '🎪',
       type: 'overseas_desert',
       faction: 'kingdom',
-      x: 48,
-      y: 205,
-      radius: 12,
+      x: 64,
+      y: 255,
+      radius: 14,
       gold: 5200,
       stocks: { wheat: 22, fish: 16, ore: 28, weapons: 38, herbs: 22, gems: 95, spices: 175 },
       prices: { wheat: 32, fish: 30, ore: 28, weapons: 65, herbs: 26, gems: 42, spices: 15 },
@@ -616,9 +631,9 @@ function generateWorld() {
       icon: '👺',
       type: 'monster_lair',
       faction: 'monster',
-      x: 100,
-      y: 160,
-      radius: 12,
+      x: 135,
+      y: 200,
+      radius: 14,
       gold: 3800,
       stocks: { wheat: 15, fish: 12, ore: 38, weapons: 55, herbs: 25, gems: 60, spices: 15 },
       prices: { wheat: 26, fish: 26, ore: 20, weapons: 40, herbs: 25, gems: 45, spices: 70 },
@@ -636,9 +651,9 @@ function generateWorld() {
       icon: '❄️',
       type: 'fortress',
       faction: 'monster',
-      x: 240,
-      y: 32,
-      radius: 13,
+      x: 320,
+      y: 40,
+      radius: 15,
       gold: 9000,
       stocks: { wheat: 5, fish: 45, ore: 85, weapons: 100, herbs: 28, gems: 130, spices: 12 },
       prices: { wheat: 45, fish: 20, ore: 15, weapons: 45, herbs: 30, gems: 45, spices: 85 },
@@ -653,11 +668,11 @@ function generateWorld() {
       type: 'port',
       faction: 'kingdom',
       isPort: true,
-      portWaterX: 165,
-      portWaterY: 66,
-      x: 165,
-      y: 52,
-      radius: 12,
+      portWaterX: 220,
+      portWaterY: 82,
+      x: 220,
+      y: 65,
+      radius: 14,
       gold: 3800,
       stocks: { wheat: 28, fish: 175, ore: 12, weapons: 18, herbs: 20, gems: 50, spices: 22 },
       prices: { wheat: 22, fish: 7, ore: 34, weapons: 60, herbs: 24, gems: 65, spices: 85 },
@@ -670,9 +685,9 @@ function generateWorld() {
       icon: '🏰',
       type: 'fortress',
       faction: 'kingdom',
-      x: 205,
-      y: 50,
-      radius: 12,
+      x: 275,
+      y: 62,
+      radius: 14,
       gold: 4800,
       stocks: { wheat: 32, fish: 18, ore: 50, weapons: 75, herbs: 22, gems: 24, spices: 6 },
       prices: { wheat: 24, fish: 25, ore: 18, weapons: 42, herbs: 30, gems: 70, spices: 100 },
@@ -685,9 +700,9 @@ function generateWorld() {
       icon: '👹',
       type: 'monster_lair',
       faction: 'monster',
-      x: 315,
-      y: 45,
-      radius: 14,
+      x: 420,
+      y: 56,
+      radius: 15,
       gold: 7200,
       stocks: { wheat: 12, fish: 12, ore: 75, weapons: 115, herbs: 12, gems: 45, spices: 6 },
       prices: { wheat: 30, fish: 30, ore: 14, weapons: 28, herbs: 35, gems: 55, spices: 90 },
@@ -705,9 +720,9 @@ function generateWorld() {
       icon: '🌋',
       type: 'monster_lair',
       faction: 'monster',
-      x: 175,
-      y: 280,
-      radius: 12,
+      x: 235,
+      y: 350,
+      radius: 14,
       gold: 6000,
       stocks: { wheat: 6, fish: 32, ore: 95, weapons: 45, herbs: 6, gems: 120, spices: 35 },
       prices: { wheat: 45, fish: 20, ore: 12, weapons: 65, herbs: 45, gems: 40, spices: 70 },
@@ -721,9 +736,9 @@ function generateWorld() {
       icon: '🦴',
       type: 'monster_lair',
       faction: 'monster',
-      x: 240,
-      y: 285,
-      radius: 13,
+      x: 320,
+      y: 355,
+      radius: 15,
       gold: 8200,
       stocks: { wheat: 6, fish: 12, ore: 130, weapons: 85, herbs: 18, gems: 170, spices: 45 },
       prices: { wheat: 40, fish: 35, ore: 12, weapons: 50, herbs: 35, gems: 40, spices: 75 },
@@ -737,9 +752,9 @@ function generateWorld() {
       icon: '🔥',
       type: 'mining',
       faction: 'dwarf',
-      x: 305,
-      y: 275,
-      radius: 12,
+      x: 405,
+      y: 345,
+      radius: 14,
       gold: 9200,
       stocks: { wheat: 16, fish: 12, ore: 250, weapons: 150, herbs: 12, gems: 95, spices: 22 },
       prices: { wheat: 35, fish: 30, ore: 8, weapons: 30, herbs: 35, gems: 55, spices: 80 },
@@ -753,11 +768,11 @@ function generateWorld() {
       type: 'coral_isle',
       faction: 'neutral',
       isPort: true,
-      portWaterX: 140,
-      portWaterY: 245,
-      x: 140,
-      y: 255,
-      radius: 12,
+      portWaterX: 185,
+      portWaterY: 308,
+      x: 185,
+      y: 320,
+      radius: 14,
       gold: 5200,
       stocks: { wheat: 18, fish: 140, ore: 18, weapons: 22, herbs: 38, gems: 150, spices: 55 },
       prices: { wheat: 28, fish: 9, ore: 35, weapons: 60, herbs: 20, gems: 45, spices: 60 },
@@ -774,9 +789,9 @@ function generateWorld() {
       icon: '💀',
       type: 'monster_lair',
       faction: 'monster',
-      x: 415,
-      y: 85,
-      radius: 13,
+      x: 555,
+      y: 105,
+      radius: 15,
       gold: 7600,
       stocks: { wheat: 0, fish: 0, ore: 55, weapons: 65, herbs: 12, gems: 140, spices: 12 },
       prices: { wheat: 40, fish: 40, ore: 20, weapons: 50, herbs: 40, gems: 35, spices: 80 },
@@ -790,9 +805,9 @@ function generateWorld() {
       icon: '🌲',
       type: 'forest_village',
       faction: 'kingdom',
-      x: 375,
-      y: 100,
-      radius: 13,
+      x: 500,
+      y: 125,
+      radius: 15,
       gold: 4800,
       stocks: { wheat: 30, fish: 20, ore: 25, weapons: 30, herbs: 140, gems: 80, spices: 30 },
       prices: { wheat: 20, fish: 22, ore: 28, weapons: 55, herbs: 10, gems: 60, spices: 75 },
@@ -805,9 +820,9 @@ function generateWorld() {
       icon: '💎',
       type: 'magic_spire',
       faction: 'kingdom',
-      x: 415,
-      y: 155,
-      radius: 14,
+      x: 555,
+      y: 195,
+      radius: 16,
       gold: 8400,
       stocks: { wheat: 20, fish: 15, ore: 90, weapons: 50, herbs: 50, gems: 260, spices: 40 },
       prices: { wheat: 28, fish: 26, ore: 18, weapons: 50, herbs: 22, gems: 30, spices: 80 },
@@ -820,9 +835,9 @@ function generateWorld() {
       icon: '🏛️',
       type: 'dragon_sanctuary',
       faction: 'monster',
-      x: 420,
-      y: 220,
-      radius: 14,
+      x: 560,
+      y: 275,
+      radius: 16,
       gold: 9800,
       stocks: { wheat: 15, fish: 15, ore: 80, weapons: 70, herbs: 30, gems: 210, spices: 50 },
       prices: { wheat: 35, fish: 30, ore: 16, weapons: 60, herbs: 30, gems: 32, spices: 70 },
@@ -837,11 +852,11 @@ function generateWorld() {
       type: 'coral_isle',
       faction: 'neutral',
       isPort: true,
-      portWaterX: 335,
-      portWaterY: 215,
-      x: 340,
-      y: 225,
-      radius: 13,
+      portWaterX: 450,
+      portWaterY: 268,
+      x: 455,
+      y: 280,
+      radius: 14,
       gold: 8800,
       stocks: { wheat: 10, fish: 180, ore: 35, weapons: 50, herbs: 20, gems: 220, spices: 60 },
       prices: { wheat: 35, fish: 6, ore: 28, weapons: 52, herbs: 28, gems: 32, spices: 65 },
@@ -859,11 +874,11 @@ function generateWorld() {
       type: 'beacon_isle',
       faction: 'kingdom',
       isPort: true,
-      portWaterX: 162,
-      portWaterY: 135,
-      x: 162,
-      y: 145,
-      radius: 10,
+      portWaterX: 216,
+      portWaterY: 168,
+      x: 216,
+      y: 180,
+      radius: 12,
       gold: 3600,
       stocks: { wheat: 40, fish: 70, ore: 18, weapons: 24, herbs: 24, gems: 30, spices: 25 },
       prices: { wheat: 22, fish: 14, ore: 30, weapons: 55, herbs: 22, gems: 70, spices: 75 },
@@ -877,11 +892,11 @@ function generateWorld() {
       type: 'monster_lair',
       faction: 'monster',
       isPort: true,
-      portWaterX: 150,
-      portWaterY: 185,
-      x: 158,
-      y: 185,
-      radius: 13,
+      portWaterX: 200,
+      portWaterY: 232,
+      x: 210,
+      y: 232,
+      radius: 14,
       gold: 8800,
       stocks: { wheat: 35, fish: 80, ore: 35, weapons: 85, herbs: 25, gems: 90, spices: 75 },
       prices: { wheat: 28, fish: 15, ore: 30, weapons: 45, herbs: 30, gems: 50, spices: 50 },
@@ -896,11 +911,11 @@ function generateWorld() {
       type: 'coral_isle',
       faction: 'merfolk',
       isPort: true,
-      portWaterX: 240,
-      portWaterY: 228,
-      x: 240,
-      y: 228,
-      radius: 14,
+      portWaterX: 320,
+      portWaterY: 275,
+      x: 320,
+      y: 285,
+      radius: 15,
       gold: 11000,
       stocks: { wheat: 10, fish: 260, ore: 35, weapons: 45, herbs: 45, gems: 320, spices: 90 },
       prices: { wheat: 35, fish: 6, ore: 30, weapons: 55, herbs: 20, gems: 30, spices: 60 },
@@ -1180,62 +1195,78 @@ function generateWorld() {
   const atlantis = settlementMap.atlantis_ruins;
   addBuilding({ id: 'atl_temple', settlementId: 'atlantis_ruins', name: '아틀란티스 해저 신전', type: 'temple', x: atlantis.x, y: atlantis.y, w: 6, h: 5, color: '#0284c7', roofColor: '#075985', icon: '🔱' });
 
-  // 7. 5대 대륙 자원 노드 (채집 & 채광 & 발굴 140+ 개소)
+  // 7. 5대 대륙 자원 노드 (채집 & 채광 & 발굴 190+ 개소)
   const resourceNodes = [];
-  // (1) 중앙 대륙: 미스릴 & 황금 광맥 (22개소)
-  for (let i = 0; i < 22; i++) {
-    const rx = Math.round(245 + Math.cos(i * 1.5) * (8 + (i % 5) * 6));
-    const ry = Math.round(125 + Math.sin(i * 1.5) * (8 + (i % 5) * 5));
+  // (1) 중앙 대륙: 미스릴 & 황금 광맥 (24개소)
+  for (let i = 0; i < 24; i++) {
+    const rx = Math.round(325 + Math.cos(i * 1.5) * (8 + (i % 5) * 8));
+    const ry = Math.round(155 + Math.sin(i * 1.5) * (8 + (i % 5) * 6));
     if (inBounds(rx, ry) && tiles[idx(rx, ry)] !== TILE.DEEP_WATER && tiles[idx(rx, ry)] !== TILE.WATER) {
       resourceNodes.push({ id: 'res_mine_c_' + i, type: 'mine', x: rx, y: ry, name: i % 2 === 0 ? '⛏️ 미스릴 광맥' : '⛏️ 황금 광맥', resource: i % 2 === 0 ? 'ore' : 'gold', amount: 5, maxAmount: 5, respawn: 0 });
     }
   }
-  // (2) 중앙 대륙: 고대 벌목 참나무 (24개소)
-  for (let i = 0; i < 24; i++) {
-    const rx = Math.round(270 + Math.sin(i * 1.7) * 25);
-    const ry = Math.round(185 + Math.cos(i * 1.3) * 20);
+  // (2) 중앙 대륙: 고대 벌목 참나무 (26개소)
+  for (let i = 0; i < 26; i++) {
+    const rx = Math.round(360 + Math.sin(i * 1.7) * 30);
+    const ry = Math.round(230 + Math.cos(i * 1.3) * 24);
     if (inBounds(rx, ry) && (tiles[idx(rx, ry)] === TILE.FOREST || tiles[idx(rx, ry)] === TILE.MEADOW || tiles[idx(rx, ry)] === TILE.GRASS)) {
       resourceNodes.push({ id: 'res_tree_c_' + i, type: 'tree', x: rx, y: ry, name: '🌲 고대 참나무', resource: 'wood', amount: 5, maxAmount: 5, respawn: 0 });
     }
   }
   // (3) 서부 신대륙: 세계수 영약초 (26개소)
   for (let i = 0; i < 26; i++) {
-    const rx = Math.round(75 + Math.sin(i * 2.1) * 22);
-    const ry = Math.round(80 + Math.cos(i * 1.9) * 22);
+    const rx = Math.round(100 + Math.sin(i * 2.1) * 26);
+    const ry = Math.round(100 + Math.cos(i * 1.9) * 26);
     if (inBounds(rx, ry) && tiles[idx(rx, ry)] !== TILE.DEEP_WATER && tiles[idx(rx, ry)] !== TILE.WATER) {
       resourceNodes.push({ id: 'res_herb_w_' + i, type: 'herb', x: rx, y: ry, name: '🌿 세계수 영약초', resource: 'herbs', amount: 5, maxAmount: 5, respawn: 0 });
     }
   }
-  // (4) 서부 신대륙: 사막 황금 향신료 선인장 (20개소)
-  for (let i = 0; i < 20; i++) {
-    const rx = Math.round(72 + Math.sin(i * 1.8) * 24);
-    const ry = Math.round(230 + Math.cos(i * 1.6) * 20);
+  // (4) 서부 신대륙: 사막 황금 향신료 선인장 (22개소)
+  for (let i = 0; i < 22; i++) {
+    const rx = Math.round(96 + Math.sin(i * 1.8) * 30);
+    const ry = Math.round(290 + Math.cos(i * 1.6) * 24);
     if (inBounds(rx, ry) && tiles[idx(rx, ry)] === TILE.DESERT) {
       resourceNodes.push({ id: 'res_spice_w_' + i, type: 'spice', x: rx, y: ry, name: '🌵 황금 사막 선인장', resource: 'spices', amount: 5, maxAmount: 5, respawn: 0 });
     }
   }
-  // (5) 북부 노스펠름: 영구동토 빙정석 (18개소)
-  for (let i = 0; i < 18; i++) {
-    const rx = Math.round(240 + Math.sin(i * 1.9) * 30);
-    const ry = Math.round(35 + Math.cos(i * 1.5) * 12);
-    if (inBounds(rx, ry) && (tiles[idx(rx, ry)] === TILE.SNOW || tiles[idx(rx, ry)] === TILE.MOUNTAIN)) {
+  // (5) 북부 노스펠름: 영구동토 빙정석 (20개소)
+  for (let i = 0; i < 20; i++) {
+    const rx = Math.round(320 + Math.sin(i * 1.9) * 36);
+    const ry = Math.round(40 + Math.cos(i * 1.5) * 14);
+    if (inBounds(rx, ry) && (tiles[idx(rx, ry)] === TILE.SNOW || tiles[idx(rx, ry)] === TILE.MOUNTAIN || tiles[idx(rx, ry)] === TILE.TUNDRA)) {
       resourceNodes.push({ id: 'res_ice_n_' + i, type: 'mine', x: rx, y: ry, name: '❄️ 영구동토 빙정석', resource: 'gems', amount: 5, maxAmount: 5, respawn: 0 });
     }
   }
-  // (6) 남부 드라코니아: 심연 흑요석 광맥 (18개소)
-  for (let i = 0; i < 18; i++) {
-    const rx = Math.round(305 + Math.sin(i * 1.9) * 20);
-    const ry = Math.round(275 + Math.cos(i * 1.7) * 12);
+  // (6) 남부 드라코니아: 심연 흑요석 광맥 (20개소)
+  for (let i = 0; i < 20; i++) {
+    const rx = Math.round(405 + Math.sin(i * 1.9) * 26);
+    const ry = Math.round(345 + Math.cos(i * 1.7) * 16);
     if (inBounds(rx, ry) && tiles[idx(rx, ry)] !== TILE.DEEP_WATER && tiles[idx(rx, ry)] !== TILE.WATER) {
       resourceNodes.push({ id: 'res_obs_s_' + i, type: 'mine', x: rx, y: ry, name: '🔥 심연 흑요석 광맥', resource: 'ore', amount: 5, maxAmount: 5, respawn: 0 });
     }
   }
-  // (7) 남서 산호환초 & 심해 진주 조개 (22개소)
-  for (let i = 0; i < 22; i++) {
-    const rx = Math.round(140 + Math.sin(i * 1.4) * 22);
-    const ry = Math.round(255 + Math.cos(i * 1.4) * 22);
+  // (7) 남서 산호환초 & 심해 진주 조개 (24개소)
+  for (let i = 0; i < 24; i++) {
+    const rx = Math.round(185 + Math.sin(i * 1.4) * 26);
+    const ry = Math.round(320 + Math.cos(i * 1.4) * 26);
     if (inBounds(rx, ry) && (tiles[idx(rx, ry)] === TILE.WATER || tiles[idx(rx, ry)] === TILE.SAND || tiles[idx(rx, ry)] === TILE.CORAL)) {
       resourceNodes.push({ id: 'res_clam_' + i, type: 'clam', x: rx, y: ry, name: '🦪 심해 진주조개', resource: 'gems', amount: 5, maxAmount: 5, respawn: 0 });
+    }
+  }
+  // (8) 동부 신비 대륙: 비전 에테르 수정 (20개소)
+  for (let i = 0; i < 20; i++) {
+    const rx = Math.round(555 + Math.sin(i * 1.8) * 22);
+    const ry = Math.round(195 + Math.cos(i * 1.6) * 18);
+    if (inBounds(rx, ry) && tiles[idx(rx, ry)] !== TILE.DEEP_WATER && tiles[idx(rx, ry)] !== TILE.WATER) {
+      resourceNodes.push({ id: 'res_crys_e_' + i, type: 'mine', x: rx, y: ry, name: '💎 비전 에테르 수정', resource: 'gems', amount: 5, maxAmount: 5, respawn: 0 });
+    }
+  }
+  // (9) 북부 노스펠름: 툰드라 서리이끼 (18개소)
+  for (let i = 0; i < 18; i++) {
+    const rx = Math.round(275 + Math.sin(i * 2.0) * 24);
+    const ry = Math.round(62 + Math.cos(i * 1.8) * 12);
+    if (inBounds(rx, ry) && (tiles[idx(rx, ry)] === TILE.TUNDRA || tiles[idx(rx, ry)] === TILE.DARK_FOREST)) {
+      resourceNodes.push({ id: 'res_moss_n_' + i, type: 'herb', x: rx, y: ry, name: '🌿 툰드라 서리이끼', resource: 'herbs', amount: 5, maxAmount: 5, respawn: 0 });
     }
   }
 

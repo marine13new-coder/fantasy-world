@@ -17,7 +17,7 @@ class WorldRenderer {
     this.ctx.imageSmoothingEnabled = false;
     this.minimapCtx.imageSmoothingEnabled = false;
 
-    this.bakeScale = 8; // 타일당 8픽셀 정밀 베이킹 (3840 x 2560: 4096px GPU/모바일 텍스처 한계 완전 호환 & 36% 메모리 절약)
+    this.bakeScale = 6; // 타일당 6픽셀 정밀 베이킹 (640x400 타일 -> 3840 x 2400: 4096px GPU/모바일 텍스처 한계 완전 호환 & 60 FPS 극대화)
     this.terrainCanvas = document.createElement('canvas');
     this.terrainCanvas.width = world.width * this.bakeScale;
     this.terrainCanvas.height = world.height * this.bakeScale;
@@ -291,6 +291,87 @@ class WorldRenderer {
           tCtx.fillRect(px + 2, py + 2, 2, 2);
           tCtx.fillStyle = '#f472b6';
           tCtx.fillRect(px + 5, py + 4, 2, 2);
+        } else if (t === TILE.SWAMP) {
+          // [안개 늪지대] 어두운 늪물과 썩은 이끼 & 맹독성 기포
+          tCtx.fillStyle = '#1c2416';
+          tCtx.fillRect(px, py, s, s);
+          tCtx.fillStyle = '#3a4a2b';
+          tCtx.fillRect(px + 1, py + 1, s - 2, s - 2);
+          tCtx.fillStyle = '#1e3a1f';
+          tCtx.fillRect(px + 2, py + 2, 3, 2);
+          if (h % 3 === 0) {
+            tCtx.fillStyle = '#84cc16'; // 독성 거품
+            tCtx.fillRect(px + (h % 4) + 1, py + ((h >> 2) % 4) + 1, 1, 1);
+          }
+        } else if (t === TILE.TUNDRA) {
+          // [영구동토 툰드라] 서리 맺힌 냉대 지의류 & 동토 크랙
+          tCtx.fillStyle = '#475569';
+          tCtx.fillRect(px, py, s, s);
+          tCtx.fillStyle = '#64748b';
+          tCtx.fillRect(px + 1, py + 1, s - 2, s - 2);
+          tCtx.fillStyle = '#cbd5e1'; // 서리 림
+          tCtx.fillRect(px + 1, py + 1, 2, 1);
+          tCtx.fillRect(px + 3, py + 3, 2, 1);
+          if (h % 2 === 0) {
+            tCtx.fillStyle = '#94a3b8';
+            tCtx.fillRect(px + (h % 4) + 1, py + ((h >> 2) % 4) + 1, 2, 1);
+          }
+        } else if (t === TILE.OBSIDIAN) {
+          // [흑요석 지대] 날카로운 유리질 암반 & 마그마 틈새 붉은 빛
+          tCtx.fillStyle = '#0f172a';
+          tCtx.fillRect(px, py, s, s);
+          tCtx.fillStyle = '#1e293b';
+          tCtx.fillRect(px + 1, py + 1, s - 2, s - 2);
+          tCtx.fillStyle = '#334155';
+          tCtx.fillRect(px + 1, py + 1, 2, 2);
+          if (h % 3 === 0) {
+            tCtx.fillStyle = '#ef4444'; // 흑요석 틈 마그마 열기
+            tCtx.fillRect(px + (h % 4) + 1, py + ((h >> 2) % 4) + 1, 1, 1);
+          }
+        } else if (t === TILE.CRYSTAL_CAVE) {
+          // [비전 수정 광맥] 신비로운 보랏빛 아케인 수정 결정체 & 에테르 광채
+          tCtx.fillStyle = '#3b0764';
+          tCtx.fillRect(px, py, s, s);
+          tCtx.fillStyle = '#6b21a8';
+          tCtx.fillRect(px + 1, py + 1, s - 2, s - 2);
+          tCtx.fillStyle = '#c084fc';
+          tCtx.fillRect(px + 2, py + 1, 2, 4);
+          tCtx.fillStyle = '#f3e8ff';
+          tCtx.fillRect(px + 2, py + 2, 1, 2);
+          if (h % 2 === 0) {
+            tCtx.fillStyle = '#e879f9';
+            tCtx.fillRect(px + 4, py + 3, 1, 1);
+          }
+        } else if (t === TILE.OASIS_WATER) {
+          // [오아시스 에메랄드 담수] 맑고 투명한 에메랄드 물결 & 수련
+          tCtx.fillStyle = '#0f766e';
+          tCtx.fillRect(px, py, s, s);
+          tCtx.fillStyle = '#14b8a6';
+          tCtx.fillRect(px + 1, py + 1, s - 2, s - 2);
+          tCtx.fillStyle = '#5eead4';
+          tCtx.fillRect(px + 2, py + 2, 2, 1);
+          if (h % 3 === 0) {
+            tCtx.fillStyle = '#f472b6'; // 수련 꽃
+            tCtx.fillRect(px + 3, py + 3, 2, 2);
+          }
+        } else if (t === TILE.ELVEN_FOREST) {
+          // [요정림] 청록빛 신성한 숲바닥과 별가루
+          tCtx.fillStyle = '#115e59';
+          tCtx.fillRect(px, py, s, s);
+          tCtx.fillStyle = '#14b8a6';
+          tCtx.fillRect(px + 1, py + 1, s - 2, s - 2);
+          if (h % 2 === 0) {
+            tCtx.fillStyle = '#99f6e4';
+            tCtx.fillRect(px + (h % 4) + 1, py + ((h >> 2) % 4) + 1, 1, 1);
+          }
+        } else if (t === TILE.AUTUMN_WOOD) {
+          // [단풍림] 붉은 낙엽 카펫
+          tCtx.fillStyle = '#7c2d12';
+          tCtx.fillRect(px, py, s, s);
+          tCtx.fillStyle = '#c2410c';
+          tCtx.fillRect(px + 1, py + 1, s - 2, s - 2);
+          tCtx.fillStyle = '#fbbf24';
+          tCtx.fillRect(px + (h % 4) + 1, py + ((h >> 2) % 4) + 1, 2, 1);
         }
 
         // 3. 고해상도 픽셀 자연 식생 & 오브젝트 데코

@@ -344,8 +344,8 @@ class EntityManager {
     }
 
     // 3. 종족별 특화 수비병 & 주민
-    // (A) 드워프 왕국 아이언포지 (드워프 전사 8명, 채굴사 8명, 룬 대장장이 4명)
-    for (let i = 0; i < 8; i++) {
+    // (A) 드워프 왕국 아이언포지 (드워프 전사 14명, 채굴사 12명, 룬 대장장이 6명)
+    for (let i = 0; i < 14; i++) {
       this.createEntity({
         name: `드워프 철갑병 ${this.pickName('dwarf')}`,
         race: 'dwarf',
@@ -354,12 +354,12 @@ class EntityManager {
         customIcon: '🛡️',
         faction: 'kingdom',
         homeId: 'ironforge',
-        x: sMap.ironforge.x + (Math.random() - 0.5) * 10,
-        y: sMap.ironforge.y + (Math.random() - 0.5) * 10,
+        x: sMap.ironforge.x + (Math.random() - 0.5) * 12,
+        y: sMap.ironforge.y + (Math.random() - 0.5) * 12,
         hp: 260, maxHp: 260, atk: 24, gold: 90, scale: 1.05
       });
     }
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 12; i++) {
       this.createEntity({
         name: `드워프 채굴사 ${this.pickName('dwarf')}`,
         race: 'dwarf',
@@ -368,12 +368,12 @@ class EntityManager {
         customIcon: '⛏️',
         faction: 'kingdom',
         homeId: 'ironforge',
-        x: sMap.ironforge.x + (Math.random() - 0.5) * 8,
-        y: sMap.ironforge.y - 3 + (Math.random() - 0.5) * 5,
+        x: sMap.ironforge.x + (Math.random() - 0.5) * 10,
+        y: sMap.ironforge.y - 3 + (Math.random() - 0.5) * 6,
         hp: 150, maxHp: 150, atk: 15, gold: 75
       });
     }
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 6; i++) {
       this.createEntity({
         name: `룬 대장장이 ${this.pickName('dwarf')}`,
         race: 'dwarf',
@@ -382,14 +382,14 @@ class EntityManager {
         customIcon: '⚒️',
         faction: 'kingdom',
         homeId: 'ironforge',
-        x: sMap.ironforge.x + (Math.random() - 0.5) * 5,
-        y: sMap.ironforge.y + (Math.random() - 0.5) * 4,
+        x: sMap.ironforge.x + (Math.random() - 0.5) * 6,
+        y: sMap.ironforge.y + (Math.random() - 0.5) * 5,
         hp: 165, maxHp: 165, atk: 18, gold: 130
       });
     }
 
-    // (B) 엘프 성소 엘븐하임 & 실버리프 호수 (엘프 레인저 10명, 약초사 8명)
-    for (let i = 0; i < 6; i++) {
+    // (B) 엘프 성소 엘븐하임 & 실버리프 호수 (엘프 레인저 18명, 약초사 14명)
+    for (let i = 0; i < 10; i++) {
       this.createEntity({
         name: `엘프 바람궁수 ${this.pickName('elf')}`,
         race: 'elf',
@@ -400,12 +400,12 @@ class EntityManager {
         projColor: '#2dd4bf',
         faction: 'kingdom',
         homeId: 'elvenheim',
-        x: sMap.elvenheim.x + (Math.random() - 0.5) * 8,
-        y: sMap.elvenheim.y + (Math.random() - 0.5) * 8,
+        x: sMap.elvenheim.x + (Math.random() - 0.5) * 10,
+        y: sMap.elvenheim.y + (Math.random() - 0.5) * 10,
         hp: 175, maxHp: 175, atk: 22, gold: 85
       });
     }
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 8; i++) {
       this.createEntity({
         name: `우드엘프 레인저 ${this.pickName('elf')}`,
         race: 'elf',
@@ -416,12 +416,12 @@ class EntityManager {
         projColor: '#4ade80',
         faction: 'kingdom',
         homeId: 'silverleaf',
-        x: sMap.silverleaf.x + (Math.random() - 0.5) * 8,
-        y: sMap.silverleaf.y + (Math.random() - 0.5) * 8,
+        x: sMap.silverleaf.x + (Math.random() - 0.5) * 10,
+        y: sMap.silverleaf.y + (Math.random() - 0.5) * 10,
         hp: 170, maxHp: 170, atk: 21, gold: 75
       });
     }
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 10; i++) {
       this.createEntity({
         name: `엘프 약초사 ${this.pickName('elf')}`,
         race: 'elf',
@@ -430,14 +430,14 @@ class EntityManager {
         customIcon: '🌿',
         faction: 'kingdom',
         homeId: 'elvenheim',
-        x: sMap.elvenheim.x - 6 + (Math.random() - 0.5) * 6,
-        y: sMap.elvenheim.y + 6 + (Math.random() - 0.5) * 4,
+        x: sMap.elvenheim.x - 6 + (Math.random() - 0.5) * 8,
+        y: sMap.elvenheim.y + 6 + (Math.random() - 0.5) * 6,
         hp: 110, maxHp: 110, atk: 9, gold: 70
       });
     }
 
-    // (C) 사막 수인족 미라주 오아시스 (수인 샴쉬르 전사 6명, 향신료 농부 5명, 사막 상인 4명)
-    for (let i = 0; i < 6; i++) {
+    // (C) 사막 수인족 미라주 오아시스 (수인 샴쉬르 전사 12명, 향신료 농부 8명)
+    for (let i = 0; i < 12; i++) {
       this.createEntity({
         name: `사막 수인전사 ${this.pickName('beastkin')}`,
         race: 'beastkin',
@@ -446,12 +446,12 @@ class EntityManager {
         customIcon: '🗡️',
         faction: 'kingdom',
         homeId: 'mirage_oasis',
-        x: sMap.mirage_oasis.x + (Math.random() - 0.5) * 8,
-        y: sMap.mirage_oasis.y + (Math.random() - 0.5) * 8,
+        x: sMap.mirage_oasis.x + (Math.random() - 0.5) * 10,
+        y: sMap.mirage_oasis.y + (Math.random() - 0.5) * 10,
         hp: 185, maxHp: 185, atk: 23, gold: 85
       });
     }
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 8; i++) {
       this.createEntity({
         name: `수인 재배사 ${this.pickName('beastkin')}`,
         race: 'beastkin',
@@ -460,8 +460,8 @@ class EntityManager {
         customIcon: '🌶️',
         faction: 'kingdom',
         homeId: 'mirage_oasis',
-        x: sMap.mirage_oasis.x - 6 + (Math.random() - 0.5) * 6,
-        y: sMap.mirage_oasis.y - 5 + (Math.random() - 0.5) * 4,
+        x: sMap.mirage_oasis.x - 6 + (Math.random() - 0.5) * 8,
+        y: sMap.mirage_oasis.y - 5 + (Math.random() - 0.5) * 6,
         hp: 105, maxHp: 105, atk: 9, gold: 75
       });
     }
@@ -643,8 +643,8 @@ class EntityManager {
       hp: 160, maxHp: 160, atk: 15, gold: 120
     });
 
-    // 4. 육상 무역 마차 (16팀) & 호위 용병
-    for (let i = 0; i < 16; i++) {
+    // 4. 육상 무역 마차 (24팀) & 호위 용병
+    for (let i = 0; i < 24; i++) {
       const townIds = ['solaris', 'goldenwheat', 'bluewave', 'ironforge', 'silverleaf', 'valor_fort', 'oakwood', 'windmill_valley', 'st_mare', 'crystal_falls', 'valkyrie_gate'];
       const startTownId = townIds[i % townIds.length];
       const startTown = sMap[startTownId];
@@ -674,9 +674,9 @@ class EntityManager {
       });
     }
 
-    // 5. 대해양 무역 범선 (14척) & 해군 전열함 (10척)
+    // 5. 대해양 무역 범선 (22척) & 해군 전열함 (16척)
     const ports = ['bluewave', 'elvenheim', 'mirage_oasis', 'st_mare', 'siren_coral', 'lone_beacon'];
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 22; i++) {
       const portId = ports[i % ports.length];
       const pTown = sMap[portId];
       const race = portId === 'elvenheim' ? 'elf' : (portId === 'mirage_oasis' ? 'beastkin' : 'human');
@@ -695,7 +695,7 @@ class EntityManager {
         gold: 600
       });
     }
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 16; i++) {
       const portId = ports[i % ports.length];
       const pTown = sMap[portId];
       this.createEntity({
@@ -716,7 +716,7 @@ class EntityManager {
       });
     }
 
-    // 6. 종족별 모험가 파티 (32명)
+    // 6. 종족별 모험가 파티 (48명)
     const advTemplates = [
       { subClass: '인간 소드마스터', race: 'human', atk: 26, hp: 220, ranged: false, projColor: '#60a5fa' },
       { subClass: '엘프 아크메이지', race: 'elf', atk: 30, hp: 160, ranged: true,  projColor: '#f97316' },
@@ -725,7 +725,7 @@ class EntityManager {
       { subClass: '수인 섀도우블레이드', race: 'beastkin', atk: 27, hp: 180, ranged: false, projColor: '#eab308' },
       { subClass: '성전사 팔라딘', race: 'human', atk: 23, hp: 250, ranged: false, projColor: '#facc15' }
     ];
-    for (let i = 0; i < 32; i++) {
+    for (let i = 0; i < 48; i++) {
       const tpl = advTemplates[i % advTemplates.length];
       const baseTowns = ['solaris', 'valor_fort', 'elvenheim', 'mirage_oasis', 'ironforge', 'crystal_falls', 'oakwood', 'valkyrie_gate'];
       const baseTownId = baseTowns[i % baseTowns.length];
@@ -759,23 +759,31 @@ class EntityManager {
 
     const animalSpawns = [
       // 🦌 사슴 (실버리프 호수 숲 및 오크우드)
-      { type: 'deer', icon: '🦌', name: '야생 백록', count: 18, x: sMap.silverleaf.x + 12, y: sMap.silverleaf.y - 12, radius: 24, hp: 60, speed: 1.45 },
+      { type: 'deer', icon: '🦌', name: '야생 백록', count: 28, x: sMap.silverleaf.x + 12, y: sMap.silverleaf.y - 12, radius: 30, hp: 60, speed: 1.45 },
       // 🐇 들토끼 (황금밀 농촌 평야 & 윈드밀 계곡)
-      { type: 'rabbit', icon: '🐇', name: '들토끼', count: 16, x: sMap.goldenwheat.x - 10, y: sMap.goldenwheat.y + 10, radius: 20, hp: 30, speed: 1.55 },
+      { type: 'rabbit', icon: '🐇', name: '들토끼', count: 26, x: sMap.goldenwheat.x - 10, y: sMap.goldenwheat.y + 10, radius: 26, hp: 30, speed: 1.55 },
       // 🐄 젖소 (황금밀 대농장 목장)
-      { type: 'cow', icon: '🐄', name: '젖소', count: 10, x: sMap.goldenwheat.x + 12, y: sMap.goldenwheat.y - 8, radius: 10, hp: 120, speed: 0.8 },
+      { type: 'cow', icon: '🐄', name: '젖소', count: 18, x: sMap.goldenwheat.x + 12, y: sMap.goldenwheat.y - 8, radius: 14, hp: 120, speed: 0.8 },
       // 🐑 양 (평원 목초지)
-      { type: 'sheep', icon: '🐑', name: '목초지 양', count: 12, x: sMap.goldenwheat.x - 16, y: sMap.goldenwheat.y - 14, radius: 12, hp: 50, speed: 0.9 },
+      { type: 'sheep', icon: '🐑', name: '목초지 양', count: 20, x: sMap.goldenwheat.x - 16, y: sMap.goldenwheat.y - 14, radius: 16, hp: 50, speed: 0.9 },
       // 🐻 불곰 (북부 산맥 & 오크우드 숲)
-      { type: 'bear', icon: '🐻', name: '갈색 불곰', count: 8, x: sMap.oakwood.x + 14, y: sMap.oakwood.y + 12, radius: 18, hp: 180, speed: 1.25, isPredator: true },
+      { type: 'bear', icon: '🐻', name: '갈색 불곰', count: 16, x: sMap.oakwood.x + 14, y: sMap.oakwood.y + 12, radius: 22, hp: 180, speed: 1.25, isPredator: true },
       // 🐐 산양 (북부 험준한 바위산 & 천공 고원)
-      { type: 'goat', icon: '🐐', name: '바위 산양', count: 12, x: sMap.ironforge.x + 16, y: sMap.ironforge.y - 12, radius: 16, hp: 70, speed: 1.35 },
+      { type: 'goat', icon: '🐐', name: '바위 산양', count: 18, x: sMap.ironforge.x + 16, y: sMap.ironforge.y - 12, radius: 20, hp: 70, speed: 1.35 },
       // 🐬 대양 돌고래 (대해양 항로 & 세이렌 산호섬)
-      { type: 'dolphin', icon: '🐬', name: '대양 돌고래', count: 20, x: 145, y: 160, radius: 55, hp: 90, speed: 1.65, isAquatic: true },
+      { type: 'dolphin', icon: '🐬', name: '대양 돌고래', count: 32, x: 220, y: 220, radius: 70, hp: 90, speed: 1.65, isAquatic: true },
       // 🐢 거대 바다거북 (신대륙 산호초 근해)
-      { type: 'turtle', icon: '🐢', name: '거대 바다거북', count: 10, x: sMap.siren_coral.x + 10, y: sMap.siren_coral.y + 8, radius: 22, hp: 160, speed: 0.75, isAquatic: true },
+      { type: 'turtle', icon: '🐢', name: '거대 바다거북', count: 18, x: sMap.siren_coral.x + 10, y: sMap.siren_coral.y + 8, radius: 28, hp: 160, speed: 0.75, isAquatic: true },
       // 🐪 사막 낙타 (미라주 오아시스 & 베두인 캠프)
-      { type: 'camel', icon: '🐪', name: '사막 낙타', count: 14, x: sMap.mirage_oasis.x - 14, y: sMap.mirage_oasis.y - 14, radius: 24, hp: 130, speed: 1.15 }
+      { type: 'camel', icon: '🐪', name: '사막 낙타', count: 22, x: sMap.mirage_oasis.x - 14, y: sMap.mirage_oasis.y - 14, radius: 30, hp: 130, speed: 1.15 },
+      // 🐺 북방 설원 늑대 (노스펠름 영구동토 & 발키리 설산)
+      { type: 'wolf', icon: '🐺', name: '설원 은빛늑대', count: 18, x: sMap.valkyrie_gate.x - 15, y: sMap.valkyrie_gate.y + 10, radius: 25, hp: 140, speed: 1.45, isPredator: true },
+      // 🐊 늪지대 악어 (동부 안개 늪지대)
+      { type: 'croc', icon: '🐊', name: '늪지대 맹독악어', count: 16, x: sMap.whispering_woods.x + 18, y: sMap.whispering_woods.y + 15, radius: 24, hp: 170, speed: 1.15, isPredator: true },
+      // 🦂 사막 거대전갈 (서남 미라주 사막 모래언덕)
+      { type: 'scorpion', icon: '🦂', name: '사막 거대전갈', count: 18, x: sMap.sphinx_pyramid.x - 12, y: sMap.sphinx_pyramid.y - 12, radius: 26, hp: 130, speed: 1.25, isPredator: true },
+      // 🦎 화산 샐러맨더 (남부 드라코니아 흑요석 용암대)
+      { type: 'salamander', icon: '🦎', name: '흑요석 불꽃도마뱀', count: 16, x: sMap.volcano_isle.x + 14, y: sMap.volcano_isle.y + 12, radius: 22, hp: 150, speed: 1.2, isPredator: true }
     ];
 
     for (const sp of animalSpawns) {
@@ -893,7 +901,7 @@ class EntityManager {
     ];
     for (const dk of dragonkinSpawns) {
       if (!dk.loc) continue;
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 8; i++) {
         this.createEntity({
           name: `${dk.name} ${i + 1}`,
           race: 'dragonkin',
@@ -913,17 +921,20 @@ class EntityManager {
       }
     }
 
-    // 5대 대륙 고유 몬스터 생태계 스폰 (전 대륙 몬스터 거점 활성화)
-    this.spawnMonstersForLair('goblin_camp', 16);
-    this.spawnMonstersForLair('orc_stronghold', 16);
-    this.spawnMonstersForLair('obsidian_necropolis', 14);
-    this.spawnMonstersForLair('pyramid_tomb', 14);
-    this.spawnMonstersForLair('pirate_cove', 14);
-    this.spawnMonstersForLair('volcano_isle', 10);
-    this.spawnMonstersForLair('molten_forge', 10);
-    this.spawnMonstersForLair('glacier_camp', 12);
-    this.spawnMonstersForLair('whispering_grove', 12);
-    this.spawnMonstersForLair('dragon_eyrie', 10);
+    // 5대 대륙 고유 몬스터 생태계 스폰 (전 대륙 몬스터 거점 활성화 - 1,000+ 개체수 확장)
+    this.spawnMonstersForLair('goblin_camp', 24);
+    this.spawnMonstersForLair('orc_stronghold', 24);
+    this.spawnMonstersForLair('obsidian_necropolis', 22);
+    this.spawnMonstersForLair('pyramid_tomb', 20);
+    this.spawnMonstersForLair('pirate_cove', 22);
+    this.spawnMonstersForLair('volcano_isle', 18);
+    this.spawnMonstersForLair('molten_forge', 18);
+    this.spawnMonstersForLair('glacier_camp', 18);
+    this.spawnMonstersForLair('whispering_grove', 18);
+    this.spawnMonstersForLair('dragon_eyrie', 18);
+    this.spawnMonstersForLair('frost_citadel', 20);
+    this.spawnMonstersForLair('dragon_ruins', 18);
+    this.spawnMonstersForLair('dragon_graveyard', 18);
 
     // 주요 도시 및 성역에 고유 NPC (사제, 방랑 상인, 성전 십자군) 스폰
     const sol = sMap.solaris;
