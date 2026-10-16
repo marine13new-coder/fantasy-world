@@ -267,6 +267,132 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // 사운드 토글
+  const btnToggleAudio = document.getElementById('btnToggleAudio');
+  if (btnToggleAudio) {
+    btnToggleAudio.addEventListener('click', () => {
+      if (typeof audioMgr !== 'undefined') {
+        const isMuted = audioMgr.toggleMute();
+        btnToggleAudio.textContent = isMuted ? '🔇' : '🔊';
+      }
+    });
+  }
+
+  // 영지 건축 모드 & 팔레트
+  const btnToggleBuild = document.getElementById('btnToggleBuild');
+  const buildPaletteEl = document.getElementById('buildPalette');
+  const btnCloseBuild = document.getElementById('btnCloseBuild');
+
+  if (btnToggleBuild) {
+    btnToggleBuild.addEventListener('click', () => {
+      if (entityMgr.rpgManager) {
+        entityMgr.rpgManager.isBuildModeActive = !entityMgr.rpgManager.isBuildModeActive;
+        if (buildPaletteEl) buildPaletteEl.classList.toggle('hidden', !entityMgr.rpgManager.isBuildModeActive);
+        btnToggleBuild.classList.toggle('active', entityMgr.rpgManager.isBuildModeActive);
+        if (entityMgr.rpgManager.isBuildModeActive && typeof audioMgr !== 'undefined') audioMgr.playBuild();
+      }
+    });
+  }
+
+  if (btnCloseBuild) {
+    btnCloseBuild.addEventListener('click', () => {
+      if (entityMgr.rpgManager) {
+        entityMgr.rpgManager.isBuildModeActive = false;
+        if (buildPaletteEl) buildPaletteEl.classList.add('hidden');
+        if (btnToggleBuild) btnToggleBuild.classList.remove('active');
+      }
+    });
+  }
+
+  document.querySelectorAll('.build-opt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.build-opt-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (entityMgr.rpgManager) {
+        entityMgr.rpgManager.selectedBuildType = btn.dataset.type;
+        if (typeof audioMgr !== 'undefined') audioMgr.playBuild();
+      }
+    });
+  });
+
+  // 호위 용병단 소집
+  const btnToggleCompanions = document.getElementById('btnToggleCompanions');
+  if (btnToggleCompanions) {
+    btnToggleCompanions.addEventListener('click', () => {
+      if (entityMgr.rpgManager) {
+        entityMgr.rpgManager.toggleCompanions();
+        btnToggleCompanions.classList.toggle('active', entityMgr.rpgManager.companionsActive);
+      }
+    });
+  }
+
+  // 장비 & 인벤토리 모달
+  const btnToggleInventory = document.getElementById('btnToggleInventory');
+  const inventoryModalEl = document.getElementById('inventoryModal');
+  const btnCloseInventory = document.getElementById('btnCloseInventory');
+
+  function updateInventoryUI() {
+    if (!entityMgr.rpgManager || !inventoryModalEl || inventoryModalEl.classList.contains('hidden')) return;
+    const rpg = entityMgr.rpgManager;
+    const p = player;
+
+    const atkEl = document.getElementById('statHeroAtk');
+    const hpEl = document.getElementById('statHeroHp');
+    const spdEl = document.getElementById('statHeroSpd');
+    const fameEl = document.getElementById('statHeroFame');
+    const goldEl = document.getElementById('statHeroGold');
+    const killsEl = document.getElementById('statHeroKills');
+
+    if (atkEl) atkEl.textContent = p.atk;
+    if (hpEl) hpEl.textContent = `${Math.round(p.hp)} / ${p.maxHp}`;
+    if (spdEl) spdEl.textContent = `${p.speed.toFixed(2)}x (${p.mount === 'dragon' ? '비룡비행' : (p.mount === 'horse' ? '백마' : (p.isShip ? '항해' : '도보'))})`;
+    if (fameEl) fameEl.textContent = p.fame || 0;
+    if (goldEl) goldEl.textContent = `${p.gold.toLocaleString()} G`;
+    if (killsEl) killsEl.textContent = p.kills || 0;
+
+    const slotWeaponName = document.getElementById('slotWeaponName');
+    const slotShieldName = document.getElementById('slotShieldName');
+    const slotArmorName = document.getElementById('slotArmorName');
+    const slotRelicName = document.getElementById('slotRelicName');
+
+    if (slotWeaponName) slotWeaponName.textContent = rpg.equipment.weapon ? rpg.equipment.weapon.name : '장착 안됨';
+    if (slotShieldName) slotShieldName.textContent = rpg.equipment.shield ? rpg.equipment.shield.name : '장착 안됨';
+    if (slotArmorName) slotArmorName.textContent = rpg.equipment.armor ? rpg.equipment.armor.name : '장착 안됨';
+    if (slotRelicName) slotRelicName.textContent = rpg.equipment.relic ? rpg.equipment.relic.name : '장착 안됨';
+
+    const grid = document.getElementById('backpackGrid');
+    if (grid) {
+      grid.innerHTML = '';
+      const items = [
+        { icon: '💎', name: '심해 보석', count: p.inventory.gems || 0 },
+        { icon: '🌶️', name: '황금 향신료', count: p.inventory.spices || 0 },
+        { icon: '🌾', name: '황금 밀', count: p.inventory.wheat || 0 },
+        { icon: '⛏️', name: '미스릴 원석', count: p.inventory.ore || 0 },
+        { icon: '🌿', name: '세계수 약초', count: p.inventory.herbs || 0 },
+        { icon: '⚔️', name: '여분 무기', count: p.inventory.weapons || 0 }
+      ];
+      items.forEach(it => {
+        const div = document.createElement('div');
+        div.className = 'backpack-item';
+        div.innerHTML = `<span>${it.icon}</span> <span>${it.name}: <strong>${it.count}</strong></span>`;
+        grid.appendChild(div);
+      });
+    }
+  }
+
+  function toggleInventory() {
+    if (!inventoryModalEl) return;
+    const isHidden = inventoryModalEl.classList.contains('hidden');
+    inventoryModalEl.classList.toggle('hidden', !isHidden);
+    if (isHidden) {
+      updateInventoryUI();
+      if (typeof audioMgr !== 'undefined') audioMgr.playCoin();
+    }
+  }
+
+  if (btnToggleInventory) btnToggleInventory.addEventListener('click', toggleInventory);
+  if (btnCloseInventory) btnCloseInventory.addEventListener('click', () => inventoryModalEl.classList.add('hidden'));
+
   // 군주 칙령 바인딩
   document.getElementById('btnDispatchFleet').addEventListener('click', () => entityMgr.dispatchTradeFleet());
   document.getElementById('btnDispatchCrusade').addEventListener('click', () => entityMgr.dispatchCrusade());
@@ -344,6 +470,12 @@ document.addEventListener('DOMContentLoaded', () => {
     dragStartY = e.clientY;
   });
 
+  canvas.addEventListener('mousemove', (e) => {
+    const wx = camera.x + (e.clientX - canvas.width / 2) / (TILE_SIZE * camera.zoom);
+    const wy = camera.y + (e.clientY - canvas.height / 2) / (TILE_SIZE * camera.zoom);
+    renderer.mouseWorldTile = { x: Math.floor(wx), y: Math.floor(wy) };
+  });
+
   window.addEventListener('mouseup', (e) => {
     if (isDragging && !dragMoved && e.target === canvas) {
       handleCanvasClick(e.clientX, e.clientY);
@@ -405,6 +537,12 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (e.code === 'KeyR') {
       entityMgr.togglePlayerMount();
       updateMountUI();
+    } else if (e.code === 'KeyB') {
+      if (btnToggleBuild) btnToggleBuild.click();
+    } else if (e.code === 'KeyC') {
+      if (btnToggleCompanions) btnToggleCompanions.click();
+    } else if (e.code === 'KeyI') {
+      toggleInventory();
     } else if (e.code === 'KeyP') {
       isPlayerControlActive = !isPlayerControlActive;
       if (isPlayerControlActive) startFollow(player);
@@ -422,6 +560,10 @@ document.addEventListener('DOMContentLoaded', () => {
       smoothMoveCamera(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0.18);
     } else if (e.code === 'Escape') {
       stopFollow();
+      if (inventoryModalEl) inventoryModalEl.classList.add('hidden');
+      if (buildPaletteEl) buildPaletteEl.classList.add('hidden');
+      if (entityMgr.rpgManager) entityMgr.rpgManager.isBuildModeActive = false;
+      if (btnToggleBuild) btnToggleBuild.classList.remove('active');
     }
   });
 
@@ -429,10 +571,19 @@ document.addEventListener('DOMContentLoaded', () => {
     keys[e.code] = false;
   });
 
-  // 클릭 시 대상 선택
+  // 클릭 시 대상 선택 및 건축 배치
   function handleCanvasClick(clientX, clientY) {
+    if (typeof audioMgr !== 'undefined') audioMgr.resume();
     const wx = camera.x + (clientX - canvas.width / 2) / (TILE_SIZE * camera.zoom);
     const wy = camera.y + (clientY - canvas.height / 2) / (TILE_SIZE * camera.zoom);
+
+    // 건축 모드 활성화 시 클릭한 지점에 구조물 배치
+    if (entityMgr.rpgManager && entityMgr.rpgManager.isBuildModeActive) {
+      const bTx = Math.floor(wx);
+      const bTy = Math.floor(wy);
+      entityMgr.rpgManager.placeStructure(entityMgr.rpgManager.selectedBuildType, bTx, bTy);
+      return;
+    }
 
     let pickedEntity = null;
     let minEntDist = 2.4 / Math.max(0.4, Math.min(1.2, camera.zoom));

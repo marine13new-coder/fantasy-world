@@ -234,6 +234,7 @@ class EntityManager {
     this.activeBattles = 0;
     this.player = null;
     this.questSystem = new QuestSystem(this.world, this);
+    this.rpgManager = (typeof RPGSystemsManager !== 'undefined') ? new RPGSystemsManager(this.world, this) : null;
   }
 
   log(type, text, x, y) {
@@ -922,6 +923,7 @@ class EntityManager {
       p.isFlying = true;
       p.speed = 3.65;
       p.icon = '🐉';
+      if (typeof audioMgr !== 'undefined') audioMgr.playRoar();
       this.addEffect(p.x, p.y, 6.0, '#ef4444', 0.8);
       this.addFloatingText(p.x, p.y - 1.6, '🐉 고대 비룡 탑승! 구름 위로 날아오릅니다 (전 지형 자유 비행)', '#f87171', 2.2);
       this.log('quest', '🐉 플레이어가 고대 비룡을 타고 창공으로 날아올랐습니다!', p.x, p.y);
@@ -947,6 +949,7 @@ class EntityManager {
       p.isFlying = false;
       p.speed = 2.65;
       p.icon = '🏇';
+      if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
       this.addEffect(p.x, p.y, 4.0, '#facc15', 0.6);
       this.addFloatingText(p.x, p.y - 1.2, '🏇 왕실 백마에 탑승했습니다! (육상 질주)', '#fde047', 1.6);
       this.log('quest', '🏇 플레이어가 왕실 백마에 올라타 질주합니다.', p.x, p.y);
@@ -960,7 +963,22 @@ class EntityManager {
       return;
     }
 
+    if (skillKey === 'B' || skillKey === 'build') {
+      if (this.rpgManager) {
+        this.rpgManager.isBuildModeActive = !this.rpgManager.isBuildModeActive;
+      }
+      return;
+    }
+
+    if (skillKey === 'C' || skillKey === 'companion') {
+      if (this.rpgManager) {
+        this.rpgManager.toggleCompanions();
+      }
+      return;
+    }
+
     if (skillKey === 'Q') {
+      if (typeof audioMgr !== 'undefined') audioMgr.playMagic();
       this.addEffect(p.x, p.y, 11, '#f97316', 0.85);
       let hitCount = 0;
       for (const other of this.entities) {
@@ -981,6 +999,7 @@ class EntityManager {
       }
       this.addFloatingText(p.x, p.y - 1.5, hitCount > 0 ? `⚡ 천공의 심판! (${hitCount}기 타격)` : '⚡ 천공의 심판!', '#fde047', 1.4);
     } else if (skillKey === 'E') {
+      if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
       p.boostTimer = 6.0;
       p.hp = Math.min(p.maxHp, p.hp + 150);
       this.addEffect(p.x, p.y, 4.5, '#38bdf8', 0.7);
@@ -1239,6 +1258,11 @@ class EntityManager {
     // 왕국 의뢰 및 현상금 퀘스트 진행도 갱신
     if (this.questSystem && this.player) {
       this.questSystem.update(dt, this.player);
+    }
+
+    // 영지 건축 타워 방어, 호위 용병단, 월드 보스 레이드, 보물상자 상호작용 갱신
+    if (this.rpgManager) {
+      this.rpgManager.update(dt);
     }
 
     // 농작물 성장

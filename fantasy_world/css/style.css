@@ -1021,4 +1021,341 @@ body, html {
   transform: translateY(-1px);
 }
 
+/* ==========================================================================
+   월드 보스 레이드 체력바 (World Boss Health Bar)
+   ========================================================================== */
+.boss-bar-container {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 580px;
+  max-width: 90vw;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid #ef4444;
+  border-radius: 10px;
+  padding: 8px 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(239, 68, 68, 0.4);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  animation: bossPulse 2s infinite ease-in-out;
+}
+
+@keyframes bossPulse {
+  0%, 100% { box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7), 0 0 16px rgba(239, 68, 68, 0.35); }
+  50% { box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7), 0 0 28px rgba(239, 68, 68, 0.7); }
+}
+
+.boss-info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.boss-icon {
+  font-size: 22px;
+}
+
+.boss-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: #fca5a5;
+  letter-spacing: -0.2px;
+}
+
+.boss-sub {
+  font-size: 11px;
+  color: #cbd5e1;
+  margin-left: auto;
+}
+
+.boss-hp-track {
+  width: 100%;
+  height: 9px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+.boss-hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #dc2626, #f97316, #eab308);
+  transition: width 0.25s ease;
+}
+
+/* ==========================================================================
+   플로팅 건축 모드 팔레트 (Build Palette)
+   ========================================================================== */
+.build-palette {
+  position: fixed;
+  bottom: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid #facc15;
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.65);
+  z-index: 105;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 480px;
+}
+
+.build-palette-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fde047;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  color: #fff;
+}
+
+.build-options {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.build-opt-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: #f8fafc;
+}
+
+.build-opt-btn:hover {
+  background: rgba(250, 204, 21, 0.18);
+  border-color: #facc15;
+}
+
+.build-opt-btn.active {
+  background: rgba(250, 204, 21, 0.28);
+  border-color: #facc15;
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.4);
+}
+
+.b-icon {
+  font-size: 22px;
+}
+
+.b-name {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #fef08a;
+}
+
+.b-cost {
+  font-size: 9.5px;
+  color: #cbd5e1;
+}
+
+/* ==========================================================================
+   RPG 캐릭터 장비 & 인벤토리 모달 (Inventory Modal)
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(5px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inventory-card {
+  width: 680px;
+  max-width: 95vw;
+  max-height: 85vh;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1.5px solid #d4af37;
+  border-radius: 14px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(212, 175, 55, 0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #f8fafc;
+}
+
+.inv-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.inv-header h2 {
+  font-size: 16px;
+  font-weight: 800;
+  color: #facc15;
+  margin: 0;
+}
+
+.inv-body {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 270px 1fr;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.inv-equipment-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hero-avatar-box {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.avatar-large {
+  font-size: 40px;
+  margin-bottom: 6px;
+}
+
+.hero-name-badge {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fde047;
+}
+
+.hero-level-badge {
+  font-size: 11px;
+  color: #38bdf8;
+  margin-top: 2px;
+}
+
+.equip-slots-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.equip-slot {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 8px;
+  padding: 7px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slot-label {
+  font-size: 10px;
+  color: #94a3b8;
+  width: 28px;
+}
+
+.slot-item-icon {
+  font-size: 18px;
+}
+
+.slot-item-name {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #fef08a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inv-stats-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.stats-panel, .backpack-panel {
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.stats-panel h3, .backpack-panel h3 {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #facc15;
+  margin: 0 0 8px 0;
+}
+
+.stat-rows {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: #cbd5e1;
+}
+
+.stat-row strong {
+  color: #fde047;
+}
+
+.backpack-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.backpack-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #e2e8f0;
+}
+
+.audio-toggle-btn {
+  font-size: 13px;
+  padding: 3px 8px;
+}
+
+
 

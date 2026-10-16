@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>크로니클 오브 아테리아 (Chronicles of Aetheria) - 오픈월드 판타지 생태계 & 항해 시뮬레이션</title>
-  <link rel="stylesheet" href="css/style.css?v=7" />
+  <link rel="stylesheet" href="css/style.css?v=8" />
 </head>
 <body>
   <!-- 메인 월드 캔버스 -->
@@ -38,6 +38,19 @@
         <button class="speed-btn" data-speed="2" title="2배속">2x</button>
         <button class="speed-btn" data-speed="4" title="4배속">4x</button>
         <button class="speed-btn" data-speed="8" title="8배속">8x</button>
+        <button id="btnToggleAudio" class="speed-btn audio-toggle-btn" title="사운드 효과음 ON/OFF">🔊</button>
+      </div>
+    </div>
+
+    <!-- 월드 보스 레이드 체력바 -->
+    <div id="bossBarContainer" class="boss-bar-container hidden">
+      <div class="boss-info-row">
+        <span id="bossIcon" class="boss-icon">🐙</span>
+        <span id="bossName" class="boss-name">심연의 대양 군주 크라켄</span>
+        <span id="bossSubtitle" class="boss-sub">대해양 침몰선 해역에 출현한 고대 해수</span>
+      </div>
+      <div class="boss-hp-track">
+        <div id="bossHpFill" class="boss-hp-fill" style="width: 100%"></div>
       </div>
     </div>
 
@@ -167,6 +180,7 @@
         <div class="controls-guide">
           <div><span>WASD / 우클릭</span> 영웅 이동 및 적 타겟 공격</div>
           <div><span>Space / R</span> 탈것 전환 (백마 🏇 / 비룡 비행 🐉 / 도보 🚶)</div>
+          <div><span>B / C / I</span> 영지 건축(B) · 용병단(C) · 장비/가방(I)</div>
           <div><span>F 키</span> 정착지 상호작용 (교역·장비강화·체력회복)</div>
           <div><span>Q / E 키</span> 천공의 심판 광역벼락 / 질주·순풍</div>
           <div><span>드래그 / 휠</span> 카메라 자유 이동 및 줌인/아웃</div>
@@ -229,6 +243,21 @@
           <span class="skill-icon">🪙</span>
           <span class="skill-name">교역/강화</span>
         </button>
+        <button class="skill-btn" id="btnToggleBuild" title="영지 건축 모드: 감시탑, 선착장, 왕실성채, 대농장 건설 (단축키 B)">
+          <span class="key-badge">B</span>
+          <span class="skill-icon">🔨</span>
+          <span class="skill-name">영지건축</span>
+        </button>
+        <button class="skill-btn" id="btnToggleCompanions" title="정예 호위 용병단 소집 및 지휘 (단축키 C)">
+          <span class="key-badge">C</span>
+          <span class="skill-icon">👥</span>
+          <span class="skill-name">호위용병</span>
+        </button>
+        <button class="skill-btn" id="btnToggleInventory" title="캐릭터 장비 & 인벤토리 가방 열기 (단축키 I)">
+          <span class="key-badge">I</span>
+          <span class="skill-icon">🎒</span>
+          <span class="skill-name">장비/가방</span>
+        </button>
       </div>
     </div>
 
@@ -247,6 +276,107 @@
     </div>
   </footer>
 
+  <!-- 플로팅 건축 모드 팔레트 바 -->
+  <div id="buildPalette" class="build-palette hidden">
+    <div class="build-palette-header">
+      <span>🔨 내 영지 건설 팔레트 (선택 후 원하는 지면 클릭)</span>
+      <button id="btnCloseBuild" class="close-btn">✖</button>
+    </div>
+    <div class="build-options">
+      <button class="build-opt-btn active" data-type="tower">
+        <span class="b-icon">🗼</span>
+        <div class="b-info">
+          <div class="b-name">아처 감시탑</div>
+          <div class="b-cost">💰 350G (자동 방어사격)</div>
+        </div>
+      </button>
+      <button class="build-opt-btn" data-type="dock">
+        <span class="b-icon">⚓</span>
+        <div class="b-info">
+          <div class="b-name">무역 선착장</div>
+          <div class="b-cost">💰 500G (해상관세 160G)</div>
+        </div>
+      </button>
+      <button class="build-opt-btn" data-type="citadel">
+        <span class="b-icon">🏰</span>
+        <div class="b-info">
+          <div class="b-name">왕실 성채</div>
+          <div class="b-cost">💰 1,000G (친위기사 스폰)</div>
+        </div>
+      </button>
+      <button class="build-opt-btn" data-type="farm">
+        <span class="b-icon">🌾</span>
+        <div class="b-info">
+          <div class="b-name">대농장 풍차</div>
+          <div class="b-cost">💰 250G (체력 재생 오라)</div>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <!-- RPG 캐릭터 장비 & 인벤토리 모달 -->
+  <div id="inventoryModal" class="modal-overlay hidden">
+    <div class="inventory-card">
+      <div class="inv-header">
+        <h2>🎒 영웅 장비 & 보물 인벤토리</h2>
+        <button id="btnCloseInventory" class="close-btn">✖</button>
+      </div>
+      <div class="inv-body">
+        <!-- 좌측 페이퍼돌 장비 슬롯 -->
+        <div class="inv-equipment-col">
+          <div class="hero-avatar-box">
+            <span class="avatar-large" id="invAvatarIcon">🌟</span>
+            <div class="hero-name-badge" id="invHeroName">플레이어 대모험가</div>
+            <div class="hero-level-badge" id="invHeroLevel">Lv. 5 왕실 영웅</div>
+          </div>
+          <div class="equip-slots-grid">
+            <div class="equip-slot" id="slotWeapon">
+              <span class="slot-label">무기</span>
+              <span class="slot-item-icon">⚔️</span>
+              <span class="slot-item-name" id="slotWeaponName">아테리아의 룬 성검</span>
+            </div>
+            <div class="equip-slot" id="slotShield">
+              <span class="slot-label">방패</span>
+              <span class="slot-item-icon">🛡️</span>
+              <span class="slot-item-name" id="slotShieldName">용비늘 이지스 방패</span>
+            </div>
+            <div class="equip-slot" id="slotArmor">
+              <span class="slot-label">갑옷</span>
+              <span class="slot-item-icon">🦺</span>
+              <span class="slot-item-name" id="slotArmorName">왕실 미스릴 판금갑옷</span>
+            </div>
+            <div class="equip-slot" id="slotRelic">
+              <span class="slot-label">유물</span>
+              <span class="slot-item-icon">💎</span>
+              <span class="slot-item-name" id="slotRelicName">대양의 심장 심해진주</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 우측 캐릭터 상세 능력치 & 가방 -->
+        <div class="inv-stats-col">
+          <div class="stats-panel">
+            <h3>📊 종합 전투력 & 스탯</h3>
+            <div class="stat-rows">
+              <div class="stat-row"><span>⚔️ 공격력</span><strong id="statHeroAtk">44</strong></div>
+              <div class="stat-row"><span>❤️ 최대 생명력</span><strong id="statHeroHp">520</strong></div>
+              <div class="stat-row"><span>💨 이동 속도</span><strong id="statHeroSpd">2.65x</strong></div>
+              <div class="stat-row"><span>🌟 왕국 명성치</span><strong id="statHeroFame">0</strong></div>
+              <div class="stat-row"><span>🪙 보유 골드</span><strong id="statHeroGold">1,200 G</strong></div>
+              <div class="stat-row"><span>💀 몬스터 처치</span><strong id="statHeroKills">0</strong></div>
+            </div>
+          </div>
+          <div class="backpack-panel">
+            <h3>📦 가방 보관품</h3>
+            <div class="backpack-grid" id="backpackGrid">
+              <!-- JS에서 실시간 렌더링 -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 하단 카메라 추적 배너 -->
   <div id="followBanner" class="follow-banner hidden">
     <span id="followBannerText">🎥 추적 중: -</span>
@@ -254,9 +384,11 @@
   </div>
 
   <!-- 스크립트 로드 -->
-  <script src="js/world_gen.js?v=7"></script>
-  <script src="js/entities.js?v=7"></script>
-  <script src="js/renderer.js?v=7"></script>
-  <script src="js/main.js?v=7"></script>
+  <script src="js/audio.js?v=8"></script>
+  <script src="js/world_gen.js?v=8"></script>
+  <script src="js/entities.js?v=8"></script>
+  <script src="js/rpg_systems.js?v=8"></script>
+  <script src="js/renderer.js?v=8"></script>
+  <script src="js/main.js?v=8"></script>
 </body>
 </html>

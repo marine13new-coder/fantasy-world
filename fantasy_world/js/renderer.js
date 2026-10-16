@@ -433,6 +433,13 @@ class WorldRenderer {
     // 12. 거점 이름표
     this.drawSettlementLabels(ctx, ts, camera.zoom, selectedItem);
 
+    // 12.1. 플레이어 건축 구조물 (방어타워, 선착장, 성채, 대농장) & 보물상자
+    if (this.entityMgr.rpgManager) {
+      this.drawPlayerStructures(ctx, ts, timeSec, camera.zoom);
+      this.drawTreasureChests(ctx, ts, timeSec, camera.zoom);
+      this.drawBuildPreview(ctx, ts, camera);
+    }
+
     // 12.5. 퀘스트 목표 지점 천공 빔 & 비컨
     if (this.entityMgr.questSystem && this.entityMgr.questSystem.activeQuest) {
       this.drawQuestBeacon(ctx, ts, timeSec, this.entityMgr.questSystem.activeQuest);
@@ -1266,6 +1273,179 @@ class WorldRenderer {
       ctx.fillText(`${Math.round(distTiles * 10)}m`, arrowX, arrowY + 23);
       ctx.restore();
     }
+  }
+
+  // 플레이어 영지 건축 구조물 (타워, 부두, 성채, 대농장) 픽셀아트 렌더링
+  drawPlayerStructures(ctx, ts, timeSec, zoom) {
+    if (!this.entityMgr.rpgManager) return;
+    for (const s of this.entityMgr.rpgManager.structures) {
+      const px = Math.round(s.x * ts);
+      const py = Math.round(s.y * ts);
+      const bw = Math.round(s.w * ts);
+      const bh = Math.round(s.h * ts);
+
+      // 바닥 픽셀 그림자
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.fillRect(px - bw / 2 + 2, py + bh / 2, bw - 2, 4);
+
+      if (s.type === 'tower') {
+        // 감시탑 본체
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(px - 10, py - 26, 20, 26);
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(px - 8, py - 24, 16, 22);
+
+        // 흉벽 (Battlements)
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(px - 12, py - 32, 24, 6);
+        ctx.fillRect(px - 12, py - 36, 6, 4);
+        ctx.fillRect(px - 2, py - 36, 4, 4);
+        ctx.fillRect(px + 6, py - 36, 6, 4);
+
+        // 탑 위의 궁수
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(px - 3, py - 42, 6, 7);
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(px + 2, py - 44, 2, 8); // 활
+
+        // 펄럭이는 깃발
+        const flagWave = Math.round(Math.sin(timeSec * 5 + s.x) * 2);
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(px - 14, py - 46, 8 + flagWave, 5);
+      } else if (s.type === 'dock') {
+        // 목재 부두 데크
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(px - bw / 2, py - bh / 2, bw, bh);
+        ctx.fillStyle = '#b45309';
+        for (let i = 0; i < s.w; i++) {
+          ctx.fillRect(px - bw / 2 + i * ts + 2, py - bh / 2 + 2, ts - 4, bh - 4);
+        }
+        // 계류 볼라드 & 램프
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(px - bw / 2 + 3, py - bh / 2 - 4, 4, 6);
+        ctx.fillRect(px + bw / 2 - 7, py - bh / 2 - 4, 4, 6);
+        ctx.fillStyle = '#fde047';
+        ctx.fillRect(px - bw / 2 + 4, py - bh / 2 - 6, 2, 2);
+      } else if (s.type === 'citadel') {
+        // 영지 왕실 성채 (4대 타워 & 중앙 천수각)
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(px - bw / 2, py - bh / 2, bw, bh);
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(px - bw / 2 + 4, py - bh / 2 + 4, bw - 8, bh - 8);
+
+        // 중앙 성채 지붕 & 황금 깃발
+        ctx.fillStyle = '#facc15';
+        ctx.beginPath();
+        ctx.moveTo(px - 16, py - bh / 2);
+        ctx.lineTo(px, py - bh / 2 - 20);
+        ctx.lineTo(px + 16, py - bh / 2);
+        ctx.closePath();
+        ctx.fill();
+
+        // 황금 사자 깃발
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(px - 1, py - bh / 2 - 28, 2, 10);
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(px + 1, py - bh / 2 - 28, 10, 6);
+      } else {
+        // 대농장 & 풍차
+        ctx.fillStyle = '#4d7c0f';
+        ctx.fillRect(px - bw / 2, py - bh / 2, bw, bh);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(px - 8, py - bh / 2 - 12, 16, 14); // 헛간
+
+        // 회전 풍차 날개
+        ctx.save();
+        ctx.translate(px, py - bh / 2 - 12);
+        ctx.rotate(timeSec * 2);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(-2, -20, 4, 40);
+        ctx.fillRect(-20, -2, 40, 4);
+        ctx.restore();
+      }
+
+      // 라벨 및 체력
+      if (zoom > 0.75) {
+        ctx.font = 'bold 10px Pretendard, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#f8fafc';
+        ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+        ctx.lineWidth = 2.5;
+        ctx.strokeText(s.name, px, py - Math.round(bh / 2) - 10);
+        ctx.fillText(s.name, px, py - Math.round(bh / 2) - 10);
+      }
+    }
+  }
+
+  // 필드 보물상자 픽셀아트 렌더링
+  drawTreasureChests(ctx, ts, timeSec, zoom) {
+    if (!this.entityMgr.rpgManager) return;
+    for (const c of this.entityMgr.rpgManager.treasureChests) {
+      const cx = Math.round(c.x * ts);
+      const cy = Math.round(c.y * ts);
+
+      if (c.opened) {
+        // 열린 보물상자
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(cx - 7, cy - 4, 14, 8);
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(cx - 6, cy - 8, 12, 4);
+      } else {
+        // 미개봉 보물상자 (반짝이는 황금빛 테두리 & 자물쇠)
+        ctx.fillStyle = '#b45309';
+        ctx.fillRect(cx - 8, cy - 7, 16, 12);
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(cx - 8, cy - 2, 16, 2);
+        ctx.fillRect(cx - 2, cy - 3, 4, 4);
+
+        // 반짝임 파티클
+        const sparkle = Math.sin(timeSec * 6 + c.x);
+        if (sparkle > 0.6) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(cx + 6, cy - 8, 2, 2);
+        }
+      }
+
+      if (zoom > 0.8 && !c.opened) {
+        ctx.font = 'bold 9.5px Pretendard, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#fde047';
+        ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+        ctx.lineWidth = 2.0;
+        ctx.strokeText(c.name, cx, cy - 11);
+        ctx.fillText(c.name, cx, cy - 11);
+      }
+    }
+  }
+
+  // 건축 모드 고스트 프리뷰 렌더링
+  drawBuildPreview(ctx, ts, camera) {
+    const rpg = this.entityMgr.rpgManager;
+    if (!rpg || !rpg.isBuildModeActive || !this.mouseWorldTile) return;
+
+    const tx = this.mouseWorldTile.x;
+    const ty = this.mouseWorldTile.y;
+    const def = (typeof STRUCTURE_DEFS !== 'undefined') ? STRUCTURE_DEFS[rpg.selectedBuildType] : null;
+    if (!def) return;
+
+    const check = rpg.canPlaceStructure(rpg.selectedBuildType, tx, ty);
+    const px = Math.round(tx * ts);
+    const py = Math.round(ty * ts);
+    const bw = Math.round(def.w * ts);
+    const bh = Math.round(def.h * ts);
+
+    ctx.save();
+    ctx.fillStyle = check.ok ? 'rgba(74, 222, 128, 0.35)' : 'rgba(239, 68, 68, 0.4)';
+    ctx.fillRect(px - bw / 2, py - bh / 2, bw, bh);
+    ctx.strokeStyle = check.ok ? '#4ade80' : '#ef4444';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(px - bw / 2, py - bh / 2, bw, bh);
+
+    ctx.font = 'bold 11px Pretendard, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = check.ok ? '#fef08a' : '#fca5a5';
+    ctx.fillText(`${def.icon} ${def.name} (${def.cost}G)`, px, py - bh / 2 - 6);
+    ctx.restore();
   }
 }
 
