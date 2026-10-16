@@ -490,6 +490,15 @@ class WorldRenderer {
       this.drawBuildPreview(ctx, ts, camera);
     }
 
+    // 12.2. 채집 및 채광 자원 노드 (Resource Nodes)
+    this.drawResourceNodes(ctx, ts, timeSec, camera.zoom);
+
+    // 12.3. 펫 컴패니언 (Pet Companion)
+    this.drawPetCompanion(ctx, ts, timeSec, camera.zoom);
+
+    // 12.4. 밤/황혼 동적 2D 조명 (Dynamic Lighting & Lighthouse Beam)
+    this.drawDynamicLighting(ctx, ts, timeSec, camera, worldTime);
+
     // 12.5. 퀘스트 목표 지점 천공 빔 & 비컨
     if (this.entityMgr.questSystem && this.entityMgr.questSystem.activeQuest) {
       this.drawQuestBeacon(ctx, ts, timeSec, this.entityMgr.questSystem.activeQuest);
@@ -1495,6 +1504,190 @@ class WorldRenderer {
     ctx.textAlign = 'center';
     ctx.fillStyle = check.ok ? '#fef08a' : '#fca5a5';
     ctx.fillText(`${def.icon} ${def.name} (${def.cost}G)`, px, py - bh / 2 - 6);
+    ctx.restore();
+  }
+
+  // 12.2. 채집 및 채광 자원 노드 픽셀아트 렌더링
+  drawResourceNodes(ctx, ts, timeSec, zoom) {
+    if (!this.world.resourceNodes) return;
+    for (const n of this.world.resourceNodes) {
+      if (n.amount <= 0) continue;
+      const px = Math.round(n.x * ts);
+      const py = Math.round(n.y * ts);
+      const bob = Math.sin(timeSec * 3 + n.x) * 1.5;
+
+      if (n.type === 'mine') {
+        // 광맥 (미스릴 / 황금)
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(px - 6, py - 4, 12, 8);
+        ctx.fillStyle = n.resource === 'gold' ? '#facc15' : '#38bdf8';
+        ctx.fillRect(px - 3, py - 7, 6, 6);
+        ctx.fillRect(px + 2, py - 2, 4, 4);
+        if (Math.sin(timeSec * 5 + n.y) > 0.5) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(px - 1, py - 6, 2, 2);
+        }
+      } else if (n.type === 'tree') {
+        // 고대 참나무
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(px - 2, py - 2, 4, 7);
+        ctx.fillStyle = '#15803d';
+        ctx.beginPath();
+        ctx.arc(px, py - 6, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#22c55e';
+        ctx.beginPath();
+        ctx.arc(px - 2, py - 8, 4, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (n.type === 'herb') {
+        // 세계수 영약초
+        ctx.fillStyle = '#10b981';
+        ctx.fillRect(px - 1, py - 3, 2, 6);
+        ctx.fillStyle = '#a855f7';
+        ctx.beginPath();
+        ctx.arc(px, py - 5 + bob, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#f472b6';
+        ctx.fillRect(px - 1, py - 6 + bob, 2, 2);
+      } else if (n.type === 'clam') {
+        // 심해 진주조개
+        ctx.fillStyle = '#0284c7';
+        ctx.beginPath();
+        ctx.arc(px, py - 2, 6, 0, Math.PI);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(px, py - 3, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      if (zoom > 0.85) {
+        ctx.font = 'bold 9px Pretendard, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#fef08a';
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
+        ctx.lineWidth = 2;
+        ctx.strokeText(n.name, px, py - 11);
+        ctx.fillText(n.name, px, py - 11);
+      }
+    }
+  }
+
+  // 12.3. 펫 컴패니언 렌더링
+  drawPetCompanion(ctx, ts, timeSec, zoom) {
+    const pet = this.entityMgr.pet;
+    if (!pet || !pet.active) return;
+    const px = Math.round(pet.x * ts);
+    const py = Math.round(pet.y * ts);
+    const flap = Math.round(Math.sin(timeSec * 10) * 3);
+
+    // 아기 비룡 본체
+    ctx.fillStyle = '#f43f5e';
+    ctx.fillRect(px - 4, py - 4, 8, 8);
+    ctx.fillStyle = '#fb7185';
+    ctx.fillRect(px + 2, py - 6, 4, 4);
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(px + 4, py - 5, 2, 2);
+
+    // 날개
+    ctx.fillStyle = '#fda4af';
+    ctx.fillRect(px - 2, py - 8 - flap, 5, 4);
+    ctx.fillRect(px - 5, py - 8 - flap, 3, 3);
+
+    // 꼬리
+    ctx.fillStyle = '#e11d48';
+    ctx.fillRect(px - 6, py + 1, 3, 3);
+
+    // 반짝이는 마력 스파크 파티클
+    ctx.fillStyle = '#facc15';
+    const spX = px + Math.sin(timeSec * 8) * 6;
+    const spY = py + Math.cos(timeSec * 8) * 6;
+    ctx.fillRect(Math.round(spX), Math.round(spY), 2, 2);
+
+    if (zoom > 0.7) {
+      ctx.font = 'bold 9px Pretendard, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#f472b6';
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
+      ctx.lineWidth = 2;
+      ctx.strokeText(pet.name, px, py - 11);
+      ctx.fillText(pet.name, px, py - 11);
+    }
+  }
+
+  // 12.4. 밤/황혼 동적 2D 조명 (Dynamic Lighting & Lighthouse Beam)
+  drawDynamicLighting(ctx, ts, timeSec, camera, worldTime) {
+    const isNight = worldTime.hour >= 18 || worldTime.hour < 6;
+    if (!isNight) return;
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+
+    // 1. 플레이어 랜턴 따뜻한 호박색 조명
+    const p = this.entityMgr.player;
+    if (p) {
+      const px = Math.round(p.x * ts);
+      const py = Math.round(p.y * ts);
+      const grad = ctx.createRadialGradient(px, py, 2, px, py, 55);
+      grad.addColorStop(0, 'rgba(253, 224, 71, 0.45)');
+      grad.addColorStop(0.5, 'rgba(245, 158, 11, 0.20)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(px, py, 55, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 2. 외딴 등대섬 (lone_beacon) 회전 등대 빔 서치라이트
+    const lb = this.world.settlementMap.lone_beacon;
+    if (lb) {
+      const bx = Math.round(lb.x * ts);
+      const by = Math.round(lb.y * ts);
+      const beamAngle = timeSec * 1.4;
+      const beamLen = 140;
+
+      ctx.save();
+      ctx.translate(bx, by - 12);
+      ctx.rotate(beamAngle);
+
+      const beamGrad = ctx.createRadialGradient(0, 0, 2, beamLen, 0, beamLen * 0.4);
+      beamGrad.addColorStop(0, 'rgba(254, 240, 138, 0.65)');
+      beamGrad.addColorStop(0.5, 'rgba(250, 204, 21, 0.25)');
+      beamGrad.addColorStop(1, 'rgba(250, 204, 21, 0)');
+
+      ctx.fillStyle = beamGrad;
+      ctx.beginPath();
+      ctx.moveTo(0, -3);
+      ctx.lineTo(beamLen, -25);
+      ctx.lineTo(beamLen, 25);
+      ctx.lineTo(0, 3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      const lGrad = ctx.createRadialGradient(bx, by - 12, 1, bx, by - 12, 45);
+      lGrad.addColorStop(0, 'rgba(255, 255, 255, 0.7)');
+      lGrad.addColorStop(1, 'rgba(253, 224, 71, 0)');
+      ctx.fillStyle = lGrad;
+      ctx.beginPath();
+      ctx.arc(bx, by - 12, 45, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 3. 주요 도시 거점 가로등/성화 조명
+    for (const s of this.world.settlements) {
+      if (Math.abs(s.x - camera.x) > 30 || Math.abs(s.y - camera.y) > 25) continue;
+      const sx = Math.round(s.x * ts);
+      const sy = Math.round(s.y * ts);
+      const sGrad = ctx.createRadialGradient(sx, sy, 2, sx, sy, 35);
+      sGrad.addColorStop(0, 'rgba(245, 158, 11, 0.28)');
+      sGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = sGrad;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 35, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     ctx.restore();
   }
 }

@@ -1069,6 +1069,85 @@ class RPGSystemsManager {
     }
   }
 
+  // ==========================================================================
+  // K. 대장간 룬 제련 & 연금술 제작 시스템 (Crafting System)
+  // ==========================================================================
+  craftItem(recipeId) {
+    const recipe = CRAFTING_RECIPES.find(r => r.id === recipeId);
+    const p = this.em.player;
+    if (!recipe || !p) return false;
+
+    // 필요 골드 확인
+    if (recipe.req.gold && p.gold < recipe.req.gold) {
+      this.em.addFloatingText(p.x, p.y - 1.2, `⚠️ 골드가 부족합니다! (${recipe.req.gold}G 필요)`, '#f87171', 1.8);
+      return false;
+    }
+    // 필요 원자재 확인
+    for (const [res, count] of Object.entries(recipe.req)) {
+      if (res === 'gold') continue;
+      if ((p.inventory[res] || 0) < count) {
+        const resName = (typeof GOODS_KR !== 'undefined' && GOODS_KR[res]) ? GOODS_KR[res] : res;
+        this.em.addFloatingText(p.x, p.y - 1.2, `⚠️ 재료 부족: ${resName} ${count}개 필요! (보유: ${p.inventory[res] || 0})`, '#f87171', 1.8);
+        return false;
+      }
+    }
+
+    // 자원 소모
+    if (recipe.req.gold) p.gold -= recipe.req.gold;
+    for (const [res, count] of Object.entries(recipe.req)) {
+      if (res === 'gold') continue;
+      p.inventory[res] -= count;
+    }
+
+    // 아이템 효과 적용
+    recipe.apply(p, this);
+    this.em.gainPlayerExp(80);
+
+    if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+    this.em.addEffect(p.x, p.y, 6.0, '#facc15', 1.2);
+    this.em.addFloatingText(p.x, p.y - 1.8, `🔨 [${recipe.name}] 제작 완료! (+80 EXP)`, '#4ade80', 2.5);
+    this.em.log('trade', `🔨 플레이어가 대장간에서 전설의 장비 [${recipe.name}]을(를) 완벽히 제련·제작했습니다!`, p.x, p.y);
+    return true;
+  }
+
+  // ==========================================================================
+  // L. 캐릭터 스탯 포인트 투자 (Stat Allocation)
+  // ==========================================================================
+  allocateStat(statKey) {
+    const p = this.em.player;
+    if (!p) return false;
+    if ((p.statPoints || 0) <= 0) {
+      this.em.addFloatingText(p.x, p.y - 1.0, '⚠️ 남은 스탯 포인트가 없습니다. 레벨업 시 획득 가능합니다.', '#f87171', 1.5);
+      return false;
+    }
+
+    p.statPoints--;
+    p.stats = p.stats || { str: 10, vit: 10, agi: 10, int: 10 };
+    p.stats[statKey] = (p.stats[statKey] || 10) + 1;
+
+    let statName = '';
+    if (statKey === 'str') {
+      p.atk += 3;
+      statName = '힘(STR) +1 -> 공격력 +3 증가';
+    } else if (statKey === 'vit') {
+      p.maxHp += 30;
+      p.hp += 30;
+      statName = '체력(VIT) +1 -> 최대 생명력 +30 증가';
+    } else if (statKey === 'agi') {
+      p.speed += 0.08;
+      statName = '민첩(AGI) +1 -> 이동속도 +0.08 증가';
+    } else if (statKey === 'int') {
+      p.atk += 2;
+      p.maxHp += 15;
+      statName = '지능(INT) +1 -> 주문력 & 생명력 증가';
+    }
+
+    if (typeof audioMgr !== 'undefined') audioMgr.playMagic();
+    this.em.addEffect(p.x, p.y, 3.5, '#38bdf8', 0.8);
+    this.em.addFloatingText(p.x, p.y - 1.5, `💪 [스탯 강화] ${statName}`, '#38bdf8', 1.8);
+    return true;
+  }
+
   update(dt, worldTime) {
     // 쿨다운 갱신
     if (this.skills.whirlwind.cd > 0) this.skills.whirlwind.cd -= dt;
@@ -1089,6 +1168,62 @@ class RPGSystemsManager {
   }
 }
 
+const CRAFTING_RECIPES = [
+  {
+    id: 'excalibur',
+    name: '아테리아의 룬 성검',
+    icon: '⚔️',
+    slot: 'weapon',
+    desc: '고대 왕국의 마법이 깃든 성검. 공격력 +55, 체력 +60 강화!',
+    req: { ore: 8, gems: 3, gold: 450 },
+    apply(p, rpg) {
+      rpg.equipment.weapon = LEGENDARY_ITEMS[0];
+      p.atk += 25;
+      p.maxHp += 60;
+      p.hp = Math.min(p.maxHp, p.hp + 60);
+    }
+  },
+  {
+    id: 'aegis_shield',
+    name: '용비늘 이지스 방패',
+    icon: '🛡️',
+    slot: 'shield',
+    desc: '고대 드래곤의 비늘로 벼려낸 불멸의 방패. 체력 +160, 받는 피해 대폭 경감!',
+    req: { ore: 10, wood: 8, gold: 400 },
+    apply(p, rpg) {
+      rpg.equipment.shield = LEGENDARY_ITEMS[1];
+      p.maxHp += 160;
+      p.hp = Math.min(p.maxHp, p.hp + 160);
+      p.atk += 10;
+    }
+  },
+  {
+    id: 'galleon_engine',
+    name: '초고속 룬 추진 범선',
+    icon: '⛵',
+    slot: 'ship',
+    desc: '심해 아틀란티스 기술이 접목된 룬 추진기. 해상 항해 속도 50% 영구 상승!',
+    req: { wood: 15, ore: 6, gold: 500 },
+    apply(p, rpg) {
+      p.shipSpeedMult = (p.shipSpeedMult || 1.0) * 1.5;
+    }
+  },
+  {
+    id: 'immortality_elixir',
+    name: '세계수의 불로불사 영약',
+    icon: '🧪',
+    slot: 'potion',
+    desc: '신비한 세계수 약초 추출물. 최대 생명력 +200 & 영구 공격력 +15 증가!',
+    req: { herbs: 10, gems: 2, gold: 350 },
+    apply(p, rpg) {
+      p.maxHp += 200;
+      p.hp = p.maxHp;
+      p.atk += 15;
+    }
+  }
+];
+
 window.RPGSystemsManager = RPGSystemsManager;
 window.STRUCTURE_DEFS = STRUCTURE_DEFS;
 window.LEGENDARY_ITEMS = LEGENDARY_ITEMS;
+window.CRAFTING_RECIPES = CRAFTING_RECIPES;

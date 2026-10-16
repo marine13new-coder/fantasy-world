@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>크로니클 오브 아테리아 (Chronicles of Aetheria) - 오픈월드 판타지 생태계 & 항해 시뮬레이션</title>
-  <link rel="stylesheet" href="css/style.css?v=11" />
+  <link rel="stylesheet" href="css/style.css?v=12" />
 </head>
 <body>
   <!-- 메인 월드 캔버스 -->
@@ -39,7 +39,19 @@
         <button class="speed-btn" data-speed="4" title="4배속">4x</button>
         <button class="speed-btn" data-speed="8" title="8배속">8x</button>
         <button id="btnToggleAudio" class="speed-btn audio-toggle-btn" title="사운드 효과음 ON/OFF">🔊</button>
+        <button id="btnToggleFullscreen" class="speed-btn" title="전체화면 전환 (F11)">⛶</button>
+        <button id="btnToggleCinematic" class="speed-btn" title="포토/시네마틱 모드 (UI 토글)">👁️</button>
       </div>
+    </div>
+
+    <!-- 동적 월드 이벤트 알림 배너 -->
+    <div id="worldEventBanner" class="world-event-banner">
+      <span id="worldEventIcon" class="event-icon">🩸</span>
+      <div class="event-info">
+        <div id="worldEventTitle" class="event-title">붉은 달의 밤 (Blood Moon)</div>
+        <div id="worldEventDesc" class="event-desc">몬스터가 사나워지며 처치 시 EXP와 전리품이 2배로 폭증합니다!</div>
+      </div>
+      <div class="event-timer-badge">⏳ <span id="worldEventTimerText">75s</span></div>
     </div>
 
     <!-- 월드 보스 레이드 체력바 -->
@@ -107,6 +119,21 @@
         <span id="questDistance" class="quest-dist">🧭 185m 남동쪽</span>
         <span id="questReward" class="quest-reward">💰 +2,500 G · 🌟 명성 +50</span>
       </div>
+    </div>
+  </div>
+
+  <!-- 실시간 네비게이션 나침반 위젯 -->
+  <div id="navCompass" class="nav-compass-widget">
+    <div class="compass-dial">
+      <div id="compassNeedle" class="compass-needle"></div>
+      <span class="compass-cardinal n">N</span>
+      <span class="compass-cardinal s">S</span>
+      <span class="compass-cardinal e">E</span>
+      <span class="compass-cardinal w">W</span>
+    </div>
+    <div class="compass-info">
+      <div id="compassTargetName" class="compass-target">솔라리스 왕도</div>
+      <div id="compassTargetDist" class="compass-dist">0m</div>
     </div>
   </div>
 
@@ -217,7 +244,14 @@
       <button id="btnTogglePlayer" class="hero-btn active">
         <span class="hero-icon">🌟</span>
         <div>
-          <div class="hero-label">내 캐릭터 (플레이어)</div>
+          <div class="hero-name-row">
+            <span class="hero-label">내 영웅</span>
+            <span id="heroLevelBadge" class="hero-lvl-badge">Lv. 5</span>
+          </div>
+          <div class="hero-mini-bars">
+            <div class="mini-bar hp" title="생명력 (HP)"><div id="dockHeroHpFill" style="width: 100%"></div></div>
+            <div class="mini-bar exp" title="경험치 (EXP)"><div id="dockHeroExpFill" style="width: 0%"></div></div>
+          </div>
           <div id="heroStatusText" class="hero-sub">조작 활성화 (WASD / 우클릭)</div>
         </div>
       </button>
@@ -258,19 +292,34 @@
           <span class="skill-icon">⚡</span>
           <span class="skill-name">천공심판</span>
         </button>
-        <button class="skill-btn" id="btnSkillE" title="질주 & 순풍 가속: 6초간 이동속도 대폭 증가 & 체력 회복 (단축키 E)">
+        <button class="skill-btn" id="btnSkillE" title="채집 & 질주 가속: 자원 채집 및 6초간 이동속도 대폭 증가 (단축키 E)">
           <span class="key-badge">E</span>
-          <span class="skill-icon">💨</span>
-          <span class="skill-name">질주/순풍</span>
+          <span class="skill-icon">⛏️</span>
+          <span class="skill-name">채집/질주</span>
         </button>
         <button class="skill-btn" id="btnSkillF" title="도시 교역 & 장비 강화: 인근 마을/항구에서 특산물 매각 및 공격력 영구 강화 (단축키 F)">
           <span class="key-badge">F</span>
           <span class="skill-icon">🪙</span>
           <span class="skill-name">교역/강화</span>
         </button>
+        <button class="skill-btn" id="btnSkillK" title="왕립 대장간 & 연금술 제작: 미스릴 무기/방패/엔진/영약 제작 (단축키 K)">
+          <span class="key-badge">K</span>
+          <span class="skill-icon">🔨</span>
+          <span class="skill-name">대장간제작</span>
+        </button>
+        <button class="skill-btn" id="btnSkillU" title="영웅 스탯 분배: 레벨업 스탯 포인트 투자 (단축키 U)">
+          <span class="key-badge">U</span>
+          <span class="skill-icon">📊</span>
+          <span class="skill-name">스탯강화</span>
+        </button>
+        <button class="skill-btn" id="btnSkillT" title="수호 펫 소환/휴식: 아기 비룡 샬롯 동행 (단축키 T)">
+          <span class="key-badge">T</span>
+          <span class="skill-icon">🐲</span>
+          <span class="skill-name">수호펫</span>
+        </button>
         <button class="skill-btn" id="btnToggleBuild" title="영지 건축 모드: 감시탑, 선착장, 왕실성채, 대농장 건설 (단축키 B)">
           <span class="key-badge">B</span>
-          <span class="skill-icon">🔨</span>
+          <span class="skill-icon">🏗️</span>
           <span class="skill-name">영지건축</span>
         </button>
         <button class="skill-btn" id="btnToggleCompanions" title="정예 호위 용병단 소집 및 지휘 (단축키 C)">
@@ -402,6 +451,82 @@
     </div>
   </div>
 
+  <!-- 대장간 & 연금술 제작 모달 -->
+  <div id="craftingModal" class="modal-overlay hidden">
+    <div class="inventory-card crafting-card">
+      <div class="inv-header">
+        <h2>🔨 왕립 대장간 & 연금술 제련소</h2>
+        <button id="btnCloseCrafting" class="close-btn">✖</button>
+      </div>
+      <div class="crafting-body">
+        <div class="crafting-desc-banner">
+          <span>대륙 각지의 광맥(광석), 고대 참나무(목재), 세계수(약초), 진주조개(보석)를 채집하여 신화급 장비와 영약을 제작하세요!</span>
+        </div>
+        <div class="crafting-recipes-list" id="craftingRecipesList">
+          <!-- JS 동적 렌더링 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 캐릭터 스탯 포인트 분배 모달 -->
+  <div id="statsModal" class="modal-overlay hidden">
+    <div class="inventory-card stats-modal-card">
+      <div class="inv-header">
+        <h2>📊 영웅 능력치(스탯) 강화</h2>
+        <button id="btnCloseStatsModal" class="close-btn">✖</button>
+      </div>
+      <div class="stats-modal-body">
+        <div class="stats-points-banner">
+          <span>사용 가능한 잔여 스탯 포인트:</span>
+          <strong id="modalStatPoints">0 P</strong>
+        </div>
+        <div class="stats-allocation-grid">
+          <div class="stat-alloc-row">
+            <div class="stat-alloc-info">
+              <span class="alloc-title">💪 근력 (STR)</span>
+              <span class="alloc-desc">물리 공격력 및 파괴력 강화 (+3 ATK)</span>
+            </div>
+            <div class="alloc-controls">
+              <strong id="statValStr">10</strong>
+              <button class="btn-alloc-plus" data-stat="str">+</button>
+            </div>
+          </div>
+          <div class="stat-alloc-row">
+            <div class="stat-alloc-info">
+              <span class="alloc-title">❤️ 체질 (VIT)</span>
+              <span class="alloc-desc">최대 생명력 및 방어 생존력 강화 (+30 MaxHP)</span>
+            </div>
+            <div class="alloc-controls">
+              <strong id="statValVit">10</strong>
+              <button class="btn-alloc-plus" data-stat="vit">+</button>
+            </div>
+          </div>
+          <div class="stat-alloc-row">
+            <div class="stat-alloc-info">
+              <span class="alloc-title">💨 민첩 (AGI)</span>
+              <span class="alloc-desc">이동 속도 및 질주 기동력 강화 (+0.08 Speed)</span>
+            </div>
+            <div class="alloc-controls">
+              <strong id="statValAgi">10</strong>
+              <button class="btn-alloc-plus" data-stat="agi">+</button>
+            </div>
+          </div>
+          <div class="stat-alloc-row">
+            <div class="stat-alloc-info">
+              <span class="alloc-title">🔮 지능 (INT)</span>
+              <span class="alloc-desc">원소 마법 피해 및 주문력 강화 (+2 ATK, +15 HP)</span>
+            </div>
+            <div class="alloc-controls">
+              <strong id="statValInt">10</strong>
+              <button class="btn-alloc-plus" data-stat="int">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 하단 카메라 추적 배너 -->
   <div id="followBanner" class="follow-banner hidden">
     <span id="followBannerText">🎥 추적 중: -</span>
@@ -409,11 +534,11 @@
   </div>
 
   <!-- 스크립트 로드 -->
-  <script src="js/audio.js?v=11"></script>
-  <script src="js/world_gen.js?v=11"></script>
-  <script src="js/entities.js?v=11"></script>
-  <script src="js/rpg_systems.js?v=11"></script>
-  <script src="js/renderer.js?v=11"></script>
-  <script src="js/main.js?v=11"></script>
+  <script src="js/audio.js?v=12"></script>
+  <script src="js/world_gen.js?v=12"></script>
+  <script src="js/entities.js?v=12"></script>
+  <script src="js/rpg_systems.js?v=12"></script>
+  <script src="js/renderer.js?v=12"></script>
+  <script src="js/main.js?v=12"></script>
 </body>
 </html>

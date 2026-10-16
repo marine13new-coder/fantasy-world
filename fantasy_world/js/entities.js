@@ -233,8 +233,19 @@ class EntityManager {
     this.specialEffects = [];
     this.activeBattles = 0;
     this.player = null;
+    this.pet = null;
     this.questSystem = new QuestSystem(this.world, this);
     this.rpgManager = (typeof RPGSystemsManager !== 'undefined') ? new RPGSystemsManager(this.world, this) : null;
+
+    // 동적 대륙 월드 이벤트 시스템
+    this.worldEvents = [
+      { id: 'blood_moon', title: '🩸 붉은 달의 밤 (Blood Moon)', desc: '몬스터가 사나워지며 처치 시 EXP와 전리품이 2배로 폭증합니다!', buff: 'blood_moon', duration: 75, icon: '🩸' },
+      { id: 'gold_rush', title: '🪙 황금 고블린 대탈출 (Treasure Rush)', desc: '전 대륙에 미확인 황금 보물상자와 황금 광맥이 대량 발견되었습니다!', buff: 'gold_rush', duration: 75, icon: '🪙' },
+      { id: 'fair_wind', title: '🌊 대양 순풍의 축복 (Fair Winds)', desc: '대양의 모든 무역선과 플레이어 선박 항해 속도가 2배로 증가합니다!', buff: 'fair_wind', duration: 75, icon: '🌊' },
+      { id: 'tree_bloom', title: '✨ 세계수의 대각성 (World Tree Bloom)', desc: '약초 채집량 2배 증가 및 주민과 플레이어 생명력이 초당 지속 회복됩니다!', buff: 'tree_bloom', duration: 75, icon: '✨' }
+    ];
+    this.activeWorldEvent = this.worldEvents[0];
+    this.worldEventTimer = 75;
   }
 
   log(type, text, x, y) {
@@ -905,9 +916,131 @@ class EntityManager {
     this.player.fame = 0;
     this.player.icon = '🏇';
     this.player.speed = 2.65;
+    this.player.exp = 0;
+    this.player.maxExp = 120;
+    this.player.statPoints = 3;
+    this.player.stats = { str: 10, vit: 10, agi: 10, int: 10 };
+    if (!this.player.inventory.wood) this.player.inventory.wood = 8;
+    if (!this.player.inventory.ore) this.player.inventory.ore = 6;
+    if (!this.player.inventory.herbs) this.player.inventory.herbs = 5;
     this.addEffect(this.player.x, this.player.y, 5, '#facc15', 1.0);
-    this.log('quest', '🌟 플레이어 영웅이 아테리아 대륙에 강림했습니다! (백마 탑승)', this.player.x, this.player.y);
+    this.log('quest', '🌟 플레이어 영웅이 아테리아 대륙에 강림했습니다! (백마 탑승 · 레벨 5)', this.player.x, this.player.y);
     return this.player;
+  }
+
+  gainPlayerExp(amount) {
+    const p = this.player;
+    if (!p) return;
+    if (this.activeWorldEvent && this.activeWorldEvent.buff === 'blood_moon') {
+      amount *= 2;
+    }
+    p.exp = (p.exp || 0) + amount;
+    this.addFloatingText(p.x, p.y - 1.2, `+${amount} EXP`, '#38bdf8', 1.2);
+    while (p.exp >= (p.maxExp || 100)) {
+      p.exp -= (p.maxExp || 100);
+      p.level = (p.level || 1) + 1;
+      p.maxExp = Math.round((p.maxExp || 100) * 1.35 + 30);
+      p.statPoints = (p.statPoints || 0) + 3;
+      p.maxHp += 30;
+      p.hp = p.maxHp;
+      p.atk += 3;
+      if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+      this.addEffect(p.x, p.y, 8.0, '#facc15', 1.5);
+      this.addFloatingText(p.x, p.y - 2.2, `🎉 LEVEL UP! Lv.${p.level} 달성! (스탯 포인트 +3 [U])`, '#fde047', 2.8);
+      this.log('quest', `🌟 플레이어가 레벨 ${p.level}에 도달했습니다! 능력치 강화 포인트 +3P 획득 [U]`, p.x, p.y);
+    }
+  }
+
+  gatherNearestResource() {
+    const p = this.spawnOrGetPlayer();
+    const nodes = this.world.resourceNodes || [];
+    let bestNode = null;
+    let minDist = 4.2;
+
+    for (const node of nodes) {
+      const d = Math.hypot(node.x - p.x, node.y - p.y);
+      if (d < minDist && node.amount > 0) {
+        minDist = d;
+        bestNode = node;
+      }
+    }
+
+    if (bestNode) {
+      bestNode.amount--;
+      const resKey = bestNode.resource;
+      const count = (this.activeWorldEvent && this.activeWorldEvent.buff === 'tree_bloom' && resKey === 'herbs') ? 2 : 1;
+      
+      if (resKey === 'gold') {
+        const gGain = 80;
+        p.gold += gGain;
+        this.addFloatingText(p.x, p.y - 1.4, `⛏️ 황금 광맥 채광 성공! +${gGain}G`, '#facc15', 1.8);
+      } else {
+        p.inventory[resKey] = (p.inventory[resKey] || 0) + count;
+        const icon = GOODS_KR[resKey] || resKey;
+        this.addFloatingText(p.x, p.y - 1.4, `🌿 [${bestNode.name}] 채집 완료! +${count} ${icon}`, '#4ade80', 1.8);
+      }
+
+      this.addEffect(bestNode.x, bestNode.y, 2.5, '#4ade80', 0.6);
+      if (typeof audioMgr !== 'undefined') audioMgr.playMagic();
+      this.gainPlayerExp(30);
+
+      if (bestNode.amount <= 0) {
+        bestNode.respawn = 45; // 45초 후 재생성
+        this.addFloatingText(bestNode.x, bestNode.y - 0.8, '노드 고갈 (45초 후 재생성)', '#94a3b8', 1.4);
+      }
+      return true;
+    } else {
+      // 일반 지형 채집 (숲/산맥/물가)
+      const tx = Math.floor(p.x);
+      const ty = Math.floor(p.y);
+      const tile = this.world.getTile(tx, ty);
+      if (tile === TILE.FOREST || tile === TILE.AUTUMN_WOOD || tile === TILE.MEADOW) {
+        p.inventory.wood = (p.inventory.wood || 0) + 1;
+        this.addFloatingText(p.x, p.y - 1.3, '🌲 원목 벌목 완료! (+1 목재)', '#84cc16', 1.5);
+        this.addEffect(p.x, p.y, 2.0, '#84cc16', 0.5);
+        this.gainPlayerExp(15);
+        return true;
+      } else if (tile === TILE.MOUNTAIN || tile === TILE.HILLS) {
+        p.inventory.ore = (p.inventory.ore || 0) + 1;
+        this.addFloatingText(p.x, p.y - 1.3, '⛏️ 암석 채광 완료! (+1 광석)', '#94a3b8', 1.5);
+        this.addEffect(p.x, p.y, 2.0, '#94a3b8', 0.5);
+        this.gainPlayerExp(15);
+        return true;
+      }
+      return false;
+    }
+  }
+
+  togglePetCompanion() {
+    const p = this.spawnOrGetPlayer();
+    if (!this.pet) {
+      this.pet = {
+        active: false,
+        name: '아기 수호 비룡 샬롯',
+        icon: '🐲',
+        x: p.x + 1.5,
+        y: p.y - 1.5,
+        targetX: p.x + 1.5,
+        targetY: p.y - 1.5,
+        speed: 3.5,
+        sparkleTimer: 0
+      };
+    }
+    this.pet.active = !this.pet.active;
+    if (this.pet.active) {
+      this.pet.x = p.x + 1.5;
+      this.pet.y = p.y - 1.5;
+      p.atk += 15;
+      p.speed += 0.2;
+      this.addEffect(this.pet.x, this.pet.y, 4.0, '#ec4899', 1.0);
+      this.addFloatingText(p.x, p.y - 1.8, '🐲 [아기 수호 비룡] 소환! (공격력+15, 이속+0.2, 자동 보물상자 수집 오라)', '#f472b6', 2.4);
+      this.log('quest', '🐲 플레이어가 전설의 수호 펫 [아기 비룡 샬롯]을 소환하여 동행합니다!', p.x, p.y);
+      if (typeof audioMgr !== 'undefined') audioMgr.playRoar();
+    } else {
+      p.atk = Math.max(10, p.atk - 15);
+      p.speed = Math.max(1.5, p.speed - 0.2);
+      this.addFloatingText(p.x, p.y - 1.2, '🐲 수호 펫을 휴식시켰습니다.', '#cbd5e1', 1.5);
+    }
   }
 
   togglePlayerMount() {
@@ -1002,6 +1135,29 @@ class EntityManager {
       return;
     }
 
+    if (skillKey === 'T' || skillKey === 'pet') {
+      this.togglePetCompanion();
+      return;
+    }
+
+    if (skillKey === 'K' || skillKey === 'craft') {
+      const modal = document.getElementById('craftingModal');
+      if (modal) {
+        modal.classList.toggle('hidden');
+        if (!modal.classList.contains('hidden') && typeof updateCraftingUI === 'function') updateCraftingUI();
+      }
+      return;
+    }
+
+    if (skillKey === 'U' || skillKey === 'stats') {
+      const modal = document.getElementById('statsModal');
+      if (modal) {
+        modal.classList.toggle('hidden');
+        if (!modal.classList.contains('hidden') && typeof updateStatsModalUI === 'function') updateStatsModalUI();
+      }
+      return;
+    }
+
     if (skillKey === 'Q') {
       if (typeof audioMgr !== 'undefined') audioMgr.playMagic();
       this.addEffect(p.x, p.y, 11, '#f97316', 0.85);
@@ -1018,17 +1174,22 @@ class EntityManager {
               p.kills++;
               p.gold += other.gold;
               p.inventory.gems = (p.inventory.gems || 0) + 1;
+              this.gainPlayerExp(45);
             }
           }
         }
       }
       this.addFloatingText(p.x, p.y - 1.5, hitCount > 0 ? `⚡ 천공의 심판! (${hitCount}기 타격)` : '⚡ 천공의 심판!', '#fde047', 1.4);
     } else if (skillKey === 'E') {
-      if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
-      p.boostTimer = 6.0;
-      p.hp = Math.min(p.maxHp, p.hp + 150);
-      this.addEffect(p.x, p.y, 4.5, '#38bdf8', 0.7);
-      this.addFloatingText(p.x, p.y - 1.4, '💨 질주 가속 & 생명력 회복!', '#38bdf8', 1.4);
+      // 인근 자원(광맥/수목/약초/진주조개)이 있으면 우선 채집
+      const gathered = this.gatherNearestResource();
+      if (!gathered) {
+        if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+        p.boostTimer = 6.0;
+        p.hp = Math.min(p.maxHp, p.hp + 150);
+        this.addEffect(p.x, p.y, 4.5, '#38bdf8', 0.7);
+        this.addFloatingText(p.x, p.y - 1.4, '💨 질주 가속 & 생명력 회복!', '#38bdf8', 1.4);
+      }
     } else if (skillKey === 'F') {
       this.interactWithNearestSettlement();
     }
@@ -1294,6 +1455,51 @@ class EntityManager {
     for (const plot of this.world.farmPlots) {
       if (plot.growth < 100) {
         plot.growth = Math.min(100, plot.growth + dt * (isNight ? 0.6 : 1.9));
+      }
+    }
+
+    // 동적 월드 이벤트 로테이션
+    this.worldEventTimer -= dt;
+    if (this.worldEventTimer <= 0) {
+      const curIdx = this.worldEvents.indexOf(this.activeWorldEvent);
+      const nextIdx = (curIdx + 1) % this.worldEvents.length;
+      this.activeWorldEvent = this.worldEvents[nextIdx];
+      this.worldEventTimer = this.activeWorldEvent.duration;
+      this.log('quest', `📢 [월드 이벤트] ${this.activeWorldEvent.title} 발령! ${this.activeWorldEvent.desc}`, this.player ? this.player.x : 200, this.player ? this.player.y : 150);
+      if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+    }
+
+    // 자원 노드 리스폰 진행
+    if (this.world.resourceNodes) {
+      for (const node of this.world.resourceNodes) {
+        if (node.amount <= 0 && node.respawn > 0) {
+          node.respawn -= dt;
+          if (node.respawn <= 0) {
+            node.amount = node.maxAmount || 5;
+          }
+        }
+      }
+    }
+
+    // 펫 컴패니언 비행 추적 및 보물상자 오토루팅
+    if (this.pet && this.pet.active && this.player) {
+      const p = this.player;
+      const angle = (Date.now() / 600) % (Math.PI * 2);
+      this.pet.targetX = p.x + Math.cos(angle) * 1.8;
+      this.pet.targetY = p.y + Math.sin(angle) * 1.8;
+      const pdx = this.pet.targetX - this.pet.x;
+      const pdy = this.pet.targetY - this.pet.y;
+      this.pet.x += pdx * dt * 4.0;
+      this.pet.y += pdy * dt * 4.0;
+
+      // 펫 주변 보물상자 오토루팅
+      if (this.rpgManager && this.rpgManager.treasureChests) {
+        for (const chest of this.rpgManager.treasureChests) {
+          if (!chest.opened && Math.hypot(chest.x - this.pet.x, chest.y - this.pet.y) < 2.8) {
+            this.rpgManager.openTreasureChest(chest, p);
+            this.addFloatingText(this.pet.x, this.pet.y - 1.0, '🐲 펫이 보물상자를 획득했습니다!', '#f472b6', 1.5);
+          }
+        }
       }
     }
 
@@ -1702,6 +1908,7 @@ class EntityManager {
           p.kills++;
           p.gold += nearest.gold;
           p.inventory.gems = (p.inventory.gems || 0) + 1;
+          this.gainPlayerExp(nearest.role === 'dragon' ? 120 : 50);
           if (this.rpgManager) {
             this.rpgManager.addCombo(2);
           }

@@ -430,6 +430,253 @@ function startFantasyWorld() {
     });
   }
 
+  // 대장간 & 연금술 제작 모달
+  const craftingModalEl = document.getElementById('craftingModal');
+  const btnCloseCrafting = document.getElementById('btnCloseCrafting');
+  const btnSkillK = document.getElementById('btnSkillK');
+
+  function updateCraftingUI() {
+    if (!craftingModalEl || craftingModalEl.classList.contains('hidden')) return;
+    const listEl = document.getElementById('craftingRecipesList');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+
+    const recipes = (typeof CRAFTING_RECIPES !== 'undefined') ? CRAFTING_RECIPES : [];
+    const p = player;
+
+    recipes.forEach(r => {
+      const item = document.createElement('div');
+      item.className = 'crafting-recipe-item';
+
+      let reqsHtml = '';
+      let canCraft = true;
+
+      // 골드
+      if (r.req.gold) {
+        const has = p.gold >= r.req.gold;
+        if (!has) canCraft = false;
+        reqsHtml += `<span class="req-tag ${has ? 'ready' : 'lack'}">🪙 ${r.req.gold}G (${p.gold.toLocaleString()}G)</span>`;
+      }
+
+      // 원자재
+      for (const [res, count] of Object.entries(r.req)) {
+        if (res === 'gold') continue;
+        const cur = p.inventory[res] || 0;
+        const has = cur >= count;
+        if (!has) canCraft = false;
+        const resLabel = (typeof GOODS_KR !== 'undefined' && GOODS_KR[res]) ? GOODS_KR[res] : res;
+        reqsHtml += `<span class="req-tag ${has ? 'ready' : 'lack'}">${resLabel} ${count}개 (보유: ${cur})</span>`;
+      }
+
+      item.innerHTML = `
+        <div class="recipe-left">
+          <span class="recipe-icon">${r.icon}</span>
+          <div class="recipe-details">
+            <span class="recipe-name">${r.name}</span>
+            <span class="recipe-desc">${r.desc}</span>
+            <div class="recipe-reqs">${reqsHtml}</div>
+          </div>
+        </div>
+        <button class="btn-craft" data-recipe="${r.id}" ${canCraft ? '' : 'style="opacity:0.5;"'}>제작 (Craft)</button>
+      `;
+
+      const btn = item.querySelector('.btn-craft');
+      btn.addEventListener('click', () => {
+        if (entityMgr.rpgManager) {
+          entityMgr.rpgManager.craftItem(r.id);
+          updateCraftingUI();
+          updateInventoryUI();
+        }
+      });
+
+      listEl.appendChild(item);
+    });
+  }
+
+  function toggleCrafting() {
+    if (!craftingModalEl) return;
+    const isHidden = craftingModalEl.classList.contains('hidden');
+    craftingModalEl.classList.toggle('hidden', !isHidden);
+    if (isHidden) {
+      updateCraftingUI();
+      if (typeof audioMgr !== 'undefined') audioMgr.playCoin();
+    }
+  }
+
+  if (btnSkillK) btnSkillK.addEventListener('click', toggleCrafting);
+  if (btnCloseCrafting) {
+    btnCloseCrafting.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (craftingModalEl) craftingModalEl.classList.add('hidden');
+    });
+  }
+  if (craftingModalEl) {
+    craftingModalEl.addEventListener('click', (e) => {
+      if (e.target === craftingModalEl) craftingModalEl.classList.add('hidden');
+    });
+  }
+
+  // 캐릭터 스탯 강화 모달
+  const statsModalEl = document.getElementById('statsModal');
+  const btnCloseStatsModal = document.getElementById('btnCloseStatsModal');
+  const btnSkillU = document.getElementById('btnSkillU');
+
+  function updateStatsModalUI() {
+    if (!statsModalEl || statsModalEl.classList.contains('hidden')) return;
+    const p = player;
+    p.stats = p.stats || { str: 10, vit: 10, agi: 10, int: 10 };
+
+    const ptsEl = document.getElementById('modalStatPoints');
+    if (ptsEl) ptsEl.textContent = `${p.statPoints || 0} P`;
+
+    const strEl = document.getElementById('statValStr');
+    const vitEl = document.getElementById('statValVit');
+    const agiEl = document.getElementById('statValAgi');
+    const intEl = document.getElementById('statValInt');
+
+    if (strEl) strEl.textContent = p.stats.str || 10;
+    if (vitEl) vitEl.textContent = p.stats.vit || 10;
+    if (agiEl) agiEl.textContent = p.stats.agi || 10;
+    if (intEl) intEl.textContent = p.stats.int || 10;
+
+    const plusBtns = statsModalEl.querySelectorAll('.btn-alloc-plus');
+    plusBtns.forEach(btn => {
+      btn.style.opacity = (p.statPoints || 0) > 0 ? '1' : '0.4';
+    });
+  }
+
+  function toggleStatsModal() {
+    if (!statsModalEl) return;
+    const isHidden = statsModalEl.classList.contains('hidden');
+    statsModalEl.classList.toggle('hidden', !isHidden);
+    if (isHidden) {
+      updateStatsModalUI();
+      if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+    }
+  }
+
+  if (btnSkillU) btnSkillU.addEventListener('click', toggleStatsModal);
+  if (btnCloseStatsModal) {
+    btnCloseStatsModal.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (statsModalEl) statsModalEl.classList.add('hidden');
+    });
+  }
+  if (statsModalEl) {
+    statsModalEl.addEventListener('click', (e) => {
+      if (e.target === statsModalEl) statsModalEl.classList.add('hidden');
+    });
+  }
+
+  // 스탯 + 버튼 클릭 핸들러
+  if (statsModalEl) {
+    const allocBtns = statsModalEl.querySelectorAll('.btn-alloc-plus');
+    allocBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const statKey = btn.getAttribute('data-stat');
+        if (entityMgr.rpgManager && statKey) {
+          entityMgr.rpgManager.allocateStat(statKey);
+          updateStatsModalUI();
+          updateInventoryUI();
+        }
+      });
+    });
+  }
+
+  // 수호 펫 토글 버튼
+  const btnSkillT = document.getElementById('btnSkillT');
+  if (btnSkillT) {
+    btnSkillT.addEventListener('click', () => {
+      entityMgr.togglePetCompanion();
+    });
+  }
+
+  // 전체화면 및 시네마틱 모드
+  const btnToggleFullscreen = document.getElementById('btnToggleFullscreen');
+  if (btnToggleFullscreen) {
+    btnToggleFullscreen.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    });
+  }
+
+  const btnToggleCinematic = document.getElementById('btnToggleCinematic');
+  if (btnToggleCinematic) {
+    btnToggleCinematic.addEventListener('click', () => {
+      document.body.classList.toggle('cinematic-mode');
+    });
+  }
+
+  // 동적 월드 이벤트 & 나침반 & 영웅 미니 바 업데이트 함수
+  function updateWorldEventUI() {
+    const ev = entityMgr.activeWorldEvent;
+    if (!ev) return;
+    const iconEl = document.getElementById('worldEventIcon');
+    const titleEl = document.getElementById('worldEventTitle');
+    const descEl = document.getElementById('worldEventDesc');
+    const timerEl = document.getElementById('worldEventTimerText');
+    if (iconEl) iconEl.textContent = ev.icon;
+    if (titleEl) titleEl.textContent = ev.title;
+    if (descEl) descEl.textContent = ev.desc;
+    if (timerEl) timerEl.textContent = `${Math.ceil(entityMgr.worldEventTimer)}s`;
+  }
+
+  function updateNavCompassUI() {
+    const p = player;
+    if (!p) return;
+    let target = null;
+    let targetName = '목표 지점';
+
+    if (entityMgr.questSystem && entityMgr.questSystem.activeQuest) {
+      const q = entityMgr.questSystem.activeQuest;
+      target = q.targetLocation || (q.targetSettlement ? world.settlementMap[q.targetSettlement] : null);
+      targetName = q.title;
+    } else if (selectedItem && selectedItem.data && (selectedItem.data.x !== undefined)) {
+      target = selectedItem.data;
+      targetName = selectedItem.data.name || '선택 지점';
+    } else {
+      target = world.settlementMap.solaris;
+      targetName = '솔라리스 왕도';
+    }
+
+    if (!target) return;
+    const dx = target.x - p.x;
+    const dy = target.y - p.y;
+    const dist = Math.hypot(dx, dy);
+    const angle = Math.atan2(dy, dx);
+
+    const needleEl = document.getElementById('compassNeedle');
+    if (needleEl) {
+      needleEl.style.transform = `rotate(${Math.round((angle * 180 / Math.PI) + 90)}deg)`;
+    }
+    const nameEl = document.getElementById('compassTargetName');
+    const distEl = document.getElementById('compassTargetDist');
+    if (nameEl) nameEl.textContent = targetName.length > 10 ? targetName.slice(0, 10) + '...' : targetName;
+    if (distEl) distEl.textContent = `${Math.round(dist * 10)}m`;
+  }
+
+  function updateHeroBarsUI() {
+    const p = player;
+    if (!p) return;
+    const lvlEl = document.getElementById('heroLevelBadge');
+    const hpFill = document.getElementById('dockHeroHpFill');
+    const expFill = document.getElementById('dockHeroExpFill');
+
+    if (lvlEl) lvlEl.textContent = `Lv. ${p.level || 5}`;
+    if (hpFill) {
+      const hpPct = Math.max(0, Math.min(100, (p.hp / p.maxHp) * 100));
+      hpFill.style.width = `${hpPct}%`;
+    }
+    if (expFill) {
+      const expPct = Math.max(0, Math.min(100, ((p.exp || 0) / (p.maxExp || 120)) * 100));
+      expFill.style.width = `${expPct}%`;
+    }
+  }
+
   // 군주 칙령 바인딩
   document.getElementById('btnDispatchFleet').addEventListener('click', () => entityMgr.dispatchTradeFleet());
   document.getElementById('btnDispatchCrusade').addEventListener('click', () => entityMgr.dispatchCrusade());
@@ -602,6 +849,21 @@ function startFantasyWorld() {
       if (btnToggleCompanions) btnToggleCompanions.click();
     } else if (e.code === 'KeyI') {
       toggleInventory();
+    } else if (e.code === 'KeyK') {
+      toggleCrafting();
+    } else if (e.code === 'KeyU') {
+      toggleStatsModal();
+    } else if (e.code === 'KeyT') {
+      entityMgr.togglePetCompanion();
+    } else if (e.code === 'KeyH') {
+      document.body.classList.toggle('cinematic-mode');
+    } else if (e.code === 'F11') {
+      e.preventDefault();
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
     } else if (e.code === 'KeyP') {
       isPlayerControlActive = !isPlayerControlActive;
       if (isPlayerControlActive) startFollow(player);
@@ -620,6 +882,8 @@ function startFantasyWorld() {
     } else if (e.code === 'Escape') {
       stopFollow();
       if (inventoryModalEl) inventoryModalEl.classList.add('hidden');
+      if (craftingModalEl) craftingModalEl.classList.add('hidden');
+      if (statsModalEl) statsModalEl.classList.add('hidden');
       if (buildPaletteEl) buildPaletteEl.classList.add('hidden');
       if (entityMgr.rpgManager) entityMgr.rpgManager.isBuildModeActive = false;
       if (btnToggleBuild) btnToggleBuild.classList.remove('active');
@@ -956,6 +1220,11 @@ function startFantasyWorld() {
       updateQuestHudUI();
       updateSettlementPromptUI();
       updateMountUI();
+      updateWorldEventUI();
+      updateNavCompassUI();
+      updateHeroBarsUI();
+      if (craftingModalEl && !craftingModalEl.classList.contains('hidden')) updateCraftingUI();
+      if (statsModalEl && !statsModalEl.classList.contains('hidden')) updateStatsModalUI();
       if (selectedItem) updateInspectorUI();
     }
 

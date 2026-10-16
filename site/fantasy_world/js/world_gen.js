@@ -745,6 +745,88 @@ function generateWorld() {
       prices: { wheat: 40, fish: 40, ore: 20, weapons: 50, herbs: 40, gems: 35, spices: 80 },
       description: '죽은 자들의 뼈와 망령 기사들이 배회하는 공포의 묘지입니다.',
       danger: true
+    },
+
+    // [신규 확장 신화 유적 & 거점]
+    {
+      id: 'atlantis_ruins',
+      name: '아틀란티스 해저 침몰신전',
+      subtitle: '대해양 심해 고대 문명 · 인어 왕국 성역 & 흑진주 제단',
+      icon: '🔱',
+      type: 'coral_isle',
+      faction: 'merfolk',
+      isPort: true,
+      portWaterX: 205,
+      portWaterY: 70,
+      x: 195,
+      y: 70,
+      radius: 14,
+      gold: 9200,
+      stocks: { wheat: 10, fish: 220, ore: 30, weapons: 40, herbs: 40, gems: 280, spices: 80 },
+      prices: { wheat: 35, fish: 6, ore: 30, weapons: 55, herbs: 20, gems: 30, spices: 60 },
+      description: '바다 깊숙이 잠겨있던 고대 해양 제국의 신전으로 전설의 삼지창과 진주가 잠들어 있습니다.'
+    },
+    {
+      id: 'frost_citadel',
+      name: '서리 거인의 얼음 성채',
+      subtitle: '극북 만년설산 영구동토 · 빙룡과 서리 거인족 본거지',
+      icon: '❄️',
+      type: 'fortress',
+      faction: 'monster',
+      x: MAINLAND_OFFSET_X + 250,
+      y: 28,
+      radius: 13,
+      gold: 8500,
+      stocks: { wheat: 5, fish: 40, ore: 80, weapons: 95, herbs: 25, gems: 120, spices: 10 },
+      prices: { wheat: 45, fish: 20, ore: 15, weapons: 45, herbs: 30, gems: 45, spices: 85 },
+      description: '혹한의 칼바람이 몰아치는 빙하 성채로 서리 거인과 얼음 드래곤이 지키고 있습니다.',
+      danger: true
+    },
+    {
+      id: 'dragon_graveyard',
+      name: '용들의 안식처 묘지',
+      subtitle: '남동부 화염 고원 · 거대 용골 암석과 불꽃 정령',
+      icon: '🦴',
+      type: 'monster_lair',
+      faction: 'monster',
+      x: MAINLAND_OFFSET_X + 245,
+      y: 290,
+      radius: 13,
+      gold: 7800,
+      stocks: { wheat: 5, fish: 10, ore: 120, weapons: 80, herbs: 15, gems: 160, spices: 40 },
+      prices: { wheat: 40, fish: 35, ore: 12, weapons: 50, herbs: 35, gems: 40, spices: 75 },
+      description: '수천 년 동안 쓰러진 고대 드래곤들의 뼈가 산을 이루며 강력한 용족의 화염 에너지가 감돕니다.',
+      danger: true
+    },
+    {
+      id: 'celestial_haven',
+      name: '천공의 룬 비행섬',
+      subtitle: '서부 상공 부유석 군도 · 고대 천공 수호자 성역',
+      icon: '☁️',
+      type: 'dragon_sanctuary',
+      faction: 'dragon',
+      x: 28,
+      y: 95,
+      radius: 12,
+      gold: 14000,
+      stocks: { wheat: 15, fish: 20, ore: 60, weapons: 70, herbs: 90, gems: 320, spices: 70 },
+      prices: { wheat: 42, fish: 35, ore: 18, weapons: 70, herbs: 18, gems: 24, spices: 50 },
+      description: '대기권 구름 위에 둥둥 떠 있는 마력 부유섬으로 천공의 비룡을 만날 수 있습니다.'
+    },
+    {
+      id: 'magma_underforge',
+      name: '마그마 심연 지하용광로',
+      subtitle: '동부 화산 지하 분화구 · 심연 드워프 대장장이 은신처',
+      icon: '🔥',
+      type: 'mining',
+      faction: 'dwarf',
+      x: MAINLAND_OFFSET_X + 265,
+      y: 195,
+      radius: 12,
+      gold: 8900,
+      stocks: { wheat: 15, fish: 10, ore: 240, weapons: 140, herbs: 10, gems: 90, spices: 20 },
+      prices: { wheat: 35, fish: 30, ore: 8, weapons: 30, herbs: 35, gems: 55, spices: 80 },
+      description: '지하 마그마의 열기로 신화급 룬 무기를 제련하는 은둔 드워프 대장장이들의 비밀 용광로입니다.'
     }
   ];
 
@@ -1010,6 +1092,58 @@ function generateWorld() {
   const necro = settlementMap.obsidian_necropolis;
   addBuilding({ id: 'nec_tomb', settlementId: 'obsidian_necropolis', name: '강령술 리치 군주의 영묘', type: 'lair', x: necro.x, y: necro.y, w: 5, h: 4, color: '#475569', roofColor: '#0f172a', icon: '💀' });
 
+  // 5대 신규 신화 유적 건물
+  const atlantis = settlementMap.atlantis_ruins;
+  if (atlantis) addBuilding({ id: 'atl_temple', settlementId: 'atlantis_ruins', name: '아틀란티스 해저 신전', type: 'temple', x: atlantis.x, y: atlantis.y, w: 6, h: 5, color: '#0284c7', roofColor: '#075985', icon: '🔱' });
+
+  const frostCit = settlementMap.frost_citadel;
+  if (frostCit) addBuilding({ id: 'fc_keep', settlementId: 'frost_citadel', name: '서리 거인 얼음 요새', type: 'lair', x: frostCit.x, y: frostCit.y, w: 6, h: 5, color: '#e0f2fe', roofColor: '#38bdf8', icon: '❄️' });
+
+  const dragonGrave = settlementMap.dragon_graveyard;
+  if (dragonGrave) addBuilding({ id: 'dg_altar', settlementId: 'dragon_graveyard', name: '용골 흑마법 제단', type: 'lair', x: dragonGrave.x, y: dragonGrave.y, w: 5, h: 4, color: '#78350f', roofColor: '#451a03', icon: '🦴' });
+
+  const celHaven = settlementMap.celestial_haven;
+  if (celHaven) addBuilding({ id: 'ch_spire', settlementId: 'celestial_haven', name: '천공 비행 룬 탑', type: 'guild', x: celHaven.x, y: celHaven.y, w: 5, h: 5, color: '#c084fc', roofColor: '#6b21a8', icon: '☁️' });
+
+  const magmaForge = settlementMap.magma_underforge;
+  if (magmaForge) addBuilding({ id: 'mu_foundry', settlementId: 'magma_underforge', name: '심연 마그마 대주조소', type: 'forge', x: magmaForge.x, y: magmaForge.y, w: 5, h: 4, color: '#dc2626', roofColor: '#7f1d1d', icon: '🔥' });
+
+  // 🐾 채집 & 채광 자원 노드 (Resource Nodes)
+  const resourceNodes = [];
+  // 1. 미스릴 & 황금 광맥 (28개소)
+  for (let i = 0; i < 28; i++) {
+    const angle = (i / 28) * Math.PI * 2;
+    const rx = Math.round(MAINLAND_OFFSET_X + 155 + Math.cos(angle) * (15 + (i % 6) * 12));
+    const ry = Math.round(65 + Math.sin(angle) * (15 + (i % 6) * 10));
+    if (inBounds(rx, ry) && tiles[idx(rx, ry)] !== TILE.DEEP_WATER && tiles[idx(rx, ry)] !== TILE.WATER) {
+      resourceNodes.push({ id: 'res_mine_' + i, type: 'mine', x: rx, y: ry, name: i % 2 === 0 ? '⛏️ 미스릴 광맥' : '⛏️ 황금 광맥', resource: i % 2 === 0 ? 'ore' : 'gold', amount: 5, maxAmount: 5, respawn: 0 });
+    }
+  }
+  // 2. 고대 벌목 참나무 (32개소)
+  for (let i = 0; i < 32; i++) {
+    const rx = Math.round(MAINLAND_OFFSET_X + 160 + (Math.sin(i * 1.7) * 45));
+    const ry = Math.round(210 + (Math.cos(i * 1.3) * 35));
+    if (inBounds(rx, ry) && (tiles[idx(rx, ry)] === TILE.FOREST || tiles[idx(rx, ry)] === TILE.MEADOW || tiles[idx(rx, ry)] === TILE.GRASS || tiles[idx(rx, ry)] === TILE.AUTUMN_WOOD)) {
+      resourceNodes.push({ id: 'res_tree_' + i, type: 'tree', x: rx, y: ry, name: '🌲 고대 참나무', resource: 'wood', amount: 5, maxAmount: 5, respawn: 0 });
+    }
+  }
+  // 3. 세계수 영약초 (26개소)
+  for (let i = 0; i < 26; i++) {
+    const rx = Math.round(65 + (Math.sin(i * 2.1) * 25));
+    const ry = Math.round(75 + (Math.cos(i * 1.9) * 25));
+    if (inBounds(rx, ry) && tiles[idx(rx, ry)] !== TILE.DEEP_WATER && tiles[idx(rx, ry)] !== TILE.WATER) {
+      resourceNodes.push({ id: 'res_herb_' + i, type: 'herb', x: rx, y: ry, name: '🌿 세계수 영약초', resource: 'herbs', amount: 5, maxAmount: 5, respawn: 0 });
+    }
+  }
+  // 4. 심해 진주 조개 (22개소)
+  for (let i = 0; i < 22; i++) {
+    const rx = Math.round(140 + (Math.sin(i * 1.4) * 22));
+    const ry = Math.round(255 + (Math.cos(i * 1.4) * 22));
+    if (inBounds(rx, ry) && (tiles[idx(rx, ry)] === TILE.WATER || tiles[idx(rx, ry)] === TILE.SAND || tiles[idx(rx, ry)] === TILE.CORAL)) {
+      resourceNodes.push({ id: 'res_clam_' + i, type: 'clam', x: rx, y: ry, name: '🦪 심해 진주조개', resource: 'gems', amount: 5, maxAmount: 5, respawn: 0 });
+    }
+  }
+
   return {
     width: WORLD_WIDTH,
     height: WORLD_HEIGHT,
@@ -1022,6 +1156,7 @@ function generateWorld() {
     farmPlots,
     fishingSpots,
     mineNodes,
+    resourceNodes,
     roadLinks,
     seaRoutes,
     getTile(tx, ty) {
