@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Game Arcade - Gallery</title>
+<style>
+  :root{--bg:#070a14;--card:#101728;--line:#1f2b48;--ink:#eef2fb;--sub:#8a96b3;--accent:#00f0ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.6}
+  .wrap{max-width:1080px;margin:0 auto;padding:60px 24px}
+  .eyebrow{color:var(--accent);font-weight:700;letter-spacing:.15em;font-size:.82rem;text-transform:uppercase}
+  h1{font-size:clamp(2.2rem,5vw,3.2rem);margin:.2em 0;letter-spacing:-.02em;background:linear-gradient(45deg,#00f0ff,#ff007f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:900;}
+  p.lead{color:var(--sub);margin:0 0 40px;font-size:1.1rem;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:25px}
+  .card{background:var(--card);border:2px solid var(--line);border-radius:14px;overflow:hidden;color:inherit;text-decoration:none;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+  .card:hover{transform:translateY(-6px);border-color:var(--accent);box-shadow:0 12px 30px rgba(0,240,255,0.25);}
+  .thumb{aspect-ratio:16/10;background:#03050a;display:grid;place-items:center;overflow:hidden;border-bottom:1px solid var(--line);}
+  .thumb img{width:100%;height:100%;object-fit:cover}
+  .meta{padding:18px 22px}
+  .meta h2{margin:0 0 8px 0;font-size:1.28rem;font-weight:800;}
+  .score{color:var(--accent);font-size:.88rem;font-weight:700;background:rgba(0,240,255,0.1);padding:4px 10px;border-radius:6px;border:1px solid rgba(0,240,255,0.3);}
+</style></head><body>
+<div class="wrap">
+  <div class="eyebrow">AI Game Arcade Pipeline</div>
+  <h1>AI Arcade Showcase</h1>
+  <p class="lead">기획 → 생성 → 정적 검사 → 렌더 스크린샷 → CDP 헤드리스 플레이테스트를 완벽하게 통과한 아케이드 갤러리</p>
+  <div class="grid">
+      <a class="card" href="fantasy_world/index.html">
+        <div class="thumb" style="background:linear-gradient(135deg,#0f172a,#1e3a8a,#14532d);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
+          <span style="font-size:3.4rem;">👑🗺️⚔️</span>
+          <span style="color:#fde047;font-weight:700;font-size:.95rem;">오픈월드 판타지 생태계 · 경제 · 무역 시뮬레이션</span>
+        </div>
+        <div class="meta">
+          <h2>아테리아 대륙 연대기 (Chronicles of Aetheria)</h2>
+          <span class="score">오픈월드 샌드박스 · 실시간 생태계 시뮬레이션</span>
+        </div>
+      </a>
+
+      <a class="card" href="chrono-blade/index.html">
+        <div class="thumb"><img src="chrono-blade/thumb.png" alt="CHRONO BLADE: Time Slicer"></div>
+        <div class="meta">
+          <h2>CHRONO BLADE: Time Slicer</h2>
+          <span class="score">비전 98 · 재미 94 · PASS</span>
+        </div>
+      </a>
+
+      <a class="card" href="neon-survivor/index.html">
+        <div class="thumb"><img src="neon-survivor/thumb.png" alt="NEON SURVIVOR"></div>
+        <div class="meta">
+          <h2>NEON SURVIVOR</h2>
+          <span class="score">비전 95 · 재미 88 · PASS</span>
+        </div>
+      </a></div>
+</div>
+</body></html>

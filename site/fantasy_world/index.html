@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>크로니클 오브 아테리아 (Chronicles of Aetheria) - 오픈월드 판타지 생태계 시뮬레이션</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- 메인 월드 캔버스 -->
+  <canvas id="worldCanvas"></canvas>
+
+  <!-- 상단 월드 상태 바 (HUD) -->
+  <header id="topHud">
+    <div class="hud-brand">
+      <span class="crown-icon">👑</span>
+      <div>
+        <h1>아테리아 대륙 연대기</h1>
+        <span class="subtitle">살아 숨쉬는 판타지 세계 시뮬레이션 · 샌드박스</span>
+      </div>
+    </div>
+
+    <div class="hud-time-weather">
+      <div class="time-box">
+        <span id="dayNightIcon">☀️</span>
+        <div>
+          <div id="worldDateText">제 1년 봄 · 1일차</div>
+          <div id="worldClockText">08:00 (아침)</div>
+        </div>
+      </div>
+      <div class="weather-box">
+        <span id="weatherIcon">🌤️</span>
+        <span id="weatherText">맑음</span>
+      </div>
+      <div class="speed-controls">
+        <button class="speed-btn" data-speed="0" title="일시정지 (Space)">⏸</button>
+        <button class="speed-btn active" data-speed="1" title="1배속">1x</button>
+        <button class="speed-btn" data-speed="2" title="2배속">2x</button>
+        <button class="speed-btn" data-speed="4" title="4배속">4x</button>
+        <button class="speed-btn" data-speed="8" title="8배속">8x</button>
+      </div>
+    </div>
+
+    <div class="hud-stats">
+      <div class="stat-pill" title="전체 활동 중인 인간/엘프/드워프 NPC 수">
+        <span>👥 주민/영웅</span>
+        <strong id="statNpcCount">0</strong>
+      </div>
+      <div class="stat-pill" title="현재 도시 간 이동 중인 상단 및 마차">
+        <span>🐎 무역 상단</span>
+        <strong id="statCaravanCount">0</strong>
+      </div>
+      <div class="stat-pill" title="대륙 내 서식 중인 몬스터 수">
+        <span>👹 몬스터</span>
+        <strong id="statMonsterCount">0</strong>
+      </div>
+      <div class="stat-pill" title="현재 진행 중인 교전 수">
+        <span>⚔️ 교전</span>
+        <strong id="statBattleCount">0</strong>
+      </div>
+      <div class="stat-pill gold" title="대륙 전체 유통 골드량">
+        <span>🪙 유통 골드</span>
+        <strong id="statTotalGold">0</strong>
+      </div>
+    </div>
+  </header>
+
+  <!-- 좌측 거점 빠른 이동 & 필터 패널 -->
+  <aside id="leftSidebar">
+    <div class="panel-card">
+      <div class="panel-header">
+        <h2>🗺️ 대륙 주요 거점 이동</h2>
+        <button id="btnZoomContinent" class="mini-btn" title="대륙 전체 보기 (키보드 M)">전체 지도</button>
+      </div>
+      <div id="regionList" class="region-list">
+        <!-- JS에서 동적 생성 -->
+      </div>
+    </div>
+
+    <div class="panel-card">
+      <div class="panel-header">
+        <h2>🔍 개체 하이라이트 필터</h2>
+      </div>
+      <div class="filter-grid">
+        <button class="filter-chip active" data-filter="all">전체 보기</button>
+        <button class="filter-chip" data-filter="merchant">🐎 상인/마차</button>
+        <button class="filter-chip" data-filter="soldier">🛡️ 병사/근위대</button>
+        <button class="filter-chip" data-filter="adventurer">⚔️ 모험가/용병</button>
+        <button class="filter-chip" data-filter="farmer">🌾 농부</button>
+        <button class="filter-chip" data-filter="fisherman">🎣 어부</button>
+        <button class="filter-chip" data-filter="miner">⛏️ 광부/대장장이</button>
+        <button class="filter-chip" data-filter="monster">👹 몬스터</button>
+      </div>
+      <div class="quick-actions">
+        <button id="btnFindRandomMerchant" class="action-btn">🐎 무역 중인 상인 따라가기</button>
+        <button id="btnFindBattle" class="action-btn danger">⚔️ 현재 전투 현장으로 이동</button>
+      </div>
+    </div>
+
+    <!-- 실시간 세계 사건 로그 -->
+    <div class="panel-card log-card">
+      <div class="panel-header">
+        <h2>📜 실시간 대륙 소식통</h2>
+      </div>
+      <div id="eventLogList" class="event-log-list"></div>
+    </div>
+  </aside>
+
+  <!-- 우측 상세 정보창 (선택된 NPC / 거점 정보 & 경제 현황) -->
+  <aside id="rightSidebar">
+    <!-- 선택된 개체/거점 상세 카드 -->
+    <div class="panel-card inspector-card" id="inspectorPanel">
+      <div class="panel-header">
+        <h2 id="inspectorTitle">👆 개체 또는 거점 선택</h2>
+        <button id="btnFollowTarget" class="mini-btn hidden">🎥 카메라 추적</button>
+      </div>
+      <div id="inspectorContent" class="inspector-content">
+        <p class="empty-hint">
+          맵 위의 <strong>상인, 병사, 모험가, 농부, 어부, 몬스터</strong> 또는 <strong>성·마을 건물</strong>을 클릭하면 상세 상태와 인벤토리, 행선지를 실시간으로 관찰할 수 있습니다.
+        </p>
+        <div class="controls-guide">
+          <div><span>🖱️ 드래그 / WASD</span> 카메라 이동</div>
+          <div><span>🖱️ 휠 스크롤</span> 줌인 / 줌아웃 (전략 뷰 ↔ 근접 뷰)</div>
+          <div><span>🖱️ 좌클릭</span> 개체·마을 상세 관찰</div>
+          <div><span>Space</span> 일시정지 / 재생</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 거점별 시세 및 경제 요약 -->
+    <div class="panel-card">
+      <div class="panel-header">
+        <h2>⚖️ 거점 교역 & 물자 현황</h2>
+      </div>
+      <div id="economyTableContainer" class="economy-container">
+        <!-- JS에서 실시간 업데이트 -->
+      </div>
+    </div>
+
+    <!-- 미니맵 -->
+    <div class="panel-card minimap-card">
+      <div class="panel-header">
+        <h2>🧭 대륙 미니맵</h2>
+        <span id="zoomLevelText">줌: 1.0x</span>
+      </div>
+      <div class="minimap-wrapper">
+        <canvas id="minimapCanvas" width="240" height="240"></canvas>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 하단 카메라 추적 배너 -->
+  <div id="followBanner" class="follow-banner hidden">
+    <span id="followBannerText">🎥 추적 중: -</span>
+    <button id="btnStopFollow">추적 해제 (ESC)</button>
+  </div>
+
+  <!-- 스크립트 로드 -->
+  <script src="js/world_gen.js"></script>
+  <script src="js/entities.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
