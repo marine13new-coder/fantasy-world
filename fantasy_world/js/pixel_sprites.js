@@ -1234,70 +1234,58 @@
       "..####....####.."
     ],
     dragonkin_down_0: [
-      "....#......#....",
-      "...#y#....#y#...",
-      "....#y####y#....",
-      "....#yRRRRe#....",
-      "...#RRRRRRRe#...",
-      "...#e#ee##ef#...",
-      "...#eeeeffff#...",
-      "....#f##ff##....",
-      ".....#R####R#...",
-      "...#RRbBBbRR#...",
-      "..#RR#bBBb#RR#..",
-      "..#Re#bYYb#Re#F.",
-      "..#e#bbBBbb#e#wh",
-      "..#e#bbBBbb#e#wh",
-      "...##bbBBbb##Fwh",
-      "...#ssss##ssss#.",
-      "...#ssss#..#ssss",
-      "..#hhhh#....#hhh",
-      ".#RR#........#RR",
-      ".###..........##"
+      "..#o#......#o#..",
+      ".#oko#....#oko#.",
+      "..#okG####Gko#..",
+      "...#oGRRRRGo#...",
+      "..#RRRRRRRRRR#..",
+      "..#R#ye##ey#R#..",
+      "..#R#ffffff#R#..",
+      "...#RR####RR#...",
+      "..#rRRgYYgRRr#..",
+      ".#rRR#gYYg#RRr#.",
+      ".#rR#Gksskk#Rr#.",
+      ".#rr#kssssk#rr#.",
+      "..##kssssss##...",
+      "...#ssssssss#...",
+      "..#ss#k##k#ss#..",
+      "..#RR#....#RR#.."
     ],
     dragonkin_down_1: [
-      "....#......#....",
-      "...#y#....#y#...",
-      "....#y####y#....",
-      "....#yRRRRe#....",
-      "...#RRRRRRRe#...",
-      "...#e#ee##ef#...",
-      "...#eeeeffff#...",
-      "....#f##ff##....",
-      ".....#R####R#...",
-      "...#RRbBBbRR#...",
-      "..#RR#bBBb#RR#..",
-      "..#Re#bYYb#Re#F.",
-      "..#e#bbBBbb#e#wh",
-      "..#e#bbBBbb#e#wh",
-      "...##bbBBbb##Fwh",
-      "..#ssss#..#ssss#",
-      "..#ssss#..#ssss#",
-      ".#hhhh#....#hhhh",
-      ".#RR#........#RR",
-      ".###..........##"
+      "..#o#......#o#..",
+      ".#oko#....#oko#.",
+      "..#okG####Gko#..",
+      "...#oGRRRRGo#...",
+      "..#RRRRRRRRRR#..",
+      "..#R#ye##ey#R#..",
+      "..#R#ffffff#R#..",
+      "...#RR####RR#...",
+      "..#rRRgYYgRRr#..",
+      ".#rRR#gYYg#RRr#.",
+      ".#rR#Gksskk#Rr#.",
+      ".#rr#kssssk#rr#.",
+      "..##kssssss##...",
+      "..#ssss##ssss#..",
+      ".#ss#......#ss#.",
+      ".#RR#......#RR#."
     ],
     dragonkin_attack: [
-      "....#......#.whh",
-      "...#y#....#y#Fff",
-      "....#y####y#Ffr#",
-      "....#yRRRRe#Ffr#",
-      "...#RRRRRRRe#Ffr",
-      "...#eeeeffff#Ffr",
-      ".....#R####R##fr",
-      "...#RRbBBbRR##fr",
-      "..#e#bbBBbb#e#r#",
-      "...##bbBBbb##...",
-      "...#ssss##ssss#.",
-      "..#hhhh#..#hhhh#",
-      ".#RR#........#RR",
-      ".###..........##",
-      "...##bbBBbb##Fwh",
-      "...#ssss##ssss#.",
-      "...#ssss#..#ssss",
-      "..#hhhh#....#hhh",
-      ".#RR#........#RR",
-      ".###..........##"
+      "..#o#......#o#..",
+      ".#oko#....#oko#.",
+      "..#okG####Gko#..",
+      "...#oGRRRRGo#..#",
+      "..#RRRRRRRRRR#wh",
+      "..#R#ee##ee#R#wh",
+      "..#R#weeeew#R#Fw",
+      "...#RR####RR#Fw#",
+      "..#rRRgYYgRRr##.",
+      ".#rRR#gYYg#RRr#.",
+      ".#rR#Gksskk#Rr#.",
+      ".#rr#kssssk#rr#.",
+      "..##kssssss##...",
+      "...#ssssssss#...",
+      "..#ss#k##k#ss#..",
+      "..#RR#....#RR#.."
     ],
     slime_0: [
       "................",
@@ -1713,6 +1701,510 @@
       "..####....####..",
       "................"
     ],
+    // 🐊 늪지대 맹독 악어 (Crocodile)
+    croc_down_0: [
+      "......####......",
+      ".....#DED#......",
+      "....#DEDLD#.....",
+      "...#oDEDDDo#....",
+      "..#o#DEDDDo#o#..",
+      ".#oD#DDDDDo#Do#.",
+      "..##DDEDDDD##...",
+      "...#DDLEDDD#....",
+      "...#DDEDDDD#....",
+      "..#o#DDDDDo#o#..",
+      ".#oD#DDDDDo#Do#.",
+      "..##DDy#yDD##...",
+      "...#DEw#wED#....",
+      "...#DDw#wDD#....",
+      "....#DDED#......",
+      ".....####......."
+    ],
+    croc_down_1: [
+      ".......####.....",
+      "......#DED#.....",
+      ".....#DEDLD#....",
+      "...#oDEDDDo#....",
+      ".#oD#DEDDDo#....",
+      "..##DDDDDo#o#...",
+      "...#DDEDDDD#Do#.",
+      "...#DDLEDDD##...",
+      "..#o#DEDDDD#....",
+      ".#oD#DDDDDo#o#..",
+      "..##DDDDDo#Do#..",
+      "...#DDy#yDD##...",
+      "...#DEw#wED#....",
+      "...#DDw#wDD#....",
+      "....#DDED#......",
+      ".....####......."
+    ],
+    croc_attack: [
+      "......####......",
+      ".....#DED#......",
+      "....#DEDLD#.....",
+      "...#oDEDDDo#....",
+      "..#o#DEDDDo#o#..",
+      ".#oD#DDDDDo#Do#.",
+      "..##DDEDDDD##...",
+      "...#DDLEDDD#....",
+      "...#DDEDDDD#....",
+      "..#o#DDDDDo#o#..",
+      ".#oD#DDDDDo#Do#.",
+      "..##DDy#yDD##...",
+      "..#DEw#e#wED#...",
+      ".#DDw#eee#wDD#..",
+      "..#DDw#e#wDD#...",
+      "...####w####...."
+    ],
+
+    // 🐇 들토끼 (White Bunny)
+    rabbit_down_0: [
+      "...##......##...",
+      "..#P#....#P#....",
+      "..#w#....#w#....",
+      "..#w#....#w#....",
+      "...#w####w#.....",
+      "..#wwwwwwww#....",
+      "..#w#e##e#w#....",
+      "..#wwwwwwww#....",
+      "...#wwwwww#.....",
+      "..#wwwwwwww#....",
+      ".#wwwwwwwwww#...",
+      ".#wwwwwwwwww#...",
+      ".#swwwwwwwws#...",
+      "..#sww##wws#....",
+      "...#ww##ww#.....",
+      "...##..##......."
+    ],
+    rabbit_down_1: [
+      "...##......##...",
+      "..#P#....#P#....",
+      "..#w#....#w#....",
+      "..#w#....#w#....",
+      "...#w####w#.....",
+      "..#wwwwwwww#....",
+      "..#w#e##e#w#....",
+      "..#wwwwwwww#....",
+      "...#wwwwww#.....",
+      "..#wwwwwwww#....",
+      ".#wwwwwwwwww#...",
+      ".#swwwwwwwws#...",
+      "..#sww##wws#....",
+      "..#ww#..#ww#....",
+      ".#ww#....#ww#...",
+      ".##........##..."
+    ],
+    rabbit_attack: [
+      "...##......##...",
+      "..#P#....#P#....",
+      "..#w#....#w#....",
+      "...#w####w#.....",
+      "..#wwwwwwww#....",
+      "..#we#ee#ew#....",
+      "..#wwwwwwww#....",
+      "...#wwwwww#.....",
+      "..#wwwwwwww#....",
+      ".#wwwwwwwwww#...",
+      ".#swweeeewws#...",
+      "..#sww##wws#....",
+      "...#ww##ww#.....",
+      "...##..##.......",
+      "................",
+      "................"
+    ],
+
+    // 🐄 젖소 (Holstein Cow)
+    cow_down_0: [
+      "...##......##...",
+      "..#s#......#s#..",
+      "..#k########k#..",
+      ".#kkkwwwwwwkkk#.",
+      ".#k#kwwwwwwk#k#.",
+      "..#fwwwwwwf#....",
+      "...#ffffff#.....",
+      "....#yyyy#......",
+      "..#kkkwwwwkk#...",
+      ".#kkkwwkwwwwk#..",
+      ".#kwwwwkwwkkk#..",
+      ".#kwwwwkkkkkk#..",
+      "..#kwwwwkkkk#...",
+      "..#k#s##s#k#....",
+      "..#s#s..s#s#....",
+      "..###....###...."
+    ],
+    cow_down_1: [
+      "...##......##...",
+      "..#s#......#s#..",
+      "..#k########k#..",
+      ".#kkkwwwwwwkkk#.",
+      ".#k#kwwwwwwk#k#.",
+      "..#fwwwwwwf#....",
+      "...#ffffff#.....",
+      "....#yyyy#......",
+      "..#kkkwwwwkk#...",
+      ".#kkkwwkwwwwk#..",
+      ".#kwwwwkwwkkk#..",
+      "..#kwwwkkkkk#...",
+      "...#k#s##s#k#...",
+      "...#s#s..s#s#...",
+      "..#s#......#s#..",
+      "..###......###.."
+    ],
+    cow_attack: [
+      "...##......##...",
+      "..#s#......#s#..",
+      "..#k########k#..",
+      ".#kkkwwwwwwkkk#.",
+      ".#k#kweeewwk#k#.",
+      "..#fweeewwf#....",
+      "...#ffffff#.....",
+      "....#yyyy#......",
+      "..#kkkwwwwkk#...",
+      ".#kkkwwkwwwwk#..",
+      ".#kwwwwkwwkkk#..",
+      ".#kwwwwkkkkkk#..",
+      "..#kwwwwkkkk#...",
+      "..#k#s##s#k#....",
+      "..#s#s..s#s#....",
+      "..###....###...."
+    ],
+
+    // 4. 🐑 목초지 양 (Sheep)
+    sheep_down_0: [
+      ".....######.....",
+      "...##hhhhhh##...",
+      "..#hhwhwhwhh#...",
+      ".#h#f####f#hh#..",
+      ".#h#ffffff#hh#..",
+      "..##f##ff##hh#..",
+      ".#hhhwhwhwhhh#..",
+      "#hwhwhwhwhwhwh#.",
+      "#whwhwhwhwhwhw#.",
+      "#hwhwhwhwhwhwh#.",
+      "#whwhwhwhwhwhw#.",
+      ".#hwhwhwhwhwh#..",
+      "..##whwhwhw##...",
+      "...#o#....#o#...",
+      "...#o#....#o#...",
+      "...##......##..."
+    ],
+    sheep_down_1: [
+      ".....######.....",
+      "...##hhhhhh##...",
+      "..#hhwhwhwhh#...",
+      ".#h#f####f#hh#..",
+      ".#h#ffffff#hh#..",
+      "..##f##ff##hh#..",
+      ".#hhhwhwhwhhh#..",
+      "#hwhwhwhwhwhwh#.",
+      "#whwhwhwhwhwhw#.",
+      "#hwhwhwhwhwhwh#.",
+      "#whwhwhwhwhwhw#.",
+      ".#hwhwhwhwhwh#..",
+      "..##whwhwhw##...",
+      "..#o#......#o#..",
+      "..#o#......#o#..",
+      "..##........##.."
+    ],
+    sheep_attack: [
+      ".....######.....",
+      "...##hhhhhh##...",
+      "..#hhwhwhwhh#...",
+      ".#h#f####f#hh#..",
+      ".#h#ffffff#hh#..",
+      "..##feeffeehh#..",
+      ".#hhhwhwhwhhh#..",
+      "#hwhwhwhwhwhwh#.",
+      "#whwhwhwhwhwhw#.",
+      "#hwhwhwhwhwhwh#.",
+      "#whwhwhwhwhwhw#.",
+      ".#hwhwhwhwhwh#..",
+      "..##whwhwhw##...",
+      "...#o#....#o#...",
+      "...#o#....#o#...",
+      "...##......##..."
+    ],
+
+    // 5. 🐐 바위 산양 (Mountain Goat)
+    goat_down_0: [
+      "...###....###...",
+      "..#zz#....#zz#..",
+      "...#z#....#z#...",
+      "....#zz##zz#....",
+      "...#qqqqqqqq#...",
+      "..#qq#k##k#qq#..",
+      "...#qqqqqqqq#...",
+      "....#qqwwqq#....",
+      ".....#wwww#.....",
+      "...#qqqqqqqq#...",
+      "..#qqqqqqqqqq#..",
+      "..#qqqqqqqqqq#..",
+      "...#qqqqqqqq#...",
+      "...#ss#..#ss#...",
+      "...#ss#..#ss#...",
+      "...###....###..."
+    ],
+    goat_down_1: [
+      "...###....###...",
+      "..#zz#....#zz#..",
+      "...#z#....#z#...",
+      "....#zz##zz#....",
+      "...#qqqqqqqq#...",
+      "..#qq#k##k#qq#..",
+      "...#qqqqqqqq#...",
+      "....#qqwwqq#....",
+      ".....#wwww#.....",
+      "...#qqqqqqqq#...",
+      "..#qqqqqqqqqq#..",
+      "..#qqqqqqqqqq#..",
+      "...#qqqqqqqq#...",
+      "..#ss#....#ss#..",
+      "..#ss#....#ss#..",
+      "..###......###.."
+    ],
+    goat_attack: [
+      "..###......###..",
+      ".#zz#......#zz#.",
+      "..#zz#....#zz#..",
+      "...#zz####zz#...",
+      "...#qqqqqqqq#...",
+      "..#qq#e##e#qq#..",
+      "...#qqqqqqqq#...",
+      "....#qqwwqq#....",
+      ".....#wwww#.....",
+      "...#qqqqqqqq#...",
+      "..#qqqqqqqqqq#..",
+      "..#qqqqqqqqqq#..",
+      "...#qqqqqqqq#...",
+      "...#ss#..#ss#...",
+      "...#ss#..#ss#...",
+      "...###....###..."
+    ],
+
+    // 6. 🐬 대양 돌고래 (Ocean Dolphin)
+    dolphin_down_0: [
+      ".......##.......",
+      "......#cc#......",
+      ".....#cccc#.....",
+      "....#cccccc#....",
+      "...#cccwcccc#...",
+      "..#cccccccccc#..",
+      ".#cccccccccccc#.",
+      "#ccwhhhhhhwwcc#.",
+      ".#ccwhhhhwwcc#..",
+      "..#cccccccc#....",
+      "...#cccccc#.....",
+      "....#cccc#......",
+      ".....#cc#.......",
+      "....#cccc#......",
+      "...#cc##cc#.....",
+      "...##....##....."
+    ],
+    dolphin_down_1: [
+      ".......##.......",
+      "......#cc#......",
+      ".....#cccc#.....",
+      "....#cccccc#....",
+      "...#cccwcccc#...",
+      "..#cccccccccc#..",
+      ".#cccccccccccc#.",
+      "#ccwhhhhhhwwcc#.",
+      ".#ccwhhhhwwcc#..",
+      "..#cccccccc#....",
+      "...#cccccc#.....",
+      "....#cccc#......",
+      ".....#cc#.......",
+      ".....#cc#.......",
+      "....#cccc#......",
+      "....##..##......"
+    ],
+    dolphin_attack: [
+      ".......##.......",
+      "......#cc#......",
+      ".....#cccc#.....",
+      "....#cccccc#....",
+      "...#cccCcccc#...",
+      "..#ccccCCCCCC#..",
+      ".#cccccccccccc#.",
+      "#ccwhhhhhhwwcc#.",
+      ".#ccwhhhhwwcc#..",
+      "..#cccccccc#....",
+      "...#cccccc#.....",
+      "....#cccc#......",
+      ".....#cc#.......",
+      "....#cccc#......",
+      "...#cc##cc#.....",
+      "...##....##....."
+    ],
+
+    // 7. 🦎 화산 흑요석 불꽃도마뱀 (Salamander)
+    salamander_down_0: [
+      "......#Y#.......",
+      ".....#yRy#......",
+      "....#kRkRk#.....",
+      "...#okRRRko#....",
+      "..#o#kRRRk#o#...",
+      ".#ok#kkkkk#ko#..",
+      "..##kRkkRkk##...",
+      "...#kkRRRkk#....",
+      "...#kkkRkkk#....",
+      "..#o#kkkkk#o#...",
+      ".#ok#kkkkk#ko#..",
+      "..##kye#eyk##...",
+      "...#kkRRRkk#....",
+      "...#kkkkkkk#....",
+      "....#kkkkk#.....",
+      ".....#####......"
+    ],
+    salamander_down_1: [
+      ".......#Y#......",
+      "......#yRy#.....",
+      ".....#kRkRk#....",
+      "...#okRRRko#....",
+      ".#ok#kRRRk#.....",
+      "..##kkkkk#ko#...",
+      "...#kRkkRkk##...",
+      "...#kkRRRkk#....",
+      "..#o#kkkRkkk#...",
+      ".#ok#kkkkk#o#...",
+      "..##kkkkk#ko#...",
+      "...##kye#eyk##..",
+      "...#kkRRRkk#....",
+      "...#kkkkkkk#....",
+      "....#kkkkk#.....",
+      ".....#####......"
+    ],
+    salamander_attack: [
+      ".....#YYY#......",
+      "....#yRRRy#.....",
+      "...#kRRRRRk#....",
+      "...#okRRRko#....",
+      "..#o#kRRRk#o#...",
+      ".#ok#kkkkk#ko#..",
+      "..##kRkkRkk##...",
+      "..#kkRRRRRkk#...",
+      "...#kkkRkkk#....",
+      "..#o#kkkkk#o#...",
+      ".#ok#kkkkk#ko#..",
+      "..##keeeeee##...",
+      "..#kkRRRRRkk#...",
+      "...#kkkkkkk#....",
+      "....#kkkkk#.....",
+      ".....#####......"
+    ],
+
+    // 8. 🦊 사막 수인족 (Beastkin Nomad)
+    beastkin_down_0: [
+      "...#d#....#d#...",
+      "..#dFd#..#dFd#..",
+      "..#dffffffffd#..",
+      ".#dffffffffffd#.",
+      ".#df#k####k#fd#.",
+      "..#ffffffffff#..",
+      "..#f#ff##ff#f#..",
+      "...#d#ffff#d#...",
+      "...#OO####OO#...",
+      "..#OOOlyylOOO#..",
+      ".#d#OOlyylOO#d#.",
+      ".#d#ffffffff#d#.",
+      "..##OOOOOOOO##..",
+      "...#OO#..#OO#...",
+      "...#ll#..#ll#...",
+      "...###....###..."
+    ],
+    beastkin_down_1: [
+      "...#d#....#d#...",
+      "..#dFd#..#dFd#..",
+      "..#dffffffffd#..",
+      ".#dffffffffffd#.",
+      ".#df#k####k#fd#.",
+      "..#ffffffffff#..",
+      "..#f#ff##ff#f#..",
+      "...#d#ffff#d#...",
+      "...#OO####OO#...",
+      "..#OOOlyylOOO#..",
+      ".#d#OOlyylOO#d#.",
+      ".#d#ffffffff#d#.",
+      "..##OOOOOOOO##..",
+      "..#OO#....#OO#..",
+      "..#ll#....#ll#..",
+      "..###......###.."
+    ],
+    beastkin_attack: [
+      "...#d#....#d#...",
+      "..#dFd#..#dFd#..",
+      "..#dffffffffd#..",
+      ".#dffffffffffd#.",
+      ".#df#e####e#fd#.",
+      "..#ffffffffff#..",
+      "..#f#ff##ff#f#..",
+      "...#d#ffff#d#..#",
+      "...#OO####OO##wh",
+      "..#OOOlyylOO#wwh",
+      ".#d#OOlyylOO#wh#",
+      ".#d#ffffffff##..",
+      "..##OOOOOOOO##..",
+      "...#OO#..#OO#...",
+      "...#ll#..#ll#...",
+      "...###....###..."
+    ],
+
+    // 10. 🐙 심연의 군주 크라켄 (Kraken World Boss)
+    kraken_down_0: [
+      "......######......",
+      "....#pppppppp#....",
+      "...#ppvvvvvvpp#...",
+      "..#ppvvPPPPvvpp#..",
+      "..#ppvPkeekPvpp#..",
+      "..#ppvPkeekPvpp#..",
+      "..#ppvvPPPPvvpp#..",
+      "...#ppvvvvvvpp#...",
+      "...#pppppppppp#...",
+      "..#p#pppppppp#p#..",
+      ".#pP#pp####pp#Pp#.",
+      "#pP#p#......#p#Pp#",
+      "#pp#p#......#p#pp#",
+      ".##.#p#....#p#.##.",
+      "....#Pp#..#pP#....",
+      ".....##....##....."
+    ],
+    kraken_down_1: [
+      "......######......",
+      "....#pppppppp#....",
+      "...#ppvvvvvvpp#...",
+      "..#ppvvPPPPvvpp#..",
+      "..#ppvPkeekPvpp#..",
+      "..#ppvPkeekPvpp#..",
+      "..#ppvvPPPPvvpp#..",
+      "...#ppvvvvvvpp#...",
+      "...#pppppppppp#...",
+      "..#p#pppppppp#p#..",
+      ".#pP#pp####pp#Pp#.",
+      ".#pp#p#....#p#pp#.",
+      "#pP#p#......#p#Pp#",
+      "#pp#p#......#p#pp#",
+      ".##.#Pp#..#pP#.##.",
+      ".....##....##....."
+    ],
+    kraken_attack: [
+      "......######......",
+      "....#pppppppp#....",
+      "...#ppvvvvvvpp#...",
+      "..#ppvvPPPPvvpp#..",
+      "..#ppvPeeeePvpp#..",
+      "..#ppvPeeeePvpp#..",
+      "..#ppvvPPPPvvpp#..",
+      "...#ppvvvvvvpp#...",
+      "..#pppppppppppp#..",
+      ".#pP#pppppppp#Pp#.",
+      ".#pP#pp####pp#Pp#.",
+      "#pp#p#......#p#pp#",
+      "#pP#p#......#p#Pp#",
+      ".##.#p#....#p#.##.",
+      "....#Pp#..#pP#....",
+      ".....##....##....."
+    ],
+
     goblin_archer_down_0: [
       "....########....",
       "..##LEEEEEEL##..",
@@ -2654,28 +3146,59 @@
 
     // 엔티티 베이스 스프라이트 정밀 분류 (Every creature is distinct!)
     getBaseKeyForEntity(e) {
-      if (e.role === 'player') return 'hero';
-      if (e.role === 'king') return 'king';
+      if (e.role === 'player') {
+        if (e.race === 'dragonkin') return 'dragonkin';
+        if (e.race === 'beastkin') return 'beastkin';
+        if (e.race === 'elf') return 'elf';
+        if (e.race === 'dwarf') return 'dwarf';
+        return 'hero';
+      }
+      if (e.role === 'king') {
+        if (e.race === 'beastkin' || (e.subClass && e.subClass.includes('술탄'))) return 'beastkin';
+        return 'king';
+      }
       if (e.role === 'priest' || e.role === 'cleric' || (e.subClass && e.subClass.includes('사제'))) return 'priest';
-      if (e.role === 'merchant') return 'merchant';
+      if (e.role === 'merchant') {
+        if (e.race === 'beastkin') return 'beastkin';
+        return 'merchant';
+      }
       if (e.race === 'dragonkin' || e.role === 'dragonkin') return 'dragonkin';
+      if (e.race === 'beastkin' || e.role === 'beastkin') return 'beastkin';
+      if (e.race === 'elf') return 'elf';
+      if (e.race === 'dwarf') return 'dwarf';
       if (e.role === 'royal_guard' || e.role === 'guard') return 'guard';
       if (e.role === 'crusader') return 'crusader';
       if (e.role === 'soldier') {
         if (e.homeId && (e.homeId.includes('necropolis') || e.homeId.includes('obsidian'))) return 'skeleton';
+        if (e.race === 'beastkin') return 'beastkin';
+        if (e.race === 'elf') return 'elf';
+        if (e.race === 'dwarf') return 'dwarf';
         return (e.id % 3 === 0) ? 'crusader' : ((e.id % 2 === 0) ? 'guard' : 'knight');
       }
 
       // 전문 직업군
-      if (e.role === 'farmer') return 'farmer';
-      if (e.role === 'miner') return 'miner';
-      if (e.role === 'blacksmith') return 'blacksmith';
+      if (e.role === 'farmer') {
+        if (e.race === 'beastkin') return 'beastkin';
+        if (e.race === 'elf') return 'elf';
+        if (e.race === 'dwarf') return 'dwarf';
+        return 'farmer';
+      }
+      if (e.role === 'miner') {
+        if (e.race === 'dwarf') return 'dwarf';
+        return 'miner';
+      }
+      if (e.role === 'blacksmith') {
+        if (e.race === 'dwarf') return 'dwarf';
+        return 'blacksmith';
+      }
       if (e.role === 'fisherman') return 'fisherman';
       if (e.role === 'bard') return 'bard';
 
       if (e.role === 'adventurer' || e.role === 'mercenary') {
         if (e.race === 'dwarf') return 'dwarf';
         if (e.race === 'elf') return 'elf';
+        if (e.race === 'beastkin') return 'beastkin';
+        if (e.race === 'dragonkin') return 'dragonkin';
         if (e.race === 'undead') return 'skeleton';
         return (e.id % 2 === 0) ? 'paladin' : 'crusader';
       }
@@ -2685,6 +3208,9 @@
         const name = e.name || '';
         const sub = e.subClass || '';
         const mtype = e.monsterType || '';
+
+        // 해양 군주
+        if (mtype === 'kraken' || name.includes('크라켄')) return 'kraken';
 
         // 1. 해골 / 리치 / 사신 언데드 군단
         if (mtype === 'lich' || name.includes('리치') || sub.includes('리치')) return 'lich';
@@ -2726,7 +3252,11 @@
         // 10. 용족
         if (e.race === 'dragonkin' || name.includes('용족') || name.includes('드래고니안')) return 'dragonkin';
 
-        // 11. 기타
+        // 11. 악어 / 샐러맨더 몬스터
+        if (mtype === 'croc' || name.includes('악어')) return 'croc';
+        if (mtype === 'salamander' || name.includes('샐러맨더') || name.includes('도마뱀')) return 'salamander';
+
+        // 12. 기타
         if (name.includes('슬라임')) return 'slime';
         if (name.includes('박쥐')) return 'bat';
         if (name.includes('늑대')) return 'wolf';
@@ -2734,15 +3264,39 @@
         return (e.id % 4 === 0) ? 'orc' : ((e.id % 3 === 0) ? 'skeleton' : ((e.id % 2 === 0) ? 'goblin_archer' : 'goblin'));
       }
 
-      // 동물
+      // 동물 (야생 동물 고유 디자인 맵핑)
       if (e.role === 'animal') {
         const at = e.animalType;
+        if (at === 'croc') return 'croc';
+        if (at === 'rabbit') return 'rabbit';
+        if (at === 'cow') return 'cow';
+        if (at === 'sheep') return 'sheep';
+        if (at === 'goat') return 'goat';
+        if (at === 'dolphin') return 'dolphin';
+        if (at === 'salamander') return 'salamander';
+        if (at === 'scorpion') return 'scorpion';
         if (at === 'horse') return 'horse';
         if (at === 'bear') return 'bear';
         if (at === 'wolf') return (e.name && (e.name.includes('서리') || e.name.includes('빙결'))) ? 'wolf_frost' : 'wolf';
-        if (at === 'deer') return 'deer';
         if (at === 'turtle') return 'turtle';
         if (at === 'camel') return 'camel';
+        if (at === 'deer') return 'deer';
+
+        const name = e.name || '';
+        if (name.includes('악어')) return 'croc';
+        if (name.includes('토끼')) return 'rabbit';
+        if (name.includes('소') || name.includes('젖소')) return 'cow';
+        if (name.includes('산양')) return 'goat';
+        if (name.includes('양')) return 'sheep';
+        if (name.includes('돌고래')) return 'dolphin';
+        if (name.includes('도마뱀') || name.includes('샐러맨더')) return 'salamander';
+        if (name.includes('전갈')) return 'scorpion';
+        if (name.includes('거북')) return 'turtle';
+        if (name.includes('낙타')) return 'camel';
+        if (name.includes('곰')) return 'bear';
+        if (name.includes('늑대')) return 'wolf';
+        if (name.includes('사슴') || name.includes('백록')) return 'deer';
+
         return 'deer';
       }
 
@@ -2766,6 +3320,15 @@
 
     // 4방향 및 애니메이션 프레임에 맞는 Canvas 캐시 검색
     resolveCanvas(baseKey, dir, animFrame, isFacingLeft) {
+      // 0순위: 공격 모션 (Attack Frame) 우선 검색
+      if (animFrame === 'attack') {
+        const directAttack = `${baseKey}_${dir}_attack${isFacingLeft ? '_left' : ''}`;
+        if (this.cache.has(directAttack)) return this.cache.get(directAttack);
+        const attackKey = `${baseKey}_attack${isFacingLeft ? '_left' : ''}`;
+        if (this.cache.has(attackKey)) return this.cache.get(attackKey);
+        if (this.cache.has(`${baseKey}_attack`)) return this.cache.get(`${baseKey}_attack`);
+      }
+
       // 1순위: 정확한 방향 + 프레임 매칭
       let candidateKey = `${baseKey}_${dir}_${animFrame}`;
       if (isFacingLeft && (dir === 'left' || dir === 'side')) {
@@ -2896,10 +3459,11 @@
         ctx.save();
         const sideSign = isFacingLeft ? -1 : 1;
         let slashColor = '#f8fafc';
-        if (baseKey === 'dragonkin' || baseKey === 'fire_golem' || baseKey === 'hellhound') slashColor = '#f97316';
+        if (baseKey === 'dragonkin' || baseKey === 'fire_golem' || baseKey === 'hellhound' || baseKey === 'salamander') slashColor = '#f97316';
         else if (baseKey === 'ice_golem' || baseKey === 'yeti' || baseKey === 'wolf_frost') slashColor = '#38bdf8';
-        else if (baseKey === 'lich' || baseKey === 'reaper' || baseKey === 'orc_shaman') slashColor = '#c084fc';
-        else if (baseKey === 'goblin' || baseKey === 'goblin_archer' || baseKey === 'treant' || baseKey === 'slime') slashColor = '#4ade80';
+        else if (baseKey === 'lich' || baseKey === 'reaper' || baseKey === 'orc_shaman' || baseKey === 'kraken') slashColor = '#c084fc';
+        else if (baseKey === 'goblin' || baseKey === 'goblin_archer' || baseKey === 'treant' || baseKey === 'slime' || baseKey === 'croc') slashColor = '#4ade80';
+        else if (baseKey === 'beastkin') slashColor = '#facc15';
 
         // 참격 호 (Crisp Crescent Slash Arc)
         ctx.strokeStyle = slashColor;

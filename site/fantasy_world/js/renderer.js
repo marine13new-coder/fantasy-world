@@ -2348,6 +2348,74 @@ class WorldRenderer {
         ctx.fillStyle = '#0284c7'; // 돌고래 유영
         ctx.fillRect(px - 8 * sc, sy - 4 * sc, 16 * sc, 6 * sc);
         ctx.fillRect(px - 1 * sc, sy - 8 * sc, 3 * sc, 4 * sc); // 등지느러미
+      } else if (e.animalType === 'croc' || (e.name && e.name.includes('악어'))) {
+        // 🐊 늪지대 맹독 악어 (납작하고 긴 초록 비늘 몸통 + 돌출된 이빨 + 노란 안광)
+        ctx.fillStyle = '#14532d'; // 짙은 늪지대 녹색 몸체
+        ctx.fillRect(px - 10 * sc, sy - 4 * sc, 20 * sc, 6 * sc);
+        ctx.fillStyle = '#16a34a'; // 등뼈 돌기
+        ctx.fillRect(px - 6 * sc, sy - 6 * sc, 12 * sc, 2 * sc);
+        // 길게 뻗은 주둥이 & 하얀 이빨
+        ctx.fillStyle = '#14532d';
+        ctx.fillRect(px + 7 * sc, sy - 3 * sc, 6 * sc, 4 * sc);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(px + 9 * sc, sy - 4 * sc, 2 * sc, 1.5 * sc);
+        ctx.fillRect(px + 11 * sc, sy - 1 * sc, 2 * sc, 1.5 * sc);
+        // 노란 뱀눈
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(px + 6 * sc, sy - 5 * sc, 2 * sc, 2 * sc);
+      } else if (e.animalType === 'cow' || (e.name && e.name.includes('소'))) {
+        // 🐄 얼룩 젖소
+        ctx.fillStyle = '#ffffff'; // 흰 몸체
+        ctx.fillRect(px - 7 * sc, sy - 6 * sc, 14 * sc, 8 * sc);
+        ctx.fillStyle = '#0f172a'; // 흑색 얼룩무늬
+        ctx.fillRect(px - 4 * sc, sy - 5 * sc, 4 * sc, 4 * sc);
+        ctx.fillRect(px + 2 * sc, sy - 4 * sc, 3 * sc, 5 * sc);
+        ctx.fillStyle = '#fbcfe8'; // 분홍 주둥이
+        ctx.fillRect(px + 5 * sc, sy - 6 * sc, 4 * sc, 4 * sc);
+        ctx.fillStyle = '#facc15'; // 워낭 방울
+        ctx.fillRect(px + 3 * sc, sy - 2 * sc, 3 * sc, 3 * sc);
+      } else if (e.animalType === 'sheep' || (e.name && e.name.includes('양') && !e.name.includes('산양'))) {
+        // 🐑 목초지 양 (폭신폭신한 흰 구름 털)
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.arc(px, sy - 2 * sc, 6 * sc, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(px - 4 * sc, sy - 3 * sc, 4.5 * sc, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(px + 4 * sc, sy - 3 * sc, 4.5 * sc, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fed7aa'; // 살구색 얼굴
+        ctx.fillRect(px + 4 * sc, sy - 5 * sc, 3.5 * sc, 3.5 * sc);
+      } else if (e.animalType === 'goat' || (e.name && e.name.includes('산양'))) {
+        // 🐐 바위 산양 (뒤로 휜 뿔 + 턱수염)
+        ctx.fillStyle = '#94a3b8'; // 회색 털
+        ctx.fillRect(px - 5 * sc, sy - 5 * sc, 10 * sc, 6 * sc);
+        ctx.fillRect(px + 3 * sc, sy - 8 * sc, 3.5 * sc, 5 * sc); // 머리
+        ctx.fillStyle = '#334155'; // 뒤로 뻗은 뿔
+        ctx.fillRect(px + 1 * sc, sy - 12 * sc, 2 * sc, 5 * sc);
+        ctx.fillStyle = '#ffffff'; // 턱수염
+        ctx.fillRect(px + 4 * sc, sy - 3 * sc, 2 * sc, 3 * sc);
+      } else if (e.animalType === 'salamander' || (e.name && e.name.includes('도마뱀'))) {
+        // 🦎 흑요석 불꽃도마뱀
+        ctx.fillStyle = '#18181b';
+        ctx.fillRect(px - 8 * sc, sy - 3 * sc, 16 * sc, 5 * sc);
+        ctx.fillStyle = '#f97316'; // 불타는 등지느러미
+        ctx.fillRect(px - 6 * sc, sy - 5 * sc, 12 * sc, 2 * sc);
+        ctx.fillStyle = '#ef4444'; // 붉은 눈
+        ctx.fillRect(px + 5 * sc, sy - 4 * sc, 2 * sc, 2 * sc);
+      } else if (e.animalType === 'scorpion' || (e.name && e.name.includes('전갈'))) {
+        // 🦂 사막 거대전갈
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(px - 6 * sc, sy - 3 * sc, 12 * sc, 5 * sc);
+        ctx.fillStyle = '#b45309'; // 앞 집게발
+        ctx.fillRect(px + 5 * sc, sy - 5 * sc, 4 * sc, 3 * sc);
+        ctx.fillRect(px + 5 * sc, sy + 1 * sc, 4 * sc, 3 * sc);
+        // 치켜든 독침 꼬리
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(px - 8 * sc, sy - 7 * sc, 3 * sc, 5 * sc);
+        ctx.fillRect(px - 6 * sc, sy - 9 * sc, 3 * sc, 2 * sc);
       } else {
         ctx.fillStyle = '#94a3b8';
         ctx.fillRect(px - 5 * sc, sy - 6 * sc, 10 * sc, 8 * sc);
