@@ -162,6 +162,17 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnSkillE').addEventListener('click', () => entityMgr.triggerPlayerSkill('E'));
   document.getElementById('btnSkillF').addEventListener('click', () => entityMgr.triggerPlayerSkill('F'));
 
+  const btnSkill1 = document.getElementById('btnSkill1');
+  if (btnSkill1) btnSkill1.addEventListener('click', () => entityMgr.triggerPlayerSkill('1'));
+  const btnSkill2 = document.getElementById('btnSkill2');
+  if (btnSkill2) btnSkill2.addEventListener('click', () => entityMgr.triggerPlayerSkill('2'));
+  const btnSkill3 = document.getElementById('btnSkill3');
+  if (btnSkill3) btnSkill3.addEventListener('click', () => entityMgr.triggerPlayerSkill('3'));
+  const btnSkill4 = document.getElementById('btnSkill4');
+  if (btnSkill4) btnSkill4.addEventListener('click', () => entityMgr.triggerPlayerSkill('4'));
+  const btnSkillJ = document.getElementById('btnSkillJ');
+  if (btnSkillJ) btnSkillJ.addEventListener('click', () => entityMgr.triggerPlayerSkill('J'));
+
   // 탈것 변경 버튼
   const btnToggleMount = document.getElementById('btnToggleMount');
   const mountIconEl = document.getElementById('mountIcon');
@@ -528,7 +539,17 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('keydown', (e) => {
     keys[e.code] = true;
 
-    if (e.code === 'KeyQ') {
+    if (e.code === 'Digit1') {
+      entityMgr.triggerPlayerSkill('1');
+    } else if (e.code === 'Digit2') {
+      entityMgr.triggerPlayerSkill('2');
+    } else if (e.code === 'Digit3') {
+      entityMgr.triggerPlayerSkill('3');
+    } else if (e.code === 'Digit4') {
+      entityMgr.triggerPlayerSkill('4');
+    } else if (e.code === 'KeyJ') {
+      entityMgr.triggerPlayerSkill('J');
+    } else if (e.code === 'KeyQ') {
       entityMgr.triggerPlayerSkill('Q');
     } else if (e.code === 'KeyE') {
       entityMgr.triggerPlayerSkill('E');
@@ -728,7 +749,22 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="margin-top:7px; font-size:11px; color:#94a3b8;">특산물 비축량 & 현지 시세:</div>
           <div class="inv-tags">${stockTags}</div>
         ` : ''}
+        <div style="margin-top: 10px;">
+          <button id="btnTeleportToSettlement" class="hud-btn" style="width:100%; justify-content:center; background:rgba(168, 85, 247, 0.22); border-color:#a855f7; color:#f3e8ff;">
+            🌀 [${s.name}] 순간이동 차원문 열기
+          </button>
+        </div>
       `;
+
+      const btnTeleport = document.getElementById('btnTeleportToSettlement');
+      if (btnTeleport) {
+        btnTeleport.addEventListener('click', () => {
+          if (entityMgr.rpgManager) {
+            entityMgr.rpgManager.teleportTo(s.id);
+            startFollow(player);
+          }
+        });
+      }
     }
   }
 

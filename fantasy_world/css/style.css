@@ -701,7 +701,14 @@ body, html {
 
 .skill-slots {
   display: flex;
-  gap: 6px;
+  gap: 5px;
+  overflow-x: auto;
+  max-width: 68vw;
+  scrollbar-width: none;
+}
+
+.skill-slots::-webkit-scrollbar {
+  display: none;
 }
 
 .skill-btn {
@@ -710,8 +717,9 @@ body, html {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 58px;
-  height: 48px;
+  width: 52px;
+  min-width: 52px;
+  height: 46px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 8px;

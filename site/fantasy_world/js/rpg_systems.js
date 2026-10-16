@@ -85,6 +85,31 @@ class RPGSystemsManager {
     this.isBuildModeActive = false;
     this.selectedBuildType = 'tower';
 
+    // 6. 콤보 연계 시스템
+    this.comboCount = 0;
+    this.comboTimer = 0;
+
+    // 7. 4대 원소 극대 궁극기 쿨다운 (1~4번 키)
+    this.skills = {
+      whirlwind: { cd: 0, maxCd: 6.0, name: '질풍의 회오리', key: '1' },
+      frostNova: { cd: 0, maxCd: 10.0, name: '혹한의 서리폭풍', key: '2' },
+      meteor: { cd: 0, maxCd: 18.0, name: '멸망의 메테오', key: '3' },
+      barrage: { cd: 0, maxCd: 12.0, name: '전방위 일제포격', key: '4' }
+    };
+
+    // 8. 낚시 미니게임 상태 (J 키)
+    this.fishing = {
+      active: false,
+      timer: 0,
+      bite: false,
+      biteTimer: 0,
+      bobberX: 0,
+      bobberY: 0
+    };
+
+    // 9. 날씨 천벌 낙뢰 타이머
+    this.cataclysmTimer = 12.0;
+
     this.initTreasureChests();
   }
 
@@ -637,10 +662,427 @@ class RPGSystemsManager {
     }
   }
 
-  update(dt) {
+  // ==========================================================================
+  // F. 콤보 연계 시스템 (Combo System)
+  // ==========================================================================
+  addCombo(hits = 1) {
+    this.comboCount += hits;
+    this.comboTimer = 3.8;
+    const mult = 1.0 + Math.min(1.5, this.comboCount * 0.05);
+
+    if (this.comboCount > 0 && this.comboCount % 5 === 0) {
+      const p = this.em.player;
+      if (p) {
+        this.em.addFloatingText(p.x, p.y - 2.0, `🔥 ${this.comboCount} COMBO! (+${Math.round((mult - 1) * 100)}% 공격력)`, '#f97316', 1.8);
+        this.em.addEffect(p.x, p.y, 2.5, '#f97316', 0.5);
+      }
+    }
+    return mult;
+  }
+
+  updateCombo(dt) {
+    if (this.comboTimer > 0) {
+      this.comboTimer -= dt;
+      if (this.comboTimer <= 0) {
+        if (this.comboCount >= 8 && this.em.player) {
+          this.em.addFloatingText(this.em.player.x, this.em.player.y - 1.2, `콤보 종료 (최종: ${this.comboCount}타)`, '#94a3b8', 1.2);
+        }
+        this.comboCount = 0;
+      }
+    }
+  }
+
+  // ==========================================================================
+  // G. 4대 원소 극대 궁극기 (Ultimate Elemental Skills)
+  // ==========================================================================
+  castWhirlwind() {
+    const p = this.em.player;
+    if (!p) return;
+    if (this.skills.whirlwind.cd > 0) {
+      this.em.addFloatingText(p.x, p.y - 1.2, `⏳ 질풍의 회오리검 쿨다운 (${Math.ceil(this.skills.whirlwind.cd)}초)`, '#94a3b8', 1.0);
+      return;
+    }
+    this.skills.whirlwind.cd = this.skills.whirlwind.maxCd;
+
+    if (typeof audioMgr !== 'undefined') audioMgr.playWhirlwind();
+    this.em.addEffect(p.x, p.y, 6.0, '#38bdf8', 0.9);
+
+    let hits = 0;
+    const dmgMult = this.addCombo(2);
+    const baseDmg = Math.round((65 + p.atk * 1.6) * dmgMult);
+
+    for (const other of this.em.entities) {
+      if (other.hp > 0 && (other.faction === 'monster' || other === this.activeBoss)) {
+        const d = Math.hypot(other.x - p.x, other.y - p.y);
+        if (d <= 5.8) {
+          hits++;
+          other.hp -= baseDmg;
+          // 넉백 효과
+          const ang = Math.atan2(other.y - p.y, other.x - p.x);
+          other.x += Math.cos(ang) * 1.5;
+          other.y += Math.sin(ang) * 1.5;
+          this.em.addFloatingText(other.x, other.y - 1.0, `🌪️-${baseDmg}`, '#38bdf8', 1.1);
+          if (other.hp <= 0) {
+            p.kills = (p.kills || 0) + 1;
+            p.gold += (other.gold || 50);
+            this.addCombo(2);
+          }
+        }
+      }
+    }
+    this.em.addFloatingText(p.x, p.y - 1.8, `🌪️ [1번] 질풍의 회오리검! (${hits}기 타격)`, '#38bdf8', 1.8);
+  }
+
+  castFrostNova() {
+    const p = this.em.player;
+    if (!p) return;
+    if (this.skills.frostNova.cd > 0) {
+      this.em.addFloatingText(p.x, p.y - 1.2, `⏳ 혹한의 서리폭풍 쿨다운 (${Math.ceil(this.skills.frostNova.cd)}초)`, '#94a3b8', 1.0);
+      return;
+    }
+    this.skills.frostNova.cd = this.skills.frostNova.maxCd;
+
+    if (typeof audioMgr !== 'undefined') audioMgr.playFrost();
+    this.em.addEffect(p.x, p.y, 7.5, '#a5f3fc', 1.2);
+
+    let hits = 0;
+    const dmgMult = this.addCombo(2);
+    const baseDmg = Math.round((50 + p.atk * 1.3) * dmgMult);
+
+    for (const other of this.em.entities) {
+      if (other.hp > 0 && (other.faction === 'monster' || other === this.activeBoss)) {
+        const d = Math.hypot(other.x - p.x, other.y - p.y);
+        if (d <= 7.2) {
+          hits++;
+          other.hp -= baseDmg;
+          other.state = 'frozen';
+          other.stateTimer = 4.0;
+          this.em.addFloatingText(other.x, other.y - 1.0, `❄️-${baseDmg} [동결 4초]`, '#a5f3fc', 1.4);
+          if (other.hp <= 0) {
+            p.kills = (p.kills || 0) + 1;
+            p.gold += (other.gold || 50);
+            this.addCombo(2);
+          }
+        }
+      }
+    }
+    this.em.addFloatingText(p.x, p.y - 1.8, `❄️ [2번] 혹한의 프로스트 노바! (${hits}기 동결)`, '#7dd3fc', 2.0);
+  }
+
+  castMeteorStrike() {
+    const p = this.em.player;
+    if (!p) return;
+    if (this.skills.meteor.cd > 0) {
+      this.em.addFloatingText(p.x, p.y - 1.2, `⏳ 멸망의 메테오 쿨다운 (${Math.ceil(this.skills.meteor.cd)}초)`, '#94a3b8', 1.0);
+      return;
+    }
+    this.skills.meteor.cd = this.skills.meteor.maxCd;
+
+    // 플레이어 전방 6타일 위치 타격
+    const dirX = p.vx !== 0 ? Math.sign(p.vx) : 1;
+    const dirY = p.vy !== 0 ? Math.sign(p.vy) : 0;
+    const targetX = Math.max(3, Math.min(this.world.width - 4, p.x + dirX * 6));
+    const targetY = Math.max(3, Math.min(this.world.height - 4, p.y + dirY * 6));
+
+    if (typeof audioMgr !== 'undefined') audioMgr.playMeteor();
+    this.em.addEffect(targetX, targetY, 8.5, '#ef4444', 1.6);
+    this.em.addEffect(targetX, targetY, 4.5, '#fbbf24', 1.2);
+
+    let hits = 0;
+    const dmgMult = this.addCombo(3);
+    const baseDmg = Math.round((220 + p.atk * 3.2) * dmgMult);
+
+    for (const other of this.em.entities) {
+      if (other.hp > 0 && (other.faction === 'monster' || other === this.activeBoss)) {
+        const d = Math.hypot(other.x - targetX, other.y - targetY);
+        if (d <= 7.0) {
+          hits++;
+          other.hp -= baseDmg;
+          this.em.addFloatingText(other.x, other.y - 1.2, `☄️-${baseDmg} [치명타!]`, '#f87171', 1.6);
+          if (other.hp <= 0) {
+            p.kills = (p.kills || 0) + 1;
+            p.gold += (other.gold || 120);
+            this.addCombo(3);
+          }
+        }
+      }
+    }
+    this.em.addFloatingText(p.x, p.y - 2.2, `☄️ [3번] 멸망의 메테오 스트라이크 작렬! (${hits}기 섬멸)`, '#ef4444', 2.4);
+    this.em.log('battle', `☄️ 플레이어가 고대 메테오 스트라이크를 낙하시켜 주변을 초토화했습니다! (${hits}기 타격)`, targetX, targetY);
+  }
+
+  castUltimateBarrage() {
+    const p = this.em.player;
+    if (!p) return;
+    if (this.skills.barrage.cd > 0) {
+      this.em.addFloatingText(p.x, p.y - 1.2, `⏳ 전방위 일제포격 쿨다운 (${Math.ceil(this.skills.barrage.cd)}초)`, '#94a3b8', 1.0);
+      return;
+    }
+    this.skills.barrage.cd = this.skills.barrage.maxCd;
+
+    if (typeof audioMgr !== 'undefined') audioMgr.playCannon();
+    this.em.addEffect(p.x, p.y, 4.0, '#f97316', 0.8);
+
+    const projectileCount = 12;
+    const dmgMult = this.addCombo(2);
+    const bulletDmg = Math.round((75 + p.atk * 1.1) * dmgMult);
+
+    for (let i = 0; i < projectileCount; i++) {
+      const angle = (Math.PI * 2 / projectileCount) * i;
+      const vx = Math.cos(angle) * 22;
+      const vy = Math.sin(angle) * 22;
+
+      this.em.projectiles.push({
+        x: p.x,
+        y: p.y,
+        vx: vx,
+        vy: vy,
+        color: '#f97316',
+        life: 0.85
+      });
+    }
+
+    let hits = 0;
+    for (const other of this.em.entities) {
+      if (other.hp > 0 && (other.faction === 'monster' || other === this.activeBoss)) {
+        const d = Math.hypot(other.x - p.x, other.y - p.y);
+        if (d <= 9.0) {
+          hits++;
+          other.hp -= bulletDmg;
+          this.em.addFloatingText(other.x, other.y - 1.0, `💣-${bulletDmg}`, '#fb923c', 1.2);
+          if (other.hp <= 0) {
+            p.kills = (p.kills || 0) + 1;
+            p.gold += (other.gold || 60);
+            this.addCombo(2);
+          }
+        }
+      }
+    }
+    this.em.addFloatingText(p.x, p.y - 1.8, `💣 [4번] 360도 전방위 일제 함포/포격 사격! (${hits}기 피격)`, '#fb923c', 2.0);
+  }
+
+  // ==========================================================================
+  // H. 낚시 미니게임 (Interactive Fishing System)
+  // ==========================================================================
+  toggleFishing() {
+    const p = this.em.player;
+    if (!p) return;
+
+    // 만약 이미 낚시 중이라면 낚아채기 시도
+    if (this.fishing.active) {
+      this.reelInFish();
+      return;
+    }
+
+    // 플레이어가 물가나 배 위에 있는지 검사
+    const tx = Math.floor(p.x);
+    const ty = Math.floor(p.y);
+    const tile = this.world.getTile(tx, ty);
+
+    let canFish = p.isShip || (tile === TILE.DOCK || tile === TILE.WATER || tile === TILE.DEEP_WATER);
+    let waterX = p.x + 2;
+    let waterY = p.y;
+
+    if (!canFish) {
+      // 인근 3타일 내 물이 있는지 탐색
+      for (let dx = -2; dx <= 2 && !canFish; dx++) {
+        for (let dy = -2; dy <= 2 && !canFish; dy++) {
+          const t = this.world.getTile(tx + dx, ty + dy);
+          if (t === TILE.WATER || t === TILE.DEEP_WATER || t === TILE.DOCK) {
+            canFish = true;
+            waterX = tx + dx + 0.5;
+            waterY = ty + dy + 0.5;
+          }
+        }
+      }
+    }
+
+    if (!canFish) {
+      this.em.addFloatingText(p.x, p.y - 1.2, '⚠️ 낚시는 강가, 바닷가, 부두 또는 선박 위에서만 가능합니다!', '#f87171', 1.8);
+      return;
+    }
+
+    // 낚시 개시
+    this.fishing.active = true;
+    this.fishing.timer = 1.8 + Math.random() * 2.8;
+    this.fishing.bite = false;
+    this.fishing.biteTimer = 0;
+    this.fishing.bobberX = waterX;
+    this.fishing.bobberY = waterY;
+
+    if (typeof audioMgr !== 'undefined') audioMgr.playSplash();
+    this.em.addEffect(waterX, waterY, 1.5, '#38bdf8', 0.8);
+    this.em.addFloatingText(p.x, p.y - 1.5, '🎣 낚싯대를 드리웠습니다... (물결 요동 시 [J]를 누르세요!)', '#38bdf8', 2.5);
+    p.fishingLine = { wx: waterX, wy: waterY };
+  }
+
+  reelInFish() {
+    const p = this.em.player;
+    if (!p || !this.fishing.active) return;
+
+    if (this.fishing.bite) {
+      // 물고기 낚아채기 성공!
+      if (typeof audioMgr !== 'undefined') audioMgr.playFish();
+      this.em.addEffect(this.fishing.bobberX, this.fishing.bobberY, 3.5, '#38bdf8', 1.0);
+
+      const roll = Math.random();
+      let fishName = '🐟 신선한 대양 은연어';
+      let goldGain = 140;
+      let extraText = '+140G & HP 120 회복';
+
+      if (roll < 0.12) {
+        fishName = '🦑 심해 아기 크라켄의 촉수';
+        goldGain = 1200;
+        p.atk += 4;
+        extraText = '+1200G & 영구 공격력 +4 강화!';
+      } else if (roll < 0.35) {
+        fishName = '🦪 신비한 흑진주 대왕조개';
+        goldGain = 500;
+        p.inventory.gems = (p.inventory.gems || 0) + 2;
+        extraText = '+500G & 심해 진주 2개 획득!';
+      } else if (roll < 0.65) {
+        fishName = '🐠 심해 발광 장어';
+        goldGain = 280;
+        extraText = '+280G & 낚시 숙련도 상승';
+      }
+
+      p.gold += goldGain;
+      p.hp = Math.min(p.maxHp, p.hp + 120);
+
+      this.em.addFloatingText(p.x, p.y - 1.8, `🎉 대박! [${fishName}] 낚음! (${extraText})`, '#4ade80', 2.8);
+      this.em.log('trade', `🎣 플레이어가 바다 낚시로 '${fishName}'을(를) 낚아 올렸습니다! (${extraText})`, p.x, p.y);
+    } else {
+      // 너무 일찍 당김
+      this.em.addFloatingText(p.x, p.y - 1.2, '💨 너무 일찍 당겨 물고기가 놀라 도망쳤습니다!', '#94a3b8', 1.5);
+    }
+
+    this.fishing.active = false;
+    this.fishing.bite = false;
+    p.fishingLine = null;
+  }
+
+  updateFishing(dt) {
+    if (!this.fishing.active) return;
+    const p = this.em.player;
+    if (!p) {
+      this.fishing.active = false;
+      return;
+    }
+
+    // 플레이어가 낚시 지점에서 너무 멀리 이동하면 자동 취소
+    const dist = Math.hypot(p.x - this.fishing.bobberX, p.y - this.fishing.bobberY);
+    if (dist > 5.5) {
+      this.fishing.active = false;
+      this.fishing.bite = false;
+      p.fishingLine = null;
+      this.em.addFloatingText(p.x, p.y - 1.0, '낚싯줄이 팽팽해져 회수했습니다.', '#94a3b8', 1.2);
+      return;
+    }
+
+    if (!this.fishing.bite) {
+      this.fishing.timer -= dt;
+      if (this.fishing.timer <= 0) {
+        this.fishing.bite = true;
+        this.fishing.biteTimer = 3.2; // 3.2초 동안 기회 제공
+        if (typeof audioMgr !== 'undefined') audioMgr.playSplash();
+        this.em.addEffect(this.fishing.bobberX, this.fishing.bobberY, 2.8, '#f43f5e', 1.0);
+        this.em.addFloatingText(p.x, p.y - 1.8, '❗❗ 입질이 왔습니다! 지금 [J] 키를 누르세요!', '#f43f5e', 2.2);
+      }
+    } else {
+      this.fishing.biteTimer -= dt;
+      if (this.fishing.biteTimer <= 0) {
+        // 입질 시간 초과 -> 물고기 도주
+        this.fishing.active = false;
+        this.fishing.bite = false;
+        p.fishingLine = null;
+        this.em.addFloatingText(p.x, p.y - 1.2, '💨 물고기가 미끼만 채가고 도망쳤습니다...', '#94a3b8', 1.5);
+      }
+    }
+  }
+
+  // ==========================================================================
+  // I. 순간이동 포탈 (Fast Travel Portal)
+  // ==========================================================================
+  teleportTo(settlementId) {
+    const p = this.em.player;
+    const s = this.world.settlementMap[settlementId];
+    if (!p || !s) return;
+
+    if (typeof audioMgr !== 'undefined') audioMgr.playTeleport();
+
+    // 출발지 이펙트
+    this.em.addEffect(p.x, p.y, 6.0, '#a855f7', 1.2);
+
+    // 대상 좌표 (배 탑승 중이고 항구면 portWater 좌표 이용)
+    const targetX = (p.isShip && s.portWaterX) ? s.portWaterX : s.x;
+    const targetY = (p.isShip && s.portWaterY) ? s.portWaterY : s.y;
+
+    p.x = targetX;
+    p.y = targetY;
+    p.targetX = targetX;
+    p.targetY = targetY;
+
+    // 동료들도 같이 순간이동
+    if (this.companionsActive) {
+      this.companions.forEach(c => {
+        c.x = targetX + (Math.random() - 0.5) * 2;
+        c.y = targetY + (Math.random() - 0.5) * 2;
+        c.targetX = c.x;
+        c.targetY = c.y;
+      });
+    }
+
+    // 도착지 이펙트
+    this.em.addEffect(targetX, targetY, 6.0, '#a855f7', 1.2);
+    this.em.addFloatingText(targetX, targetY - 1.8, `🌀 [${s.name}] 순간이동 완료!`, '#c084fc', 2.4);
+    this.em.log('quest', `🌀 플레이어가 고대 차원문을 통해 [${s.name}]으로 순간이동했습니다!`, targetX, targetY);
+  }
+
+  // ==========================================================================
+  // J. 날씨 천벌 낙뢰 (Cataclysm Lightning)
+  // ==========================================================================
+  updateCataclysm(dt, worldTime) {
+    this.cataclysmTimer -= dt;
+    if (this.cataclysmTimer <= 0) {
+      this.cataclysmTimer = 14.0 + Math.random() * 12.0;
+
+      const p = this.em.player;
+      if (!p) return;
+
+      // 플레이어 화면 근처에서 번개 발생
+      const lx = Math.max(4, Math.min(this.world.width - 5, p.x + (Math.random() - 0.5) * 28));
+      const ly = Math.max(4, Math.min(this.world.height - 5, p.y + (Math.random() - 0.5) * 28));
+
+      if (typeof audioMgr !== 'undefined') audioMgr.playThunder();
+      this.em.addEffect(lx, ly, 6.0, '#facc15', 0.8);
+      this.em.addEffect(lx, ly, 3.0, '#ffffff', 0.5);
+
+      // 번개 직격 타격 (몬스터에게 대미지)
+      for (const ent of this.em.entities) {
+        if (ent.hp > 0 && ent.faction === 'monster') {
+          if (Math.hypot(ent.x - lx, ent.y - ly) < 4.5) {
+            ent.hp -= 90;
+            this.em.addFloatingText(ent.x, ent.y - 1.0, `⚡ 천벌-90`, '#facc15', 1.2);
+          }
+        }
+      }
+    }
+  }
+
+  update(dt, worldTime) {
+    // 쿨다운 갱신
+    if (this.skills.whirlwind.cd > 0) this.skills.whirlwind.cd -= dt;
+    if (this.skills.frostNova.cd > 0) this.skills.frostNova.cd -= dt;
+    if (this.skills.meteor.cd > 0) this.skills.meteor.cd -= dt;
+    if (this.skills.barrage.cd > 0) this.skills.barrage.cd -= dt;
+
+    this.updateCombo(dt);
     this.updateStructures(dt);
     this.updateCompanions(dt);
     this.updateBoss(dt);
+    this.updateFishing(dt);
+    this.updateCataclysm(dt, worldTime);
+
     if (this.em.player) {
       this.checkTreasureInteraction(this.em.player);
     }

@@ -359,29 +359,79 @@ class WorldRenderer {
           const wy = Math.round(e.fishingLine.wy * ts + ts / 2 + Math.sin(timeSec * 5 + e.id) * 2);
 
           ctx.strokeStyle = '#e2e8f0';
-          ctx.lineWidth = 1;
+          ctx.lineWidth = 1.2;
           ctx.beginPath();
           ctx.moveTo(ex, ey);
           ctx.lineTo(wx, wy);
           ctx.stroke();
 
+          // 찌 렌더링
           ctx.fillStyle = '#ef4444';
           ctx.fillRect(wx - 2, wy - 2, 4, 4);
+
+          // 플레이어 입질 시 붉은 파문 & 경고 표시
+          if (e.role === 'player' && this.entityMgr.rpgManager && this.entityMgr.rpgManager.fishing.bite) {
+            ctx.save();
+            ctx.strokeStyle = '#f43f5e';
+            ctx.lineWidth = 2;
+            const ripR = (timeSec * 35) % 18;
+            ctx.beginPath();
+            ctx.arc(wx, wy, ripR, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.font = 'bold 16px sans-serif';
+            ctx.fillStyle = '#f43f5e';
+            ctx.fillText('❗', wx - 6, wy - 12);
+            ctx.restore();
+          }
         }
       }
     }
 
-    // 8. 광역 마법 이펙트
+    // 8. 광역 마법 이펙트 (회오리검, 서리폭풍, 메테오, 포격, 번개)
     for (const fx of this.entityMgr.specialEffects) {
       const progress = fx.age / fx.duration;
       const curR = Math.round(fx.radius * ts * (0.3 + progress * 0.7));
+      const fxPx = Math.round(fx.x * ts);
+      const fxPy = Math.round(fx.y * ts);
+
       ctx.save();
       ctx.globalAlpha = Math.max(0, 1 - progress);
       ctx.strokeStyle = fx.color;
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(Math.round(fx.x * ts), Math.round(fx.y * ts), curR, 0, Math.PI * 2);
+      ctx.arc(fxPx, fxPy, curR, 0, Math.PI * 2);
       ctx.stroke();
+
+      // 원소별 특수 디테일
+      if (fx.color === '#ef4444') {
+        // 메테오 충격파 불꽃 핵
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.35)';
+        ctx.beginPath();
+        ctx.arc(fxPx, fxPy, curR * 0.75, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (fx.color === '#a5f3fc') {
+        // 혹한의 서리 다각형 얼음 결정
+        ctx.strokeStyle = '#e0f2fe';
+        ctx.lineWidth = 1.5;
+        for (let a = 0; a < 6; a++) {
+          const ang = (Math.PI / 3) * a + progress;
+          ctx.beginPath();
+          ctx.moveTo(fxPx, fxPy);
+          ctx.lineTo(fxPx + Math.cos(ang) * curR, fxPy + Math.sin(ang) * curR);
+          ctx.stroke();
+        }
+      } else if (fx.color === '#38bdf8') {
+        // 질풍의 회오리 블레이드 호
+        ctx.lineWidth = 2.5;
+        const spin = timeSec * 15;
+        ctx.beginPath();
+        ctx.arc(fxPx, fxPy, curR, spin, spin + Math.PI * 0.7);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(fxPx, fxPy, curR, spin + Math.PI, spin + Math.PI * 1.7);
+        ctx.stroke();
+      }
+
       ctx.restore();
     }
 

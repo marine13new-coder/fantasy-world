@@ -977,6 +977,31 @@ class EntityManager {
       return;
     }
 
+    if (skillKey === '1' || skillKey === 'whirlwind') {
+      if (this.rpgManager) this.rpgManager.castWhirlwind();
+      return;
+    }
+
+    if (skillKey === '2' || skillKey === 'frost') {
+      if (this.rpgManager) this.rpgManager.castFrostNova();
+      return;
+    }
+
+    if (skillKey === '3' || skillKey === 'meteor') {
+      if (this.rpgManager) this.rpgManager.castMeteorStrike();
+      return;
+    }
+
+    if (skillKey === '4' || skillKey === 'barrage') {
+      if (this.rpgManager) this.rpgManager.castUltimateBarrage();
+      return;
+    }
+
+    if (skillKey === 'J' || skillKey === 'fish') {
+      if (this.rpgManager) this.rpgManager.toggleFishing();
+      return;
+    }
+
     if (skillKey === 'Q') {
       if (typeof audioMgr !== 'undefined') audioMgr.playMagic();
       this.addEffect(p.x, p.y, 11, '#f97316', 0.85);
@@ -1262,7 +1287,7 @@ class EntityManager {
 
     // 영지 건축 타워 방어, 호위 용병단, 월드 보스 레이드, 보물상자 상호작용 갱신
     if (this.rpgManager) {
-      this.rpgManager.update(dt);
+      this.rpgManager.update(dt, worldTime);
     }
 
     // 농작물 성장
@@ -1644,7 +1669,12 @@ class EntityManager {
       }
       if (nearest) {
         p.attackCooldown = 0.65;
-        const dmg = Math.round(p.atk * (0.9 + Math.random() * 0.3));
+        let comboMult = 1.0;
+        if (this.rpgManager) {
+          comboMult = this.rpgManager.addCombo(1);
+        }
+        if (typeof audioMgr !== 'undefined') audioMgr.playSword();
+        const dmg = Math.round(p.atk * comboMult * (0.9 + Math.random() * 0.3));
         nearest.hp -= dmg;
         const angle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
         this.projectiles.push({
@@ -1660,6 +1690,9 @@ class EntityManager {
           p.kills++;
           p.gold += nearest.gold;
           p.inventory.gems = (p.inventory.gems || 0) + 1;
+          if (this.rpgManager) {
+            this.rpgManager.addCombo(2);
+          }
           this.addFloatingText(p.x, p.y - 1.2, `+${nearest.gold}G 토벌 성공!`, '#4ade80', 1.4);
         }
       }
