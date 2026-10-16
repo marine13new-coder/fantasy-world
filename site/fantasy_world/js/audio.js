@@ -25,6 +25,15 @@ class RetroAudioSystem {
     }
   }
 
+  ensureReady() {
+    if (this.muted) return false;
+    if (!this.initialized) this.init();
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+    return !!this.ctx;
+  }
+
   resume() {
     if (!this.initialized) this.init();
     if (this.ctx && this.ctx.state === 'suspended') {
@@ -42,8 +51,7 @@ class RetroAudioSystem {
 
   // 1. 검 휘두르기 / 물리 타격 (Metallic Slash)
   playSword() {
-    if (this.muted || !this.ctx) return;
-    this.resume();
+    if (!this.ensureReady()) return;
     const t = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -64,8 +72,7 @@ class RetroAudioSystem {
 
   // 2. 마법 벼락 / 천공의 심판 (Magic Thunder Strike)
   playMagic() {
-    if (this.muted || !this.ctx) return;
-    this.resume();
+    if (!this.ensureReady()) return;
     const t = this.ctx.currentTime;
 
     // 고주파 스파크
@@ -86,8 +93,7 @@ class RetroAudioSystem {
 
   // 3. 골드 / 보물 획득 짤랑거림 (Coin Chime)
   playCoin() {
-    if (this.muted || !this.ctx) return;
-    this.resume();
+    if (!this.ensureReady()) return;
     const t = this.ctx.currentTime;
 
     [987.77, 1318.51].forEach((freq, idx) => {
@@ -110,8 +116,7 @@ class RetroAudioSystem {
 
   // 4. 의뢰 완수 / 레벨업 팡파르 (Fanfare)
   playFanfare() {
-    if (this.muted || !this.ctx) return;
-    this.resume();
+    if (!this.ensureReady()) return;
     const t = this.ctx.currentTime;
     const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
 
@@ -136,8 +141,7 @@ class RetroAudioSystem {
 
   // 5. 드래곤 포효 (Dragon Roar)
   playRoar() {
-    if (this.muted || !this.ctx) return;
-    this.resume();
+    if (!this.ensureReady()) return;
     const t = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -158,8 +162,7 @@ class RetroAudioSystem {
 
   // 6. 건축 망치질 (Building Hammer Thud)
   playBuild() {
-    if (this.muted || !this.ctx) return;
-    this.resume();
+    if (!this.ensureReady()) return;
     const t = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -179,8 +182,7 @@ class RetroAudioSystem {
 
   // 7. 물살 & 출항 (Ship Sail Splash)
   playSplash() {
-    if (this.muted || !this.ctx) return;
-    this.resume();
+    if (!this.ensureReady()) return;
     const t = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -200,8 +202,7 @@ class RetroAudioSystem {
 
   // 8. 월드 보스 레이드 경보 (Boss Alarm Horn)
   playBossHorn() {
-    if (this.muted || !this.ctx) return;
-    this.resume();
+    if (!this.ensureReady()) return;
     const t = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -222,8 +223,7 @@ class RetroAudioSystem {
 
   // 9. 선풍참 연속 회전 베기 (Whirlwind Slash)
   playWhirlwind() {
-    if (this.muted || !this.ctx) return;
-    this.resume();
+    if (!this.ensureReady()) return;
     const t = this.ctx.currentTime;
     for (let i = 0; i < 3; i++) {
       const osc = this.ctx.createOscillator();
@@ -243,8 +243,7 @@ class RetroAudioSystem {
 
   // 10. 빙결 서리 폭풍 (Frost Nova)
   playFrost() {
-    if (this.muted || !this.ctx) return;
-    this.resume();
+    if (!this.ensureReady()) return;
     const t = this.ctx.currentTime;
     [1200, 1500, 1850].forEach((freq, idx) => {
       const osc = this.ctx.createOscillator();
@@ -264,8 +263,7 @@ class RetroAudioSystem {
 
   // 11. 화염 메테오 폭격 (Meteor Strike)
   playMeteor() {
-    if (this.muted || !this.ctx) return;
-    this.resume();
+    if (!this.ensureReady()) return;
     const t = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -282,8 +280,7 @@ class RetroAudioSystem {
 
   // 12. 함대 함포 일제 사격 (Broadside Cannons)
   playCannon() {
-    if (this.muted || !this.ctx) return;
-    this.resume();
+    if (!this.ensureReady()) return;
     const t = this.ctx.currentTime;
     for (let i = 0; i < 4; i++) {
       const osc = this.ctx.createOscillator();
@@ -303,8 +300,7 @@ class RetroAudioSystem {
 
   // 13. 낚시 입질 & 건져올리기 (Fishing Splash)
   playFish() {
-    if (this.muted || !this.ctx) return;
-    this.resume();
+    if (!this.ensureReady()) return;
     const t = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -321,8 +317,7 @@ class RetroAudioSystem {
 
   // 14. 고대 마법 포탈 순간이동 (Portal Warp)
   playTeleport() {
-    if (this.muted || !this.ctx) return;
-    this.resume();
+    if (!this.ensureReady()) return;
     const t = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -339,8 +334,7 @@ class RetroAudioSystem {
 
   // 15. 천벌 뇌우 낙뢰 (Thunder Crash)
   playThunder() {
-    if (this.muted || !this.ctx) return;
-    this.resume();
+    if (!this.ensureReady()) return;
     const t = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();

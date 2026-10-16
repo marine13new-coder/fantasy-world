@@ -2,16 +2,30 @@
 // main.js - 메인 시뮬레이션 루프, 플레이어 직접 조작(RPG/항해 모드), 군주 칙령, UI 인터랙션
 // ============================================================================
 
-document.addEventListener('DOMContentLoaded', () => {
+function startFantasyWorld() {
   const canvas = document.getElementById('worldCanvas');
   const minimapCanvas = document.getElementById('minimapCanvas');
+  if (!canvas || !minimapCanvas) return;
 
   function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    const ctx = canvas.getContext('2d');
+    if (ctx) ctx.imageSmoothingEnabled = false;
   }
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
+
+  // 첫 사용자 상호작용 시 오디오 자동 해제
+  const unlockAudio = () => {
+    if (typeof audioMgr !== 'undefined') audioMgr.resume();
+    window.removeEventListener('click', unlockAudio);
+    window.removeEventListener('keydown', unlockAudio);
+    window.removeEventListener('touchstart', unlockAudio);
+  };
+  window.addEventListener('click', unlockAudio);
+  window.addEventListener('keydown', unlockAudio);
+  window.addEventListener('touchstart', unlockAudio);
 
   // 1. 월드 및 시뮬레이션 상태 초기화
   const world = generateWorld();
@@ -455,6 +469,18 @@ document.addEventListener('DOMContentLoaded', () => {
     player.targetY = Math.max(2, Math.min(WORLD_HEIGHT - 3, wy));
     entityMgr.addEffect(player.targetX, player.targetY, 1.8, '#facc15', 0.45);
   });
+
+  // 모바일 / 태블릿 터치로 플레이어 이동 및 타겟팅
+  canvas.addEventListener('touchstart', (e) => {
+    if (e.touches && e.touches.length === 1) {
+      const touch = e.touches[0];
+      const wx = camera.x + (touch.clientX - canvas.width / 2) / (TILE_SIZE * camera.zoom);
+      const wy = camera.y + (touch.clientY - canvas.height / 2) / (TILE_SIZE * camera.zoom);
+      player.targetX = Math.max(2, Math.min(WORLD_WIDTH - 3, wx));
+      player.targetY = Math.max(2, Math.min(WORLD_HEIGHT - 3, wy));
+      entityMgr.addEffect(player.targetX, player.targetY, 1.8, '#facc15', 0.45);
+    }
+  }, { passive: true });
 
   canvas.addEventListener('mousedown', (e) => {
     if (e.button === 0) {
@@ -925,4 +951,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   requestAnimationFrame(loop);
-});
+}
+
+// 브라우저 DOM 준비 상태에 따른 즉각 실행 보장 (ReadyState Guard)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startFantasyWorld);
+} else {
+  startFantasyWorld();
+}

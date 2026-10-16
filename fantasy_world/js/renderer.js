@@ -17,7 +17,7 @@ class WorldRenderer {
     this.ctx.imageSmoothingEnabled = false;
     this.minimapCtx.imageSmoothingEnabled = false;
 
-    this.bakeScale = 10; // 타일당 10픽셀 정밀 베이킹 (4800 x 3200)
+    this.bakeScale = 8; // 타일당 8픽셀 정밀 베이킹 (3840 x 2560: 4096px GPU/모바일 텍스처 한계 완전 호환 & 36% 메모리 절약)
     this.terrainCanvas = document.createElement('canvas');
     this.terrainCanvas.width = world.width * this.bakeScale;
     this.terrainCanvas.height = world.height * this.bakeScale;

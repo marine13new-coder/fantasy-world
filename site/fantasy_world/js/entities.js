@@ -1421,7 +1421,11 @@ class EntityManager {
       let minD = 5.5;
       for (const other of this.entities) {
         if (other.faction === 'monster' || other.isPredator || other.role === 'player') {
-          const d = Math.hypot(other.x - e.x, other.y - e.y);
+          const dx = other.x - e.x;
+          if (Math.abs(dx) > minD) continue;
+          const dy = other.y - e.y;
+          if (Math.abs(dy) > minD) continue;
+          const d = Math.hypot(dx, dy);
           if (d < minD) {
             minD = d;
             threat = other;
@@ -1479,7 +1483,11 @@ class EntityManager {
     let minD = 14;
     for (const other of this.entities) {
       if (other.faction === 'kingdom' && other.hp > 0) {
-        const d = Math.hypot(other.x - e.x, other.y - e.y);
+        const dx = other.x - e.x;
+        if (Math.abs(dx) > minD) continue;
+        const dy = other.y - e.y;
+        if (Math.abs(dy) > minD) continue;
+        const d = Math.hypot(dx, dy);
         if (d < minD) {
           minD = d;
           target = other;
@@ -1660,7 +1668,11 @@ class EntityManager {
       let minDist = 8.5;
       for (const other of this.entities) {
         if (other.faction === 'monster' && other.hp > 0) {
-          const d = Math.hypot(other.x - p.x, other.y - p.y);
+          const dx = other.x - p.x;
+          if (Math.abs(dx) > minDist) continue;
+          const dy = other.y - p.y;
+          if (Math.abs(dy) > minDist) continue;
+          const d = Math.hypot(dx, dy);
           if (d < minDist) {
             minDist = d;
             nearest = other;
@@ -1715,7 +1727,11 @@ class EntityManager {
       for (const other of this.entities) {
         if (other === e || other.hp <= 0 || other.faction === e.faction || other.faction === 'neutral') continue;
         if (e.isShip !== other.isShip) continue;
-        const d = Math.hypot(other.x - e.x, other.y - e.y);
+        const dx = other.x - e.x;
+        if (Math.abs(dx) > minDist) continue;
+        const dy = other.y - e.y;
+        if (Math.abs(dy) > minDist) continue;
+        const d = Math.hypot(dx, dy);
         if (d < minDist) {
           minDist = d;
           nearest = other;
