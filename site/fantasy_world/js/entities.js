@@ -1257,6 +1257,9 @@ class EntityManager {
           if (d <= 12) {
             const dmg = Math.round(p.atk * 2.4);
             other.hp -= dmg;
+            other.hitTimer = 0.25;
+            other.combatTarget = p;
+            this.rallyNearbyAllies(other, p, 10.0);
             hitCount++;
             this.addFloatingText(other.x, other.y - 1, `⚡-${dmg}`, '#facc15', 1.2);
             if (other.hp <= 0) {
@@ -1270,17 +1273,189 @@ class EntityManager {
       }
       this.addFloatingText(p.x, p.y - 1.5, hitCount > 0 ? `⚡ 천공의 심판! (${hitCount}기 타격)` : '⚡ 천공의 심판!', '#fde047', 1.4);
     } else if (skillKey === 'E') {
-      // 인근 자원(광맥/수목/약초/진주조개)이 있으면 우선 채집
-      const gathered = this.gatherNearestResource();
-      if (!gathered) {
-        if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
-        p.boostTimer = 6.0;
-        p.hp = Math.min(p.maxHp, p.hp + 150);
-        this.addEffect(p.x, p.y, 4.5, '#38bdf8', 0.7);
-        this.addFloatingText(p.x, p.y - 1.4, '💨 질주 가속 & 생명력 회복!', '#38bdf8', 1.4);
+      // 인근 NPC와 대화 우선, 다음으로 자원 채집, 없으면 질주 가속
+      const talked = this.interactWithNearestNPC(p);
+      if (!talked) {
+        const gathered = this.gatherNearestResource();
+        if (!gathered) {
+          if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+          p.boostTimer = 6.0;
+          p.hp = Math.min(p.maxHp, p.hp + 150);
+          this.addEffect(p.x, p.y, 4.5, '#38bdf8', 0.7);
+          this.addFloatingText(p.x, p.y - 1.4, '💨 질주 가속 & 생명력 회복!', '#38bdf8', 1.4);
+        }
       }
     } else if (skillKey === 'F') {
-      this.interactWithNearestSettlement();
+      // 1순위: 근접 NPC와의 전용 상호작용 및 보상 대화
+      const talked = this.interactWithNearestNPC(p);
+      // 2순위: 인근 거점 도시/항구 교역 및 강화
+      if (!talked) {
+        this.interactWithNearestSettlement();
+      }
+    } else if (skillKey === 'J' || skillKey === 'attack') {
+      this.playerPerformAttack(p);
+    }
+  }
+
+  // ⚔️ 플레이어 직접 수동 무기 공격 (J키 / F키 / 좌클릭 타겟팅)
+  playerPerformAttack(p, target = null) {
+    if (!p) p = this.spawnOrGetPlayer();
+    if (p.attackCooldown > 0) return;
+
+    // 타겟이 없으면 전방 또는 반경 4.5타일 내 가장 가까운 적 선별
+    if (!target) {
+      let minDist = 4.8;
+      for (const other of this.entities) {
+        if (other !== p && other.hp > 0 && this.isHostile(p, other)) {
+          const d = Math.hypot(other.x - p.x, other.y - p.y);
+          if (d < minDist) {
+            minDist = d;
+            target = other;
+          }
+        }
+      }
+    }
+
+    p.attackCooldown = 0.45;
+    if (typeof audioMgr !== 'undefined') audioMgr.playSword();
+
+    const angle = target
+      ? Math.atan2(target.y - p.y, target.x - p.x)
+      : (p.facing === 'left' ? Math.PI : (p.facing === 'up' ? -Math.PI / 2 : (p.facing === 'down' ? Math.PI / 2 : 0)));
+
+    const slashX = p.x + Math.cos(angle) * 1.2;
+    const slashY = p.y + Math.sin(angle) * 1.2;
+    this.addEffect(slashX, slashY, 2.5, '#fde047', 0.35);
+
+    if (target) {
+      let comboMult = 1.0;
+      if (this.rpgManager) {
+        comboMult = this.rpgManager.addCombo(1);
+      }
+      const dmg = Math.round(p.atk * comboMult * (1.1 + Math.random() * 0.4));
+      target.hp -= dmg;
+      target.hitTimer = 0.25;
+
+      // 💥 핵심: 플레이어 공격 즉시 몬스터가 플레이어를 인식하고 반격!
+      target.combatTarget = p;
+      this.rallyNearbyAllies(target, p, 11.0);
+
+      this.addFloatingText(target.x, target.y - 0.9, `💥-${dmg}`, '#fde047', 1.0);
+      this.addEffect(target.x, target.y, 2.0, '#ef4444', 0.3);
+
+      if (target.hp <= 0) {
+        p.kills++;
+        p.gold += target.gold;
+        p.inventory.gems = (p.inventory.gems || 0) + 1;
+        this.gainPlayerExp(target.role === 'dragon' ? 150 : 60);
+        if (this.rpgManager) this.rpgManager.addCombo(2);
+        this.addFloatingText(p.x, p.y - 1.2, `+${target.gold}G 격파!`, '#4ade80', 1.5);
+      }
+    } else {
+      this.addFloatingText(slashX, slashY - 0.5, '⚡ 휘두르기!', '#94a3b8', 0.6);
+    }
+  }
+
+  // 🎯 특정 대상 공격 지명
+  playerAttackTarget(target) {
+    const p = this.spawnOrGetPlayer();
+    if (!p || !target || target.hp <= 0) return;
+    p.combatTarget = target;
+    const d = Math.hypot(target.x - p.x, target.y - p.y);
+    if (d <= 4.2) {
+      this.playerPerformAttack(p, target);
+    } else {
+      p.targetX = target.x;
+      p.targetY = target.y;
+      this.addFloatingText(p.x, p.y - 1.1, `🎯 [${target.name}] 타겟 추격 돌격!`, '#f87171', 1.2);
+    }
+  }
+
+  // 💬 인근 NPC 탐색 및 상호작용 트리거
+  interactWithNearestNPC(p) {
+    if (!p) p = this.spawnOrGetPlayer();
+    let nearest = null;
+    let minDist = 4.2;
+    for (const other of this.entities) {
+      if (other !== p && other.hp > 0 && other.faction === 'kingdom') {
+        const d = Math.hypot(other.x - p.x, other.y - p.y);
+        if (d < minDist) {
+          minDist = d;
+          nearest = other;
+        }
+      }
+    }
+    if (nearest) {
+      this.interactWithNPC(p, nearest);
+      return true;
+    }
+    return false;
+  }
+
+  // 🗣️ 직업/종족별 고유 상호작용 및 보답 시스템
+  interactWithNPC(p, npc) {
+    if (!p || !npc) return;
+    const dx = p.x - npc.x;
+    const dy = p.y - npc.y;
+    if (Math.abs(dy) > Math.abs(dx)) {
+      npc.facing = dy > 0 ? 'down' : 'up';
+      p.facing = dy > 0 ? 'up' : 'down';
+    } else {
+      npc.facing = dx > 0 ? 'right' : 'left';
+      p.facing = dx > 0 ? 'left' : 'right';
+    }
+
+    npc.talkingTimer = 4.5;
+    this.addEffect(npc.x, npc.y, 4.0, '#38bdf8', 0.8);
+    if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+
+    if (npc.role === 'king') {
+      const bounty = 600;
+      p.gold += bounty;
+      p.fame = (p.fame || 0) + 15;
+      p.maxHp += 30;
+      p.hp = p.maxHp;
+      npc.thought = `👑 "대륙의 영웅이여! 왕실의 영광과 함께하길." (+${bounty}G, 명성+15)`;
+      this.addFloatingText(npc.x, npc.y - 1.3, `👑 국왕의 칙령 포상 (+${bounty}G, 생명력+30)`, '#facc15', 2.2);
+      this.log('event', `👑 [${npc.name}] 국왕이 플레이어에게 하사금 ${bounty}G와 왕실 칭호를 수여했습니다!`, npc.x, npc.y);
+    } else if (npc.subClass && (npc.subClass.includes('사제') || npc.subClass.includes('성기사') || npc.subClass.includes('신관') || npc.role === 'priest')) {
+      p.hp = p.maxHp;
+      p.boostTimer = 18.0;
+      npc.thought = `✨ "빛의 가호가 그대를 감싸 안을지어다." (체력 100% 완전 회복)`;
+      this.addFloatingText(p.x, p.y - 1.3, '✨ 신성한 대치유! (HP 완전 회복 & 보호막)', '#38bdf8', 2.2);
+      this.addEffect(p.x, p.y, 6.0, '#e0f2fe', 1.0);
+    } else if (npc.role === 'blacksmith') {
+      p.atk += 4;
+      npc.thought = `⚒️ "크하하! 이 숫돌 맛을 보게나. 칼날이 바위도 베겠어!" (+4 영구 공격력)`;
+      this.addFloatingText(p.x, p.y - 1.3, '⚒️ 드워프 명검 단조 (+4 영구 공격력 강화!)', '#fb923c', 2.2);
+      this.addEffect(p.x, p.y, 4.0, '#f97316', 0.7);
+    } else if (npc.role === 'adventurer' || npc.role === 'mercenary') {
+      npc.guardTargetId = p.id;
+      npc.thought = `🗡️ "대장! 당신의 칼이 되어 함께 싸우겠소!" (파티원 합류)`;
+      this.addFloatingText(npc.x, npc.y - 1.3, `🤝 [${npc.name}] 파티 합류! (호위 및 공동 전투)`, '#a855f7', 2.2);
+      this.log('event', `🤝 모험가 [${npc.name}]이(가) 플레이어의 파티원으로 합류하여 함께 전투에 나섭니다!`, npc.x, npc.y);
+    } else if (npc.role === 'merchant' || npc.role === 'sea_merchant') {
+      const tradeGain = 250 + (p.inventory.gems || 0) * 85 + (p.inventory.spices || 0) * 95;
+      p.gold += tradeGain;
+      p.inventory.gems = 0;
+      p.inventory.spices = 0;
+      p.inventory.wheat = (p.inventory.wheat || 0) + 3;
+      npc.thought = `💰 "좋은 거래였습니다! 여행용 비상식량 3포대도 덤으로 드립니다." (+${tradeGain}G)`;
+      this.addFloatingText(npc.x, npc.y - 1.3, `💰 상단 직거래 완료 (+${tradeGain}G & 비상식량)`, '#fde047', 2.2);
+    } else if (npc.race === 'elf') {
+      p.boostTimer = 25.0;
+      p.speed = Math.min(2.5, p.speed * 1.15);
+      npc.thought = `🌿 "바람의 정령이 당신의 발걸음에 날개를 달아줄 것입니다." (신속 비약)`;
+      this.addFloatingText(p.x, p.y - 1.3, '🌿 요정의 신속 비약 활성화! (+이동속도 가속 25초)', '#4ade80', 2.2);
+    } else if (npc.role === 'soldier' || npc.role === 'royal_guard') {
+      p.gold += 80;
+      npc.thought = `🛡️ "경례! 관할 구역 치안 이상 무! 전선 몬스터 토벌에 감사드립니다." (+80G)`;
+      this.addFloatingText(npc.x, npc.y - 1.3, `🛡️ 수비대 전선 첩보 및 지원금 (+80G)`, '#60a5fa', 2.0);
+    } else {
+      p.hp = Math.min(p.maxHp, p.hp + 60);
+      p.inventory.wheat = (p.inventory.wheat || 0) + 2;
+      npc.thought = `🍞 "용사님! 늘 지켜주셔서 감사해요. 따뜻한 빵과 음료를 드세요."`;
+      this.addFloatingText(p.x, p.y - 1.3, '🍞 주민의 따뜻한 보답 (체력 +60 회복 & 식량)', '#fcd34d', 2.0);
     }
   }
 
@@ -1632,6 +1807,8 @@ class EntityManager {
       if (e.hitTimer > 0) e.hitTimer -= dt;
       if (e.stateTimer > 0) e.stateTimer -= dt;
       if (e.boostTimer > 0) e.boostTimer -= dt;
+      if (e.talkingTimer > 0) e.talkingTimer -= dt;
+      if (e.satiatedTimer > 0) e.satiatedTimer -= dt;
 
       if (!e.combatTarget && e.hp < e.maxHp) {
         e.hp = Math.min(e.maxHp, e.hp + dt * 3.0);
@@ -1708,6 +1885,13 @@ class EntityManager {
 
     this.activeBattles = Math.ceil(battleCount / 2);
 
+    // 💬 왕국 주민/병사/모험가 간 자연스러운 소셜 대화 & 경례 인터랙션 주기적 체크
+    this.npcSocialTimer = (this.npcSocialTimer || 0) + dt;
+    if (this.npcSocialTimer >= 1.6) {
+      this.npcSocialTimer = 0;
+      this.checkNPCSocialInteractions();
+    }
+
     // 투사체 업데이트
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const p = this.projectiles[i];
@@ -1733,55 +1917,146 @@ class EntityManager {
     }
   }
 
-  // 🐾 야생 동물 AI
+  // 🐾 야생 동물 생태계 AI (포식자 사냥 추적 및 초식 동물 무리 도주 시스템)
   updateAnimalAI(e, dt) {
-    // 포식자나 사냥꾼이 가까이 오면 도망침
-    if (!e.isPredator && Math.random() < 0.25) {
-      let threat = null;
-      let minD = 5.5;
+    // A. 포식자 (늑대, 호랑이, 곰, 랩터, 사자, 상어 등)
+    if (e.isPredator) {
+      if (e.satiatedTimer > 0) {
+        // 배부른 상태: 여유롭게 영역 순찰
+        if (e.stateTimer <= 0) {
+          e.stateTimer = 4.5 + Math.random() * 4;
+          const ang = Math.random() * Math.PI * 2;
+          e.targetX = Math.max(3, Math.min(WORLD_WIDTH - 4, e.x + Math.cos(ang) * 7));
+          e.targetY = Math.max(3, Math.min(WORLD_HEIGHT - 4, e.y + Math.sin(ang) * 7));
+          e.state = 'resting';
+          e.thought = '🍖 식사 후 든든하게 낮잠 및 영역 산책 중';
+        }
+        return;
+      }
+
+      // 사냥감 탐색 (반경 14타일 이내 비포식자 초식 동물 또는 사냥 대상)
+      let prey = null;
+      let minPreyD = 14.0;
       for (const other of this.entities) {
-        if (other.faction === 'monster' || other.isPredator || other.role === 'player') {
-          const dx = other.x - e.x;
-          if (Math.abs(dx) > minD) continue;
-          const dy = other.y - e.y;
-          if (Math.abs(dy) > minD) continue;
-          const d = Math.hypot(dx, dy);
-          if (d < minD) {
-            minD = d;
-            threat = other;
-          }
+        if (other === e || other.hp <= 0 || other.role !== 'animal' || other.isPredator) continue;
+        if (e.isAquatic !== other.isAquatic) continue;
+        const dx = other.x - e.x;
+        if (Math.abs(dx) > minPreyD) continue;
+        const dy = other.y - e.y;
+        if (Math.abs(dy) > minPreyD) continue;
+        const d = Math.hypot(dx, dy);
+        if (d < minPreyD) {
+          minPreyD = d;
+          prey = other;
         }
       }
-      if (threat) {
-        // 반대 방향으로 질주
-        const angle = Math.atan2(e.y - threat.y, e.x - threat.x);
-        e.targetX = Math.max(4, Math.min(WORLD_WIDTH - 4, e.x + Math.cos(angle) * 12));
-        e.targetY = Math.max(4, Math.min(WORLD_HEIGHT - 4, e.y + Math.sin(angle) * 12));
-        e.thought = `⚠️ ${threat.name}을(를) 피해 재빠르게 도망치는 중!`;
-        e.state = 'fleeing';
+
+      if (prey) {
+        e.targetX = prey.x;
+        e.targetY = prey.y;
+        const cdx = prey.x - e.x;
+        const cdy = prey.y - e.y;
+        if (Math.abs(cdy) > Math.abs(cdx)) {
+          e.facing = cdy > 0 ? 'down' : 'up';
+        } else {
+          e.facing = cdx > 0 ? 'right' : 'left';
+        }
+
+        if (minPreyD > 4.5) {
+          // 살금살금 은신 추적 모드
+          e.state = 'stalking';
+          e.thought = `🐾 [${prey.name}] 조용히 풍하에서 추적 중... (${Math.round(minPreyD)}m)`;
+          this.moveTowardTarget(e, dt * 1.05);
+        } else if (minPreyD > 1.4) {
+          // 전력 질주 기습 덮치기 모드!
+          e.state = 'hunting';
+          e.thought = `⚡ [${prey.name}] 향해 발톱을 드러내고 전력 질주 돌진!`;
+          this.moveTowardTarget(e, dt * 1.55);
+        } else {
+          // 물어뜯기 공격!
+          if (e.attackCooldown <= 0) {
+            e.attackCooldown = 0.9;
+            const dmg = Math.max(8, Math.round(e.atk * (0.9 + Math.random() * 0.3)));
+            prey.hp -= dmg;
+            prey.hitTimer = 0.25;
+            this.addFloatingText(prey.x, prey.y - 0.7, `-🐾${dmg}`, '#ef4444', 0.8);
+            if (typeof audioMgr !== 'undefined') audioMgr.playSword();
+
+            if (prey.hp <= 0) {
+              e.satiatedTimer = 9.0;
+              e.hp = Math.min(e.maxHp, e.hp + 50);
+              e.kills = (e.kills || 0) + 1;
+              e.state = 'feeding';
+              e.thought = `🍖 [${prey.name}] 사냥 성공! 배부르게 식사 중`;
+              this.addFloatingText(e.x, e.y - 1.1, '🍖 포식 완료!', '#4ade80', 1.5);
+            }
+          }
+        }
         return;
       }
     }
 
+    // B. 초식/평화 동물 (사슴, 토끼, 양, 소, 말, 돌고래 등)
+    // 인근에 포식자/몬스터/위협이 접근하면 필사적으로 무리 지어 도망
+    let threat = null;
+    let minThreatD = 9.0;
+    for (const other of this.entities) {
+      if (other === e || other.hp <= 0) continue;
+      const isThreat = other.isPredator || other.faction === 'monster' || (other.role === 'player' && Math.hypot(other.x - e.x, other.y - e.y) < 3.2);
+      if (!isThreat) continue;
+      if (e.isAquatic !== other.isAquatic && !other.isFlying) continue;
+
+      const dx = other.x - e.x;
+      if (Math.abs(dx) > minThreatD) continue;
+      const dy = other.y - e.y;
+      if (Math.abs(dy) > minThreatD) continue;
+      const d = Math.hypot(dx, dy);
+      if (d < minThreatD) {
+        minThreatD = d;
+        threat = other;
+      }
+    }
+
+    if (threat) {
+      // 위협 반대 방향으로 질주
+      const angle = Math.atan2(e.y - threat.y, e.x - threat.x);
+      e.targetX = Math.max(3, Math.min(WORLD_WIDTH - 4, e.x + Math.cos(angle) * 11));
+      e.targetY = Math.max(3, Math.min(WORLD_HEIGHT - 4, e.y + Math.sin(angle) * 11));
+      e.thought = `⚠️ ${threat.name}의 습격을 피해 필사적으로 전력 질주 도망 중!`;
+      e.state = 'fleeing';
+      this.moveTowardTarget(e, dt * 1.45);
+
+      // 주변 같은 무리 동물들에게도 위험 경보 전파!
+      for (const mate of this.entities) {
+        if (mate !== e && mate.role === 'animal' && !mate.isPredator && Math.hypot(mate.x - e.x, mate.y - e.y) < 5.5) {
+          mate.state = 'fleeing';
+          mate.targetX = e.targetX + (Math.random() - 0.5) * 3;
+          mate.targetY = e.targetY + (Math.random() - 0.5) * 3;
+          mate.thought = `⚠️ 무리의 경보에 호응하여 함께 대피 중!`;
+        }
+      }
+      return;
+    }
+
+    // 평화로운 자연 생태 활동 (풀 뜯기, 시냇가 물 마시기, 무리 유영)
     if (e.stateTimer <= 0) {
-      e.stateTimer = 4 + Math.random() * 5;
+      e.stateTimer = 4.0 + Math.random() * 5.0;
       const r = Math.random();
       if (e.animalType === 'dolphin') {
-        // 돌고래는 바다 위를 힘차게 회유
         const angle = Math.random() * Math.PI * 2;
-        e.targetX = Math.max(85, Math.min(160, e.x + Math.cos(angle) * 15));
-        e.targetY = Math.max(40, Math.min(180, e.y + Math.sin(angle) * 15));
-        e.thought = '🐬 파도를 가르며 힘차게 도약 중!';
+        e.targetX = Math.max(85, Math.min(160, e.x + Math.cos(angle) * 16));
+        e.targetY = Math.max(40, Math.min(180, e.y + Math.sin(angle) * 16));
+        e.thought = '🐬 청명한 파도를 가르며 무리와 도약 유영 중!';
       } else if (e.animalType === 'deer') {
         const angle = Math.random() * Math.PI * 2;
         e.targetX = e.x + Math.cos(angle) * 8;
         e.targetY = e.y + Math.sin(angle) * 8;
-        e.thought = r < 0.6 ? '🌿 고요한 숲속에서 풀을 뜯는 중' : '💧 맑은 시냇가에서 목을 축이는 중';
+        e.thought = r < 0.6 ? '🌿 고요한 숲속 그늘에서 풀을 뜯는 중' : '💧 맑은 시냇가에서 경계하며 목을 축이는 중';
       } else if (e.animalType === 'rabbit') {
         const angle = Math.random() * Math.PI * 2;
         e.targetX = e.x + Math.cos(angle) * 6;
         e.targetY = e.y + Math.sin(angle) * 6;
-        e.thought = '🐇 들판을 깡충깡충 뛰어다니는 중';
+        e.thought = '🐇 들판의 클로버를 뜯으며 깡충깡충 뛰어다니는 중';
       } else if (e.animalType === 'bear') {
         const angle = Math.random() * Math.PI * 2;
         e.targetX = e.x + Math.cos(angle) * 9;
@@ -1791,7 +2066,7 @@ class EntityManager {
         const angle = Math.random() * Math.PI * 2;
         e.targetX = e.x + Math.cos(angle) * 6;
         e.targetY = e.y + Math.sin(angle) * 6;
-        e.thought = '🌿 한가롭게 들판에서 쉬는 중';
+        e.thought = '🌿 한가롭게 들판에서 동료들과 쉬는 중';
       }
     }
   }
@@ -2021,6 +2296,11 @@ class EntityManager {
         const dmg = Math.round(p.atk * comboMult * (0.9 + Math.random() * 0.3));
         nearest.hp -= dmg;
         nearest.hitTimer = 0.25;
+
+        // 💥 핵심: 플레이어 사격/타격 즉시 몬스터가 플레이어를 표적으로 반격 & 무리 지원 요청!
+        nearest.combatTarget = p;
+        this.rallyNearbyAllies(nearest, p, 10.0);
+
         const angle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
         this.projectiles.push({
           x: p.x,
@@ -2045,22 +2325,189 @@ class EntityManager {
     }
   }
 
+  // ⚔️ 적대 관계(Hostility) 판별 매트릭스
+  isHostile(a, b) {
+    if (!a || !b || a === b || a.hp <= 0 || b.hp <= 0) return false;
+
+    // A. 플레이어와 대상의 관계
+    if (a.role === 'player') {
+      return b.faction === 'monster' || b.isPredator;
+    }
+    if (b.role === 'player') {
+      return a.faction === 'monster' || (a.isPredator && a.combatTarget === b);
+    }
+
+    // B. 비전투 민간인(농부, 어부, 광부, 대장장이, 상인)은 먼저 공격하지 않음
+    const aIsCivilian = (a.role === 'farmer' || a.role === 'fisherman' || a.role === 'miner' || a.role === 'merchant' || a.role === 'blacksmith');
+    if (aIsCivilian) return false;
+
+    // C. 야생 동물
+    if (a.role === 'animal') {
+      if (a.isPredator) {
+        if (b.role === 'animal' && !b.isPredator) return true;
+        if (a.combatTarget === b) return true;
+      }
+      return false;
+    }
+
+    // D. 왕국 전투원 (군사, 근위병, 해군, 모험가, 용병)
+    if (a.faction === 'kingdom') {
+      if (b.faction === 'monster') return true;
+      // 시민이나 플레이어를 공격 중인 맹수
+      if (b.isPredator && b.combatTarget && (b.combatTarget.faction === 'kingdom' || b.combatTarget.role === 'player')) return true;
+      if (a.combatTarget === b) return true;
+      return false;
+    }
+
+    // E. 드래곤
+    if (a.role === 'dragon') {
+      if (b.faction === 'monster') return true;
+      if (a.combatTarget === b) return true;
+      return false;
+    }
+
+    // F. 몬스터 진영 (고블린, 오크, 해적, 언데드 등)
+    if (a.faction === 'monster') {
+      // 왕국 전체 공격
+      if (b.faction === 'kingdom') return true;
+      // 동물 사냥
+      if (b.role === 'animal' && Math.random() < 0.25) return true;
+      // 몬스터 파벌 간 라이벌 분쟁 (흑요석 네크로폴리스 언데드 vs 오크/고블린/해적)
+      if (b.faction === 'monster') {
+        const aIsUndead = (a.homeId === 'obsidian_necropolis' || a.subClass === '사령술사' || a.subClass === '해골병사' || a.subClass === '데스나이트');
+        const bIsUndead = (b.homeId === 'obsidian_necropolis' || b.subClass === '사령술사' || b.subClass === '해골병사' || b.subClass === '데스나이트');
+        if (aIsUndead !== bIsUndead) return true;
+        if (a.isShip !== b.isShip && (a.homeId === 'pirate_cove' || b.homeId === 'pirate_cove')) return true;
+      }
+      if (a.combatTarget === b) return true;
+      return false;
+    }
+
+    return false;
+  }
+
+  // 🚨 시민 위협 시 인근 왕국 군사/경비대/모험가 긴급 구원 요청 (Civic Defense)
+  alertCivicDefense(victim, attacker, radius = 18.0) {
+    if (!victim || !attacker || attacker.hp <= 0) return;
+    let responders = 0;
+    for (const other of this.entities) {
+      if (other === victim || other.hp <= 0 || other.faction !== 'kingdom') continue;
+      const isCombatant = (other.role === 'soldier' || other.role === 'royal_guard' || other.role === 'mercenary' || other.role === 'adventurer' || other.role === 'navy');
+      if (!isCombatant) continue;
+      if (victim.isShip !== other.isShip) continue;
+
+      const dx = other.x - victim.x;
+      if (Math.abs(dx) > radius) continue;
+      const dy = other.y - victim.y;
+      if (Math.abs(dy) > radius) continue;
+      const d = Math.hypot(dx, dy);
+      if (d <= radius) {
+        if (!other.combatTarget || Math.hypot(other.combatTarget.x - other.x, other.combatTarget.y - other.y) > d) {
+          other.combatTarget = attacker;
+          other.state = 'combat';
+          other.targetX = attacker.x;
+          other.targetY = attacker.y;
+          other.thought = `🛡️ [${victim.name}] 구출을 위해 긴급 방어 출격!`;
+          responders++;
+        }
+      }
+    }
+    if (responders > 0 && Math.random() < 0.35) {
+      this.addFloatingText(victim.x, victim.y - 1.2, '🚨 도와주세요! 경비병님!', '#ef4444', 1.4);
+    }
+  }
+
+  // 📢 몬스터/경비병의 주변 동료 집단 결집 (Rallying Call)
+  rallyNearbyAllies(leader, target, radius = 12.0) {
+    if (!leader || !target || target.hp <= 0) return;
+    for (const ally of this.entities) {
+      if (ally === leader || ally.hp <= 0 || ally.combatTarget) continue;
+      if (ally.faction === leader.faction && ally.homeId === leader.homeId && ally.isShip === leader.isShip) {
+        const d = Math.hypot(ally.x - leader.x, ally.y - leader.y);
+        if (d <= radius) {
+          ally.combatTarget = target;
+          ally.state = 'combat';
+          ally.targetX = target.x;
+          ally.targetY = target.y;
+          ally.thought = ally.faction === 'monster'
+            ? `👹 [${leader.name}]의 전투 포효에 호응하여 집단 기습!`
+            : `⚔️ 전우 [${leader.name}]를 지원하여 일제 돌격!`;
+        }
+      }
+    }
+  }
+
+  // 💬 우호 NPC 간 자연스러운 소셜 인터랙션 (인사, 경례, 대화 말풍선)
+  checkNPCSocialInteractions() {
+    const candidates = this.entities.filter(e => e.faction === 'kingdom' && e.role !== 'player' && e.hp > 0 && e.state !== 'combat' && (!e.talkingTimer || e.talkingTimer <= 0));
+    if (candidates.length < 2) return;
+
+    for (let i = 0; i < Math.min(20, candidates.length); i++) {
+      const a = candidates[Math.floor(Math.random() * candidates.length)];
+      for (const b of candidates) {
+        if (a === b || a.isShip !== b.isShip) continue;
+        const dx = b.x - a.x;
+        if (Math.abs(dx) > 2.6) continue;
+        const dy = b.y - a.y;
+        if (Math.abs(dy) > 2.6) continue;
+        const d = Math.hypot(dx, dy);
+        if (d <= 2.6) {
+          if (Math.abs(dy) > Math.abs(dx)) {
+            a.facing = dy > 0 ? 'down' : 'up';
+            b.facing = dy > 0 ? 'up' : 'down';
+          } else {
+            a.facing = dx > 0 ? 'right' : 'left';
+            b.facing = dx > 0 ? 'left' : 'right';
+          }
+          a.talkingTimer = 3.5;
+          b.talkingTimer = 3.5;
+
+          let bubbleA = '💬 좋은 날씨군요!';
+          let bubbleB = '💬 늘 건강하십시오!';
+          if (a.role === 'soldier' && b.role === 'soldier') {
+            bubbleA = '🛡️ 충성! 가도 경계 이상 무!';
+            bubbleB = '🛡️ 교대 때까지 힘내세!';
+          } else if (a.role === 'farmer' && b.role === 'merchant') {
+            bubbleA = '🌾 올해 황금 밀 품질이 최상이오!';
+            bubbleB = '💰 왕도 시장에서 최고가로 사겠소!';
+          } else if (a.role === 'adventurer' && b.role === 'blacksmith') {
+            bubbleA = '⚒️ 대장장이님, 검 날이 여전히 예리합니다!';
+            bubbleB = '🔥 드워프의 명품 룬 검이지! 무사히 다녀오게.';
+          } else if (a.role === 'soldier' || b.role === 'soldier') {
+            bubbleA = '🛡️ 안심하십시오, 왕실 군대가 지킵니다.';
+            bubbleB = '🙏 항상 고생 많으십니다!';
+          } else if (a.race === 'elf' || b.race === 'elf') {
+            bubbleA = '🌿 자연의 정령들이 평안을 전합니다.';
+            bubbleB = '✨ 엘프의 지혜에 감사드립니다.';
+          }
+
+          a.thought = bubbleA;
+          b.thought = bubbleB;
+          this.addFloatingText(a.x, a.y - 0.9, '💬', '#bae6fd', 1.8);
+          return;
+        }
+      }
+    }
+  }
+
+  // ⚔️ 통합 전투 판정 및 교전 실행 루프
   checkAndRunCombat(e, dt) {
     const isCivilian = (e.role === 'farmer' || e.role === 'fisherman' || e.role === 'miner' || e.role === 'merchant' || e.role === 'blacksmith');
-    const detectRange = isCivilian ? 6.5 : 12.5;
+    const detectRange = isCivilian ? 7.0 : 13.0;
 
     if (e.combatTarget) {
-      if (e.combatTarget.hp <= 0 || Math.hypot(e.combatTarget.x - e.x, e.combatTarget.y - e.y) > 17) {
+      if (e.combatTarget.hp <= 0 || Math.hypot(e.combatTarget.x - e.x, e.combatTarget.y - e.y) > 20) {
         e.combatTarget = null;
       }
     }
 
-    if (!e.combatTarget && Math.random() < 0.35) {
+    if (!e.combatTarget && Math.random() < 0.4) {
       let nearest = null;
       let minDist = detectRange;
       for (const other of this.entities) {
-        if (other === e || other.hp <= 0 || other.faction === e.faction || other.faction === 'neutral') continue;
-        if (e.isShip !== other.isShip) continue;
+        if (other === e || other.hp <= 0) continue;
+        if (e.isShip !== other.isShip && !e.isFlying && !other.isFlying) continue;
+        if (!this.isHostile(e, other)) continue;
         const dx = other.x - e.x;
         if (Math.abs(dx) > minDist) continue;
         const dy = other.y - e.y;
@@ -2079,20 +2526,22 @@ class EntityManager {
     e.fishingLine = null;
 
     if (isCivilian && e.role !== 'merchant') {
+      this.alertCivicDefense(e, target, 18.0);
       const home = this.world.settlementMap[e.homeId];
       if (home) {
         e.targetX = home.x;
         e.targetY = home.y;
         e.state = 'fleeing';
-        e.thought = `⚠️ ${target.name}에게서 대피 중!`;
-        this.moveTowardTarget(e, dt * 1.25);
+        e.thought = `🚨 ${target.name}에게서 대피 중! (수비대 긴급 구원 요청)`;
+        this.moveTowardTarget(e, dt * 1.35);
         return true;
       }
     }
 
     if (e.role === 'merchant') {
+      this.alertCivicDefense(e, target, 18.0);
       e.thought = `⚠️ ${target.name} 습격! 호위병에게 보호받는 중!`;
-      this.moveTowardTarget(e, dt * 1.15);
+      this.moveTowardTarget(e, dt * 1.2);
       return true;
     }
 
@@ -2117,13 +2566,16 @@ class EntityManager {
     if (dist > attackRange) {
       e.targetX = target.x;
       e.targetY = target.y;
-      this.moveTowardTarget(e, dt * 1.2);
+      this.moveTowardTarget(e, dt * 1.25);
     } else if (e.attackCooldown <= 0) {
       e.attackCooldown = 0.85 + Math.random() * 0.35;
-      const dmg = Math.max(4, Math.round(e.atk * (0.85 + Math.random() * 0.35)));
+      const dmg = Math.max(5, Math.round(e.atk * (0.85 + Math.random() * 0.35)));
       target.hp -= dmg;
       target.combatTarget = e;
       target.hitTimer = 0.25;
+
+      // 동료 무리 결집
+      this.rallyNearbyAllies(e, target, 10.0);
 
       if (e.ranged || e.isShip) {
         const angle = Math.atan2(target.y - e.y, target.x - e.x);
@@ -2557,13 +3009,16 @@ class EntityManager {
 
   updateAdventurerAI(e, dt, isNight) {
     if (e.guardTargetId) {
-      const merchant = this.entities.find(m => m.id === e.guardTargetId);
-      if (merchant) {
+      const leader = this.entities.find(m => m.id === e.guardTargetId);
+      if (leader && leader.hp > 0) {
+        if (leader.combatTarget && (!e.combatTarget || e.combatTarget.hp <= 0)) {
+          e.combatTarget = leader.combatTarget;
+        }
         const angle = (e.id % 6) * (Math.PI / 3);
-        e.targetX = merchant.x + Math.cos(angle) * 2.2;
-        e.targetY = merchant.y + Math.sin(angle) * 2.2;
+        e.targetX = leader.x + Math.cos(angle) * 2.2;
+        e.targetY = leader.y + Math.sin(angle) * 2.2;
         e.state = 'escorting';
-        e.thought = `🗡️ [${merchant.name}] 근접 호위 중`;
+        e.thought = `🗡️ [${leader.name}] 호위 및 공동 전투 중`;
         return;
       } else {
         e.guardTargetId = null;

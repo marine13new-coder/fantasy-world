@@ -717,6 +717,8 @@ class RPGSystemsManager {
         if (d <= 5.8) {
           hits++;
           other.hp -= baseDmg;
+          other.combatTarget = p;
+          this.em.rallyNearbyAllies(other, p, 10.0);
           // 넉백 효과
           const ang = Math.atan2(other.y - p.y, other.x - p.x);
           other.x += Math.cos(ang) * 1.5;
@@ -755,6 +757,8 @@ class RPGSystemsManager {
         if (d <= 7.2) {
           hits++;
           other.hp -= baseDmg;
+          other.combatTarget = p;
+          this.em.rallyNearbyAllies(other, p, 10.0);
           other.state = 'frozen';
           other.stateTimer = 4.0;
           this.em.addFloatingText(other.x, other.y - 1.0, `❄️-${baseDmg} [동결 4초]`, '#a5f3fc', 1.4);
@@ -798,6 +802,8 @@ class RPGSystemsManager {
         if (d <= 7.0) {
           hits++;
           other.hp -= baseDmg;
+          other.combatTarget = p;
+          this.em.rallyNearbyAllies(other, p, 10.0);
           this.em.addFloatingText(other.x, other.y - 1.2, `☄️-${baseDmg} [치명타!]`, '#f87171', 1.6);
           if (other.hp <= 0) {
             p.kills = (p.kills || 0) + 1;
@@ -849,6 +855,8 @@ class RPGSystemsManager {
         if (d <= 9.0) {
           hits++;
           other.hp -= bulletDmg;
+          other.combatTarget = p;
+          this.em.rallyNearbyAllies(other, p, 10.0);
           this.em.addFloatingText(other.x, other.y - 1.0, `💣-${bulletDmg}`, '#fb923c', 1.2);
           if (other.hp <= 0) {
             p.kills = (p.kills || 0) + 1;

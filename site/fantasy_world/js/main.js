@@ -1047,6 +1047,19 @@ function startFantasyWorld() {
     if (pickedEntity) {
       selectedItem = { type: 'entity', data: pickedEntity };
       updateInspectorUI();
+
+      // ⚔️ 플레이어 직접 인터랙션: 적 클릭 시 타겟팅 공격, 우호 NPC 클릭 시 전용 대화 & 보상 수령
+      if (player && pickedEntity !== player) {
+        const distToPlayer = Math.hypot(pickedEntity.x - player.x, pickedEntity.y - player.y);
+        if (entityMgr.isHostile(player, pickedEntity)) {
+          entityMgr.playerAttackTarget(pickedEntity);
+          return;
+        }
+        if (pickedEntity.faction === 'kingdom' && distToPlayer <= 4.5) {
+          entityMgr.interactWithNPC(player, pickedEntity);
+          return;
+        }
+      }
       return;
     }
 
