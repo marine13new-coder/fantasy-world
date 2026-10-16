@@ -1255,20 +1255,112 @@ class EntityManager {
     }
   }
 
+  canEntityTraverse(e, tx, ty) {
+    if (tx < 1 || tx >= this.world.width - 1 || ty < 1 || ty >= this.world.height - 1) return false;
+    const tile = this.world.getTile(tx, ty);
+
+    // 1. 드래곤은 비행 생물이므로 모든 지형 통과 가능
+    if (e.role === 'dragon') return true;
+
+    // 2. 해상 선박 & 수중 생물: 바다, 강, 부두, 교량 밑, 산호초만 항해 가능
+    if (e.isShip || e.isAquatic) {
+      if (tile === TILE.DEEP_WATER || tile === TILE.WATER || tile === TILE.DOCK || tile === TILE.BRIDGE || tile === TILE.CORAL) {
+        return true;
+      }
+      if (tile === TILE.SAND) return true; // 해변 접안
+      return false; // 육지로는 절대 진입 불가!
+    }
+
+    // 3. 육상 유닛: 사람은 바다, 강, 산맥, 용암, 성벽 진입 불가!
+    if (tile === TILE.BRIDGE || tile === TILE.DOCK) return true;
+    if (tile === TILE.DEEP_WATER || tile === TILE.WATER || tile === TILE.MOUNTAIN || tile === TILE.SNOW || tile === TILE.WALL || tile === TILE.LAVA) {
+      return false;
+    }
+    return true;
+  }
+
   updatePlayerControl(p, dt, playerInput) {
-    const curTile = this.world.getTile(Math.floor(p.x), Math.floor(p.y));
-    p.isShip = (curTile === TILE.DEEP_WATER || curTile === TILE.WATER);
-    p.icon = p.isShip ? '⛵' : '🌟';
+    const curTx = Math.floor(p.x);
+    const curTy = Math.floor(p.y);
+    const curTile = this.world.getTile(curTx, curTy);
 
     const boostMult = p.boostTimer > 0 ? 1.85 : 1.0;
 
     if (playerInput && (playerInput.dx !== 0 || playerInput.dy !== 0)) {
       const len = Math.hypot(playerInput.dx, playerInput.dy) || 1;
       const step = p.speed * boostMult * dt * 3.2;
+      const moveX = (playerInput.dx / len) * step;
+      const moveY = (playerInput.dy / len) * step;
+
       p.vx = (playerInput.dx / len) * p.speed;
       p.vy = (playerInput.dy / len) * p.speed;
-      p.x = Math.max(2, Math.min(WORLD_WIDTH - 3, p.x + (playerInput.dx / len) * step));
-      p.y = Math.max(2, Math.min(WORLD_HEIGHT - 3, p.y + (playerInput.dy / len) * step));
+
+      const tryMove = (mx, my) => {
+        const nx = p.x + mx;
+        const ny = p.y + my;
+        const nTx = Math.floor(nx);
+        const nTy = Math.floor(ny);
+        const nTile = this.world.getTile(nTx, nTy);
+
+        // A. 배를 탄 상태
+        if (p.isShip) {
+          const isNavalArea = (nTile === TILE.DEEP_WATER || nTile === TILE.WATER || nTile === TILE.DOCK || nTile === TILE.BRIDGE || nTile === TILE.CORAL);
+          if (isNavalArea) {
+            p.x = nx;
+            p.y = ny;
+            return true;
+          }
+          // 해변(SAND)이나 부두(DOCK)로 전진하면 육지로 상륙!
+          if (nTile === TILE.SAND || nTile === TILE.DOCK) {
+            p.x = nx;
+            p.y = ny;
+            p.isShip = false;
+            p.icon = '🌟';
+            this.addFloatingText(p.x, p.y - 1.2, '🏇 육지에 상륙했습니다! (백마 탑승)', '#fde047', 1.5);
+            return true;
+          }
+          if (Math.random() < 0.04) {
+            this.addFloatingText(p.x, p.y - 1.0, '⚓ 배는 육지로 올라갈 수 없습니다! 부두나 해변에 정박하세요', '#f87171', 1.2);
+          }
+          return false;
+        }
+
+        // B. 육상 도보/말 상태
+        const isWater = (nTile === TILE.WATER || nTile === TILE.DEEP_WATER);
+        if (isWater) {
+          // 부두나 해변에서 물로 나아가는 경우 배로 승선!
+          if (curTile === TILE.DOCK || curTile === TILE.SAND) {
+            p.x = nx;
+            p.y = ny;
+            p.isShip = true;
+            p.icon = '⛵';
+            this.addFloatingText(p.x, p.y - 1.2, '⛵ [특무범선] 승선 완료! 출항합니다', '#38bdf8', 1.5);
+            return true;
+          }
+          if (Math.random() < 0.04) {
+            this.addFloatingText(p.x, p.y - 1.0, '🌊 깊은 물입니다! 부두나 해변에서 배를 타거나 다리를 건너세요', '#60a5fa', 1.2);
+          }
+          return false;
+        }
+
+        // 산맥, 절벽, 성벽, 용암 통과 불가
+        if (this.canEntityTraverse(p, nTx, nTy)) {
+          p.x = nx;
+          p.y = ny;
+          return true;
+        }
+        return false;
+      };
+
+      // 대각선 이동 시도 -> 실패 시 X 단독 또는 Y 단독 슬라이딩 이동
+      if (!tryMove(moveX, moveY)) {
+        if (!tryMove(moveX, 0)) {
+          tryMove(0, moveY);
+        }
+      }
+
+      p.x = Math.max(2, Math.min(WORLD_WIDTH - 3, p.x));
+      p.y = Math.max(2, Math.min(WORLD_HEIGHT - 3, p.y));
       p.targetX = p.x;
       p.targetY = p.y;
       p.thought = p.isShip
@@ -1929,18 +2021,29 @@ class EntityManager {
     }
 
     const step = Math.min(dist, e.speed * terrainMult * dt * 2.5);
-    const nx = e.x + (dx / dist) * step;
-    const ny = e.y + (dy / dist) * step;
+    const moveX = (dx / dist) * step;
+    const moveY = (dy / dist) * step;
 
     e.vx = (dx / dist) * e.speed;
     e.vy = (dy / dist) * e.speed;
 
-    if (e.role === 'player' || e.role === 'dragon' || e.isShip || this.world.isWalkable(Math.floor(nx), Math.floor(ny)) || e.role === 'fisherman') {
-      e.x = Math.max(2, Math.min(WORLD_WIDTH - 3, nx));
-      e.y = Math.max(2, Math.min(WORLD_HEIGHT - 3, ny));
-    } else {
-      e.x = Math.max(2, Math.min(WORLD_WIDTH - 3, nx));
-      e.y = Math.max(2, Math.min(WORLD_HEIGHT - 3, ny));
+    const tryMove = (mx, my) => {
+      const nx = e.x + mx;
+      const ny = e.y + my;
+      const nTx = Math.floor(nx);
+      const nTy = Math.floor(ny);
+      if (this.canEntityTraverse(e, nTx, nTy)) {
+        e.x = Math.max(2, Math.min(WORLD_WIDTH - 3, nx));
+        e.y = Math.max(2, Math.min(WORLD_HEIGHT - 3, ny));
+        return true;
+      }
+      return false;
+    };
+
+    if (!tryMove(moveX, moveY)) {
+      if (!tryMove(moveX, 0)) {
+        tryMove(0, moveY);
+      }
     }
   }
 }
