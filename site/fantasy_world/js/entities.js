@@ -1444,6 +1444,8 @@ class EntityManager {
       patrolRoad: !!opts.patrolRoad,
       boostTimer: 0,
       wingsPhase: Math.random() * Math.PI * 2,
+      facing: opts.facing || 'down',
+      hitTimer: 0,
       state: 'idle',
       thought: opts.thought || '주변을 살피는 중',
       stateTimer: Math.random() * 2,
@@ -1545,6 +1547,7 @@ class EntityManager {
       e.animPhase += dt * 6;
       e.wingsPhase += dt * 8;
       if (e.attackCooldown > 0) e.attackCooldown -= dt;
+      if (e.hitTimer > 0) e.hitTimer -= dt;
       if (e.stateTimer > 0) e.stateTimer -= dt;
       if (e.boostTimer > 0) e.boostTimer -= dt;
 
@@ -1801,6 +1804,11 @@ class EntityManager {
     const boostMult = p.boostTimer > 0 ? 1.85 : 1.0;
 
     if (playerInput && (playerInput.dx !== 0 || playerInput.dy !== 0)) {
+      if (Math.abs(playerInput.dy) > Math.abs(playerInput.dx)) {
+        p.facing = playerInput.dy > 0 ? 'down' : 'up';
+      } else {
+        p.facing = playerInput.dx > 0 ? 'right' : 'left';
+      }
       const len = Math.hypot(playerInput.dx, playerInput.dy) || 1;
       const step = p.speed * boostMult * dt * 3.2;
       const moveX = (playerInput.dx / len) * step;
@@ -1915,6 +1923,13 @@ class EntityManager {
         }
       }
       if (nearest) {
+        const cdx = nearest.x - p.x;
+        const cdy = nearest.y - p.y;
+        if (Math.abs(cdy) > Math.abs(cdx)) {
+          p.facing = cdy > 0 ? 'down' : 'up';
+        } else {
+          p.facing = cdx > 0 ? 'right' : 'left';
+        }
         p.attackCooldown = 0.65;
         let comboMult = 1.0;
         if (this.rpgManager) {
@@ -1923,6 +1938,7 @@ class EntityManager {
         if (typeof audioMgr !== 'undefined') audioMgr.playSword();
         const dmg = Math.round(p.atk * comboMult * (0.9 + Math.random() * 0.3));
         nearest.hp -= dmg;
+        nearest.hitTimer = 0.25;
         const angle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
         this.projectiles.push({
           x: p.x,
@@ -2006,6 +2022,16 @@ class EntityManager {
     const dist = Math.hypot(target.x - e.x, target.y - e.y);
     const attackRange = (e.ranged || e.isShip) ? 7.5 : 1.8;
 
+    const cdx = target.x - e.x;
+    const cdy = target.y - e.y;
+    if (Math.abs(cdy) > Math.abs(cdx)) {
+      e.facing = cdy > 0 ? 'down' : 'up';
+      target.facing = cdy > 0 ? 'up' : 'down';
+    } else {
+      e.facing = cdx > 0 ? 'right' : 'left';
+      target.facing = cdx > 0 ? 'left' : 'right';
+    }
+
     if (dist > attackRange) {
       e.targetX = target.x;
       e.targetY = target.y;
@@ -2015,6 +2041,7 @@ class EntityManager {
       const dmg = Math.max(4, Math.round(e.atk * (0.85 + Math.random() * 0.35)));
       target.hp -= dmg;
       target.combatTarget = e;
+      target.hitTimer = 0.25;
 
       if (e.ranged || e.isShip) {
         const angle = Math.atan2(target.y - e.y, target.x - e.x);
@@ -2571,6 +2598,12 @@ class EntityManager {
 
     e.vx = (dx / dist) * e.speed;
     e.vy = (dy / dist) * e.speed;
+
+    if (Math.abs(e.vy) > Math.abs(e.vx) && Math.abs(e.vy) > 0.05) {
+      e.facing = e.vy > 0 ? 'down' : 'up';
+    } else if (Math.abs(e.vx) > 0.05) {
+      e.facing = e.vx > 0 ? 'right' : 'left';
+    }
 
     const tryMove = (mx, my) => {
       const nx = e.x + mx;

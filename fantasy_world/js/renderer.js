@@ -1170,17 +1170,20 @@ class WorldRenderer {
       const isNight = (this.lastWorldTime && (this.lastWorldTime.hour >= 20 || this.lastWorldTime.hour < 5));
       if (e.role === 'player' && e.mount === 'horse') {
         window.PixelSprites.draw(ctx, { ...e, animalType: 'horse', role: 'animal' }, px, py + 2 * sc, bounce, timeSec, isNight);
-        // 말 위에 탑승한 플레이어 상체
+        // 말 위에 탑승한 플레이어 영웅 상체 (방향 및 장비 인식)
+        const isLeft = (e.facing === 'left');
+        const facingSign = isLeft ? -1 : 1;
         ctx.fillStyle = '#dc2626'; // 망토
-        ctx.fillRect(px - 6 * sc, sy - 11 * sc, 3 * sc, 8 * sc);
+        ctx.fillRect(px - facingSign * 5 * sc, sy - 11 * sc, 3 * sc, 8 * sc);
         ctx.fillStyle = '#1d4ed8'; // 블루 갑주
         ctx.fillRect(px - 3 * sc, sy - 12 * sc, 6 * sc, 7 * sc);
         ctx.fillStyle = '#fed7aa'; // 얼굴
         ctx.fillRect(px - 2 * sc, sy - 16 * sc, 4 * sc, 4 * sc);
         ctx.fillStyle = '#facc15'; // 황금 왕관
         ctx.fillRect(px - 3 * sc, sy - 18 * sc, 6 * sc, 2 * sc);
-        ctx.fillStyle = '#fef08a'; // 전설검
-        ctx.fillRect(px + 4 * sc, sy - 16 * sc, 2 * sc, 9 * sc);
+        if (window.PixelSprites && window.PixelSprites.drawEquippedGear) {
+          window.PixelSprites.drawEquippedGear(ctx, e, px, sy - 4 * sc, 0, e.facing || 'down', e.state === 'combat', timeSec, sc);
+        }
         return;
       }
 
