@@ -18,7 +18,12 @@ function startFantasyWorld() {
 
   // 첫 사용자 상호작용 시 오디오 자동 해제
   const unlockAudio = () => {
-    if (typeof audioMgr !== 'undefined') audioMgr.resume();
+    if (typeof audioMgr !== 'undefined') {
+      audioMgr.resume();
+      if (!audioMgr.muted && !audioMgr.bgmPlaying) {
+        audioMgr.startBGM('peaceful');
+      }
+    }
     window.removeEventListener('click', unlockAudio);
     window.removeEventListener('keydown', unlockAudio);
     window.removeEventListener('touchstart', unlockAudio);
@@ -65,8 +70,10 @@ function startFantasyWorld() {
     zoom: 0.95,
     minZoom: 0.10,
     maxZoom: 2.8,
-    followEntity: player
+    followEntity: player,
+    shake: 0
   };
+  entityMgr.camera = camera;
 
   let filterCategory = 'all';
   let selectedItem = { type: 'entity', data: player };
@@ -1337,6 +1344,11 @@ function startFantasyWorld() {
     if (camera.followEntity) {
       camera.x += (camera.followEntity.x - camera.x) * 0.15;
       camera.y += (camera.followEntity.y - camera.y) * 0.15;
+    }
+
+    // 카메라 셰이크 감쇠 (Smooth Screen Shake Decay)
+    if (camera.shake > 0) {
+      camera.shake = Math.max(0, camera.shake - rawDt * 22);
     }
 
     renderer.render(camera, worldTime, filterCategory, selectedItem, now / 1000);

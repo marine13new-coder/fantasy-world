@@ -231,6 +231,7 @@ class EntityManager {
     this.projectiles = [];
     this.floatingTexts = [];
     this.specialEffects = [];
+    this.sparkParticles = [];
     this.activeBattles = 0;
     this.player = null;
     this.pet = null;
@@ -259,6 +260,46 @@ class EntityManager {
 
   addEffect(x, y, radius, color = '#facc15', duration = 0.7) {
     this.specialEffects.push({ x, y, radius, color, age: 0, duration });
+  }
+
+  // 💥 정밀 픽셀 히트 스파크 (Hit Sparks)
+  addHitSparks(x, y, color = '#facc15', count = 7) {
+    if (!this.sparkParticles) this.sparkParticles = [];
+    if (this.sparkParticles.length > 300) this.sparkParticles.splice(0, count);
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 1.5 + Math.random() * 4.5;
+      this.sparkParticles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 1.2,
+        color,
+        size: Math.random() > 0.5 ? 2.5 : 1.5,
+        age: 0,
+        duration: 0.28 + Math.random() * 0.22
+      });
+    }
+  }
+
+  // 🌟 레벨업 & 보물상자 황금 축하 스타버스트 (Level-Up Starburst)
+  addLevelUpBurst(x, y) {
+    if (!this.sparkParticles) this.sparkParticles = [];
+    const colors = ['#fde047', '#facc15', '#ffffff', '#38bdf8', '#c084fc', '#f472b6'];
+    for (let i = 0; i < 28; i++) {
+      const angle = (Math.PI * 2 / 28) * i + Math.random() * 0.2;
+      const speed = 2.5 + Math.random() * 5.0;
+      this.sparkParticles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 2.5,
+        color: colors[i % colors.length],
+        size: 3,
+        age: 0,
+        duration: 0.65 + Math.random() * 0.35
+      });
+    }
   }
 
   pickName(race = 'human') {
@@ -1288,9 +1329,13 @@ class EntityManager {
     } else if (skillKey === 'F') {
       // 1순위: 근접 NPC와의 전용 상호작용 및 보상 대화
       const talked = this.interactWithNearestNPC(p);
-      // 2순위: 인근 거점 도시/항구 교역 및 강화
       if (!talked) {
-        this.interactWithNearestSettlement();
+        // 2순위: 인근 모닥불(Campfire) 휴식 및 요리 버프
+        const camp = this.checkNearbyCampfire(p);
+        // 3순위: 인근 거점 도시/항구 교역 및 강화
+        if (!camp) {
+          this.interactWithNearestSettlement();
+        }
       }
     } else if (skillKey === 'J' || skillKey === 'attack') {
       this.playerPerformAttack(p);
@@ -1302,7 +1347,7 @@ class EntityManager {
     if (!p) p = this.spawnOrGetPlayer();
     if (p.attackCooldown > 0) return;
 
-    // 타겟이 없으면 전방 또는 반경 4.5타일 내 가장 가까운 적 선별
+    // 타겟이 없으면 전방 또는 반경 4.8타일 내 가장 가까운 적 선별
     if (!target) {
       let minDist = 4.8;
       for (const other of this.entities) {
@@ -1336,6 +1381,12 @@ class EntityManager {
       target.hp -= dmg;
       target.hitTimer = 0.25;
 
+      // 💥 타격 스파크 및 카메라 셰이크
+      this.addHitSparks(target.x, target.y, '#fde047', 9);
+      if (this.camera) {
+        this.camera.shake = Math.min(18, (this.camera.shake || 0) + 4.5);
+      }
+
       // 💥 핵심: 플레이어 공격 즉시 몬스터가 플레이어를 인식하고 반격!
       target.combatTarget = p;
       this.rallyNearbyAllies(target, p, 11.0);
@@ -1344,6 +1395,9 @@ class EntityManager {
       this.addEffect(target.x, target.y, 2.0, '#ef4444', 0.3);
 
       if (target.hp <= 0) {
+        if (this.camera) {
+          this.camera.shake = Math.min(25, (this.camera.shake || 0) + 8);
+        }
         p.kills++;
         p.gold += target.gold;
         p.inventory.gems = (p.inventory.gems || 0) + 1;
@@ -1451,12 +1505,47 @@ class EntityManager {
       p.gold += 80;
       npc.thought = `🛡️ "경례! 관할 구역 치안 이상 무! 전선 몬스터 토벌에 감사드립니다." (+80G)`;
       this.addFloatingText(npc.x, npc.y - 1.3, `🛡️ 수비대 전선 첩보 및 지원금 (+80G)`, '#60a5fa', 2.0);
+    } else if (npc.role === 'bard' || (npc.subClass && npc.subClass.includes('바드')) || (npc.name && (npc.name.includes('바드') || npc.name.includes('음유시인')))) {
+      if (this.rpgManager) {
+        const bet = Math.min(30, Math.max(10, p.gold));
+        if (p.gold >= 10) {
+          this.rpgManager.playTavernDice(bet);
+          npc.thought = `🎲 "하하! 주점 주사위 한 판 어떠신가? 운명의 여신을 시험해보게!"`;
+        } else {
+          npc.thought = `🍺 "판돈(10G)이 부족하구려! 주점의 에일 맥주 한 잔 마시며 쉬게나."`;
+          p.hp = Math.min(p.maxHp, p.hp + 50);
+          this.addFloatingText(p.x, p.y - 1.2, '🍺 에일 맥주 휴식 (HP +50)', '#fde047', 1.8);
+        }
+      }
     } else {
       p.hp = Math.min(p.maxHp, p.hp + 60);
       p.inventory.wheat = (p.inventory.wheat || 0) + 2;
       npc.thought = `🍞 "용사님! 늘 지켜주셔서 감사해요. 따뜻한 빵과 음료를 드세요."`;
       this.addFloatingText(p.x, p.y - 1.3, '🍞 주민의 따뜻한 보답 (체력 +60 회복 & 식량)', '#fcd34d', 2.0);
     }
+  }
+
+  // 🔥 인근 모닥불(Campfire) 탐색 및 휴식/요리
+  checkNearbyCampfire(p) {
+    if (!p) p = this.spawnOrGetPlayer();
+    const px = Math.round(p.x);
+    const py = Math.round(p.y);
+    const w = this.world.width;
+    const h = this.world.height;
+    for (let dy = -2; dy <= 2; dy++) {
+      for (let dx = -2; dx <= 2; dx++) {
+        const tx = px + dx;
+        const ty = py + dy;
+        if (tx >= 0 && tx < w && ty >= 0 && ty < h) {
+          if (this.world.deco && this.world.deco[ty * w + tx] === 12) {
+            if (this.rpgManager) {
+              return this.rpgManager.interactCampfire(p);
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 
   interactWithNearestSettlement() {
@@ -1892,6 +1981,17 @@ class EntityManager {
       this.checkNPCSocialInteractions();
     }
 
+    // 🎵 상황 적응형 다이내믹 BGM (전투 vs 평화 테마)
+    this.bgmCheckTimer = (this.bgmCheckTimer || 0) + dt;
+    if (this.bgmCheckTimer >= 0.8) {
+      this.bgmCheckTimer = 0;
+      if (typeof audioMgr !== 'undefined') {
+        const p = this.player;
+        const inBattle = p && (p.state === 'combat' || (p.combatTarget && p.combatTarget.hp > 0));
+        audioMgr.setBGMMood(inBattle ? 'battle' : 'peaceful');
+      }
+    }
+
     // 투사체 업데이트
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const p = this.projectiles[i];
@@ -1914,6 +2014,18 @@ class EntityManager {
       const fx = this.specialEffects[i];
       fx.age += dt;
       if (fx.age >= fx.duration) this.specialEffects.splice(i, 1);
+    }
+
+    // 💥 픽셀 히트 스파크 & 스타버스트 파티클 업데이트
+    if (this.sparkParticles) {
+      for (let i = this.sparkParticles.length - 1; i >= 0; i--) {
+        const sp = this.sparkParticles[i];
+        sp.age += dt;
+        sp.x += sp.vx * dt;
+        sp.y += sp.vy * dt;
+        sp.vy += dt * 3.5; // 미세 중력 가속도
+        if (sp.age >= sp.duration) this.sparkParticles.splice(i, 1);
+      }
     }
   }
 
@@ -1980,7 +2092,12 @@ class EntityManager {
             prey.hp -= dmg;
             prey.hitTimer = 0.25;
             this.addFloatingText(prey.x, prey.y - 0.7, `-🐾${dmg}`, '#ef4444', 0.8);
-            if (typeof audioMgr !== 'undefined') audioMgr.playSword();
+            this.addHitSparks(prey.x, prey.y, '#ef4444', 6);
+            if (typeof audioMgr !== 'undefined') {
+              if (e.animalType === 'croc' || (e.name && e.name.includes('악어'))) audioMgr.playCrocSnap();
+              else if (e.animalType === 'wolf' || (e.name && e.name.includes('늑대'))) audioMgr.playWolfHowl();
+              else audioMgr.playSword();
+            }
 
             if (prey.hp <= 0) {
               e.satiatedTimer = 9.0;
@@ -2241,9 +2358,21 @@ class EntityManager {
         }
       } else {
         // 대각선 이동 시도 -> 실패 시 X 단독 또는 Y 단독 슬라이딩 이동
-        if (!tryMove(moveX, moveY)) {
-          if (!tryMove(moveX, 0)) {
-            tryMove(0, moveY);
+        let moved = tryMove(moveX, moveY);
+        if (!moved) {
+          if (tryMove(moveX, 0)) moved = true;
+          else if (tryMove(0, moveY)) moved = true;
+        }
+        if (moved) {
+          p.footstepTimer = (p.footstepTimer || 0) + dt;
+          if (p.footstepTimer >= (p.mount === 'horse' ? 0.22 : 0.34)) {
+            p.footstepTimer = 0;
+            if (typeof audioMgr !== 'undefined') {
+              const surface = p.isShip ? 'water' :
+                (curTile === TILE.SNOW || curTile === TILE.ICE ? 'snow' :
+                (curTile === TILE.SAND || curTile === TILE.DESERT_DUNES ? 'sand' : 'grass'));
+              audioMgr.playFootstep(surface);
+            }
           }
         }
       }
@@ -2573,6 +2702,12 @@ class EntityManager {
       target.hp -= dmg;
       target.combatTarget = e;
       target.hitTimer = 0.25;
+
+      const isPlayerFight = (e === this.player || target === this.player);
+      this.addHitSparks(target.x, target.y, e.faction === 'kingdom' ? '#fde047' : '#ef4444', isPlayerFight ? 8 : 4);
+      if (isPlayerFight && this.camera) {
+        this.camera.shake = Math.min(16, (this.camera.shake || 0) + 3.5);
+      }
 
       // 동료 무리 결집
       this.rallyNearbyAllies(e, target, 10.0);

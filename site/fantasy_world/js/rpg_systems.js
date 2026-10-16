@@ -706,6 +706,7 @@ class RPGSystemsManager {
 
     if (typeof audioMgr !== 'undefined') audioMgr.playWhirlwind();
     this.em.addEffect(p.x, p.y, 6.0, '#38bdf8', 0.9);
+    if (this.em.camera) this.em.camera.shake = Math.min(18, (this.em.camera.shake || 0) + 8);
 
     let hits = 0;
     const dmgMult = this.addCombo(2);
@@ -719,6 +720,7 @@ class RPGSystemsManager {
           other.hp -= baseDmg;
           other.combatTarget = p;
           this.em.rallyNearbyAllies(other, p, 10.0);
+          this.em.addHitSparks(other.x, other.y, '#38bdf8', 6);
           // 넉백 효과
           const ang = Math.atan2(other.y - p.y, other.x - p.x);
           other.x += Math.cos(ang) * 1.5;
@@ -746,6 +748,7 @@ class RPGSystemsManager {
 
     if (typeof audioMgr !== 'undefined') audioMgr.playFrost();
     this.em.addEffect(p.x, p.y, 7.5, '#a5f3fc', 1.2);
+    if (this.em.camera) this.em.camera.shake = Math.min(18, (this.em.camera.shake || 0) + 7);
 
     let hits = 0;
     const dmgMult = this.addCombo(2);
@@ -761,6 +764,7 @@ class RPGSystemsManager {
           this.em.rallyNearbyAllies(other, p, 10.0);
           other.state = 'frozen';
           other.stateTimer = 4.0;
+          this.em.addHitSparks(other.x, other.y, '#a5f3fc', 6);
           this.em.addFloatingText(other.x, other.y - 1.0, `❄️-${baseDmg} [동결 4초]`, '#a5f3fc', 1.4);
           if (other.hp <= 0) {
             p.kills = (p.kills || 0) + 1;
@@ -791,6 +795,7 @@ class RPGSystemsManager {
     if (typeof audioMgr !== 'undefined') audioMgr.playMeteor();
     this.em.addEffect(targetX, targetY, 8.5, '#ef4444', 1.6);
     this.em.addEffect(targetX, targetY, 4.5, '#fbbf24', 1.2);
+    if (this.em.camera) this.em.camera.shake = Math.min(28, (this.em.camera.shake || 0) + 18);
 
     let hits = 0;
     const dmgMult = this.addCombo(3);
@@ -804,6 +809,7 @@ class RPGSystemsManager {
           other.hp -= baseDmg;
           other.combatTarget = p;
           this.em.rallyNearbyAllies(other, p, 10.0);
+          this.em.addHitSparks(other.x, other.y, '#f87171', 12);
           this.em.addFloatingText(other.x, other.y - 1.2, `☄️-${baseDmg} [치명타!]`, '#f87171', 1.6);
           if (other.hp <= 0) {
             p.kills = (p.kills || 0) + 1;
@@ -828,6 +834,7 @@ class RPGSystemsManager {
 
     if (typeof audioMgr !== 'undefined') audioMgr.playCannon();
     this.em.addEffect(p.x, p.y, 4.0, '#f97316', 0.8);
+    if (this.em.camera) this.em.camera.shake = Math.min(20, (this.em.camera.shake || 0) + 10);
 
     const projectileCount = 12;
     const dmgMult = this.addCombo(2);
@@ -1174,6 +1181,61 @@ class RPGSystemsManager {
       this.checkTreasureInteraction(this.em.player);
     }
   }
+
+  // ==========================================================================
+  // L. 주점 주사위 도박 미니게임 (Tavern Dice Gambling)
+  // ==========================================================================
+  playTavernDice(bet = 50) {
+    const p = this.em.player;
+    if (!p) return false;
+    if (p.gold < bet) {
+      this.em.addFloatingText(p.x, p.y - 1.2, `⚠️ 판돈이 부족합니다! (${bet}G 필요)`, '#f87171', 1.8);
+      return false;
+    }
+
+    if (typeof audioMgr !== 'undefined') audioMgr.playDiceRoll();
+
+    const d1 = Math.floor(Math.random() * 6) + 1;
+    const d2 = Math.floor(Math.random() * 6) + 1;
+    const playerTotal = d1 + d2;
+
+    const op1 = Math.floor(Math.random() * 6) + 1;
+    const op2 = Math.floor(Math.random() * 6) + 1;
+    const opponentTotal = op1 + op2;
+
+    if (playerTotal > opponentTotal) {
+      const winnings = bet * 2;
+      p.gold += bet;
+      this.em.addFloatingText(p.x, p.y - 1.8, `🎲 주사위 대승! [${playerTotal} vs ${opponentTotal}] (+${winnings}G)`, '#4ade80', 2.5);
+      this.em.addEffect(p.x, p.y, 4.0, '#facc15', 0.8);
+      if (typeof audioMgr !== 'undefined') audioMgr.playCoin();
+      this.em.log('trade', `🎲 [${p.name}]이(가) 주점에서 주사위 승부로 ${winnings}G 거액을 획득했습니다! (${playerTotal} > ${opponentTotal})`, p.x, p.y);
+    } else if (playerTotal === opponentTotal) {
+      this.em.addFloatingText(p.x, p.y - 1.5, `🎲 무승부! [${playerTotal} vs ${opponentTotal}] (판돈 환급)`, '#94a3b8', 2.0);
+    } else {
+      p.gold -= bet;
+      this.em.addFloatingText(p.x, p.y - 1.5, `🎲 주사위 패배... [${playerTotal} vs ${opponentTotal}] (-${bet}G)`, '#f87171', 2.0);
+      this.em.log('trade', `🎲 [${p.name}]이(가) 주점 주사위 내기에서 ${bet}G를 잃었습니다. (${playerTotal} < ${opponentTotal})`, p.x, p.y);
+    }
+    return true;
+  }
+
+  // ==========================================================================
+  // M. 모닥불 휴식 & 야외 요리 시스템 (Campfire Cooking & Rest)
+  // ==========================================================================
+  interactCampfire(p) {
+    if (!p) p = this.em.player;
+    if (!p) return false;
+
+    // 체력 회복
+    const heal = Math.round(p.maxHp * 0.4);
+    p.hp = Math.min(p.maxHp, p.hp + heal);
+    if (typeof audioMgr !== 'undefined') audioMgr.playCookSizzle();
+    this.em.addEffect(p.x, p.y, 3.5, '#f97316', 0.8);
+    this.em.addFloatingText(p.x, p.y - 1.6, `🔥 모닥불 휴식 (+${heal} HP 회복)`, '#4ade80', 2.2);
+    this.em.log('quest', `🔥 [${p.name}]이(가) 야외 모닥불 곁에서 따뜻하게 휴식하며 체력을 보충했습니다.`, p.x, p.y);
+    return true;
+  }
 }
 
 const CRAFTING_RECIPES = [
@@ -1227,6 +1289,45 @@ const CRAFTING_RECIPES = [
       p.maxHp += 200;
       p.hp = p.maxHp;
       p.atk += 15;
+    }
+  },
+  {
+    id: 'roast_fish',
+    name: '모닥불 생선 구이',
+    icon: '🐟',
+    slot: 'food',
+    desc: '노릇노릇하게 구워낸 모닥불 생선 요리. 체력 250 즉시 회복!',
+    req: { fish: 2, wood: 1, gold: 20 },
+    apply(p, rpg) {
+      p.hp = Math.min(p.maxHp, p.hp + 250);
+      if (typeof audioMgr !== 'undefined') audioMgr.playCookSizzle();
+    }
+  },
+  {
+    id: 'hunter_stew',
+    name: '약초 사냥꾼 스튜',
+    icon: '🍲',
+    slot: 'food',
+    desc: '원기를 북돋는 영양 스튜. 체력 150 회복 및 이동속도 +0.5(60초간)!',
+    req: { herbs: 3, spices: 1, gold: 30 },
+    apply(p, rpg) {
+      p.hp = Math.min(p.maxHp, p.hp + 150);
+      p.speed = (p.speed || 2.0) + 0.5;
+      setTimeout(() => { p.speed = Math.max(1.8, p.speed - 0.5); }, 60000);
+      if (typeof audioMgr !== 'undefined') audioMgr.playCookSizzle();
+    }
+  },
+  {
+    id: 'dragon_steak',
+    name: '용고기 특상 바베큐',
+    icon: '🥩',
+    slot: 'food',
+    desc: '드래곤의 마력이 농축된 특제 스테이크. 공격력 +25 버프(90초간 지속)!',
+    req: { gems: 1, spices: 2, gold: 100 },
+    apply(p, rpg) {
+      p.atk += 25;
+      setTimeout(() => { p.atk = Math.max(20, p.atk - 25); }, 90000);
+      if (typeof audioMgr !== 'undefined') audioMgr.playCookSizzle();
     }
   }
 ];

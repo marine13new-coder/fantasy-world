@@ -394,7 +394,10 @@ class WorldRenderer {
     ctx.fillRect(0, 0, cw, ch);
 
     ctx.save();
-    ctx.translate(cw / 2, ch / 2);
+    const shakeMag = camera.shake || 0;
+    const shakeX = shakeMag > 0 ? (Math.random() - 0.5) * shakeMag * 2 : 0;
+    const shakeY = shakeMag > 0 ? (Math.random() - 0.5) * shakeMag * 2 : 0;
+    ctx.translate(cw / 2 + shakeX, ch / 2 + shakeY);
     ctx.scale(camera.zoom, camera.zoom);
     ctx.translate(-camera.x * ts, -camera.y * ts);
 
@@ -606,6 +609,21 @@ class WorldRenderer {
       ctx.fillRect(Math.round(p.x * ts - 1), Math.round(p.y * ts - 9), 2, 2);
     }
 
+    // 10.5. 픽셀 히트 스파크 & 레벨업 스타버스트 파티클
+    if (this.entityMgr.sparkParticles && this.entityMgr.sparkParticles.length > 0) {
+      for (const sp of this.entityMgr.sparkParticles) {
+        if (sp.x < minTx || sp.x > maxTx || sp.y < minTy || sp.y > maxTy) continue;
+        const alpha = Math.max(0, 1 - sp.age / sp.duration);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = sp.color;
+        const spx = Math.round(sp.x * ts);
+        const spy = Math.round(sp.y * ts);
+        ctx.fillRect(spx - sp.size / 2, spy - sp.size / 2, sp.size, sp.size);
+        ctx.restore();
+      }
+    }
+
     // 11. 플로팅 텍스트
     if (camera.zoom > 0.32) {
       ctx.font = 'bold 12px Pretendard, sans-serif';
@@ -657,7 +675,7 @@ class WorldRenderer {
     }
 
     // 13. 대기 및 날씨 조명 오버레이
-    this.drawAtmosphereOverlay(ctx, cw, ch, worldTime, timeSec);
+    this.drawAtmosphereOverlay(ctx, cw, ch, worldTime, timeSec, camera);
 
     // 14. 미니맵 렌더링
     this.renderMinimap(camera, cw, ch, filterCategory);
@@ -2469,7 +2487,7 @@ class WorldRenderer {
     }
   }
 
-  drawAtmosphereOverlay(ctx, cw, ch, worldTime, timeSec) {
+  drawAtmosphereOverlay(ctx, cw, ch, worldTime, timeSec, camera = null) {
     const h = worldTime.hour + worldTime.minute / 60;
     let darkness = 0;
     if (h >= 20) darkness = Math.min(0.48, (h - 20) / 3 * 0.48);
@@ -2488,9 +2506,12 @@ class WorldRenderer {
       ctx.fillRect(0, 0, cw, ch);
     }
 
-    // 날씨별 픽셀 파티클
-    if (worldTime.weather === 'rain') {
-      ctx.strokeStyle = 'rgba(147, 197, 253, 0.42)';
+    const camX = camera ? camera.x : 320;
+    const camY = camera ? camera.y : 200;
+
+    // 1. 빗줄기 & 지면 착탄 수면 파문 (Rain & Splash Ripples)
+    if (worldTime.weather === 'rain' || worldTime.weather === 'storm') {
+      ctx.strokeStyle = 'rgba(147, 197, 253, 0.45)';
       ctx.lineWidth = 1.3;
       ctx.beginPath();
       for (let i = 0; i < 95; i++) {
@@ -2500,10 +2521,86 @@ class WorldRenderer {
         ctx.lineTo(rx - 4, ry + 12);
       }
       ctx.stroke();
-    } else if (darkness > 0.25) {
-      // 밤의 신비로운 반딧불이
+
+      // 지면 착탄 파문 링
+      ctx.strokeStyle = 'rgba(191, 219, 254, 0.35)';
+      ctx.lineWidth = 1.0;
+      for (let i = 0; i < 18; i++) {
+        const ripProg = ((timeSec * 2.5 + i * 0.3) % 1.0);
+        const ripX = Math.floor((i * 241 + Math.sin(i) * 60) % cw);
+        const ripY = Math.floor((i * 181 + Math.cos(i) * 60) % ch);
+        const rRad = Math.round(2 + ripProg * 6);
+        ctx.beginPath();
+        ctx.ellipse(ripX, ripY, rRad * 1.5, rRad * 0.7, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // 폭풍우 천둥 번개 플래시 (Thunder Lightning Flash)
+      if (worldTime.weather === 'storm') {
+        const stormCycle = (timeSec * 0.8) % 6.0;
+        if (stormCycle < 0.12) {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.40)';
+          ctx.fillRect(0, 0, cw, ch);
+          if (camera && camera.shake === 0) camera.shake = 8;
+        }
+      }
+    }
+
+    // 2. ❄️ 북부 설원 눈보라 (Snowdrift for North Pole & Snow Weather)
+    if (worldTime.weather === 'snow' || camY < 95) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      for (let i = 0; i < 70; i++) {
+        const sx = Math.floor((i * 181 + Math.sin(timeSec * 2.2 + i) * 24 + timeSec * 32) % cw);
+        const sy = Math.floor((i * 269 + timeSec * 115) % ch);
+        const sz = (i % 3 === 0) ? 3 : 2;
+        ctx.fillRect(sx, sy, sz, sz);
+      }
+    }
+
+    // 3. 🏜️ 서부 미라주 사막 모래폭풍 (Desert Sandstorm & Heat Shimmer)
+    if (worldTime.weather === 'sandstorm' || (camX < 180 && camY > 170 && camY < 320)) {
+      ctx.strokeStyle = 'rgba(217, 119, 6, 0.28)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      for (let i = 0; i < 55; i++) {
+        const dx = Math.floor((i * 163 + timeSec * 420) % cw);
+        const dy = Math.floor((i * 241 + Math.sin(timeSec * 1.8 + i) * 16) % ch);
+        ctx.moveTo(dx, dy);
+        ctx.lineTo(dx + 26, dy + 2);
+      }
+      ctx.stroke();
+    }
+
+    // 4. 🔥 남부 드라코니아 화산재 & 불씨 파티클 (Volcanic Ash & Rising Embers)
+    if (camY > 270 && camX > 250 && camX < 430) {
+      for (let i = 0; i < 36; i++) {
+        const ex = Math.floor((i * 191 + Math.sin(timeSec * 2.8 + i) * 25) % cw);
+        const ey = Math.floor((i * 307 - timeSec * 130) % ch + ch) % ch;
+        const prog = (timeSec * 1.8 + i * 0.1) % 1;
+        ctx.fillStyle = (i % 2 === 0) ? '#f97316' : '#ef4444';
+        ctx.globalAlpha = Math.max(0.15, 0.75 * (1 - prog));
+        ctx.fillRect(ex, ey, 2.5, 2.5);
+      }
+      ctx.globalAlpha = 1.0;
+    }
+
+    // 5. 🌿 동부 안개 늪지대 도깨비불 (Swamp Will-o'-the-Wisps)
+    if (camX > 450 && camY > 110 && camY < 280) {
+      for (let i = 0; i < 22; i++) {
+        const wx = Math.floor((i * 223 + Math.sin(timeSec * 1.1 + i * 2) * 45) % cw);
+        const wy = Math.floor((i * 179 + Math.cos(timeSec * 0.8 + i * 2) * 35) % ch);
+        const glow = 0.35 + Math.sin(timeSec * 3.5 + i) * 0.25;
+        ctx.fillStyle = (i % 2 === 0) ? `rgba(74, 222, 128, ${glow})` : `rgba(192, 132, 252, ${glow})`;
+        ctx.fillRect(wx - 2, wy - 2, 4, 4);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(wx - 1, wy - 1, 2, 2);
+      }
+    }
+
+    // 6. 밤의 신비로운 황금 반딧불이 (Night Fireflies)
+    if (darkness > 0.25) {
       ctx.fillStyle = '#fde047';
-      for (let i = 0; i < 45; i++) {
+      for (let i = 0; i < 40; i++) {
         const fx = Math.floor((i * 271 + Math.sin(timeSec + i) * 40) % cw);
         const fy = Math.floor((i * 193 + Math.cos(timeSec * 0.8 + i) * 40) % ch);
         ctx.fillRect(fx, fy, 2, 2);
