@@ -4750,6 +4750,41 @@
           }
         }
 
+        // 🌌 성좌의 천체 스타포지 은하수 아스트롤라베 참격 & 성운 폭풍 (Starforge Cosmic Slash & Nebula Burst)
+        if (weaponId.includes('star') || weaponId.includes('celestial') || weaponId.includes('aether') || weaponId.includes('astrolabe') || weaponId.includes('zodiac') || weaponId.includes('supernova') || weaponId.includes('cosmic') || weaponId.includes('void')) {
+          // 성운의 퍼플-골드 2중 초승달 섬광 호
+          ctx.strokeStyle = '#c084fc';
+          ctx.lineWidth = 4.2 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 24 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#fef08a';
+          ctx.lineWidth = 2.0 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 22 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          // 튀어나가는 6개의 황도 12궁 성좌 별빛 파편 (Zodiac Star Constellation Motes)
+          const starTime = (e.animTime || 0) * 18;
+          for (let sm = 0; sm < 6; sm++) {
+            const smAng = startAng + (sm / 5) * (endAng - startAng);
+            const smDist = (23 + Math.sin(starTime + sm * 2.4) * 8) * sc;
+            const smx = arcCenter + Math.cos(smAng) * smDist;
+            const smy = py - 10 * sc - bounce + Math.sin(smAng) * smDist;
+
+            // 6각 다이아몬드 별 (6-Pointed Star Mote)
+            ctx.fillStyle = sm % 2 === 0 ? '#facc15' : '#38bdf8';
+            ctx.fillRect(smx - 1.5 * sc, smy - 1.5 * sc, 3 * sc, 3 * sc);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(smx - 0.7 * sc, smy - 0.7 * sc, 1.4 * sc, 1.4 * sc);
+
+            // 성운 먼지 입자 (Nebula Stardust Glow)
+            ctx.fillStyle = 'rgba(192, 132, 252, 0.75)';
+            ctx.fillRect(smx + sideSign * 3 * sc, smy - 3 * sc, 2 * sc, 2 * sc);
+          }
+        }
+
         // 반짝이는 참격 스파크 및 엠버
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(arcCenter + sideSign * 14 * sc, py - 14 * sc - bounce, 3 * sc, 3 * sc);

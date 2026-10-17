@@ -6033,6 +6033,10 @@ class WorldRenderer {
       else if (cx >= 840 && cx <= 1200 && cy >= 40 && cy <= 380) {
         tintColor = 'rgba(14, 165, 233, 0.11)';
       }
+      // 성좌의 천체 티탄 스타포지 제국: 신비로운 우주 인디고 & 보랏빛 성운 림
+      else if (cx >= 3500 && cx <= 3840 && cy >= 120 && cy <= 600) {
+        tintColor = 'rgba(99, 102, 241, 0.10)';
+      }
 
       if (tintColor) {
         const bGrad = ctx.createRadialGradient(cw / 2, ch / 2, radius * 0.35, cw / 2, ch / 2, radius);

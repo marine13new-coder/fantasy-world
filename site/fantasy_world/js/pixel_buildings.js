@@ -4263,6 +4263,192 @@
     },
 
     // =========================================================================
+    // 28. 성좌의 천체 티탄 스타포지 수도 (Starforge Titan Celestial Foundry)
+    // =========================================================================
+    drawStarforgeTitanFoundry(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 지면 성운 그림자 (Cosmic Nebula Cast Shadow)
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 2, halfW + 10, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 바닥 황도 12궁 성좌 룬 서클 (Zodiac Runic Circle on Ground)
+      ctx.strokeStyle = 'rgba(168, 85, 247, 0.45)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 2, halfW + 6, 6, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // B. 3단 티탄 흑요석 및 인디고 메탈 성채 본체 (Obsidian Celestial Bastion)
+      const bastW = Math.round(bw * 0.84);
+      const bastHW = Math.round(bastW / 2);
+      const bastH = Math.round(bh * 0.70);
+      const bastY = py + halfH - bastH;
+
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - bastHW, bastY, bastW, bastH);
+      ctx.fillStyle = '#1e1b4b';
+      ctx.fillRect(px - bastHW + 2, bastY + 2, bastW - 4, bastH - 4);
+      ctx.fillStyle = '#312e81';
+      ctx.fillRect(px - bastHW + 4, bastY + 6, bastW - 8, bastH - 12);
+
+      // 황금 티탄 톱니 버트리스 (Golden Filigree Buttresses)
+      ctx.fillStyle = '#f59e0b';
+      for (let bx = px - bastHW; bx < px + bastHW - 4; bx += 10) {
+        ctx.fillRect(bx, bastY - 3, 6, 3);
+      }
+
+      // C. 중앙 초신성 항성 코어 (Levitating Supernova Stellar Core)
+      const coreY = bastY - 12;
+      const corePulse = 7 + Math.sin(timeSec * 4.0) * 1.8;
+
+      // 외곽 성운 오라 (Nebula Glow Aura)
+      const grad = ctx.createRadialGradient(px, coreY, 2, px, coreY, corePulse + 10);
+      grad.addColorStop(0, 'rgba(254, 240, 138, 0.95)');
+      grad.addColorStop(0.35, 'rgba(245, 158, 11, 0.80)');
+      grad.addColorStop(0.70, 'rgba(236, 72, 153, 0.45)');
+      grad.addColorStop(1, 'rgba(139, 92, 246, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(px, coreY, corePulse + 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 중심 플라즈마 구체 (Central Plasma Sphere)
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(px, coreY, corePulse * 0.45, 0, Math.PI * 2);
+      ctx.fill();
+
+      // D. 3D 회전하는 3개의 황금 혼천의 궤도 링 (3 Concentric Rotating Armillary Rings)
+      ctx.lineWidth = 1.8;
+      // 링 1: 수평 회전
+      const r1Angle = timeSec * 1.8;
+      ctx.strokeStyle = '#facc15';
+      ctx.beginPath();
+      ctx.ellipse(px, coreY, corePulse + 6, Math.abs(Math.sin(r1Angle)) * (corePulse + 6), 0.2, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 링 2: 수직 대각 회전
+      const r2Angle = timeSec * -2.2;
+      ctx.strokeStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.ellipse(px, coreY, Math.abs(Math.cos(r2Angle)) * (corePulse + 8), corePulse + 8, -0.4, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 링 3: 45도 극도 회전
+      const r3Angle = timeSec * 2.6;
+      ctx.strokeStyle = '#c084fc';
+      ctx.beginPath();
+      ctx.ellipse(px, coreY, corePulse + 10, Math.abs(Math.sin(r3Angle)) * (corePulse + 10), 0.8, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // E. 공중에 흩날리는 6개의 성간 별빛 스파크 (Cosmic Sparks & Motes)
+      for (let st = 0; st < 6; st++) {
+        const sAng = (timeSec * 2.5) + (st * (Math.PI * 2 / 6));
+        const sDist = (corePulse + 12 + Math.sin(timeSec * 6 + st) * 4);
+        const sx = px + Math.cos(sAng) * sDist;
+        const sy = coreY + Math.sin(sAng) * sDist * 0.6;
+        ctx.fillStyle = st % 2 === 0 ? '#fef08a' : '#38bdf8';
+        ctx.fillRect(sx - 1, sy - 1, 2.5, 2.5);
+      }
+
+      // F. 성문: 차원 넥서스 게이트 (Aether Dimensional Gate)
+      const gateW = Math.round(bw * 0.22);
+      const gateH = Math.round(bh * 0.32);
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(px - gateW / 2, py + halfH - gateH, gateW, gateH);
+      ctx.fillStyle = isNight ? '#818cf8' : '#4f46e5';
+      ctx.fillRect(px - gateW / 2 + 2, py + halfH - gateH + 2, gateW - 4, gateH - 2);
+    },
+
+    // =========================================================================
+    // 29. 황도 12궁 거대 혼천의 천문대 (Zodiac Armillary Astrolabe Observatory)
+    // =========================================================================
+    drawZodiacAstrolabeObservatory(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 지면 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.58)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 2, halfW + 6, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // B. 8각 석조 천문대 돔 기단 (Octagonal Observatory Spire)
+      const baseW = Math.round(bw * 0.72);
+      const baseHW = Math.round(baseW / 2);
+      const baseH = Math.round(bh * 0.65);
+      const baseY = py + halfH - baseH;
+
+      ctx.fillStyle = '#1e1b4b';
+      ctx.fillRect(px - baseHW, baseY, baseW, baseH);
+      ctx.fillStyle = '#312e81';
+      ctx.fillRect(px - baseHW + 2, baseY + 2, baseW - 4, baseH - 4);
+
+      // 천문대 돔 천장 (Brass Observatory Dome)
+      const domeR = baseHW + 2;
+      ctx.fillStyle = '#b45309';
+      ctx.beginPath();
+      ctx.arc(px, baseY + 2, domeR, Math.PI, 0);
+      ctx.fill();
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(px - 2, baseY - domeR, 4, domeR);
+
+      // C. 거대 굴절 망원경 & 천공을 꿰뚫는 성광 빔 (Starlight Telescope Beam)
+      const beamY = baseY - domeR - 4;
+      const teleAngle = -Math.PI / 4 + Math.sin(timeSec * 0.8) * 0.08;
+
+      ctx.save();
+      ctx.translate(px, baseY - 4);
+      ctx.rotate(teleAngle);
+
+      // 망원경 경통
+      ctx.fillStyle = '#d97706';
+      ctx.fillRect(-4, -18, 8, 22);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(-5, -22, 10, 4);
+
+      // 천공으로 쏘아 올리는 성광 빔 (Piercing Starlight Beam)
+      const bPulse = 2 + Math.sin(timeSec * 8) * 1;
+      ctx.strokeStyle = 'rgba(192, 132, 252, 0.75)';
+      ctx.lineWidth = bPulse * 2;
+      ctx.beginPath();
+      ctx.moveTo(0, -22);
+      ctx.lineTo(0, -60);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = bPulse * 0.8;
+      ctx.beginPath();
+      ctx.moveTo(0, -22);
+      ctx.lineTo(0, -60);
+      ctx.stroke();
+
+      ctx.restore();
+
+      // D. 공중에 공전하는 2개의 비전 프리즘 결정 (Arcane Prisms)
+      for (let p = 0; p < 2; p++) {
+        const pAng = (timeSec * 2.2) + p * Math.PI;
+        const pX = px + Math.cos(pAng) * (baseHW + 8);
+        const pY = baseY + 12 + Math.sin(pAng) * 4;
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.moveTo(pX, pY - 4);
+        ctx.lineTo(pX + 3, pY);
+        ctx.lineTo(pX, pY + 4);
+        ctx.lineTo(pX - 3, pY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(pX - 0.5, pY - 0.5, 1, 1);
+      }
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -4430,6 +4616,16 @@
       }
       if (type === 'frozen_throne' || (type === 'castle' && b && b.continent === 'frost_necropolis') || (type === 'fortress' && b && b.continent === 'frost_necropolis') || (type === 'temple' && b && b.continent === 'frost_necropolis') || (type === 'lair' && b && b.continent === 'frost_necropolis')) {
         this.drawLichKingFrozenThrone(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+
+      // 🌌 성좌의 천체 티탄 스타포지 & 황도 12궁 혼천의 (Starforge Titan Foundry & Zodiac Astrolabe)
+      if (type === 'starforge_foundry' || (type === 'capital' && b && b.continent === 'starforge') || (type === 'palace' && b && b.continent === 'starforge')) {
+        this.drawStarforgeTitanFoundry(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'zodiac_astrolabe' || (type === 'castle' && b && b.continent === 'starforge') || (type === 'fortress' && b && b.continent === 'starforge') || (type === 'temple' && b && b.continent === 'starforge') || (type === 'lair' && b && b.continent === 'starforge')) {
+        this.drawZodiacAstrolabeObservatory(ctx, px, py, bw, bh, isNight, timeSec);
         return true;
       }
 

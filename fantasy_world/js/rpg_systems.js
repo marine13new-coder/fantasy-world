@@ -51,7 +51,8 @@ const LEGENDARY_ITEMS = [
   { id: 'mithril_armor', slot: 'armor', name: '왕실 미스릴 판금갑옷', icon: '🦺', atk: 15, hp: 200, desc: '드워프 명장이 제련한 미스릴 갑주. 최대 생명력이 대폭 증가합니다.' },
   { id: 'ocean_heart', slot: 'relic', name: '대양의 심장 심해진주', icon: '💎', atk: 20, hp: 80, desc: '바다의 여신 탈라사의 축복. 항해 속도와 무역 이윤이 증가합니다.' },
   { id: 'dragon_crown', slot: 'helmet', name: '정복자의 황금 용관', icon: '👑', atk: 30, hp: 120, desc: '천공의 비룡을 제압한 대영웅의 관. 명성치 획득량이 증폭됩니다.' },
-  { id: 'frostmourne_glacial_blade', slot: 'weapon', name: '서리고룡의 영구빙하 마검', icon: '❄️', atk: 62, hp: 140, desc: '혹한의 만년빙하에서 벼려낸 서리고룡의 마검. 타격 시 서리 파편이 폭발하며 적을 동결시킵니다.' }
+  { id: 'frostmourne_glacial_blade', slot: 'weapon', name: '서리고룡의 영구빙하 마검', icon: '❄️', atk: 62, hp: 140, desc: '혹한의 만년빙하에서 벼려낸 서리고룡의 마검. 타격 시 서리 파편이 폭발하며 적을 동결시킵니다.' },
+  { id: 'starforge_aether_astrolabe', slot: 'weapon', name: '성좌의 티탄 에테르 아스트롤라베', icon: '🌌', atk: 68, hp: 160, desc: '별들의 궤적을 벼려낸 티탄의 천구의 마검. 공격 시 2중 성운 폭풍과 황도 12궁 별빛 파편이 방출됩니다.' }
 ];
 
 const DUNGEONS = [
@@ -146,6 +147,29 @@ const DUNGEONS = [
     },
     goldReward: 7500,
     fameReward: 150
+  },
+  {
+    id: 'dungeon_starforge',
+    name: '천체 티탄의 성간 스타포지 코어',
+    icon: '🌌',
+    levelReq: 14,
+    x: 3680, y: 240,
+    color: '#8b5cf6',
+    desc: '은하의 중심에 위치한 티탄의 초신성 용광로. 별들을 벼려내던 태고의 창조자 티탄 크로노스가 폭주한 성운의 불길 속에 군림합니다.',
+    bossName: '성좌의 창조자 티탄 크로노스 (Titan Chronos)',
+    bossHp: 5200,
+    bossAtk: 75,
+    relicReward: {
+      id: 'relic_supernova_heart',
+      slot: 'relic',
+      name: '티탄의 초신성 플라즈마 핵',
+      icon: '✨',
+      atk: 58,
+      hp: 260,
+      desc: '모든 공격 적중 시 30% 확률로 전방에 성간 유성우를 소환하여 140의 추가 에테르 피해를 입힙니다.'
+    },
+    goldReward: 9000,
+    fameReward: 180
   }
 ];
 
@@ -3069,6 +3093,17 @@ const TOWN_LORE_DATABASE = {
     tavernToast: '영구동토 빙하 송어 회와 백년 묵은 서리이끼 증류주(Glacial Schnapps)를 들이켰습니다! 뼛속까지 찌르던 혹한이 단숨에 타오르는 얼음불꽃으로 변합니다.',
     questTitle: '만년설 고룡 능선 영혼 빙식(氷蝕) 골렘 파괴',
     questDesc: '영구동토의 냉기를 흡수해 비대해진 얼음 골렘 핵을 부수고 영구빙 파편을 회수하시오.'
+  },
+  starforge: {
+    npcName: '대천문학자 아스트라이아 & 티탄 조물주 아틀라스 (Astraea & Atlas)',
+    npcRole: '성좌의 천체 스타포지 황금 혼천의 수석 관측관',
+    icon: '🌌',
+    disposition: '🪐 우주의 영원과 성간 심연을 응시하는 초월적 위엄',
+    quote: '"인간의 수명은 찰나의 스파크에 불과하거늘, 그 짧은 숨결로 우주의 영원을 헤아리려 드는 그대의 오만함이 실로 경이롭군. 저 용광로에서 타오르는 것은 단순한 쇳물이 아니오. 천 년 후 밤하늘에 피어날 별들의 태반이지."',
+    rumor: '💡 혼천의의 천체 기록: "황도 12궁의 톱니가 일직선으로 맞물리는 날, 스타포지 중심부의 초신성 도가니에서 별을 가르는 칼날 \'아스트롤라베\'가 모습을 드러낸다더군. 은하의 무게를 견딜 수 있는 영혼만이 그 자루를 쥘 수 있지."',
+    tavernToast: '성간 에테르 증류주와 은하수 별빛 젤리(Nebula Starlight Jelly)를 삼켰습니다! 두 눈에 우주의 성운이 비치며 마력과 공격속도가 한계치를 돌파합니다.',
+    questTitle: '뒤틀린 혜성 충돌 파편 봉인 작전',
+    questDesc: '초신성 도가니 외곽으로 낙하한 공허 오염 운석 파편을 회수하고 성운 폭주를 억제하시오.'
   },
   gothic: {
     npcName: '밤의 대주교 발렌타인 (Archbishop Valentine)',

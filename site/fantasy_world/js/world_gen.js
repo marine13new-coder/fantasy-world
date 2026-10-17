@@ -710,6 +710,16 @@ function createSettlementList() {
   add('sunken_iceberg_shipwreck_cove', '빙산 좌초 유령선 난파선 만', 'port', 'frost_necropolis', 910, 340, 'corsair', false, 9);
   add('aurora_borealis_valkyrie_shrine', '오로라 극광 발키리 비천 제단', 'temple', 'frost_necropolis', 1020, 80, 'celestial', true, 13);
 
+  // =========================================================================
+  // 27. THE CELESTIAL STARFORGE TITAN FOUNDRY & ZODIAC OBSERVATORY (성좌의 천체 티탄 스타포지 & 황도 12궁 혼천의)
+  // =========================================================================
+  add('starforge_titan_celestial_foundry', '성좌의 천체 티탄 스타포지 수도', 'capital', 'starforge', 3680, 240, 'celestial', true, 18);
+  add('zodiac_armillary_astrolabe_observatory', '황도 12궁 거대 혼천의 천문대', 'castle', 'starforge', 3760, 380, 'celestial', true, 16);
+  add('supernova_plasma_crucible_haven', '초신성 플라즈마 도가니 요새', 'lair', 'starforge', 3560, 180, 'dwarf', true, 12);
+  add('aether_starfall_cataract_harbor', '에테르 유성우 은하 폭포 항만', 'port', 'starforge', 3540, 420, 'elf', false, 10);
+  add('stellar_prism_monolith_shrine', '성간 프리즘 거석단 천체 신전', 'temple', 'starforge', 3720, 520, 'celestial', true, 13);
+  add('meteor_iron_artificer_village', '운석철 비전 공학자 길드 마을', 'town', 'starforge', 3620, 320, 'human', false, 9);
+
   return list;
 }
 
@@ -1151,6 +1161,18 @@ function generateWorld() {
           continue;
         }
 
+        // 성좌의 천체 티탄 스타포지 & 황도 12궁 혼천의 전용 지형 카빙
+        if (s.continent === 'starforge') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.OBSIDIAN : TILE.CASTLE_FLOOR; // 칠흑의 우주 흑요석 기단 및 황금 성좌 룬 바닥
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.CRYSTAL_CAVE : TILE.MEADOW; // 영롱한 별빛 수정 결정지 및 은하 잔디
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.OASIS_WATER : TILE.SAND; // 에테르 은하수 운하 및 백금 모래
+          }
+          continue;
+        }
+
         const curT = tiles[idx(tx, ty)];
         const isWater = (curT === TILE.DEEP_WATER || curT === TILE.WATER);
 
@@ -1414,7 +1436,16 @@ function generateWorld() {
     ['lich_king_frozen_throne_sanctum', 'rime_alchemist_cryo_laboratory'],
     ['permafrost_mammoth_bone_haven', 'sunken_iceberg_shipwreck_cove'],
     ['sunken_iceberg_shipwreck_cove', 'frost_wyrm_glacial_citadel'],
-    ['permafrost_mammoth_bone_haven', 'pegasus_aether_skydock_port']
+    ['permafrost_mammoth_bone_haven', 'pegasus_aether_skydock_port'],
+
+    // [성좌의 천체 티탄 스타포지 가도 (Celestial Zodiac Starlight Highway)]
+    ['starforge_titan_celestial_foundry', 'zodiac_armillary_astrolabe_observatory'],
+    ['starforge_titan_celestial_foundry', 'supernova_plasma_crucible_haven'],
+    ['starforge_titan_celestial_foundry', 'meteor_iron_artificer_village'],
+    ['zodiac_armillary_astrolabe_observatory', 'stellar_prism_monolith_shrine'],
+    ['supernova_plasma_crucible_haven', 'aether_starfall_cataract_harbor'],
+    ['aether_starfall_cataract_harbor', 'meteor_iron_artificer_village'],
+    ['supernova_plasma_crucible_haven', 'astral_void_gate']
   ];
   const roadLinks = rawRoadLinks.filter(([a, b]) => settlementMap[a] && settlementMap[b]);
 
