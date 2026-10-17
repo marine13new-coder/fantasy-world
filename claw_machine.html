@@ -1130,11 +1130,17 @@
         swayVelX: 0,
         swayVelZ: 0,
         
-        // Claw State
+        // Claw State & Articulated Physics
         state: 'IDLE', // IDLE, DESCENDING, GRABBING, ASCENDING, RETURNING, DROPPING
-        clawOpenRatio: 1.0, // 1.0 = fully open, 0.0 = fully closed
+        clawAngles: [1.0, 1.0, 1.0], // Independent 3 prongs (1.0 = open, 0.0 = closed)
+        targetClawAngles: [1.0, 1.0, 1.0],
         grabbedDoll: null,
-        gripStrength: 1.0,
+        grabOffset: new THREE.Vector3(),
+        isLatched: false,
+        latchFeatureName: '',
+        slipVelocity: 0,
+        slipOffset: 0,
+        contactCount: 0,
         hasDollSlipped: false
       },
 
@@ -1624,6 +1630,67 @@
         group.add(earL, earR);
       }
 
+      // Multi-part Physical Feature Colliders (local space)
+      const colliders = [];
+      let mass = 1.0;
+      let friction = 0.50;
+
+      if (config.shape === 'bunny') {
+        colliders.push({ type: 'sphere', p: new THREE.Vector3(0, 0, 0), r: 0.65, hookable: false, name: '몸통' });
+        colliders.push({ type: 'sphere', p: new THREE.Vector3(0, 0.8, 0.05), r: 0.52, hookable: false, name: '머리' });
+        // Ears: Hookable thin vertical parts!
+        colliders.push({ type: 'capsule', a: new THREE.Vector3(-0.35, 0.9, -0.05), b: new THREE.Vector3(-0.45, 1.7, -0.15), r: 0.16, hookable: true, name: '왼쪽 귀' });
+        colliders.push({ type: 'capsule', a: new THREE.Vector3(0.35, 0.9, -0.05), b: new THREE.Vector3(0.45, 1.7, -0.15), r: 0.16, hookable: true, name: '오른쪽 귀' });
+        friction = 0.55;
+        mass = 0.85;
+      } else if (config.shape === 'bear' || config.shape === 'panda') {
+        colliders.push({ type: 'sphere', p: new THREE.Vector3(0, 0, 0), r: 0.70, hookable: false, name: '몸통' });
+        colliders.push({ type: 'sphere', p: new THREE.Vector3(0, 0.85, 0.1), r: 0.55, hookable: false, name: '머리' });
+        // Neck groove & Arms (Great hook latch points)
+        colliders.push({ type: 'sphere', p: new THREE.Vector3(0, 0.45, 0.05), r: 0.38, hookable: true, name: '목 틈새' });
+        colliders.push({ type: 'capsule', a: new THREE.Vector3(-0.35, 0.25, 0), b: new THREE.Vector3(-0.8, -0.05, 0), r: 0.20, hookable: true, name: '왼쪽 팔' });
+        colliders.push({ type: 'capsule', a: new THREE.Vector3(0.35, 0.25, 0), b: new THREE.Vector3(0.8, -0.05, 0), r: 0.20, hookable: true, name: '오른쪽 팔' });
+        friction = 0.50;
+        mass = config.shape === 'panda' ? 1.3 : 1.0;
+      } else if (config.shape === 'duck') {
+        // Completely round, smooth, slippery - NO hookable features
+        colliders.push({ type: 'sphere', p: new THREE.Vector3(0, 0, 0), r: 0.82, hookable: false, name: '통통 몸통' });
+        colliders.push({ type: 'sphere', p: new THREE.Vector3(0, 0.7, 0.35), r: 0.52, hookable: false, name: '동글 머리' });
+        friction = 0.12; // Extremely slippery!
+        mass = 0.95;
+      } else if (config.shape === 'octopus') {
+        colliders.push({ type: 'sphere', p: new THREE.Vector3(0, 0.4, 0), r: 0.70, hookable: false, name: '머리' });
+        for (let t = 0; t < 6; t++) {
+          const ang = (t * 2 * Math.PI) / 6;
+          colliders.push({
+            type: 'capsule',
+            a: new THREE.Vector3(Math.cos(ang) * 0.35, 0.05, Math.sin(ang) * 0.35),
+            b: new THREE.Vector3(Math.cos(ang) * 0.75, -0.25, Math.sin(ang) * 0.75),
+            r: 0.16,
+            hookable: true,
+            name: `촉수 ${t + 1}`
+          });
+        }
+        friction = 0.42;
+        mass = 1.2;
+      } else if (config.shape === 'pig') {
+        colliders.push({ type: 'sphere', p: new THREE.Vector3(0, 0, 0), r: 0.95, hookable: false, name: '황금 거대몸통' });
+        colliders.push({ type: 'sphere', p: new THREE.Vector3(0, 0.05, 0.95), r: 0.28, hookable: false, name: '돼지 코' });
+        friction = 0.20; // Metallic smooth
+        mass = 2.8; // Very heavy!
+      } else {
+        colliders.push({ type: 'sphere', p: new THREE.Vector3(0, 0, 0), r: 0.72, hookable: false, name: '몸통' });
+        colliders.push({ type: 'sphere', p: new THREE.Vector3(0, 0.65, 0.25), r: 0.55, hookable: false, name: '머리' });
+        colliders.push({ type: 'capsule', a: new THREE.Vector3(-0.35, 0.8, 0.2), b: new THREE.Vector3(-0.45, 1.25, 0.2), r: 0.15, hookable: true, name: '귀' });
+        colliders.push({ type: 'capsule', a: new THREE.Vector3(0.35, 0.8, 0.2), b: new THREE.Vector3(0.45, 1.25, 0.2), r: 0.15, hookable: true, name: '귀' });
+        friction = 0.46;
+        mass = 1.0;
+      }
+
+      group.userData.colliders = colliders;
+      group.userData.friction = friction;
+      group.userData.mass = mass;
+
       group.position.set(posX, posY, posZ);
       group.rotation.y = Math.random() * Math.PI * 2;
       group.rotation.x = (Math.random() - 0.5) * 0.4;
@@ -1763,87 +1830,185 @@
       c.swayAngleX += c.swayVelX * delta;
       c.swayAngleZ += c.swayVelZ * delta;
 
-      // 3. Claw Tip Coordinates
-      // Tip position accounts for sway offset
+      // 3. Articulated Claw Kinematics
       const clawHangX = c.x + Math.sin(c.swayAngleX) * c.cableLength;
       const clawHangZ = c.z + Math.sin(c.swayAngleZ) * c.cableLength;
       const clawHangY = c.y - Math.cos(c.swayAngleX) * Math.cos(c.swayAngleZ) * c.cableLength;
+      const clawCenter = new THREE.Vector3(clawHangX, clawHangY, clawHangZ);
+
+      // Helper to compute world position of a claw prong's hook tip
+      function getProngTipWorldPos(fingerIdx, angleRatio) {
+        const baseAngle = (fingerIdx * 2 * Math.PI) / 3;
+        // Radial radius and depth from hub pivot based on individual prong angle
+        const radius = 0.42 + 0.95 * angleRatio;
+        const depth = -1.65 + 0.35 * (1.0 - angleRatio);
+        
+        // Local offset relative to claw rotation
+        const localOffset = new THREE.Vector3(
+          Math.cos(baseAngle) * radius,
+          depth,
+          Math.sin(baseAngle) * radius
+        );
+        // Apply claw assembly rotation (sway angles)
+        localOffset.applyAxisAngle(new THREE.Vector3(0, 0, 1), -c.swayAngleX);
+        localOffset.applyAxisAngle(new THREE.Vector3(1, 0, 0), c.swayAngleZ);
+        return clawCenter.clone().add(localOffset);
+      }
 
       // 4. State Machine Execution
       switch (c.state) {
         case 'DESCENDING': {
-          document.getElementById('status-display').textContent = '집게 하강 중... 두근두근!';
+          document.getElementById('status-display').textContent = '집게 하강 중... 조준점으로 내려갑니다!';
           const dropSpeed = 5.0;
           c.cableLength += dropSpeed * delta;
           sound.playChainTick();
 
+          // Reset individual claw prongs to fully open
+          for (let i = 0; i < 3; i++) {
+            c.clawAngles[i] = 1.0;
+            c.targetClawAngles[i] = 0.05; // target is fully closed unless obstructed
+          }
+          c.isLatched = false;
+          c.slipOffset = 0;
+          c.slipVelocity = 0;
+
           // Check collision with floor or doll stack
           let hitStack = false;
-          const currentTipY = c.y - c.cableLength;
-
           for (const doll of dolls) {
             const distHoriz = Math.hypot(clawHangX - doll.position.x, clawHangZ - doll.position.z);
-            const distVert = (currentTipY) - doll.position.y;
-            if (distHoriz < 1.4 && distVert <= 0.8) {
+            const distVert = (clawHangY - 1.2) - doll.position.y;
+            if (distHoriz < 1.35 && distVert <= 0.5) {
               hitStack = true;
               break;
             }
           }
 
           if (c.cableLength >= c.maxCable || hitStack) {
-            // Hit bottom! Elastic thud bounce
             sound.playThud();
             c.swayVelX += (Math.random() - 0.5) * 1.5;
             c.swayVelZ += (Math.random() - 0.5) * 1.5;
             c.state = 'GRABBING';
             c.grabTimer = 0;
+            c.activeDoll = null;
           }
           break;
         }
 
         case 'GRABBING': {
-          document.getElementById('status-display').textContent = '찰칵! 집게 발을 오므리는 중!';
           c.grabTimer += delta;
-          
-          // Animate claw closing
-          c.clawOpenRatio = THREE.MathUtils.lerp(c.clawOpenRatio, 0.1, 0.1);
+          document.getElementById('status-display').textContent = '집게발이 모터 힘으로 오므라드는 중...';
 
-          if (c.grabTimer > 0.8) {
+          // Motor drives each claw finger inwards individually
+          const motorSpeed = 1.8;
+          let anyClosing = false;
+
+          for (let i = 0; i < 3; i++) {
+            if (c.clawAngles[i] > c.targetClawAngles[i]) {
+              c.clawAngles[i] = Math.max(c.targetClawAngles[i], c.clawAngles[i] - motorSpeed * delta);
+              anyClosing = true;
+            }
+          }
+
+          // Real-time Collision & Contact Solver for each finger against doll colliders
+          const contactedFingersByDoll = new Map();
+          const latchFeatureByDoll = new Map();
+
+          for (const doll of dolls) {
+            if (doll.userData.isInChute) continue;
+            const distToDoll = clawCenter.distanceTo(doll.position);
+            if (distToDoll > 2.8) continue; // too far
+
+            const dollPos = doll.position;
+            const dollRotY = doll.rotation.y;
+
+            for (let f = 0; f < 3; f++) {
+              const tipWorld = getProngTipWorldPos(f, c.clawAngles[f]);
+
+              // Check each feature collider of this doll
+              for (const col of doll.userData.colliders) {
+                let hit = false;
+
+                if (col.type === 'sphere') {
+                  const worldColPos = col.p.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), dollRotY).add(dollPos);
+                  const dist = tipWorld.distanceTo(worldColPos);
+                  if (dist <= col.r + 0.12) {
+                    hit = true;
+                    // Obstructed! Finger stops at this angle
+                    c.targetClawAngles[f] = c.clawAngles[f];
+
+                    // Wedge effect on smooth surfaces (like duck body)
+                    if (doll.userData.friction < 0.2) {
+                      const pushDir = dollPos.clone().sub(tipWorld).setY(0).normalize();
+                      doll.position.addScaledVector(pushDir, 0.4 * delta);
+                      doll.position.y -= 0.2 * delta; // slips downward under wedge squeeze
+                    }
+                  }
+                } else if (col.type === 'capsule') {
+                  const aWorld = col.a.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), dollRotY).add(dollPos);
+                  const bWorld = col.b.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), dollRotY).add(dollPos);
+                  
+                  // Point to segment distance
+                  const ab = bWorld.clone().sub(aWorld);
+                  const at = tipWorld.clone().sub(aWorld);
+                  const t = THREE.MathUtils.clamp(at.dot(ab) / ab.lengthSq(), 0, 1);
+                  const closestPoint = aWorld.clone().addScaledVector(ab, t);
+
+                  if (tipWorld.distanceTo(closestPoint) <= col.r + 0.12) {
+                    hit = true;
+                    c.targetClawAngles[f] = c.clawAngles[f];
+
+                    if (col.hookable) {
+                      latchFeatureByDoll.set(doll, col.name);
+                    }
+                  }
+                }
+
+                if (hit) {
+                  if (!contactedFingersByDoll.has(doll)) {
+                    contactedFingersByDoll.set(doll, new Set());
+                  }
+                  contactedFingersByDoll.get(doll).add(f);
+                }
+              }
+            }
+          }
+
+          // Grasp Evaluation after clamp cycle
+          if (c.grabTimer > 1.0) {
             sound.playClamp();
 
-            // Gripping Logic: Find closest doll to claw center
+            // Find best grasped doll
             let bestDoll = null;
-            let minDist = 1.6;
+            let maxContacts = 0;
 
-            for (const doll of dolls) {
-              if (doll.userData.isInChute) continue;
-              const dDist = Math.hypot(clawHangX - doll.position.x, clawHangZ - doll.position.z);
-              const yDist = Math.abs(clawHangY - 1.2 - doll.position.y);
-              
-              if (dDist < 1.35 && yDist < 1.2) {
-                const totalDist = dDist + yDist * 0.5;
-                if (totalDist < minDist) {
-                  minDist = totalDist;
-                  bestDoll = doll;
-                }
+            for (const [doll, fingers] of contactedFingersByDoll.entries()) {
+              if (fingers.size >= 2 && fingers.size > maxContacts) {
+                maxContacts = fingers.size;
+                bestDoll = doll;
               }
             }
 
             if (bestDoll) {
-              // Calculate Grip Quality based on doll difficulty and centering
-              const centering = 1.0 - (minDist / 1.6);
-              const difficulty = bestDoll.userData.config.gripDifficulty;
-              const gripChance = centering * (1.1 - difficulty * 0.4);
-
               c.grabbedDoll = bestDoll;
               bestDoll.userData.isGrabbed = true;
-              c.gripStrength = THREE.MathUtils.clamp(gripChance, 0.2, 1.0);
+              c.contactCount = maxContacts;
+              c.grabOffset.copy(bestDoll.position).sub(clawCenter);
               c.hasDollSlipped = false;
+              c.slipOffset = 0;
 
-              document.getElementById('status-display').textContent = `잡았다! ${bestDoll.userData.config.name}!`;
+              const latchedFeature = latchFeatureByDoll.get(bestDoll);
+              if (latchedFeature) {
+                c.isLatched = true;
+                c.latchFeatureName = latchedFeature;
+                document.getElementById('status-display').textContent = `🎯 갈고리 래칭! [${bestDoll.userData.config.name}]의 ${latchedFeature}에 완벽히 걸림!`;
+              } else {
+                c.isLatched = false;
+                c.latchFeatureName = '';
+                document.getElementById('status-display').textContent = `⚠️ 마찰 그립! [${bestDoll.userData.config.name}]을 쥐었으나 미끄러질 수 있습니다!`;
+              }
             } else {
               c.grabbedDoll = null;
-              document.getElementById('status-display').textContent = '아쉽게도 허공을 잡았습니다...';
+              document.getElementById('status-display').textContent = '인형을 제대로 감싸쥐지 못하고 빗나갔습니다!';
             }
 
             c.state = 'ASCENDING';
@@ -1852,26 +2017,48 @@
         }
 
         case 'ASCENDING': {
-          document.getElementById('status-display').textContent = '집게 상승 중! 놓치지 마라...!';
           const liftSpeed = 4.2;
           c.cableLength -= liftSpeed * delta;
           sound.playChainTick();
 
-          // Slipped thrill logic! If grip strength is shaky, it might slip midway
+          // Physical Slipping Mechanics during Ascent
           if (c.grabbedDoll && !c.hasDollSlipped) {
-            const heightFactor = (c.maxCable - c.cableLength) / (c.maxCable - c.minCable);
-            if (heightFactor > 0.4 && Math.random() < (1.0 - c.gripStrength) * 0.04) {
-              // Doll slipped off claw! Heartbreak moment!
-              c.grabbedDoll.userData.isGrabbed = false;
-              c.grabbedDoll.userData.velocity.set(
-                (Math.random() - 0.5) * 1.5,
-                -2.0,
-                (Math.random() - 0.5) * 1.5
-              );
-              c.grabbedDoll = null;
-              c.hasDollSlipped = true;
-              sound.playDropMiss();
-              document.getElementById('status-display').textContent = '앗! 아슬아슬하게 미끄러졌습니다! 😭';
+            const doll = c.grabbedDoll;
+            
+            if (c.isLatched) {
+              // Geometrically latched onto hookable features (ear, neck groove, tentacles)
+              // Highly secure hold!
+              document.getElementById('status-display').textContent = `단단히 걸렸습니다! (${c.latchFeatureName})`;
+            } else {
+              // Pure friction hold - calculates actual physical equilibrium
+              const m = doll.userData.mass;
+              const mu = doll.userData.friction;
+              // Normal force from contact fingers
+              const holdFrictionForce = c.contactCount * mu * 34.0;
+              // Inertial downward load = gravity + lift acceleration + sway oscillation
+              const swayMagnitude = Math.hypot(c.swayVelX, c.swayVelZ);
+              const totalDownwardLoad = m * 24.0 + m * (swayMagnitude * 14.0);
+
+              if (totalDownwardLoad > holdFrictionForce) {
+                // Slip velocity grows with force deficit
+                const deficit = totalDownwardLoad - holdFrictionForce;
+                const slipStep = deficit * delta * 0.045;
+                c.slipOffset += slipStep;
+                
+                document.getElementById('status-display').textContent = `⚠️ 미끄러지는 중! 아슬아슬 버티는 중... (${Math.round(c.slipOffset * 100)}%)`;
+
+                // If slipped past claw fingertips, doll drops!
+                if (c.slipOffset > 0.62) {
+                  doll.userData.isGrabbed = false;
+                  doll.userData.velocity.set((Math.random() - 0.5) * 1.5, -3.2, (Math.random() - 0.5) * 1.5);
+                  c.grabbedDoll = null;
+                  c.hasDollSlipped = true;
+                  sound.playDropMiss();
+                  document.getElementById('status-display').textContent = `😭 으악! 무게를 못 이기고 집게 사이로 쏙 미끄러져 떨어졌습니다!`;
+                }
+              } else {
+                document.getElementById('status-display').textContent = `집게 상승 중! 안정적으로 들려 있습니다.`;
+              }
             }
           }
 
@@ -1883,13 +2070,11 @@
         }
 
         case 'RETURNING': {
-          document.getElementById('status-display').textContent = '배출구로 이동 중... 조마조마!';
+          document.getElementById('status-display').textContent = '배출구로 이동 중... 조마조마 흔들흔들!';
           sound.playMotor();
 
-          // Move toward chute coordinate (x: -5, z: 5)
           const targetX = state.cabinet.chute.x;
           const targetZ = state.cabinet.chute.z;
-
           const dx = targetX - c.x;
           const dz = targetZ - c.z;
           const dist = Math.hypot(dx, dz);
@@ -1901,15 +2086,21 @@
             c.x += c.velX * delta;
             c.z += c.velZ * delta;
 
-            // Extra sway during transit increases slip chance!
-            if (c.grabbedDoll && !c.hasDollSlipped) {
-              if (Math.random() < (1.0 - c.gripStrength) * 0.02) {
+            // Lateral gantry momentum adds centrifugal strain to unlatched dolls
+            if (c.grabbedDoll && !c.hasDollSlipped && !c.isLatched) {
+              const m = c.grabbedDoll.userData.mass;
+              const mu = c.grabbedDoll.userData.friction;
+              const swayStrain = Math.hypot(c.swayAngleX, c.swayAngleZ) * 40.0;
+              const slipStep = (swayStrain / (mu * 100.0)) * delta * 0.04;
+              c.slipOffset += slipStep;
+
+              if (c.slipOffset > 0.62) {
                 c.grabbedDoll.userData.isGrabbed = false;
-                c.grabbedDoll.userData.velocity.set(0, -2, 0);
+                c.grabbedDoll.userData.velocity.set(c.velX * 0.8, -2.5, c.velZ * 0.8);
                 c.grabbedDoll = null;
                 c.hasDollSlipped = true;
                 sound.playDropMiss();
-                document.getElementById('status-display').textContent = '이동 중 덜컹거리다 떨어졌습니다! 😭';
+                document.getElementById('status-display').textContent = '이동 중 덜컹거리다 미끄러져 떨어졌습니다! 😭';
               }
             }
           } else {
@@ -1926,14 +2117,15 @@
 
         case 'DROPPING': {
           c.dropWaitTimer += delta;
-          // Open claw
-          c.clawOpenRatio = THREE.MathUtils.lerp(c.clawOpenRatio, 1.0, 0.12);
+          // Open all 3 claw fingers simultaneously
+          for (let i = 0; i < 3; i++) {
+            c.clawAngles[i] = THREE.MathUtils.lerp(c.clawAngles[i], 1.0, 0.14);
+          }
 
           if (c.grabbedDoll) {
-            // Release grabbed doll
             const releasedDoll = c.grabbedDoll;
             releasedDoll.userData.isGrabbed = false;
-            releasedDoll.userData.velocity.set(0, -4.5, 0); // drop straight down into chute!
+            releasedDoll.userData.velocity.set(0, -4.5, 0); // Drop straight into chute
             c.grabbedDoll = null;
             sound.playClamp();
           }
@@ -1967,23 +2159,23 @@
       clawAssembly.rotation.z = -c.swayAngleX;
       clawAssembly.rotation.x = c.swayAngleZ;
 
-      // Animate 3 Claw Fingers opening/closing
-      clawFingers.forEach(f => {
-        // As clawOpenRatio goes from 0 to 1, rotate finger outwards
-        f.rotation.x = 0.2 + c.clawOpenRatio * 0.45;
-      });
+      // Animate 3 Claw Fingers opening/closing with INDEPENDENT angles!
+      for (let i = 0; i < 3; i++) {
+        clawFingers[i].rotation.x = 0.2 + c.clawAngles[i] * 0.48;
+      }
 
       // 6. Update Grabbed Doll or Falling Dolls Physics
       dolls.forEach(doll => {
         if (doll.userData.isGrabbed) {
-          // Attached to claw tip
-          doll.position.set(clawHangX, clawHangY - 1.25, clawHangZ);
+          // Attached to claw tip with physical offset and slip translation
+          const targetDollY = clawHangY - 1.25 - (c.slipOffset || 0);
+          doll.position.set(clawHangX, targetDollY, clawHangZ);
           doll.rotation.z = -c.swayAngleX * 0.8;
           doll.rotation.x = c.swayAngleZ * 0.8;
         } else {
-          // Normal physics (falling, settling, chute detection)
+          // Gravity, falling, bounce & chute detection
           if (doll.position.y > 0.85 || Math.abs(doll.userData.velocity.y) > 0.05) {
-            doll.userData.velocity.y -= gravity * 0.8 * delta;
+            doll.userData.velocity.y -= gravity * 0.85 * delta;
             doll.position.addScaledVector(doll.userData.velocity, delta);
 
             // Chute Fall Detection (Winning condition!)
@@ -1994,7 +2186,6 @@
                 onPrizeWon(doll.userData.config);
               }
             } else if (doll.position.y <= 0.85) {
-              // Hit the floor
               doll.position.y = 0.85;
               doll.userData.velocity.set(0, 0, 0);
             }
