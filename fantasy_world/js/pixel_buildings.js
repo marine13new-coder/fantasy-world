@@ -2722,6 +2722,256 @@
     },
 
     // =========================================================================
+    // 11.18. 영롱한 프리즘 수정 황제 궁전 (Crystal Prism Zenith Palace)
+    // =========================================================================
+    drawCrystalPrismPalace(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 영롱한 프리즘 굴절 바닥 그림자
+      ctx.fillStyle = 'rgba(14, 165, 233, 0.25)';
+      ctx.fillRect(px - halfW - 2, py + halfH - 3, bw + 4, 7);
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+      ctx.fillRect(px - halfW + 2, py + halfH - 2, bw - 4, 5);
+
+      // B. 육각 수정 기단 테라스 (Hexagonal Crystal Podium)
+      const podW = Math.round(bw * 0.88);
+      const podHW = Math.round(podW / 2);
+      const podH = Math.round(bh * 0.24);
+      const podY = py + halfH - podH;
+
+      ctx.fillStyle = '#0369a1';
+      ctx.fillRect(px - podHW, podY, podW, podH);
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(px - podHW + 2, podY + 2, podW - 4, podH - 3);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(px - podHW + 4, podY + 3, podW - 8, 2);
+
+      // C. 좌우 다이아몬드 수정 첨탑 (Twin Diamond Crystal Obelisks)
+      const obW = Math.round(bw * 0.20);
+      const obH = Math.round(bh * 0.85);
+      const obY = py + halfH - obH;
+
+      const drawObelisk = (ox, isLeft) => {
+        // 수정 바디
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(ox, obY + 8, obW, obH - 8);
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(ox + 1, obY + 9, obW - 2, obH - 10);
+        ctx.fillStyle = '#bae6fd';
+        ctx.fillRect(isLeft ? ox + 1 : ox + obW - 3, obY + 9, 2, obH - 10);
+
+        // 뾰족한 다이아몬드 팁 (Diamond Pointed Tip)
+        ctx.fillStyle = '#e0f2fe';
+        ctx.beginPath();
+        ctx.moveTo(ox, obY + 8);
+        ctx.lineTo(ox + Math.round(obW / 2), obY - 14);
+        ctx.lineTo(ox + obW, obY + 8);
+        ctx.closePath();
+        ctx.fill();
+
+        // 굴절 무지개 하이라이트 빔 (Prismatic Rainbow Refraction)
+        const gleam = Math.sin(timeSec * 4 + (isLeft ? 0 : 2)) * 0.5 + 0.5;
+        ctx.fillStyle = isLeft ? `rgba(244, 114, 182, ${gleam * 0.7})` : `rgba(250, 204, 21, ${gleam * 0.7})`;
+        ctx.fillRect(ox + Math.round(obW / 2) - 1, obY - 12, 2, obH);
+      };
+
+      drawObelisk(px - halfW + 1, true);
+      drawObelisk(px + halfW - obW - 1, false);
+
+      // D. 중앙 거대 부유 다이아몬드 수정 코어 (Levitating Master Diamond Heart)
+      const heartW = Math.round(bw * 0.38);
+      const heartHW = Math.round(heartW / 2);
+      const floatBob = Math.sin(timeSec * 3) * 3;
+      const heartY = py - Math.round(bh * 0.15) + floatBob;
+
+      // 후광 방사 오라 (Iridescent Halo Aura)
+      ctx.save();
+      const auraGrad = ctx.createRadialGradient(px, heartY, 2, px, heartY, heartW);
+      auraGrad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+      auraGrad.addColorStop(0.3, 'rgba(56, 189, 248, 0.75)');
+      auraGrad.addColorStop(0.6, 'rgba(232, 121, 249, 0.45)');
+      auraGrad.addColorStop(1, 'rgba(14, 165, 233, 0)');
+      ctx.fillStyle = auraGrad;
+      ctx.beginPath();
+      ctx.arc(px, heartY, heartW, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 마스터 다이아몬드 능면 (Faceted Diamond Gem Polygons)
+      // 상부 삼각형
+      ctx.fillStyle = '#e0f2fe';
+      ctx.beginPath();
+      ctx.moveTo(px - heartHW, heartY);
+      ctx.lineTo(px, heartY - heartHW * 1.2);
+      ctx.lineTo(px + heartHW, heartY);
+      ctx.closePath();
+      ctx.fill();
+
+      // 하부 역삼각형
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.moveTo(px - heartHW, heartY);
+      ctx.lineTo(px, heartY + heartHW * 1.5);
+      ctx.lineTo(px + heartHW, heartY);
+      ctx.closePath();
+      ctx.fill();
+
+      // 중앙 깎인 다이아몬드 테이블 면 (Gem Table Facet)
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(px - Math.round(heartHW * 0.5), heartY - Math.round(heartHW * 0.3));
+      ctx.lineTo(px, heartY - Math.round(heartHW * 0.8));
+      ctx.lineTo(px + Math.round(heartHW * 0.5), heartY - Math.round(heartHW * 0.3));
+      ctx.lineTo(px, heartY + Math.round(heartHW * 0.7));
+      ctx.closePath();
+      ctx.fill();
+
+      // 궤도 회전하는 작은 수정 파편 3개 (Orbiting Crystal Shards)
+      for (let s = 0; s < 3; s++) {
+        const sAng = timeSec * 2.8 + (s * Math.PI * 2) / 3;
+        const sR = heartHW + 8;
+        const sX = px + Math.cos(sAng) * sR;
+        const sY = heartY + Math.sin(sAng) * (sR * 0.5);
+
+        ctx.fillStyle = (s === 0) ? '#f472b6' : ((s === 1) ? '#facc15' : '#38bdf8');
+        ctx.beginPath();
+        ctx.moveTo(sX, sY - 3);
+        ctx.lineTo(sX + 2, sY);
+        ctx.lineTo(sX, sY + 3);
+        ctx.lineTo(sX - 2, sY);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // E. 지면 마나 분수대 및 투명 크리스탈 포탈 (Mana Cascade Portal)
+      const portW = 10;
+      const portH = 12;
+      const portX = px - 5;
+      const portY = py + halfH - portH - 2;
+
+      ctx.fillStyle = '#0369a1';
+      ctx.fillRect(portX, portY, portW, portH);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(portX + 1, portY + 1, portW - 2, portH - 2);
+
+      // 폭포수 마나 기둥 (Cascading Mana Light)
+      const flowPulse = (timeSec * 8) % portH;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 2, portY + flowPulse, 4, 3);
+
+      // F. 야간 천공 방사 프리즘 오로라 빔 (Night Prismatic Zenith Sky Beam)
+      if (isNight) {
+        ctx.save();
+        const beamW = 12;
+        const skyGrad = ctx.createLinearGradient(0, py - halfH, 0, py - halfH - 45);
+        skyGrad.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
+        skyGrad.addColorStop(0.5, 'rgba(232, 121, 249, 0.35)');
+        skyGrad.addColorStop(1, 'rgba(250, 204, 21, 0)');
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(px - Math.round(beamW / 2), py - halfH - 45, beamW, 45);
+        ctx.restore();
+      }
+    },
+
+    // =========================================================================
+    // 11.19. 별빛 마나 첨탑 에테르 천문대 (Starlight Mana Spire Observatory)
+    // =========================================================================
+    drawStarlightManaObservatory(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 별빛 오로라 지면 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.50)';
+      ctx.fillRect(px - halfW + 2, py + halfH - 2, bw - 4, 6);
+
+      // B. 원형 천문대 석조 돔 기단 (Circular Astrolabe Base)
+      const baseW = Math.round(bw * 0.75);
+      const baseHW = Math.round(baseW / 2);
+      const baseH = Math.round(bh * 0.48);
+      const baseY = py + halfH - baseH;
+
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - baseHW, baseY, baseW, baseH);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(px - baseHW + 2, baseY + 2, baseW - 4, baseH - 3);
+
+      // 황도 12궁 황동 링 디테일 (Brass Zodiac Inlay)
+      ctx.fillStyle = '#d97706';
+      ctx.fillRect(px - baseHW + 3, baseY + 6, baseW - 6, 2);
+      ctx.fillStyle = '#fde047';
+      for (let zx = px - baseHW + 6; zx < px + baseHW - 6; zx += 6) {
+        ctx.fillRect(zx, baseY + 6, 2, 2);
+      }
+
+      // C. 회전하는 혼천의 아밀러리 링 (Rotating Armillary Crystal Rings)
+      ctx.save();
+      const ringR = Math.min(18, Math.round(bw * 0.36));
+      const ringY = baseY - 2;
+
+      // 외부 링
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.ellipse(px, ringY, ringR, ringR * 0.45, timeSec * 0.8, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 내부 링 (반대 회전)
+      ctx.strokeStyle = '#c084fc';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.ellipse(px, ringY, ringR * 0.75, ringR * 0.35, -timeSec * 1.1, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // D. 중심 초신성 마나 코어 (Pulsing Supernova Core)
+      const corePulse = Math.sin(timeSec * 5) * 1.5;
+      const coreGrad = ctx.createRadialGradient(px, ringY, 1, px, ringY, 8 + corePulse);
+      coreGrad.addColorStop(0, '#ffffff');
+      coreGrad.addColorStop(0.4, '#38bdf8');
+      coreGrad.addColorStop(0.8, '#a855f7');
+      coreGrad.addColorStop(1, 'rgba(168, 85, 247, 0)');
+
+      ctx.fillStyle = coreGrad;
+      ctx.beginPath();
+      ctx.arc(px, ringY, 8 + corePulse, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 코어 중심 발광 십자별 (Starlight Cross Twinkle)
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 6, ringY - 0.5, 12, 1);
+      ctx.fillRect(px - 0.5, ringY - 6, 1, 12);
+      ctx.restore();
+
+      // E. 좌우 지지 수정 오벨리스크 (Channeling Crystal Pylons)
+      const pW = 5;
+      const pH = Math.round(bh * 0.65);
+      const pY = py + halfH - pH;
+
+      const drawPylon = (pX) => {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(pX, pY, pW, pH);
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(pX + 1, pY + 1, pW - 2, pH - 2);
+        // 꼭대기 보석
+        ctx.fillStyle = '#f472b6';
+        ctx.fillRect(pX - 1, pY - 4, pW + 2, 4);
+      };
+
+      drawPylon(px - baseHW - 2);
+      drawPylon(px + baseHW - 3);
+
+      // F. 출입문 및 성도 관측대 (Dome Portal & Astrological Ramp)
+      const dW = 8;
+      const dH = 10;
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(px - 4, py + halfH - dH, dW, dH);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(px - 3, py + halfH - dH + 1, dW - 2, dH - 1);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 1, py + halfH - dH + 3, 2, 2); // 별빛 룬
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -2871,6 +3121,16 @@
       ctx.beginPath();
       ctx.ellipse(px + 6, py + bh / 2 + 4, bw * 0.42, 4, 0.08, 0, Math.PI * 2);
       ctx.fill();
+
+      // 💎 영롱한 프리즘 수정 제국 & 별빛 마나 성채 (Crystal Prism Zenith Empire)
+      if (type === 'crystal_prism_palace' || (type === 'capital' && b && b.continent === 'crystal_zenith') || (type === 'palace' && b && b.continent === 'crystal_zenith')) {
+        this.drawCrystalPrismPalace(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'starlight_observatory' || (type === 'castle' && b && b.continent === 'crystal_zenith') || (type === 'temple' && b && b.continent === 'crystal_zenith') || (type === 'fortress' && b && b.continent === 'crystal_zenith')) {
+        this.drawStarlightManaObservatory(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
 
       // 🦇 핏빛 장미의 고딕 뱀파이어 제국 (Gothic Blood Rose Empire)
       if (type === 'gothic_cathedral' || (type === 'palace' && b && b.continent === 'gothic') || (type === 'temple' && b && b.continent === 'gothic')) {

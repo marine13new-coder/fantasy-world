@@ -4459,6 +4459,7 @@
         else if (weaponId.includes('shadow') || weaponId.includes('arcane')) { slashColor = '#c084fc'; glowColor = 'rgba(192, 132, 252, 0.6)'; }
         else if (weaponId.includes('holy') || weaponId.includes('gold')) { slashColor = '#facc15'; glowColor = 'rgba(250, 204, 21, 0.6)'; }
         else if (weaponId.includes('blood') || weaponId.includes('vampire') || weaponId.includes('gothic') || weaponId.includes('rose') || weaponId.includes('scythe')) { slashColor = '#f43f5e'; glowColor = 'rgba(159, 18, 57, 0.85)'; }
+        else if (weaponId.includes('crystal') || weaponId.includes('prism') || weaponId.includes('starlight') || weaponId.includes('mana') || weaponId.includes('zenith')) { slashColor = '#38bdf8'; glowColor = 'rgba(232, 121, 249, 0.85)'; }
 
         const arcCenter = px + sideSign * 4 * sc;
         const startAng = isLeft ? Math.PI * 0.7 : Math.PI * 0.3;
@@ -4543,6 +4544,32 @@
             ctx.fillStyle = (p % 2 === 0) ? '#f43f5e' : '#be123c';
             ctx.beginPath();
             ctx.ellipse(ptX, ptY, 2.5 * sc, 1.4 * sc, ptAng + Math.PI / 4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        // 💎 영롱한 프리즘 수정 제국 별빛 크리스탈 파쇄 잔상 (Prism Starlight Diamond Burst)
+        if (weaponId.includes('crystal') || weaponId.includes('prism') || weaponId.includes('starlight') || weaponId.includes('mana') || weaponId.includes('zenith')) {
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 2.8 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 4 * sc, py - 10 * sc - bounce, 21 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          // 튀는 다이아몬드 수정 파편 5개 (Shattered Prismatic Gem Sparks)
+          const shardColors = ['#ffffff', '#38bdf8', '#e879f9', '#fde047', '#4ade80'];
+          for (let k = 0; k < 5; k++) {
+            const shAng = startAng + (k / 4) * (endAng - startAng);
+            const shDist = (20 + (k % 3) * 4) * sc;
+            const shX = arcCenter + Math.cos(shAng) * shDist;
+            const shY = py - 10 * sc - bounce + Math.sin(shAng) * shDist;
+            ctx.fillStyle = shardColors[k];
+            ctx.beginPath();
+            ctx.moveTo(shX, shY - 2.5 * sc);
+            ctx.lineTo(shX + 2 * sc, shY);
+            ctx.lineTo(shX, shY + 2.5 * sc);
+            ctx.lineTo(shX - 2 * sc, shY);
+            ctx.closePath();
             ctx.fill();
           }
         }

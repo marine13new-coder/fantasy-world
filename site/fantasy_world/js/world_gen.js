@@ -650,6 +650,16 @@ function createSettlementList() {
   add('crimson_belfry_coven_shrine', '진홍빛 종탑 마녀 집회소 신전', 'temple', 'gothic', 2780, 1920, 'elf', true, 11);
   add('weeping_willow_mausoleum', '수양버들 영혼의 묘소 거석단', 'town', 'gothic', 2850, 2090, 'undead', false, 8);
 
+  // =========================================================================
+  // 21. THE CRYSTAL PRISM ZENITH EMPIRE & FLOATING STARLIGHT CITADEL (영롱한 프리즘 수정 제국 & 별빛 마나 성채)
+  // =========================================================================
+  add('crystal_prism_zenith_capital', '영롱한 프리즘 수정 황제 수도', 'capital', 'crystal_zenith', 2620, 1680, 'elf', true, 16);
+  add('starlight_mana_spire_citadel', '별빛 마나 첨탑 에테르 대성채', 'castle', 'crystal_zenith', 2520, 1740, 'celestial', true, 14);
+  add('prismatic_aurora_skydock_port', '무지갯빛 오로라 비행선 수정 항만', 'port', 'crystal_zenith', 2740, 1720, 'human', false, 9);
+  add('astral_gem_alchemist_refinery', '천상 보석 연금술 정제소 성역', 'lair', 'crystal_zenith', 2680, 1610, 'elf', true, 10);
+  add('diamond_constellation_oracle_shrine', '다이아몬드 별자리 신탁 성소', 'temple', 'crystal_zenith', 2540, 1620, 'elf', true, 11);
+  add('celestial_quartz_crystal_gardens', '천공 석영 수정 정원 마을', 'town', 'crystal_zenith', 2640, 1800, 'fairy', false, 8);
+
   return list;
 }
 
@@ -1019,6 +1029,18 @@ function generateWorld() {
           continue;
         }
 
+        // 영롱한 프리즘 수정 제국 & 별빛 마나 성채 전용 지형 카빙
+        if (s.continent === 'crystal_zenith') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.CASTLE_FLOOR : TILE.ROAD; // 영롱한 수정 대리석 포장 보도
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.CRYSTAL_CAVE : TILE.MEADOW; // 발광 크리스탈 수정 바위 & 마나 초원
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.WATER : TILE.CRYSTAL_CAVE; // 무지갯빛 마나 호수 & 수정 암반
+          }
+          continue;
+        }
+
         const curT = tiles[idx(tx, ty)];
         const isWater = (curT === TILE.DEEP_WATER || curT === TILE.WATER);
 
@@ -1233,7 +1255,15 @@ function generateWorld() {
     ['gothic_blood_rose_cathedral_capital', 'crypt_alchemist_blood_forge'],
     ['gothic_blood_rose_cathedral_capital', 'crimson_belfry_coven_shrine'],
     ['vampire_moonlit_castlevania_keep', 'weeping_willow_mausoleum'],
-    ['crimson_belfry_coven_shrine', 'weeping_willow_mausoleum']
+    ['crimson_belfry_coven_shrine', 'weeping_willow_mausoleum'],
+
+    // [영롱한 프리즘 수정 제국 & 별빛 마나 성채 가도 (Prism Starlight Leyline Highway)]
+    ['crystal_prism_zenith_capital', 'starlight_mana_spire_citadel'],
+    ['crystal_prism_zenith_capital', 'prismatic_aurora_skydock_port'],
+    ['crystal_prism_zenith_capital', 'astral_gem_alchemist_refinery'],
+    ['crystal_prism_zenith_capital', 'diamond_constellation_oracle_shrine'],
+    ['starlight_mana_spire_citadel', 'celestial_quartz_crystal_gardens'],
+    ['diamond_constellation_oracle_shrine', 'celestial_quartz_crystal_gardens']
   ];
   const roadLinks = rawRoadLinks.filter(([a, b]) => settlementMap[a] && settlementMap[b]);
 
