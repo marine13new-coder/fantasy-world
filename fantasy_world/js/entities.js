@@ -919,7 +919,11 @@ class EntityManager {
       // 🦂 사막 거대전갈 (서남 미라주 사막 모래언덕)
       { type: 'scorpion', icon: '🦂', name: '사막 거대전갈', count: 18, x: sMap.sphinx_pyramid.x - 12, y: sMap.sphinx_pyramid.y - 12, radius: 26, hp: 130, speed: 1.25, isPredator: true },
       // 🦎 화산 샐러맨더 (남부 드라코니아 흑요석 용암대)
-      { type: 'salamander', icon: '🦎', name: '흑요석 불꽃도마뱀', count: 16, x: sMap.volcano_isle.x + 14, y: sMap.volcano_isle.y + 12, radius: 22, hp: 150, speed: 1.2, isPredator: true }
+      { type: 'salamander', icon: '🦎', name: '흑요석 불꽃도마뱀', count: 16, x: sMap.volcano_isle.x + 14, y: sMap.volcano_isle.y + 12, radius: 22, hp: 150, speed: 1.2, isPredator: true },
+      // 🐔 귀여운 암탉 (황금밀 대평원 농가 & 솔라리스 근교)
+      { type: 'chicken', icon: '🐔', name: '시골 암탉', count: 48, x: sMap.goldenwheat.x - 3, y: sMap.goldenwheat.y + 4, radius: 20, hp: 35, speed: 0.95 },
+      { type: 'chicken', icon: '🐔', name: '왕실 백색토종닭', count: 32, x: sMap.solaris.x + 8, y: sMap.solaris.y + 10, radius: 16, hp: 35, speed: 0.95 },
+      { type: 'chicken', icon: '🐔', name: '오크우드 방목닭', count: 24, x: sMap.oakwood.x - 5, y: sMap.oakwood.y + 5, radius: 14, hp: 35, speed: 0.95 }
     ];
 
     for (const sp of animalSpawns) {
@@ -2439,6 +2443,21 @@ class EntityManager {
         e.targetX = e.x + Math.cos(angle) * 9;
         e.targetY = e.y + Math.sin(angle) * 9;
         e.thought = '🐻 산악 숲에서 영역을 순찰하며 어슬렁거리는 중';
+      } else if (e.animalType === 'chicken') {
+        const isSleeping = Math.random() < 0.35;
+        e.isSleeping = isSleeping;
+        if (isSleeping) {
+          e.state = 'sleeping';
+          e.thought = '💤 짚단 둥지에서 고요히 낮잠 자는 중 (Zzz...)';
+          e.vx = 0;
+          e.vy = 0;
+        } else {
+          e.state = 'roaming';
+          const angle = Math.random() * Math.PI * 2;
+          e.targetX = e.x + Math.cos(angle) * 3.5;
+          e.targetY = e.y + Math.sin(angle) * 3.5;
+          e.thought = '🐔 마당에서 모이를 쪼며 꼬꼬댁거리는 중';
+        }
       } else {
         const angle = Math.random() * Math.PI * 2;
         e.targetX = e.x + Math.cos(angle) * 6;

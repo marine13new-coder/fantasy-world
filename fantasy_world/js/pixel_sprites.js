@@ -2461,7 +2461,81 @@
       "...###....###..."
     ],
 
-    // 6. 🐬 대양 돌고래 (Ocean Dolphin)
+    // 6. 🐔 [CUTE FANTASY] 시골 흰 암탉 & 둥지에서 잠자는 갈색 암탉 (Reference Image Match)
+    chicken_down_0: [
+      "................",
+      "......#R#.......",
+      ".....#RRR#......",
+      ".....#www#y#....",
+      "....#wwkww##....",
+      "....#wwwwww#....",
+      "...#wwwwwwww#...",
+      "...#wwwwwwww#...",
+      "...#wwwwwwww#...",
+      "....#wwwwww#....",
+      ".....#wwww#.....",
+      "......#yy#......",
+      "......#..#......",
+      "................",
+      "................",
+      "................"
+    ],
+    chicken_down_1: [
+      "................",
+      "......#R#.......",
+      ".....#RRR#......",
+      ".....#www#y#....",
+      "....#wwkww##....",
+      "....#wwwwww#....",
+      "...#wwwwwwww#...",
+      "...#wwwwwwww#...",
+      "...#wwwwwwww#...",
+      "....#wwwwww#....",
+      ".....#wwww#.....",
+      ".....#y..y#.....",
+      ".....#....#.....",
+      "................",
+      "................",
+      "................"
+    ],
+    chicken_attack: [
+      "................",
+      "......#R#.......",
+      ".....#RRR#......",
+      "......#ww#......",
+      ".....#wwkw#.....",
+      "....#wwwwww#y#..",
+      "...#wwwwwwww##..",
+      "...#wwwwwwww#...",
+      "...#wwwwwwww#...",
+      "....#wwwwww#....",
+      ".....#wwww#.....",
+      "......#yy#......",
+      "......#..#......",
+      "................",
+      "................",
+      "................"
+    ],
+    chicken_sleep: [
+      "......#r#.......",
+      ".....#rrr#......",
+      ".....#OOO#y#....",
+      "....#OO-OO##....",
+      "....#OOOOOO#....",
+      "...#OOOOOOOO#...",
+      "...#lltlltll#...",
+      "..#tttttttttt#..",
+      "..#tttttttttt#..",
+      "...##########...",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+
+    // 7. 🐬 대양 돌고래 (Ocean Dolphin)
     dolphin_down_0: [
       ".......##.......",
       "......#cc#......",
@@ -3781,8 +3855,10 @@
         if (at === 'turtle') return 'turtle';
         if (at === 'camel') return 'camel';
         if (at === 'deer') return 'deer';
+        if (at === 'chicken') return 'chicken';
 
         const name = e.name || '';
+        if (name.includes('닭') || name.includes('치킨')) return 'chicken';
         if (name.includes('악어')) return 'croc';
         if (name.includes('토끼')) return 'rabbit';
         if (name.includes('소') || name.includes('젖소')) return 'cow';
@@ -3885,12 +3961,14 @@
       }
 
       const isFacingLeft = (dir === 'left');
-      const isAttacking = (e.state === 'combat') || ((e.attackCooldown || 0) > 0.3);
+      const isAttacking = (e.state === 'combat' && (Math.sin(timeSec * 8 + (e.id || 0)) > 0.15)) || ((e.attackCooldown || 0) > 0.08);
       const isMoving = Math.abs(e.vx || 0) > 0.08 || Math.abs(e.vy || 0) > 0.08;
 
       // 2. 애니메이션 프레임 산출 (보행 시 균형 잡힌 0/1 스텝)
       let animFrame = '0';
-      if (isAttacking) {
+      if (baseKey === 'chicken' && (e.isSleeping || e.state === 'sleeping')) {
+        animFrame = 'sleep';
+      } else if (isAttacking) {
         animFrame = 'attack';
       } else if (isMoving) {
         const step = Math.floor(((e.animPhase || 0) * 1.5)) % 2;
@@ -3946,6 +4024,15 @@
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(cv, renderX, renderY, renderW, renderH);
 
+      // 잠자는 닭 상공 'Zzz' 수면 말풍선 파티클 (Reference Image Match)
+      if (baseKey === 'chicken' && animFrame === 'sleep') {
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 9px monospace';
+        const zBob = Math.sin(timeSec * 3 + (e.id || 0)) * 2;
+        ctx.fillText('z', px + 3, py - 9 * sc + zBob);
+        ctx.fillText('Z', px + 7, py - 14 * sc + zBob * 1.2);
+      }
+
       // 7. 피격 시 선명한 적색 플래시 틴트
       if (e.hitTimer && e.hitTimer > 0) {
         ctx.save();
@@ -3954,32 +4041,50 @@
         ctx.restore();
       }
 
-      // 8. 공격 시 전방 크리스피 픽셀 참격 궤적 (캐릭터 전면을 가리지 않고 전방에만 선명하게 발도)
+      // 8. [CUTE FANTASY 스타일] 전방 화려한 순백 크레센트 참격호 (Hero & Monster Crescent Slash Arc Trail)
       if (isAttacking) {
         ctx.save();
         const sideSign = isFacingLeft ? -1 : 1;
-        let slashColor = '#f8fafc';
-        if (baseKey === 'dragonkin' || baseKey === 'fire_golem' || baseKey === 'hellhound' || baseKey === 'salamander') slashColor = '#f97316';
-        else if (baseKey === 'ice_golem' || baseKey === 'yeti' || baseKey === 'wolf_frost') slashColor = '#38bdf8';
-        else if (baseKey === 'lich' || baseKey === 'reaper' || baseKey === 'orc_shaman' || baseKey === 'kraken') slashColor = '#c084fc';
-        else if (baseKey === 'goblin' || baseKey === 'goblin_archer' || baseKey === 'treant' || baseKey === 'slime' || baseKey === 'croc') slashColor = '#4ade80';
-        else if (baseKey === 'beastkin') slashColor = '#facc15';
+        let slashColor = '#ffffff';
+        let glowColor = 'rgba(186, 230, 253, 0.75)'; // 밝은 하늘빛 잔상 (Cute Fantasy Glow)
+        if (baseKey === 'dragonkin' || baseKey === 'fire_golem' || baseKey === 'hellhound' || baseKey === 'salamander') {
+          slashColor = '#fef08a'; glowColor = 'rgba(249, 115, 22, 0.8)';
+        } else if (baseKey === 'ice_golem' || baseKey === 'yeti' || baseKey === 'wolf_frost') {
+          slashColor = '#ffffff'; glowColor = 'rgba(56, 189, 248, 0.85)';
+        } else if (baseKey === 'lich' || baseKey === 'reaper' || baseKey === 'orc_shaman' || baseKey === 'kraken') {
+          slashColor = '#f3e8ff'; glowColor = 'rgba(192, 132, 252, 0.85)';
+        } else if (baseKey === 'goblin' || baseKey === 'goblin_archer' || baseKey === 'treant' || baseKey === 'slime' || baseKey === 'croc') {
+          slashColor = '#f0fdf4'; glowColor = 'rgba(74, 222, 128, 0.85)';
+        }
 
-        // 참격 호 (Crisp Crescent Slash Arc)
-        ctx.strokeStyle = slashColor;
-        ctx.lineWidth = 2.0 * sc;
+        const arcCenterX = px + (dir === 'left' ? -12 : (dir === 'right' ? 12 : 0)) * sc;
+        const arcCenterY = py - 7 * sc - bounce + (dir === 'down' ? 6 : (dir === 'up' ? -6 : 0)) * sc;
+        const startAng = isFacingLeft ? Math.PI * 0.65 : -Math.PI * 0.35;
+        const endAng = isFacingLeft ? Math.PI * 1.35 : Math.PI * 0.35;
+
+        // 1. 외곽 푸른빛 에너지 잔상 (Tapered Outer Glow)
+        ctx.strokeStyle = glowColor;
+        ctx.lineWidth = 4.5 * sc;
+        ctx.lineCap = 'round';
         ctx.beginPath();
-        const arcCenterX = px + (dir === 'left' ? -10 : (dir === 'right' ? 10 : 0)) * sc;
-        const arcCenterY = py - 8 * sc - bounce + (dir === 'down' ? 6 : (dir === 'up' ? -6 : 0)) * sc;
-        const startAng = isFacingLeft ? Math.PI * 0.7 : -Math.PI * 0.3;
-        const endAng = isFacingLeft ? Math.PI * 1.3 : Math.PI * 0.3;
-        ctx.arc(arcCenterX, arcCenterY, 12 * sc, startAng, endAng, isFacingLeft);
+        ctx.arc(arcCenterX, arcCenterY, 14 * sc, startAng, endAng, isFacingLeft);
         ctx.stroke();
 
-        // 픽셀 스파크 파편 2개
+        // 2. 내부 순백의 날카로운 참격 코어 (Pure White Sharp Crescent Core - Reference Image Match)
+        ctx.strokeStyle = slashColor;
+        ctx.lineWidth = 2.4 * sc;
+        ctx.beginPath();
+        ctx.arc(arcCenterX, arcCenterY, 14 * sc, startAng + 0.1, endAng - 0.1, isFacingLeft);
+        ctx.stroke();
+
+        // 3. 팁 스파크 & 별빛 궤적 파편 (Trailing Slash Sparks)
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(arcCenterX + sideSign * 8 * sc, arcCenterY - 4 * sc, 2 * sc, 2 * sc);
-        ctx.fillRect(arcCenterX + sideSign * 11 * sc, arcCenterY + 2 * sc, 1.5 * sc, 1.5 * sc);
+        ctx.fillRect(arcCenterX + sideSign * 12 * sc, arcCenterY - 7 * sc, 3 * sc, 3 * sc);
+        ctx.fillRect(arcCenterX + sideSign * 16 * sc, arcCenterY, 2.5 * sc, 2.5 * sc);
+        ctx.fillRect(arcCenterX + sideSign * 13 * sc, arcCenterY + 6 * sc, 2 * sc, 2 * sc);
+        ctx.fillStyle = glowColor;
+        ctx.fillRect(arcCenterX + sideSign * 10 * sc, arcCenterY - 9 * sc, 2 * sc, 2 * sc);
+        ctx.fillRect(arcCenterX + sideSign * 18 * sc, arcCenterY - 2 * sc, 1.5 * sc, 1.5 * sc);
         ctx.restore();
       }
 

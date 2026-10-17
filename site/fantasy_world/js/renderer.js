@@ -464,40 +464,87 @@ class WorldRenderer {
           }
         }
 
-        // B. 유기적인 흙길 & 오솔길 자갈 디테일 (Organic Dirt Paths - Images 1, 3, 4)
+        // B. [CUTE FANTASY 스타일] 따뜻한 오솔길 & 스캘럽 픽셀 에지 & 조약돌 (Scalloped Dirt Road)
         if (t === TILE.ROAD) {
-          // 길 테두리에 잔디 침범 효과 (Grass Encroaching Tufts)
-          ctx.fillStyle = '#16a34a';
-          if (h % 3 === 0) {
-            ctx.fillRect(px, py, 4, 3);
-            ctx.fillRect(px + 18, py, 5, 2);
-            ctx.fillRect(px + 8, py + ts - 3, 6, 3);
-          } else if (h % 3 === 1) {
-            ctx.fillRect(px + ts - 4, py, 4, 3);
-            ctx.fillRect(px + 4, py + ts - 3, 5, 3);
-            ctx.fillRect(px, py + 12, 3, 6);
-          } else {
-            ctx.fillRect(px + 12, py, 4, 2);
-            ctx.fillRect(px + ts - 3, py + 14, 3, 5);
+          const tUp = ty > 0 ? tiles[(ty - 1) * width + tx] : t;
+          const tDown = ty < height - 1 ? tiles[(ty + 1) * width + tx] : t;
+          const tLeft = tx > 0 ? tiles[ty * width + (tx - 1)] : t;
+          const tRight = tx < width - 1 ? tiles[ty * width + (tx + 1)] : t;
+
+          // 1. 따뜻한 모래흙길 바닥 질감 (Warm Sandstone Dirt Base)
+          ctx.fillStyle = '#df9c68';
+          ctx.fillRect(px, py, ts, ts);
+          ctx.fillStyle = '#f1c597';
+          ctx.fillRect(px + 4, py + 4, ts - 8, ts - 8);
+
+          // 2. 잔디와 맞닿는 경계면의 스캘럽(Scalloped) 둥근 톱니 픽셀 에지 및 1px 짙은 외곽선
+          const edgeCol = '#1a4724'; // 짙은 에메랄드 외곽선 (Cute Fantasy Outlines)
+          const toothCol = '#4bb352'; // 잔디 색상
+
+          if (tUp === TILE.GRASS || tUp === TILE.MEADOW) {
+            ctx.fillStyle = edgeCol;
+            ctx.fillRect(px, py, ts, 2);
+            ctx.fillStyle = toothCol;
+            ctx.fillRect(px + 2, py, 6, 4);
+            ctx.fillRect(px + 12, py, 8, 3);
+            ctx.fillRect(px + 24, py, 6, 4);
+            ctx.fillStyle = edgeCol;
+            ctx.fillRect(px + 2, py + 4, 6, 1);
+            ctx.fillRect(px + 12, py + 3, 8, 1);
+            ctx.fillRect(px + 24, py + 4, 6, 1);
+          }
+          if (tDown === TILE.GRASS || tDown === TILE.MEADOW) {
+            ctx.fillStyle = edgeCol;
+            ctx.fillRect(px, py + ts - 2, ts, 2);
+            ctx.fillStyle = toothCol;
+            ctx.fillRect(px + 4, py + ts - 4, 7, 4);
+            ctx.fillRect(px + 15, py + ts - 5, 8, 5);
+            ctx.fillRect(px + 26, py + ts - 3, 5, 3);
+            ctx.fillStyle = edgeCol;
+            ctx.fillRect(px + 4, py + ts - 5, 7, 1);
+            ctx.fillRect(px + 15, py + ts - 6, 8, 1);
+            ctx.fillRect(px + 26, py + ts - 4, 5, 1);
+          }
+          if (tLeft === TILE.GRASS || tLeft === TILE.MEADOW) {
+            ctx.fillStyle = edgeCol;
+            ctx.fillRect(px, py, 2, ts);
+            ctx.fillStyle = toothCol;
+            ctx.fillRect(px, py + 3, 4, 7);
+            ctx.fillRect(px, py + 16, 5, 8);
+            ctx.fillStyle = edgeCol;
+            ctx.fillRect(px + 4, py + 3, 1, 7);
+            ctx.fillRect(px + 5, py + 16, 1, 8);
+          }
+          if (tRight === TILE.GRASS || tRight === TILE.MEADOW) {
+            ctx.fillStyle = edgeCol;
+            ctx.fillRect(px + ts - 2, py, 2, ts);
+            ctx.fillStyle = toothCol;
+            ctx.fillRect(px + ts - 4, py + 6, 4, 8);
+            ctx.fillRect(px + ts - 5, py + 19, 5, 7);
+            ctx.fillStyle = edgeCol;
+            ctx.fillRect(px + ts - 5, py + 6, 1, 8);
+            ctx.fillRect(px + ts - 6, py + 19, 1, 7);
           }
 
-          // 흩뿌려진 조약돌 & 자갈 (Pebbles & Stones)
-          ctx.fillStyle = '#78716c';
-          ctx.fillRect(px + (h % 18) + 6, py + ((h >> 3) % 18) + 6, 3, 2);
-          ctx.fillStyle = '#d6d3d1';
-          ctx.fillRect(px + (h % 18) + 6, py + ((h >> 3) % 18) + 6, 1, 1);
-
-          if (h % 2 === 0) {
-            ctx.fillStyle = '#57534e';
-            ctx.fillRect(px + ((h >> 2) % 16) + 8, py + ((h >> 5) % 16) + 8, 2, 2);
-            ctx.fillStyle = '#a8a29e';
-            ctx.fillRect(px + ((h >> 2) % 16) + 8, py + ((h >> 5) % 16) + 8, 1, 1);
+          // 3. 길 위에 흩뿌려진 귀여운 둥근 조약돌 (Cute Rounded Pebbles with Highlights & Shadows)
+          if ((h % 5) === 0) {
+            const rx = px + ((h >> 2) % 20) + 6;
+            const ry = py + ((h >> 4) % 20) + 6;
+            // 그림자
+            ctx.fillStyle = '#8c5830';
+            ctx.fillRect(rx - 1, ry + 3, 5, 2);
+            // 본체
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(rx, ry, 4, 3);
+            // 상단 하이라이트
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(rx + 1, ry, 2, 1);
           }
         }
 
-        // C. 정착지 중앙 광장 성채 석판 바닥 (Cobblestone Plaza - Image 2)
+        // C. 정착지 중앙 광장 성채 석판 바닥 (Cobblestone Plaza)
         if (t === TILE.CASTLE_FLOOR) {
-          ctx.fillStyle = '#334155'; // 줄눈
+          ctx.fillStyle = '#475569'; // 줄눈
           ctx.fillRect(px + 15, py, 2, ts);
           ctx.fillRect(px, py + 15, ts, 2);
 
@@ -512,40 +559,116 @@ class WorldRenderer {
           ctx.fillRect(px + 18, py + 18, 1, 12);
         }
 
-
-        // E. [젤다 BotW 스타일] 야생 초원 & 꽃밭 & 조약돌 필드 (Lush Grassy Meadows & Wildflowers)
+        // D. [CUTE FANTASY 스타일] 울창한 에메랄드 잔디 & 4잎 핑크 야생화 & 버터컵 꽃밭
         if (t === TILE.GRASS || t === TILE.MEADOW) {
-          // 자연스러운 잔디 풀잎 (Swaying Grass Blades)
-          const gOff = Math.sin(timeSec * 2.5 + tx * 0.5) * 1.0;
-          ctx.fillStyle = '#22c55e';
-          ctx.fillRect(px + (h % 20) + 4 + gOff, py + ((h >> 2) % 20) + 4, 1, 3);
-          ctx.fillStyle = '#15803d';
-          ctx.fillRect(px + (h % 20) + 4, py + ((h >> 2) % 20) + 7, 1, 1);
+          // 3가닥 짙은 녹색 풀잎 클러스터 (Cute Grass Blade Tufts)
+          if ((h % 4) === 0) {
+            const gx = px + (h % 22) + 5;
+            const gy = py + ((h >> 2) % 22) + 5;
+            ctx.fillStyle = '#286b30';
+            ctx.fillRect(gx, gy + 1, 1, 3);
+            ctx.fillRect(gx + 2, gy, 1, 4);
+            ctx.fillRect(gx + 4, gy + 2, 1, 2);
+          }
 
-          // 다채로운 야생화 군락 (Wildflowers: Daisies, Poppies, Lavender)
-          if ((h & 15) === 0) {
-            const flowerType = (h >> 4) % 3;
+          // 🌸 귀여운 4잎 핑크 꽃 & 노란 버터컵 & 하얀 데이지 (Reference Image Match)
+          if ((h & 7) === 0) {
             const fx = px + ((h >> 3) % 22) + 5;
-            const fy = py + ((h >> 6) % 22) + 5;
-            if (flowerType === 0) {
-              // 노란 민들레 & 데이지
-              ctx.fillStyle = '#ffffff';
-              ctx.fillRect(fx - 1, fy - 1, 3, 3);
+            const fy = py + ((h >> 5) % 22) + 5;
+            const ftype = (h >> 2) % 4;
+
+            if (ftype === 0 || ftype === 1) {
+              // 🌸 시그니처 4잎 핑크 꽃 (중앙 황금 화심)
+              ctx.fillStyle = '#f472b6'; // 분홍 꽃잎 4개
+              ctx.fillRect(fx - 2, fy, 5, 2);
+              ctx.fillRect(fx, fy - 2, 2, 5);
+              ctx.fillStyle = '#fde047'; // 황금 꽃술
+              ctx.fillRect(fx, fy, 2, 2);
+              // 꽃받침 줄기
+              ctx.fillStyle = '#166534';
+              ctx.fillRect(fx, fy + 3, 1, 2);
+            } else if (ftype === 2) {
+              // 🌼 화사한 노란 버터컵 / 민들레
               ctx.fillStyle = '#facc15';
-              ctx.fillRect(fx, fy, 1, 1);
-            } else if (flowerType === 1) {
-              // 붉은 양귀비꽃
-              ctx.fillStyle = '#dc2626';
               ctx.fillRect(fx - 1, fy - 1, 3, 3);
-              ctx.fillStyle = '#f87171';
+              ctx.fillStyle = '#fef08a';
               ctx.fillRect(fx, fy, 1, 1);
+              ctx.fillStyle = '#15803d';
+              ctx.fillRect(fx, fy + 2, 1, 2);
             } else {
-              // 보라색 라벤더 꽃
-              ctx.fillStyle = '#9333ea';
-              ctx.fillRect(fx, fy - 2, 2, 4);
+              // 💜 신비로운 보랏빛 라벤더 / 벨플라워
               ctx.fillStyle = '#c084fc';
-              ctx.fillRect(fx, fy - 1, 2, 2);
+              ctx.fillRect(fx - 1, fy - 2, 3, 3);
+              ctx.fillStyle = '#a855f7';
+              ctx.fillRect(fx, fy - 1, 1, 3);
+              ctx.fillStyle = '#15803d';
+              ctx.fillRect(fx, fy + 2, 1, 2);
             }
+          }
+        }
+
+        // E. [CUTE FANTASY 스타일] 비옥한 텃밭 농경지 & 당근/양배추/가지/옥수수 작물 & 나무 울타리
+        if (t === TILE.FARMLAND) {
+          // 갈아엎은 흙 이랑 (Tilled Soil Furrows)
+          ctx.fillStyle = '#8b4513';
+          ctx.fillRect(px, py + 4, ts, 2);
+          ctx.fillRect(px, py + 12, ts, 2);
+          ctx.fillRect(px, py + 20, ts, 2);
+          ctx.fillRect(px, py + 28, ts, 2);
+
+          // 이랑 위에 심어진 탐스러운 채소 작물들
+          const ctype = (tx + ty) % 4;
+          for (let cx = 4; cx <= 24; cx += 10) {
+            const cy = 6 + (cx % 3) * 8;
+            if (ctype === 0) {
+              // 🥕 당근: 흙 밖으로 솟은 주황 당근 어깨 + 싱싱한 초록 잎사귀
+              ctx.fillStyle = '#f97316';
+              ctx.fillRect(px + cx, py + cy + 1, 4, 3);
+              ctx.fillStyle = '#22c55e';
+              ctx.fillRect(px + cx - 1, py + cy - 2, 6, 2);
+              ctx.fillRect(px + cx + 1, py + cy - 4, 2, 2);
+            } else if (ctype === 1) {
+              // 🥬 동글동글 싱싱한 양배추
+              ctx.fillStyle = '#16a34a';
+              ctx.fillRect(px + cx - 1, py + cy - 1, 6, 5);
+              ctx.fillStyle = '#86efac';
+              ctx.fillRect(px + cx, py + cy, 4, 3);
+              ctx.fillStyle = '#4ade80';
+              ctx.fillRect(px + cx + 1, py + cy + 1, 2, 1);
+            } else if (ctype === 2) {
+              // 🍆 보랏빛 가지 / 무 (Purple Turnip)
+              ctx.fillStyle = '#7e22ce';
+              ctx.fillRect(px + cx, py + cy, 5, 4);
+              ctx.fillStyle = '#c084fc';
+              ctx.fillRect(px + cx + 1, py + cy + 1, 2, 2);
+              ctx.fillStyle = '#22c55e';
+              ctx.fillRect(px + cx + 1, py + cy - 2, 3, 2);
+            } else {
+              // 🌽 황금 옥수수 대
+              ctx.fillStyle = '#15803d';
+              ctx.fillRect(px + cx + 1, py + cy - 5, 2, 9);
+              ctx.fillStyle = '#facc15';
+              ctx.fillRect(px + cx, py + cy - 3, 4, 4);
+              ctx.fillStyle = '#fef08a';
+              ctx.fillRect(px + cx + 1, py + cy - 2, 2, 2);
+            }
+          }
+
+          // 농작물 푯말 (Crop Signpost)
+          if ((h % 9) === 0) {
+            const sx = px + 2;
+            const sy = py + ts - 12;
+            // 나무 기둥
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(sx + 3, sy + 4, 2, 8);
+            // 사각 푯말
+            ctx.fillStyle = '#92400e';
+            ctx.fillRect(sx, sy, 8, 6);
+            ctx.fillStyle = '#b45309';
+            ctx.fillRect(sx + 1, sy + 1, 6, 4);
+            // 아이콘 점
+            ctx.fillStyle = '#f97316';
+            ctx.fillRect(sx + 2, sy + 2, 3, 2);
           }
         }
 

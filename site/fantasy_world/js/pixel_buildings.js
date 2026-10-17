@@ -625,40 +625,215 @@
     // =========================================================================
     // 9. 마을 디테일 소품 (Props: Well, Lamp, Barrels, Crates, Wheelbarrow)
     // =========================================================================
+    // =========================================================================
+    // 9. 마을 디테일 소품 (Cute Fantasy Reference Props)
+    // =========================================================================
     drawProp(ctx, px, py, propType = 'well', isNight = false, timeSec = 0) {
-      if (propType === 'well') {
-        // [식수 우물] 원형 석조 원통 + 블루 슬레이트 박공 지붕 + 도르래
+      if (propType === 'well' || propType === 'stone_well') {
+        // [CUTE FANTASY 식수 우물] 원형 석조 원통 + 목조 기둥 + 박공 지붕 + 도르래 양동이
         ctx.fillStyle = 'rgba(15, 23, 42, 0.40)';
-        ctx.fillRect(px - 6, py + 4, 12, 4);
+        ctx.fillRect(px - 7, py + 5, 14, 4);
 
         // 석조 원통
-        ctx.fillStyle = B_PALETTE.stone_dark;
-        ctx.fillRect(px - 6, py - 2, 12, 8);
-        ctx.fillStyle = B_PALETTE.stone_mid;
-        ctx.fillRect(px - 5, py - 1, 10, 6);
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(px - 7, py - 3, 14, 9);
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(px - 6, py - 2, 12, 7);
         // 물
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(px - 4, py - 2, 8, 3);
         ctx.fillStyle = '#0284c7';
         ctx.fillRect(px - 3, py - 1, 6, 2);
 
-        // 지붕 기둥 & 슬레이트 지붕
-        ctx.fillStyle = B_PALETTE.timber_dark;
-        ctx.fillRect(px - 5, py - 10, 2, 9);
-        ctx.fillRect(px + 3, py - 10, 2, 9);
+        // 두 개의 목조 기둥
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(px - 6, py - 12, 2, 11);
+        ctx.fillRect(px + 4, py - 12, 2, 11);
+        // 가로 들보 & 도르래 로프
+        ctx.fillRect(px - 6, py - 12, 12, 2);
+        ctx.fillStyle = '#fde047'; // 로프
+        ctx.fillRect(px - 1, py - 10, 1, 4);
+        // 작은 나무 양동이
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(px - 2, py - 6, 3, 3);
 
-        ctx.fillStyle = B_PALETTE.roof_slate_main;
+        // 목조 박공 지붕 (Cute Wooden Gabled Canopy)
+        ctx.fillStyle = '#5c3012';
         ctx.beginPath();
-        ctx.moveTo(px - 7, py - 10);
-        ctx.lineTo(px, py - 15);
-        ctx.lineTo(px + 7, py - 10);
+        ctx.moveTo(px - 9, py - 11);
+        ctx.lineTo(px, py - 18);
+        ctx.lineTo(px + 9, py - 11);
         ctx.closePath();
         ctx.fill();
+        ctx.fillStyle = '#b45309';
+        ctx.beginPath();
+        ctx.moveTo(px - 7, py - 12);
+        ctx.lineTo(px, py - 17);
+        ctx.lineTo(px + 7, py - 12);
+        ctx.closePath();
+        ctx.fill();
+      } else if (propType === 'hay_bale') {
+        // [CUTE FANTASY 황금 건초 더미 (붉은 리본 결속)]
+        // 피라미드 스택 건초더미 (아래 2개, 위 1개)
+        const drawSingleBale = (bx, by) => {
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+          ctx.fillRect(bx - 4, by + 4, 9, 3);
+          // 황금빛 짚단 본체
+          ctx.fillStyle = '#ca8a04';
+          ctx.fillRect(bx - 4, by - 4, 8, 8);
+          ctx.fillStyle = '#facc15';
+          ctx.fillRect(bx - 3, by - 3, 6, 6);
+          ctx.fillStyle = '#fef08a';
+          ctx.fillRect(bx - 3, by - 3, 6, 2);
+          // 🎀 붉은 결속 리본 십자가 (Red Ribbon Cross)
+          ctx.fillStyle = '#b91c1c';
+          ctx.fillRect(bx - 1, by - 4, 2, 8);
+          ctx.fillRect(bx - 4, by - 1, 8, 2);
+          ctx.fillStyle = '#ef4444';
+          ctx.fillRect(bx, by - 4, 1, 8);
+          ctx.fillRect(bx - 4, by, 8, 1);
+        };
+        drawSingleBale(px - 3, py + 2);
+        drawSingleBale(px + 4, py + 2);
+        drawSingleBale(px, py - 5);
+      } else if (propType === 'anvil' || propType === 'iron_anvil') {
+        // [CUTE FANTASY 대장간 철제 모루 & 통나무 받침대]
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.40)';
+        ctx.fillRect(px - 5, py + 3, 10, 3);
+        // 원형 통나무 받침대
+        ctx.fillStyle = '#5c3012';
+        ctx.fillRect(px - 4, py - 1, 8, 5);
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(px - 3, py, 6, 3);
+        // 주철 모루 (Cast Iron Anvil)
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(px - 5, py - 6, 10, 5);
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(px - 4, py - 5, 8, 2);
+        // 모루 뿔 (Horn) & 상단 평면 타격대 (Face)
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(px - 6, py - 6, 3, 2);
+        ctx.fillRect(px - 3, py - 6, 6, 1);
+      } else if (propType === 'campfire' || propType === 'campfire_stools') {
+        // [CUTE FANTASY 캠프파이어 & 통나무 스툴 4개 서클]
+        // 바닥 자갈 원
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(px - 5, py - 2, 10, 5);
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(px - 4, py - 1, 8, 3);
+        // 십자 장작
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(px - 3, py, 6, 1);
+        ctx.fillRect(px, py - 3, 1, 6);
+        // 애니메이션 불꽃 (Flickering Flame)
+        const fPulse = Math.sin(timeSec * 9) * 1.5;
+        ctx.fillStyle = '#f97316';
+        ctx.fillRect(px - 2, py - 5 + fPulse, 4, 5);
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(px - 1, py - 4 + fPulse, 2, 3);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(px, py - 3 + fPulse, 1, 1);
+
+        // 주변 4개 통나무 스툴 (Round Tree Stump Stools)
+        const drawStool = (sx, sy) => {
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+          ctx.fillRect(sx - 3, sy + 3, 6, 2);
+          ctx.fillStyle = '#5c3012'; // 외피 나무껍질
+          ctx.fillRect(sx - 3, sy - 2, 6, 5);
+          ctx.fillStyle = '#d59560'; // 절단면 나이테
+          ctx.fillRect(sx - 2, sy - 2, 4, 2);
+          ctx.fillStyle = '#7c441c';
+          ctx.fillRect(sx - 1, sy - 1, 2, 1);
+        };
+        drawStool(px - 8, py - 1);
+        drawStool(px + 8, py - 1);
+        drawStool(px, py + 6);
+        drawStool(px, py - 7);
+      } else if (propType === 'tree_stump') {
+        // [CUTE FANTASY 나이테가 선명한 밑동 (Tree Stump with Rings)]
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+        ctx.fillRect(px - 4, py + 3, 8, 3);
+        ctx.fillStyle = '#5c3012'; // 나무 껍질
+        ctx.fillRect(px - 4, py - 2, 8, 6);
+        ctx.fillStyle = '#d79963'; // 밝은 나이테 코어
+        ctx.fillRect(px - 3, py - 2, 6, 3);
+        // 동심원 나이테 (Concentric growth rings)
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(px - 2, py - 2, 4, 1);
+        ctx.fillRect(px - 1, py - 1, 2, 1);
+      } else if (propType === 'fallen_log') {
+        // [CUTE FANTASY 쓰러진 통나무 (Fallen Timber Log with Branch Nub)]
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+        ctx.fillRect(px - 7, py + 2, 14, 3);
+        ctx.fillStyle = '#5c3012'; // 통나무 몸체
+        ctx.fillRect(px - 7, py - 2, 14, 5);
+        ctx.fillStyle = '#874b20';
+        ctx.fillRect(px - 6, py - 1, 12, 3);
+        // 단면 나이테
+        ctx.fillStyle = '#d79963';
+        ctx.fillRect(px - 7, py - 1, 2, 3);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(px - 6, py, 1, 1);
+        // 옹이 / 잔가지 그루터기
+        ctx.fillStyle = '#5c3012';
+        ctx.fillRect(px + 2, py - 4, 2, 3);
+      } else if (propType === 'wooden_fence') {
+        // [CUTE FANTASY 목조 울타리 (Wooden Post & Rail Fence)]
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.30)';
+        ctx.fillRect(px - 8, py + 4, 16, 2);
+        // 가로 레일 2줄 (Top & Bottom Rails)
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(px - 8, py - 3, 16, 2);
+        ctx.fillRect(px - 8, py + 1, 16, 2);
+        ctx.fillStyle = '#b45309';
+        ctx.fillRect(px - 8, py - 3, 16, 1);
+        ctx.fillRect(px - 8, py + 1, 16, 1);
+        // 둥근 캡 기둥 2개 (Round-topped Posts)
+        const drawPost = (postX) => {
+          ctx.fillStyle = '#451a03';
+          ctx.fillRect(postX - 2, py - 6, 4, 11);
+          ctx.fillStyle = '#92400e';
+          ctx.fillRect(postX - 1, py - 5, 2, 9);
+          ctx.fillStyle = '#d59560'; // 기둥 둥근 머리 하이라이트
+          ctx.fillRect(postX - 1, py - 6, 2, 1);
+        };
+        drawPost(px - 6);
+        drawPost(px + 6);
+      } else if (propType === 'chicken_coop') {
+        // [CUTE FANTASY 닭장 울타리 / 급수대 / 짚단 둥지]
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+        ctx.fillRect(px - 8, py + 4, 16, 3);
+        // 급수통 (Water Trough)
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(px - 6, py - 3, 7, 5);
+        ctx.fillStyle = '#38bdf8'; // 물
+        ctx.fillRect(px - 5, py - 2, 5, 3);
+        // 짚단 둥지 (Straw Nest)
+        ctx.fillStyle = '#ca8a04';
+        ctx.fillRect(px + 2, py - 3, 6, 5);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(px + 3, py - 2, 4, 3);
+        // 흰 알
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(px + 4, py - 1, 2, 2);
+      } else if (propType === 'signpost') {
+        // [CUTE FANTASY 나무 이정표 푯말]
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+        ctx.fillRect(px - 2, py + 4, 4, 2);
+        ctx.fillStyle = '#5c3012'; // 기둥
+        ctx.fillRect(px - 1, py - 8, 2, 12);
+        // 화살표 푯말
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(px - 5, py - 9, 10, 4);
+        ctx.fillRect(px + 5, py - 8, 2, 2); // 화살표 촉
+        ctx.fillStyle = '#d59560';
+        ctx.fillRect(px - 4, py - 8, 8, 2);
       } else if (propType === 'barrel') {
         // [와인/물 오크통]
         ctx.fillStyle = B_PALETTE.timber_dark;
         ctx.fillRect(px - 3, py - 4, 6, 8);
         ctx.fillStyle = B_PALETTE.wood_board;
         ctx.fillRect(px - 2, py - 3, 4, 6);
-        // 철제 밴드 (Metal hoops)
         ctx.fillStyle = B_PALETTE.iron_metal;
         ctx.fillRect(px - 3, py - 2, 6, 1);
         ctx.fillRect(px - 3, py + 1, 6, 1);
@@ -668,15 +843,13 @@
         ctx.fillRect(px - 4, py - 4, 8, 8);
         ctx.fillStyle = B_PALETTE.wood_board;
         ctx.fillRect(px - 3, py - 3, 6, 6);
-        // X자 버팀목
         ctx.fillStyle = B_PALETTE.timber_main;
         ctx.fillRect(px - 2, py - 2, 4, 1);
         ctx.fillRect(px - 2, py + 1, 4, 1);
       } else if (propType === 'lamp') {
-        // [가로등] 나무 기둥 + 블루 유리 등불 + 야간 온화한 조명
+        // [가로등]
         ctx.fillStyle = B_PALETTE.timber_dark;
         ctx.fillRect(px - 1, py - 10, 2, 12);
-        // 등불 하우징
         ctx.fillStyle = B_PALETTE.iron_metal;
         ctx.fillRect(px - 3, py - 12, 6, 3);
         ctx.fillStyle = isNight ? B_PALETTE.window_night : '#38bdf8';
@@ -687,27 +860,99 @@
           ctx.arc(px, py - 10, 10, 0, Math.PI * 2);
           ctx.fill();
         }
-      } else if (propType === 'wheelbarrow') {
-        // [수레/손수레] 바퀴와 짐칸
-        ctx.fillStyle = B_PALETTE.timber_dark;
-        ctx.fillRect(px - 5, py - 2, 9, 4);
-        ctx.fillStyle = B_PALETTE.wood_board;
-        ctx.fillRect(px - 4, py - 1, 7, 2);
-        // 손잡이 & 바퀴
-        ctx.fillStyle = B_PALETTE.timber_dark;
-        ctx.fillRect(px + 4, py - 2, 3, 1);
-        ctx.fillStyle = B_PALETTE.iron_dark;
-        ctx.fillRect(px - 6, py, 3, 3);
-      } else if (propType === 'campfire') {
-        // [모닥불]
-        ctx.fillStyle = B_PALETTE.stone_dark;
-        ctx.fillRect(px - 4, py - 2, 8, 4);
-        const fPulse = Math.sin(timeSec * 8) * 1.5;
-        ctx.fillStyle = B_PALETTE.fire_orange;
-        ctx.fillRect(px - 2, py - 4 + fPulse, 4, 4);
-        ctx.fillStyle = B_PALETTE.fire_yellow;
-        ctx.fillRect(px - 1, py - 3 + fPulse, 2, 2);
       }
+    },
+
+    // =========================================================================
+    // [CUTE FANTASY 스타일] 통나무 오두막 & 농가 (Cute Log Cabin & Farmstead)
+    // =========================================================================
+    drawCuteLogCabin(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // 발밑 픽셀 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+      ctx.fillRect(px - halfW + 2, py + halfH - 2, bw - 2, 7);
+
+      // 1. 통나무 벽체 (Horizontal Interlocking Logs)
+      const wallH = Math.round(bh * 0.6);
+      const wallY = py + halfH - wallH;
+
+      ctx.fillStyle = '#6d3b16'; // 통나무 줄눈/외곽선
+      ctx.fillRect(px - halfW, wallY, bw, wallH);
+
+      // 가로 통나무 층 (3~4개 가로 통나무 겹침)
+      const logH = 5;
+      for (let ly = wallY; ly < py + halfH; ly += logH) {
+        ctx.fillStyle = '#6d3b16';
+        ctx.fillRect(px - halfW, ly, bw, 1);
+        ctx.fillStyle = '#b37340'; // 따뜻한 통나무 본체
+        ctx.fillRect(px - halfW + 1, ly + 1, bw - 2, logH - 2);
+        ctx.fillStyle = '#d59560'; // 상단 하이라이트
+        ctx.fillRect(px - halfW + 2, ly + 1, bw - 4, 1);
+        // 좌우 돌출된 둥근 통나무 결 (Protruding corner logs)
+        ctx.fillStyle = '#7c441c';
+        ctx.fillRect(px - halfW - 1, ly + 1, 2, logH - 2);
+        ctx.fillRect(px + halfW - 1, ly + 1, 2, logH - 2);
+      }
+
+      // 2. 발광 청록 창문 (Glowing Cyan Window - Reference Image Match)
+      const winW = 7;
+      const winH = 8;
+      const winX = px + halfW - 14;
+      const winY = wallY + 4;
+      ctx.fillStyle = '#451a03'; // 창틀
+      ctx.fillRect(winX - 1, winY - 1, winW + 2, winH + 2);
+      ctx.fillStyle = isNight ? '#fef08a' : '#38bdf8'; // 청록/황금
+      ctx.fillRect(winX, winY, winW, winH);
+      // 창문 십자 프레임
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(winX + 3, winY, 1, winH);
+      ctx.fillRect(winX, winY + 4, winW, 1);
+      // 흰색 유리 반사광
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(winX + 1, winY + 1, 2, 2);
+
+      // 3. 나무 아치형 현관문 (Wooden Plank Door)
+      const doorW = 8;
+      const doorH = wallH - 3;
+      const doorX = px - halfW + 6;
+      const doorY = py + halfH - doorH;
+      ctx.fillStyle = '#3a1908';
+      ctx.fillRect(doorX - 1, doorY - 1, doorW + 2, doorH + 1);
+      ctx.fillStyle = '#7c441c';
+      ctx.fillRect(doorX, doorY, doorW, doorH);
+      ctx.fillStyle = '#965528';
+      ctx.fillRect(doorX + 1, doorY + 1, doorW - 2, doorH - 1);
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(doorX + doorW - 3, doorY + Math.round(doorH / 2), 2, 2); // 손잡이
+
+      // 4. 스텝형 목조 박공 지붕 (Stepped Wooden Plank Gabled Roof)
+      const roofPeakY = wallY - 14;
+      ctx.fillStyle = '#4a260f'; // 지붕 외곽선
+      ctx.beginPath();
+      ctx.moveTo(px - halfW - 4, wallY + 2);
+      ctx.lineTo(px, roofPeakY - 2);
+      ctx.lineTo(px + halfW + 4, wallY + 2);
+      ctx.closePath();
+      ctx.fill();
+
+      // 지붕 널판지 채우기
+      ctx.fillStyle = '#874b20';
+      ctx.beginPath();
+      ctx.moveTo(px - halfW - 2, wallY);
+      ctx.lineTo(px, roofPeakY);
+      ctx.lineTo(px + halfW + 2, wallY);
+      ctx.closePath();
+      ctx.fill();
+
+      // 지붕 결 라인 & 하이라이트
+      ctx.fillStyle = '#5c3012';
+      ctx.fillRect(px - halfW, wallY - 4, bw, 1);
+      ctx.fillRect(px - halfW + 4, wallY - 8, bw - 8, 1);
+      ctx.fillStyle = '#a8612f';
+      ctx.fillRect(px - halfW + 2, wallY - 3, bw - 4, 1);
+      ctx.fillRect(px - halfW + 6, wallY - 7, bw - 12, 1);
     },
 
     // =========================================================================
@@ -1052,9 +1297,17 @@
         this.drawTownHall(ctx, px, py, bw, bh, isNight, timeSec);
         return true;
       }
+      if (type === 'cabin' || type === 'farmstead' || type === 'cottage' || type === 'log_cabin') {
+        this.drawCuteLogCabin(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
       if (type === 'house' || type === 'residence') {
         const style = b.id ? (b.id.charCodeAt(b.id.length - 1) % 3) : 0;
-        this.drawHalfTimberedHouse(ctx, px, py, bw, bh, style, isNight, timeSec);
+        if (style === 2) {
+          this.drawCuteLogCabin(ctx, px, py, bw, bh, isNight, timeSec);
+        } else {
+          this.drawHalfTimberedHouse(ctx, px, py, bw, bh, style, isNight, timeSec);
+        }
         return true;
       }
       if (type === 'market' || type === 'bazaar') {
@@ -1098,21 +1351,49 @@
         this.drawProp(ctx, px, py, 'bone_totem', isNight, timeSec);
         return true;
       }
-      if (type === 'campfire') {
-        this.drawProp(ctx, px, py, 'campfire', isNight, timeSec);
+      if (type === 'campfire' || type === 'campfire_stools') {
+        this.drawProp(ctx, px, py, 'campfire_stools', isNight, timeSec);
         return true;
       }
       if (type === 'cage') {
         this.drawProp(ctx, px, py, 'cage', isNight, timeSec);
         return true;
       }
-      if (type === 'well') {
-        this.drawProp(ctx, px, py, 'well', isNight, timeSec);
+      if (type === 'well' || type === 'stone_well') {
+        this.drawProp(ctx, px, py, 'stone_well', isNight, timeSec);
+        return true;
+      }
+      if (type === 'hay_bale') {
+        this.drawProp(ctx, px, py, 'hay_bale', isNight, timeSec);
+        return true;
+      }
+      if (type === 'anvil' || type === 'iron_anvil') {
+        this.drawProp(ctx, px, py, 'anvil', isNight, timeSec);
+        return true;
+      }
+      if (type === 'tree_stump') {
+        this.drawProp(ctx, px, py, 'tree_stump', isNight, timeSec);
+        return true;
+      }
+      if (type === 'fallen_log') {
+        this.drawProp(ctx, px, py, 'fallen_log', isNight, timeSec);
+        return true;
+      }
+      if (type === 'wooden_fence') {
+        this.drawProp(ctx, px, py, 'wooden_fence', isNight, timeSec);
+        return true;
+      }
+      if (type === 'chicken_coop') {
+        this.drawProp(ctx, px, py, 'chicken_coop', isNight, timeSec);
+        return true;
+      }
+      if (type === 'signpost') {
+        this.drawProp(ctx, px, py, 'signpost', isNight, timeSec);
         return true;
       }
 
-      // Default fallback: half-timbered house
-      this.drawHalfTimberedHouse(ctx, px, py, bw, bh, 0, isNight, timeSec);
+      // Default fallback: cute log cabin
+      this.drawCuteLogCabin(ctx, px, py, bw, bh, isNight, timeSec);
       return true;
     }
   };

@@ -41,33 +41,33 @@ const TILE = {
 };
 
 const TILE_INFO = {
-  [TILE.DEEP_WATER]:   { name: '대해양 (심해)', color: '#091b2c', miniColor: '#091b2c', walkable: false, naval: true },
-  [TILE.WATER]:        { name: '연안/해협/호수', color: '#1d4ed8', miniColor: '#2563eb', walkable: false, naval: true },
-  [TILE.SAND]:         { name: '황금 모래해변', color: '#d6be86', miniColor: '#d6be86', walkable: true, naval: false },
-  [TILE.GRASS]:        { name: '초원', color: '#386934', miniColor: '#386934', walkable: true, naval: false },
-  [TILE.MEADOW]:       { name: '비옥한 평야', color: '#477d40', miniColor: '#477d40', walkable: true, naval: false },
-  [TILE.FOREST]:       { name: '울창한 참나무 숲', color: '#244b23', miniColor: '#20431f', walkable: true, naval: false },
-  [TILE.DARK_FOREST]:  { name: '그림자 침엽수림', color: '#182922', miniColor: '#15241e', walkable: true, naval: false },
-  [TILE.HILLS]:        { name: '구릉지', color: '#575446', miniColor: '#575446', walkable: true, naval: false },
-  [TILE.MOUNTAIN]:     { name: '험준한 암벽 산맥', color: '#413f3d', miniColor: '#413f3d', walkable: false, naval: false },
-  [TILE.SNOW]:         { name: '만년설 빙하 봉우리', color: '#cbd5e1', miniColor: '#e2e8f0', walkable: false, naval: false },
-  [TILE.BADLANDS]:     { name: '붉은 황무지', color: '#663e2f', miniColor: '#663e2f', walkable: true, naval: false },
-  [TILE.FARMLAND]:     { name: '비옥한 경작지', color: '#684f2b', miniColor: '#85662f', walkable: true, naval: false },
-  [TILE.ROAD]:         { name: '대륙 포장 가도', color: '#978770', miniColor: '#b4a187', walkable: true, naval: false },
-  [TILE.BRIDGE]:       { name: '견고한 교량', color: '#7c5332', miniColor: '#98653e', walkable: true, naval: true },
-  [TILE.CASTLE_FLOOR]: { name: '성채 석재 광장', color: '#717882', miniColor: '#8c95a3', walkable: true, naval: false },
-  [TILE.DOCK]:         { name: '항구 목조 부두', color: '#714b29', miniColor: '#855831', walkable: true, naval: true },
-  [TILE.WALL]:         { name: '방어 성벽', color: '#414d5e', miniColor: '#cbd5e1', walkable: false, naval: false },
-  [TILE.DESERT]:       { name: '황금빛 모래사막', color: '#d4964b', miniColor: '#d4964b', walkable: true, naval: false },
-  [TILE.ELVEN_FOREST]: { name: '영원의 요정숲', color: '#276859', miniColor: '#2dd4bf', walkable: true, naval: false },
-  [TILE.LAVA]:         { name: '펄펄 끓는 용암', color: '#dc2626', miniColor: '#ef4444', walkable: false, naval: false },
-  [TILE.CORAL]:        { name: '산호초 환초', color: '#0ea5e9', miniColor: '#38bdf8', walkable: false, naval: true },
-  [TILE.AUTUMN_WOOD]:  { name: '붉은 단풍나무 숲', color: '#7c2d12', miniColor: '#c2410c', walkable: true, naval: false },
-  [TILE.SWAMP]:        { name: '안개 낀 늪지대', color: '#2e3a23', miniColor: '#3f4f30', walkable: true, naval: false },
-  [TILE.TUNDRA]:       { name: '영구동토 툰드라', color: '#607274', miniColor: '#94a3b8', walkable: true, naval: false },
-  [TILE.OBSIDIAN]:     { name: '흑요석 화산암대', color: '#1c1917', miniColor: '#292524', walkable: true, naval: false },
-  [TILE.CRYSTAL_CAVE]: { name: '비전 수정 광맥', color: '#581c87', miniColor: '#a855f7', walkable: true, naval: false },
-  [TILE.OASIS_WATER]:  { name: '오아시스 에메랄드 담수', color: '#0d9488', miniColor: '#14b8a6', walkable: false, naval: true }
+  [TILE.DEEP_WATER]:   { name: '대해양 (심해)', color: '#165e9e', miniColor: '#165e9e', walkable: false, naval: true },
+  [TILE.WATER]:        { name: '연안/해협/호수', color: '#2b8bd6', miniColor: '#389ce8', walkable: false, naval: true },
+  [TILE.SAND]:         { name: '황금 모래해변', color: '#f3d38c', miniColor: '#f3d38c', walkable: true, naval: false },
+  [TILE.GRASS]:        { name: '비옥한 초원', color: '#4bb352', miniColor: '#4bb352', walkable: true, naval: false },
+  [TILE.MEADOW]:       { name: '꽃밭 들판', color: '#58c75f', miniColor: '#58c75f', walkable: true, naval: false },
+  [TILE.FOREST]:       { name: '울창한 참나무 숲', color: '#286b30', miniColor: '#286b30', walkable: true, naval: false },
+  [TILE.DARK_FOREST]:  { name: '그림자 침엽수림', color: '#1a4724', miniColor: '#1a4724', walkable: true, naval: false },
+  [TILE.HILLS]:        { name: '구릉지', color: '#688c53', miniColor: '#688c53', walkable: true, naval: false },
+  [TILE.MOUNTAIN]:     { name: '험준한 암벽 산맥', color: '#5a6268', miniColor: '#5a6268', walkable: false, naval: false },
+  [TILE.SNOW]:         { name: '만년설 봉우리', color: '#e2e8f0', miniColor: '#f1f5f9', walkable: true, naval: false },
+  [TILE.BADLANDS]:     { name: '붉은 황무지', color: '#8c4e33', miniColor: '#8c4e33', walkable: true, naval: false },
+  [TILE.FARMLAND]:     { name: '비옥한 경작지', color: '#a85c32', miniColor: '#b46638', walkable: true, naval: false },
+  [TILE.ROAD]:         { name: '따뜻한 오솔길 가도', color: '#e5a973', miniColor: '#e5a973', walkable: true, naval: false },
+  [TILE.BRIDGE]:       { name: '견고한 교량', color: '#935328', miniColor: '#a66232', walkable: true, naval: true },
+  [TILE.CASTLE_FLOOR]: { name: '성채 석재 광장', color: '#88929e', miniColor: '#9ba5b2', walkable: true, naval: false },
+  [TILE.DOCK]:         { name: '항구 목조 부두', color: '#875129', miniColor: '#995e32', walkable: true, naval: true },
+  [TILE.WALL]:         { name: '방어 성벽', color: '#4a5568', miniColor: '#cbd5e1', walkable: true, naval: false },
+  [TILE.DESERT]:       { name: '황금빛 모래사막', color: '#f0ad56', miniColor: '#f0ad56', walkable: true, naval: false },
+  [TILE.ELVEN_FOREST]: { name: '영원의 요정숲', color: '#2b8a75', miniColor: '#34d399', walkable: true, naval: false },
+  [TILE.LAVA]:         { name: '펄펄 끓는 용암', color: '#ef4444', miniColor: '#f97316', walkable: false, naval: false },
+  [TILE.CORAL]:        { name: '산호초 환초', color: '#22d3ee', miniColor: '#38bdf8', walkable: false, naval: true },
+  [TILE.AUTUMN_WOOD]:  { name: '붉은 단풍나무 숲', color: '#9a3412', miniColor: '#c2410c', walkable: true, naval: false },
+  [TILE.SWAMP]:        { name: '안개 낀 늪지대', color: '#3b5235', miniColor: '#4d6945', walkable: true, naval: false },
+  [TILE.TUNDRA]:       { name: '영구동토 툰드라', color: '#78909c', miniColor: '#90a4ae', walkable: true, naval: false },
+  [TILE.OBSIDIAN]:     { name: '흑요석 화산암대', color: '#262626', miniColor: '#404040', walkable: true, naval: false },
+  [TILE.CRYSTAL_CAVE]: { name: '비전 수정 광맥', color: '#7e22ce', miniColor: '#a855f7', walkable: true, naval: false },
+  [TILE.OASIS_WATER]:  { name: '오아시스 에메랄드 담수', color: '#14b8a6', miniColor: '#2dd4bf', walkable: false, naval: true }
 };
 
 function createSettlementList() {
@@ -779,10 +779,18 @@ function generateWorld() {
       buildings.push({ id: s.id + '_cage', settlementId: s.id, name: '포로 우리 / 전리품 보관소', type: 'cage', x: sx + 5, y: sy + 3, w: 4, h: 3, icon: '🦴' });
     } else {
       buildings.push({ id: s.id + '_hall', settlementId: s.id, name: s.name + ' 마을회관', type: 'town_hall', x: sx, y: sy - 3, w: 6, h: 5, icon: '🏛️' });
-      buildings.push({ id: s.id + '_market', settlementId: s.id, name: '특산물 가판대', type: 'market', x: sx + 5, y: sy + 1, w: 5, h: 4, icon: '🎪' });
-      buildings.push({ id: s.id + '_well', settlementId: s.id, name: '마을 광장 우물', type: 'well', x: sx, y: sy + 2, w: 2, h: 2, icon: '💧' });
-      for (let h = 0; h < 4; h++) {
-        buildings.push({ id: s.id + '_house_' + h, settlementId: s.id, name: '민가 ' + (h + 1), type: 'house', x: sx + (h % 2 === 0 ? -6 : 6), y: sy + 4 + Math.floor(h / 2) * 5, w: 4, h: 4, icon: '🏠' });
+      buildings.push({ id: s.id + '_cabin', settlementId: s.id, name: '아늑한 통나무 오두막', type: 'cabin', x: sx - 7, y: sy + 2, w: 6, h: 5, icon: '🏡' });
+      buildings.push({ id: s.id + '_market', settlementId: s.id, name: '특산물 가판대', type: 'market', x: sx + 6, y: sy + 1, w: 5, h: 4, icon: '🎪' });
+      buildings.push({ id: s.id + '_well', settlementId: s.id, name: '석조 식수 우물', type: 'stone_well', x: sx - 2, y: sy + 3, w: 2, h: 2, icon: '💧' });
+      buildings.push({ id: s.id + '_hay', settlementId: s.id, name: '황금 건초더미', type: 'hay_bale', x: sx - 4, y: sy + 7, w: 2, h: 2, icon: '🌾' });
+      buildings.push({ id: s.id + '_anvil', settlementId: s.id, name: '마을 철제 모루', type: 'anvil', x: sx - 1, y: sy + 1, w: 2, h: 2, icon: '⚒️' });
+      buildings.push({ id: s.id + '_camp', settlementId: s.id, name: '모닥불 & 통나무 스툴', type: 'campfire_stools', x: sx + 8, y: sy + 6, w: 3, h: 3, icon: '🔥' });
+      buildings.push({ id: s.id + '_stump', settlementId: s.id, name: '나이테 통나무 밑동', type: 'tree_stump', x: sx + 7, y: sy + 2, w: 2, h: 2, icon: '🪵' });
+      buildings.push({ id: s.id + '_log', settlementId: s.id, name: '쓰러진 목재', type: 'fallen_log', x: sx + 10, y: sy + 3, w: 3, h: 1, icon: '🪵' });
+      buildings.push({ id: s.id + '_coop', settlementId: s.id, name: '목조 닭장 울타리', type: 'chicken_coop', x: sx + 5, y: sy - 4, w: 3, h: 3, icon: '🐔' });
+      buildings.push({ id: s.id + '_sign', settlementId: s.id, name: '마을 방향 푯말', type: 'signpost', x: sx + 1, y: sy - 4, w: 1, h: 1, icon: '🪧' });
+      for (let h = 0; h < 2; h++) {
+        buildings.push({ id: s.id + '_house_' + h, settlementId: s.id, name: '민가 ' + (h + 1), type: 'house', x: sx + (h === 0 ? -6 : 6), y: sy + 8, w: 4, h: 4, icon: '🏠' });
       }
     }
   }
