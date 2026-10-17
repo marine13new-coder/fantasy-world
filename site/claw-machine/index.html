@@ -1132,8 +1132,8 @@
         
         // Claw State & Articulated Physics
         state: 'IDLE', // IDLE, DESCENDING, GRABBING, ASCENDING, RETURNING, DROPPING
-        clawAngles: [1.0, 1.0, 1.0], // Independent 3 prongs (1.0 = open, 0.0 = closed)
-        targetClawAngles: [1.0, 1.0, 1.0],
+        clawAngles: [0.35, 0.35, 0.35], // Idle rest posture (semi-closed)
+        targetClawAngles: [0.35, 0.35, 0.35],
         grabbedDoll: null,
         grabOffset: new THREE.Vector3(),
         isLatched: false,
@@ -1382,41 +1382,73 @@
     clawNeon.position.y = 0.2;
     clawAssembly.add(clawNeon);
 
-    // 3 Claw Fingers (Prongs)
+    // 3 Claw Fingers (Prongs) with Two-Segment Articulated Hinges
     const clawFingers = [];
     const fingerMat = new THREE.MeshStandardMaterial({
-      color: 0xcccccc,
-      metalness: 0.95,
+      color: 0xe0e0e0,
+      metalness: 0.9,
       roughness: 0.15
+    });
+    const jointPinMat = new THREE.MeshStandardMaterial({
+      color: 0x222222,
+      metalness: 0.8,
+      roughness: 0.3
     });
 
     for (let i = 0; i < 3; i++) {
-      const angle = (i * 2 * Math.PI) / 3;
-      const fingerRoot = new THREE.Group();
-      fingerRoot.position.set(Math.cos(angle) * 0.55, -0.3, Math.sin(angle) * 0.55);
-      fingerRoot.rotation.y = -angle + Math.PI / 2;
+      const baseAngle = (i * 2 * Math.PI) / 3;
 
-      // Upper arm
-      const upperArm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.1, 0.15), fingerMat);
-      upperArm.position.set(0, -0.5, 0.1);
-      upperArm.rotation.x = 0.35;
+      // 1. Base Mount (Fixed radial yaw facing center)
+      const mountGroup = new THREE.Group();
+      mountGroup.position.set(Math.cos(baseAngle) * 0.65, -0.3, Math.sin(baseAngle) * 0.65);
+      mountGroup.rotation.y = -baseAngle + Math.PI / 2; // Face towards center
+      clawAssembly.add(mountGroup);
+
+      // Mechanical Hinge Pin
+      const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.28, 12), jointPinMat);
+      pin.rotation.z = Math.PI / 2;
+      mountGroup.add(pin);
+
+      // 2. Primary Hinge Joint (Rotates on local X axis to open/close!)
+      const hingeGroup = new THREE.Group();
+      mountGroup.add(hingeGroup);
+
+      // Upper arm link
+      const upperArm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.25, 0.14), fingerMat);
+      upperArm.position.set(0, -0.62, 0);
       upperArm.castShadow = true;
-      fingerRoot.add(upperArm);
+      hingeGroup.add(upperArm);
 
-      // Lower hooked prong
-      const lowerArm = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.9, 0.14), fingerMat);
-      lowerArm.position.set(0, -1.2, 0.35);
-      lowerArm.rotation.x = -0.7;
+      // 3. Secondary Knee/Hook Joint
+      const kneeGroup = new THREE.Group();
+      kneeGroup.position.set(0, -1.25, 0);
+      hingeGroup.add(kneeGroup);
+
+      const kneePin = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.24, 12), jointPinMat);
+      kneePin.rotation.z = Math.PI / 2;
+      kneeGroup.add(kneePin);
+
+      // Hooked lower claw prong
+      const lowerArm = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.0, 0.12), fingerMat);
+      lowerArm.position.set(0, -0.45, 0.25);
+      lowerArm.rotation.x = -0.75; // Curved inwards
       lowerArm.castShadow = true;
-      fingerRoot.add(lowerArm);
+      kneeGroup.add(lowerArm);
 
-      // Rubber tip pad (for grip look)
-      const tipPad = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), new THREE.MeshStandardMaterial({ color: 0xff0044, roughness: 0.9 }));
-      tipPad.position.set(0, -1.6, 0.1);
-      fingerRoot.add(tipPad);
+      // High-traction Rubber Tip
+      const tipPad = new THREE.Mesh(
+        new THREE.SphereGeometry(0.15, 12, 12),
+        new THREE.MeshStandardMaterial({ color: 0xff0044, roughness: 0.9 })
+      );
+      tipPad.position.set(0, -0.85, 0.55);
+      kneeGroup.add(tipPad);
 
-      clawAssembly.add(fingerRoot);
-      clawFingers.push(fingerRoot);
+      clawFingers.push({
+        mount: mountGroup,
+        hinge: hingeGroup,
+        knee: kneeGroup,
+        tip: tipPad
+      });
     }
 
     /* ==========================================================================
@@ -1896,10 +1928,10 @@
 
         case 'GRABBING': {
           c.grabTimer += delta;
-          document.getElementById('status-display').textContent = '집게발이 모터 힘으로 오므라드는 중...';
+          document.getElementById('status-display').textContent = '집게발이 모터 힘으로 서서히 오므라드는 중...';
 
-          // Motor drives each claw finger inwards individually
-          const motorSpeed = 1.8;
+          // Motor drives each claw finger inwards with clear visible motion
+          const motorSpeed = 0.75; // Takes ~1.2s to fully close, giving a clear cinematic view!
           let anyClosing = false;
 
           for (let i = 0; i < 3; i++) {
@@ -1916,12 +1948,15 @@
           for (const doll of dolls) {
             if (doll.userData.isInChute) continue;
             const distToDoll = clawCenter.distanceTo(doll.position);
-            if (distToDoll > 2.8) continue; // too far
+            if (distToDoll > 2.6) continue; // too far
 
             const dollPos = doll.position;
             const dollRotY = doll.rotation.y;
 
             for (let f = 0; f < 3; f++) {
+              // Only check resistance once prong has actively curved inward (< 0.75)
+              if (c.clawAngles[f] > 0.75) continue;
+
               const tipWorld = getProngTipWorldPos(f, c.clawAngles[f]);
 
               // Check each feature collider of this doll
@@ -1931,16 +1966,16 @@
                 if (col.type === 'sphere') {
                   const worldColPos = col.p.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), dollRotY).add(dollPos);
                   const dist = tipWorld.distanceTo(worldColPos);
-                  if (dist <= col.r + 0.12) {
+                  if (dist <= col.r + 0.14) {
                     hit = true;
-                    // Obstructed! Finger stops at this angle
+                    // Finger hits resistance and stops at this angle!
                     c.targetClawAngles[f] = c.clawAngles[f];
 
                     // Wedge effect on smooth surfaces (like duck body)
                     if (doll.userData.friction < 0.2) {
                       const pushDir = dollPos.clone().sub(tipWorld).setY(0).normalize();
                       doll.position.addScaledVector(pushDir, 0.4 * delta);
-                      doll.position.y -= 0.2 * delta; // slips downward under wedge squeeze
+                      doll.position.y -= 0.25 * delta; // slips downward under wedge squeeze
                     }
                   }
                 } else if (col.type === 'capsule') {
@@ -1953,7 +1988,7 @@
                   const t = THREE.MathUtils.clamp(at.dot(ab) / ab.lengthSq(), 0, 1);
                   const closestPoint = aWorld.clone().addScaledVector(ab, t);
 
-                  if (tipWorld.distanceTo(closestPoint) <= col.r + 0.12) {
+                  if (tipWorld.distanceTo(closestPoint) <= col.r + 0.14) {
                     hit = true;
                     c.targetClawAngles[f] = c.clawAngles[f];
 
@@ -1974,7 +2009,7 @@
           }
 
           // Grasp Evaluation after clamp cycle
-          if (c.grabTimer > 1.0) {
+          if (c.grabTimer > 1.35) {
             sound.playClamp();
 
             // Find best grasped doll
@@ -2132,6 +2167,10 @@
 
           if (c.dropWaitTimer > 1.2) {
             c.state = 'IDLE';
+            for (let i = 0; i < 3; i++) {
+              c.clawAngles[i] = 0.35;
+              c.targetClawAngles[i] = 0.35;
+            }
             document.getElementById('btn-drop').disabled = false;
             document.getElementById('status-display').textContent = '새 라운드 시작! 다시 조준하세요!';
           }
@@ -2161,7 +2200,12 @@
 
       // Animate 3 Claw Fingers opening/closing with INDEPENDENT angles!
       for (let i = 0; i < 3; i++) {
-        clawFingers[i].rotation.x = 0.2 + c.clawAngles[i] * 0.48;
+        const ratio = c.clawAngles[i]; // 1.0 = fully open, 0.0 = fully closed
+        // Hinge rotates on its local X axis:
+        // +0.75 rad (wide open outwards) to -0.45 rad (tight closed inwards)
+        clawFingers[i].hinge.rotation.x = THREE.MathUtils.lerp(-0.45, 0.75, ratio);
+        // Knee joint curls further inward when closed:
+        clawFingers[i].knee.rotation.x = THREE.MathUtils.lerp(-0.40, 0.25, ratio);
       }
 
       // 6. Update Grabbed Doll or Falling Dolls Physics
@@ -2311,6 +2355,10 @@
       sound.playCoin();
 
       state.crane.state = 'DESCENDING';
+      for (let i = 0; i < 3; i++) {
+        state.crane.clawAngles[i] = 1.0;
+        state.crane.targetClawAngles[i] = 0.05;
+      }
       document.getElementById('btn-drop').disabled = true;
     }
 
