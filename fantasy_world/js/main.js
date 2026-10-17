@@ -8,11 +8,28 @@ function startFantasyWorld() {
   if (!canvas || !minimapCanvas) return;
 
   function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+    canvas.width = Math.round(window.innerWidth * dpr);
+    canvas.height = Math.round(window.innerHeight * dpr);
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    if (typeof renderer !== 'undefined' && renderer) {
+      renderer.dpr = dpr;
+    }
     const ctx = canvas.getContext('2d');
     if (ctx) ctx.imageSmoothingEnabled = false;
   }
+
+  function screenToWorld(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const sx = (clientX - rect.left) - rect.width / 2;
+    const sy = (clientY - rect.top) - rect.height / 2;
+    return {
+      x: camera.x + sx / (TILE_SIZE * camera.zoom),
+      y: camera.y + sy / (TILE_SIZE * camera.zoom)
+    };
+  }
+
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
 
@@ -273,6 +290,44 @@ function startFantasyWorld() {
   if (btnSkillPotion) {
     btnSkillPotion.addEventListener('click', () => {
       entityMgr.triggerPlayerSkill('H');
+    });
+  }
+
+  // 전투 3대 태세 전환 (맹공 / 수호 / 균형)
+  const btnToggleStance = document.getElementById('btnToggleStance');
+  const stanceIconEl = document.getElementById('stanceIcon');
+  const stanceNameEl = document.getElementById('stanceName');
+
+  function updateCombatStanceUI() {
+    if (!stanceIconEl || !stanceNameEl) return;
+    const st = player.combatStance || 'balanced';
+    if (st === 'berserk') {
+      stanceIconEl.textContent = '🔥';
+      stanceNameEl.textContent = '맹공태세';
+      if (btnToggleStance) btnToggleStance.style.borderColor = '#ef4444';
+    } else if (st === 'guardian') {
+      stanceIconEl.textContent = '🛡️';
+      stanceNameEl.textContent = '수호태세';
+      if (btnToggleStance) btnToggleStance.style.borderColor = '#38bdf8';
+    } else {
+      stanceIconEl.textContent = '⚡';
+      stanceNameEl.textContent = '균형태세';
+      if (btnToggleStance) btnToggleStance.style.borderColor = '#eab308';
+    }
+  }
+
+  if (btnToggleStance) {
+    btnToggleStance.addEventListener('click', () => {
+      entityMgr.triggerPlayerSkill('stance');
+      updateCombatStanceUI();
+    });
+  }
+
+  // 각성 초필살기 (신벌의 천벌)
+  const btnUltimateSkill = document.getElementById('btnUltimateSkill');
+  if (btnUltimateSkill) {
+    btnUltimateSkill.addEventListener('click', () => {
+      entityMgr.triggerPlayerSkill('ultimate');
     });
   }
 
@@ -1478,6 +1533,20 @@ function startFantasyWorld() {
         s4.style.opacity = rpg.skills.barrage.cd > 0 ? '0.5' : '1.0';
       }
     }
+
+    // 각성 초필살기 (X) 게이지 & 레디 상태
+    const ultBtn = document.getElementById('btnUltimateSkill');
+    const ultFill = document.getElementById('ultimateGaugeFill');
+    if (ultFill) {
+      ultFill.style.width = `${p.awakeningGauge || 0}%`;
+    }
+    if (ultBtn) {
+      if ((p.awakeningGauge || 0) >= 100) {
+        ultBtn.classList.add('ready');
+      } else {
+        ultBtn.classList.remove('ready');
+      }
+    }
   }
 
   // 군주 칙령 토글 팝업 바인딩
@@ -1574,13 +1643,12 @@ function startFantasyWorld() {
       }
 
       // 평시 우클릭: 지정 위치로 플레이어 자동 이동
-      const wx = camera.x + (e.clientX - canvas.width / 2) / (TILE_SIZE * camera.zoom);
-      const wy = camera.y + (e.clientY - canvas.height / 2) / (TILE_SIZE * camera.zoom);
+      const wPos = screenToWorld(e.clientX, e.clientY);
       isPlayerControlActive = true;
       updatePlayerControlUI();
       startFollow(player);
-      player.targetX = Math.max(2, Math.min(WORLD_WIDTH - 3, wx));
-      player.targetY = Math.max(2, Math.min(WORLD_HEIGHT - 3, wy));
+      player.targetX = Math.max(2, Math.min(WORLD_WIDTH - 3, wPos.x));
+      player.targetY = Math.max(2, Math.min(WORLD_HEIGHT - 3, wPos.y));
       player.isMovingToTarget = true;
       entityMgr.addEffect(player.targetX, player.targetY, 1.8, '#facc15', 0.45);
     }
@@ -1590,14 +1658,13 @@ function startFantasyWorld() {
   canvas.addEventListener('touchstart', (e) => {
     if (e.touches && e.touches.length === 1) {
       const touch = e.touches[0];
-      const wx = camera.x + (touch.clientX - canvas.width / 2) / (TILE_SIZE * camera.zoom);
-      const wy = camera.y + (touch.clientY - canvas.height / 2) / (TILE_SIZE * camera.zoom);
+      const wPos = screenToWorld(touch.clientX, touch.clientY);
       if (player) {
         isPlayerControlActive = true;
         updatePlayerControlUI();
         startFollow(player);
-        player.targetX = Math.max(2, Math.min(WORLD_WIDTH - 3, wx));
-        player.targetY = Math.max(2, Math.min(WORLD_HEIGHT - 3, wy));
+        player.targetX = Math.max(2, Math.min(WORLD_WIDTH - 3, wPos.x));
+        player.targetY = Math.max(2, Math.min(WORLD_HEIGHT - 3, wPos.y));
         player.isMovingToTarget = true;
         entityMgr.addEffect(player.targetX, player.targetY, 1.8, '#facc15', 0.45);
       }
@@ -1630,9 +1697,8 @@ function startFantasyWorld() {
   });
 
   canvas.addEventListener('mousemove', (e) => {
-    const wx = camera.x + (e.clientX - canvas.width / 2) / (TILE_SIZE * camera.zoom);
-    const wy = camera.y + (e.clientY - canvas.height / 2) / (TILE_SIZE * camera.zoom);
-    renderer.mouseWorldTile = { x: Math.floor(wx), y: Math.floor(wy) };
+    const wPos = screenToWorld(e.clientX, e.clientY);
+    renderer.mouseWorldTile = { x: Math.floor(wPos.x), y: Math.floor(wPos.y) };
   });
 
   window.addEventListener('mouseup', (e) => {
@@ -1648,13 +1714,11 @@ function startFantasyWorld() {
     const nextZoom = Math.max(camera.minZoom, Math.min(camera.maxZoom, camera.zoom * zoomFactor));
 
     if (!camera.followEntity) {
-      const wxBefore = camera.x + (e.clientX - canvas.width / 2) / (TILE_SIZE * camera.zoom);
-      const wyBefore = camera.y + (e.clientY - canvas.height / 2) / (TILE_SIZE * camera.zoom);
+      const before = screenToWorld(e.clientX, e.clientY);
       camera.zoom = nextZoom;
-      const wxAfter = camera.x + (e.clientX - canvas.width / 2) / (TILE_SIZE * camera.zoom);
-      const wyAfter = camera.y + (e.clientY - canvas.height / 2) / (TILE_SIZE * camera.zoom);
-      camera.x += (wxBefore - wxAfter);
-      camera.y += (wyBefore - wyAfter);
+      const after = screenToWorld(e.clientX, e.clientY);
+      camera.x += (before.x - after.x);
+      camera.y += (before.y - after.y);
     } else {
       camera.zoom = nextZoom;
     }
@@ -1705,6 +1769,12 @@ function startFantasyWorld() {
       entityMgr.triggerPlayerSkill('F');
     } else if (e.code === 'KeyZ' || e.code === 'KeyV') {
       entityMgr.triggerPlayerSkill('parry');
+    } else if (e.code === 'KeyX') {
+      entityMgr.triggerPlayerSkill('ultimate');
+    } else if (e.code === 'Tab') {
+      e.preventDefault();
+      entityMgr.triggerPlayerSkill('stance');
+      updateCombatStanceUI();
     } else if (e.code === 'KeyG') {
       if (entityMgr.rpgManager && entityMgr.rpgManager.awakening) {
         entityMgr.triggerPlayerSkill('G');
@@ -1726,8 +1796,7 @@ function startFantasyWorld() {
       toggleStatsModal();
     } else if (e.code === 'KeyT') {
       entityMgr.togglePetCompanion();
-    } else if (e.code === 'Tab') {
-      e.preventDefault();
+    } else if (e.code === 'BracketLeft') {
       if (btnToggleLeftSidebar) btnToggleLeftSidebar.click();
     } else if (e.code === 'BracketRight' || e.code === 'Backquote') {
       if (btnToggleRightSidebar) btnToggleRightSidebar.click();
@@ -1825,8 +1894,9 @@ function startFantasyWorld() {
   // 클릭 시 대상 선택 및 건축 배치
   function handleCanvasClick(clientX, clientY) {
     if (typeof audioMgr !== 'undefined') audioMgr.resume();
-    const wx = camera.x + (clientX - canvas.width / 2) / (TILE_SIZE * camera.zoom);
-    const wy = camera.y + (clientY - canvas.height / 2) / (TILE_SIZE * camera.zoom);
+    const wPos = screenToWorld(clientX, clientY);
+    const wx = wPos.x;
+    const wy = wPos.y;
 
     // 건축 모드 활성화 시 클릭한 지점에 구조물 배치
     if (entityMgr.rpgManager && entityMgr.rpgManager.isBuildModeActive) {

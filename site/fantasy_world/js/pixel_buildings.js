@@ -1281,6 +1281,16 @@
     render(ctx, b, px, py, bw, bh, timeSec, isNight) {
       const type = b.type || 'house';
 
+      // 🏛️ 건축물 지면 밀착 앰비언트 오클루전 & 대각선 다이렉셔널 섀도우 (Ambient Occlusion & Cast Shadow)
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.46)';
+      ctx.beginPath();
+      ctx.ellipse(px + 3, py + bh / 2 + 3, bw * 0.54, 6, 0.08, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.28)';
+      ctx.beginPath();
+      ctx.ellipse(px + 6, py + bh / 2 + 4, bw * 0.42, 4, 0.08, 0, Math.PI * 2);
+      ctx.fill();
+
       if (type === 'palace' || type === 'capital_keep') {
         this.drawCastleKeep(ctx, px, py, bw, bh, 0, isNight, timeSec);
         return true;

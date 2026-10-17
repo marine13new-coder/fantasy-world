@@ -26,18 +26,30 @@ class WorldRenderer {
     this.minimapBaseCanvas.width = Math.round(world.width / 10);
     this.minimapBaseCanvas.height = Math.round(world.height / 10);
 
-    // 🌸 대기 환경 파티클 (꽃잎, 반딧불이, 사막 먼지, 불꽃 스파크, 수면 반짝임)
+    // 🖥️ Hi-DPI 초고해상도 레티나 스케일링 계수
+    this.dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2.5) : 1;
+
+    // 🌸 대기 환경 파티클 (꽃잎, 반딧불이, 단풍잎, 눈꽃 결정, 화산 불꽃재, 수면 반짝임)
     this.ambientParticles = [];
-    for (let i = 0; i < 75; i++) {
+    for (let i = 0; i < 110; i++) {
+      let pType = 'petal';
+      let pColor = '#f472b6';
+      if (i < 25) { pType = 'petal'; pColor = Math.random() > 0.4 ? '#f472b6' : '#ffffff'; }
+      else if (i < 45) { pType = 'firefly'; pColor = '#bef264'; }
+      else if (i < 65) { pType = 'leaf'; pColor = Math.random() > 0.5 ? '#ea580c' : '#d97706'; }
+      else if (i < 85) { pType = 'snow'; pColor = '#f8fafc'; }
+      else if (i < 98) { pType = 'ash'; pColor = Math.random() > 0.5 ? '#f97316' : '#ef4444'; }
+      else { pType = 'shimmer'; pColor = '#ffffff'; }
+
       this.ambientParticles.push({
         x: Math.random() * 1920,
         y: Math.random() * 1080,
-        vx: 0.6 + Math.random() * 1.6,
-        vy: 0.2 + Math.random() * 0.7,
-        size: 2 + Math.random() * 2.5,
-        type: i < 30 ? 'petal' : (i < 50 ? 'firefly' : (i < 65 ? 'spark' : 'shimmer')),
+        vx: (pType === 'snow' || pType === 'ash') ? (-0.5 + Math.random()) * 0.8 : (0.6 + Math.random() * 1.6),
+        vy: (pType === 'snow' || pType === 'leaf') ? (0.8 + Math.random() * 1.2) : (pType === 'ash' ? (-0.8 - Math.random() * 1.0) : (0.2 + Math.random() * 0.7)),
+        size: (pType === 'leaf') ? (3 + Math.random() * 2) : (2 + Math.random() * 2),
+        type: pType,
         phase: Math.random() * Math.PI * 2,
-        color: i < 30 ? (Math.random() > 0.4 ? '#f472b6' : '#ffffff') : '#bef264'
+        color: pColor
       });
     }
 
@@ -130,6 +142,7 @@ class WorldRenderer {
 
   render(camera, worldTime, filterCategory, selectedItem, timeSec) {
     const ctx = this.ctx;
+    const dpr = this.dpr || 1;
     const { width: cw, height: ch } = this.canvas;
     const ts = TILE_SIZE;
 
@@ -149,13 +162,13 @@ class WorldRenderer {
     const shakeX = shakeMag > 0 ? (Math.random() - 0.5) * shakeMag * 2 : 0;
     const shakeY = shakeMag > 0 ? (Math.random() - 0.5) * shakeMag * 2 : 0;
     const effectiveZoom = camera.zoom * (1 + (camera.zoomPulse || 0) * 0.06);
-    ctx.translate(cw / 2 + shakeX, ch / 2 + shakeY);
-    ctx.scale(effectiveZoom, effectiveZoom);
+    ctx.translate(cw / 2 + shakeX * dpr, ch / 2 + shakeY * dpr);
+    ctx.scale(effectiveZoom * dpr, effectiveZoom * dpr);
     ctx.translate(-camera.x * ts, -camera.y * ts);
 
-    // 뷰포트 컬링 바운드
-    const halfW = (cw / 2 / camera.zoom) / ts + 4;
-    const halfH = (ch / 2 / camera.zoom) / ts + 4;
+    // 뷰포트 컬링 바운드 (Hi-DPI dpr 반영)
+    const halfW = (cw / (2 * dpr) / camera.zoom) / ts + 4;
+    const halfH = (ch / (2 * dpr) / camera.zoom) / ts + 4;
     const minTx = Math.max(0, Math.floor(camera.x - halfW));
     const maxTx = Math.min(this.world.width, Math.ceil(camera.x + halfW));
     const minTy = Math.max(0, Math.floor(camera.y - halfH));
@@ -489,6 +502,9 @@ class WorldRenderer {
 
     // 13.5. 🌸 대기 환경 부유 파티클 (꽃잎, 밤 반딧불이, 사막 먼지, 불꽃, 수면 반짝임)
     this.drawAtmosphericParticles(ctx, cw, ch, timeSec, camera, worldTime);
+
+    // 13.8. 🎬 다크 판타지 시네마틱 비네트 & 콘트라스트 렌즈 림 (Cinematic Vignette Rim)
+    this.drawCinematicVignette(ctx, cw, ch);
 
     // 14. 미니맵 렌더링
     this.renderMinimap(camera, cw, ch, filterCategory);
@@ -1880,6 +1896,43 @@ class WorldRenderer {
       ctx.beginPath();
       ctx.ellipse(px + Math.round(sh.dx * 0.5), py + Math.round(sh.dy * 0.6), 8 * e.scale * sh.stretch, 4.5 * e.scale, 0, 0, Math.PI * 2);
       ctx.fill();
+    }
+
+    // ⚔️ 플레이어 3대 전투 태세 발밑 룬 씰 (Dynamic Stance Runic Seal)
+    if (e.role === 'player' && e.combatStance) {
+      ctx.save();
+      ctx.translate(px, py + 2);
+      ctx.scale(1.0, 0.52);
+      ctx.rotate(timeSec * 2.2);
+      const stanceColor = e.combatStance === 'berserk' ? '#ef4444' : (e.combatStance === 'guardian' ? '#38bdf8' : '#facc15');
+      ctx.strokeStyle = stanceColor;
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.arc(0, 0, 16, 0, Math.PI * 2);
+      ctx.stroke();
+
+      for (let k = 0; k < 3; k++) {
+        const kAngle = (Math.PI * 2 / 3) * k;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(Math.cos(kAngle) * 16 - 1.5, Math.sin(kAngle) * 16 - 1.5, 3, 3);
+      }
+      ctx.restore();
+    }
+
+    // 👹 정예 챔피언 몬스터 아우라 & 황금 해골 왕관 (Elite Champion Badge & Aura)
+    if (e.isElite) {
+      ctx.save();
+      const elitePulse = 14 + Math.sin(timeSec * 4 + (e.id || 1)) * 3;
+      ctx.strokeStyle = e.eliteAura || '#facc15';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.ellipse(px, py + 2, elitePulse, elitePulse * 0.5, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.font = '12px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('👑', px, py - 30 * e.scale);
+      ctx.restore();
     }
 
     // 1. 해상 범선 픽셀아트 (Player ship, sea merchants, navy, pirates)
@@ -4026,6 +4079,31 @@ class WorldRenderer {
           ctx.fillRect(p.x - 2, p.y, 5, 1);
           ctx.restore();
         }
+      } else if (p.type === 'leaf') {
+        // 🍂 가을 숲 바람에 실려 흩날리는 황금/오렌지 단풍잎
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.phase + timeSec * 2.0);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = 0.8;
+        ctx.fillRect(-p.size, -p.size / 2, p.size * 1.8, p.size * 0.9);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(0, -1, 1, p.size);
+        ctx.restore();
+      } else if (p.type === 'snow') {
+        // ❄️ 북부 설원 & 겨울의 흩날리는 순백 눈꽃 결정
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+        ctx.restore();
+      } else if (p.type === 'ash') {
+        // 🌋 화산 군도 및 황무지의 붉은 불꽃 재
+        ctx.save();
+        const ashGlow = Math.sin(timeSec * 5.0 + p.phase);
+        ctx.fillStyle = ashGlow > 0 ? '#f97316' : '#ef4444';
+        ctx.globalAlpha = 0.7;
+        ctx.fillRect(p.x, p.y, 2, 2);
+        ctx.restore();
       }
     }
   }
@@ -4553,6 +4631,19 @@ class WorldRenderer {
       ctx.arc(px, py, r * 0.45, 0, Math.PI * 2);
       ctx.fill();
     }
+    ctx.restore();
+  }
+
+  // 🎬 [13.8] 다크 판타지 시네마틱 비네트 & 콘트라스트 렌즈 림 (Cinematic Dark Fantasy Vignette)
+  drawCinematicVignette(ctx, cw, ch) {
+    ctx.save();
+    const radius = Math.hypot(cw, ch) / 2;
+    const grad = ctx.createRadialGradient(cw / 2, ch / 2, radius * 0.42, cw / 2, ch / 2, radius);
+    grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    grad.addColorStop(0.70, 'rgba(10, 15, 29, 0.16)');
+    grad.addColorStop(1, 'rgba(2, 6, 18, 0.58)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, cw, ch);
     ctx.restore();
   }
 }

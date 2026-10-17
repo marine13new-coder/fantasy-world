@@ -936,6 +936,54 @@ body, html {
   background: rgba(30, 58, 138, 0.3);
 }
 
+.skill-btn.stance {
+  border-color: rgba(234, 179, 8, 0.7);
+  background: linear-gradient(180deg, rgba(234, 179, 8, 0.15), rgba(15, 23, 42, 0.9));
+}
+.skill-btn.stance:hover {
+  border-color: #facc15;
+  background: linear-gradient(180deg, rgba(234, 179, 8, 0.3), rgba(30, 41, 59, 0.95));
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.5);
+}
+
+.skill-btn.ultimate {
+  border-color: rgba(168, 85, 247, 0.7);
+  background: linear-gradient(180deg, rgba(168, 85, 247, 0.18), rgba(15, 23, 42, 0.95));
+  overflow: hidden;
+}
+.skill-btn.ultimate:hover {
+  border-color: #c084fc;
+  box-shadow: 0 0 12px rgba(192, 132, 252, 0.5);
+}
+.skill-btn.ultimate.ready {
+  border-color: #facc15 !important;
+  background: linear-gradient(180deg, rgba(250, 204, 21, 0.35), rgba(88, 28, 135, 0.85)) !important;
+  animation: ultGlowPulse 1.2s infinite alternate ease-in-out;
+}
+@keyframes ultGlowPulse {
+  0% {
+    box-shadow: 0 0 8px rgba(250, 204, 21, 0.6), inset 0 0 6px rgba(250, 204, 21, 0.3);
+    transform: translateY(0);
+  }
+  100% {
+    box-shadow: 0 0 18px rgba(250, 204, 21, 1), 0 0 25px rgba(234, 88, 12, 0.8), inset 0 0 12px rgba(255, 255, 255, 0.6);
+    transform: translateY(-2px) scale(1.06);
+  }
+}
+.ultimate-gauge-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.7);
+}
+.ultimate-gauge-bar > div {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #facc15, #ffffff);
+  transition: width 0.15s ease-out;
+}
+
 .skill-btn .key-badge {
   position: absolute;
   top: 1px;

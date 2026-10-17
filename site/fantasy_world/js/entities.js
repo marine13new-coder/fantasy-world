@@ -1442,6 +1442,8 @@ class EntityManager {
     this.player.maxExp = 120;
     this.player.statPoints = 3;
     this.player.stats = { str: 10, vit: 10, agi: 10, int: 10 };
+    this.player.awakeningGauge = 0; // 0 ~ 100%
+    this.player.combatStance = 'balanced'; // 'balanced' | 'berserk' | 'guardian'
     if (!this.player.inventory.wood) this.player.inventory.wood = 8;
     if (!this.player.inventory.ore) this.player.inventory.ore = 6;
     if (!this.player.inventory.herbs) this.player.inventory.herbs = 5;
@@ -1718,6 +1720,16 @@ class EntityManager {
       return;
     }
 
+    if (skillKey === 'stance' || skillKey === 'TAB_stance') {
+      this.playerToggleStance(p);
+      return;
+    }
+
+    if (skillKey === 'X' || skillKey === 'ultimate') {
+      this.playerCastUltimate(p);
+      return;
+    }
+
     if (skillKey === 'Q') {
       if (typeof audioMgr !== 'undefined') audioMgr.playMagic();
       this.addEffect(p.x, p.y, 11, '#f97316', 0.85);
@@ -1934,19 +1946,20 @@ class EntityManager {
     }
 
     p.isParrying = true;
-    p.parryTimer = 0.22; // 0.22초 내에 적 공격이 닿으면 퍼펙트 패링
-    p.parryCooldown = 1.6; // 재사용 쿨다운 1.6초
-    p.shieldBlockTimer = 0.65; // 전체 방패 거치 모션
+    // 수호 태세일 경우 패링 판정 시간을 0.35초로 대폭 완화!
+    p.parryTimer = (p.combatStance === 'guardian') ? 0.35 : 0.22;
+    p.parryCooldown = (p.combatStance === 'guardian') ? 1.2 : 1.6;
+    p.shieldBlockTimer = 0.65;
 
     this.addSlashArc(p.x, p.y, 2.2, 0, Math.PI * 2, '#38bdf8', 0.22);
-    this.addFloatingText(p.x, p.y - 1.2, '🛡️ 방패 가드 자세!', '#38bdf8', 0.8);
+    this.addFloatingText(p.x, p.y - 1.2, p.combatStance === 'guardian' ? '🛡️ [수호 패링 가드] 판정 대폭 강화!' : '🛡️ 방패 가드 자세!', '#38bdf8', 0.8);
     if (typeof audioMgr !== 'undefined' && audioMgr.playShieldBlock) {
       audioMgr.playShieldBlock();
     }
     return true;
   }
 
-  // ⚡ 퍼펙트 패링 성공: 공격자 2.4초 스턴 + 320% 크리티컬 리포스트 반격 버프
+  // ⚡ 퍼펙트 패링 성공: 공격자 2.4초 스턴 + 320% 크리티컬 리포스트 반격 버프 + 각성 게이지 +22%
   triggerPlayerParrySuccess(attacker) {
     const p = this.player;
     if (!p) return;
@@ -1955,6 +1968,7 @@ class EntityManager {
     p.parryTimer = 0;
     p.riposteReady = true;
     p.riposteTimer = 4.5; // 4.5초간 반격 버프 유지
+    p.awakeningGauge = Math.min(100, (p.awakeningGauge || 0) + 22.0);
 
     if (attacker) {
       attacker.stunTimer = 2.4;
@@ -1970,10 +1984,10 @@ class EntityManager {
     this.addShockwave(p.x, p.y, 5.2, '#38bdf8', 0.6);
     this.addShockwave(p.x, p.y, 3.2, '#ffffff', 0.4);
     this.addHitSparks(p.x, p.y, '#ffffff', 22);
-    this.addFloatingText(p.x, p.y - 2.0, '⚡ [PERFECT PARRY!] 320% 리포스트 반격 준비!', '#facc15', 2.2);
+    this.addFloatingText(p.x, p.y - 2.0, `⚡ [PERFECT PARRY!] 320% 리포스트 반격! (각성 +22% -> ${Math.floor(p.awakeningGauge)}%)`, '#facc15', 2.2);
 
     if (this.camera) {
-      this.camera.screenFreeze = 0.12; // 패링 타격감 역경직
+      this.camera.screenFreeze = 0.12;
       this.camera.shake = 11;
       this.camera.zoomPulse = 1.0;
     }
@@ -1981,6 +1995,96 @@ class EntityManager {
       window.renderer.screenFlashTimer = 0.08;
       window.renderer.screenFlashColor = '#ffffff';
     }
+  }
+
+  // ⚔️ 3대 전투 태세 전환 시스템 (Combat Stance Switch: 맹공 / 수호 / 균형)
+  playerToggleStance(p) {
+    if (!p) p = this.spawnOrGetPlayer();
+    if (!p.combatStance) p.combatStance = 'balanced';
+
+    if (p.combatStance === 'balanced') {
+      p.combatStance = 'berserk';
+      this.addFloatingText(p.x, p.y - 1.8, '🔥 [맹공 태세!] 공격력+45%, 치명타+30% (피격+20%)', '#ef4444', 2.2);
+      this.addShockwave(p.x, p.y, 4.2, '#ef4444', 0.4);
+      this.addHitSparks(p.x, p.y, '#f97316', 14);
+    } else if (p.combatStance === 'berserk') {
+      p.combatStance = 'guardian';
+      this.addFloatingText(p.x, p.y - 1.8, '🛡️ [수호 태세!] 받는피해-55%, 패링판정 대폭완화 (이동-15%)', '#38bdf8', 2.2);
+      this.addShockwave(p.x, p.y, 4.2, '#38bdf8', 0.4);
+      this.addHitSparks(p.x, p.y, '#38bdf8', 14);
+    } else {
+      p.combatStance = 'balanced';
+      this.addFloatingText(p.x, p.y - 1.8, '⚡ [균형 태세!] 표준 밸런스 & 초당 지속회복 2배', '#facc15', 2.2);
+      this.addShockwave(p.x, p.y, 4.2, '#facc15', 0.4);
+      this.addHitSparks(p.x, p.y, '#fde047', 14);
+    }
+
+    if (typeof audioMgr !== 'undefined' && audioMgr.playSword) {
+      audioMgr.playSword();
+    }
+    return p.combatStance;
+  }
+
+  // 💥 초필살기 궁극기: 신벌의 천벌 (Ultimate Limit Break: Heavenly Wrath)
+  playerCastUltimate(p) {
+    if (!p) p = this.spawnOrGetPlayer();
+    if ((p.awakeningGauge || 0) < 100) {
+      const cur = Math.floor(p.awakeningGauge || 0);
+      this.addFloatingText(p.x, p.y - 1.2, `⚠️ 각성 게이지 충전 필요! (${cur}% / 100%)`, '#94a3b8', 1.0);
+      return false;
+    }
+
+    p.awakeningGauge = 0;
+
+    // 시네마틱 스크린 프리즈 & 번개 플래시
+    if (this.camera) {
+      this.camera.screenFreeze = 0.16;
+      this.camera.shake = 26;
+      this.camera.zoomPulse = 2.0;
+    }
+    if (window.renderer) {
+      window.renderer.screenFlashTimer = 0.18;
+      window.renderer.screenFlashColor = '#fef08a';
+    }
+    if (typeof audioMgr !== 'undefined') {
+      if (audioMgr.playMagic) audioMgr.playMagic();
+      if (audioMgr.playWhirlwind) audioMgr.playWhirlwind();
+    }
+
+    this.addFloatingText(p.x, p.y - 2.4, '💥 [신벌의 천벌! ULTIMATE WRATH!]', '#fde047', 3.0);
+    this.addShockwave(p.x, p.y, 10.0, '#facc15', 0.9);
+    this.addShockwave(p.x, p.y, 15.0, '#ffffff', 1.2);
+    this.addHitSparks(p.x, p.y, '#ffffff', 40);
+
+    // 7줄기의 거대한 신성 번개 기둥 & 운석 강타
+    const hostiles = this.spatialGrid
+      ? this.spatialGrid.query(p.x, p.y, 16.0, other => other !== p && other.hp > 0 && this.isHostile(p, other))
+      : this.entities.filter(other => other !== p && other.hp > 0 && this.isHostile(p, other) && Math.hypot(other.x - p.x, other.y - p.y) <= 16.0);
+
+    let killed = 0;
+    for (const target of hostiles) {
+      const dmg = Math.round(520 + Math.random() * 220);
+      target.hp -= dmg;
+      target.hitTimer = 0.45;
+      target.stunTimer = 2.8;
+
+      this.addSlashArc(target.x, target.y, 3.8, 0, Math.PI * 2, '#facc15', 0.4);
+      this.addShockwave(target.x, target.y, 4.5, '#ef4444', 0.55);
+      this.addHitSparks(target.x, target.y, '#facc15', 18);
+      this.addBloodDecal(target.x, target.y, '#991b1b', 3.0, 6);
+      this.addFloatingText(target.x, target.y - 1.2, `⚡-${dmg} [신벌]`, '#fde047', 1.8);
+
+      if (target.hp <= 0) {
+        killed++;
+        p.kills = (p.kills || 0) + 1;
+        this.gainPlayerExp(target.role === 'dragon' ? 240 : 100);
+        this.spawnLootDrop(target.x, target.y, { itemType: 'gold', name: '골드 주머니', icon: '🪙', gold: (target.gold || 50) * 2, color: '#facc15' });
+        this.spawnLootDrop(target.x + 0.3, target.y, { itemType: 'gem', name: '마정석', icon: '💎', resourceKey: 'gems', resourceCount: 2, color: '#c084fc' });
+      }
+    }
+
+    this.log('battle', `💥 [초필살기] 영웅이 신벌의 천벌을 강림시켜 반경 적 ${hostiles.length}기에 파멸적 심판을 내렸습니다! (처치 ${killed}기)`, p.x, p.y);
+    return true;
   }
 
   // ⚔️ 3단 연속 콤보 공격 시스템 (1타 신속베기 -> 2타 어퍼크로스 -> 3타 360도 회전베기 피니셔)
@@ -2134,9 +2238,22 @@ class EntityManager {
         }
       }
 
-      const isCrit = (riposteMult > 1.0) || (Math.random() < 0.25);
-      const baseDmg = Math.round(p.atk * comboMultiplier * comboMult * riposteMult * (1.0 + Math.random() * 0.3));
+      // ⚔️ 전투 태세에 따른 배율 적용 (Berserk: ATK+45%, Crit+30% / Guardian: ATK-10% / Balanced: 1.0)
+      let stanceDmgMult = 1.0;
+      let stanceCritBonus = 0;
+      if (p.combatStance === 'berserk') {
+        stanceDmgMult = 1.45;
+        stanceCritBonus = 0.30;
+      } else if (p.combatStance === 'guardian') {
+        stanceDmgMult = 0.90;
+      }
+
+      const isCrit = (riposteMult > 1.0) || (Math.random() < (0.25 + stanceCritBonus));
+      const baseDmg = Math.round(p.atk * comboMultiplier * comboMult * riposteMult * stanceDmgMult * (1.0 + Math.random() * 0.3));
       const dmg = isCrit ? Math.round(baseDmg * 1.5) : baseDmg;
+
+      // 💥 공격 적중 시 각성 게이지 축적 (+3.5%)
+      p.awakeningGauge = Math.min(100, (p.awakeningGauge || 0) + 3.5);
 
       if (isCrit && window.renderer) {
         window.renderer.screenFlashTimer = 0.05;
@@ -2641,6 +2758,31 @@ class EntityManager {
       combatTarget: null,
       fishingLine: null
     };
+
+    // 👹 정예 챔피언 몬스터 생성 (Elite Champion Monsters with Affixes)
+    if ((ent.category === 'monster' || ent.role === 'monster') && !opts.isBoss && !opts.isBountyTarget && Math.random() < 0.25) {
+      ent.isElite = true;
+      const affixes = [
+        { id: 'swift', label: '⚡[신속의]', speedMult: 1.45, atkMult: 1.15, aura: '#38bdf8' },
+        { id: 'ironclad', label: '🛡️[철벽의]', hpMult: 2.2, aura: '#94a3b8' },
+        { id: 'volatile', label: '💥[폭렬의]', hpMult: 1.35, onDeathExplode: true, aura: '#ef4444' },
+        { id: 'glacial', label: '❄️[혹한의]', chills: true, hpMult: 1.45, aura: '#67e8f9' }
+      ];
+      const aff = affixes[Math.floor(Math.random() * affixes.length)];
+      ent.eliteAffix = aff.id;
+      ent.eliteLabel = aff.label;
+      ent.eliteAura = aff.aura;
+      ent.name = `${aff.label} ${ent.name}`;
+      if (aff.speedMult) ent.speed *= aff.speedMult;
+      if (aff.hpMult) {
+        ent.maxHp = Math.round(ent.maxHp * aff.hpMult);
+        ent.hp = ent.maxHp;
+      }
+      if (aff.atkMult) ent.atk = Math.round(ent.atk * aff.atkMult);
+      ent.scale = (ent.scale || 1.0) * 1.25;
+      ent.gold = Math.round((ent.gold || 50) * 2.8);
+    }
+
     this.entities.push(ent);
     return ent;
   }
@@ -3848,10 +3990,29 @@ class EntityManager {
 
       // 일반 방패 블록 (parryTimer는 끝났으나 shieldBlockTimer 유지 중인 가드 상태 -> 데미지 70% 차단)
       let dmg = Math.max(5, Math.round(e.atk * (0.85 + Math.random() * 0.35)));
-      if (target === this.player && this.player.shieldBlockTimer > 0) {
-        dmg = Math.max(1, Math.round(dmg * 0.30));
-        this.addFloatingText(target.x, target.y - 1.4, '🛡️ [방패 가드 -70%]', '#38bdf8', 1.0);
-        this.addHitSparks(target.x, target.y, '#38bdf8', 6);
+
+      // 🛡️ 플레이어 피격 시 태세 보정 및 각성 게이지 충전
+      if (target === this.player) {
+        if (target.combatStance === 'guardian') {
+          dmg = Math.max(1, Math.round(dmg * 0.45)); // 수호 태세: 받는 피해 55% 경감!
+        } else if (target.combatStance === 'berserk') {
+          dmg = Math.round(dmg * 1.20); // 맹공 태세: 받는 피해 20% 증가
+        }
+
+        if (this.player.shieldBlockTimer > 0) {
+          dmg = Math.max(1, Math.round(dmg * 0.30));
+          this.addFloatingText(target.x, target.y - 1.4, '🛡️ [방패 가드 -70%]', '#38bdf8', 1.0);
+          this.addHitSparks(target.x, target.y, '#38bdf8', 6);
+        }
+
+        // 플레이어 피격 시 각성 분노 게이지 충전 (+6%)
+        this.player.awakeningGauge = Math.min(100, (this.player.awakeningGauge || 0) + 6.0);
+      }
+
+      // ❄️ 엘리트 [혹한의] 몬스터 공격 피격 시 플레이어 둔화
+      if (e.isElite && e.eliteAffix === 'glacial' && target === this.player) {
+        target.speed = Math.max(1.3, (target.speed || 2.4) * 0.7);
+        this.addFloatingText(target.x, target.y - 1.6, '❄️ [혹한 둔화 -30%]', '#67e8f9', 1.2);
       }
 
       target.hp -= dmg;
@@ -3914,6 +4075,13 @@ class EntityManager {
   }
 
   handleEntityDeath(e) {
+    if (e.isElite && e.eliteAffix === 'volatile') {
+      this.addShockwave(e.x, e.y, 5.0, '#ef4444', 0.55);
+      this.addHazardZone(e.x, e.y, 4.0, 0.35, 110, '💥 폭렬 자폭', '#ef4444');
+      this.addHitSparks(e.x, e.y, '#f97316', 22);
+      this.addFloatingText(e.x, e.y - 1.2, '💥 [폭렬 자폭 발동!]', '#ef4444', 1.8);
+    }
+
     if (e.faction === 'kingdom') {
       const home = this.world.settlementMap[e.homeId] || this.world.settlementMap.solaris;
       e.hp = e.maxHp;
