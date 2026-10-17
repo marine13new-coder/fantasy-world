@@ -4452,6 +4452,7 @@
         let glowColor = 'rgba(255, 255, 255, 0.4)';
         if (weaponId.includes('flame') || weaponId.includes('magma')) { slashColor = '#f97316'; glowColor = 'rgba(249, 115, 22, 0.6)'; }
         else if (weaponId.includes('thunder') || weaponId.includes('lightning') || weaponId.includes('zeus') || weaponId.includes('storm')) { slashColor = '#fef08a'; glowColor = 'rgba(56, 189, 248, 0.85)'; }
+        else if (weaponId.includes('steam') || weaponId.includes('hammer') || weaponId.includes('forge') || weaponId.includes('dwarf')) { slashColor = '#fbbf24'; glowColor = 'rgba(234, 88, 12, 0.75)'; }
         else if (weaponId.includes('mirage') || weaponId.includes('scimitar') || weaponId.includes('sand') || weaponId.includes('djinn')) { slashColor = '#fde68a'; glowColor = 'rgba(245, 158, 11, 0.75)'; }
         else if (weaponId.includes('excalibur') || weaponId.includes('frost')) { slashColor = '#38bdf8'; glowColor = 'rgba(56, 189, 248, 0.6)'; }
         else if (weaponId.includes('poison') || weaponId.includes('nature')) { slashColor = '#4ade80'; glowColor = 'rgba(74, 222, 128, 0.6)'; }
@@ -4506,6 +4507,21 @@
           ctx.fillRect(arcCenter + sideSign * 20 * sc, py - 10 * sc - bounce, 2 * sc, 2 * sc);
           ctx.fillStyle = '#f59e0b';
           ctx.fillRect(arcCenter + sideSign * 16 * sc, py - 20 * sc - bounce, 2 * sc, 2 * sc);
+        }
+
+        // ⚙️ 태고 드워프 증기 요새 마그마 분출 & 구리 파편 스파크 (Steamforge Copper & Magma Burst)
+        if (weaponId.includes('steam') || weaponId.includes('hammer') || weaponId.includes('forge') || weaponId.includes('dwarf')) {
+          ctx.strokeStyle = '#ea580c';
+          ctx.lineWidth = 2.4 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 2 * sc, py - 10 * sc - bounce, 18 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          // 튀는 용암 & 구리 스파크
+          ctx.fillStyle = '#fde047';
+          ctx.fillRect(arcCenter + sideSign * 18 * sc, py - 14 * sc - bounce, 3 * sc, 3 * sc);
+          ctx.fillStyle = '#ea580c';
+          ctx.fillRect(arcCenter + sideSign * 15 * sc, py - 6 * sc - bounce, 2 * sc, 2 * sc);
         }
 
         // 반짝이는 참격 스파크 및 엠버

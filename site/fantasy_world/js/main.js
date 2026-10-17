@@ -1242,10 +1242,10 @@ function startFantasyWorld() {
     const rpg = entityMgr.rpgManager;
     const gridEl = document.getElementById('worldMapSettlementsGrid');
     if (gridEl && world.settlementList) {
-      // 주요 수도, 항구, 대성채, 천공 군도, 심연 성채, 해저 아틀란티스, 명계 제국, 성운 비전 고원, 공허 심연, 위그드라실, 크로노스 시계탑, 발키리 오로라, 벚꽃 옥룡 제국, 신기루 제국, 올림포스 제국 필터
+      // 주요 수도, 항구, 대성채, 천공 군도, 심연 성채, 해저 아틀란티스, 명계 제국, 성운 비전 고원, 공허 심연, 위그드라실, 크로노스 시계탑, 발키리 오로라, 벚꽃 옥룡 제국, 신기루 제국, 올림포스 제국, 증기 요새 제국 필터
       const keySettlements = world.settlementList.filter(s => 
-        s.type === 'capital' || s.type === 'port' || s.type === 'fortress' || s.hasWall || s.continent === 'sky' || s.continent === 'south_abyss' || s.continent === 'abyss_ocean' || s.continent === 'underworld' || s.continent === 'astral' || s.continent === 'atlantis' || s.continent === 'void' || s.continent === 'yggdrasil' || s.continent === 'chrono' || s.continent === 'valkyrie' || s.continent === 'sakura' || s.continent === 'mirage' || s.continent === 'olympus'
-      ).slice(0, 200);
+        s.type === 'capital' || s.type === 'port' || s.type === 'fortress' || s.hasWall || s.continent === 'sky' || s.continent === 'south_abyss' || s.continent === 'abyss_ocean' || s.continent === 'underworld' || s.continent === 'astral' || s.continent === 'atlantis' || s.continent === 'void' || s.continent === 'yggdrasil' || s.continent === 'chrono' || s.continent === 'valkyrie' || s.continent === 'sakura' || s.continent === 'mirage' || s.continent === 'olympus' || s.continent === 'steamforge'
+      ).slice(0, 220);
 
       gridEl.innerHTML = keySettlements.map(s => {
         let icon = '🏘️';
@@ -1261,6 +1261,7 @@ function startFantasyWorld() {
         else if (s.continent === 'sakura') icon = '⛩️';
         else if (s.continent === 'mirage') icon = '🕌';
         else if (s.continent === 'olympus') icon = '⚡';
+        else if (s.continent === 'steamforge') icon = '⚙️';
         else if (s.type === 'capital') icon = '👑';
         else if (s.type === 'port') icon = '⚓';
         else if (s.type === 'fortress') icon = '🏰';
@@ -1278,6 +1279,7 @@ function startFantasyWorld() {
         else if (s.continent === 'sakura') regionName = '⛩️ 동방 벚꽃 옥룡 제국 & 영혼의 죽림';
         else if (s.continent === 'mirage') regionName = '🕌 환영의 모래바다 신기루 제국 & 지니의 오아시스';
         else if (s.continent === 'olympus') regionName = '⚡ 천둥의 올림포스 판테온 & 신들의 티탄 검투장';
+        else if (s.continent === 'steamforge') regionName = '⚙️ 태고 드워프 증기 요새 & 거신 마그마 제국';
         else if (s.continent === 'west') regionName = '서부 실바니아';
         else if (s.continent === 'north') regionName = '북부 노스펠';
         else if (s.continent === 'south') regionName = '남부 드라코니아';

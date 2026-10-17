@@ -630,6 +630,16 @@ function createSettlementList() {
   add('athena_wisdom_marble_academy', '아테나 지혜의 대리석 학술 아카데미', 'town', 'olympus', 580, 150, 'elf', false, 8);
   add('delphi_prophecy_oracle_spring', '델포이 신탁의 신성 샘터 성역', 'temple', 'olympus', 460, 180, 'beastkin', true, 10);
 
+  // =========================================================================
+  // 19. THE DEEP MOUNTAIN STEAMFORGE DWARVEN METROPOLIS & MAGMA CORE (태고 드워프 증기 요새 & 거신 마그마 제국)
+  // =========================================================================
+  add('steamforge_dwarven_high_throne', '태고 드워프 증기 황제 옥좌 대성채', 'capital', 'steamforge', 240, 480, 'dwarf', true, 16);
+  add('titan_magma_smelting_foundry', '티탄 마그마 거대 제련소 & 흑요석 모루', 'castle', 'steamforge', 180, 560, 'dwarf', true, 14);
+  add('aether_geothermal_drill_port', '에테르 지열 굴착 비행선 항만', 'port', 'steamforge', 310, 420, 'human', false, 9);
+  add('runic_golem_assembly_sanctum', '룬 골렘 조립 신성 공방 성역', 'lair', 'steamforge', 150, 400, 'dwarf', true, 11);
+  add('mithril_deep_vein_quarry', '미스릴 심층 광맥 채굴 대성채', 'town', 'steamforge', 280, 580, 'crusader', false, 8);
+  add('valkyrie_brazen_bull_altar', '청동 거신 마그마 화로 제단', 'temple', 'steamforge', 210, 640, 'monster', true, 10);
+
   return list;
 }
 
@@ -975,6 +985,18 @@ function generateWorld() {
           continue;
         }
 
+        // 태고 드워프 증기 요새 & 거신 마그마 제국 전용 지형 카빙
+        if (s.continent === 'steamforge') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.CASTLE_FLOOR : TILE.ROAD; // 놋쇠 레일과 현무암 포장 도로
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.OBSIDIAN : TILE.BADLANDS; // 흑요석 지각 & 붉은 황무지 단층대
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.LAVA : TILE.MOUNTAIN; // 마그마 용암 개울과 험준한 암벽 산맥
+          }
+          continue;
+        }
+
         const curT = tiles[idx(tx, ty)];
         const isWater = (curT === TILE.DEEP_WATER || curT === TILE.WATER);
 
@@ -1173,7 +1195,15 @@ function generateWorld() {
     ['olympus_zeus_throne_pantheon', 'hephaestus_divine_thunder_forge'],
     ['olympus_zeus_throne_pantheon', 'athena_wisdom_marble_academy'],
     ['titan_colosseum_grand_arena', 'delphi_prophecy_oracle_spring'],
-    ['athena_wisdom_marble_academy', 'delphi_prophecy_oracle_spring']
+    ['athena_wisdom_marble_academy', 'delphi_prophecy_oracle_spring'],
+
+    // [태고 드워프 증기 요새 & 거신 마그마 제국 톱니 가도 (Steamforge Runic Railway)]
+    ['steamforge_dwarven_high_throne', 'titan_magma_smelting_foundry'],
+    ['steamforge_dwarven_high_throne', 'aether_geothermal_drill_port'],
+    ['steamforge_dwarven_high_throne', 'runic_golem_assembly_sanctum'],
+    ['titan_magma_smelting_foundry', 'mithril_deep_vein_quarry'],
+    ['titan_magma_smelting_foundry', 'valkyrie_brazen_bull_altar'],
+    ['mithril_deep_vein_quarry', 'valkyrie_brazen_bull_altar']
   ];
   const roadLinks = rawRoadLinks.filter(([a, b]) => settlementMap[a] && settlementMap[b]);
 

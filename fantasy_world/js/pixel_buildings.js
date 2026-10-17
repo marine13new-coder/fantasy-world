@@ -2171,6 +2171,211 @@
     },
 
     // =========================================================================
+    // 11.14. 태고 드워프 증기 요새 대성채 (Steamforge Dwarven Citadel)
+    // =========================================================================
+    drawSteamforgeCitadel(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 지면 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.48)';
+      ctx.fillRect(px - halfW + 2, py + halfH - 2, bw - 4, 6);
+
+      // B. 중후한 현무암 & 주철 성채 몸체 (Heavy Basalt & Cast-Iron Bastion)
+      const baseH = Math.round(bh * 0.62);
+      const baseY = py + halfH - baseH;
+
+      ctx.fillStyle = '#0f172a'; // 현무암 섀도우
+      ctx.fillRect(px - halfW, baseY, bw, baseH);
+      ctx.fillStyle = '#1e293b'; // 주철 메인 블록
+      ctx.fillRect(px - halfW + 2, baseY + 2, bw - 4, baseH - 3);
+
+      // 리벳 결합 놋쇠 띠 (Riveted Brass Reinforcement Bands)
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(px - halfW + 2, baseY + 6, bw - 4, 3);
+      ctx.fillRect(px - halfW + 2, baseY + baseH - 10, bw - 4, 3);
+      ctx.fillStyle = '#f59e0b';
+      for (let rx = px - halfW + 5; rx < px + halfW - 5; rx += 7) {
+        ctx.fillRect(rx, baseY + 7, 2, 1);
+        ctx.fillRect(rx, baseY + baseH - 9, 2, 1);
+      }
+
+      // C. 좌우 거대 산업 굴뚝 & 증기 배출 (Twin Smelting Smokestacks & Steam Vents)
+      const stackW = Math.max(5, Math.round(bw * 0.14));
+      const stackH = Math.round(bh * 0.55);
+      const stackY = baseY - stackH + 6;
+
+      const drawSmokestack = (sx) => {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(sx, stackY, stackW, stackH);
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(sx + 1, stackY, stackW - 2, stackH);
+        ctx.fillStyle = '#b45309'; // 놋쇠 립
+        ctx.fillRect(sx - 1, stackY - 2, stackW + 2, 3);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(sx, stackY - 1, stackW, 1);
+
+        // 배출되는 풍성한 백색 증기 구름 (Puffing Steam Clouds)
+        for (let p = 0; p < 3; p++) {
+          const steamAge = (timeSec * 3.5 + p * 1.3) % 4.0;
+          const puffY = stackY - 4 - steamAge * 7;
+          const puffWobble = Math.sin(timeSec * 4 + p) * 3;
+          const puffRad = 3 + steamAge * 1.5;
+          const steamAlpha = Math.max(0, 0.45 - steamAge * 0.11);
+          ctx.fillStyle = `rgba(241, 245, 249, ${steamAlpha})`;
+          ctx.beginPath();
+          ctx.arc(sx + stackW / 2 + puffWobble, puffY, puffRad, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      };
+      drawSmokestack(px - halfW + 3);
+      drawSmokestack(px + halfW - stackW - 3);
+
+      // D. 전면 거대 회전 놋쇠 기어 톱니바퀴 (Rotating Brass Clockwork Gear)
+      const gearR = Math.round(bw * 0.22);
+      const gearX = px;
+      const gearY = baseY + Math.round(baseH * 0.38);
+      const gearAng = timeSec * 1.8;
+
+      ctx.save();
+      ctx.translate(gearX, gearY);
+      ctx.rotate(gearAng);
+      // 기어 외륜 및 톱니 (Cogs)
+      ctx.fillStyle = '#b45309';
+      for (let t = 0; t < 8; t++) {
+        const ang = (Math.PI / 4) * t;
+        ctx.fillRect(Math.cos(ang) * (gearR - 1) - 2, Math.sin(ang) * (gearR - 1) - 2, 4, 4);
+      }
+      ctx.beginPath();
+      ctx.arc(0, 0, gearR - 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.arc(0, 0, gearR - 4, 0, Math.PI * 2);
+      ctx.fill();
+      // 기어 중심 림 & 리벳
+      ctx.fillStyle = '#78350f';
+      ctx.beginPath();
+      ctx.arc(0, 0, gearR * 0.45, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fde68a';
+      ctx.fillRect(-1.5, -1.5, 3, 3);
+      ctx.restore();
+
+      // E. 하단 룬 철문 포트컬리스 & 마그마 도랑 (Iron Portcullis & Molten Magma Trench)
+      const gateW = Math.round(bw * 0.30);
+      const gateH = Math.round(baseH * 0.38);
+      const gateX = px - Math.round(gateW / 2);
+      const gateY = py + halfH - gateH;
+
+      // 마그마 홈 (Magma Gutter)
+      ctx.fillStyle = '#ea580c';
+      ctx.fillRect(px - halfW + 2, py + halfH - 4, bw - 4, 4);
+      ctx.fillStyle = '#fef08a';
+      for (let mx = px - halfW + 4; mx < px + halfW - 4; mx += 8) {
+        ctx.fillRect(mx + (timeSec * 6) % 8, py + halfH - 3, 3, 2);
+      }
+
+      // 철문 및 드워프 황금 룬 (Iron Gate & Glowing Inscription)
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(gateX, gateY, gateW, gateH - 4);
+      ctx.fillStyle = '#f97316';
+      ctx.fillRect(gateX + 2, gateY + 2, gateW - 4, 1);
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(gateX + Math.round(gateW / 2) - 1, gateY + 4, 2, gateH - 10);
+    },
+
+    // =========================================================================
+    // 11.15. 티탄 마그마 거대 제련소 & 흑요석 모루 (Titan Magma Smelting Foundry)
+    // =========================================================================
+    drawMagmaFoundry(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 지면 뜨거운 마그마 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+      ctx.fillRect(px - halfW + 2, py + halfH - 2, bw - 4, 6);
+
+      // B. 흑요석 용광로 벽체 (Obsidian Furnace Structure)
+      const fH = Math.round(bh * 0.65);
+      const fY = py + halfH - fH;
+
+      ctx.fillStyle = '#090d16'; // 흑요석
+      ctx.fillRect(px - halfW, fY, bw, fH);
+      ctx.fillStyle = '#1e1b4b';
+      ctx.fillRect(px - halfW + 2, fY + 2, bw - 4, fH - 3);
+
+      // 복잡한 구리 증기 파이프라인 (Intertwined Copper Steam Pipes)
+      ctx.fillStyle = '#9a3412';
+      ctx.fillRect(px - halfW + 4, fY + 6, bw - 8, 3);
+      ctx.fillRect(px + halfW - 8, fY + 6, 4, fH - 12);
+      ctx.fillStyle = '#ea580c';
+      ctx.fillRect(px - halfW + 5, fY + 7, bw - 10, 1);
+      ctx.fillRect(px + halfW - 7, fY + 7, 2, fH - 14);
+
+      // 원형 증기 압력 게이지 (Circular Steam Pressure Gauge)
+      const gaugeX = px + halfW - 14;
+      const gaugeY = fY + 14;
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.arc(gaugeX, gaugeY, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(gaugeX, gaugeY, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ef4444'; // 바늘
+      ctx.fillRect(gaugeX - 0.5, gaugeY - 2.5, 1, 3);
+
+      // C. 상단 기울어진 마그마 도가니 (Tilting Molten Magma Crucible)
+      const vatW = Math.round(bw * 0.36);
+      const vatHW = Math.round(vatW / 2);
+      const vatH = Math.round(fH * 0.45);
+      const vatY = fY - 3;
+
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(px - vatHW, vatY, vatW, vatH);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(px - vatHW + 1, vatY + 1, vatW - 2, vatH - 2);
+
+      // 흘러내리는 액체 황금 마그마 폭포 (Pouring Molten Gold & Magma Stream)
+      const pourX = px - 2;
+      const pourH = fH - 4;
+      ctx.fillStyle = '#ea580c';
+      ctx.fillRect(pourX - 1, vatY + vatH - 2, 6, pourH);
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(pourX, vatY + vatH - 2, 4, pourH);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(pourX + 1, vatY + vatH - 2, 2, pourH);
+
+      // D. 거대한 흑요석 모루와 티탄 망치 (Colossal Obsidian Anvil & Hammer)
+      const anvilX = px - halfW + 12;
+      const anvilY = py + halfH - 12;
+
+      // 모루 대좌
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(anvilX - 6, anvilY + 4, 12, 6);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(anvilX - 7, anvilY, 14, 4);
+      // 모루 뿔 (Horn)
+      ctx.beginPath();
+      ctx.moveTo(anvilX - 7, anvilY);
+      ctx.lineTo(anvilX - 10, anvilY + 1);
+      ctx.lineTo(anvilX - 7, anvilY + 3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(anvilX - 5, anvilY + 1, 9, 2);
+
+      // 용광로 불꽃 스파크 방출 (Molten Smelter Sparks)
+      const sparkCycle = (timeSec * 8) % 6;
+      ctx.fillStyle = '#fde047';
+      ctx.fillRect(pourX - 3 + Math.sin(timeSec * 15) * 4, py + halfH - 8 - sparkCycle * 2, 2, 2);
+      ctx.fillStyle = '#f97316';
+      ctx.fillRect(pourX + 4 - Math.sin(timeSec * 15) * 4, py + halfH - 6 - sparkCycle * 2, 2, 2);
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -2409,6 +2614,14 @@
       }
       if (type === 'titan_colosseum' || (type === 'castle' && b && b.continent === 'olympus') || (type === 'temple' && b && b.continent === 'olympus')) {
         this.drawTitanColosseum(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'steamforge_citadel' || (type === 'capital' && b && b.continent === 'steamforge') || (type === 'palace' && b && b.continent === 'steamforge')) {
+        this.drawSteamforgeCitadel(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'magma_foundry' || (type === 'castle' && b && b.continent === 'steamforge') || (type === 'temple' && b && b.continent === 'steamforge')) {
+        this.drawMagmaFoundry(ctx, px, py, bw, bh, isNight, timeSec);
         return true;
       }
       if (type === 'temple' || type === 'cathedral') {
