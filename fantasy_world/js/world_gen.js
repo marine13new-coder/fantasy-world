@@ -498,6 +498,19 @@ function createSettlementList() {
     add(id, name, type, 'strait', cx, cy, faction, hasWall, wallRad);
   });
 
+  // =========================================================================
+  // 6. THE CELESTIAL SKY ARCHIPELAGO & ABYSS (천공의 부유 군도 & 심연 마그마 성소)
+  // =========================================================================
+  add('sky_aetheria', '천공의 대성소 에테리아 (신성 제단)', 'capital', 'sky', 1920, 360, 'celestial', true, 16);
+  add('sky_starfall_keep', '성좌의 수호성채 스타폴', 'castle', 'sky', 1560, 330, 'celestial', true, 12);
+  add('sky_celestial_haven', '천공의 오아시스 하이헤이븐', 'port', 'sky', 2280, 350, 'celestial', true, 12);
+  add('sky_cloud_monastery', '구름바다 고요 수도원', 'town', 'sky', 1740, 260, 'celestial', false, 8);
+  add('sky_void_citadel', '공허의 천공 심연요새', 'lair', 'sky', 2120, 240, 'monster', true, 11);
+  add('sky_astral_observatory', '태고의 천체 관측소', 'town', 'sky', 1920, 190, 'celestial', false, 8);
+  add('sky_valkyrie_eyrie', '발키리 천공 비룡 둥지', 'fortress', 'sky', 1380, 280, 'celestial', true, 9);
+  add('sky_starlight_forge', '별빛 결정 주조소 타운', 'town', 'sky', 2460, 300, 'celestial', false, 8);
+  add('magma_abyss_chasm', '심연 화염 열곡 드워프 용광로', 'castle', 'south', 1920, 2140, 'kingdom', true, 14);
+
   return list;
 }
 
@@ -678,6 +691,7 @@ function generateWorld() {
     else if (s.continent === 'west') baseLandTile = (s.y > 1200) ? TILE.DESERT : TILE.ELVEN_FOREST;
     else if (s.continent === 'east') baseLandTile = TILE.SWAMP;
     else if (s.continent === 'strait') baseLandTile = TILE.GRASS;
+    else if (s.continent === 'sky') baseLandTile = TILE.MEADOW;
 
     for (let dy = -landRad; dy <= landRad; dy++) {
       for (let dx = -landRad; dx <= landRad; dx++) {
@@ -685,6 +699,18 @@ function generateWorld() {
         const tx = s.x + dx;
         const ty = s.y + dy;
         if (!inBounds(tx, ty)) continue;
+
+        // 천공의 부유 군도 전용 지형 카빙
+        if (s.continent === 'sky') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 6) ? TILE.CASTLE_FLOOR : TILE.MEADOW;
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = TILE.CORAL;
+          } else if (dist <= landRad + 1) {
+            tiles[idx(tx, ty)] = TILE.WATER;
+          }
+          continue;
+        }
 
         const curT = tiles[idx(tx, ty)];
         const isWater = (curT === TILE.DEEP_WATER || curT === TILE.WATER);

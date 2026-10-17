@@ -1240,14 +1240,26 @@ function startFantasyWorld() {
     const rpg = entityMgr.rpgManager;
     const gridEl = document.getElementById('worldMapSettlementsGrid');
     if (gridEl && world.settlementList) {
-      // 주요 수도, 항구, 대성채, 거점 필터
+      // 주요 수도, 항구, 대성채, 천공 군도, 심연 성채 필터
       const keySettlements = world.settlementList.filter(s => 
-        s.type === 'capital' || s.type === 'port' || s.type === 'fortress' || s.hasWall
-      ).slice(0, 36);
+        s.type === 'capital' || s.type === 'port' || s.type === 'fortress' || s.hasWall || s.continent === 'sky' || s.continent === 'south_abyss'
+      ).slice(0, 60);
 
       gridEl.innerHTML = keySettlements.map(s => {
-        const icon = s.type === 'capital' ? '👑' : (s.type === 'port' ? '⚓' : (s.type === 'fortress' ? '🏰' : '🏘️'));
-        const regionName = s.continent === 'central' ? '중앙 제국' : (s.continent === 'west' ? '서부 실바니아' : (s.continent === 'north' ? '북부 노스펠' : '남부 드라코니아'));
+        let icon = '🏘️';
+        if (s.continent === 'sky') icon = '🌌';
+        else if (s.continent === 'south_abyss') icon = '🌋';
+        else if (s.type === 'capital') icon = '👑';
+        else if (s.type === 'port') icon = '⚓';
+        else if (s.type === 'fortress') icon = '🏰';
+
+        let regionName = '중앙 제국';
+        if (s.continent === 'sky') regionName = '🌌 천공의 부유 군도';
+        else if (s.continent === 'south_abyss') regionName = '🌋 심연의 심층 단층';
+        else if (s.continent === 'west') regionName = '서부 실바니아';
+        else if (s.continent === 'north') regionName = '북부 노스펠';
+        else if (s.continent === 'south') regionName = '남부 드라코니아';
+
         return `
           <div class="map-settlement-card">
             <div class="map-settlement-info">

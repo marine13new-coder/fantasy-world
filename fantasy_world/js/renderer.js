@@ -918,6 +918,67 @@ class WorldRenderer {
             ctx.fillRect(px + ts - 5, py + ts - 6, 7, 4);
           }
         }
+
+        // G. 🌌 천공의 부유 군도 / 에테르 수정 (Celestial Aether Crystals & Starlight Shimmer)
+        if (t === TILE.CORAL || t === TILE.CRYSTAL_CAVE) {
+          const crystalPhase = (timeSec * 2.5 + tx * 0.7 + ty * 0.5) % (Math.PI * 2);
+          const glowAlpha = 0.35 + Math.sin(crystalPhase) * 0.25;
+          const cx = px + (h % 14) + 9;
+          const cy = py + ((h >> 3) % 14) + 9;
+
+          // 보랏빛/청록빛 에테르 펄스 발광
+          ctx.fillStyle = `rgba(168, 85, 247, ${glowAlpha * 0.4})`;
+          ctx.beginPath();
+          ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 3D 픽셀 수정체 (Faceted Aether Crystal Shard)
+          ctx.fillStyle = '#c084fc';
+          ctx.fillRect(cx - 2, cy - 4, 4, 8);
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillRect(cx - 1, cy - 3, 2, 6);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(cx - 1, cy - 2, 1, 2);
+
+          // 반짝이는 별빛 파티클
+          if ((h % 3) === 0) {
+            const sparkleX = px + ((h >> 5) % 24) + 4;
+            const sparkleY = py + ((h >> 7) % 24) + 4;
+            const spAlpha = Math.max(0, Math.sin(timeSec * 4.0 + tx + ty));
+            ctx.fillStyle = `rgba(255, 255, 255, ${spAlpha})`;
+            ctx.fillRect(sparkleX, sparkleY - 1, 1, 3);
+            ctx.fillRect(sparkleX - 1, sparkleY, 3, 1);
+          }
+        }
+
+        // H. 🌋 심연의 심층 단층 / 용암 균열 (Abyssal Magma Fissures & Molten Glow)
+        if (t === TILE.LAVA || t === TILE.OBSIDIAN) {
+          const lavaPhase = (timeSec * 1.8 + tx * 0.4 + ty * 0.6) % (Math.PI * 2);
+          const heatAlpha = 0.4 + Math.sin(lavaPhase) * 0.3;
+          
+          // 마그마 지열 펄스
+          ctx.fillStyle = `rgba(239, 68, 68, ${heatAlpha * 0.35})`;
+          ctx.fillRect(px + 4, py + 4, ts - 8, ts - 8);
+
+          // 용암 분출 크랙 (Molten Fissure Cracks)
+          const fx = px + (h % 16) + 6;
+          const fy = py + ((h >> 4) % 16) + 6;
+          ctx.fillStyle = '#f97316';
+          ctx.fillRect(fx, fy, 5, 2);
+          ctx.fillRect(fx + 2, fy - 2, 2, 6);
+          ctx.fillStyle = '#fef08a';
+          ctx.fillRect(fx + 1, fy, 2, 1);
+
+          // 상승하는 잉걸불 불티 (Rising Embers)
+          if ((h % 4) === 0) {
+            const emberY = (py + ts - ((timeSec * 18 + h) % ts));
+            const emberX = px + ((h >> 2) % 24) + 4 + Math.sin(timeSec * 3 + ty) * 2;
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillRect(emberX, emberY, 2, 2);
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(emberX, emberY + 1, 2, 1);
+          }
+        }
       }
     }
   }

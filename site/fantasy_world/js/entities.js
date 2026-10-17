@@ -2967,14 +2967,27 @@ class EntityManager {
 
       let riposteMult = 1.0;
       if (p.riposteReady) {
-        riposteMult = 3.2;
+        riposteMult = 3.6;
         p.riposteReady = false;
         p.riposteTimer = 0;
-        this.addFloatingText(p.x, p.y - 1.8, '⚡ [CRITICAL RIPOSTE x3.2!]', '#fde047', 1.8);
-        this.addShockwave(slashX, slashY, 4.8, '#ffffff', 0.45);
+        this.addFloatingText(p.x, p.y - 1.8, '⚡ [CRITICAL RIPOSTE EXECUTION! x3.6]', '#fde047', 2.2);
+        this.addShockwave(slashX, slashY, 5.5, '#ffffff', 0.50);
+        this.addSlashArc(target.x, target.y, 4.2, -Math.PI * 0.75, Math.PI * 0.75, '#fde047', 0.45);
+        this.addSlashArc(target.x, target.y, 4.2, Math.PI * 0.25, Math.PI * 1.25, '#ef4444', 0.45);
+        this.addHitSparks(target.x, target.y, '#fde047', 24);
+        this.addHitSparks(target.x, target.y, '#ef4444', 16);
         if (this.camera) {
-          this.camera.screenFreeze = 0.085;
-          this.camera.shake = 12;
+          this.camera.screenFreeze = 0.12;
+          this.camera.shake = 18;
+          this.camera.zoomPulse = 1.35;
+        }
+        if (typeof window !== 'undefined' && window.renderer) {
+          window.renderer.screenFlashTimer = 0.08;
+          window.renderer.screenFlashColor = '#ffffff';
+        }
+        if (typeof audioMgr !== 'undefined') {
+          audioMgr.playSword();
+          if (audioMgr.playFanfare) audioMgr.playFanfare();
         }
       }
 
