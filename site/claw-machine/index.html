@@ -1941,48 +1941,40 @@
             }
           }
 
-          // Real-time Collision & Contact Solver for each finger against doll colliders
+          // Real-time Collision & Physical Force Solver
           const contactedFingersByDoll = new Map();
+          const underneathFingersByDoll = new Map();
           const latchFeatureByDoll = new Map();
 
           for (const doll of dolls) {
             if (doll.userData.isInChute) continue;
             const distToDoll = clawCenter.distanceTo(doll.position);
-            if (distToDoll > 2.6) continue; // too far
+            if (distToDoll > 2.6) continue;
 
             const dollPos = doll.position;
             const dollRotY = doll.rotation.y;
 
             for (let f = 0; f < 3; f++) {
-              // Only check resistance once prong has actively curved inward (< 0.75)
-              if (c.clawAngles[f] > 0.75) continue;
+              if (c.clawAngles[f] > 0.80) continue;
 
               const tipWorld = getProngTipWorldPos(f, c.clawAngles[f]);
 
               // Check each feature collider of this doll
               for (const col of doll.userData.colliders) {
                 let hit = false;
+                let contactPoint = null;
 
                 if (col.type === 'sphere') {
                   const worldColPos = col.p.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), dollRotY).add(dollPos);
                   const dist = tipWorld.distanceTo(worldColPos);
                   if (dist <= col.r + 0.14) {
                     hit = true;
-                    // Finger hits resistance and stops at this angle!
+                    contactPoint = worldColPos;
                     c.targetClawAngles[f] = c.clawAngles[f];
-
-                    // Wedge effect on smooth surfaces (like duck body)
-                    if (doll.userData.friction < 0.2) {
-                      const pushDir = dollPos.clone().sub(tipWorld).setY(0).normalize();
-                      doll.position.addScaledVector(pushDir, 0.4 * delta);
-                      doll.position.y -= 0.25 * delta; // slips downward under wedge squeeze
-                    }
                   }
                 } else if (col.type === 'capsule') {
                   const aWorld = col.a.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), dollRotY).add(dollPos);
                   const bWorld = col.b.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), dollRotY).add(dollPos);
-                  
-                  // Point to segment distance
                   const ab = bWorld.clone().sub(aWorld);
                   const at = tipWorld.clone().sub(aWorld);
                   const t = THREE.MathUtils.clamp(at.dot(ab) / ab.lengthSq(), 0, 1);
@@ -1990,8 +1982,8 @@
 
                   if (tipWorld.distanceTo(closestPoint) <= col.r + 0.14) {
                     hit = true;
+                    contactPoint = closestPoint;
                     c.targetClawAngles[f] = c.clawAngles[f];
-
                     if (col.hookable) {
                       latchFeatureByDoll.set(doll, col.name);
                     }
@@ -1999,9 +1991,29 @@
                 }
 
                 if (hit) {
-                  if (!contactedFingersByDoll.has(doll)) {
-                    contactedFingersByDoll.set(doll, new Set());
+                  // REAL PHYSICAL FORCE IMPACT:
+                  // Is prong tip reaching BELOW the doll's center of mass to cup it?
+                  const isUnderneath = (tipWorld.y < dollPos.y + 0.05);
+
+                  if (isUnderneath) {
+                    // Successfully cupping underneath!
+                    if (!underneathFingersByDoll.has(doll)) underneathFingersByDoll.set(doll, new Set());
+                    underneathFingersByDoll.get(doll).add(f);
+                  } else {
+                    // HIT UPPER BODY / HEAD -> TOPPLE & KNOCK OVER!
+                    // Transfers lateral force and torque!
+                    const pushDir = dollPos.clone().sub(tipWorld).setY(0).normalize();
+                    doll.userData.velocity.addScaledVector(pushDir, 1.5 * delta);
+                    doll.userData.angularVel.x += (Math.random() - 0.5) * 8.0 * delta;
+                    doll.userData.angularVel.z += (Math.random() - 0.5) * 8.0 * delta;
+
+                    // Smooth slippery shapes (like duck) slide away fast
+                    if (doll.userData.friction < 0.2) {
+                      doll.userData.velocity.addScaledVector(pushDir, 3.5 * delta);
+                    }
                   }
+
+                  if (!contactedFingersByDoll.has(doll)) contactedFingersByDoll.set(doll, new Set());
                   contactedFingersByDoll.get(doll).add(f);
                 }
               }
@@ -2012,38 +2024,47 @@
           if (c.grabTimer > 1.35) {
             sound.playClamp();
 
-            // Find best grasped doll
             let bestDoll = null;
-            let maxContacts = 0;
+            let bestLatched = false;
 
-            for (const [doll, fingers] of contactedFingersByDoll.entries()) {
-              if (fingers.size >= 2 && fingers.size > maxContacts) {
-                maxContacts = fingers.size;
+            // Physical Support Polygon & Cradle Verification
+            for (const [doll, underneathFingers] of underneathFingersByDoll.entries()) {
+              const isLatched = latchFeatureByDoll.has(doll);
+              const horizDist = Math.hypot(doll.position.x - clawCenter.x, doll.position.z - clawCenter.z);
+
+              // TRUE PHYSICAL LIFT CRITERIA:
+              // Must be either:
+              // A) Mechanically latched by prong onto hookable part (ear, neck groove, tentacles)
+              // B) Physically cupped underneath by at least 2 opposing prongs near the center
+              if (isLatched || (underneathFingers.size >= 2 && horizDist < 0.46)) {
                 bestDoll = doll;
+                bestLatched = isLatched;
+                break;
+              } else {
+                // Not properly cradled! Doll topples and tumbles onto the pile!
+                doll.userData.angularVel.x += (Math.random() - 0.5) * 6.0;
+                doll.userData.angularVel.z += (Math.random() - 0.5) * 6.0;
+                doll.userData.velocity.set((Math.random() - 0.5) * 1.8, 0.4, (Math.random() - 0.5) * 1.8);
               }
             }
 
             if (bestDoll) {
               c.grabbedDoll = bestDoll;
               bestDoll.userData.isGrabbed = true;
-              c.contactCount = maxContacts;
-              c.grabOffset.copy(bestDoll.position).sub(clawCenter);
+              c.isLatched = bestLatched;
               c.hasDollSlipped = false;
               c.slipOffset = 0;
+              c.contactCount = underneathFingersByDoll.get(bestDoll).size;
 
-              const latchedFeature = latchFeatureByDoll.get(bestDoll);
-              if (latchedFeature) {
-                c.isLatched = true;
-                c.latchFeatureName = latchedFeature;
-                document.getElementById('status-display').textContent = `🎯 갈고리 래칭! [${bestDoll.userData.config.name}]의 ${latchedFeature}에 완벽히 걸림!`;
+              if (bestLatched) {
+                const feature = latchFeatureByDoll.get(bestDoll);
+                document.getElementById('status-display').textContent = `🎯 걸쇠 래칭! [${bestDoll.userData.config.name}]의 ${feature}에 완벽히 걸림!`;
               } else {
-                c.isLatched = false;
-                c.latchFeatureName = '';
-                document.getElementById('status-display').textContent = `⚠️ 마찰 그립! [${bestDoll.userData.config.name}]을 쥐었으나 미끄러질 수 있습니다!`;
+                document.getElementById('status-display').textContent = `집게 밑바닥에 실렸습니다! (${bestDoll.userData.config.name})`;
               }
             } else {
               c.grabbedDoll = null;
-              document.getElementById('status-display').textContent = '인형을 제대로 감싸쥐지 못하고 빗나갔습니다!';
+              document.getElementById('status-display').textContent = '제대로 받치지 못해 인형이 바닥에 쓰러졌습니다!';
             }
 
             c.state = 'ASCENDING';
@@ -2056,43 +2077,37 @@
           c.cableLength -= liftSpeed * delta;
           sound.playChainTick();
 
-          // Physical Slipping Mechanics during Ascent
+          // Physical Slipping Mechanics during Ascent (NO MAGNETS)
           if (c.grabbedDoll && !c.hasDollSlipped) {
             const doll = c.grabbedDoll;
             
             if (c.isLatched) {
-              // Geometrically latched onto hookable features (ear, neck groove, tentacles)
-              // Highly secure hold!
-              document.getElementById('status-display').textContent = `단단히 걸렸습니다! (${c.latchFeatureName})`;
+              document.getElementById('status-display').textContent = `단단히 걸려 올라갑니다! (${doll.userData.config.name})`;
             } else {
-              // Pure friction hold - calculates actual physical equilibrium
+              // Pure friction cup - real dynamic equilibrium
               const m = doll.userData.mass;
               const mu = doll.userData.friction;
-              // Normal force from contact fingers
               const holdFrictionForce = c.contactCount * mu * 34.0;
-              // Inertial downward load = gravity + lift acceleration + sway oscillation
               const swayMagnitude = Math.hypot(c.swayVelX, c.swayVelZ);
-              const totalDownwardLoad = m * 24.0 + m * (swayMagnitude * 14.0);
+              const totalDownwardLoad = m * 24.0 + m * (swayMagnitude * 16.0);
 
               if (totalDownwardLoad > holdFrictionForce) {
-                // Slip velocity grows with force deficit
                 const deficit = totalDownwardLoad - holdFrictionForce;
-                const slipStep = deficit * delta * 0.045;
+                const slipStep = deficit * delta * 0.05;
                 c.slipOffset += slipStep;
                 
-                document.getElementById('status-display').textContent = `⚠️ 미끄러지는 중! 아슬아슬 버티는 중... (${Math.round(c.slipOffset * 100)}%)`;
+                document.getElementById('status-display').textContent = `⚠️ 미끄러지는 중! 버티기 힘듦... (${Math.round(c.slipOffset * 100)}%)`;
 
-                // If slipped past claw fingertips, doll drops!
-                if (c.slipOffset > 0.62) {
+                if (c.slipOffset > 0.58) {
+                  // Drops and tumbles!
                   doll.userData.isGrabbed = false;
-                  doll.userData.velocity.set((Math.random() - 0.5) * 1.5, -3.2, (Math.random() - 0.5) * 1.5);
+                  doll.userData.velocity.set((Math.random() - 0.5) * 2.0, -2.8, (Math.random() - 0.5) * 2.0);
+                  doll.userData.angularVel.set((Math.random() - 0.5) * 7.0, 0, (Math.random() - 0.5) * 7.0);
                   c.grabbedDoll = null;
                   c.hasDollSlipped = true;
                   sound.playDropMiss();
-                  document.getElementById('status-display').textContent = `😭 으악! 무게를 못 이기고 집게 사이로 쏙 미끄러져 떨어졌습니다!`;
+                  document.getElementById('status-display').textContent = `😭 으악! 무게를 못 이기고 집게 사이로 미끄러져 떨어졌습니다!`;
                 }
-              } else {
-                document.getElementById('status-display').textContent = `집게 상승 중! 안정적으로 들려 있습니다.`;
               }
             }
           }
@@ -2125,13 +2140,15 @@
             if (c.grabbedDoll && !c.hasDollSlipped && !c.isLatched) {
               const m = c.grabbedDoll.userData.mass;
               const mu = c.grabbedDoll.userData.friction;
-              const swayStrain = Math.hypot(c.swayAngleX, c.swayAngleZ) * 40.0;
-              const slipStep = (swayStrain / (mu * 100.0)) * delta * 0.04;
+              const swayStrain = Math.hypot(c.swayAngleX, c.swayAngleZ) * 45.0;
+              const slipStep = (swayStrain / (mu * 100.0)) * delta * 0.045;
               c.slipOffset += slipStep;
 
-              if (c.slipOffset > 0.62) {
-                c.grabbedDoll.userData.isGrabbed = false;
-                c.grabbedDoll.userData.velocity.set(c.velX * 0.8, -2.5, c.velZ * 0.8);
+              if (c.slipOffset > 0.58) {
+                const doll = c.grabbedDoll;
+                doll.userData.isGrabbed = false;
+                doll.userData.velocity.set(c.velX * 0.9, -2.5, c.velZ * 0.9);
+                doll.userData.angularVel.set((Math.random() - 0.5) * 6.0, 0, (Math.random() - 0.5) * 6.0);
                 c.grabbedDoll = null;
                 c.hasDollSlipped = true;
                 sound.playDropMiss();
@@ -2152,7 +2169,6 @@
 
         case 'DROPPING': {
           c.dropWaitTimer += delta;
-          // Open all 3 claw fingers simultaneously
           for (let i = 0; i < 3; i++) {
             c.clawAngles[i] = THREE.MathUtils.lerp(c.clawAngles[i], 1.0, 0.14);
           }
@@ -2161,6 +2177,7 @@
             const releasedDoll = c.grabbedDoll;
             releasedDoll.userData.isGrabbed = false;
             releasedDoll.userData.velocity.set(0, -4.5, 0); // Drop straight into chute
+            releasedDoll.userData.angularVel.set((Math.random() - 0.5) * 4.0, 0, (Math.random() - 0.5) * 4.0);
             c.grabbedDoll = null;
             sound.playClamp();
           }
@@ -2179,11 +2196,10 @@
       }
 
       // 5. Update 3D Transform Objects
-      // Gantry trolley
       gantryCrossBar.position.z = c.z;
       trolleyMesh.position.set(c.x, c.y, c.z);
 
-      // Cable Mesh (Stretches between trolley and claw)
+      // Cable Mesh
       const topPos = new THREE.Vector3(c.x, c.y, c.z);
       const botPos = new THREE.Vector3(clawHangX, clawHangY, clawHangZ);
       const midPos = new THREE.Vector3().addVectors(topPos, botPos).multiplyScalar(0.5);
@@ -2198,41 +2214,46 @@
       clawAssembly.rotation.z = -c.swayAngleX;
       clawAssembly.rotation.x = c.swayAngleZ;
 
-      // Animate 3 Claw Fingers opening/closing with INDEPENDENT angles!
+      // Animate 3 Claw Fingers opening/closing
       for (let i = 0; i < 3; i++) {
-        const ratio = c.clawAngles[i]; // 1.0 = fully open, 0.0 = fully closed
-        // Hinge rotates on its local X axis:
-        // +0.75 rad (wide open outwards) to -0.45 rad (tight closed inwards)
+        const ratio = c.clawAngles[i];
         clawFingers[i].hinge.rotation.x = THREE.MathUtils.lerp(-0.45, 0.75, ratio);
-        // Knee joint curls further inward when closed:
         clawFingers[i].knee.rotation.x = THREE.MathUtils.lerp(-0.40, 0.25, ratio);
       }
 
-      // 6. Update Grabbed Doll or Falling Dolls Physics
+      // 6. Complete 6-DOF Rigid Body & Tumbling Physics (NO MAGNETS)
       dolls.forEach(doll => {
         if (doll.userData.isGrabbed) {
-          // Attached to claw tip with physical offset and slip translation
-          const targetDollY = clawHangY - 1.25 - (c.slipOffset || 0);
-          doll.position.set(clawHangX, targetDollY, clawHangZ);
-          doll.rotation.z = -c.swayAngleX * 0.8;
-          doll.rotation.x = c.swayAngleZ * 0.8;
+          // Resting inside claw cup (smooth mechanical spring-follow, NOT teleportation!)
+          const targetY = clawHangY - 1.25 - (c.slipOffset || 0);
+          doll.position.x = THREE.MathUtils.lerp(doll.position.x, clawHangX, 0.22);
+          doll.position.y = THREE.MathUtils.lerp(doll.position.y, targetY, 0.22);
+          doll.position.z = THREE.MathUtils.lerp(doll.position.z, clawHangZ, 0.22);
+          
+          doll.rotation.z = -c.swayAngleX * 0.9;
+          doll.rotation.x = c.swayAngleZ * 0.9;
         } else {
-          // Gravity, falling, bounce & chute detection
-          if (doll.position.y > 0.85 || Math.abs(doll.userData.velocity.y) > 0.05) {
-            doll.userData.velocity.y -= gravity * 0.85 * delta;
-            doll.position.addScaledVector(doll.userData.velocity, delta);
+          // Rigid Body Motion: Velocity & Angular Tumbling
+          doll.userData.velocity.y -= gravity * 0.9 * delta;
+          doll.position.addScaledVector(doll.userData.velocity, delta);
 
-            // Chute Fall Detection (Winning condition!)
-            const distToChute = Math.hypot(doll.position.x - state.cabinet.chute.x, doll.position.z - state.cabinet.chute.z);
-            if (distToChute < state.cabinet.chute.radius && doll.position.y < 1.0) {
-              if (!doll.userData.isInChute) {
-                doll.userData.isInChute = true;
-                onPrizeWon(doll.userData.config);
-              }
-            } else if (doll.position.y <= 0.85) {
-              doll.position.y = 0.85;
-              doll.userData.velocity.set(0, 0, 0);
+          // Tumbling angular rotation
+          doll.rotation.x += doll.userData.angularVel.x * delta;
+          doll.rotation.z += doll.userData.angularVel.z * delta;
+
+          // Chute Fall Detection (Winning condition!)
+          const distToChute = Math.hypot(doll.position.x - state.cabinet.chute.x, doll.position.z - state.cabinet.chute.z);
+          if (distToChute < state.cabinet.chute.radius && doll.position.y < 1.0) {
+            if (!doll.userData.isInChute) {
+              doll.userData.isInChute = true;
+              onPrizeWon(doll.userData.config);
             }
+          } else if (doll.position.y <= 0.85) {
+            // Hit Floor: Bounce damping & rolling friction
+            doll.position.y = 0.85;
+            doll.userData.velocity.y = 0;
+            doll.userData.velocity.multiplyScalar(0.86);
+            doll.userData.angularVel.multiplyScalar(0.82); // slows down tumbling
           }
         }
       });
