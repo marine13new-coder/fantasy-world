@@ -351,6 +351,7 @@ class EntityManager {
     this.dustPuffs = [];
     this.waterWakes = [];
     this.shadowDecoys = [];
+    this.groundFissures = [];
     this.falcon = { active: false, x: 0, y: 0, altitude: 28, angle: 0, wingCycle: 0, state: 'orbit', target: null, diveCooldown: 0 };
     this.witchTimeTimer = 0;
     this.witchTimeScale = 0.22;
@@ -423,6 +424,40 @@ class EntityManager {
     if (!this.waterRipples) this.waterRipples = [];
     if (this.waterRipples.length > 90) this.waterRipples.shift();
     this.waterRipples.push({ x, y, radius: 2.5, maxRadius: 15, age: 0, duration: 0.85 });
+  }
+
+  // 🌋 대지 파쇄 균열 및 마그마 단층 파괴흔 (Ground Sunder Fissures & Molten Scars)
+  addGroundFissure(x, y, angle, length = 3.5, color = '#f97316') {
+    if (!this.groundFissures) this.groundFissures = [];
+    if (this.groundFissures.length > 80) this.groundFissures.shift();
+    // 세부 지그재그 균열 정점 생성 (Jagged crack points)
+    const points = [{ dx: 0, dy: 0 }];
+    const steps = 6;
+    const stepLen = length / steps;
+    let currX = 0, currY = 0;
+    for (let i = 1; i <= steps; i++) {
+      const stepAngle = angle + (Math.random() - 0.5) * 0.7;
+      currX += Math.cos(stepAngle) * stepLen;
+      currY += Math.sin(stepAngle) * stepLen;
+      points.push({ dx: currX, dy: currY, jitter: (Math.random() - 0.5) * 0.25 });
+    }
+    this.groundFissures.push({
+      x, y, angle, length, color,
+      points,
+      age: 0,
+      duration: 5.5,
+      width: 0.22 + Math.random() * 0.12
+    });
+  }
+
+  updateGroundFissures(dt) {
+    if (!this.groundFissures || this.groundFissures.length === 0) return;
+    for (let i = this.groundFissures.length - 1; i >= 0; i--) {
+      this.groundFissures[i].age += dt;
+      if (this.groundFissures[i].age >= this.groundFissures[i].duration) {
+        this.groundFissures.splice(i, 1);
+      }
+    }
   }
 
   // 👣 동적 발자국 & 수면 항적 생성 (Dynamic Footprints & Foaming Wakes)
@@ -867,7 +902,7 @@ class EntityManager {
       if (typeof audioMgr !== 'undefined') audioMgr.playShoot();
       return true;
     } else {
-      // 🌪️ 황금 대폭풍 대회전베기 (Great Whirlwind Cleave)
+      // 🌪️ 황금 대폭풍 대회전베기 (Great Whirlwind Cleave) & 🌋 대지 파쇄 분쇄격 (Ground Sunder Fissure)
       const mult = isMax ? 4.5 : 2.8;
       const dmg = Math.round((p.atk || 25) * mult);
       const cleaveRadius = isMax ? 5.2 : 3.8;
@@ -885,8 +920,8 @@ class EntityManager {
         ent.hitTimer = 0.35;
         ent.stunTimer = 1.4;
         const kAng = Math.atan2(ent.y - p.y, ent.x - p.x);
-        ent.x += Math.cos(kAng) * 2.8;
-        ent.y += Math.sin(kAng) * 2.8;
+        const knockDist = isMax ? 3.6 : 2.6;
+        this.applyKnockbackWithWallImpact(ent, Math.cos(kAng) * knockDist, Math.sin(kAng) * knockDist, dmg);
         this.addHitSparks(ent.x, ent.y, '#fde047', 16);
         this.addBloodDecal(ent.x, ent.y, '#dc2626', 2.2, ent.hp <= 0 ? 6 : 2);
         this.addFloatingText(ent.x, ent.y - 1.2, `💥 CRIT x${mult.toFixed(1)} -${dmg}`, '#fde047', 1.5);
@@ -899,13 +934,27 @@ class EntityManager {
         }
       }
 
+      // 🌋 대지 파쇄 균열 데칼 방사
+      if (isMax) {
+        for (let i = 0; i < 8; i++) {
+          const fAng = (i / 8) * Math.PI * 2 + (Math.random() - 0.5) * 0.2;
+          this.addGroundFissure(p.x, p.y, fAng, 4.2 + Math.random() * 1.5, '#f97316');
+        }
+        if (this.camera) this.camera.cinematicBarsTimer = 0.65;
+      } else {
+        const baseAng = p.dir === 1 ? 0 : p.dir === 3 ? Math.PI : p.dir === 0 ? -Math.PI * 0.5 : Math.PI * 0.5;
+        this.addGroundFissure(p.x, p.y, baseAng, 3.2, '#fbbf24');
+        this.addGroundFissure(p.x, p.y, baseAng - 0.45, 2.8, '#f97316');
+        this.addGroundFissure(p.x, p.y, baseAng + 0.45, 2.8, '#f97316');
+      }
+
       this.addShockwave(p.x, p.y, cleaveRadius, '#facc15', 0.5);
       this.addSlashArc(p.x, p.y, cleaveRadius, 0, Math.PI * 2, '#fde047', 0.38);
-      this.addFloatingText(p.x, p.y - 2.0, `🌪️ [대폭풍 대회전베기!] (${targets.length}기 분쇄)`, '#facc15', 2.0);
+      this.addFloatingText(p.x, p.y - 2.0, isMax ? `🌋 [초토화 대지파쇄!] (${targets.length}기 분쇄)` : `🌪️ [대폭풍 대회전베기!] (${targets.length}기 분쇄)`, '#facc15', 2.0);
 
       if (this.camera) {
-        this.camera.shake = Math.min(22, (this.camera.shake || 0) + 12);
-        this.camera.screenFreeze = 0.08;
+        this.camera.shake = Math.min(22, (this.camera.shake || 0) + (isMax ? 16 : 10));
+        this.camera.screenFreeze = isMax ? 0.12 : 0.08;
       }
       if (typeof audioMgr !== 'undefined') audioMgr.playSword();
       return true;
@@ -2875,7 +2924,11 @@ class EntityManager {
     target.hitTimer = 0.40;
     target.stunTimer = 1.6; // 지면에 처박히며 1.6초 무방비 기절
 
-    // 지면 크레이터 균열 & 충격파 & 검기 파편
+    // 지면 크레이터 균열 & 충격파 & 검기 파편 & 대지 단층
+    this.addGroundFissure(target.x, target.y, 0, 3.4, '#ef4444');
+    this.addGroundFissure(target.x, target.y, Math.PI * 0.5, 3.4, '#ef4444');
+    this.addGroundFissure(target.x, target.y, Math.PI, 3.4, '#ef4444');
+    this.addGroundFissure(target.x, target.y, -Math.PI * 0.5, 3.4, '#ef4444');
     this.addShockwave(target.x, target.y, 4.8, '#facc15', 0.55);
     this.addSlashArc(target.x, target.y, 3.5, -Math.PI * 0.5, Math.PI * 0.5, '#ffffff', 0.35);
     this.addHitSparks(target.x, target.y, '#fde047', 24);
@@ -4432,6 +4485,9 @@ class EntityManager {
 
     // 🌊 선박 및 수영 V자 물보라 항적 업데이트
     this.updateWaterWakes(dt);
+
+    // 🌋 대지 파쇄 균열 및 단층 분쇄흔 수명 관리
+    this.updateGroundFissures(dt);
 
     // 🦅 상공 정찰매 사역마 AI 업데이트
     this.updateFalcon(dt);

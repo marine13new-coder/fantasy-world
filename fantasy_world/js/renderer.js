@@ -391,6 +391,9 @@ class WorldRenderer {
     // 8.4. 🩸 다크 판타지 영구 지속 지면 전투 혈흔 및 그을음 데칼
     this.drawGroundDecals(ctx, ts, minTx, maxTx, minTy, maxTy);
 
+    // 8.4.1. 🌋 대지 파쇄 균열 및 발광 마그마 단층 분쇄흔 (Ground Sunder Fissures)
+    this.drawGroundFissures(ctx, ts, minTx, maxTx, minTy, maxTy);
+
     // 8.5. ⚠️ 보스/엘리트 공격 전조 위험 장판 (Telegraphed Hazard Zones)
     this.drawHazardZones(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy);
 
@@ -874,15 +877,43 @@ class WorldRenderer {
           }
         }
 
-        // F. 맑은 연안 & 호수 잔물결 및 수련잎 (Water Lilies & Animated Ripples)
-        if (t === TILE.WATER) {
-          const wPhase = (timeSec * 2.0 + tx * 0.4 + ty * 0.6) % (Math.PI * 2);
+        // F. 맑은 연안 & 호수 잔물결, 수련잎 및 해안선 파도 포말/태양광 반짝임 (Water Waves, Foaming Shore & Specular Glint)
+        if (t === TILE.WATER || t === TILE.DEEP_WATER) {
+          const wPhase = (timeSec * 2.2 + tx * 0.45 + ty * 0.65) % (Math.PI * 2);
           const ripX = Math.round(Math.sin(wPhase) * 2);
-          ctx.fillStyle = 'rgba(147, 197, 253, 0.45)';
+          ctx.fillStyle = t === TILE.DEEP_WATER ? 'rgba(56, 189, 248, 0.28)' : 'rgba(147, 197, 253, 0.45)';
           ctx.fillRect(px + (h % 16) + 6 + ripX, py + ((h >> 3) % 18) + 6, 6, 1);
 
+          // 🌊 조수간만 파도 포말 (Tidal Wave Foam Crest on shores)
+          const tUp = ty > 0 ? tiles[(ty - 1) * width + tx] : t;
+          const isShore = (tUp !== TILE.WATER && tUp !== TILE.DEEP_WATER);
+          if (isShore) {
+            const tidePhase = Math.sin(timeSec * 2.4 + tx * 0.7);
+            if (tidePhase > 0) {
+              const tideOffset = Math.floor(tidePhase * 3.5);
+              ctx.fillStyle = `rgba(255, 255, 255, ${(0.35 + tidePhase * 0.4).toFixed(2)})`;
+              ctx.fillRect(px + 1, py + tideOffset, ts - 2, 1);
+              ctx.fillStyle = `rgba(186, 230, 253, ${(0.2 + tidePhase * 0.3).toFixed(2)})`;
+              ctx.fillRect(px + 3, py + tideOffset + 1, ts - 6, 1);
+            }
+          }
+
+          // ✨ 수면 태양광 반짝임 (Sunlight Specular Glint)
+          if ((h & 15) === 0) {
+            const glintPulse = Math.sin(timeSec * 4.5 + (h % 7));
+            if (glintPulse > 0.8) {
+              const gx = px + ((h >> 2) % 20) + 4;
+              const gy = py + ((h >> 5) % 20) + 4;
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(gx, gy, 2, 2);
+              ctx.fillStyle = 'rgba(254, 240, 138, 0.8)';
+              ctx.fillRect(gx - 1, gy, 4, 1);
+              ctx.fillRect(gx, gy - 1, 1, 4);
+            }
+          }
+
           // 수련잎 및 분홍 연꽃 (Water Lily Pad)
-          if ((h & 31) === 0) {
+          if (t === TILE.WATER && (h & 31) === 0) {
             const lx = px + ((h >> 4) % 18) + 7;
             const ly = py + ((h >> 7) % 18) + 7;
             ctx.fillStyle = '#166534';
@@ -5881,6 +5912,57 @@ class WorldRenderer {
       ctx.beginPath();
       ctx.arc(px, py, r * 0.45, 0, Math.PI * 2);
       ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // 🌋 [8.4.1] 대지 파쇄 균열 및 발광 마그마 단층 분쇄흔 (Ground Sunder Fissures)
+  drawGroundFissures(ctx, ts, minTx, maxTx, minTy, maxTy) {
+    if (!this.entityMgr || !this.entityMgr.groundFissures) return;
+    const fissures = this.entityMgr.groundFissures;
+    if (fissures.length === 0) return;
+
+    ctx.save();
+    for (let i = 0; i < fissures.length; i++) {
+      const f = fissures[i];
+      if (f.x < minTx - 3 || f.x > maxTx + 3 || f.y < minTy - 3 || f.y > maxTy + 3) continue;
+      const progress = f.age / f.duration;
+      const alpha = Math.max(0, 1 - progress);
+      if (alpha <= 0.01) continue;
+
+      const sx = f.x * ts;
+      const sy = f.y * ts;
+      const pts = f.points;
+      if (!pts || pts.length < 2) continue;
+
+      // 1. 그을린 암석 크랙 외곽 틈새 (Charred Ground Crack Base)
+      ctx.strokeStyle = '#09090b';
+      ctx.lineWidth = Math.max(2, (f.width * ts * 1.5) * (1 - progress * 0.3));
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'miter';
+      ctx.globalAlpha = alpha * 0.85;
+
+      ctx.beginPath();
+      ctx.moveTo(sx + pts[0].dx * ts, sy + pts[0].dy * ts);
+      for (let p = 1; p < pts.length; p++) {
+        ctx.lineTo(sx + pts[p].dx * ts, sy + pts[p].dy * ts);
+      }
+      ctx.stroke();
+
+      // 2. 고열 마그마 / 황금 에너지 코어 (Molten Core Glow)
+      const pulse = 0.75 + Math.sin(f.age * 9) * 0.25;
+      ctx.strokeStyle = f.color || '#f97316';
+      ctx.lineWidth = Math.max(1, (f.width * ts * 0.65) * pulse * (1 - progress * 0.6));
+      ctx.globalAlpha = alpha * (1 - progress * 0.4);
+      ctx.stroke();
+
+      // 3. 중심 백열 열선 (White-hot Center Thread)
+      if (progress < 0.65) {
+        ctx.strokeStyle = '#fef08a';
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = alpha * (1 - progress / 0.65) * 0.9;
+        ctx.stroke();
+      }
     }
     ctx.restore();
   }

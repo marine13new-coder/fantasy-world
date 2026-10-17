@@ -561,6 +561,16 @@ function createSettlementList() {
   add('void_singing_meteor_crater', '노래하는 운석 충돌구', 'lair', 'void', 3550, 1760, 'monster', true, 11);
   add('void_supernova_forge', '초신성 에테르 모루 제단', 'temple', 'void', 3600, 1650, 'celestial', true, 12);
 
+  // =========================================================================
+  // 12. THE SACRED YGGDRASIL WORLD TREE & FAIRY CANOPY (성스러운 세계수 위그드라실 천공 수관림)
+  // =========================================================================
+  add('yggdrasil_elder_crown', '세계수 최상층 엘더 크라운 수도', 'capital', 'yggdrasil', 2650, 520, 'elf', true, 16);
+  add('yggdrasil_canopy_palace', '천공 수관림 에메랄드 궁전', 'castle', 'yggdrasil', 2510, 440, 'elf', true, 14);
+  add('yggdrasil_fairy_haven', '요정 날개 안식처 항만', 'port', 'yggdrasil', 2780, 610, 'elf', false, 9);
+  add('yggdrasil_glowmoss_spire', '발광 이끼 비전 침엽탑', 'town', 'yggdrasil', 2610, 710, 'elf', false, 8);
+  add('yggdrasil_ancient_root_burrow', '태고 뿌리 영험한 굴', 'lair', 'yggdrasil', 2450, 620, 'beastkin', true, 10);
+  add('yggdrasil_life_spring_font', '생명의 영천 신성 샘터', 'temple', 'yggdrasil', 2730, 480, 'celestial', true, 12);
+
   return list;
 }
 
@@ -818,6 +828,18 @@ function generateWorld() {
             tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.CRYSTAL_CAVE : TILE.OBSIDIAN;
           } else if (dist <= landRad + 3) {
             tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.CORAL : TILE.DEEP_WATER;
+          }
+          continue;
+        }
+
+        // 성스러운 세계수 위그드라실 천공 수관림 전용 지형 카빙
+        if (s.continent === 'yggdrasil') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 5) ? TILE.CASTLE_FLOOR : TILE.ELVEN_FOREST;
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.CRYSTAL_CAVE : TILE.MEADOW;
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.WATER : TILE.FOREST;
           }
           continue;
         }
