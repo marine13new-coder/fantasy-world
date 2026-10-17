@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <title>ARCHIVE 1999: THE RESIDUE - Steam Masterpiece Gold Edition</title>
+  <title>ARCHIVE 1999: THE RESIDUE - Steam Masterpiece Ultimate Edition</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Special+Elite&family=Noto+Serif+KR:wght@400;700;900&display=swap');
@@ -277,7 +277,7 @@
       position: fixed;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      width: 1020px;
+      width: 1040px;
       max-width: 96vw;
       background: rgba(7, 13, 9, 0.98);
       border: 2px solid var(--phosphor);
@@ -585,6 +585,26 @@
       box-shadow: 0 0 50px rgba(180, 50, 255, 0.4);
     }
 
+    /* 임상 일지 및 사건 보드 정밀 열람 모달 */
+    #documentInspectModal {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 680px;
+      max-width: 92vw;
+      background: #0d1712;
+      border: 2px solid #ffaa11;
+      border-radius: 6px;
+      padding: 24px;
+      z-index: 90;
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 0 60px rgba(255, 170, 17, 0.35);
+      color: #eae0ce;
+      line-height: 1.8;
+    }
+
     /* 결말 모달 */
     .modal-overlay {
       position: fixed;
@@ -654,6 +674,17 @@
   </div>
 
   <canvas id="webglCanvas"></canvas>
+
+  <!-- 문서 / 증거물 정밀 열람 모달 -->
+  <div id="documentInspectModal">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #443015; padding-bottom:8px;">
+      <span id="docInspectTitle" style="color:var(--amber); font-weight:bold; letter-spacing:1px;">📋 기밀 의무 기록 일지 (CONFIDENTIAL)</span>
+      <button class="deck-btn" onclick="closeDocModal()" style="padding:4px 10px; border-color:#ffaa11; color:#ffcc66;">닫기 (ESC / E)</button>
+    </div>
+    <div id="docInspectBody" style="font-size:14px; min-height:120px; font-family:'Share Tech Mono', 'Noto Serif KR', monospace;">
+      <!-- 문서 내용 동적 렌더링 -->
+    </div>
+  </div>
 
   <!-- 전화 통화 모달 -->
   <div id="telephoneCallModal">
@@ -766,7 +797,7 @@
           <strong>[EVP 워크스테이션 안내]</strong> 테이프 랙에서 복원할 카트리지를 선택하고, [▶ 재생] 후 주파수 노브(FREQ)를 조절하십시오.
         </div>
         <div class="transcript-entry uv-clue">
-          <strong>[조사 가이드]</strong> 3D 격리실에서 <strong>[ G ] 키로 UV 블랙라이트</strong>를 켜면 벽면에 숨겨진 주파수 암호와 피 묻은 단서를 발견할 수 있습니다.
+          <strong>[헤테로다인 피드백]</strong> 목표 주파수에 근접할수록 주파수 간섭 휘파람(Whistle) 음이 낮아지며, 정확한 주파수에서 깨끗한 음성이 복원됩니다.
         </div>
       </div>
     </div>
@@ -778,7 +809,7 @@
       ARCHIVE 1999
     </h1>
     <div style="font-size:12px; letter-spacing:3px; color:var(--phosphor); margin-bottom:16px;">
-      STEAM MASTERPIECE GOLD EDITION
+      STEAM MASTERPIECE ULTIMATE EDITION
     </div>
     <p style="font-size:15px; color:#8abf9d; max-width:650px; line-height:1.8; margin-bottom:14px;">
       1999년 12월 31일, 국립 청송 정신의학 연구소 제4병동 지하 404호 격리실.<br>
@@ -871,7 +902,7 @@
     }, 1000);
 
     /* ========================================================
-       1. 절차적 고해상도 PBR 텍스처 & UV 형광 텍스처 생성기
+       1. 절차적 고해상도 텍스처 & 증거물 캔버스 생성기
        ======================================================== */
     function createTileTexture() {
       const c = document.createElement('canvas');
@@ -926,7 +957,6 @@
       return new THREE.CanvasTexture(c);
     }
 
-    // UV 라이트 전용 자외선 형광 텍스처 (숨겨진 피문서와 암호)
     function createUVClueTexture() {
       const c = document.createElement('canvas');
       c.width = 1024; c.height = 512;
@@ -945,13 +975,46 @@
       ctx.fillText('⚡ TAPE 04: REVERSE 2400 Hz (뒤집힌 구조대 무전)', 80, 360);
       ctx.fillText('⚡ TAPE 05: 440 Hz (진실의 기준음: 너 자신이 한진우다)', 80, 440);
 
-      // 발자국 형광 자국
       ctx.fillStyle = 'rgba(0, 255, 200, 0.8)';
       for (let i = 0; i < 12; i++) {
         ctx.beginPath();
         ctx.ellipse(800 + (i % 2) * 40, 100 + i * 35, 16, 28, 0.2, 0, Math.PI * 2);
         ctx.fill();
       }
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    function createNoticeBoardTexture() {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 256;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#3a2717'; ctx.fillRect(0, 0, 512, 256); // 코르크 바탕
+
+      // 폴라로이드 사진 소품
+      ctx.fillStyle = '#f0ede6'; ctx.fillRect(40, 30, 90, 110);
+      ctx.fillStyle = '#111'; ctx.fillRect(48, 38, 74, 74);
+      // 사진 위 긁힌 X 자국
+      ctx.strokeStyle = '#c01a24'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(48, 38); ctx.lineTo(122, 112); ctx.moveTo(122, 38); ctx.lineTo(48, 112); ctx.stroke();
+
+      // 신문 기사 조각
+      ctx.fillStyle = '#e8d8b8'; ctx.fillRect(160, 25, 200, 140);
+      ctx.fillStyle = '#222'; ctx.font = 'bold 13px "Special Elite", monospace';
+      ctx.fillText('1979 청송연구소 화재 참사', 170, 50);
+      ctx.font = '10px monospace';
+      ctx.fillText('지하 격리병동 방화 추정...', 170, 75);
+      ctx.fillText('한진우 원장 행방 묘연...', 170, 95);
+      ctx.fillText('[경찰 수사 잠정 중단]', 170, 120);
+
+      // 붉은 압정
+      ctx.fillStyle = '#ff2233';
+      ctx.beginPath(); ctx.arc(260, 20, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(85, 25, 6, 0, Math.PI * 2); ctx.fill();
+
+      // 붉은색 연결 실선 (Investigation Red Thread)
+      ctx.strokeStyle = '#ff2233'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(85, 25); ctx.lineTo(260, 20); ctx.stroke();
 
       return new THREE.CanvasTexture(c);
     }
@@ -980,14 +1043,16 @@
     }
 
     /* ========================================================
-       2. THREE.JS 3D 환경 (CCTV, 배전반, UV 라이트, 먼지)
+       2. THREE.JS 3D 환경 구성 (볼류메트릭 콘, 증거보드, 차트)
        ======================================================== */
     let scene, camera, renderer;
-    let flashlight, ceilingLamp, ambientGlow;
-    let deskObj, monitorObj, doorObj, monsterFigure, ceilingFan, wheelchairObj, ivStandObj, gurneyObj, phoneObj, breakerBoxObj, cctvCameraObj;
+    let flashlight, flashlightCone, ceilingLamp, ambientGlow, exitSignLamp;
+    let deskObj, monitorObj, doorObj, monsterFigure, ceilingFan, wheelchairObj, ivStandObj, gurneyObj;
+    let phoneObj, breakerBoxObj, cctvCameraObj, noticeBoardObj, clipboardObj, exitSignObj;
     let uvClueMesh, dustParticles, waterDropMesh;
     let isPointerLocked = false;
     let inTerminalMode = false;
+    let inDocInspectMode = false;
 
     const keys = { w: false, a: false, s: false, d: false };
     const playerPos = new THREE.Vector3(0, 1.6, 2.8);
@@ -1016,11 +1081,19 @@
       ceilingLamp.castShadow = true;
       scene.add(ceilingLamp);
 
+      // 비상구 붉은빛 조명
+      exitSignLamp = new THREE.PointLight(0xff2233, 0.9, 4.0);
+      exitSignLamp.position.set(0, 3.3, 5.6);
+      scene.add(exitSignLamp);
+
       // 손전등 / UV 탐조등 스포트라이트
       flashlight = new THREE.SpotLight(0xfff6dc, 4.0, 16, Math.PI / 5.5, 0.35, 1.2);
       flashlight.castShadow = true;
       scene.add(flashlight);
       scene.add(flashlight.target);
+
+      // 3D 볼류메트릭 라이트 콘 메쉬 (Volumetric Light Cone)
+      buildVolumetricLightCone();
 
       buildAsylumWard();
       buildVolumetricDust();
@@ -1029,10 +1102,28 @@
       initSpectrogramCanvas();
     }
 
+    function buildVolumetricLightCone() {
+      const coneGeo = new THREE.ConeGeometry(0.85, 6.2, 16, 1, true);
+      coneGeo.translate(0, -3.1, 0);
+      coneGeo.rotateX(-Math.PI / 2);
+
+      const coneMat = new THREE.MeshBasicMaterial({
+        color: 0xfff0cc,
+        transparent: true,
+        opacity: 0.12,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide
+      });
+      flashlightCone = new THREE.Mesh(coneGeo, coneMat);
+      scene.add(flashlightCone);
+    }
+
     function buildAsylumWard() {
       const tileTex = createTileTexture();
       const wallTex = createWallTexture();
       const uvTex = createUVClueTexture();
+      const boardTex = createNoticeBoardTexture();
       const doorTex = createDoorTexture();
 
       // 바닥
@@ -1073,7 +1164,14 @@
       wallRight.rotation.y = -Math.PI / 2;
       scene.add(wallRight);
 
-      // UV 형광 비밀 단서 패널 (벽면에 덧씌워짐)
+      // 벽면 사건 증거 코르크 보드 (Notice Board)
+      const boardGeo = new THREE.BoxGeometry(2.4, 1.2, 0.05);
+      const boardMat = new THREE.MeshStandardMaterial({ map: boardTex, roughness: 0.9 });
+      noticeBoardObj = new THREE.Mesh(boardGeo, boardMat);
+      noticeBoardObj.position.set(0, 2.35, -5.92);
+      scene.add(noticeBoardObj);
+
+      // UV 형광 비밀 단서 패널
       const uvClueMat = new THREE.MeshBasicMaterial({
         map: uvTex,
         transparent: true,
@@ -1125,6 +1223,9 @@
       screen.position.set(0, 1.35, -3.79);
       scene.add(screen);
 
+      // 데스크 위 의무 기록 차트 (Clinical Clipboard)
+      buildClinicalClipboard();
+
       // 데스크 위 로터리 전화기
       buildDeskTelephone();
 
@@ -1134,13 +1235,8 @@
       // 모퉁이 천장 회전형 CCTV 감시 카메라
       buildCCTVCamera();
 
-      // 등 뒤 철문
-      const doorGeo = new THREE.BoxGeometry(1.8, 3.2, 0.15);
-      const doorMat = new THREE.MeshStandardMaterial({ map: doorTex, roughness: 0.7, metalness: 0.4 });
-      doorObj = new THREE.Mesh(doorGeo, doorMat);
-      doorObj.position.set(0, 1.6, 5.9);
-      doorObj.castShadow = true;
-      scene.add(doorObj);
+      // 등 뒤 철문 & 상단 비상구 조명
+      buildDoorAndExitSign(doorTex);
 
       // 병원 소품 (휠체어, 링거대, 수술용 들것)
       buildWheelchairProp();
@@ -1173,22 +1269,66 @@
       scene.add(p2);
     }
 
+    function buildClinicalClipboard() {
+      clipboardObj = new THREE.Group();
+      const boardMat = new THREE.MeshStandardMaterial({ color: 0x5a452a, roughness: 0.8 });
+      const paperMat = new THREE.MeshStandardMaterial({ color: 0xe0d6b5, roughness: 0.9 });
+      const clipMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.9 });
+
+      const board = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.02, 0.45), boardMat);
+      clipboardObj.add(board);
+
+      const paper = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.022, 0.42), paperMat);
+      paper.position.y = 0.005;
+      clipboardObj.add(paper);
+
+      const clip = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.06), clipMat);
+      clip.position.set(0, 0.015, -0.19);
+      clipboardObj.add(clip);
+
+      clipboardObj.position.set(-0.95, 0.91, -4.0);
+      clipboardObj.rotation.y = 0.18;
+      scene.add(clipboardObj);
+    }
+
+    function buildDoorAndExitSign(doorTex) {
+      const doorGeo = new THREE.BoxGeometry(1.8, 3.2, 0.15);
+      const doorMat = new THREE.MeshStandardMaterial({ map: doorTex, roughness: 0.7, metalness: 0.4 });
+      doorObj = new THREE.Mesh(doorGeo, doorMat);
+      doorObj.position.set(0, 1.6, 5.9);
+      doorObj.castShadow = true;
+      scene.add(doorObj);
+
+      // EXIT 404 비상등
+      exitSignObj = new THREE.Group();
+      const boxMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+      const signBox = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.35, 0.15), boxMat);
+      exitSignObj.add(signBox);
+
+      const labelGeo = new THREE.PlaneGeometry(0.85, 0.3);
+      const labelMat = new THREE.MeshBasicMaterial({ color: 0xff3344 });
+      const labelMesh = new THREE.Mesh(labelGeo, labelMat);
+      labelMesh.position.z = -0.08;
+      labelMesh.rotation.y = Math.PI;
+      exitSignObj.add(labelMesh);
+
+      exitSignObj.position.set(0, 3.45, 5.85);
+      scene.add(exitSignObj);
+    }
+
     function buildBreakerBox() {
       breakerBoxObj = new THREE.Group();
       const metalMat = new THREE.MeshStandardMaterial({ color: 0x334433, metalness: 0.8 });
       const redMat = new THREE.MeshBasicMaterial({ color: 0xff2222 });
 
-      // 차단기 함체
       const box = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.7, 0.5), metalMat);
       breakerBoxObj.add(box);
 
-      // 레버 스위치
       const lever = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.25, 8), new THREE.MeshStandardMaterial({ color: 0xffaa00 }));
       lever.rotation.x = Math.PI / 4;
       lever.position.set(0.08, 0, 0);
       breakerBoxObj.add(lever);
 
-      // 상태 표시등 LED
       const led = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), redMat);
       led.position.set(0.07, 0.25, 0.15);
       breakerBoxObj.add(led);
@@ -1202,16 +1342,13 @@
       const cMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.7 });
       const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
 
-      // 브라켓
       const bracket = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.4, 8), cMat);
       cctvCameraObj.add(bracket);
 
-      // 카메라 본체 하우징
       const body = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.16, 0.45), cMat);
       body.position.set(0, -0.2, 0.1);
       cctvCameraObj.add(body);
 
-      // 적색 감시 렌즈
       const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.06, 12), eyeMat);
       lens.rotation.x = Math.PI / 2;
       lens.position.set(0, -0.2, 0.33);
@@ -1383,17 +1520,14 @@
 
       if (ceilingFan) ceilingFan.rotation.y += 0.02;
 
-      // 부유 먼지 입자 회전
       if (dustParticles) {
         dustParticles.rotation.y += 0.0008;
       }
 
-      // CCTV 카메라의 플레이어 실시간 추적 (Tracking Eye)
       if (cctvCameraObj) {
         cctvCameraObj.lookAt(playerPos.x, playerPos.y, playerPos.z);
       }
 
-      // 천장 물방울 누수
       if (waterDropMesh) {
         waterDropY -= 0.055;
         if (waterDropY < 0.02) {
@@ -1403,16 +1537,15 @@
         waterDropMesh.position.y = waterDropY;
       }
 
-      // 전화기 벨 진동 애니메이션
       if (isPhoneRinging && phoneObj) {
         phoneObj.position.x = 1.1 + Math.sin(Date.now() * 0.05) * 0.015;
       }
 
-      // 조명 흔들림 (정전 상태일 경우 조명 완전 OFF)
       lampSwing += 0.03;
       ceilingLamp.position.x = Math.sin(lampSwing) * 0.2;
       if (isBlackoutActive) {
         ceilingLamp.intensity = 0;
+        if (exitSignLamp) exitSignLamp.intensity = Math.sin(Date.now() * 0.01) * 0.5 + 0.5;
       } else if (!isSafeMode) {
         if (Math.random() < 0.025) {
           ceilingLamp.intensity = Math.random() * 0.3;
@@ -1422,7 +1555,7 @@
       }
 
       // 플레이어 이동 로직
-      if (isPointerLocked && !inTerminalMode) {
+      if (isPointerLocked && !inTerminalMode && !inDocInspectMode) {
         const speed = 0.045;
         const moveVec = new THREE.Vector3();
         let isWalking = false;
@@ -1461,6 +1594,11 @@
       const dir = new THREE.Vector3(0, 0, -1).applyEuler(camera.rotation);
       flashlight.target.position.copy(camera.position).add(dir);
 
+      if (flashlightCone) {
+        flashlightCone.position.copy(camera.position);
+        flashlightCone.rotation.set(cameraPitch, cameraYaw, 0, 'YXZ');
+      }
+
       checkInteractCrosshair();
       renderer.render(scene, camera);
     }
@@ -1468,7 +1606,7 @@
     function checkInteractCrosshair() {
       const reticle = document.getElementById('reticle');
       const tip = document.getElementById('actionTipBox');
-      if (inTerminalMode) {
+      if (inTerminalMode || inDocInspectMode) {
         reticle.classList.remove('active', 'active-uv');
         tip.style.display = 'none';
         return;
@@ -1479,6 +1617,8 @@
       const targets = [deskObj, monitorObj, doorObj];
       if (phoneObj) targets.push(phoneObj);
       if (breakerBoxObj) targets.push(breakerBoxObj);
+      if (noticeBoardObj) targets.push(noticeBoardObj);
+      if (clipboardObj) targets.push(clipboardObj);
 
       const hits = ray.intersectObjects(targets, true);
 
@@ -1489,7 +1629,11 @@
         let rootHit = hits[0].object;
         while (rootHit.parent && rootHit.parent !== scene) rootHit = rootHit.parent;
 
-        if (rootHit === breakerBoxObj) {
+        if (rootHit === noticeBoardObj) {
+          tip.innerText = "[ E ] 벽면 사건 증거 보드 정밀 조사";
+        } else if (rootHit === clipboardObj) {
+          tip.innerText = "[ E ] 환자 17호 및 닥터 한 비밀 일지 열람";
+        } else if (rootHit === breakerBoxObj) {
           tip.innerText = isBlackoutActive ? "[ E ] 배전반 차단기 레버 복원" : "[ E ] 배전반 점검 (정상)";
         } else if (rootHit === phoneObj && isPhoneRinging) {
           tip.innerText = "[ E ] 울리는 전화기 받기";
@@ -1505,7 +1649,7 @@
     }
 
     /* ========================================================
-       3. Web Audio 신시사이저 & 오디오 시뮬레이션
+       3. Web Audio 신시사이저 & 헤테로다인 라디오 피드백
        ======================================================== */
     let audioCtx = null;
     let isPlaying = false;
@@ -1520,6 +1664,8 @@
 
     let noiseNode = null;
     let toneOsc = null;
+    let heterodyneOsc = null;
+    let heterodyneGain = null;
     let filterNode = null;
     let masterGain = null;
     let heartbeatTimer = null;
@@ -1703,6 +1849,7 @@
       noiseNode.start();
 
       startHarmonicVoice();
+      startHeterodyneWhistle();
       startTuningCheckTimer();
     }
 
@@ -1715,6 +1862,7 @@
 
       if (noiseNode) { try { noiseNode.stop(); } catch(e){} noiseNode = null; }
       if (toneOsc) { try { toneOsc.stop(); } catch(e){} toneOsc = null; }
+      if (heterodyneOsc) { try { heterodyneOsc.stop(); } catch(e){} heterodyneOsc = null; }
     }
 
     function startHarmonicVoice() {
@@ -1728,10 +1876,34 @@
       toneOsc.start();
     }
 
+    function startHeterodyneWhistle() {
+      heterodyneOsc = audioCtx.createOscillator();
+      heterodyneGain = audioCtx.createGain();
+      heterodyneOsc.type = 'sine';
+      heterodyneGain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+      heterodyneOsc.connect(heterodyneGain);
+      heterodyneGain.connect(masterGain);
+      heterodyneOsc.start();
+      updateHeterodyneWhistle();
+    }
+
+    function updateHeterodyneWhistle() {
+      if (!heterodyneOsc || !audioCtx) return;
+      const ch = chapterDB[curChapter];
+      const dist = Math.abs(paramFreq - ch.targetFreq);
+      const whistlePitch = Math.min(1800, Math.max(35, dist * 1.5 + 40));
+      heterodyneOsc.frequency.setTargetAtTime(whistlePitch, audioCtx.currentTime, 0.05);
+
+      // 근접했을 때 휘파람 소리가 제로 비트(Null)로 줄어듦
+      const vol = dist <= ch.tolerance ? 0.005 : Math.min(0.04, dist / 25000);
+      heterodyneGain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.05);
+    }
+
     function updateFilterSettings() {
       if (!filterNode || !audioCtx) return;
       filterNode.frequency.setTargetAtTime(paramFreq, audioCtx.currentTime, 0.05);
       filterNode.Q.setTargetAtTime(paramRes, audioCtx.currentTime, 0.05);
+      updateHeterodyneWhistle();
     }
 
     let tuningCheckTimer = null;
@@ -1974,6 +2146,44 @@
       appendLog("시스템", "배전반 차단기가 복구되어 조명이 정상 복원되었습니다.");
     }
 
+    /* 사건 증거 보드 및 의무 일지 열람 모달 */
+    function openDocModal(type) {
+      inDocInspectMode = true;
+      document.exitPointerLock();
+      const modal = document.getElementById('documentInspectModal');
+      const title = document.getElementById('docInspectTitle');
+      const body = document.getElementById('docInspectBody');
+      modal.style.display = 'flex';
+
+      if (type === 'board') {
+        title.innerText = "📌 사건 증거 분석 보드 (CASE BOARD 1979)";
+        body.innerHTML = `
+          <p><strong>[1979.11.02 국립 청송정신의학연구소 참사 기사]</strong></p>
+          <p>지하 4병동 404호 격리병실에서 원인 미상의 화재와 함께 환자 24명 사망, 원장 한진우 실종.</p>
+          <p><em>"원장은 수면 박탈 및 극단적인 특정 헤르츠(108.4Hz) 음향 노출을 통해 환자의 기억과 인격을 교체하는 극비 프로젝트를 진행해왔음."</em></p>
+          <p style="color:#ffaa11; margin-top:12px;"><strong>[벽면 메모]</strong> 최은경 간호사의 음성 증언 테이프(TAPE 03)는 1850Hz에 숨겨져 있다.</p>
+        `;
+      } else {
+        title.innerText = "📋 환자 17호 및 닥터 한 비밀 임상 일지";
+        body.innerHTML = `
+          <p><strong>[피험자 17호 김민우 임상 기록 - 닥터 한 친필 서명]</strong></p>
+          <p>- 1979년 8월: 850Hz 알파파 유도 시작. 피험자가 두통과 함께 '벽 뒤의 괴물'을 시각화함.</p>
+          <p>- 1979년 10월: 108.4Hz 펄스로 과거 기억 완전 망각. 하지만 자신을 닥터 한이라고 부르는 해리성 정체 장애 발현.</p>
+          <p>- <em>"연구가 위험해지고 있다. 최 간호사가 고발 녹음을 남겼다. 나는 404호에 문을 걸어 잠갔다..."</em></p>
+        `;
+      }
+      playBeep(620);
+    }
+
+    function closeDocModal() {
+      inDocInspectMode = false;
+      document.getElementById('documentInspectModal').style.display = 'none';
+      try {
+        const lockPromise = renderer.domElement.requestPointerLock();
+        if (lockPromise && lockPromise.catch) lockPromise.catch(() => {});
+      } catch(e) {}
+    }
+
     function triggerHorrorEvent(trig) {
       if (trig === 'scare') {
         playJumpScare();
@@ -2064,11 +2274,9 @@
       requestAnimationFrame(drawSpectrogramWaterfall);
       if (!specCtx) return;
 
-      // 이전 프레임을 아래로 1px 스크롤
       const imgData = specCtx.getImageData(0, 0, 240, 54);
       specCtx.putImageData(imgData, 0, 1);
 
-      // 최상단 한 줄에 새로운 주파수 히트맵 라인 렌더링
       const line = specCtx.createImageData(240, 1);
       const data = line.data;
       const targetPos = (paramFreq / 3800) * 240;
@@ -2234,6 +2442,10 @@
       if (mode === 'flashlight') {
         flashlight.intensity = 4.0;
         flashlight.color.setHex(0xfff6dc);
+        if (flashlightCone) {
+          flashlightCone.material.color.setHex(0xfff0cc);
+          flashlightCone.material.opacity = 0.12;
+        }
         if (uvClueMesh) uvClueMesh.material.opacity = 0;
         uvLayer.style.opacity = '0';
         lbl.innerText = 'FLASHLIGHT (일반)';
@@ -2241,12 +2453,17 @@
       } else if (mode === 'uv') {
         flashlight.intensity = 5.0;
         flashlight.color.setHex(0xaa33ff);
+        if (flashlightCone) {
+          flashlightCone.material.color.setHex(0xaa22ff);
+          flashlightCone.material.opacity = 0.22;
+        }
         if (uvClueMesh) uvClueMesh.material.opacity = 0.95;
         uvLayer.style.opacity = '1';
         lbl.innerText = 'UV BLACKLIGHT (자외선)';
         lbl.style.color = '#cc55ff';
       } else {
         flashlight.intensity = 0;
+        if (flashlightCone) flashlightCone.material.opacity = 0;
         if (uvClueMesh) uvClueMesh.material.opacity = 0;
         uvLayer.style.opacity = '0';
         lbl.innerText = 'LIGHT OFF';
@@ -2273,7 +2490,7 @@
     });
 
     window.addEventListener('mousemove', (e) => {
-      if (!isPointerLocked || inTerminalMode) return;
+      if (!isPointerLocked || inTerminalMode || inDocInspectMode) return;
       cameraYaw -= e.movementX * 0.0022;
       cameraPitch -= e.movementY * 0.0022;
       cameraPitch = Math.max(-Math.PI / 2.3, Math.min(Math.PI / 2.3, cameraPitch));
@@ -2286,20 +2503,20 @@
       if (k === 's') keys.s = true;
       if (k === 'd') keys.d = true;
 
-      // 손전등 일반 토글
       if (k === 'f') {
         if (lightMode === 'flashlight') setLightMode('off');
         else setLightMode('flashlight');
       }
 
-      // UV 자외선 탐조등 토글
       if (k === 'g') {
         if (lightMode === 'uv') setLightMode('flashlight');
         else setLightMode('uv');
       }
 
       if (k === 'e') {
-        if (inTerminalMode) {
+        if (inDocInspectMode) {
+          closeDocModal();
+        } else if (inTerminalMode) {
           exitTerminal();
         } else {
           const ray = new THREE.Raycaster();
@@ -2307,13 +2524,19 @@
           const targets = [deskObj, monitorObj, doorObj];
           if (phoneObj) targets.push(phoneObj);
           if (breakerBoxObj) targets.push(breakerBoxObj);
+          if (noticeBoardObj) targets.push(noticeBoardObj);
+          if (clipboardObj) targets.push(clipboardObj);
 
           const hits = ray.intersectObjects(targets, true);
           if (hits.length > 0 && hits[0].distance < 3.8) {
             let rootHit = hits[0].object;
             while (rootHit.parent && rootHit.parent !== scene) rootHit = rootHit.parent;
 
-            if (rootHit === breakerBoxObj) {
+            if (rootHit === noticeBoardObj) {
+              openDocModal('board');
+            } else if (rootHit === clipboardObj) {
+              openDocModal('clipboard');
+            } else if (rootHit === breakerBoxObj) {
               repairBreaker();
             } else if (rootHit === phoneObj && isPhoneRinging) {
               answerPhone();
@@ -2328,6 +2551,7 @@
       }
 
       if (e.key === 'Escape') {
+        if (inDocInspectMode) closeDocModal();
         if (inTerminalMode) exitTerminal();
         hangupPhone();
       }
