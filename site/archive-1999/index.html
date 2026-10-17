@@ -78,6 +78,23 @@
       background: radial-gradient(circle at center, transparent 55%, rgba(0,0,0,0.6) 100%);
     }
 
+    /* 광기(Sanity) 핏줄 잠식 오버레이 */
+    #sanityVeinOverlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(circle at center, transparent 40%, rgba(180, 10, 20, 0.5) 85%, rgba(100, 0, 5, 0.95) 100%);
+      box-shadow: inset 0 0 90px rgba(200, 0, 0, 0.6);
+      z-index: 42;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+      animation: vein-heartbeat 1.2s infinite ease-in-out;
+    }
+    @keyframes vein-heartbeat {
+      0%, 100% { transform: scale(1); filter: contrast(100%); }
+      50% { transform: scale(1.02); filter: contrast(130%); }
+    }
+
     /* UV 블랙라이트 오버레이 */
     #uvOverlay {
       position: fixed;
@@ -635,6 +652,7 @@
   <div class="vhs-overlay"></div>
   <div class="vhs-tracking-bar"></div>
   <div class="vignette-lens"></div>
+  <div id="sanityVeinOverlay"></div>
   <div id="uvOverlay"></div>
   <div id="bloodFlash"></div>
   <div id="reticle"></div>
@@ -816,7 +834,6 @@
       일반 손전등(F)과 UV 자외선 탐조등(G)을 교차 활용하여 불탄 릴 테이프를 복원하십시오.
     </p>
 
-    <!-- 공포 모드 선택 (쫄보 배려 모드 완비) -->
     <div style="font-size:12px; color:#aaa; margin-bottom:6px;">난이도 및 플레이 모드 선택:</div>
     <div class="mode-toggle-group">
       <button class="mode-btn active" id="btnModeHard" onclick="setPlayMode('hard')">🩸 하드코어 공포 (원작 체험)</button>
@@ -850,6 +867,8 @@
     let curChapter = 1;
     let isPhoneRinging = false;
     let isBlackoutActive = false;
+    let isDrawerOpen = false;
+    let hasSedative = true;
     let lightMode = 'flashlight'; // 'flashlight', 'uv', 'off'
 
     function setPlayMode(mode) {
@@ -874,6 +893,7 @@
         if (ambientGlow) ambientGlow.intensity = 1.6;
         if (ceilingLamp) ceilingLamp.intensity = 1.8;
         if (isBlackoutActive) repairBreaker();
+        document.getElementById('sanityVeinOverlay').style.opacity = '0';
       } else {
         document.body.classList.remove('safe-mode-active');
         if (ambientGlow) ambientGlow.intensity = 0.7;
@@ -989,16 +1009,13 @@
       const c = document.createElement('canvas');
       c.width = 512; c.height = 256;
       const ctx = c.getContext('2d');
-      ctx.fillStyle = '#3a2717'; ctx.fillRect(0, 0, 512, 256); // 코르크 바탕
+      ctx.fillStyle = '#3a2717'; ctx.fillRect(0, 0, 512, 256);
 
-      // 폴라로이드 사진 소품
       ctx.fillStyle = '#f0ede6'; ctx.fillRect(40, 30, 90, 110);
       ctx.fillStyle = '#111'; ctx.fillRect(48, 38, 74, 74);
-      // 사진 위 긁힌 X 자국
       ctx.strokeStyle = '#c01a24'; ctx.lineWidth = 4;
       ctx.beginPath(); ctx.moveTo(48, 38); ctx.lineTo(122, 112); ctx.moveTo(122, 38); ctx.lineTo(48, 112); ctx.stroke();
 
-      // 신문 기사 조각
       ctx.fillStyle = '#e8d8b8'; ctx.fillRect(160, 25, 200, 140);
       ctx.fillStyle = '#222'; ctx.font = 'bold 13px "Special Elite", monospace';
       ctx.fillText('1979 청송연구소 화재 참사', 170, 50);
@@ -1007,12 +1024,10 @@
       ctx.fillText('한진우 원장 행방 묘연...', 170, 95);
       ctx.fillText('[경찰 수사 잠정 중단]', 170, 120);
 
-      // 붉은 압정
       ctx.fillStyle = '#ff2233';
       ctx.beginPath(); ctx.arc(260, 20, 6, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(85, 25, 6, 0, Math.PI * 2); ctx.fill();
 
-      // 붉은색 연결 실선 (Investigation Red Thread)
       ctx.strokeStyle = '#ff2233'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(85, 25); ctx.lineTo(260, 20); ctx.stroke();
 
@@ -1043,12 +1058,12 @@
     }
 
     /* ========================================================
-       2. THREE.JS 3D 환경 구성 (볼류메트릭 콘, 증거보드, 차트)
+       2. THREE.JS 3D 환경 구성 (서랍, 진정제, 볼류메트릭 콘)
        ======================================================== */
     let scene, camera, renderer;
     let flashlight, flashlightCone, ceilingLamp, ambientGlow, exitSignLamp;
-    let deskObj, monitorObj, doorObj, monsterFigure, ceilingFan, wheelchairObj, ivStandObj, gurneyObj;
-    let phoneObj, breakerBoxObj, cctvCameraObj, noticeBoardObj, clipboardObj, exitSignObj;
+    let deskObj, deskDrawerObj, sedativeBottleObj, monitorObj, doorObj, monsterFigure, ceilingFan;
+    let wheelchairObj, ivStandObj, gurneyObj, phoneObj, breakerBoxObj, cctvCameraObj, noticeBoardObj, clipboardObj, exitSignObj;
     let uvClueMesh, dustParticles, waterDropMesh;
     let isPointerLocked = false;
     let inTerminalMode = false;
@@ -1081,20 +1096,16 @@
       ceilingLamp.castShadow = true;
       scene.add(ceilingLamp);
 
-      // 비상구 붉은빛 조명
       exitSignLamp = new THREE.PointLight(0xff2233, 0.9, 4.0);
       exitSignLamp.position.set(0, 3.3, 5.6);
       scene.add(exitSignLamp);
 
-      // 손전등 / UV 탐조등 스포트라이트
       flashlight = new THREE.SpotLight(0xfff6dc, 4.0, 16, Math.PI / 5.5, 0.35, 1.2);
       flashlight.castShadow = true;
       scene.add(flashlight);
       scene.add(flashlight.target);
 
-      // 3D 볼류메트릭 라이트 콘 메쉬 (Volumetric Light Cone)
       buildVolumetricLightCone();
-
       buildAsylumWard();
       buildVolumetricDust();
       renderLoop3D();
@@ -1164,7 +1175,7 @@
       wallRight.rotation.y = -Math.PI / 2;
       scene.add(wallRight);
 
-      // 벽면 사건 증거 코르크 보드 (Notice Board)
+      // 벽면 사건 증거 코르크 보드
       const boardGeo = new THREE.BoxGeometry(2.4, 1.2, 0.05);
       const boardMat = new THREE.MeshStandardMaterial({ map: boardTex, roughness: 0.9 });
       noticeBoardObj = new THREE.Mesh(boardGeo, boardMat);
@@ -1209,6 +1220,9 @@
       deskObj.receiveShadow = true;
       scene.add(deskObj);
 
+      // 슬라이딩 서랍 (Desk Drawer)
+      buildDeskDrawer();
+
       // CRT 모니터 & 릴 테이프 머신
       const monGeo = new THREE.BoxGeometry(1.2, 0.85, 0.8);
       const monMat = new THREE.MeshStandardMaterial({ color: 0x18261e, roughness: 0.65 });
@@ -1223,7 +1237,7 @@
       screen.position.set(0, 1.35, -3.79);
       scene.add(screen);
 
-      // 데스크 위 의무 기록 차트 (Clinical Clipboard)
+      // 데스크 위 의무 기록 차트
       buildClinicalClipboard();
 
       // 데스크 위 로터리 전화기
@@ -1252,6 +1266,61 @@
 
       // 기괴한 3D 그림자 괴물
       buildMonsterEntity();
+    }
+
+    function buildDeskDrawer() {
+      deskDrawerObj = new THREE.Group();
+      const woodMat = new THREE.MeshStandardMaterial({ color: 0x221710, roughness: 0.8 });
+      const handleMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8 });
+
+      // 서랍 앞판
+      const face = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.22, 0.04), woodMat);
+      deskDrawerObj.add(face);
+
+      // 서랍 손잡이
+      const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.16, 8), handleMat);
+      handle.rotation.z = Math.PI / 2;
+      handle.position.set(0, 0, 0.03);
+      deskDrawerObj.add(handle);
+
+      // 서랍 내부 박스
+      const tray = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.18, 0.6), woodMat);
+      tray.position.set(0, -0.01, -0.32);
+      deskDrawerObj.add(tray);
+
+      // 진정제 약병 (Sedative Vial)
+      sedativeBottleObj = new THREE.Group();
+      const bottleMat = new THREE.MeshStandardMaterial({ color: 0xcc8833, roughness: 0.3, transparent: true, opacity: 0.85 });
+      const capMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+      const bBody = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.09, 12), bottleMat);
+      const bCap = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.03, 12), capMat);
+      bCap.position.y = 0.055;
+      sedativeBottleObj.add(bBody);
+      sedativeBottleObj.add(bCap);
+      sedativeBottleObj.position.set(0.12, 0.04, -0.28);
+      deskDrawerObj.add(sedativeBottleObj);
+
+      deskDrawerObj.position.set(0.85, 0.62, -3.52);
+      scene.add(deskDrawerObj);
+    }
+
+    function toggleDeskDrawer() {
+      isDrawerOpen = !isDrawerOpen;
+      const targetZ = isDrawerOpen ? -3.15 : -3.52;
+      deskDrawerObj.position.z = targetZ;
+      playBeep(isDrawerOpen ? 450 : 320);
+      if (isDrawerOpen && hasSedative) {
+        appendLog("발견", "서랍 안에서 [신경 안정제 약병]을 발견했습니다! [ E ]로 복용하여 이성을 회복할 수 있습니다.");
+      }
+    }
+
+    function consumeSedative() {
+      if (!hasSedative) return;
+      hasSedative = false;
+      sedativeBottleObj.visible = false;
+      modifySanity(30);
+      playBeep(700);
+      appendLog("회복", "💊 진정제를 복용했습니다! 호흡이 가라앉고 이성(SAN)이 +30% 회복되었습니다.");
     }
 
     function buildCeilingPipes() {
@@ -1299,7 +1368,6 @@
       doorObj.castShadow = true;
       scene.add(doorObj);
 
-      // EXIT 404 비상등
       exitSignObj = new THREE.Group();
       const boxMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
       const signBox = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.35, 0.15), boxMat);
@@ -1554,7 +1622,6 @@
         }
       }
 
-      // 플레이어 이동 로직
       if (isPointerLocked && !inTerminalMode && !inDocInspectMode) {
         const speed = 0.045;
         const moveVec = new THREE.Vector3();
@@ -1619,6 +1686,8 @@
       if (breakerBoxObj) targets.push(breakerBoxObj);
       if (noticeBoardObj) targets.push(noticeBoardObj);
       if (clipboardObj) targets.push(clipboardObj);
+      if (deskDrawerObj) targets.push(deskDrawerObj);
+      if (sedativeBottleObj && hasSedative) targets.push(sedativeBottleObj);
 
       const hits = ray.intersectObjects(targets, true);
 
@@ -1627,9 +1696,15 @@
         tip.style.display = 'block';
 
         let rootHit = hits[0].object;
-        while (rootHit.parent && rootHit.parent !== scene) rootHit = rootHit.parent;
+        while (rootHit.parent && rootHit.parent !== scene && rootHit !== deskDrawerObj && rootHit !== sedativeBottleObj) {
+          rootHit = rootHit.parent;
+        }
 
-        if (rootHit === noticeBoardObj) {
+        if (rootHit === sedativeBottleObj && hasSedative) {
+          tip.innerText = "[ E ] 신경 안정제 복용 (이성 +30%)";
+        } else if (rootHit === deskDrawerObj) {
+          tip.innerText = isDrawerOpen ? "[ E ] 책상 서랍 닫기" : "[ E ] 책상 서랍 열기";
+        } else if (rootHit === noticeBoardObj) {
           tip.innerText = "[ E ] 벽면 사건 증거 보드 정밀 조사";
         } else if (rootHit === clipboardObj) {
           tip.innerText = "[ E ] 환자 17호 및 닥터 한 비밀 일지 열람";
@@ -1666,6 +1741,7 @@
     let toneOsc = null;
     let heterodyneOsc = null;
     let heterodyneGain = null;
+    let wowLfo = null;
     let filterNode = null;
     let masterGain = null;
     let heartbeatTimer = null;
@@ -1863,6 +1939,7 @@
       if (noiseNode) { try { noiseNode.stop(); } catch(e){} noiseNode = null; }
       if (toneOsc) { try { toneOsc.stop(); } catch(e){} toneOsc = null; }
       if (heterodyneOsc) { try { heterodyneOsc.stop(); } catch(e){} heterodyneOsc = null; }
+      if (wowLfo) { try { wowLfo.stop(); } catch(e){} wowLfo = null; }
     }
 
     function startHarmonicVoice() {
@@ -1871,6 +1948,16 @@
       const ch = chapterDB[curChapter];
       toneOsc.type = 'triangle';
       toneOsc.frequency.setValueAtTime(ch.targetFreq * paramSpeed, audioCtx.currentTime);
+
+      // 테이프 와우 앤 플러터(Wow & Flutter) 아날로그 피치 요동
+      wowLfo = audioCtx.createOscillator();
+      const lfoGain = audioCtx.createGain();
+      wowLfo.frequency.setValueAtTime(1.1, audioCtx.currentTime);
+      lfoGain.gain.setValueAtTime(3.5, audioCtx.currentTime);
+      wowLfo.connect(lfoGain);
+      lfoGain.connect(toneOsc.frequency);
+      wowLfo.start();
+
       g.gain.setValueAtTime(0.015, audioCtx.currentTime);
       toneOsc.connect(g); g.connect(masterGain);
       toneOsc.start();
@@ -1894,7 +1981,6 @@
       const whistlePitch = Math.min(1800, Math.max(35, dist * 1.5 + 40));
       heterodyneOsc.frequency.setTargetAtTime(whistlePitch, audioCtx.currentTime, 0.05);
 
-      // 근접했을 때 휘파람 소리가 제로 비트(Null)로 줄어듦
       const vol = dist <= ch.tolerance ? 0.005 : Math.min(0.04, dist / 25000);
       heterodyneGain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.05);
     }
@@ -2082,7 +2168,6 @@
       }
     }
 
-    /* 전화 벨 소리 합성 (Procedural Telephone Ring) */
     function startPhoneRinging() {
       if (isPhoneRinging || !audioCtx) return;
       isPhoneRinging = true;
@@ -2130,7 +2215,6 @@
       document.getElementById('telephoneCallModal').style.display = 'none';
     }
 
-    /* 정전(Blackout) 이벤트 및 배전반 복원 */
     function triggerBlackoutEvent() {
       if (isSafeMode) return;
       isBlackoutActive = true;
@@ -2146,7 +2230,6 @@
       appendLog("시스템", "배전반 차단기가 복구되어 조명이 정상 복원되었습니다.");
     }
 
-    /* 사건 증거 보드 및 의무 일지 열람 모달 */
     function openDocModal(type) {
       inDocInspectMode = true;
       document.exitPointerLock();
@@ -2215,6 +2298,16 @@
       document.getElementById('lblSAN').innerText = sanity + '%';
       document.getElementById('lblBPM').innerText = bpm;
       startHeartbeatTimer();
+
+      // 이성 붕괴에 따른 화면 핏줄 잠식 오버레이 제어
+      const vein = document.getElementById('sanityVeinOverlay');
+      if (vein) {
+        if (!isSafeMode && sanity < 70) {
+          vein.style.opacity = ((70 - sanity) / 70 * 0.88).toFixed(2);
+        } else {
+          vein.style.opacity = '0';
+        }
+      }
     }
 
     function appendLog(spk, txt) {
@@ -2526,13 +2619,21 @@
           if (breakerBoxObj) targets.push(breakerBoxObj);
           if (noticeBoardObj) targets.push(noticeBoardObj);
           if (clipboardObj) targets.push(clipboardObj);
+          if (deskDrawerObj) targets.push(deskDrawerObj);
+          if (sedativeBottleObj && hasSedative) targets.push(sedativeBottleObj);
 
           const hits = ray.intersectObjects(targets, true);
           if (hits.length > 0 && hits[0].distance < 3.8) {
             let rootHit = hits[0].object;
-            while (rootHit.parent && rootHit.parent !== scene) rootHit = rootHit.parent;
+            while (rootHit.parent && rootHit.parent !== scene && rootHit !== deskDrawerObj && rootHit !== sedativeBottleObj) {
+              rootHit = rootHit.parent;
+            }
 
-            if (rootHit === noticeBoardObj) {
+            if (rootHit === sedativeBottleObj && hasSedative) {
+              consumeSedative();
+            } else if (rootHit === deskDrawerObj) {
+              toggleDeskDrawer();
+            } else if (rootHit === noticeBoardObj) {
               openDocModal('board');
             } else if (rootHit === clipboardObj) {
               openDocModal('clipboard');
