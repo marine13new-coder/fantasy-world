@@ -601,6 +601,16 @@ function createSettlementList() {
   add('valkyrie_permafrost_ice_forge', '영구동토 비전 서리 대장간', 'lair', 'valkyrie', 2340, 180, 'dwarf', true, 11);
   add('valkyrie_borealis_monolith_shrine', '북극광 성좌 거석 신성 제단', 'temple', 'valkyrie', 2090, 310, 'celestial', true, 12);
 
+  // =========================================================================
+  // 16. THE EASTERN SAKURA JADE EMPIRE & SPIRIT BAMBOO GROVE (동방 벚꽃 옥룡 제국 & 영혼의 죽림)
+  // =========================================================================
+  add('sakura_jade_palace_capital', '벚꽃 옥룡 황성 수도', 'capital', 'sakura', 2950, 1420, 'human', true, 16);
+  add('sakura_spirit_bamboo_temple', '영혼의 죽림 선원 신사', 'temple', 'sakura', 3080, 1340, 'elf', true, 14);
+  add('sakura_floating_lotus_port', '부유하는 연꽃 다원 항만', 'port', 'sakura', 2840, 1520, 'human', false, 9);
+  add('sakura_samurai_moonlit_dojo', '월하의 사무라이 도장 대성채', 'castle', 'sakura', 3160, 1490, 'crusader', true, 13);
+  add('sakura_jade_waterfall_forge', '옥룡 폭포 비전 명검 대장간', 'lair', 'sakura', 3010, 1610, 'dwarf', true, 10);
+  add('sakura_kitsune_spirit_shrine', '구미호 신목 영험한 여우 신사', 'town', 'sakura', 2890, 1320, 'beastkin', false, 8);
+
   return list;
 }
 
@@ -906,6 +916,18 @@ function generateWorld() {
             tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.CRYSTAL_CAVE : TILE.SNOW; // 서리 크리스탈 동굴 & 설원
           } else if (dist <= landRad + 3) {
             tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.WATER : TILE.SNOW;
+          }
+          continue;
+        }
+
+        // 동방 벚꽃 옥룡 제국 & 영혼의 죽림 전용 지형 카빙
+        if (s.continent === 'sakura') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.CASTLE_FLOOR : TILE.ROAD; // 붉은 기와 석조 보도
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.MEADOW : TILE.FOREST; // 벚꽃 꽃밭 초원 & 영혼의 대나무 숲
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.WATER : TILE.MEADOW;
           }
           continue;
         }

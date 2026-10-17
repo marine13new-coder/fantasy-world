@@ -29,18 +29,19 @@ class WorldRenderer {
     // 🖥️ Hi-DPI 초고해상도 레티나 스케일링 계수
     this.dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2.5) : 1;
 
-    // 🌸 대기 환경 파티클 (꽃잎, 반딧불이, 단풍잎, 눈꽃 결정, 화산 불꽃재, 수면 반짝임)
+    // 🌸 대기 환경 파티클 (벚꽃잎, 반딧불이, 단풍잎, 눈꽃 결정, 화산 불꽃재, 수면 반짝임)
     this.ambientParticles = [];
-    for (let i = 0; i < 115; i++) {
+    for (let i = 0; i < 130; i++) {
       let pType = 'petal';
       let pColor = '#f472b6';
-      if (i < 20) { pType = 'petal'; pColor = Math.random() > 0.4 ? '#f472b6' : '#ffffff'; }
-      else if (i < 38) { pType = 'firefly'; pColor = '#bef264'; }
-      else if (i < 54) { pType = 'leaf'; pColor = Math.random() > 0.5 ? '#ea580c' : '#d97706'; }
-      else if (i < 70) { pType = 'snow'; pColor = '#f8fafc'; }
-      else if (i < 85) { pType = 'ash'; pColor = Math.random() > 0.5 ? '#f97316' : '#ef4444'; }
-      else if (i < 100) { pType = 'spore'; pColor = '#c084fc'; }
-      else if (i < 112) { pType = 'void_shard'; pColor = '#a855f7'; }
+      if (i < 20) { pType = 'sakura_petal'; pColor = Math.random() > 0.4 ? '#f472b6' : '#fb7185'; }
+      else if (i < 36) { pType = 'petal'; pColor = Math.random() > 0.4 ? '#fbcfe8' : '#ffffff'; }
+      else if (i < 52) { pType = 'firefly'; pColor = '#bef264'; }
+      else if (i < 68) { pType = 'leaf'; pColor = Math.random() > 0.5 ? '#ea580c' : '#d97706'; }
+      else if (i < 84) { pType = 'snow'; pColor = '#f8fafc'; }
+      else if (i < 98) { pType = 'ash'; pColor = Math.random() > 0.5 ? '#f97316' : '#ef4444'; }
+      else if (i < 112) { pType = 'spore'; pColor = '#c084fc'; }
+      else if (i < 122) { pType = 'void_shard'; pColor = '#a855f7'; }
       else { pType = 'shimmer'; pColor = '#ffffff'; }
 
       this.ambientParticles.push({
@@ -4930,6 +4931,19 @@ class WorldRenderer {
         ctx.fillStyle = p.color;
         ctx.globalAlpha = 0.72;
         ctx.fillRect(-p.size, -p.size / 2, p.size * 2, p.size);
+        ctx.restore();
+      } else if (p.type === 'sakura_petal') {
+        // 🌸 동방 벚꽃 옥룡 제국의 흩날리는 픽셀 벚꽃잎 (Floating Sakura Petals)
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.phase + Math.sin(timeSec * 2.5 + p.phase) * 0.8);
+        ctx.fillStyle = p.color || '#f472b6';
+        ctx.globalAlpha = 0.85;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, p.size * 1.6, p.size * 0.85, 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fdf2f8'; // 중심 잎맥 하이라이트
+        ctx.fillRect(-0.5, -p.size * 0.5, 1, p.size);
         ctx.restore();
       } else if (p.type === 'firefly' && isNight) {
         // 🌟 밤에 영롱하게 반짝이는 초록/황금 반딧불이 (Sine Wave Glow Pulse)

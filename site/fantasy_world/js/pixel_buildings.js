@@ -1503,6 +1503,160 @@
     },
 
     // =========================================================================
+    // 11.8. 동방 벚꽃 다층 옥룡 파고다 누각 (Multi-Tiered Sakura Pagoda Tower)
+    // =========================================================================
+    drawPagodaTower(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // 바닥 석조 기단 및 모래 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.50)';
+      ctx.fillRect(px - halfW + 2, py + halfH - 2, bw - 4, 6);
+
+      // 1단 기단 (Grey Stone Plinth)
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(px - halfW + 4, py + halfH - 5, bw - 8, 4);
+
+      // 3층 다층 누각 루프 (3-Tiered Pagoda Roofs with Upturned Eaves)
+      const tiers = [
+        { y: py + 4, w: bw - 6, roofW: bw + 6 },
+        { y: py - 8, w: bw - 12, roofW: bw },
+        { y: py - 20, w: bw - 18, roofW: bw - 6 }
+      ];
+
+      for (let t = 0; t < tiers.length; t++) {
+        const tr = tiers[t];
+        const tw = tr.w;
+        const thw = Math.round(tw / 2);
+
+        // 주홍빛 붉은 목조 기둥 및 벽 (Vermilion Timber Walls)
+        ctx.fillStyle = '#7f1d1d';
+        ctx.fillRect(px - thw, tr.y, tw, 10);
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(px - thw + 1, tr.y, 3, 10);
+        ctx.fillRect(px + thw - 4, tr.y, 3, 10);
+        ctx.fillRect(px - 1, tr.y, 2, 10);
+
+        // 격자 미닫이 창문 (Shoji Screen Windows)
+        ctx.fillStyle = isNight ? '#fef08a' : '#f8fafc';
+        ctx.fillRect(px - thw + 4, tr.y + 2, Math.max(2, thw - 5), 6);
+        ctx.fillRect(px + 1, tr.y + 2, Math.max(2, thw - 5), 6);
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(px - thw + 4, tr.y + 4, Math.max(2, thw - 5), 1);
+        ctx.fillRect(px + 1, tr.y + 4, Math.max(2, thw - 5), 1);
+
+        // 곡선형 치켜올려진 기와 처마 (Curved Slate Tile Eaves)
+        const rw = tr.roofW;
+        const rhw = Math.round(rw / 2);
+        const roofY = tr.y - 3;
+
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(px - rhw, roofY + 2, rw, 2);
+
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.moveTo(px - rhw - 2, roofY - 2);
+        ctx.lineTo(px, roofY - 5);
+        ctx.lineTo(px + rhw + 2, roofY - 2);
+        ctx.lineTo(px + rhw, roofY);
+        ctx.lineTo(px - rhw, roofY);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(px - rhw - 1, roofY, 2, 2);
+        ctx.fillRect(px + rhw - 1, roofY, 2, 2);
+      }
+
+      // 상단 황금 보주 상륜부 (Golden Pagoda Finial Spire)
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(px - 1, py - 30, 2, 8);
+      ctx.beginPath();
+      ctx.arc(px, py - 32, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 건물 처마 매달린 붉은 종이 등불 (Hanging Red Paper Lanterns)
+      const lanternY = py + 7;
+      const drawLantern = (lx) => {
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(lx, lanternY, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = isNight ? '#fef08a' : '#fbbf24';
+        ctx.fillRect(lx - 0.5, lanternY - 0.5, 1, 1);
+      };
+      drawLantern(px - halfW + 1);
+      drawLantern(px + halfW - 1);
+    },
+
+    // =========================================================================
+    // 11.9. 붉은 도리이 문 & 석등 신사 (Vermilion Torii Gate & Spirit Shrine)
+    // =========================================================================
+    drawToriiShrine(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // 바닥 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+      ctx.fillRect(px - halfW + 2, py + halfH - 2, bw - 4, 5);
+
+      // 도리이 2대 원주 기둥 (Twin Vermilion Columns)
+      const colX1 = px - halfW + 6;
+      const colX2 = px + halfW - 8;
+      const colH = bh - 10;
+      const colY = py + halfH - 2 - colH;
+
+      ctx.fillStyle = '#991b1b';
+      ctx.fillRect(colX1 - 1, colY, 5, colH);
+      ctx.fillRect(colX2 - 1, colY, 5, colH);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(colX1, colY, 3, colH);
+      ctx.fillRect(colX2, colY, 3, colH);
+
+      // 기둥 밑 흑색 주춧돌 (Black Stone Bases)
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(colX1 - 2, py + halfH - 5, 7, 4);
+      ctx.fillRect(colX2 - 2, py + halfH - 5, 7, 4);
+
+      // 하부 가로 인방 보 (Nuki Cross-Beam)
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(px - halfW + 4, colY + 8, bw - 8, 3);
+
+      // 상부 주보 (Kasagi & Shimaki Top Curved Beams)
+      const topY = colY - 3;
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.moveTo(px - halfW + 1, topY - 3);
+      ctx.lineTo(px, topY - 5);
+      ctx.lineTo(px + halfW - 1, topY - 3);
+      ctx.lineTo(px + halfW, topY);
+      ctx.lineTo(px - halfW, topY);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(px - halfW + 3, topY, bw - 6, 4);
+
+      // 금박 현판 (Golden Tablet)
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(px - 3, colY + 1, 6, 8);
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(px - 2, colY + 2, 4, 6);
+
+      // 좌우 석등롱 (Twin Stone Lanterns Toro)
+      const drawToro = (tx) => {
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(tx - 2, py + halfH - 8, 5, 7);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(tx - 3, py + halfH - 12, 7, 4);
+        ctx.fillStyle = isNight ? '#fef08a' : '#ffffff';
+        ctx.fillRect(tx - 1, py + halfH - 10, 3, 2);
+      };
+      drawToro(colX1 - 8);
+      drawToro(colX2 + 8);
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -1717,6 +1871,14 @@
       }
       if (type === 'aurora_monolith' || (type === 'temple' && b && b.continent === 'valkyrie')) {
         this.drawAuroraMonolith(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'pagoda_tower' || (type === 'castle' && b && b.continent === 'sakura') || (type === 'capital' && b && b.continent === 'sakura')) {
+        this.drawPagodaTower(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'torii_shrine' || (type === 'temple' && b && b.continent === 'sakura')) {
+        this.drawToriiShrine(ctx, px, py, bw, bh, isNight, timeSec);
         return true;
       }
       if (type === 'temple' || type === 'cathedral') {
