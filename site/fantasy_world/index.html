@@ -66,6 +66,21 @@
       </div>
     </div>
 
+    <!-- 대륙 긴급 돌발 이벤트 배너 (Dynamic World Event Banner) -->
+    <div id="worldEventBanner" class="world-event-banner hidden">
+      <div class="event-banner-inner">
+        <span id="eventIcon" class="event-icon">⚡</span>
+        <div class="event-info">
+          <div class="event-title-line">
+            <span class="event-tag">대륙 긴급 이벤트</span>
+            <span id="eventName" class="event-name">해적 함대 기습</span>
+            <span id="eventTimer" class="event-timer">⏱️ 110s</span>
+          </div>
+          <span id="eventDesc" class="event-desc">푸른파도 항구 해역에 해적 선단 출현</span>
+        </div>
+      </div>
+    </div>
+
     <div class="hud-stats">
       <div class="stat-pill" title="전체 왕국 주민 및 영웅 수">
         <span>👥 주민/영웅</span>
@@ -561,6 +576,16 @@
               <strong id="statValInt">10</strong>
               <button class="btn-alloc-plus" data-stat="int">+</button>
             </div>
+          </div>
+        </div>
+
+        <!-- 해금된 고대 성소의 영구 유물 특성 목록 -->
+        <div class="ancient-traits-section">
+          <div class="traits-title-row">
+            <span>🏛️ 각성된 고대 성소 유물 특성 (Ancient Relic Traits)</span>
+          </div>
+          <div class="traits-grid" id="ancientTraitsGrid">
+            <!-- JS 동적 렌더링 -->
           </div>
         </div>
       </div>

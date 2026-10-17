@@ -47,6 +47,31 @@ class WorldRenderer {
     this.bakeStaticTerrain();
   }
 
+  // ☀️ 실시간 태양 궤적에 따른 다이내믹 투영 그림자 벡터 (Dynamic Sun Angle Shadows)
+  getSunShadowOffset(worldTime) {
+    if (!worldTime) return { dx: 6, dy: 6, alpha: 0.35, stretch: 1.0 };
+    const h = worldTime.hour + (worldTime.minute || 0) / 60;
+    let dx = 0;
+    let dy = 5;
+    let alpha = 0.35;
+    let stretch = 1.0;
+
+    if (h >= 5.5 && h < 18.5) {
+      const sunRatio = (h - 5.5) / 13; // 0 (Dawn) to 1 (Dusk)
+      dx = Math.round((sunRatio - 0.5) * 26);
+      const noonDist = Math.abs(h - 12);
+      dy = Math.round(3 + noonDist * 0.6);
+      stretch = 0.85 + noonDist * 0.08;
+      alpha = Math.max(0.2, 0.44 - noonDist * 0.025);
+    } else {
+      dx = 4;
+      dy = 4;
+      alpha = 0.20;
+      stretch = 0.75;
+    }
+    return { dx, dy, alpha, stretch };
+  }
+
   bakeStaticTerrain() {
     const tCtx = this.terrainCanvas.getContext('2d');
     const mCtx = this.minimapBaseCanvas.getContext('2d');
@@ -215,6 +240,9 @@ class WorldRenderer {
     // 5.5. 16/32비트 고품질 픽셀 자연 식생 & 환경 소품 (대형 참나무, 침엽수, 그루터기, 통나무, 울타리, 꽃밭, 모닥불, 유적, 버섯) + 다이렉셔널 드롭 섀도우
     if (camera.zoom > 0.25) {
       this.drawDetailedPixelProps(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
+      if (camera.zoom > 0.35) {
+        this.drawBioluminescentSprites(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
+      }
     }
 
     // 6. 건물 렌더링 (픽셀 기와, 회전 풍차, 굴뚝 연기, 밤 조명)
@@ -405,6 +433,7 @@ class WorldRenderer {
     if (this.entityMgr.rpgManager) {
       this.drawPlayerStructures(ctx, ts, timeSec, camera.zoom);
       this.drawTreasureChests(ctx, ts, timeSec, camera.zoom);
+      this.drawAncientShrines(ctx, ts, timeSec, camera.zoom);
       this.drawBuildPreview(ctx, ts, camera);
     }
 
@@ -777,6 +806,8 @@ class WorldRenderer {
   drawDetailedPixelProps(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec) {
     const { width, deco } = this.world;
 
+    const sh = this.getSunShadowOffset(this.lastWorldTime);
+
     for (let ty = minTy; ty <= maxTy; ty++) {
       for (let tx = minTx; tx <= maxTx; tx++) {
         const idx = ty * width + tx;
@@ -786,16 +817,16 @@ class WorldRenderer {
         const px = tx * ts;
         const py = ty * ts;
 
-        // 1. 공통 다이렉셔널 드롭 섀도우 (Directional Drop Shadow - Image 4)
+        // 1. 실시간 태양각 다이내믹 드롭 섀도우 (Dynamic Sun-Tracking Drop Shadow)
         if (d === 1 || d === 2 || d === 6 || d === 7 || d === 8) {
-          ctx.fillStyle = 'rgba(15, 23, 42, 0.40)';
+          ctx.fillStyle = `rgba(15, 23, 42, ${sh.alpha})`;
           ctx.beginPath();
-          ctx.ellipse(px + ts / 2 + 7, py + ts / 2 + 8, 15, 8, 0, 0, Math.PI * 2);
+          ctx.ellipse(px + ts / 2 + sh.dx, py + ts / 2 + sh.dy, 15 * sh.stretch, 8, 0, 0, Math.PI * 2);
           ctx.fill();
         } else if (d === 4 || d === 9 || d === 10 || d === 12 || d === 13) {
-          ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+          ctx.fillStyle = `rgba(15, 23, 42, ${sh.alpha * 0.9})`;
           ctx.beginPath();
-          ctx.ellipse(px + ts / 2 + 4, py + ts / 2 + 5, 10, 5, 0, 0, Math.PI * 2);
+          ctx.ellipse(px + ts / 2 + Math.round(sh.dx * 0.6), py + ts / 2 + Math.round(sh.dy * 0.8), 10 * sh.stretch, 5, 0, 0, Math.PI * 2);
           ctx.fill();
         }
 
@@ -1225,28 +1256,105 @@ class WorldRenderer {
     }
   }
 
-  // 픽셀 해안선 파도 거품 애니메이션
+  // 픽셀 해안선 파도 거품 애니메이션 & 수면 태양광 펄/윤슬 (Water Caustics & Shoreline Wave Foam)
   drawPixelShorelines(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec) {
     const wave = Math.floor((Math.sin(timeSec * 2.8) + 1) * 2); // 0, 1, 2, 3 정수 픽셀 스텝
-    ctx.fillStyle = 'rgba(240, 249, 255, 0.45)';
+    const isWater = (tile) => (tile === TILE.WATER || tile === TILE.DEEP_WATER || tile === TILE.OCEAN || tile === TILE.DEEP_OCEAN);
+
+    const isDay = (this.lastWorldTime && this.lastWorldTime.hour >= 6 && this.lastWorldTime.hour < 18);
+    const sunGlintAlpha = isDay ? (Math.sin(timeSec * 3.5) * 0.25 + 0.45) : (Math.sin(timeSec * 2.0) * 0.15 + 0.25);
+    const glintColor = isDay ? `rgba(254, 240, 138, ${sunGlintAlpha})` : `rgba(186, 230, 253, ${sunGlintAlpha})`;
 
     for (let ty = minTy; ty <= maxTy; ty++) {
       for (let tx = minTx; tx <= maxTx; tx++) {
         const t = this.world.getTile(tx, ty);
-        if (t === TILE.WATER || t === TILE.DEEP_WATER) {
-          // 인접 모래사장(SAND) 방향으로 하얀 포말 픽셀 라인
-          if (this.world.getTile(tx + 1, ty) === TILE.SAND) {
-            ctx.fillRect(tx * ts + ts - 3 - wave, ty * ts + 2, 2, ts - 4);
+        if (isWater(t)) {
+          const px = tx * ts;
+          const py = ty * ts;
+
+          // 1. 대양 & 강변 윤슬 (Sun/Moon Glint Sparkles on water)
+          const hash = (tx * 73 + ty * 37) & 63;
+          if (hash === 7 || hash === 23 || hash === 41) {
+            const sparkPhase = Math.sin(timeSec * 4.2 + tx * 0.8 + ty * 0.5);
+            if (sparkPhase > 0.35) {
+              const sx = px + (hash % (ts - 6)) + 3;
+              const sy = py + ((hash >> 2) % (ts - 6)) + 3;
+              ctx.fillStyle = glintColor;
+              ctx.fillRect(sx, sy, 2, 2);
+              if (sparkPhase > 0.75) {
+                ctx.fillRect(sx - 1, sy, 4, 1);
+                ctx.fillRect(sx, sy - 1, 1, 4);
+              }
+            }
           }
-          if (this.world.getTile(tx - 1, ty) === TILE.SAND) {
-            ctx.fillRect(tx * ts + 1 + wave, ty * ts + 2, 2, ts - 4);
+
+          // 2. 육지와 접하는 모든 방향 해안선 파도 포말 (Shoreline Foam)
+          const tRight = this.world.getTile(tx + 1, ty);
+          const tLeft = this.world.getTile(tx - 1, ty);
+          const tDown = this.world.getTile(tx, ty + 1);
+          const tUp = this.world.getTile(tx, ty - 1);
+
+          ctx.fillStyle = 'rgba(240, 249, 255, 0.48)';
+
+          if (tRight !== null && !isWater(tRight)) {
+            ctx.fillRect(px + ts - 3 - wave, py + 2, 2, ts - 4);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.28)';
+            ctx.fillRect(px + ts - 5 - wave, py + 4, 1, ts - 8);
+            ctx.fillStyle = 'rgba(240, 249, 255, 0.48)';
           }
-          if (this.world.getTile(tx, ty + 1) === TILE.SAND) {
-            ctx.fillRect(tx * ts + 2, ty * ts + ts - 3 - wave, ts - 4, 2);
+          if (tLeft !== null && !isWater(tLeft)) {
+            ctx.fillRect(px + 1 + wave, py + 2, 2, ts - 4);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.28)';
+            ctx.fillRect(px + 3 + wave, py + 4, 1, ts - 8);
+            ctx.fillStyle = 'rgba(240, 249, 255, 0.48)';
           }
-          if (this.world.getTile(tx, ty - 1) === TILE.SAND) {
-            ctx.fillRect(tx * ts + 2, ty * ts + 1 + wave, ts - 4, 2);
+          if (tDown !== null && !isWater(tDown)) {
+            ctx.fillRect(px + 2, py + ts - 3 - wave, ts - 4, 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.28)';
+            ctx.fillRect(px + 4, py + ts - 5 - wave, ts - 8, 1);
+            ctx.fillStyle = 'rgba(240, 249, 255, 0.48)';
           }
+          if (tUp !== null && !isWater(tUp)) {
+            ctx.fillRect(px + 2, py + 1 + wave, ts - 4, 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.28)';
+            ctx.fillRect(px + 4, py + 3 + wave, ts - 8, 1);
+            ctx.fillStyle = 'rgba(240, 249, 255, 0.48)';
+          }
+        }
+      }
+    }
+  }
+
+  // 🧚 [3.2] 밤/숲 생체발광 반딧불이 & 마나 정령 렌더러 (Bioluminescent Fireflies & Spirit Wisps)
+  drawBioluminescentSprites(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec) {
+    const isNight = (this.lastWorldTime && (this.lastWorldTime.hour >= 19 || this.lastWorldTime.hour < 6));
+    if (!isNight) return;
+
+    for (let ty = minTy; ty <= maxTy; ty += 2) {
+      for (let tx = minTx; tx <= maxTx; tx += 2) {
+        const hash = (tx * 101 + ty * 47) & 127;
+        if (hash < 12) { // 숲/수풀/습지 일대에 은은한 분산
+          const t = this.world.getTile(tx, ty);
+          if (t === TILE.WATER || t === TILE.DEEP_WATER || t === TILE.MOUNTAIN_HIGH || t === TILE.LAVA) continue;
+
+          // 부드러운 3차원 유영 궤적
+          const fOffX = Math.sin(timeSec * 1.8 + hash) * 14;
+          const fOffY = Math.cos(timeSec * 2.2 + hash * 1.5) * 10 - Math.sin(timeSec * 0.8 + hash) * 6;
+          const fx = Math.round(tx * ts + 8 + fOffX);
+          const fy = Math.round(ty * ts + 8 + fOffY);
+
+          const pulse = (Math.sin(timeSec * 3.2 + hash) + 1) * 0.5;
+          const isEmerald = (hash % 2 === 0);
+
+          // 외곽 은은한 빛 무리 (Soft Glow Aura)
+          ctx.fillStyle = isEmerald
+            ? `rgba(167, 243, 208, ${0.12 + pulse * 0.18})`
+            : `rgba(254, 240, 138, ${0.12 + pulse * 0.18})`;
+          ctx.fillRect(fx - 2, fy - 2, 5, 5);
+
+          // 중심 발광 코어 (Bioluminescent Core)
+          ctx.fillStyle = isEmerald ? '#a7f3d0' : '#fef08a';
+          ctx.fillRect(fx, fy, 2, 2);
         }
       }
     }
@@ -1712,6 +1820,15 @@ class WorldRenderer {
       ctx.strokeRect(px - 16 * e.scale, py - 18 * e.scale, 32 * e.scale, 36 * e.scale);
     }
 
+    // 실시간 태양각 다이내믹 엔티티 드롭 섀도우 (Dynamic Sun-Angle Drop Shadow)
+    if (!e.isShip) {
+      const sh = this.getSunShadowOffset(this.lastWorldTime);
+      ctx.fillStyle = `rgba(15, 23, 42, ${sh.alpha * 0.85})`;
+      ctx.beginPath();
+      ctx.ellipse(px + Math.round(sh.dx * 0.5), py + Math.round(sh.dy * 0.6), 8 * e.scale * sh.stretch, 4.5 * e.scale, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     // 1. 해상 범선 픽셀아트 (Player ship, sea merchants, navy, pirates)
     if (e.isShip && e.monsterType !== 'kraken' && e.monsterType !== 'sea_serpent' && e.role !== 'animal' && e.role !== 'dragon') {
       this.drawSpriteShip(ctx, px, py, bounce, e, timeSec);
@@ -1727,6 +1844,48 @@ class WorldRenderer {
     // 4. 플레이어 영웅 & 인간/엘프/드워프/수인/몬스터/동물 픽셀 캐릭터
     else {
       this.drawSpriteCharacter(ctx, px, py, bounce, e, timeSec, zoom);
+    }
+
+    // 🔥 상태이상 비주얼 오버레이: 화상 (Burning Flames)
+    if (e.burningTimer > 0) {
+      const flmBob = Math.sin(timeSec * 16 + e.id) * 3;
+      ctx.save();
+      ctx.fillStyle = '#f97316';
+      ctx.fillRect(px - 4, py - 18 * e.scale + flmBob, 3, 6);
+      ctx.fillRect(px + 2, py - 20 * e.scale - flmBob, 3, 7);
+      ctx.fillStyle = '#fde047';
+      ctx.fillRect(px - 3, py - 16 * e.scale + flmBob, 2, 4);
+      ctx.fillRect(px + 3, py - 18 * e.scale - flmBob, 2, 5);
+      ctx.restore();
+    }
+
+    // ❄️ 상태이상 비주얼 오버레이: 빙결 (Crystalline Frost Shell)
+    if (e.frozenTimer > 0) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(186, 230, 253, 0.45)';
+      ctx.fillRect(px - 14 * e.scale, py - 24 * e.scale, 28 * e.scale, 28 * e.scale);
+      ctx.strokeStyle = '#bae6fd';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(px - 14 * e.scale, py - 24 * e.scale, 28 * e.scale, 28 * e.scale);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 8 * e.scale, py - 20 * e.scale, 3, 3);
+      ctx.fillRect(px + 6 * e.scale, py - 12 * e.scale, 3, 3);
+      ctx.restore();
+    }
+
+    // 💫 상태이상 비주얼 오버레이: 기절 (Orbiting Stun Stars)
+    if (e.stunTimer > 0) {
+      ctx.save();
+      ctx.fillStyle = '#facc15';
+      for (let sIdx = 0; sIdx < 3; sIdx++) {
+        const sAng = timeSec * 8 + (sIdx * (Math.PI * 2 / 3));
+        const sx = px + Math.cos(sAng) * (11 * e.scale);
+        const sy = py - 24 * e.scale + Math.sin(sAng) * 4;
+        ctx.fillRect(sx - 2, sy - 2, 4, 4);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(sx - 1, sy - 1, 2, 2);
+      }
+      ctx.restore();
     }
 
     // 전투 중 픽셀 위험 느낌표
@@ -2072,6 +2231,29 @@ class WorldRenderer {
         ctx.fillRect(px - 3 * sc, sy - 18 * sc, 6 * sc, 2 * sc);
         if (window.PixelSprites && window.PixelSprites.drawEquippedGear) {
           window.PixelSprites.drawEquippedGear(ctx, e, px, sy - 4 * sc, 0, e.facing || 'down', e.state === 'combat', timeSec, sc);
+        }
+        return;
+      }
+
+      // 2.5. 플레이어 펜리르 섀도우 울프 탑승 특수 렌더링
+      if (e.role === 'player' && e.mount === 'wolf') {
+        // 그림자 야수 발밑 오라
+        ctx.save();
+        ctx.fillStyle = 'rgba(168, 85, 247, 0.28)';
+        ctx.beginPath();
+        ctx.ellipse(px, py + 4 * sc, 12 * sc, 5 * sc, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // 울프 라이더 정밀 스프라이트 렌더링
+        window.PixelSprites.draw(ctx, { ...e, role: 'wolfrider' }, px, py, bounce, timeSec, isNight);
+
+        // 잔상 그림자 불꽃 파티클 (질주 시)
+        if (Math.abs(e.vx || 0) > 0.05 || Math.abs(e.vy || 0) > 0.05) {
+          const trailSign = (e.facing === 'left' || (e.vx || 0) < 0) ? 1 : -1;
+          ctx.fillStyle = 'rgba(192, 132, 252, 0.65)';
+          const flpY = py - ((timeSec * 24) % 8) * sc;
+          ctx.fillRect(px + trailSign * 10 * sc, flpY, 2 * sc, 2 * sc);
         }
         return;
       }
@@ -2481,25 +2663,55 @@ class WorldRenderer {
         ctx.stroke();
       }
 
-      // 폭풍우 천둥 번개 플래시 (Thunder Lightning Flash)
-      if (worldTime.weather === 'storm') {
-        const stormCycle = (timeSec * 0.8) % 6.0;
-        if (stormCycle < 0.12) {
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.40)';
+      // 폭풍우 천둥 번개 플래시 & 지그재그 픽셀 낙뢰 (Thunder Lightning Flash & Jagged Bolt Arcs)
+      if (worldTime.weather === 'storm' || worldTime.weather === 'rain') {
+        const stormCycle = (timeSec * 0.75) % 6.5;
+        if (stormCycle < 0.14) {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
           ctx.fillRect(0, 0, cw, ch);
-          if (camera && camera.shake === 0) camera.shake = 8;
+          if (camera && camera.shake === 0) camera.shake = 9;
+
+          // 지그재그 번개 줄기
+          ctx.save();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          let bx = (timeSec * 811) % (cw * 0.8) + cw * 0.1;
+          let by = 0;
+          ctx.moveTo(bx, by);
+          for (let step = 0; step < 7; step++) {
+            bx += (Math.sin(step * 2.5 + timeSec * 15) > 0 ? 1 : -1) * (18 + (step % 3) * 10);
+            by += ch * 0.11;
+            ctx.lineTo(bx, by);
+            if (step === 3 || step === 5) {
+              ctx.moveTo(bx, by);
+              ctx.lineTo(bx + 24, by + 18);
+              ctx.moveTo(bx, by);
+            }
+          }
+          ctx.stroke();
+          ctx.restore();
         }
       }
     }
 
-    // 2. ❄️ 북부 설원 눈보라 (Snowdrift for North Pole & Snow Weather)
-    if (worldTime.weather === 'snow' || camY < 95) {
+    // 2. ❄️ 북부 설원 눈보라 & 얼어붙은 서리 비네트 (Snowdrift & Polar Frost Borders)
+    if (worldTime.weather === 'snow' || camY < 120) {
       ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
       for (let i = 0; i < 70; i++) {
         const sx = Math.floor((i * 181 + Math.sin(timeSec * 2.2 + i) * 24 + timeSec * 32) % cw);
         const sy = Math.floor((i * 269 + timeSec * 115) % ch);
         const sz = (i % 3 === 0) ? 3 : 2;
         ctx.fillRect(sx, sy, sz, sz);
+      }
+
+      // 화면 모서리 서리 비네트
+      if (camY < 95) {
+        const frostGrad = ctx.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * 0.45, cw / 2, ch / 2, Math.max(cw, ch) * 0.75);
+        frostGrad.addColorStop(0, 'rgba(186, 230, 253, 0)');
+        frostGrad.addColorStop(1, 'rgba(186, 230, 253, 0.28)');
+        ctx.fillStyle = frostGrad;
+        ctx.fillRect(0, 0, cw, ch);
       }
     }
 
@@ -2899,6 +3111,96 @@ class WorldRenderer {
         ctx.strokeText(c.name, cx, cy - 11);
         ctx.fillText(c.name, cx, cy - 11);
       }
+    }
+  }
+
+  // 🏛️ [12.1-B] 고대 시련의 사당 & 성소 픽셀아트 렌더러 (Ancient Shrines of Power)
+  drawAncientShrines(ctx, ts, timeSec, zoom) {
+    const rpg = this.entityMgr.rpgManager;
+    if (!rpg || !rpg.ancientShrines) return;
+
+    for (const sh of rpg.ancientShrines) {
+      const px = Math.round(sh.x * ts);
+      const py = Math.round(sh.y * ts);
+
+      // 1. 지면 고대 룬 결계 진 (Pulsing Concentric Runic Rings)
+      const pulse = 0.5 + 0.5 * Math.sin(timeSec * 3 + sh.x);
+      ctx.save();
+      ctx.strokeStyle = sh.color;
+      ctx.lineWidth = 2.0;
+      ctx.beginPath();
+      ctx.arc(px, py, 20 + pulse * 6, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.arc(px, py, 12, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 2. 고대 제단 석조 기단
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(px - 14, py - 8, 28, 16);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(px - 12, py - 6, 24, 12);
+
+      // 4대 기둥 (Stone Pillars with Glowing Runes)
+      const pillars = [
+        { dx: -12, dy: -12 },
+        { dx: 12, dy: -12 },
+        { dx: -12, dy: 6 },
+        { dx: 12, dy: 6 }
+      ];
+      for (const pil of pillars) {
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(px + pil.dx - 3, py + pil.dy - 10, 6, 14);
+        ctx.fillStyle = sh.color;
+        ctx.fillRect(px + pil.dx - 1, py + pil.dy - 6, 2, 6);
+      }
+
+      // 3. 중앙 공중 부유 회전 룬 다이아몬드 (Floating Rotating Runic Crystal)
+      const bobY = Math.sin(timeSec * 3.5 + sh.y) * 4;
+      const cryY = py - 18 + bobY;
+      ctx.fillStyle = sh.color;
+      ctx.beginPath();
+      ctx.moveTo(px, cryY - 9);
+      ctx.lineTo(px + 7, cryY);
+      ctx.lineTo(px, cryY + 9);
+      ctx.lineTo(px - 7, cryY);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 2, cryY - 3, 4, 6);
+
+      // 4. 완수된 사당: 영구 하늘 천공 빛기둥 (Permanent Celestial Pillar of Light)
+      if (sh.cleared) {
+        const pillarGrad = ctx.createLinearGradient(px, py, px, py - 180);
+        pillarGrad.addColorStop(0, `${sh.color}88`);
+        pillarGrad.addColorStop(1, `${sh.color}00`);
+        ctx.fillStyle = pillarGrad;
+        ctx.fillRect(px - 10, py - 180, 20, 180);
+
+        // 상공 완료 왕관 배지
+        ctx.font = 'bold 12px Pretendard, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#fde047';
+        ctx.fillText(`👑 [${sh.traitName} 각성]`, px, py - 32 + bobY);
+      } else {
+        // 미완료 사당 상공 이름표
+        if (zoom > 0.45) {
+          ctx.font = 'bold 11px Pretendard, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+          ctx.fillRect(px - 45, py - 36 + bobY, 90, 18);
+          ctx.strokeStyle = sh.color;
+          ctx.lineWidth = 1.2;
+          ctx.strokeRect(px - 45, py - 36 + bobY, 90, 18);
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillText(`${sh.icon} ${sh.name}`, px, py - 23 + bobY);
+        }
+      }
+      ctx.restore();
     }
   }
 
@@ -3313,6 +3615,19 @@ class WorldRenderer {
         const offset = fp.side ? 2.5 : -2.5;
         ctx.fillRect(-2, offset - 1, 4, 3);
         ctx.clearRect(-1, offset, 2, 1);
+      } else if (fp.type === 'wolf') {
+        // 늑대 발자국 (발바닥 패드 + 앞 발톱 3개)
+        const col = (fp.tile === TILE.SNOW || fp.tile === TILE.ICE)
+          ? `rgba(147, 197, 253, ${alpha * 0.75})`
+          : (fp.tile === TILE.SAND || fp.tile === TILE.DESERT_DUNES
+            ? `rgba(180, 83, 9, ${alpha * 0.55})`
+            : `rgba(88, 28, 135, ${alpha * 0.4})`);
+        ctx.fillStyle = col;
+        const offset = fp.side ? 2 : -2;
+        ctx.fillRect(-1, offset - 1, 3, 2);
+        ctx.fillRect(-2, offset - 2, 1, 1);
+        ctx.fillRect(0, offset - 3, 1, 1);
+        ctx.fillRect(2, offset - 2, 1, 1);
       } else if (fp.type === 'dragon') {
         // 비룡 발톱 흔적
         ctx.fillStyle = `rgba(15, 23, 42, ${alpha * 0.4})`;

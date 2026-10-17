@@ -287,6 +287,9 @@ function startFantasyWorld() {
     } else if (player.isFlying && player.mount === 'dragon') {
       mountIconEl.textContent = '🐉';
       mountNameEl.textContent = '고대비룡';
+    } else if (player.mount === 'wolf') {
+      mountIconEl.textContent = '🐺';
+      mountNameEl.textContent = '섀도우울프';
     } else if (player.mount === 'horse') {
       mountIconEl.textContent = '🏇';
       mountNameEl.textContent = '왕실백마';
@@ -645,6 +648,28 @@ function startFantasyWorld() {
     plusBtns.forEach(btn => {
       btn.style.opacity = (p.statPoints || 0) > 0 ? '1' : '0.4';
     });
+
+    // 🏛️ 고대 성소 영구 유물 특성 목록 렌더링
+    const traitsGridEl = document.getElementById('ancientTraitsGrid');
+    if (traitsGridEl && entityMgr && entityMgr.rpgManager && entityMgr.rpgManager.ancientShrines) {
+      const rpg = entityMgr.rpgManager;
+      traitsGridEl.innerHTML = rpg.ancientShrines.map(shrine => {
+        const isUnlocked = rpg.hasTrait(shrine.traitId);
+        return `
+          <div class="trait-card ${isUnlocked ? 'unlocked' : ''}">
+            <div class="trait-icon-box">${shrine.icon}</div>
+            <div class="trait-info">
+              <div class="trait-header-line">
+                <span class="trait-name">${shrine.traitName}</span>
+                <span class="trait-status-badge">${isUnlocked ? '✓ 각성 완료' : '🔒 봉인됨'}</span>
+              </div>
+              <div class="trait-desc">${shrine.traitDesc}</div>
+              <div class="trait-shrine-source">🏛️ 성소: ${shrine.name} [좌표: ${shrine.x}, ${shrine.y}]</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
   }
 
   function toggleStatsModal() {
@@ -733,7 +758,11 @@ function startFantasyWorld() {
     let target = null;
     let targetName = '목표 지점';
 
-    if (entityMgr.questSystem && entityMgr.questSystem.activeQuest) {
+    if (entityMgr.rpgManager && entityMgr.rpgManager.activeContinentalEvent) {
+      const evt = entityMgr.rpgManager.activeContinentalEvent;
+      target = { x: evt.x, y: evt.y };
+      targetName = `[긴급] ${evt.name}`;
+    } else if (entityMgr.questSystem && entityMgr.questSystem.activeQuest) {
       const q = entityMgr.questSystem.activeQuest;
       target = q.targetLocation || (q.targetSettlement ? world.settlementMap[q.targetSettlement] : null);
       targetName = q.title;

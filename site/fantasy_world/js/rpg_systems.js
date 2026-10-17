@@ -110,6 +110,93 @@ class RPGSystemsManager {
     // 9. 날씨 천벌 낙뢰 타이머
     this.cataclysmTimer = 12.0;
 
+    // 10. 🏛️ 고대 시련의 사당 & 영구 유물 특성 시스템 (Ancient Shrines & Relic Traits)
+    this.ancientShrines = [
+      {
+        id: 'shrine_flame',
+        name: '불꽃의 시련 성소',
+        element: 'flame',
+        x: 420, y: 1740,
+        color: '#f97316',
+        icon: '🔥',
+        traitId: 'flame_brand',
+        traitName: '화염의 각인',
+        traitDesc: '모든 공격 시 대상에게 4초간 화염(Burn) 도트 피해를 부여합니다.',
+        cleared: false,
+        activeTrial: false,
+        guardians: [],
+        guardiansLeft: 0
+      },
+      {
+        id: 'shrine_frost',
+        name: '혹한의 시련 성소',
+        element: 'frost',
+        x: 1980, y: 180,
+        color: '#38bdf8',
+        icon: '❄️',
+        traitId: 'frost_aegis',
+        traitName: '혹한의 방벽',
+        traitDesc: '적에게 피격 시 공격자를 1.8초간 완전히 빙결(Freeze) 상태로 동결시킵니다.',
+        cleared: false,
+        activeTrial: false,
+        guardians: [],
+        guardiansLeft: 0
+      },
+      {
+        id: 'shrine_storm',
+        name: '폭풍의 시련 성소',
+        element: 'storm',
+        x: 3120, y: 840,
+        color: '#a855f7',
+        icon: '⚡',
+        traitId: 'windstrider',
+        traitName: '질풍의 도약',
+        traitDesc: '영구 이동속도 +25% 및 닷지 롤(Space) 회피 쿨다운이 35% 단축됩니다.',
+        cleared: false,
+        activeTrial: false,
+        guardians: [],
+        guardiansLeft: 0
+      },
+      {
+        id: 'shrine_earth',
+        name: '대지의 시련 성소',
+        element: 'earth',
+        x: 1420, y: 1350,
+        color: '#22c55e',
+        icon: '🌿',
+        traitId: 'earth_vitality',
+        traitName: '대지의 축복',
+        traitDesc: '영구 최대 체력 +150 및 2초마다 12HP씩 생명력이 지속 자동 재생됩니다.',
+        cleared: false,
+        activeTrial: false,
+        guardians: [],
+        guardiansLeft: 0
+      },
+      {
+        id: 'shrine_sun',
+        name: '태양왕의 성소',
+        element: 'sun',
+        x: 1960, y: 1380,
+        color: '#facc15',
+        icon: '👑',
+        traitId: 'solar_aura',
+        traitName: '태양왕의 패기',
+        traitDesc: '영구 기본 공격력 +25 및 3단 콤보 피니셔의 참격 범위가 45% 극대화됩니다.',
+        cleared: false,
+        activeTrial: false,
+        guardians: [],
+        guardiansLeft: 0
+      }
+    ];
+    this.unlockedTraits = [];
+
+    // 11. ⚡ 대륙 긴급 돌발 이벤트 시스템 (Dynamic Continental World Events)
+    this.worldEventTimer = 75.0; // 75초 후 첫 이벤트 발생
+    this.activeContinentalEvent = null;
+
+    // 12. 🏰 왕국 요새 & 도시 주둔군 감시탑 자동 방어 시스템
+    this.garrisonDefenseTimer = 1.6;
+
     this.initTreasureChests();
   }
 
@@ -1166,9 +1253,24 @@ class RPGSystemsManager {
     this.updateBoss(dt);
     this.updateFishing(dt);
     this.updateCataclysm(dt, worldTime);
+    this.updateShrines(dt);
+    this.updateContinentalEvents(dt);
+    this.updateSettlementGarrisonDefense(dt);
 
     if (this.em.player) {
       this.checkTreasureInteraction(this.em.player);
+
+      // 🌿 영구 특성: 대지의 축복 (Earth Vitality) 2.2초마다 지속 체력 재생
+      if (this.hasTrait('earth_vitality')) {
+        this.regenTimer = (this.regenTimer || 0) + dt;
+        if (this.regenTimer >= 2.2) {
+          this.regenTimer = 0;
+          if (this.em.player.hp < this.em.player.maxHp) {
+            this.em.player.hp = Math.min(this.em.player.maxHp, this.em.player.hp + 14);
+            this.em.addFloatingText(this.em.player.x, this.em.player.y - 1.2, '+14 HP 🌿', '#4ade80', 0.8);
+          }
+        }
+      }
     }
   }
 
@@ -1225,6 +1327,362 @@ class RPGSystemsManager {
     this.em.addFloatingText(p.x, p.y - 1.6, `🔥 모닥불 휴식 (+${heal} HP 회복)`, '#4ade80', 2.2);
     this.em.log('quest', `🔥 [${p.name}]이(가) 야외 모닥불 곁에서 따뜻하게 휴식하며 체력을 보충했습니다.`, p.x, p.y);
     return true;
+  }
+
+  // ==========================================================================
+  // N. 고대 시련의 사당 & 영구 유물 특성 시스템 (Ancient Shrines & Relic Trials)
+  // ==========================================================================
+  hasTrait(traitId) {
+    return this.unlockedTraits && this.unlockedTraits.includes(traitId);
+  }
+
+  checkNearbyShrine(player) {
+    if (!player || !this.ancientShrines) return null;
+    for (const sh of this.ancientShrines) {
+      if (Math.hypot(sh.x - player.x, sh.y - player.y) <= 4.8) {
+        return sh;
+      }
+    }
+    return null;
+  }
+
+  startShrineTrial(shrineId) {
+    const shrine = this.ancientShrines.find(s => s.id === shrineId);
+    if (!shrine) return;
+    if (shrine.cleared) {
+      this.em.addFloatingText(shrine.x, shrine.y - 1.5, `✨ [${shrine.name}] 이미 시련을 극복한 성소입니다. (특성 활성 중)`, '#fde047', 1.8);
+      return;
+    }
+    if (shrine.activeTrial) {
+      this.em.addFloatingText(shrine.x, shrine.y - 1.5, '⚠️ 성소의 시련이 이미 진행 중입니다! 수호령을 격퇴하세요!', '#f87171', 1.8);
+      return;
+    }
+
+    shrine.activeTrial = true;
+    shrine.guardiansLeft = 3;
+    shrine.guardians = [];
+
+    // 시련 개방 연출
+    if (window.audioMgr) window.audioMgr.playFanfare();
+    if (window.renderer) {
+      window.renderer.screenFlashTimer = 0.15;
+      window.renderer.screenFlashColor = shrine.color;
+    }
+    this.em.addEffect(shrine.x, shrine.y, 14.0, shrine.color, 1.8);
+    this.em.addFloatingText(shrine.x, shrine.y - 2.2, `🏛️ [${shrine.name}] 고대 봉인 해제! 수호령 3기 격퇴 시련 개시!`, shrine.color, 3.0);
+    this.em.log('quest', `🏛️ 플레이어가 [${shrine.name}]의 봉인을 깨뜨리고 고대 시련에 도전합니다!`, shrine.x, shrine.y);
+
+    // 수호령 3기 스폰
+    const p = this.em.player;
+    for (let i = 0; i < 3; i++) {
+      const angle = (Math.PI * 2 / 3) * i;
+      const gx = shrine.x + Math.cos(angle) * 3.5;
+      const gy = shrine.y + Math.sin(angle) * 3.5;
+      const guardian = this.em.createEntity({
+        name: `고대 ${shrine.name} 수호령 ${i + 1}호`,
+        race: 'monster',
+        role: 'monster',
+        monsterType: 'shrine_guardian',
+        customIcon: shrine.icon,
+        faction: 'monster',
+        homeId: 'shrine',
+        x: gx,
+        y: gy,
+        hp: 420,
+        maxHp: 420,
+        atk: 32,
+        gold: 150,
+        scale: 1.4,
+        projColor: shrine.color,
+        thought: `🏛️ [${shrine.name}]의 신성한 성역을 수호 중!`
+      });
+      guardian.shrineId = shrine.id;
+      guardian.combatTarget = p;
+      shrine.guardians.push(guardian);
+      this.em.addEffect(gx, gy, 4.0, shrine.color, 0.8);
+    }
+  }
+
+  updateShrines(dt) {
+    if (!this.ancientShrines) return;
+    for (const sh of this.ancientShrines) {
+      if (sh.activeTrial && !sh.cleared) {
+        let alive = 0;
+        for (const g of sh.guardians) {
+          if (g && g.hp > 0) alive++;
+        }
+        sh.guardiansLeft = alive;
+        if (alive <= 0) {
+          this.completeShrineTrial(sh);
+        }
+      }
+    }
+  }
+
+  completeShrineTrial(shrine) {
+    shrine.activeTrial = false;
+    shrine.cleared = true;
+    if (!this.unlockedTraits.includes(shrine.traitId)) {
+      this.unlockedTraits.push(shrine.traitId);
+    }
+
+    const p = this.em.player;
+    if (p) {
+      p.gold += 1500;
+      p.fame = (p.fame || 0) + 100;
+      if (shrine.traitId === 'earth_vitality') {
+        p.maxHp += 150;
+        p.hp = p.maxHp;
+      } else if (shrine.traitId === 'solar_aura') {
+        p.atk += 25;
+      } else if (shrine.traitId === 'windstrider') {
+        p.speed += 0.4;
+      }
+    }
+
+    if (window.audioMgr) window.audioMgr.playFanfare();
+    if (window.renderer) {
+      window.renderer.screenFlashTimer = 0.25;
+      window.renderer.screenFlashColor = '#facc15';
+    }
+    this.em.addEffect(shrine.x, shrine.y, 20.0, '#facc15', 3.0);
+    this.em.addFloatingText(shrine.x, shrine.y - 3.0, `🌟 [${shrine.name}] 시련 완수! [${shrine.traitName}] 영구 특성 획득! (+1500G, 명성+100)`, '#fde047', 4.5);
+    this.em.log('quest', `👑 플레이어가 [${shrine.name}]의 시련을 극복하고 전설의 고대 유물 특성 '${shrine.traitName}'을(를) 영구 각성했습니다!`, shrine.x, shrine.y);
+  }
+
+  // ==========================================================================
+  // J. 대륙 긴급 돌발 이벤트 시스템 (Dynamic Continental World Events)
+  // ==========================================================================
+  updateContinentalEvents(dt) {
+    if (this.activeContinentalEvent) {
+      const evt = this.activeContinentalEvent;
+      evt.timer -= dt;
+
+      // 생존한 침공 몬스터 수 체크
+      if (evt.monsters && evt.monsters.length > 0) {
+        evt.monstersLeft = evt.monsters.filter(m => m.hp > 0).length;
+      }
+
+      this.updateContinentalEventUI();
+
+      // 승리 조건: 모든 침공 몬스터 처치 (또는 축제 시간 만료)
+      if (evt.type === 'golden_harvest') {
+        if (evt.timer <= 0) {
+          this.completeContinentalEvent(true);
+        }
+      } else {
+        if (evt.monstersLeft === 0) {
+          this.completeContinentalEvent(true);
+        } else if (evt.timer <= 0) {
+          this.completeContinentalEvent(false); // 시간 초과 실패
+        }
+      }
+    } else {
+      this.hideContinentalEventUI();
+      this.worldEventTimer -= dt;
+      if (this.worldEventTimer <= 0) {
+        this.triggerRandomContinentalEvent();
+      }
+    }
+  }
+
+  triggerRandomContinentalEvent() {
+    this.worldEventTimer = 140.0; // 다음 이벤트까지 140초
+    const types = ['pirate_raid', 'void_rift', 'golden_harvest'];
+    const chosenType = types[Math.floor(Math.random() * types.length)];
+    const sMap = this.world.settlementMap || {};
+
+    if (chosenType === 'pirate_raid') {
+      const loc = sMap.bluewave || { x: 1950, y: 1680 };
+      const eventMonsters = [];
+      // 해적 습격대 4명 소환
+      for (let i = 0; i < 4; i++) {
+        const ox = (Math.random() - 0.5) * 6;
+        const oy = (Math.random() - 0.5) * 6;
+        const pMonster = this.em.spawnMonsterAt(loc.x + ox, loc.y + oy, 'orc');
+        if (pMonster) {
+          pMonster.name = i === 0 ? '🏴‍☠️ 캡틴 블랙비어드' : '🏴‍☠️ 검은돛 해적 약탈자';
+          pMonster.maxHp = i === 0 ? 650 : 280;
+          pMonster.hp = pMonster.maxHp;
+          pMonster.atk = i === 0 ? 32 : 18;
+          pMonster.gold = i === 0 ? 800 : 200;
+          pMonster.color = '#7f1d1d';
+          eventMonsters.push(pMonster);
+        }
+      }
+      this.activeContinentalEvent = {
+        type: 'pirate_raid',
+        name: '🏴‍☠️ 푸른파도 항구 해적 함대 기습',
+        desc: '악명 높은 캡틴 블랙비어드의 해적 함대가 항구를 포격하고 있습니다! 해적단을 섬멸하십시오.',
+        icon: '🏴‍☠️',
+        x: loc.x,
+        y: loc.y,
+        timer: 110.0,
+        maxTimer: 110.0,
+        monsters: eventMonsters,
+        monstersLeft: eventMonsters.length
+      };
+      if (typeof audioMgr !== 'undefined') audioMgr.playBossHorn();
+      this.em.addFloatingText(loc.x, loc.y - 2, '🏴‍☠️ 긴급: 푸른파도 항구 해적 습격 발생!', '#f87171', 3.0);
+      this.em.log('battle', '🏴‍☠️ [대륙 긴급 이벤트] 푸른파도 항구에 해적 대함대가 출현하여 항구를 포격하기 시작했습니다!', loc.x, loc.y);
+    } else if (chosenType === 'void_rift') {
+      const loc = { x: 2600, y: 1550 };
+      const eventMonsters = [];
+      // 공허의 네더 마수 4명 소환
+      for (let i = 0; i < 4; i++) {
+        const ox = (Math.random() - 0.5) * 6;
+        const oy = (Math.random() - 0.5) * 6;
+        const pMonster = this.em.spawnMonsterAt(loc.x + ox, loc.y + oy, 'lich');
+        if (pMonster) {
+          pMonster.name = i === 0 ? '🌋 차원의 네더 보이드로드' : '🔮 공허의 차원망령';
+          pMonster.maxHp = i === 0 ? 750 : 310;
+          pMonster.hp = pMonster.maxHp;
+          pMonster.atk = i === 0 ? 35 : 20;
+          pMonster.gold = i === 0 ? 950 : 250;
+          pMonster.color = '#7e22ce';
+          eventMonsters.push(pMonster);
+        }
+      }
+      this.activeContinentalEvent = {
+        type: 'void_rift',
+        name: '🌋 공허의 네더 균열 침공',
+        desc: '차원의 틈새가 벌어져 보이드로드와 네더 군단이 침공했습니다! 균열 군주를 처단하십시오.',
+        icon: '🌋',
+        x: loc.x,
+        y: loc.y,
+        timer: 110.0,
+        maxTimer: 110.0,
+        monsters: eventMonsters,
+        monstersLeft: eventMonsters.length
+      };
+      if (typeof audioMgr !== 'undefined') audioMgr.playBossHorn();
+      this.em.addEffect(loc.x, loc.y, 8.0, '#a855f7', 1.2);
+      this.em.addFloatingText(loc.x, loc.y - 2, '🌋 긴급: 공허의 네더 차원 균열 개방!', '#c084fc', 3.0);
+      this.em.log('battle', '🌋 [대륙 긴급 이벤트] 대륙 동부 황무지에 공허의 네더 차원 균열이 열려 마수가 쏟아져 나옵니다!', loc.x, loc.y);
+    } else {
+      // golden_harvest
+      const loc = sMap.solaris || { x: 1960, y: 1400 };
+      this.activeContinentalEvent = {
+        type: 'golden_harvest',
+        name: '🌾 천상 대풍년 & 황금 유성우',
+        desc: '대륙 전역에 황금 유성우가 내리며 대풍년 축제가 시작됩니다! (이동속도 +35% & 2배 무역 이윤)',
+        icon: '🌾',
+        x: loc.x,
+        y: loc.y,
+        timer: 80.0,
+        maxTimer: 80.0,
+        monsters: [],
+        monstersLeft: 0
+      };
+      if (this.em.player) {
+        this.em.player.boostTimer = Math.max(this.em.player.boostTimer || 0, 75.0);
+      }
+      if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+      this.em.addEffect(loc.x, loc.y, 10.0, '#facc15', 1.2);
+      this.em.addFloatingText(loc.x, loc.y - 2, '✨ 축복: 대륙 천상 대풍년 축제 개막!', '#fde047', 3.0);
+      this.em.log('harvest', '🌾 [대륙 긴급 이벤트] 여신의 황금 유성우 축복으로 전 대륙에 대풍년 축제가 열렸습니다!', loc.x, loc.y);
+    }
+  }
+
+  completeContinentalEvent(success) {
+    if (!this.activeContinentalEvent) return;
+    const evt = this.activeContinentalEvent;
+    const p = this.em.player;
+
+    if (success) {
+      if (p) {
+        const rewardGold = evt.type === 'golden_harvest' ? 1200 : 2000;
+        const rewardFame = 60;
+        p.gold += rewardGold;
+        p.fame = (p.fame || 0) + rewardFame;
+        if (this.em.addFloatingText) {
+          this.em.addFloatingText(p.x, p.y - 2, `🎉 대륙 이벤트 승리! +${rewardGold}G / +${rewardFame} 명성`, '#4ade80', 2.8);
+        }
+      }
+      if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+      this.em.log('quest', `🏆 [대륙 이벤트 완료] [${evt.name}]을 완벽하게 진압/달성하여 왕국의 명성을 드높였습니다!`, evt.x, evt.y);
+    } else {
+      this.em.log('quest', `⚠️ [대륙 이벤트 종료] [${evt.name}] 제한 시간이 만료되어 적들이 퇴각했습니다.`, evt.x, evt.y);
+    }
+
+    this.hideContinentalEventUI();
+    this.activeContinentalEvent = null;
+  }
+
+  updateContinentalEventUI() {
+    const banner = document.getElementById('worldEventBanner');
+    if (!banner) return;
+    if (this.activeContinentalEvent && this.activeContinentalEvent.timer > 0) {
+      banner.classList.remove('hidden');
+      const iconEl = document.getElementById('eventIcon');
+      const nameEl = document.getElementById('eventName');
+      const descEl = document.getElementById('eventDesc');
+      const timerEl = document.getElementById('eventTimer');
+
+      const evt = this.activeContinentalEvent;
+      if (iconEl) iconEl.textContent = evt.icon || '⚡';
+      if (nameEl) nameEl.textContent = evt.name;
+      if (descEl) {
+        if (evt.type === 'golden_harvest') {
+          descEl.textContent = `축복 지속 시간: 잔여 ${Math.ceil(evt.timer)}초 (전 대륙 무역 이윤 2배 & 이동속도 +35%)`;
+        } else {
+          descEl.textContent = `${evt.desc} [잔여 적: ${evt.monstersLeft || 0}마리]`;
+        }
+      }
+      if (timerEl) timerEl.textContent = `⏱️ ${Math.ceil(evt.timer)}s`;
+    } else {
+      banner.classList.add('hidden');
+    }
+  }
+
+  hideContinentalEventUI() {
+    const banner = document.getElementById('worldEventBanner');
+    if (banner) banner.classList.add('hidden');
+  }
+
+  // ==========================================================================
+  // K. 왕국 요새 & 도시 주둔군 감시탑 자동 방어 사격 (Settlement Garrison Defense)
+  // ==========================================================================
+  updateSettlementGarrisonDefense(dt) {
+    this.garrisonDefenseTimer -= dt;
+    if (this.garrisonDefenseTimer > 0) return;
+    this.garrisonDefenseTimer = 1.6;
+
+    if (!this.world || !this.world.settlements) return;
+
+    for (const s of this.world.settlements) {
+      if (s.faction !== 'kingdom' && s.faction !== 'allied') continue;
+
+      // 주둔지 중심 반경 9.5 타일 내 침공 몬스터 탐색
+      const target = this.em.spatialGrid
+        ? this.em.spatialGrid.findNearest(s.x, s.y, 9.5, e => e.faction === 'monster' && e.hp > 0)
+        : null;
+
+      if (target) {
+        const dist = Math.hypot(target.x - s.x, target.y - s.y);
+        const dmg = 42 + Math.floor(Math.random() * 18);
+        target.hp -= dmg;
+        const angle = Math.atan2(target.y - s.y, target.x - s.x);
+
+        // 방어 성벽 화살 투사체 발사
+        this.em.projectiles.push({
+          x: s.x,
+          y: s.y,
+          vx: Math.cos(angle) * 22,
+          vy: Math.sin(angle) * 22,
+          color: '#facc15',
+          life: dist / 22
+        });
+
+        this.em.addFloatingText(target.x, target.y - 0.8, `🏹-${dmg} (성벽 경비대)`, '#facc15', 1.0);
+
+        if (target.hp <= 0 && this.em.player) {
+          this.em.player.gold += Math.floor(target.gold * 0.5);
+          this.em.addFloatingText(s.x, s.y - 1.2, `🛡️ [${s.name}] 경비대 요격 성공!`, '#60a5fa', 1.6);
+        }
+        break; // 프레임당 거점별 1발씩 집중
+      }
+    }
   }
 }
 

@@ -1338,6 +1338,94 @@ body, html {
 }
 
 /* ==========================================================================
+   대륙 긴급 돌발 이벤트 배너 (Dynamic World Event Banner)
+   ========================================================================== */
+.world-event-banner {
+  position: fixed;
+  top: 68px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 520px;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid #a855f7;
+  border-radius: 12px;
+  padding: 8px 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(168, 85, 247, 0.4);
+  z-index: 100;
+  animation: eventGlowPulse 2.2s infinite ease-in-out;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.world-event-banner.hidden {
+  display: none !important;
+}
+
+@keyframes eventGlowPulse {
+  0%, 100% {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7), 0 0 16px rgba(168, 85, 247, 0.35);
+    border-color: #a855f7;
+  }
+  50% {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7), 0 0 28px rgba(234, 179, 8, 0.65);
+    border-color: #facc15;
+  }
+}
+
+.event-banner-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.event-icon {
+  font-size: 26px;
+  filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.7));
+}
+
+.event-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.event-title-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.event-tag {
+  background: rgba(168, 85, 247, 0.3);
+  color: #c084fc;
+  border: 1px solid rgba(192, 132, 252, 0.5);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.event-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #fef08a;
+  letter-spacing: -0.2px;
+}
+
+.event-timer {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fca5a5;
+}
+
+.event-desc {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+/* ==========================================================================
    플로팅 건축 모드 팔레트 (Build Palette)
    ========================================================================== */
 .build-palette {
@@ -2043,6 +2131,128 @@ body.cinematic-mode #navCompass,
 body.cinematic-mode #followBanner {
   display: none !important;
 }
+
+/* ==========================================================================
+   고대 성소 유물 특성 목록 (Ancient Traits Section)
+   ========================================================================== */
+.ancient-traits-section {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.traits-title-row {
+  font-size: 13px;
+  font-weight: 700;
+  color: #facc15;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: -0.2px;
+}
+
+.traits-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.trait-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 12px;
+  transition: all 0.2s ease;
+  position: relative;
+  opacity: 0.55;
+  filter: grayscale(80%);
+}
+
+.trait-card.unlocked {
+  opacity: 1;
+  filter: none;
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(250, 204, 21, 0.45);
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.15);
+}
+
+.trait-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.trait-card.unlocked .trait-icon-box {
+  border-color: rgba(250, 204, 21, 0.6);
+  background: radial-gradient(circle, rgba(250, 204, 21, 0.25) 0%, rgba(0, 0, 0, 0.5) 100%);
+}
+
+.trait-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.trait-header-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.trait-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.trait-card.unlocked .trait-name {
+  color: #fef08a;
+  text-shadow: 0 0 8px rgba(250, 204, 21, 0.5);
+}
+
+.trait-status-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-weight: 600;
+  background: rgba(100, 116, 139, 0.3);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.trait-card.unlocked .trait-status-badge {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.4);
+}
+
+.trait-desc {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.35;
+}
+
+.trait-shrine-source {
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
 
 
 

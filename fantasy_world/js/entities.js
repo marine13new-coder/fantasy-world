@@ -1534,7 +1534,17 @@ class EntityManager {
     }
 
     if (p.mount === 'horse') {
-      // 백마 -> 비룡
+      // 백마 -> 섀도우 울프
+      p.mount = 'wolf';
+      p.isFlying = false;
+      p.speed = 3.15;
+      p.icon = '🐺';
+      if (typeof audioMgr !== 'undefined' && audioMgr.playWolfHowl) audioMgr.playWolfHowl();
+      this.addEffect(p.x, p.y, 4.5, '#c084fc', 0.8);
+      this.addFloatingText(p.x, p.y - 1.5, '🐺 펜리르 섀도우 울프 탑승! (이동속도 +60% / 그림자 질주)', '#c084fc', 2.0);
+      this.log('quest', '🐺 플레이어가 전설의 펜리르 섀도우 울프에 탑승하여 질주합니다!', p.x, p.y);
+    } else if (p.mount === 'wolf') {
+      // 섀도우 울프 -> 비룡
       p.mount = 'dragon';
       p.isFlying = true;
       p.speed = 3.65;
@@ -1683,6 +1693,14 @@ class EntityManager {
         }
       }
     } else if (skillKey === 'F') {
+      // 0순위: 인근 고대 시련의 사당 상호작용
+      if (this.rpgManager) {
+        const shrine = this.rpgManager.checkNearbyShrine(p);
+        if (shrine) {
+          this.rpgManager.startShrineTrial(shrine.id);
+          return;
+        }
+      }
       // 1순위: 근접 NPC와의 전용 상호작용 및 보상 대화
       const talked = this.interactWithNearestNPC(p);
       if (!talked) {
@@ -1705,7 +1723,8 @@ class EntityManager {
     if (!p) p = this.spawnOrGetPlayer();
     if (p.dodgeCooldown > 0 || p.isDashing || p.isShip) return;
 
-    p.dodgeCooldown = 0.95;
+    const hasWindstrider = this.rpgManager && this.rpgManager.hasTrait('windstrider');
+    p.dodgeCooldown = hasWindstrider ? 0.62 : 0.95;
     p.isDashing = true;
     p.dashTimer = 0.28;
     p.invulnerableTimer = 0.32;
@@ -1862,12 +1881,14 @@ class EntityManager {
 
     // 💥 3단계 피니셔: 주변 360도 모든 적 광역 타격 및 넉백
     if (p.comboStep === 3) {
-      this.addEffect(p.x, p.y, 3.8, '#facc15', 0.45);
+      const hasSolar = this.rpgManager && this.rpgManager.hasTrait('solar_aura');
+      const aoeRadius = hasSolar ? 6.2 : 4.2;
+      this.addEffect(p.x, p.y, aoeRadius * 0.9, '#facc15', 0.45);
       if (this.camera) this.camera.shake = Math.min(22, (this.camera.shake || 0) + 7.5);
 
       const aoeTargets = this.spatialGrid
-        ? this.spatialGrid.query(p.x, p.y, 4.2, other => other !== p && other.hp > 0 && this.isHostile(p, other))
-        : this.entities.filter(other => other !== p && other.hp > 0 && this.isHostile(p, other) && Math.hypot(other.x - p.x, other.y - p.y) <= 4.2);
+        ? this.spatialGrid.query(p.x, p.y, aoeRadius, other => other !== p && other.hp > 0 && this.isHostile(p, other))
+        : this.entities.filter(other => other !== p && other.hp > 0 && this.isHostile(p, other) && Math.hypot(other.x - p.x, other.y - p.y) <= aoeRadius);
 
       let hits = 0;
       for (const ent of aoeTargets) {
@@ -1877,6 +1898,11 @@ class EntityManager {
         const dmg = Math.round(p.atk * comboMultiplier * mult * (1.1 + Math.random() * 0.3));
         const isCrit = Math.random() < 0.35;
         const finalDmg = isCrit ? Math.round(dmg * 1.5) : dmg;
+
+        // 화염의 각인 특성
+        if (this.rpgManager && this.rpgManager.hasTrait('flame_brand')) {
+          ent.burningTimer = 4.0;
+        }
 
         ent.hp -= finalDmg;
         ent.hitTimer = 0.28;
@@ -1930,6 +1956,11 @@ class EntityManager {
       if (isCrit && window.renderer) {
         window.renderer.screenFlashTimer = 0.05;
         window.renderer.screenFlashColor = '#ffffff';
+      }
+
+      // 화염의 각인 특성
+      if (this.rpgManager && this.rpgManager.hasTrait('flame_brand')) {
+        target.burningTimer = 4.0;
       }
 
       target.hp -= dmg;
@@ -2467,6 +2498,36 @@ class EntityManager {
       if (e.boostTimer > 0) e.boostTimer -= dt;
       if (e.talkingTimer > 0) e.talkingTimer -= dt;
       if (e.satiatedTimer > 0) e.satiatedTimer -= dt;
+
+      // 🔥 상태이상: 화상 (Burning)
+      if (e.burningTimer > 0) {
+        e.burningTimer -= dt;
+        e.burnTick = (e.burnTick || 0) + dt;
+        if (e.burnTick >= 0.5) {
+          e.burnTick = 0;
+          const burnDmg = Math.max(6, Math.round(e.maxHp * 0.025 + 8));
+          e.hp -= burnDmg;
+          e.hitTimer = 0.22;
+          this.addFloatingText(e.x, e.y - 0.9, `🔥-${burnDmg}`, '#f97316', 0.8);
+          this.addHitSparks(e.x, e.y, '#f97316', 4);
+        }
+      }
+
+      // ❄️ 상태이상: 빙결 (Frozen)
+      if (e.frozenTimer > 0) {
+        e.frozenTimer -= dt;
+        e.vx = 0;
+        e.vy = 0;
+        continue;
+      }
+
+      // 💫 상태이상: 기절 (Stun)
+      if (e.stunTimer > 0) {
+        e.stunTimer -= dt;
+        e.vx = 0;
+        e.vy = 0;
+        continue;
+      }
 
       if (!e.combatTarget && e.hp < e.maxHp) {
         e.hp = Math.min(e.maxHp, e.hp + dt * 3.0);
@@ -3132,9 +3193,11 @@ class EntityManager {
         ? '🐉 고대 비룡을 타고 창공 비행 중! (Space:착륙 / WASD:비행)'
         : (p.isShip
           ? '⛵ 전용 범선으로 대해양 및 군도 항해 중!'
-          : (p.mount === 'horse'
-            ? '🏇 왕실 백마를 타고 대륙 질주 중! (Space:비룡비행)'
-            : '🚶 도보로 대륙 탐험 중 (Space:백마탑승)'));
+          : (p.mount === 'wolf'
+            ? '🐺 펜리르 섀도우 울프로 대륙 질주 중! (Space:비룡비행)'
+            : (p.mount === 'horse'
+              ? '🏇 왕실 백마를 타고 대륙 질주 중! (Space:섀도우울프)'
+              : '🚶 도보로 대륙 탐험 중 (Space:백마탑승)')));
     } else if (p.isMovingToTarget) {
       // 🌟 마우스 좌클릭/우클릭 및 터치 목표 지점 추적 이동 (Click-to-Move)
       const dx = p.targetX - p.x;
@@ -3462,6 +3525,13 @@ class EntityManager {
       target.hp -= dmg;
       target.combatTarget = e;
       target.hitTimer = 0.25;
+
+      // ❄️ 혹한의 방벽 (Frost Aegis) 영구 특성: 플레이어 피격 시 공격자 즉시 1.8초 동결
+      if (target === this.player && this.rpgManager && this.rpgManager.hasTrait('frost_aegis')) {
+        e.frozenTimer = 1.8;
+        this.addFloatingText(e.x, e.y - 1.2, '❄️ [혹한의 방벽] 공격자 1.8초 동결!', '#38bdf8', 1.4);
+        this.addHitSparks(e.x, e.y, '#bae6fd', 8);
+      }
 
       const isPlayerFight = (e === this.player || target === this.player);
       this.addHitSparks(target.x, target.y, e.faction === 'kingdom' ? '#fde047' : '#ef4444', isPlayerFight ? 8 : 4);
