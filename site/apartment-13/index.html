@@ -543,6 +543,7 @@
         <p style="font-size: 13px; color: #8899aa;">게임 진행 상황은 각 챕터 및 세이브 시 자동 저장됩니다.</p>
         <button class="primary-btn" onclick="saveGameManual()" style="width: 100%;">현재 상태 즉시 저장</button>
         <button class="secondary-btn" onclick="resumeGame()" style="width: 100%;">게임으로 복귀</button>
+        <button class="secondary-btn" onclick="location.href='../index.html'" style="width: 100%; border-color: #00f0ff; color: #00f0ff;">🎮 전체 게임 허브로 이동</button>
         <button class="secondary-btn" onclick="returnToTitle()" style="width: 100%; border-color: #662222; color: #ff8888;">타이틀 화면으로</button>
       </div>
     </div>
@@ -576,6 +577,10 @@
         <option value="5">Act 5: 새벽의 심판과 진실</option>
       </select>
       <button class="secondary-btn" style="padding: 6px 12px; font-size: 11px;" onclick="jumpToSelectedChapter()">이동</button>
+    </div>
+
+    <div style="margin-top: 18px;">
+      <a href="../index.html" style="color: #00f0ff; font-size: 13px; text-decoration: none; border-bottom: 1px dashed #00f0ff; padding-bottom: 2px;">← 🎮 전체 게임 아케이드 허브로 돌아가기</a>
     </div>
 
     <div class="controls-hint">

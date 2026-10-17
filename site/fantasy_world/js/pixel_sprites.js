@@ -4451,6 +4451,7 @@
         let slashColor = '#f8fafc';
         let glowColor = 'rgba(255, 255, 255, 0.4)';
         if (weaponId.includes('flame') || weaponId.includes('magma')) { slashColor = '#f97316'; glowColor = 'rgba(249, 115, 22, 0.6)'; }
+        else if (weaponId.includes('mirage') || weaponId.includes('scimitar') || weaponId.includes('sand') || weaponId.includes('djinn')) { slashColor = '#fde68a'; glowColor = 'rgba(245, 158, 11, 0.75)'; }
         else if (weaponId.includes('excalibur') || weaponId.includes('frost')) { slashColor = '#38bdf8'; glowColor = 'rgba(56, 189, 248, 0.6)'; }
         else if (weaponId.includes('poison') || weaponId.includes('nature')) { slashColor = '#4ade80'; glowColor = 'rgba(74, 222, 128, 0.6)'; }
         else if (weaponId.includes('shadow') || weaponId.includes('arcane')) { slashColor = '#c084fc'; glowColor = 'rgba(192, 132, 252, 0.6)'; }
@@ -4473,6 +4474,21 @@
         ctx.beginPath();
         ctx.arc(arcCenter, py - 10 * sc - bounce, 16 * sc, startAng, endAng, isLeft);
         ctx.stroke();
+
+        // 🏜️ 환영의 시미터 초승달 미라주 잔상 (Curved Scimitar Mirage Afterimage Flurry)
+        if (weaponId.includes('mirage') || weaponId.includes('scimitar') || weaponId.includes('sand') || weaponId.includes('djinn') || (e.role === 'player' && e.comboStep >= 2)) {
+          ctx.strokeStyle = 'rgba(251, 191, 36, 0.45)';
+          ctx.lineWidth = 1.2 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter - sideSign * 4 * sc, py - 10 * sc - bounce, 19 * sc, startAng + 0.15, endAng - 0.15, isLeft);
+          ctx.stroke();
+
+          // 황금 사구 신기루 스파클
+          ctx.fillStyle = '#fde68a';
+          ctx.fillRect(arcCenter + sideSign * 20 * sc, py - 10 * sc - bounce, 2 * sc, 2 * sc);
+          ctx.fillStyle = '#f59e0b';
+          ctx.fillRect(arcCenter + sideSign * 16 * sc, py - 20 * sc - bounce, 2 * sc, 2 * sc);
+        }
 
         // 반짝이는 참격 스파크 및 엠버
         ctx.fillStyle = '#ffffff';

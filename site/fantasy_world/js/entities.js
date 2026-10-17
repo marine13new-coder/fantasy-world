@@ -526,10 +526,10 @@ class EntityManager {
     }
   }
 
-  // 💨 회피 롤 착지 시 픽셀 모래먼지 파티클 (Dust Puffs)
-  addDustPuff(x, y, count = 4) {
+  // 💨 회피 롤 착지 및 질주 시 픽셀 모래먼지/눈보라 파티클 (Dynamic Dust Puffs)
+  addDustPuff(x, y, count = 4, color = null) {
     if (!this.dustPuffs) this.dustPuffs = [];
-    if (this.dustPuffs.length > 80) this.dustPuffs.splice(0, count);
+    if (this.dustPuffs.length > 90) this.dustPuffs.splice(0, count);
     for (let i = 0; i < count; i++) {
       const ang = Math.random() * Math.PI * 2;
       const spd = 0.5 + Math.random() * 1.2;
@@ -538,6 +538,7 @@ class EntityManager {
         y: y + (Math.random() - 0.5) * 0.4,
         vx: Math.cos(ang) * spd,
         vy: Math.sin(ang) * spd - 0.4,
+        color: color || (Math.random() < 0.5 ? '#fde68a' : '#d97706'),
         age: 0,
         duration: 0.45 + Math.random() * 0.25,
         size: 2.0 + Math.random() * 2.5
@@ -4872,8 +4873,15 @@ class EntityManager {
           if (this.waterRipples.length < 30) {
             this.waterRipples.push({ x: p.x, y: p.y, age: 0, duration: 0.45, radius: 2.2 });
           }
-        } else if (curTile === 2 || curTile === 17 || curTile === 10 || curTile === 12) {
-          this.addDustPuff(p.x, p.y + 0.2, 1);
+        } else if (curTile === 2 || curTile === 17) {
+          // 🏜️ 황금 사구 & 신기루 사막 모래 튀김 (Sand Spray)
+          this.addDustPuff(p.x, p.y + 0.15, 2, '#fde68a');
+        } else if (curTile === 9 || curTile === 23) {
+          // ❄️ 만년설원 & 툰드라 서리 눈먼지 튀김 (Snow Powder Spray)
+          this.addDustPuff(p.x, p.y + 0.15, 2, '#ffffff');
+        } else if (curTile === 10 || curTile === 12 || curTile === 11) {
+          // 흙길 / 황무지 / 경작지 흙먼지 (Dirt Puff)
+          this.addDustPuff(p.x, p.y + 0.2, 1, '#d97706');
         }
       }
     }

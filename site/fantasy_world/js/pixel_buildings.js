@@ -1657,6 +1657,289 @@
     },
 
     // =========================================================================
+    // 11.10. 신기루 제국 황금 술탄 궁전 (Mirage Empire Golden Sultan Palace)
+    // =========================================================================
+    drawSultanPalace(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 지면 앰비언트 오클루전 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+      ctx.fillRect(px - halfW + 2, py + halfH - 2, bw - 4, 6);
+
+      // B. 사암 기단 및 청금석 모자이크 외벽 (Sandstone Foundation & Lapis Mosaic)
+      const baseH = Math.round(bh * 0.52);
+      const baseY = py + halfH - baseH;
+      ctx.fillStyle = '#b45309'; // 따뜻한 사암 섀도우
+      ctx.fillRect(px - halfW, baseY, bw, baseH);
+      ctx.fillStyle = '#d97706'; // 사암 메인 블록
+      ctx.fillRect(px - halfW + 2, baseY + 2, bw - 4, baseH - 3);
+
+      // 청금석 & 터키석 모자이크 띠 (Lapis Lazuli & Turquoise Geometric Inlays)
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(px - halfW + 2, baseY + 6, bw - 4, 3);
+      ctx.fillStyle = '#38bdf8';
+      for (let ix = px - halfW + 4; ix < px + halfW - 4; ix += 6) {
+        ctx.fillRect(ix, baseY + 7, 2, 1);
+      }
+
+      // C. 좌우 대칭 첨탑 미나렛 (Twin Slender Minaret Towers)
+      const minW = Math.max(5, Math.round(bw * 0.14));
+      const minH = Math.round(bh * 0.78);
+      const minLeftX = px - halfW + 2;
+      const minRightX = px + halfW - minW - 2;
+      const minY = py + halfH - minH;
+
+      const drawMinaret = (mx) => {
+        // 미나렛 기둥
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(mx, minY, minW, minH);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(mx + 1, minY + 1, minW - 2, minH - 1);
+        // 중간 발코니
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(mx - 2, minY + 16, minW + 4, 3);
+        ctx.fillStyle = '#fde68a';
+        ctx.fillRect(mx - 1, minY + 17, minW + 2, 1);
+        // 미나렛 황금 미니 양파 돔 (Mini Onion Dome)
+        ctx.fillStyle = '#b45309';
+        ctx.beginPath();
+        ctx.arc(mx + minW / 2, minY - 2, minW * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#facc15';
+        ctx.beginPath();
+        ctx.arc(mx + minW / 2, minY - 2, minW * 0.55, 0, Math.PI * 2);
+        ctx.fill();
+        // 초승달 상륜부 (Hilal Spire)
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(mx + minW / 2 - 0.5, minY - minW * 0.7 - 5, 1, 5);
+        ctx.fillRect(mx + minW / 2 - 1.5, minY - minW * 0.7 - 6, 3, 1);
+      };
+      drawMinaret(minLeftX);
+      drawMinaret(minRightX);
+
+      // D. 중앙 마제형(말발굽) 아치 대문 (Horseshoe Keyhole Archway)
+      const gateW = Math.round(bw * 0.32);
+      const gateH = Math.round(baseH * 0.65);
+      const gateX = px - Math.round(gateW / 2);
+      const gateY = py + halfH - gateH;
+
+      ctx.fillStyle = '#0f172a'; // 어두운 궁전 내부
+      ctx.fillRect(gateX, gateY, gateW, gateH);
+      ctx.beginPath();
+      ctx.arc(px, gateY, gateW / 2, Math.PI, 0);
+      ctx.fill();
+
+      // 황금 아치 테두리 장식
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(gateX, gateY, gateW, gateH);
+      ctx.beginPath();
+      ctx.arc(px, gateY, gateW / 2, Math.PI, 0);
+      ctx.stroke();
+
+      // 보랏빛 왕실 비단 캐노피 (Royal Purple Silk Canopy)
+      ctx.fillStyle = '#7e22ce';
+      ctx.fillRect(gateX - 2, gateY - 3, gateW + 4, 3);
+      ctx.fillStyle = '#c084fc';
+      ctx.fillRect(gateX - 1, gateY - 2, gateW + 2, 1);
+
+      // E. 중앙 거대 황금 양파 돔 (Grand Gilded Onion Dome)
+      const domeR = Math.round(bw * 0.28);
+      const domeY = baseY - Math.round(domeR * 0.55);
+
+      // 돔 베이스 원통형 드럼
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(px - domeR + 2, baseY - 6, (domeR - 2) * 2, 7);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(px - domeR + 3, baseY - 5, (domeR - 3) * 2, 5);
+
+      // 구형 양파 돔 몸통
+      ctx.fillStyle = '#b45309'; // 섀도우
+      ctx.beginPath();
+      ctx.arc(px, domeY, domeR, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#f59e0b'; // 황금 메인 바디
+      ctx.beginPath();
+      ctx.arc(px, domeY, domeR - 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 왼쪽 하이라이트 & 스페큘러 글로우
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.arc(px - domeR * 0.25, domeY - domeR * 0.25, domeR * 0.55, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - domeR * 0.35, domeY - domeR * 0.35, 3, 3);
+
+      // 뾰족한 양파 돔 첨두부 (Onion Dome Spire Tip)
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.moveTo(px - 5, domeY - domeR + 2);
+      ctx.lineTo(px, domeY - domeR - 10);
+      ctx.lineTo(px + 5, domeY - domeR + 2);
+      ctx.closePath();
+      ctx.fill();
+
+      // 황금 초승달 힐랄 핀나클 (Golden Hilal Crescent Moon Finial)
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 0.5, domeY - domeR - 14, 1, 5);
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.arc(px, domeY - domeR - 16, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = isNight ? '#0f172a' : '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(px + 1.2, domeY - domeR - 17, 2.8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // F. 야간 지니 영천 램프 및 화로 연기 (Night Djinn Lanterns & Mystic Vapors)
+      if (isNight) {
+        // 좌우 청동 화로 등불
+        const lampY = py + halfH - 12;
+        const drawLamp = (lx) => {
+          ctx.fillStyle = '#06b6d4';
+          ctx.beginPath();
+          ctx.arc(lx, lampY, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#cffafe';
+          ctx.fillRect(lx - 1, lampY - 1, 2, 2);
+        };
+        drawLamp(gateX - 4);
+        drawLamp(gateX + gateW + 4);
+
+        // 지니의 터키석 마법 안개 연무
+        const wispY = lampY - 6 - (timeSec * 8) % 10;
+        ctx.fillStyle = 'rgba(6, 182, 212, 0.4)';
+        ctx.fillRect(gateX - 4 + Math.sin(timeSec * 3) * 2, wispY, 2, 2);
+        ctx.fillRect(gateX + gateW + 4 - Math.sin(timeSec * 3) * 2, wispY, 2, 2);
+      }
+    },
+
+    // =========================================================================
+    // 11.11. 고대 파라오 계단식 사암 피라미드 (Ancient Sandstone Stepped Pyramid)
+    // =========================================================================
+    drawSandstonePyramid(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 모래사장 지면 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+      ctx.fillRect(px - halfW + 2, py + halfH - 2, bw - 4, 6);
+
+      // B. 5단 계단식 사암 테라스 (5-Tiered Sandstone Stepped Terraces)
+      const tiers = 5;
+      const tierH = Math.round((bh - 14) / tiers);
+      for (let t = 0; t < tiers; t++) {
+        const stepFrac = t / tiers;
+        const curW = Math.round(bw * (1 - stepFrac * 0.72));
+        const curHW = Math.round(curW / 2);
+        const curY = py + halfH - 3 - (t + 1) * tierH;
+
+        // 사암 계단 음영
+        ctx.fillStyle = '#78350f'; // 섀도우 우측
+        ctx.fillRect(px - curHW, curY, curW, tierH);
+        ctx.fillStyle = '#b45309'; // 메인 베이스
+        ctx.fillRect(px - curHW + 1, curY + 1, curW - 2, tierH - 1);
+        ctx.fillStyle = '#d97706'; // 상단 햇빛 받는 면
+        ctx.fillRect(px - curHW + 2, curY + 1, curW - 4, 2);
+
+        // 상형문자 음각 각인 디테일 (Hieroglyphic Cartouche Etchings)
+        if (t < 3) {
+          ctx.fillStyle = '#451a03';
+          for (let gx = px - curHW + 6; gx < px + curHW - 6; gx += 8) {
+            ctx.fillRect(gx, curY + 4, 3, 2);
+            ctx.fillRect(gx + 1, curY + 3, 1, 4);
+          }
+        }
+      }
+
+      // C. 중앙 깊은 성소 묘실 입구 (Deep Pharaoh Tomb Portal)
+      const gateW = Math.max(6, Math.round(bw * 0.22));
+      const gateH = Math.round(tierH * 1.8);
+      const gateX = px - Math.round(gateW / 2);
+      const gateY = py + halfH - gateH - 3;
+
+      ctx.fillStyle = '#020617'; // 암흑의 무덤 내부
+      ctx.fillRect(gateX, gateY, gateW, gateH);
+      // 포탈 상인방 (Stone Lintel)
+      ctx.fillStyle = '#d97706';
+      ctx.fillRect(gateX - 2, gateY - 2, gateW + 4, 3);
+      ctx.fillStyle = '#fde68a';
+      ctx.fillRect(gateX - 1, gateY - 1, gateW + 2, 1);
+
+      // 좌우 미니어처 오벨리스크 (Twin Ceremonial Obelisks)
+      const obLeftX = px - halfW + 6;
+      const obRightX = px + halfW - 8;
+      const obH = Math.round(bh * 0.38);
+      const obY = py + halfH - obH - 2;
+
+      const drawObelisk = (ox) => {
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(ox, obY + 3, 4, obH - 3);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(ox + 1, obY + 3, 2, obH - 3);
+        // 황금 피라미디온 상단
+        ctx.fillStyle = '#facc15';
+        ctx.beginPath();
+        ctx.moveTo(ox, obY + 3);
+        ctx.lineTo(ox + 2, obY);
+        ctx.lineTo(ox + 4, obY + 3);
+        ctx.closePath();
+        ctx.fill();
+      };
+      drawObelisk(obLeftX);
+      drawObelisk(obRightX);
+
+      // D. 정상에 부유하는 초자연적 황금 피라미디온 (Floating Golden Pyramidion Capstone)
+      const floatY = Math.sin(timeSec * 3.2) * 2;
+      const capW = Math.round(bw * 0.24);
+      const capHW = Math.round(capW / 2);
+      const capTopY = py - halfH + 4 + floatY;
+
+      // 발광 오라 광선 (Mystic Sun Beam)
+      ctx.save();
+      const beamGrad = ctx.createLinearGradient(px, capTopY, px, gateY);
+      beamGrad.addColorStop(0, 'rgba(250, 204, 21, 0.45)');
+      beamGrad.addColorStop(1, 'rgba(250, 204, 21, 0.0)');
+      ctx.fillStyle = beamGrad;
+      ctx.beginPath();
+      ctx.moveTo(px - capHW, capTopY + 8);
+      ctx.lineTo(px + capHW, capTopY + 8);
+      ctx.lineTo(px + gateW / 2 + 2, gateY);
+      ctx.lineTo(px - gateW / 2 - 2, gateY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // 황금 피라미디온 본체
+      ctx.fillStyle = '#b45309';
+      ctx.beginPath();
+      ctx.moveTo(px - capHW, capTopY + 8);
+      ctx.lineTo(px, capTopY);
+      ctx.lineTo(px + capHW, capTopY + 8);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.moveTo(px - capHW + 1, capTopY + 7);
+      ctx.lineTo(px, capTopY + 1);
+      ctx.lineTo(px + capHW - 1, capTopY + 7);
+      ctx.closePath();
+      ctx.fill();
+
+      // 피라미디온 호루스의 눈 / 라의 태양 심볼
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(px, capTopY + 5, 2.0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0284c7'; // 청금석 동공
+      ctx.fillRect(px - 0.5, capTopY + 4.5, 1, 1);
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -1879,6 +2162,14 @@
       }
       if (type === 'torii_shrine' || (type === 'temple' && b && b.continent === 'sakura')) {
         this.drawToriiShrine(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'sultan_palace' || (type === 'capital' && b && b.continent === 'mirage') || (type === 'palace' && b && b.continent === 'mirage')) {
+        this.drawSultanPalace(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'sandstone_pyramid' || (type === 'castle' && b && b.continent === 'mirage') || (type === 'temple' && b && b.continent === 'mirage')) {
+        this.drawSandstonePyramid(ctx, px, py, bw, bh, isNight, timeSec);
         return true;
       }
       if (type === 'temple' || type === 'cathedral') {
