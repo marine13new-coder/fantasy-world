@@ -2745,6 +2745,68 @@ class EntityManager {
     }
   }
 
+  // ⚡ 쾌도난마 대시 찌르기 (Dash Thrust Piercing Cleave - 회피 질주 중 공격 연계)
+  playerPerformDashThrust(p, target) {
+    if (!p) p = this.spawnOrGetPlayer();
+    p.isDashing = false; // 대시 모멘텀을 찌르기로 전환
+    p.isAttacking = true;
+    p.attackAnimTimer = 0.32;
+    p.attackCooldown = 0.38;
+
+    let dirX = (p.dashVx && p.dashVx !== 0) ? Math.sign(p.dashVx) : (p.facing === 'left' ? -1 : (p.facing === 'right' ? 1 : 0));
+    let dirY = (p.dashVy && p.dashVy !== 0) ? Math.sign(p.dashVy) : (p.facing === 'up' ? -1 : (p.facing === 'down' ? 1 : 0));
+    if (dirX === 0 && dirY === 0) dirX = 1;
+    const len = Math.hypot(dirX, dirY) || 1;
+    const nx = dirX / len;
+    const ny = dirY / len;
+    const thrustAngle = Math.atan2(ny, nx);
+
+    // 전방으로 추가 돌진
+    p.x += nx * 1.35;
+    p.y += ny * 1.35;
+
+    if (typeof audioMgr !== 'undefined') audioMgr.playSword();
+    this.addEffect(p.x, p.y, 3.2, '#38bdf8', 0.35);
+    this.addShockwave(p.x, p.y, 3.5, '#38bdf8', 0.38);
+    this.addSlashArc(p.x, p.y, 3.6, thrustAngle - 0.45, thrustAngle + 0.45, '#38bdf8', 0.28);
+    this.addDustPuff(p.x, p.y, 6);
+    this.addHitSparks(p.x + nx * 1.2, p.y + ny * 1.2, '#bae6fd', 14);
+
+    if (this.camera) {
+      this.camera.shake = 8.5;
+      this.camera.zoomPulse = 0.6;
+    }
+
+    const thrustDist = 4.2;
+    const thrustDmg = Math.round((p.atk || 25) * 2.45 * (1.1 + Math.random() * 0.25));
+
+    // 직선 관통 경로상의 모든 적 타격 (Piercing Line Attack)
+    const targets = this.spatialGrid
+      ? this.spatialGrid.query(p.x, p.y, thrustDist, other => other !== p && other.hp > 0 && this.isHostile(p, other))
+      : this.entities.filter(other => other !== p && other.hp > 0 && this.isHostile(p, other));
+
+    for (const ent of targets) {
+      const ex = ent.x - p.x;
+      const ey = ent.y - p.y;
+      const proj = ex * nx + ey * ny;
+      if (proj >= -0.5 && proj <= thrustDist) {
+        const perpDist = Math.abs(ex * (-ny) + ey * nx);
+        if (perpDist <= 1.4) {
+          ent.hp -= thrustDmg;
+          ent.hitTimer = 0.32;
+          this.checkEnemyExecutable(ent);
+          ent.combatTarget = p;
+          ent.x += nx * 1.2 + (-ny) * (Math.random() - 0.5) * 0.8;
+          ent.y += ny * 1.2 + nx * (Math.random() - 0.5) * 0.8;
+          this.addHitSparks(ent.x, ent.y, '#38bdf8', 10);
+        }
+      }
+    }
+
+    this.addFloatingText(p.x, p.y - 1.4, `⚡ [DASH THRUST!] -${thrustDmg} (쾌도 찌르기)`, '#38bdf8', 1.3);
+    return true;
+  }
+
   // ⚡ 공중 연격 & 투구 깨기 (Aerial Helm Breaker Downward Slam)
   playerPerformHelmBreaker(p, target) {
     if (!p) p = this.spawnOrGetPlayer();
@@ -2800,6 +2862,11 @@ class EntityManager {
     // 0순위: 인근 처형 가능 대상(canExecute)이 있을 시 즉시 일격처형(Glory Kill) 발동
     if (this.checkExecutionTrigger(p)) {
       return;
+    }
+
+    // 0.3순위: 대시 롤(회피) 중 공격 입력 시 쾌도난마 대시 찌르기 (Dash Thrust Piercing Cleave)
+    if (p.isDashing) {
+      return this.playerPerformDashThrust(p, target);
     }
 
     // 0.5순위: 대상이 공중에 떠있는 경우(Airborne) 즉시 공중 연격 헬름 브레이커 발동!
@@ -4584,6 +4651,15 @@ class EntityManager {
         this.addFootprint(p.x, p.y, Math.atan2(p.vy, p.vx), p.isShip ? 'wake' : (p.mount || 'human'), curTile);
         if (curTile === 1 || curTile === 2 || curTile === 3 || curTile === 24 || curTile === 11 || curTile === 12) {
           this.addGrassDebris(p.x, p.y, curTile);
+        }
+        // 💨 모래/흙길 달리기 먼지 파티클 & 물 첨벙거림 (Dynamic Footstep Kick-up Particles)
+        if (curTile === 1 || p.isShip) {
+          if (!this.waterRipples) this.waterRipples = [];
+          if (this.waterRipples.length < 30) {
+            this.waterRipples.push({ x: p.x, y: p.y, age: 0, duration: 0.45, radius: 2.2 });
+          }
+        } else if (curTile === 2 || curTile === 17 || curTile === 10 || curTile === 12) {
+          this.addDustPuff(p.x, p.y + 0.2, 1);
         }
       }
     }
