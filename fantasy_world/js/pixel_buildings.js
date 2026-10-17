@@ -3480,6 +3480,323 @@
     },
 
     // =========================================================================
+    // 11.24. 태고 요정 숲 에메랄드 거목 성소 (Elder Fairy World Tree Sanctuary)
+    // =========================================================================
+    drawElderFairyWorldTree(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 거목 밑둥 지면 그림자 & 이끼 덮인 둔덕
+      ctx.fillStyle = 'rgba(2, 44, 34, 0.58)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 2, halfW + 10, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // B. 뻗어나가는 태고의 뿌리 지지대 (Primeval Gnarled Buttress Roots)
+      ctx.fillStyle = '#451a03';
+      ctx.beginPath();
+      ctx.moveTo(px - halfW - 8, py + halfH + 2);
+      ctx.quadraticCurveTo(px - halfW + 4, py + halfH - 14, px - 18, py + halfH - 26);
+      ctx.lineTo(px + 18, py + halfH - 26);
+      ctx.quadraticCurveTo(px + halfW - 4, py + halfH - 14, px + halfW + 8, py + halfH + 2);
+      ctx.closePath();
+      ctx.fill();
+
+      // 밝은 나무 껍질 하이라이트 & 이끼 텍스처
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(px - 14, py + halfH - 24, 28, 22);
+      ctx.fillStyle = '#15803d';
+      ctx.fillRect(px - halfW - 4, py + halfH - 3, 8, 4);
+      ctx.fillRect(px + halfW - 4, py + halfH - 3, 8, 4);
+      ctx.fillRect(px - 10, py + halfH - 18, 5, 8);
+      ctx.fillRect(px + 6, py + halfH - 14, 6, 6);
+
+      // C. 수액 수로 - 맥동하는 에메랄드 마나 도관 (Luminescent Emerald Sap Veins)
+      const sapPulse = Math.sin(timeSec * 3) * 0.25 + 0.75;
+      ctx.fillStyle = `rgba(52, 211, 153, ${sapPulse})`;
+      ctx.fillRect(px - 8, py + halfH - 22, 2, 16);
+      ctx.fillRect(px + 7, py + halfH - 20, 2, 14);
+      ctx.fillRect(px - 1, py + halfH - 25, 2, 18);
+
+      // D. 거목 중앙 아치형 요정 차원문 (Arched Fairy Portal Gateway)
+      const doorW = 12;
+      const doorH = 16;
+      const doorX = px - 6;
+      const doorY = py + halfH - doorH;
+
+      ctx.fillStyle = '#022c22';
+      ctx.beginPath();
+      ctx.arc(px, doorY + 6, doorW / 2, Math.PI, 0);
+      ctx.lineTo(px + doorW / 2, doorY + doorH);
+      ctx.lineTo(px - doorW / 2, doorY + doorH);
+      ctx.closePath();
+      ctx.fill();
+
+      // 내부 에메랄드 비전 광채
+      ctx.fillStyle = '#6ee7b7';
+      ctx.fillRect(doorX + 2, doorY + 7, doorW - 4, doorH - 8);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(doorX + 4, doorY + 9, 4, 4);
+
+      // E. 나선형 나무 줄기 계단 & 요정 수관 구름다리 (Spiral Canopy Boardwalk)
+      ctx.fillStyle = '#92400e';
+      const steps = [
+        { x: px - 18, y: py + halfH - 14, w: 10, h: 3 },
+        { x: px - 14, y: py + halfH - 22, w: 12, h: 3 },
+        { x: px + 8,  y: py + halfH - 28, w: 14, h: 3 },
+        { x: px + 12, y: py + halfH - 36, w: 12, h: 3 }
+      ];
+      for (const st of steps) {
+        ctx.fillRect(st.x, st.y, st.w, st.h);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(st.x + 2, st.y - 1, 2, 2); // 반딧불 조명
+        ctx.fillStyle = '#92400e';
+      }
+
+      // F. 3단으로 뻗어나가는 거대 에메랄드 수관림 (Massive Tiered Emerald Canopy)
+      // 하단 수관 로브 (Lower Canopy Lobes)
+      ctx.fillStyle = '#064e3b';
+      ctx.beginPath();
+      ctx.arc(px - halfW + 2, py - 4, Math.round(bw * 0.32), 0, Math.PI * 2);
+      ctx.arc(px + halfW - 2, py - 4, Math.round(bw * 0.32), 0, Math.PI * 2);
+      ctx.fill();
+
+      // 중단 주 수관 돔 (Main Middle Foliage Dome)
+      ctx.fillStyle = '#047857';
+      ctx.beginPath();
+      ctx.arc(px, py - 16, Math.round(bw * 0.46), 0, Math.PI * 2);
+      ctx.fill();
+
+      // 상단 첨탑 수관 돔 & 에메랄드 하이라이트 (Upper Emerald Crown)
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(px, py - halfH + 8, Math.round(bw * 0.34), 0, Math.PI * 2);
+      ctx.fill();
+
+      // 신선한 새싹 민트빛 픽셀 림 라이트 (Mint Leaf Highlights)
+      ctx.fillStyle = '#6ee7b7';
+      ctx.beginPath();
+      ctx.arc(px - 6, py - halfH + 2, Math.round(bw * 0.22), 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#a7f3d0';
+      ctx.fillRect(px - 10, py - halfH + 2, 6, 4);
+      ctx.fillRect(px + 4, py - 22, 8, 4);
+      ctx.fillRect(px - halfW + 6, py - 8, 6, 3);
+      ctx.fillRect(px + halfW - 12, py - 8, 6, 3);
+
+      // G. 가지 끝에 매달려 흔들리는 발광 요정 꽃망울 (Hanging Glowing Bell Blossoms)
+      const flowers = [
+        { x: px - halfW + 2, y: py + 8, color: '#f472b6' },
+        { x: px - 18, y: py + 12, color: '#ec4899' },
+        { x: px + 18, y: py + 12, color: '#f472b6' },
+        { x: px + halfW - 2, y: py + 8, color: '#fde047' }
+      ];
+
+      for (let i = 0; i < flowers.length; i++) {
+        const fl = flowers[i];
+        const sway = Math.sin(timeSec * 2.8 + i * 1.5) * 3;
+        const fx = fl.x + sway;
+        const fy = fl.y;
+
+        // 매달린 덩굴 줄기
+        ctx.strokeStyle = '#059669';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(fl.x, fl.y - 10);
+        ctx.lineTo(fx, fy);
+        ctx.stroke();
+
+        // 발광 꽃망울
+        ctx.fillStyle = fl.color;
+        ctx.beginPath();
+        ctx.arc(fx, fy + 2, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(fx - 1, fy + 1, 2, 2);
+      }
+
+      // H. 거목 주위를 춤추듯 날아오르는 픽시 요정 가루 & 반딧불 (Orbiting Pixie Dust Particles)
+      const pixieCount = 6;
+      for (let p = 0; p < pixieCount; p++) {
+        const pAng = (timeSec * 1.8 + (p * Math.PI * 2) / pixieCount);
+        const pRadX = halfW * 0.78 + Math.sin(timeSec * 3 + p) * 6;
+        const pRadY = halfH * 0.65;
+        const pxPos = px + Math.cos(pAng) * pRadX;
+        const pyPos = (py - 12) + Math.sin(pAng) * pRadY;
+
+        ctx.fillStyle = (p % 2 === 0) ? '#fde047' : '#67e8f9';
+        ctx.beginPath();
+        ctx.arc(pxPos, pyPos, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(pxPos - 0.8, pyPos - 0.8, 1.6, 1.6);
+      }
+    },
+
+    // =========================================================================
+    // 11.25. 발광 포자 거대 버섯 성채 (Luminescent Spore Mushroom Citadel)
+    // =========================================================================
+    drawLuminescentSporeCitadel(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 균사체 대지 지면 그림자 & 발광 균사망
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.55)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 2, halfW + 6, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 바닥 발광 덩굴 & 균사체 라인
+      ctx.strokeStyle = '#818cf8';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(px - halfW, py + halfH);
+      ctx.lineTo(px - 10, py + halfH - 2);
+      ctx.lineTo(px + 12, py + halfH - 1);
+      ctx.lineTo(px + halfW, py + halfH);
+      ctx.stroke();
+
+      // B. 좌우 보조 버섯 첨탑 (Flanking Secondary Mushroom Spores)
+      const flankMushrooms = [
+        { x: px - Math.round(halfW * 0.68), y: py + 4, capW: Math.round(bw * 0.38), capH: 18, color: '#06b6d4' },
+        { x: px + Math.round(halfW * 0.68), y: py + 6, capW: Math.round(bw * 0.36), capH: 16, color: '#f43f5e' }
+      ];
+
+      for (const m of flankMushrooms) {
+        // 자루 (Stipe)
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(m.x - 3, m.y, 6, py + halfH - m.y);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(m.x - 3, m.y, 2, py + halfH - m.y);
+
+        // 버섯 갓 (Cap)
+        ctx.fillStyle = m.color;
+        ctx.beginPath();
+        ctx.ellipse(m.x, m.y, m.capW / 2, m.capH, 0, Math.PI, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        // 갓의 발광 점박이 무늬 (Glowing Spots)
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(m.x - 4, m.y - 8, 3, 3);
+        ctx.fillRect(m.x + 3, m.y - 6, 2, 2);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(m.x - 2, m.y - 12, 3, 2);
+      }
+
+      // 좌우 보조 버섯을 잇는 덩굴 구름다리
+      ctx.strokeStyle = '#854d0e';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(flankMushrooms[0].x, flankMushrooms[0].y + 4);
+      ctx.quadraticCurveTo(px, py + 12, flankMushrooms[1].x, flankMushrooms[1].y + 4);
+      ctx.stroke();
+
+      // C. 중앙 거대 버섯 자루 (Central Tower Stipe)
+      const stemW = Math.round(bw * 0.28);
+      const stemHW = Math.round(stemW / 2);
+      const stemY = py - 4;
+      const stemH = py + halfH - stemY;
+
+      ctx.fillStyle = '#f1f5f9';
+      ctx.fillRect(px - stemHW, stemY, stemW, stemH);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(px - stemHW, stemY, 4, stemH);
+
+      // 자루 중간 턱 (Annulus Ring)
+      ctx.fillStyle = '#22d3ee';
+      ctx.fillRect(px - stemHW - 3, stemY + 12, stemW + 6, 3);
+
+      // 버섯 기둥에 뚫린 요정의 창문들 (Illuminated Stipe Windows)
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - 3, stemY + 18, 6, 8);
+      ctx.fillStyle = '#fde047';
+      ctx.fillRect(px - 2, stemY + 19, 4, 6);
+
+      // D. 거대 주 버섯 갓 밑면 주름 (Bioluminescent Underside Gills)
+      const mainCapW = Math.round(bw * 0.88);
+      const mainCapHW = Math.round(mainCapW / 2);
+      const mainCapY = py - 8;
+      const gillPulse = Math.sin(timeSec * 3.5) * 0.25 + 0.75;
+
+      ctx.fillStyle = `rgba(6, 182, 212, ${gillPulse})`;
+      ctx.beginPath();
+      ctx.ellipse(px, mainCapY + 2, mainCapHW, 10, 0, 0, Math.PI);
+      ctx.closePath();
+      ctx.fill();
+
+      // 방사형 주름선
+      ctx.strokeStyle = '#0891b2';
+      ctx.lineWidth = 1;
+      for (let gx = px - mainCapHW + 4; gx <= px + mainCapHW - 4; gx += 6) {
+        ctx.beginPath();
+        ctx.moveTo(gx, mainCapY + 2);
+        ctx.lineTo(px, mainCapY + 6);
+        ctx.stroke();
+      }
+
+      // E. 거대 주 버섯 갓 돔 (Massive Royal Violet & Fuchsia Cap Dome)
+      const capDomeH = Math.round(bh * 0.52);
+      ctx.fillStyle = '#581c87';
+      ctx.beginPath();
+      ctx.ellipse(px, mainCapY, mainCapHW, capDomeH, 0, Math.PI, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      // 상부 바이올렛/마젠타 그라데이션 하이라이트
+      ctx.fillStyle = '#7e22ce';
+      ctx.beginPath();
+      ctx.ellipse(px, mainCapY - 4, mainCapHW - 4, capDomeH - 6, 0, Math.PI, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#a855f7';
+      ctx.beginPath();
+      ctx.ellipse(px - 4, mainCapY - 8, mainCapHW - 10, capDomeH - 12, 0, Math.PI, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      // F. 발광 포자 반점 (Luminescent Spore Circles & Dots)
+      const spots = [
+        { x: px - 18, y: mainCapY - 14, r: 4.5, c: '#22d3ee' },
+        { x: px + 16, y: mainCapY - 16, r: 5.0, c: '#22d3ee' },
+        { x: px - 2,  y: mainCapY - 24, r: 4.0, c: '#f472b6' },
+        { x: px - 28, y: mainCapY - 6,  r: 3.5, c: '#f472b6' },
+        { x: px + 28, y: mainCapY - 8,  r: 3.5, c: '#f472b6' },
+        { x: px + 6,  y: mainCapY - 12, r: 3.0, c: '#fde047' }
+      ];
+
+      for (const sp of spots) {
+        ctx.fillStyle = sp.c;
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, sp.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(sp.x - 1, sp.y - 1, sp.r * 0.45, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // G. 공중으로 솟구치는 발광 포자 안개 및 미세 포자 입자 (Rising Spore Mist Flurry)
+      const sporeCount = 5;
+      for (let s = 0; s < sporeCount; s++) {
+        const sTime = (timeSec * 2.2 + s * 1.8) % 4.0;
+        const progress = sTime / 4.0; // 0 to 1
+        const sX = px + Math.sin(timeSec * 3 + s * 2) * (halfW * 0.7);
+        const sY = mainCapY - (progress * bh * 0.85);
+        const sAlpha = (1 - progress) * 0.85;
+
+        ctx.fillStyle = (s % 2 === 0) ? `rgba(34, 211, 238, ${sAlpha})` : `rgba(244, 114, 182, ${sAlpha})`;
+        ctx.beginPath();
+        ctx.arc(sX, sY, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = `rgba(255, 255, 255, ${sAlpha})`;
+        ctx.fillRect(sX - 0.7, sY - 0.7, 1.4, 1.4);
+      }
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -3629,6 +3946,16 @@
       ctx.beginPath();
       ctx.ellipse(px + 6, py + bh / 2 + 4, bw * 0.42, 4, 0.08, 0, Math.PI * 2);
       ctx.fill();
+
+      // 🌿 태고 요정 숲 에메랄드 거목 성소 & 발광 포자 거대 버섯 성채 (Elder Fairy World Tree & Spore Citadel)
+      if (type === 'fairy_tree' || (type === 'capital' && b && b.continent === 'fairy_grove') || (type === 'palace' && b && b.continent === 'fairy_grove')) {
+        this.drawElderFairyWorldTree(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'spore_citadel' || (type === 'castle' && b && b.continent === 'fairy_grove') || (type === 'fortress' && b && b.continent === 'fairy_grove') || (type === 'temple' && b && b.continent === 'fairy_grove') || (type === 'lair' && b && b.continent === 'fairy_grove')) {
+        this.drawLuminescentSporeCitadel(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
 
       // 🦊 달빛 은룡 천공 신사 & 구미호 영혼 제국 (Celestial Moonlit Silver Dragon & Kitsune Spirit Realm)
       if (type === 'moonlit_dragon_palace' || (type === 'capital' && b && b.continent === 'spirit_shrine') || (type === 'palace' && b && b.continent === 'spirit_shrine')) {

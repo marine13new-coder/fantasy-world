@@ -680,6 +680,16 @@ function createSettlementList() {
   add('wisteria_spirit_fox_shrine', '등나무 영령 여우 신탁 성소', 'temple', 'spirit_shrine', 780, 620, 'fairy', true, 11);
   add('thousand_lotus_mirror_grove', '천 개의 연꽃 거울 호수 마을', 'town', 'spirit_shrine', 880, 770, 'human', false, 8);
 
+  // =========================================================================
+  // 24. THE PRIMEVAL EMERALD FAIRY WORLD TREE HAVEN & LUMINESCENT SPORE CITADEL (태고 요정 숲 에메랄드 거목 성소 & 발광 포자 거대 버섯 성채)
+  // =========================================================================
+  add('elder_fairy_world_tree_capital', '태고 요정 숲 에메랄드 거목 성소 수도', 'capital', 'fairy_grove', 1680, 1680, 'fairy', true, 16);
+  add('luminescent_spore_citadel', '발광 포자 거대 버섯 성채', 'castle', 'fairy_grove', 1580, 1720, 'fairy', true, 14);
+  add('sylph_wind_canopy_skydock_port', '실프 바람 수관림 비행선 항만', 'port', 'fairy_grove', 1780, 1620, 'elf', false, 9);
+  add('pixie_alchemical_nectar_distillery', '픽시 비전 꽃꿀 연금술 증류소', 'lair', 'fairy_grove', 1620, 1610, 'fairy', true, 10);
+  add('ancient_moss_monolith_shrine', '태고 이끼 거석단 요정 신전', 'temple', 'fairy_grove', 1740, 1740, 'elf', true, 11);
+  add('glowing_firefly_hollow_village', '반딧불이 숲속 통나무 마을', 'town', 'fairy_grove', 1680, 1780, 'fairy', false, 8);
+
   return list;
 }
 
@@ -1085,6 +1095,18 @@ function generateWorld() {
           continue;
         }
 
+        // 태고 요정 숲 에메랄드 거목 성소 & 발광 포자 거대 버섯 성채 전용 지형 카빙
+        if (s.continent === 'fairy_grove') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.CASTLE_FLOOR : TILE.ROAD; // 에메랄드 이끼 보석 석조 보도
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.ELVEN_FOREST : TILE.MEADOW; // 태고 에메랄드 요정림 & 신비로운 이끼 초원
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.WATER : TILE.ELVEN_FOREST; // 맑은 숲속 요정 옹달샘 & 거목 숲
+          }
+          continue;
+        }
+
         const curT = tiles[idx(tx, ty)];
         const isWater = (curT === TILE.DEEP_WATER || curT === TILE.WATER);
 
@@ -1323,7 +1345,15 @@ function generateWorld() {
     ['moonlit_silver_dragon_capital', 'celestial_bamboo_alchemist_refinery'],
     ['moonlit_silver_dragon_capital', 'wisteria_spirit_fox_shrine'],
     ['kitsune_nine_tails_sacred_citadel', 'thousand_lotus_mirror_grove'],
-    ['wisteria_spirit_fox_shrine', 'thousand_lotus_mirror_grove']
+    ['wisteria_spirit_fox_shrine', 'thousand_lotus_mirror_grove'],
+
+    // [태고 요정 숲 에메랄드 거목 성소 가도 (Emerald Fairy Grove Leyline Way)]
+    ['elder_fairy_world_tree_capital', 'luminescent_spore_citadel'],
+    ['elder_fairy_world_tree_capital', 'sylph_wind_canopy_skydock_port'],
+    ['elder_fairy_world_tree_capital', 'pixie_alchemical_nectar_distillery'],
+    ['elder_fairy_world_tree_capital', 'ancient_moss_monolith_shrine'],
+    ['luminescent_spore_citadel', 'glowing_firefly_hollow_village'],
+    ['ancient_moss_monolith_shrine', 'glowing_firefly_hollow_village']
   ];
   const roadLinks = rawRoadLinks.filter(([a, b]) => settlementMap[a] && settlementMap[b]);
 

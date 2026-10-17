@@ -4462,6 +4462,7 @@
         else if (weaponId.includes('crystal') || weaponId.includes('prism') || weaponId.includes('starlight') || weaponId.includes('mana') || weaponId.includes('zenith')) { slashColor = '#38bdf8'; glowColor = 'rgba(232, 121, 249, 0.85)'; }
         else if (weaponId.includes('corsair') || weaponId.includes('pirate') || weaponId.includes('cutlass') || weaponId.includes('anchor') || weaponId.includes('kraken') || weaponId.includes('harpoon')) { slashColor = '#06b6d4'; glowColor = 'rgba(6, 182, 212, 0.85)'; }
         else if (weaponId.includes('spirit') || weaponId.includes('fox') || weaponId.includes('moon') || weaponId.includes('kitsune') || weaponId.includes('katana') || weaponId.includes('shrine')) { slashColor = '#f8fafc'; glowColor = 'rgba(168, 85, 247, 0.85)'; }
+        else if (weaponId.includes('fairy') || weaponId.includes('flora') || weaponId.includes('leaf') || weaponId.includes('spore') || weaponId.includes('sylph') || weaponId.includes('nectar') || weaponId.includes('pixie')) { slashColor = '#10b981'; glowColor = 'rgba(74, 222, 128, 0.85)'; }
 
         const arcCenter = px + sideSign * 4 * sc;
         const startAng = isLeft ? Math.PI * 0.7 : Math.PI * 0.3;
@@ -4644,6 +4645,35 @@
               ctx.fillStyle = '#dc2626';
               ctx.fillRect(fx + 4 * sc, fy - 3 * sc, 1 * sc, 3 * sc);
             }
+          }
+        }
+
+        // 🌿 태고 요정 숲 꽃잎 회오리 & 발광 포자 참격 (Fairy Emerald Petal Flurry & Luminescent Spore Slash)
+        if (weaponId.includes('fairy') || weaponId.includes('flora') || weaponId.includes('leaf') || weaponId.includes('spore') || weaponId.includes('sylph') || weaponId.includes('nectar') || weaponId.includes('pixie')) {
+          // 에메랄드 요정 바람 칼날 호
+          ctx.strokeStyle = '#34d399';
+          ctx.lineWidth = 3.6 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 23 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          // 흩날리는 5장의 요정 나뭇잎 & 분홍 꽃잎 & 발광 포자 입자
+          const fairyTime = (e.animTime || 0) * 16;
+          for (let p = 0; p < 5; p++) {
+            const pAng = startAng + (p / 4) * (endAng - startAng);
+            const pDist = (22 + Math.sin(fairyTime + p * 2.1) * 6) * sc;
+            const pxLeaf = arcCenter + Math.cos(pAng) * pDist;
+            const pyLeaf = py - 10 * sc - bounce + Math.sin(pAng) * pDist;
+
+            // 에메랄드 나뭇잎 또는 분홍 꽃잎
+            ctx.fillStyle = (p % 2 === 0) ? '#10b981' : '#f472b6';
+            ctx.beginPath();
+            ctx.ellipse(pxLeaf, pyLeaf, 3.2 * sc, 1.8 * sc, pAng, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 발광 픽시 요정 가루 (Pixie Dust Spark)
+            ctx.fillStyle = '#fef08a';
+            ctx.fillRect(pxLeaf + 2 * sc, pyLeaf - 3 * sc, 1.8 * sc, 1.8 * sc);
           }
         }
 
