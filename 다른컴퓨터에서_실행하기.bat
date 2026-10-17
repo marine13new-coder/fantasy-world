@@ -12,11 +12,12 @@ echo   ▶ [통합 게임 허브 (추천)] : http://192.168.18.152:8000/site/ind
 echo.
 echo   -----------------------------------------------------------------
 echo   [개별 게임 바로가기 주소]
-echo   1. ✈️ 3D 비행기 게임   : http://192.168.18.152:8000/flight_3d.html
-echo   2. 🧸 3D 인형뽑기       : http://192.168.18.152:8000/claw_machine.html
-echo   3. 👑 아테리아 판타지   : http://192.168.18.152:8000/site/fantasy_world/index.html
-echo   4. ⏳ 크로노 블레이드   : http://192.168.18.152:8000/site/chrono-blade/index.html
-echo   5. 👾 네온 서바이벌     : http://192.168.18.152:8000/site/neon-survivor/index.html
+echo   0. 📻🩸 공포게임(아카이브1999) : http://192.168.18.152:8000/archive_1999.html
+echo   1. ✈️ 3D 비행기 게임          : http://192.168.18.152:8000/flight_3d.html
+echo   2. 🧸 3D 인형뽑기              : http://192.168.18.152:8000/claw_machine.html
+echo   3. 👑 아테리아 판타지          : http://192.168.18.152:8000/site/fantasy_world/index.html
+echo   4. ⏳ 크로노 블레이드          : http://192.168.18.152:8000/site/chrono-blade/index.html
+echo   5. 👾 네온 서바이벌            : http://192.168.18.152:8000/site/neon-survivor/index.html
 echo   -----------------------------------------------------------------
 echo.
 echo   ※ 이 창을 닫으면 다른 컴퓨터에서 접속이 종료됩니다. (종료: Ctrl + C)

@@ -1,5 +1,29 @@
 [
   {
+    "slug": "archive-1999",
+    "title": "아카이브 1999: 잔향의 병동 (Archive 1999)",
+    "score": 99,
+    "fun": 96
+  },
+  {
+    "slug": "flight-3d",
+    "title": "스카이 에이스 3D (Sky Ace 3D)",
+    "score": 98,
+    "fun": 95
+  },
+  {
+    "slug": "claw-machine",
+    "title": "CLAW MASTER 3000",
+    "score": 96,
+    "fun": 92
+  },
+  {
+    "slug": "fantasy_world",
+    "title": "아테리아 대륙 연대기",
+    "score": 97,
+    "fun": 93
+  },
+  {
     "slug": "chrono-blade",
     "title": "CHRONO BLADE: Time Slicer",
     "score": 98,
