@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>은하아파트 13동 : 심야 순찰 (Apartment 13: The Blackout) - Deluxe Edition</title>
+  <title>은하아파트 13동 : 심야 순찰 (Apartment 13: The Blackout) - Steam Master Edition</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&family=Nanum+Myeongjo:wght@700;800&family=Share+Tech+Mono&display=swap');
 
     :root {
-      --bg-dark: #020305;
-      --corridor-fog: #05080c;
-      --emergency-red: #ff1e2d;
-      --sensor-yellow: #ffc857;
-      --hud-text: #e6edf5;
-      --hud-sub: #7d8b99;
+      --bg-dark: #010204;
+      --corridor-fog: #040609;
+      --emergency-red: #ff1122;
+      --sensor-yellow: #ffc44d;
+      --hud-text: #edf2f7;
+      --hud-sub: #7b8c9d;
       --accent-cyan: #00f0ff;
     }
 
@@ -44,7 +44,7 @@
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none;
-      background: radial-gradient(circle at center, transparent 38%, rgba(0, 0, 0, 0.92) 100%);
+      background: radial-gradient(circle at center, transparent 35%, rgba(0, 0, 0, 0.94) 100%);
       z-index: 10;
     }
 
@@ -52,7 +52,7 @@
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none;
-      background: radial-gradient(circle at center, transparent 25%, rgba(220, 20, 30, 0.8) 100%);
+      background: radial-gradient(circle at center, transparent 20%, rgba(220, 15, 25, 0.82) 100%);
       opacity: 0;
       transition: opacity 0.15s ease-out;
       z-index: 11;
@@ -62,7 +62,7 @@
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none;
-      background: #fff;
+      background: #ffffff;
       opacity: 0;
       z-index: 12;
       mix-blend-mode: overlay;
@@ -72,10 +72,10 @@
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%),
-                  linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.015), rgba(0, 0, 255, 0.03));
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.38) 50%),
+                  linear-gradient(90deg, rgba(255, 0, 0, 0.035), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.035));
       background-size: 100% 3px, 5px 100%;
-      opacity: 0.85;
+      opacity: 0.88;
       z-index: 13;
     }
 
@@ -87,19 +87,19 @@
       display: none;
       justify-content: center;
       align-items: center;
-      background: rgba(0,0,0,0.9);
+      background: rgba(0,0,0,0.92);
       z-index: 95;
     }
-    #scareFaceOverlay img, #scareFaceOverlay svg {
-      width: 80vh;
-      height: 80vh;
-      filter: contrast(180%) brightness(80%) drop-shadow(0 0 40px #ff0000);
-      animation: scareShake 0.05s infinite;
+    #scareFaceOverlay svg {
+      width: 82vh;
+      height: 82vh;
+      filter: contrast(190%) brightness(85%) drop-shadow(0 0 50px #ff0000);
+      animation: scareShake 0.04s infinite;
     }
     @keyframes scareShake {
-      0% { transform: translate(-4px, 2px) scale(1.05); }
-      50% { transform: translate(5px, -3px) scale(1.08); }
-      100% { transform: translate(-2px, -4px) scale(1.03); }
+      0% { transform: translate(-5px, 3px) scale(1.06); }
+      50% { transform: translate(6px, -4px) scale(1.1); }
+      100% { transform: translate(-3px, -5px) scale(1.04); }
     }
 
     /* 크로스헤어 */
@@ -119,8 +119,8 @@
       height: 16px;
       background: rgba(255, 215, 60, 0.95);
       border: 2px solid #000;
-      box-shadow: 0 0 12px rgba(255, 215, 60, 0.8);
-      transform: translate(-50%, -50%) scale(1.25);
+      box-shadow: 0 0 14px rgba(255, 215, 60, 0.85);
+      transform: translate(-50%, -50%) scale(1.3);
     }
 
     /* HUD */
@@ -143,7 +143,7 @@
     }
 
     .time-badge {
-      background: rgba(8, 12, 16, 0.85);
+      background: rgba(6, 10, 15, 0.88);
       border-left: 3px solid #ff3b30;
       padding: 10px 18px;
       backdrop-filter: blur(6px);
@@ -158,7 +158,7 @@
       gap: 16px;
     }
     .status-box {
-      background: rgba(8, 12, 16, 0.85);
+      background: rgba(6, 10, 15, 0.88);
       padding: 10px 16px;
       border: 1px solid #233446;
       min-width: 130px;
@@ -177,10 +177,10 @@
     .hud-objective {
       position: absolute;
       top: 92px; left: 24px;
-      background: rgba(12, 16, 22, 0.88);
+      background: rgba(10, 14, 20, 0.9);
       border-left: 4px solid #ffcc00;
       padding: 12px 20px;
-      max-width: 440px;
+      max-width: 450px;
       backdrop-filter: blur(6px);
       box-shadow: 0 6px 20px rgba(0,0,0,0.6);
       transition: all 0.3s;
@@ -193,7 +193,7 @@
       position: absolute;
       top: 57%; left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(5, 7, 10, 0.92);
+      background: rgba(4, 6, 9, 0.94);
       border: 1px solid #ffcc44;
       padding: 7px 18px;
       border-radius: 4px;
@@ -218,13 +218,13 @@
     #subtitles {
       align-self: center;
       margin-bottom: 28px;
-      background: rgba(2, 4, 7, 0.88);
+      background: rgba(2, 4, 7, 0.9);
       padding: 14px 28px;
       border-radius: 4px;
       font-size: 16px;
       line-height: 1.6;
       text-align: center;
-      max-width: 760px;
+      max-width: 780px;
       opacity: 0;
       transition: opacity 0.35s;
       font-family: 'Nanum Myeongjo', serif;
@@ -254,39 +254,74 @@
       50% { opacity: 1; transform: translate(-50%, -50%) scale(1.02); }
     }
 
-    /* CCTV 모니터 뷰포트 오버레이 (경비실 전용) */
-    #cctvOverlay {
+    /* 키패드 도어락 인터랙티브 모달 */
+    #keypadModal {
       position: absolute;
-      bottom: 24px; right: 24px;
-      width: 220px;
-      height: 140px;
-      background: #000;
-      border: 2px solid #225533;
-      border-radius: 4px;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(2, 3, 5, 0.88);
+      z-index: 105;
       display: none;
-      overflow: hidden;
-      box-shadow: 0 0 15px rgba(50, 255, 100, 0.3);
-      z-index: 26;
-      pointer-events: none;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(8px);
     }
-    #cctvCanvas { width: 100%; height: 100%; }
-    .cctv-label {
-      position: absolute;
-      top: 6px; left: 8px;
+    .keypad-device {
+      background: #151a22;
+      border: 2px solid #334455;
+      border-radius: 12px;
+      width: 320px;
+      padding: 24px;
+      box-shadow: 0 0 35px rgba(0,0,0,0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .keypad-screen {
+      width: 100%;
+      height: 52px;
+      background: #080d12;
+      border: 1px solid #1c2b38;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-family: 'Share Tech Mono', monospace;
-      font-size: 10px;
+      font-size: 28px;
       color: #33ff66;
-      text-shadow: 0 0 5px #33ff66;
+      letter-spacing: 8px;
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px rgba(51, 255, 102, 0.6);
     }
-    .cctv-rec {
-      position: absolute;
-      top: 6px; right: 8px;
-      color: #ff3333;
-      font-size: 10px;
+    .keypad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      width: 100%;
+    }
+    .key-btn {
+      background: #202b38;
+      border: 1px solid #3b4e63;
+      color: #fff;
+      font-size: 20px;
       font-weight: bold;
-      animation: blinkRec 1s infinite;
+      height: 52px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.1s;
     }
-    @keyframes blinkRec { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    .key-btn:hover { background: #324357; }
+    .key-btn:active { transform: scale(0.95); background: #ffaa33; color: #000; }
+    .keypad-close {
+      margin-top: 18px;
+      background: none;
+      border: 1px solid #485c70;
+      color: #9ab0c4;
+      padding: 8px 18px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .keypad-close:hover { background: #ff3344; color: #fff; border-color: #ff3344; }
 
     /* 모달 공통 */
     #inventoryModal, #documentModal, #pauseModal {
@@ -452,8 +487,23 @@
     }
     .secondary-btn:hover { background: #233446; color: #fff; }
 
+    /* 쫄보 맞춤 배려 토글 */
+    .brave-mode-toggle {
+      margin-top: 16px;
+      font-size: 12.5px;
+      color: #a0b2c6;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(20, 30, 40, 0.6);
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid #2d3f54;
+    }
+    .brave-mode-toggle input { cursor: pointer; }
+
     .controls-hint {
-      margin-top: 28px;
+      margin-top: 24px;
       font-size: 12px;
       color: #63778a;
       display: flex;
@@ -511,7 +561,7 @@
     }
 
     .chapter-select-box {
-      margin-top: 16px;
+      margin-top: 14px;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -550,7 +600,6 @@
       <circle cx="65" cy="85" r="5" fill="#ff0000"/>
       <circle cx="135" cy="85" r="5" fill="#ff0000"/>
       <path d="M50 140 Q100 190 150 140 Q100 160 50 140 Z" fill="#300000" stroke="#880000" stroke-width="3"/>
-      <!-- 방독면 파이프 라인 -->
       <path d="M100 110 L100 170" stroke="#444" stroke-width="8"/>
       <circle cx="100" cy="155" r="22" fill="#222" stroke="#555" stroke-width="3"/>
     </svg>
@@ -590,19 +639,35 @@
       <div class="obj-text" id="objectiveText">경비실 책상 위에서 '야간 순찰 수칙서'와 손전등을 획득하시오.</div>
     </div>
 
-    <!-- CCTV 모니터 뷰포트 (경비실용) -->
-    <div id="cctvOverlay">
-      <canvas id="cctvCanvas"></canvas>
-      <div class="cctv-label" id="cctvCamLabel">CAM 04 [4F 복도]</div>
-      <div class="cctv-rec">● REC</div>
-    </div>
-
     <!-- 자막/독백 -->
     <div id="subtitles"></div>
   </div>
 
   <div id="interactPrompt"><kbd>E</kbd> <span id="promptAction">조사하기</span></div>
   <div id="hidingBanner">캐비닛 안에 몸을 숨겼습니다.<br><kbd>SPACE</kbd> 숨 참기 (게이지 주의) / <kbd>E</kbd> 나가기</div>
+
+  <!-- 404호 키패드 도어락 모달 -->
+  <div id="keypadModal">
+    <div class="keypad-device">
+      <div style="font-size: 13px; color: #ffaa33; font-weight: bold; margin-bottom: 10px; letter-spacing: 1px;">404호 특수 전자 도어락</div>
+      <div class="keypad-screen" id="keypadDisplay">_ _ _ _</div>
+      <div class="keypad-grid">
+        <button class="key-btn" onclick="pressKey('1')">1</button>
+        <button class="key-btn" onclick="pressKey('2')">2</button>
+        <button class="key-btn" onclick="pressKey('3')">3</button>
+        <button class="key-btn" onclick="pressKey('4')">4</button>
+        <button class="key-btn" onclick="pressKey('5')">5</button>
+        <button class="key-btn" onclick="pressKey('6')">6</button>
+        <button class="key-btn" onclick="pressKey('7')">7</button>
+        <button class="key-btn" onclick="pressKey('8')">8</button>
+        <button class="key-btn" onclick="pressKey('9')">9</button>
+        <button class="key-btn" onclick="clearKeypad()" style="font-size: 14px; color: #ff8888;">C</button>
+        <button class="key-btn" onclick="pressKey('0')">0</button>
+        <button class="key-btn" onclick="submitKeypad()" style="font-size: 14px; color: #33ff88;">E</button>
+      </div>
+      <button class="keypad-close" onclick="closeKeypadModal()">입력 취소</button>
+    </div>
+  </div>
 
   <!-- 인벤토리 모달 -->
   <div id="inventoryModal">
@@ -668,6 +733,13 @@
       <button class="secondary-btn" id="loadBtn" onclick="loadSavedGame()">이어하기 (로드)</button>
     </div>
 
+    <div class="brave-mode-toggle">
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" id="safeTourCheckbox">
+        <span>🛡️ <strong>스토리 탐험 모드 (Brave Mode)</strong> - 적의 공격 없이 스토리와 퍼즐에 집중 (쫄보 맞춤 배려)</span>
+      </label>
+    </div>
+
     <div class="chapter-select-box">
       <span>챕터 바로가기:</span>
       <select id="chapterJumpSelect">
@@ -707,8 +779,7 @@
 
   <script>
     /* =========================================================
-       1. 프로급 오디오 신시사이저 엔진 (Web Audio API)
-       바이노럴 앰비언트, 비, 천둥, 심장박동, EKG, 점프스케어, 속삭임
+       1. 프로급 오디오 엔진 (Web Audio API)
        ========================================================= */
     class ProHorrorAudio {
       constructor() {
@@ -744,7 +815,6 @@
         this.isInitialized = true;
       }
 
-      // 저주파 드론 & 복도 메아리 럼블
       startWindAndRumble() {
         const bufferSize = this.ctx.sampleRate * 2;
         const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
@@ -766,7 +836,6 @@
         whiteNoise.start();
       }
 
-      // 창밖 비 내리는 소리
       startRainAudio() {
         const bufferSize = this.ctx.sampleRate * 2;
         const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
@@ -789,7 +858,6 @@
         rainNoise.start();
       }
 
-      // 천둥 벼락 굉음
       playThunder() {
         if (!this.ctx) return;
         const osc = this.ctx.createOscillator();
@@ -947,27 +1015,25 @@
         osc.stop(this.ctx.currentTime + 1.5);
       }
 
-      playEkgBeep() {
+      playKeypadBeep(freq = 1200) {
         if (!this.ctx) return;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, this.ctx.currentTime);
-
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
         gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
-
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
         osc.connect(gain);
         gain.connect(this.masterGain);
         osc.start();
-        osc.stop(this.ctx.currentTime + 0.13);
+        osc.stop(this.ctx.currentTime + 0.09);
       }
     }
 
     const audio = new ProHorrorAudio();
 
     /* =========================================================
-       2. 고해상도 절차적 텍스처 (1998 한국 복도식 아파트 디테일)
+       2. 고해상도 절차적 텍스처
        ========================================================= */
     class ProceduralTextures {
       static createWallTexture() {
@@ -975,14 +1041,12 @@
         canvas.width = 512; canvas.height = 512;
         const ctx = canvas.getContext('2d');
 
-        // 상단 크림색, 하단 청록색 페인트 투톤 복도
         ctx.fillStyle = '#6a736d';
         ctx.fillRect(0, 0, 512, 512);
 
         ctx.fillStyle = '#9b9e95';
         ctx.fillRect(0, 0, 512, 280);
 
-        // 시멘트 갈라짐 & 페인트 박리
         for (let i = 0; i < 450; i++) {
           const x = Math.random() * 512;
           const y = Math.random() * 512;
@@ -993,7 +1057,6 @@
           ctx.fill();
         }
 
-        // 곰팡이 및 비 얼룩
         ctx.fillStyle = 'rgba(20, 25, 20, 0.25)';
         for (let x = 0; x < 512; x += 36) {
           if (Math.random() > 0.35) {
@@ -1014,7 +1077,6 @@
         ctx.fillStyle = '#32363a';
         ctx.fillRect(0, 0, 512, 512);
 
-        // 도끼다시(테라조) 자갈 알갱이
         for (let i = 0; i < 2200; i++) {
           const x = Math.random() * 512;
           const y = Math.random() * 512;
@@ -1039,7 +1101,6 @@
         canvas.width = 256; canvas.height = 512;
         const ctx = canvas.getContext('2d');
 
-        // 녹색 철문
         ctx.fillStyle = '#1c3327';
         ctx.fillRect(0, 0, 256, 512);
 
@@ -1052,14 +1113,12 @@
         ctx.strokeRect(20, 20, 216, 210);
         ctx.strokeRect(20, 260, 216, 220);
 
-        // 우유 투입구
         ctx.fillStyle = '#0d1411';
         ctx.fillRect(80, 360, 96, 26);
         ctx.strokeStyle = '#32473c';
         ctx.lineWidth = 2;
         ctx.strokeRect(80, 360, 96, 26);
 
-        // 황동 호실 명판
         ctx.fillStyle = '#d4af37';
         ctx.fillRect(88, 70, 80, 32);
         ctx.strokeStyle = '#665215';
@@ -1072,7 +1131,6 @@
         ctx.textBaseline = 'middle';
         ctx.fillText(roomNumber, 128, 86);
 
-        // 문고리
         ctx.fillStyle = '#b8972e';
         ctx.beginPath();
         ctx.arc(36, 270, 12, 0, Math.PI * 2);
@@ -1106,7 +1164,7 @@
     }
 
     /* =========================================================
-       3. 게임 상태 데이터 & 시나리오 DB
+       3. 게임 데이터 & 시나리오 DB
        ========================================================= */
     const GAME_DATA = {
       currentAct: 1,
@@ -1120,6 +1178,7 @@
       isHiding: false,
       isHoldingBreath: false,
       sanity: 72,
+      safeTour: false, // 쫄보 맞춤 배려 모드
 
       inventory: [],
       collectedClues: [],
@@ -1132,6 +1191,7 @@
         gotFuse: false,
         repairedPower: false,
         foundRoster502: false,
+        unlocked404Keypad: false,
         enteredForbidden4F: false,
         heardRadioNews: false,
         sawFlashback404: false,
@@ -1170,7 +1230,8 @@
 "박 반장 목소리 듣지 마라. 그놈은 25년 전에 이미 숯덩이가 됐다.
 너 경비원 아니잖아. 네 가슴팍에 달린 명찰 봐라.
 '502호 최진우'... 네가 왜 경비 옷을 입고 있어?
-빨리 도망쳐! 지하실에서 보일러가 또 끓고 있어!"`
+빨리 도망쳐! 지하실에서 보일러가 또 끓고 있어!
+404호 비밀번호는 불난 날짜다. 1017이야!"`
       },
       residentRosterDoc: {
         title: '1998년 은하아파트 13동 입주민 명단',
@@ -1179,7 +1240,7 @@
 - 101호: 공실
 - 203호: 김영식 (이주 완료)
 - 304호: 박창호 (독거노인, 퇴거 거부)
-- 404호: [기록 말소 / 영구 봉쇄 구역]
+- 404호: [기록 말소 / 영구 봉쇄 구역 - 비밀번호: 참사발생일 1017]
 - 502호: 최진우 (29세 / 부인 이미경, 영아 최수진) - 보증금 압류 경매 진행 중.
 - 관리사무소장: 박종철 (현장 사망 추정)
 
@@ -1202,7 +1263,7 @@
     };
 
     /* =========================================================
-       4. Three.js 3D 환경 구축 & 파티클 / 조명
+       4. 3D 월드 & 1인칭 뷰모델 (FPS Viewmodel) 손전등
        ========================================================= */
     const canvas = document.getElementById('gameCanvas');
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -1212,8 +1273,8 @@
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x040608);
-    scene.fog = new THREE.FogExp2(0x05080c, 0.05);
+    scene.background = new THREE.Color(0x030508);
+    scene.fog = new THREE.FogExp2(0x040609, 0.05);
 
     const camera = new THREE.PerspectiveCamera(74, window.innerWidth / window.innerHeight, 0.1, 100);
     camera.position.set(0, 1.6, 2);
@@ -1236,9 +1297,44 @@
     flashlight.target.position.set(0, 0, -5);
     camera.add(flashlight);
     camera.add(flashlight.target);
+
+    // ★ 1인칭 뷰모델 (플레이어의 손 & 메탈 손전등 모델)
+    const viewmodelGroup = new THREE.Group();
+    // 손전등 본체 실린더
+    const flashBodyGeo = new THREE.CylinderGeometry(0.024, 0.024, 0.18, 16);
+    const flashBodyMat = new THREE.MeshStandardMaterial({ color: 0x444a50, metalness: 0.8, roughness: 0.3 });
+    const flashBody = new THREE.Mesh(flashBodyGeo, flashBodyMat);
+    flashBody.rotation.x = Math.PI / 2;
+    viewmodelGroup.add(flashBody);
+
+    // 손전등 림/헤드
+    const flashHeadGeo = new THREE.CylinderGeometry(0.038, 0.024, 0.05, 16);
+    const flashHeadMat = new THREE.MeshStandardMaterial({ color: 0x22262a, metalness: 0.9, roughness: 0.2 });
+    const flashHead = new THREE.Mesh(flashHeadGeo, flashHeadMat);
+    flashHead.position.z = -0.11;
+    flashHead.rotation.x = Math.PI / 2;
+    viewmodelGroup.add(flashHead);
+
+    // 렌즈 글래스
+    const lensGeo = new THREE.CircleGeometry(0.036, 16);
+    const lensMat = new THREE.MeshBasicMaterial({ color: 0xffffcc });
+    const lens = new THREE.Mesh(lensGeo, lensMat);
+    lens.position.z = -0.136;
+    viewmodelGroup.add(lens);
+
+    // 플레이어의 장갑/소매 손
+    const handGeo = new THREE.CylinderGeometry(0.032, 0.042, 0.15, 12);
+    const handMat = new THREE.MeshStandardMaterial({ color: 0x1a242f, roughness: 0.9 });
+    const hand = new THREE.Mesh(handGeo, handMat);
+    hand.position.set(0, -0.04, 0.04);
+    hand.rotation.x = Math.PI / 2.3;
+    viewmodelGroup.add(hand);
+
+    viewmodelGroup.position.set(0.26, -0.25, -0.42);
+    camera.add(viewmodelGroup);
     scene.add(camera);
 
-    const ambientLight = new THREE.AmbientLight(0x070b10, 0.32);
+    const ambientLight = new THREE.AmbientLight(0x06090e, 0.32);
     scene.add(ambientLight);
 
     const colliders = [];
@@ -1247,9 +1343,8 @@
     let stalkerEnemy = null;
     let dustParticles = null;
 
-    // 먼지 파티클 생성 (볼류메트릭 손전등 느낌)
     function createDustParticles() {
-      const pCount = 350;
+      const pCount = 380;
       const geo = new THREE.BufferGeometry();
       const pos = new Float32Array(pCount * 3);
       for (let i = 0; i < pCount * 3; i += 3) {
@@ -1260,9 +1355,9 @@
       geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
       const mat = new THREE.PointsMaterial({
         color: 0xcccccc,
-        size: 0.04,
+        size: 0.045,
         transparent: true,
-        opacity: 0.35,
+        opacity: 0.38,
         blending: THREE.AdditiveBlending
       });
       dustParticles = new THREE.Points(geo, mat);
@@ -1271,7 +1366,6 @@
     createDustParticles();
 
     function buildApartmentWorld() {
-      // 복도 바닥/천장
       const corridorGeo = new THREE.BoxGeometry(3.2, 0.1, 62);
       const floor = new THREE.Mesh(corridorGeo, floorMat);
       floor.position.set(0, 0, -15);
@@ -1281,7 +1375,6 @@
       ceiling.position.set(0, 2.8, -15);
       scene.add(ceiling);
 
-      // 복도 벽
       const wallGeo = new THREE.BoxGeometry(0.2, 2.8, 62);
       const leftWall = new THREE.Mesh(wallGeo, wallMat);
       leftWall.position.set(-1.6, 1.4, -15);
@@ -1293,7 +1386,6 @@
       scene.add(rightWall);
       colliders.push(rightWall);
 
-      // 복도 끝 벽
       const endWallGeo = new THREE.BoxGeometry(3.2, 2.8, 0.2);
       const northWall = new THREE.Mesh(endWallGeo, wallMat);
       northWall.position.set(0, 1.4, -46);
@@ -1317,14 +1409,12 @@
       officeFloor.position.set(-3.7, 0, 8);
       scene.add(officeFloor);
 
-      // 책상
       const deskMat = new THREE.MeshStandardMaterial({ color: 0x4a3219, roughness: 0.8 });
       const desk = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.75, 0.9), deskMat);
       desk.position.set(-3.5, 0.38, 7.5);
       scene.add(desk);
       colliders.push(desk);
 
-      // CCTV 모니터
       const monitorMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
       const monitor = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.45, 0.4), monitorMat);
       monitor.position.set(-3.5, 0.98, 7.5);
@@ -1334,7 +1424,6 @@
       cctvLight.position.set(-3.5, 1.0, 7.8);
       scene.add(cctvLight);
 
-      // 수칙서
       const rulebookMesh = new THREE.Mesh(
         new THREE.BoxGeometry(0.3, 0.04, 0.4),
         new THREE.MeshStandardMaterial({ color: 0xd8caa8 })
@@ -1348,7 +1437,6 @@
         action: () => inspectRulebook()
       });
 
-      // 열쇠
       const keyMesh = new THREE.Mesh(
         new THREE.BoxGeometry(0.12, 0.02, 0.15),
         new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.9, roughness: 0.2 })
@@ -1391,7 +1479,6 @@
         });
       });
 
-      // 소화전
       const hydrantBox = new THREE.Mesh(
         new THREE.BoxGeometry(0.15, 0.9, 0.7),
         new THREE.MeshStandardMaterial({ color: 0xaa2222, roughness: 0.4 })
@@ -1405,7 +1492,6 @@
         action: () => handleHydrantInspection()
       });
 
-      // 비상구 유도등
       const exitLightMat = new THREE.MeshBasicMaterial({ color: 0x11ff44 });
       const exitSign = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.25, 0.1), exitLightMat);
       exitSign.position.set(0, 2.5, -45.5);
@@ -1415,7 +1501,6 @@
       exitPointLight.position.set(0, 2.3, -45);
       scene.add(exitPointLight);
 
-      // 비상계단 옥상 문
       const fireDoorGeo = new THREE.BoxGeometry(1.6, 2.4, 0.1);
       const fireDoorMat = new THREE.MeshStandardMaterial({ color: 0x441111, metalness: 0.6, roughness: 0.6 });
       const fireDoor = new THREE.Mesh(fireDoorGeo, fireDoorMat);
@@ -1501,7 +1586,7 @@
     buildApartmentWorld();
 
     /* =========================================================
-       5. 1인칭 조작 및 물리 / 심박 / 폐활량 제어
+       5. 1인칭 조작 및 물리 / 심박 / 폐활량 / 핸드 밥
        ========================================================= */
     const keys = {};
     let isPointerLocked = false;
@@ -1512,6 +1597,7 @@
     let playerHeight = 1.6;
     let lastStepTime = 0;
     let thunderTimer = 8.0;
+    let walkBobTimer = 0;
 
     window.addEventListener('keydown', e => {
       keys[e.code] = true;
@@ -1544,8 +1630,12 @@
       e.preventDefault();
       if (!isPointerLocked) return;
       audio.playFlashlightClick();
+      // 뷰모델 셰이크 모션
+      viewmodelGroup.position.y += 0.04;
+      setTimeout(() => { viewmodelGroup.position.y -= 0.04; }, 120);
+
       if (GAME_DATA.battery < 30) {
-        flashlight.intensity = 3.0;
+        flashlight.intensity = 3.4;
         showSubtitle("[손전등을 탁탁 쳐서 접촉 불량을 바로잡았다]", 1500);
       }
     });
@@ -1572,6 +1662,7 @@
       if (GAME_DATA.battery <= 0) return;
       GAME_DATA.flashlightOn = !GAME_DATA.flashlightOn;
       flashlight.visible = GAME_DATA.flashlightOn;
+      lens.material.color.setHex(GAME_DATA.flashlightOn ? 0xffffcc : 0x222222);
       audio.playFlashlightClick();
       showSubtitle(GAME_DATA.flashlightOn ? "[손전등을 켰다]" : "[손전등을 껐다]", 1200);
     }
@@ -1619,7 +1710,7 @@
     }
 
     /* =========================================================
-       6. 게임 루프 & 천둥 번개 & 심박 / 폐활량
+       6. 게임 루프 & 천둥 번개 & 심박 / 폐활량 / 뷰모델 밥
        ========================================================= */
     let lastFrameTime = performance.now();
 
@@ -1645,7 +1736,6 @@
       updateStalkerAI(delta);
       checkRaycastInteraction();
 
-      // 먼지 파티클 애니메이션
       if (dustParticles) {
         dustParticles.rotation.y += 0.0008;
       }
@@ -1675,7 +1765,18 @@
       playerHeight = GAME_DATA.isCrouching ? 0.95 : 1.6;
       camera.position.y += (playerHeight - camera.position.y) * 10 * delta;
 
-      if (moveX !== 0 || moveZ !== 0) {
+      const isMoving = (moveX !== 0 || moveZ !== 0);
+
+      // ★ 뷰모델 핸드 밥(Hand Bobbing) 및 헤드 밥 계산
+      if (isMoving) {
+        const bobSpeed = GAME_DATA.isSprinting ? 14 : 9;
+        walkBobTimer += delta * bobSpeed;
+        const bobX = Math.cos(walkBobTimer) * 0.015;
+        const bobY = Math.abs(Math.sin(walkBobTimer)) * 0.018;
+
+        viewmodelGroup.position.x = 0.26 + bobX;
+        viewmodelGroup.position.y = -0.25 - bobY;
+
         const len = Math.sqrt(moveX * moveX + moveZ * moveZ);
         moveX /= len;
         moveZ /= len;
@@ -1704,6 +1805,10 @@
           audio.playFootstep(GAME_DATA.isCrouching, GAME_DATA.isSprinting);
           lastStepTime = now;
         }
+      } else {
+        // 정지 시 미세 숨쉬기 모션
+        walkBobTimer += delta * 1.5;
+        viewmodelGroup.position.y = -0.25 + Math.sin(walkBobTimer) * 0.003;
       }
     }
 
@@ -1714,7 +1819,6 @@
       const secs = Math.floor(GAME_DATA.clockSeconds % 60).toString().padStart(2, '0');
       clockDisplay.innerText = `${hrs}:${mins}:${secs}`;
 
-      // 손전등 배터리
       if (GAME_DATA.flashlightOn) {
         GAME_DATA.battery = Math.max(0, GAME_DATA.battery - delta * 0.4);
         batteryBar.style.width = `${GAME_DATA.battery}%`;
@@ -1724,31 +1828,29 @@
         if (GAME_DATA.battery <= 0) {
           GAME_DATA.flashlightOn = false;
           flashlight.visible = false;
+          lens.material.color.setHex(0x222222);
           showSubtitle("[손전등 배터리가 방전되었다! 아무것도 보이지 않는다...]", 3000);
         }
       }
 
-      // 숨 참기 게이지 제어
       if (GAME_DATA.isHoldingBreath) {
         GAME_DATA.breath = Math.max(0, GAME_DATA.breath - delta * 25);
         if (GAME_DATA.breath <= 0) {
           GAME_DATA.isHoldingBreath = false;
           showSubtitle("[헉...! 숨이 차서 더 이상 참을 수 없다!]", 2000);
-          audio.playFootstep(false, true); // 숨 들이쉬는 소리
+          audio.playFootstep(false, true);
         }
       } else {
         GAME_DATA.breath = Math.min(100, GAME_DATA.breath + delta * 30);
       }
       breathBar.style.width = `${GAME_DATA.breath}%`;
 
-      // 천둥 번개 시스템 (무작위 주기)
       thunderTimer -= delta;
       if (thunderTimer <= 0) {
         triggerLightning();
         thunderTimer = 15.0 + Math.random() * 20.0;
       }
 
-      // 센서등
       sensorLights.forEach(sl => {
         const dist = Math.abs(camera.position.z - sl.z);
         if (dist < 3.2 && !sl.active) {
@@ -1767,7 +1869,6 @@
         }
       });
 
-      // 심박수(BPM) 및 패닉 계산
       let targetBpm = 72;
       if (GAME_DATA.isSprinting) targetBpm += 35;
       if (stalkerEnemy && stalkerEnemy.obj.visible) {
@@ -1805,7 +1906,13 @@
       const playerPos = camera.position;
       const dist = stalkerPos.distanceTo(playerPos);
 
-      // 숨어있고 숨을 참고 있으면 추격자가 플레이어를 놓침
+      // 쫄보 배려 모드(Safe Tour)일 경우 공격하지 않고 배회만 함
+      if (GAME_DATA.safeTour) {
+        stalkerPos.z += delta * 1.0;
+        if (stalkerPos.z > 2) stalkerPos.z = -38;
+        return;
+      }
+
       const isHiddenSafe = GAME_DATA.isHiding && GAME_DATA.isHoldingBreath;
 
       if (dist < 18 && !isHiddenSafe) {
@@ -1913,7 +2020,7 @@
         }
       } else if (actNum === 3) {
         actTagDisplay.innerText = "ACT 3 : 닫힌 4층과 피의 의식 (The Forbidden Floor)";
-        setObjective("4층 404호의 봉인된 방을 조사하여 1998년 참사의 진실을 확인하시오.");
+        setObjective("4층 404호 특수 도어락의 비밀번호(참사 발생일 4자리)를 입력하여 진입하시오.");
         showSubtitle("무전기(지지직): '최 씨... 4층에서 계량기가 미친 듯이 돌아가고 있어... 올라가 봐...'", 4500);
       } else if (actNum === 4) {
         actTagDisplay.innerText = "ACT 4 : 타오르는 기억 (Ashes of Guilt)";
@@ -1940,6 +2047,9 @@
       } else if (roomNum === '404') {
         if (GAME_DATA.currentAct < 3) {
           showSubtitle("404호 문 앞에는 붉은 경고문이 붙어 있다: [절대 개방 금지]", 3000);
+        } else if (!GAME_DATA.flags.unlocked404Keypad) {
+          // 키패드 도어락 열기
+          openKeypadModal();
         } else {
           showSubtitle("[404호 안으로 진입했다. 수십 개의 촛불과 라디오 뉴스 속보가 흘러나온다]", 4000);
           audio.playScareStab();
@@ -1960,6 +2070,60 @@
         }
       } else {
         showSubtitle(`${roomNum}호 문은 굳게 잠겨 있으며 내부에는 아무도 살지 않는 듯하다.`, 2500);
+      }
+    }
+
+    // ★ 도어락 키패드 로직
+    let keypadBuffer = "";
+    function openKeypadModal() {
+      document.exitPointerLock();
+      keypadBuffer = "";
+      updateKeypadDisplay();
+      document.getElementById('keypadModal').style.display = 'flex';
+    }
+
+    function closeKeypadModal() {
+      document.getElementById('keypadModal').style.display = 'none';
+      if (!GAME_DATA.isHiding) canvas.requestPointerLock();
+    }
+
+    function pressKey(num) {
+      if (keypadBuffer.length < 4) {
+        keypadBuffer += num;
+        audio.playKeypadBeep(1000 + keypadBuffer.length * 150);
+        updateKeypadDisplay();
+      }
+    }
+
+    function clearKeypad() {
+      keypadBuffer = "";
+      audio.playKeypadBeep(400);
+      updateKeypadDisplay();
+    }
+
+    function updateKeypadDisplay() {
+      const display = document.getElementById('keypadDisplay');
+      let str = "";
+      for (let i = 0; i < 4; i++) {
+        str += (i < keypadBuffer.length ? keypadBuffer[i] : "_") + " ";
+      }
+      display.innerText = str.trim();
+    }
+
+    function submitKeypad() {
+      if (keypadBuffer === "1017") {
+        // 참사일 10월 17일 암호 일치!
+        audio.playKeypadBeep(1800);
+        GAME_DATA.flags.unlocked404Keypad = true;
+        closeKeypadModal();
+        showSubtitle("[삐리릭! 도어락 잠금이 해제되었다! 404호 문이 열린다!]", 3500);
+        setTimeout(() => {
+          advanceToAct(4);
+        }, 1200);
+      } else {
+        audio.playKeypadBeep(250);
+        showSubtitle("[삐- 삐- 삐-! 비밀번호 오류! 304호 노인의 쪽지를 확인하라.]", 3000);
+        clearKeypad();
       }
     }
 
@@ -2065,6 +2229,7 @@
       document.getElementById('inventoryModal').style.display = 'none';
       document.getElementById('documentModal').style.display = 'none';
       document.getElementById('pauseModal').style.display = 'none';
+      document.getElementById('keypadModal').style.display = 'none';
       if (!GAME_DATA.isHiding) canvas.requestPointerLock();
     }
 
@@ -2122,6 +2287,9 @@
     function jumpToSelectedChapter() {
       const select = document.getElementById('chapterJumpSelect');
       const act = parseInt(select.value, 10);
+      const safeCheckbox = document.getElementById('safeTourCheckbox');
+      GAME_DATA.safeTour = safeCheckbox ? safeCheckbox.checked : false;
+
       document.getElementById('startScreen').style.display = 'none';
       audio.init();
       advanceToAct(act);
@@ -2214,6 +2382,9 @@
     }
 
     function startGame() {
+      const safeCheckbox = document.getElementById('safeTourCheckbox');
+      GAME_DATA.safeTour = safeCheckbox ? safeCheckbox.checked : false;
+
       document.getElementById('startScreen').style.display = 'none';
       audio.init();
       canvas.requestPointerLock();

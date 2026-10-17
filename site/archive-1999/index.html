@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <title>ARCHIVE 1999: THE RESIDUE - Steam Masterpiece Edition</title>
+  <title>ARCHIVE 1999: THE RESIDUE - Steam Masterpiece Definitive</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Special+Elite&family=Noto+Serif+KR:wght@400;700;900&display=swap');
@@ -13,14 +13,10 @@
       --phosphor: #33ff77;
       --blood: #e61c24;
       --amber: #ffaa11;
-      --hud-bg: rgba(6, 10, 8, 0.88);
+      --hud-bg: rgba(6, 10, 8, 0.9);
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0; padding: 0;
-      user-select: none;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
 
     body {
       background: #000;
@@ -38,7 +34,6 @@
       z-index: 1;
     }
 
-    /* 포스트 프로세싱 시뮬레이션: CRT 스캔라인, 필름 그레인, 렌즈 왜곡 비네트 */
     .crt-scanlines {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -47,13 +42,13 @@
       background-size: 100% 3px, 4px 100%;
       z-index: 40;
       pointer-events: none;
-      opacity: 0.9;
+      opacity: 0.92;
     }
 
     .vignette-lens {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.95) 100%);
+      background: radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.96) 100%);
       z-index: 41;
       pointer-events: none;
     }
@@ -68,7 +63,6 @@
       transition: opacity 0.15s ease-out;
     }
 
-    /* 조준점 & 상호작용 피드백 */
     #reticle {
       position: fixed;
       top: 50%; left: 50%;
@@ -87,7 +81,7 @@
       background: rgba(51, 255, 119, 0.2);
     }
 
-    /* 상단 헤더 HUD */
+    /* 상단 HUD */
     #hudHeader {
       position: fixed;
       top: 16px; left: 24px; right: 24px;
@@ -114,8 +108,9 @@
 
     .status-capsules {
       display: flex;
-      gap: 14px;
+      gap: 12px;
       font-size: 13px;
+      pointer-events: auto;
     }
 
     .capsule {
@@ -140,7 +135,7 @@
       50% { transform: scale(1.6); opacity: 1; box-shadow: 0 0 8px var(--blood); }
     }
 
-    /* 하단 상호작용 안내 */
+    /* 하단 안내 */
     #hudActionGuide {
       position: fixed;
       bottom: 28px; left: 50%;
@@ -150,7 +145,7 @@
     }
 
     .action-tip {
-      background: rgba(6, 12, 8, 0.92);
+      background: rgba(6, 12, 8, 0.94);
       border: 1px solid var(--phosphor);
       color: #fff;
       padding: 10px 24px;
@@ -161,12 +156,9 @@
       display: none;
       animation: pulse-tip 1.5s infinite;
     }
-    @keyframes pulse-tip {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.03); }
-    }
+    @keyframes pulse-tip { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
 
-    /* 인게임 오디오 단말기 튜닝 UI (E 키 누르면 열림) */
+    /* 오디오 단말기 튜닝 UI (E 키) */
     #tuningStationUI {
       position: fixed;
       top: 50%; left: 50%;
@@ -241,7 +233,6 @@
     .cassette-spool.reverse-spin { animation: spool-rotate 1.8s linear infinite reverse; }
     @keyframes spool-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-    /* 4종 마우스 드래그 노브 */
     .knob-dock {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -300,7 +291,6 @@
     .deck-btn:hover { background: #1c452b; color: #fff; }
     .deck-btn.active { background: var(--phosphor); color: #030805; }
 
-    /* 우측 단서 로그 */
     .transcript-box {
       background: #040806;
       border: 1px solid #14301e;
@@ -322,7 +312,7 @@
     .transcript-entry strong { color: var(--amber); }
     .transcript-entry.alert strong { color: var(--blood); }
 
-    /* 시작 런처 오버레이 */
+    /* 시작 런처 */
     #launcherScreen {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -335,6 +325,32 @@
       color: #fff;
       text-align: center;
       padding: 24px;
+    }
+
+    .mode-toggle-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 14px;
+      background: rgba(14, 25, 18, 0.7);
+      padding: 6px;
+      border-radius: 30px;
+      border: 1px solid #1c3d28;
+    }
+    .mode-btn {
+      background: transparent;
+      border: none;
+      color: #7abf94;
+      padding: 6px 18px;
+      border-radius: 20px;
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mode-btn.active {
+      background: var(--phosphor);
+      color: #040806;
+      font-weight: bold;
     }
 
     .start-game-btn {
@@ -393,7 +409,7 @@
   <!-- 상단 HUD -->
   <div id="hudHeader">
     <div class="brand-hud">
-      ARCHIVE 1999 <small>ASYLUM WARD 4</small>
+      ARCHIVE 1999 <small id="lblGameMode">HARDCORE HORROR</small>
     </div>
     <div class="status-capsules">
       <div class="capsule">
@@ -421,7 +437,10 @@
   <div id="tuningStationUI">
     <div class="station-titlebar">
       <span id="txtTapeHeader">CH.1 잡음 속의 숨소리 (Noise in the Dark)</span>
-      <button class="deck-btn" onclick="exitTerminal()" style="padding:4px 10px;">✕ 나가기 (ESC / E)</button>
+      <div style="display:flex; gap:8px;">
+        <button class="deck-btn" id="btnAutoTune" style="background:#203b29; color:#88ffbb;" onclick="autoTuneAssist()">🎯 자동 튜닝 (힌트)</button>
+        <button class="deck-btn" onclick="exitTerminal()" style="padding:4px 10px;">✕ 나가기 (ESC / E)</button>
+      </div>
     </div>
 
     <div class="station-grid">
@@ -482,12 +501,19 @@
     <h1 style="font-size:38px; letter-spacing:5px; color:#fff; text-shadow:0 0 25px var(--phosphor); margin-bottom:14px;">
       ARCHIVE 1999
     </h1>
-    <p style="font-size:16px; color:#8abf9d; max-width:620px; line-height:1.8; margin-bottom:20px;">
+    <p style="font-size:16px; color:#8abf9d; max-width:620px; line-height:1.8; margin-bottom:12px;">
       1999년 12월 31일, 국립 청송 정신의학 연구소 제4병동 지하 격리실.<br>
-      불탄 릴 테이프를 복원하며 진실의 심연을 마주하십시오.<br>
-      (※ <strong>헤드폰 착용</strong> 및 <strong>어두운 방</strong>에서 플레이하십시오)
+      불탄 릴 테이프를 복원하며 진실의 심연을 마주하십시오.
     </p>
-    <div style="font-size:13px; color:#aaa; line-height:1.6; margin-bottom:24px;">
+
+    <!-- 공포 모드 선택 (쫄보 배려 모드 탑재) -->
+    <div style="font-size:12px; color:#aaa; margin-bottom:6px;">난이도 및 공포 모드 선택:</div>
+    <div class="mode-toggle-group">
+      <button class="mode-btn active" id="btnModeHard" onclick="setPlayMode('hard')">🩸 하드코어 공포 (권장)</button>
+      <button class="mode-btn" id="btnModeSafe" onclick="setPlayMode('safe')">🛡️ 스토리 안전 모드 (쫄보 모드)</button>
+    </div>
+
+    <div style="font-size:13px; color:#888; line-height:1.6; margin-top:20px; margin-bottom:14px;">
       [ W, A, S, D ] 이동 | [ 마우스 ] 시점 회전 | [ E ] 상호작용 | [ F ] 손전등 토글
     </div>
     <button class="start-game-btn" id="btnStartGame">🎮 입장하기 (ENTER THE WARD)</button>
@@ -505,17 +531,32 @@
   </div>
 
   <script>
+    let isSafeMode = false;
+    function setPlayMode(mode) {
+      if (mode === 'safe') {
+        isSafeMode = true;
+        document.getElementById('btnModeSafe').classList.add('active');
+        document.getElementById('btnModeHard').classList.remove('active');
+        document.getElementById('lblGameMode').innerText = "STORY SAFE MODE";
+        document.getElementById('lblGameMode').style.color = "#33ff77";
+      } else {
+        isSafeMode = false;
+        document.getElementById('btnModeHard').classList.add('active');
+        document.getElementById('btnModeSafe').classList.remove('active');
+        document.getElementById('lblGameMode').innerText = "HARDCORE HORROR";
+        document.getElementById('lblGameMode').style.color = "var(--amber)";
+      }
+    }
+
     /* ========================================================
-       1. 절차적 고해상도 PBR 텍스처 생성기 (Procedural Canvas Textures)
+       1. 절차적 고해상도 PBR 텍스처 생성기
        ======================================================== */
-    function createTileTexture() { // 곰팡이 핀 병원 바닥 타일
+    function createTileTexture() {
       const c = document.createElement('canvas');
       c.width = 512; c.height = 512;
       const ctx = c.getContext('2d');
-
       ctx.fillStyle = '#111814'; ctx.fillRect(0, 0, 512, 512);
 
-      // 타일 격자
       ctx.strokeStyle = '#070a08'; ctx.lineWidth = 4;
       for (let x = 0; x < 512; x += 64) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 512); ctx.stroke();
@@ -524,7 +565,6 @@
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
       }
 
-      // 오염 얼룩 & 핏자국
       for (let i = 0; i < 40; i++) {
         ctx.fillStyle = Math.random() < 0.25 ? 'rgba(70, 10, 15, 0.45)' : 'rgba(10, 25, 15, 0.4)';
         ctx.beginPath();
@@ -538,59 +578,47 @@
       return tex;
     }
 
-    function createWallTexture() { // 피 묻은 낙서와 콘크리트 벽
+    function createWallTexture() {
       const c = document.createElement('canvas');
       c.width = 1024; c.height = 512;
       const ctx = c.getContext('2d');
-
       ctx.fillStyle = '#17221c'; ctx.fillRect(0, 0, 1024, 512);
 
-      // 벽면 노이즈 얼룩
       for (let i = 0; i < 150; i++) {
         ctx.fillStyle = 'rgba(8, 14, 10, ' + (Math.random() * 0.4) + ')';
         ctx.fillRect(Math.random() * 1024, Math.random() * 512, Math.random() * 80, Math.random() * 80);
       }
 
-      // 섬뜩한 벽면 핏빛 낙서
       ctx.font = 'bold 36px "Special Elite", monospace';
       ctx.fillStyle = 'rgba(180, 20, 25, 0.75)';
       ctx.fillText('[ CAGED 1979 ]', 120, 180);
       ctx.fillText('108.4 Hz', 480, 260);
       ctx.fillText('너도 여기서 못 나가', 220, 380);
 
-      // 손톱 긁힌 자국
       ctx.strokeStyle = 'rgba(150, 20, 30, 0.6)';
       ctx.lineWidth = 3;
       for (let i = 0; i < 6; i++) {
-        ctx.beginPath();
-        ctx.moveTo(750 + i * 15, 120);
-        ctx.lineTo(730 + i * 15, 300);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(750 + i * 15, 120); ctx.lineTo(730 + i * 15, 300); ctx.stroke();
       }
 
-      const tex = new THREE.CanvasTexture(c);
-      return tex;
+      return new THREE.CanvasTexture(c);
     }
 
-    function createDoorTexture() { // 녹슨 철문
+    function createDoorTexture() {
       const c = document.createElement('canvas');
       c.width = 256; c.height = 512;
       const ctx = c.getContext('2d');
-
       ctx.fillStyle = '#221517'; ctx.fillRect(0, 0, 256, 512);
 
-      // 철판 테두리 리벳
       ctx.strokeStyle = '#12090b'; ctx.lineWidth = 8;
       ctx.strokeRect(10, 10, 236, 492);
 
-      // 쇠창살 창문 구멍
       ctx.fillStyle = '#020302'; ctx.fillRect(50, 60, 156, 120);
       ctx.strokeStyle = '#3a443e'; ctx.lineWidth = 6;
       for (let x = 70; x < 200; x += 25) {
         ctx.beginPath(); ctx.moveTo(x, 60); ctx.lineTo(x, 180); ctx.stroke();
       }
 
-      // 녹 자국
       for (let i = 0; i < 40; i++) {
         ctx.fillStyle = 'rgba(120, 40, 20, 0.35)';
         ctx.fillRect(Math.random() * 256, Math.random() * 512, Math.random() * 40, Math.random() * 40);
@@ -600,12 +628,11 @@
     }
 
     /* ========================================================
-       2. THREE.JS 3D 공간 환경 구성 (Asylum Ward 4)
+       2. THREE.JS 3D 공간 환경 구성 (휠체어, 링거대 소품 추가)
        ======================================================== */
     let scene, camera, renderer;
     let flashlight, ceilingLamp, ambientGlow;
-    let deskObj, monitorObj, doorObj, monsterFigure, ceilingFan;
-    let dustParticles;
+    let deskObj, monitorObj, doorObj, monsterFigure, ceilingFan, wheelchairObj;
     let isFlashlightOn = true;
     let isPointerLocked = false;
     let inTerminalMode = false;
@@ -613,8 +640,6 @@
     const keys = { w: false, a: false, s: false, d: false };
     const playerPos = new THREE.Vector3(0, 1.6, 2.8);
     let cameraPitch = 0, cameraYaw = 0;
-
-    // 헤드 바빙(걸을 때 카메라 흔들림)
     let walkCycle = 0;
 
     function init3DEnvironment() {
@@ -633,20 +658,17 @@
       ambientGlow = new THREE.AmbientLight(0x08100a, 0.7);
       scene.add(ambientGlow);
 
-      // 천장 흔들리는 펜던트 조명
       ceilingLamp = new THREE.PointLight(0x44ff88, 1.3, 11);
       ceilingLamp.position.set(0, 3.4, 0);
       ceilingLamp.castShadow = true;
       scene.add(ceilingLamp);
 
-      // 손전등
       flashlight = new THREE.SpotLight(0xfff6dc, 3.8, 15, Math.PI / 5.5, 0.35, 1.2);
       flashlight.castShadow = true;
       scene.add(flashlight);
       scene.add(flashlight.target);
 
       buildAsylumWard();
-      buildDustParticles();
       renderLoop3D();
     }
 
@@ -670,7 +692,7 @@
       ceiling.rotation.x = Math.PI / 2;
       scene.add(ceiling);
 
-      // 벽면 (정면, 후면, 좌, 우)
+      // 벽면들
       const wallFrontGeo = new THREE.PlaneGeometry(9, 4);
       const wallFrontMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.85 });
       const wallFront = new THREE.Mesh(wallFrontGeo, wallFrontMat);
@@ -693,15 +715,7 @@
       wallRight.rotation.y = -Math.PI / 2;
       scene.add(wallRight);
 
-      // 천장 배관 파이프
-      const pipeGeo = new THREE.CylinderGeometry(0.08, 0.08, 12, 8);
-      const pipeMat = new THREE.MeshStandardMaterial({ color: 0x1f2b23, metalness: 0.7, roughness: 0.5 });
-      const pipe1 = new THREE.Mesh(pipeGeo, pipeMat);
-      pipe1.rotation.x = Math.PI / 2;
-      pipe1.position.set(-3.2, 3.8, 0);
-      scene.add(pipe1);
-
-      // 회전하는 실링 팬
+      // 실링 팬
       const fanHub = new THREE.CylinderGeometry(0.2, 0.2, 0.1, 8);
       const fanMat = new THREE.MeshStandardMaterial({ color: 0x16221a });
       ceilingFan = new THREE.Mesh(fanHub, fanMat);
@@ -732,14 +746,13 @@
       monitorObj.castShadow = true;
       scene.add(monitorObj);
 
-      // 모니터 녹색 스크린 발광면
       const screenGeo = new THREE.PlaneGeometry(0.85, 0.6);
       const screenMat = new THREE.MeshBasicMaterial({ color: 0x33ff77 });
       const screen = new THREE.Mesh(screenGeo, screenMat);
       screen.position.set(0, 1.35, -3.79);
       scene.add(screen);
 
-      // 등 뒤의 잠긴 404호 철문
+      // 등 뒤 철문
       const doorGeo = new THREE.BoxGeometry(1.8, 3.2, 0.15);
       const doorMat = new THREE.MeshStandardMaterial({ map: doorTex, roughness: 0.7, metalness: 0.4 });
       doorObj = new THREE.Mesh(doorGeo, doorMat);
@@ -747,7 +760,10 @@
       doorObj.castShadow = true;
       scene.add(doorObj);
 
-      // 문틈의 그림자 괴물 인영 (출현용)
+      // 휠체어 소품 (방 구석)
+      buildWheelchairProp();
+
+      // 그림자 괴물
       const monGeoShape = new THREE.CylinderGeometry(0.35, 0.45, 2.4, 8);
       const monMatShape = new THREE.MeshBasicMaterial({ color: 0x000000 });
       monsterFigure = new THREE.Mesh(monGeoShape, monMatShape);
@@ -756,30 +772,44 @@
       scene.add(monsterFigure);
     }
 
-    // 공기 중 부유 먼지 파티클
-    function buildDustParticles() {
-      const dustGeo = new THREE.BufferGeometry();
-      const dustCount = 400;
-      const posArray = new Float32Array(dustCount * 3);
-      for (let i = 0; i < dustCount * 3; i += 3) {
-        posArray[i] = (Math.random() - 0.5) * 8;
-        posArray[i + 1] = Math.random() * 3.8;
-        posArray[i + 2] = (Math.random() - 0.5) * 10;
-      }
-      dustGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-      const dustMat = new THREE.PointsMaterial({ size: 0.03, color: 0x88ffaa, transparent: true, opacity: 0.4 });
-      dustParticles = new THREE.Points(dustGeo, dustMat);
-      scene.add(dustParticles);
+    function buildWheelchairProp() {
+      wheelchairObj = new THREE.Group();
+      const frameMat = new THREE.MeshStandardMaterial({ color: 0x223328, metalness: 0.7 });
+      const seatMat = new THREE.MeshStandardMaterial({ color: 0x1a1215 });
+
+      // 좌석
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.8), seatMat);
+      seat.position.y = 0.6;
+      wheelchairObj.add(seat);
+
+      // 등받이
+      const back = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.1), seatMat);
+      back.position.set(0, 1.0, 0.35);
+      wheelchairObj.add(back);
+
+      // 큰 바퀴 2개
+      const wheelGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.06, 16);
+      const w1 = new THREE.Mesh(wheelGeo, frameMat);
+      w1.rotation.z = Math.PI / 2;
+      w1.position.set(-0.45, 0.45, 0);
+      wheelchairObj.add(w1);
+
+      const w2 = new THREE.Mesh(wheelGeo, frameMat);
+      w2.rotation.z = Math.PI / 2;
+      w2.position.set(0.45, 0.45, 0);
+      wheelchairObj.add(w2);
+
+      wheelchairObj.position.set(2.8, 0, -2.5);
+      wheelchairObj.rotation.y = -0.5;
+      scene.add(wheelchairObj);
     }
 
     let lampSwing = 0;
     function renderLoop3D() {
       requestAnimationFrame(renderLoop3D);
 
-      // 천장 팬 회전
       if (ceilingFan) ceilingFan.rotation.y += 0.02;
 
-      // 펜던트 조명 스윙 및 깜빡임
       lampSwing += 0.03;
       ceilingLamp.position.x = Math.sin(lampSwing) * 0.2;
       if (Math.random() < 0.025) {
@@ -788,7 +818,6 @@
         ceilingLamp.intensity = 0.9 + Math.sin(lampSwing * 2) * 0.25;
       }
 
-      // 플레이어 이동 & 발소리
       if (isPointerLocked && !inTerminalMode) {
         const speed = 0.045;
         const moveVec = new THREE.Vector3();
@@ -804,11 +833,9 @@
           moveVec.applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraYaw);
           playerPos.add(moveVec);
 
-          // 헤드 바빙
           walkCycle += 0.16;
           camera.position.y = playerPos.y + Math.sin(walkCycle) * 0.04;
 
-          // 발소리 오디오 생성
           if (Math.sin(walkCycle) > 0.95 && Math.random() < 0.35) {
             playFootstepSound();
           }
@@ -862,7 +889,7 @@
     }
 
     /* ========================================================
-       3. Web Audio 신시사이저 (발소리, 드론, 릴 튜닝)
+       3. Web Audio 신시사이저 & 튜닝 로직
        ======================================================== */
     let audioCtx = null;
     let isPlaying = false;
@@ -1093,6 +1120,20 @@
       }, 800);
     }
 
+    function autoTuneAssist() { // 쫄보 배려 모드용 자동 튜닝
+      const ch = chapterDB[curChapter];
+      paramFreq = ch.targetFreq;
+      document.getElementById('valFreq').innerText = paramFreq + ' Hz';
+      document.getElementById('dialF').style.transform = `rotate(${(paramFreq / 3800) * 270 - 135}deg)`;
+      if (curChapter === 4) {
+        if (!isReversed) document.getElementById('btnReverse').click();
+        paramSpeed = 0.8;
+        document.getElementById('valSpeed').innerText = '0.8 x';
+      }
+      updateFilterSettings();
+      playBeep(880);
+    }
+
     function playTTSWhisper(txt) {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
@@ -1144,14 +1185,16 @@
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(110, now);
       osc.frequency.exponentialRampToValueAtTime(25, now + 0.9);
-      g.gain.setValueAtTime(0.85, now);
+      g.gain.setValueAtTime(isSafeMode ? 0.35 : 0.85, now);
       g.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
       osc.connect(g); g.connect(masterGain);
       osc.start(now); osc.stop(now + 0.9);
 
-      const flash = document.getElementById('bloodFlash');
-      flash.style.opacity = '0.9';
-      setTimeout(() => flash.style.opacity = '0', 350);
+      if (!isSafeMode) {
+        const flash = document.getElementById('bloodFlash');
+        flash.style.opacity = '0.9';
+        setTimeout(() => flash.style.opacity = '0', 350);
+      }
     }
 
     function triggerHorrorEvent(trig) {
@@ -1161,6 +1204,11 @@
       } else if (trig === 'monsterAppear') {
         playJumpScare();
         monsterFigure.visible = true;
+        // 휠체어가 문 앞으로 이동하는 폴터가이스트
+        if (wheelchairObj) {
+          wheelchairObj.position.set(0.8, 0, 4.2);
+          wheelchairObj.rotation.y = 2.8;
+        }
         appendLog("경고", "뒤쪽 철문 틈을 보십시오! 검은 인영이 문틈을 막아서고 있습니다!");
       } else if (trig === 'bangDoor') {
         playJumpScare();
@@ -1171,6 +1219,7 @@
     }
 
     function modifySanity(d) {
+      if (isSafeMode) d = Math.round(d * 0.4);
       sanity = Math.max(10, Math.min(100, sanity + d));
       bpm = Math.min(160, Math.max(65, Math.round(180 - sanity * 1.15)));
       document.getElementById('lblSAN').innerText = sanity + '%';
@@ -1198,7 +1247,10 @@
     function exitTerminal() {
       inTerminalMode = false;
       document.getElementById('tuningStationUI').style.display = 'none';
-      renderer.domElement.requestPointerLock();
+      try {
+        const lockPromise = renderer.domElement.requestPointerLock();
+        if (lockPromise && lockPromise.catch) lockPromise.catch(() => {});
+      } catch(e) {}
     }
 
     document.getElementById('btnPlay').addEventListener('click', startTapeEngine);
@@ -1224,7 +1276,6 @@
       playBeep(750);
     });
 
-    // 노브 드래그
     let activeDial = null;
     let dragOriginY = 0;
     let dragOriginVal = 0;
@@ -1277,7 +1328,10 @@
       document.getElementById('launcherScreen').style.display = 'none';
       init3DEnvironment();
       initAudio();
-      renderer.domElement.requestPointerLock();
+      try {
+        const lockPromise = renderer.domElement.requestPointerLock();
+        if (lockPromise && lockPromise.catch) lockPromise.catch(() => {});
+      } catch(e) {}
     });
 
     document.addEventListener('pointerlockchange', () => {
@@ -1298,14 +1352,14 @@
       if (k === 's') keys.s = true;
       if (k === 'd') keys.d = true;
 
-      if (k === 'f') { // 손전등
+      if (k === 'f') {
         isFlashlightOn = !isFlashlightOn;
         flashlight.intensity = isFlashlightOn ? 3.8 : 0;
         document.getElementById('lblFlashlight').innerText = isFlashlightOn ? 'ON' : 'OFF';
         playBeep(isFlashlightOn ? 850 : 420);
       }
 
-      if (k === 'e') { // 상호작용
+      if (k === 'e') {
         if (inTerminalMode) {
           exitTerminal();
         } else {
