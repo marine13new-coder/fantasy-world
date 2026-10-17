@@ -4,22 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <title>ARCHIVE 1999: THE RESIDUE - Full 3D Commercial Edition</title>
-  <!-- Three.js CDN -->
+  <title>ARCHIVE 1999: THE RESIDUE - Steam Masterpiece Edition</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Serif+KR:wght@400;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Special+Elite&family=Noto+Serif+KR:wght@400;700;900&display=swap');
 
     :root {
       --phosphor: #33ff77;
       --blood: #e61c24;
       --amber: #ffaa11;
+      --hud-bg: rgba(6, 10, 8, 0.88);
     }
 
     * {
       box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       user-select: none;
     }
 
@@ -28,11 +27,10 @@
       color: #fff;
       font-family: 'Share Tech Mono', 'Noto Serif KR', monospace;
       overflow: hidden;
-      width: 100vw;
-      height: 100vh;
+      width: 100vw; height: 100vh;
+      cursor: crosshair;
     }
 
-    /* 3D WebGL 캔버스 컨테이너 */
     #webglCanvas {
       position: absolute;
       top: 0; left: 0;
@@ -40,209 +38,180 @@
       z-index: 1;
     }
 
-    /* CRT 스캔라인 & 비네트 */
-    .crt-film {
+    /* 포스트 프로세싱 시뮬레이션: CRT 스캔라인, 필름 그레인, 렌즈 왜곡 비네트 */
+    .crt-scanlines {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.42) 50%),
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.45) 50%),
                   linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.03));
       background-size: 100% 3px, 4px 100%;
-      z-index: 50;
+      z-index: 40;
       pointer-events: none;
-      opacity: 0.92;
+      opacity: 0.9;
     }
 
-    .vignette-layer {
+    .vignette-lens {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: radial-gradient(circle at center, transparent 35%, rgba(0,0,0,0.96) 100%);
-      z-index: 51;
+      background: radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.95) 100%);
+      z-index: 41;
       pointer-events: none;
     }
 
-    #panicLayer {
+    #bloodFlash {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: radial-gradient(circle, transparent 25%, rgba(230, 28, 36, 0.75) 100%);
-      z-index: 52;
+      background: radial-gradient(circle, transparent 20%, rgba(200, 20, 25, 0.85) 100%);
+      z-index: 42;
       pointer-events: none;
       opacity: 0;
-      transition: opacity 0.2s;
+      transition: opacity 0.15s ease-out;
     }
 
-    /* 조준점 (Crosshair) */
-    #crosshair {
+    /* 조준점 & 상호작용 피드백 */
+    #reticle {
       position: fixed;
       top: 50%; left: 50%;
-      width: 8px; height: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.5);
+      width: 6px; height: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.6);
       border-radius: 50%;
       transform: translate(-50%, -50%);
-      z-index: 60;
+      z-index: 50;
       pointer-events: none;
-      transition: transform 0.1s, border-color 0.1s;
+      transition: all 0.12s;
     }
-    #crosshair.interactable {
+    #reticle.active {
+      width: 16px; height: 16px;
       border-color: var(--phosphor);
-      transform: translate(-50%, -50%) scale(2.2);
-      box-shadow: 0 0 10px var(--phosphor);
+      box-shadow: 0 0 12px var(--phosphor);
+      background: rgba(51, 255, 119, 0.2);
     }
 
-    /* 상단 HUD */
-    #hudTop {
+    /* 상단 헤더 HUD */
+    #hudHeader {
       position: fixed;
-      top: 14px; left: 20px; right: 20px;
+      top: 16px; left: 24px; right: 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      z-index: 60;
+      z-index: 50;
       pointer-events: none;
     }
 
-    .hud-title {
-      font-size: 20px;
+    .brand-hud {
+      font-size: 21px;
       font-weight: 900;
       letter-spacing: 3px;
       color: #fff;
       text-shadow: 0 0 10px var(--phosphor);
     }
+    .brand-hud small {
+      font-size: 11px;
+      color: var(--amber);
+      font-weight: normal;
+      margin-left: 8px;
+    }
 
-    .hud-stats {
+    .status-capsules {
       display: flex;
-      gap: 16px;
+      gap: 14px;
       font-size: 13px;
     }
 
-    .stat-badge {
-      background: rgba(8, 14, 10, 0.85);
-      border: 1px solid #1c3d28;
-      padding: 6px 12px;
+    .capsule {
+      background: var(--hud-bg);
+      border: 1px solid #1a3824;
+      padding: 6px 14px;
       border-radius: 3px;
       display: flex;
       align-items: center;
       gap: 8px;
+      backdrop-filter: blur(4px);
     }
 
-    .dot-bpm {
-      width: 9px; height: 9px;
+    .heart-pulse-dot {
+      width: 8px; height: 8px;
       border-radius: 50%;
       background: var(--blood);
-      animation: heart-pulse 1s infinite;
+      animation: heartbeat-anim 1s infinite;
     }
-    @keyframes heart-pulse {
+    @keyframes heartbeat-anim {
       0%, 100% { transform: scale(1); opacity: 0.8; }
       50% { transform: scale(1.6); opacity: 1; box-shadow: 0 0 8px var(--blood); }
     }
 
-    /* 하단 가이드 및 상호작용 프롬프트 */
-    #hudBottom {
+    /* 하단 상호작용 안내 */
+    #hudActionGuide {
       position: fixed;
-      bottom: 24px; left: 50%;
+      bottom: 28px; left: 50%;
       transform: translateX(-50%);
-      z-index: 60;
-      text-align: center;
+      z-index: 50;
       pointer-events: none;
     }
 
-    .interact-prompt {
-      background: rgba(8, 14, 10, 0.9);
+    .action-tip {
+      background: rgba(6, 12, 8, 0.92);
       border: 1px solid var(--phosphor);
       color: #fff;
-      padding: 10px 22px;
+      padding: 10px 24px;
       border-radius: 4px;
-      font-size: 15px;
+      font-size: 14px;
       letter-spacing: 1.5px;
-      box-shadow: 0 0 15px rgba(51, 255, 119, 0.3);
+      box-shadow: 0 0 20px rgba(51, 255, 119, 0.3);
       display: none;
-      animation: pulse-glow 1.5s infinite;
+      animation: pulse-tip 1.5s infinite;
     }
-
-    @keyframes pulse-glow {
+    @keyframes pulse-tip {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.03); }
     }
 
-    /* 포인터 락 시작 안내 오버레이 */
-    #startOverlay {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.92);
-      z-index: 100;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      text-align: center;
-      padding: 20px;
-    }
-
-    .start-btn {
-      background: #143021;
-      border: 2px solid var(--phosphor);
-      color: #fff;
-      padding: 16px 36px;
-      font-family: inherit;
-      font-size: 18px;
-      font-weight: bold;
-      letter-spacing: 2px;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-top: 24px;
-      transition: all 0.2s;
-      box-shadow: 0 0 20px rgba(51, 255, 119, 0.3);
-    }
-    .start-btn:hover {
-      background: #24583b;
-      box-shadow: 0 0 30px var(--phosphor);
-      transform: scale(1.05);
-    }
-
-    /* 워크스테이션 오디오 튜닝 단말기 팝업 (E 키 누르면 열림) */
-    #terminalUI {
+    /* 인게임 오디오 단말기 튜닝 UI (E 키 누르면 열림) */
+    #tuningStationUI {
       position: fixed;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      width: 900px;
+      width: 920px;
       max-width: 95vw;
-      background: rgba(8, 13, 10, 0.96);
+      background: rgba(8, 14, 10, 0.97);
       border: 2px solid var(--phosphor);
       border-radius: 6px;
-      box-shadow: 0 0 40px rgba(51, 255, 119, 0.35);
-      z-index: 80;
+      box-shadow: 0 0 50px rgba(51, 255, 119, 0.35);
+      z-index: 70;
       display: none;
       flex-direction: column;
       padding: 18px;
-      gap: 12px;
+      gap: 14px;
+      backdrop-filter: blur(6px);
     }
 
-    .terminal-header {
+    .station-titlebar {
       display: flex;
       justify-content: space-between;
-      border-bottom: 1px solid #1c3b28;
+      border-bottom: 1px solid #1a3a25;
       padding-bottom: 8px;
       font-size: 13px;
       color: #7abf94;
     }
 
-    .deck-grid {
+    .station-grid {
       display: grid;
-      grid-template-columns: 1.2fr 0.8fr;
-      gap: 14px;
+      grid-template-columns: 1.25fr 0.75fr;
+      gap: 16px;
     }
 
-    .reel-visual-box {
+    .reel-console {
       background: #040806;
-      border: 1px solid #153320;
+      border: 1px solid #14301e;
       border-radius: 4px;
-      padding: 12px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
 
-    .reels-row {
+    .reel-bay {
       display: flex;
       justify-content: space-around;
       width: 100%;
@@ -250,41 +219,39 @@
       padding: 10px 0;
     }
 
-    .reel-plate {
-      width: 90px;
-      height: 90px;
+    .cassette-spool {
+      width: 95px; height: 95px;
       border-radius: 50%;
-      border: 4px dashed #204c31;
-      background: radial-gradient(circle, #0e1711 30%, #030604 75%);
+      border: 4px dashed #225235;
+      background: radial-gradient(circle, #0e1a12 30%, #030604 75%);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 12px rgba(51, 255, 119, 0.15);
+      position: relative;
+      box-shadow: 0 0 14px rgba(51, 255, 119, 0.15);
     }
-
-    .reel-plate::after {
+    .cassette-spool::after {
       content: "";
       width: 22px; height: 22px;
       border-radius: 50%;
       background: var(--phosphor);
       opacity: 0.75;
     }
+    .cassette-spool.spin { animation: spool-rotate 1.8s linear infinite; }
+    .cassette-spool.reverse-spin { animation: spool-rotate 1.8s linear infinite reverse; }
+    @keyframes spool-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-    .reel-plate.spinning { animation: spin 1.8s linear infinite; }
-    .reel-plate.reverse-spin { animation: spin 1.8s linear infinite reverse; }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-    /* 4종 다이얼 튜너 */
-    .knob-row {
+    /* 4종 마우스 드래그 노브 */
+    .knob-dock {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 8px;
       width: 100%;
     }
 
-    .knob-unit {
-      background: #070d09;
-      border: 1px solid #163020;
+    .knob-pod {
+      background: #070e0a;
+      border: 1px solid #153320;
       padding: 8px 4px;
       border-radius: 4px;
       text-align: center;
@@ -293,34 +260,34 @@
       align-items: center;
       gap: 4px;
     }
-    .knob-unit label { font-size: 10px; color: #82b596; text-transform: uppercase; }
+    .knob-pod label { font-size: 10px; color: #82b596; letter-spacing: 1px; }
 
-    .rotary-wheel {
-      width: 38px; height: 38px;
+    .knob-rotary {
+      width: 40px; height: 40px;
       border-radius: 50%;
-      background: radial-gradient(circle, #244730 40%, #0d1711 80%);
+      background: radial-gradient(circle, #254a32 40%, #0d1711 80%);
       border: 2px solid var(--phosphor);
       position: relative;
       cursor: ns-resize;
       box-shadow: 0 0 8px rgba(51, 255, 119, 0.25);
     }
-    .rotary-pointer {
+    .knob-rotary-notch {
       position: absolute;
       top: 3px; left: calc(50% - 2px);
       width: 4px; height: 8px;
       background: #fff;
       border-radius: 2px;
     }
-    .rotary-val { font-size: 11px; color: #fff; font-weight: bold; }
+    .knob-display-val { font-size: 11px; color: #fff; font-weight: bold; }
 
-    .deck-btns {
+    .deck-action-buttons {
       display: flex;
       gap: 8px;
     }
 
-    .m-btn {
-      background: #112419;
-      border: 1px solid #235235;
+    .deck-btn {
+      background: #11261a;
+      border: 1px solid #235436;
       color: #79ff9c;
       padding: 8px 14px;
       font-family: inherit;
@@ -330,36 +297,72 @@
       cursor: pointer;
       transition: all 0.15s;
     }
-    .m-btn:hover { background: #1f4730; color: #fff; }
-    .m-btn.active { background: var(--phosphor); color: #040906; }
+    .deck-btn:hover { background: #1c452b; color: #fff; }
+    .deck-btn.active { background: var(--phosphor); color: #030805; }
 
     /* 우측 단서 로그 */
-    .terminal-side {
+    .transcript-box {
       background: #040806;
-      border: 1px solid #153320;
+      border: 1px solid #14301e;
       border-radius: 4px;
-      padding: 10px;
+      padding: 12px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
       font-size: 12px;
       overflow-y: auto;
-      max-height: 280px;
+      max-height: 290px;
     }
 
-    .log-line {
-      border-bottom: 1px dashed #173321;
-      padding-bottom: 6px;
-      line-height: 1.5;
+    .transcript-entry {
+      border-bottom: 1px dashed #163622;
+      padding-bottom: 8px;
+      line-height: 1.6;
     }
-    .log-line strong { color: var(--amber); }
-    .log-line.danger strong { color: var(--blood); }
+    .transcript-entry strong { color: var(--amber); }
+    .transcript-entry.alert strong { color: var(--blood); }
 
-    /* 모달 */
-    .info-modal {
+    /* 시작 런처 오버레이 */
+    #launcherScreen {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(circle at center, #0a140f 10%, #000 80%);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .start-game-btn {
+      background: #132e1f;
+      border: 2px solid var(--phosphor);
+      color: #fff;
+      padding: 16px 40px;
+      font-family: inherit;
+      font-size: 18px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: all 0.2s;
+      box-shadow: 0 0 25px rgba(51, 255, 119, 0.35);
+    }
+    .start-game-btn:hover {
+      background: #204c31;
+      box-shadow: 0 0 35px var(--phosphor);
+      transform: scale(1.05);
+    }
+
+    /* 결말 모달 */
+    .modal-overlay {
       position: fixed;
       top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.94);
+      background: rgba(0, 0, 0, 0.95);
       z-index: 120;
       display: none;
       align-items: center;
@@ -367,160 +370,259 @@
       padding: 20px;
     }
 
-    .modal-box {
-      background: #09120e;
+    .modal-card {
+      background: #09140e;
       border: 2px solid var(--phosphor);
       border-radius: 6px;
-      width: 700px;
+      width: 720px;
       max-width: 95vw;
-      padding: 24px;
+      padding: 26px;
       color: #ccebda;
-      line-height: 1.7;
+      line-height: 1.8;
+      box-shadow: 0 0 45px rgba(51, 255, 119, 0.3);
     }
   </style>
 </head>
 <body>
 
-  <div class="crt-film"></div>
-  <div class="vignette-layer"></div>
-  <div id="panicLayer"></div>
-  <div id="crosshair"></div>
+  <div class="crt-scanlines"></div>
+  <div class="vignette-lens"></div>
+  <div id="bloodFlash"></div>
+  <div id="reticle"></div>
 
   <!-- 상단 HUD -->
-  <div id="hudTop">
-    <div class="hud-title">ARCHIVE 1999 <small style="font-size:11px; color:var(--amber);">FULL 3D COMMERCIAL EDITION</small></div>
-    <div class="hud-stats">
-      <div class="stat-badge">
-        <span>손전등 [F]: <strong id="txtFlashlight" style="color:var(--phosphor);">ON</strong></span>
+  <div id="hudHeader">
+    <div class="brand-hud">
+      ARCHIVE 1999 <small>ASYLUM WARD 4</small>
+    </div>
+    <div class="status-capsules">
+      <div class="capsule">
+        <span>손전등 [F]: <strong id="lblFlashlight" style="color:var(--phosphor);">ON</strong></span>
       </div>
-      <div class="stat-badge">
-        <div class="dot-bpm"></div>
-        <span>심박수: <strong id="txtBPM" style="color:var(--blood);">76</strong> BPM</span>
+      <div class="capsule">
+        <div class="heart-pulse-dot"></div>
+        <span>심박수: <strong id="lblBPM" style="color:var(--blood);">76</strong> BPM</span>
       </div>
-      <div class="stat-badge">
-        <span>이성(SAN): <strong id="txtSAN" style="color:var(--phosphor);">95%</strong></span>
+      <div class="capsule">
+        <span>이성(SAN): <strong id="lblSAN" style="color:var(--phosphor);">95%</strong></span>
       </div>
     </div>
   </div>
 
-  <!-- 하단 상호작용 안내 -->
-  <div id="hudBottom">
-    <div class="interact-prompt" id="promptText">[ E ] 오디오 워크스테이션 조사</div>
+  <!-- 하단 안내 -->
+  <div id="hudActionGuide">
+    <div class="action-tip" id="actionTipBox">[ E ] 오디오 워크스테이션 튜닝</div>
   </div>
 
-  <!-- 3D WebGL 캔버스 -->
+  <!-- 3D 캔버스 -->
   <canvas id="webglCanvas"></canvas>
 
-  <!-- 단말기 튜닝 팝업 (E 키) -->
-  <div id="terminalUI">
-    <div class="terminal-header">
-      <span id="txtChTitle">CH.1 잡음 속의 숨소리 (Noise in the Dark)</span>
-      <button class="m-btn" onclick="closeTerminal()" style="padding:4px 10px;">✕ 나가기 (ESC / E)</button>
+  <!-- 단말기 튜닝 팝업 -->
+  <div id="tuningStationUI">
+    <div class="station-titlebar">
+      <span id="txtTapeHeader">CH.1 잡음 속의 숨소리 (Noise in the Dark)</span>
+      <button class="deck-btn" onclick="exitTerminal()" style="padding:4px 10px;">✕ 나가기 (ESC / E)</button>
     </div>
 
-    <div class="deck-grid">
-      <div class="reel-visual-box">
-        <div class="reels-row">
-          <div class="reel-plate" id="rLeft"></div>
-          <div style="position:absolute; top:50%; left:25%; right:25%; height:2px; background:#226633;"></div>
-          <div class="reel-plate" id="rRight"></div>
+    <div class="station-grid">
+      <div class="reel-console">
+        <div class="reel-bay">
+          <div class="cassette-spool" id="spoolL"></div>
+          <div style="position:absolute; top:50%; left:25%; right:25%; height:2px; background:#226633; box-shadow:0 0 6px var(--phosphor);"></div>
+          <div class="cassette-spool" id="spoolR"></div>
         </div>
 
         <div style="display:flex; justify-content:space-between; width:100%; font-size:12px;">
-          <span>동기화: <strong id="syncStateText" style="color:#7abf94;">UNLOCKED</strong></span>
-          <span>복원 정확도: <strong id="syncPctText" style="color:var(--amber);">0%</strong></span>
+          <span>주파수 상태: <strong id="lblSyncState" style="color:#7abf94;">UNLOCKED</strong></span>
+          <span>복원율: <strong id="lblSyncPct" style="color:var(--amber);">0%</strong></span>
         </div>
 
-        <!-- 4종 다이얼 노브 -->
-        <div class="knob-row">
-          <div class="knob-unit">
+        <!-- 4종 노브 -->
+        <div class="knob-dock">
+          <div class="knob-pod">
             <label>FREQ</label>
-            <div class="rotary-wheel" id="kFreq" data-p="freq"><div class="rotary-pointer"></div></div>
-            <span class="rotary-val" id="lblFreq">1200 Hz</span>
+            <div class="knob-rotary" id="dialF" data-k="freq"><div class="knob-rotary-notch"></div></div>
+            <span class="knob-display-val" id="valFreq">1200 Hz</span>
           </div>
-          <div class="knob-unit">
+          <div class="knob-pod">
             <label>NOISE</label>
-            <div class="rotary-wheel" id="kNoise" data-p="noise"><div class="rotary-pointer"></div></div>
-            <span class="rotary-val" id="lblNoise">20 %</span>
+            <div class="knob-rotary" id="dialN" data-k="noise"><div class="knob-rotary-notch"></div></div>
+            <span class="knob-display-val" id="valNoise">20 %</span>
           </div>
-          <div class="knob-unit">
+          <div class="knob-pod">
             <label>RESONANCE</label>
-            <div class="rotary-wheel" id="kRes" data-p="res"><div class="rotary-pointer"></div></div>
-            <span class="rotary-val" id="lblRes">5 Q</span>
+            <div class="knob-rotary" id="dialR" data-k="res"><div class="knob-rotary-notch"></div></div>
+            <span class="knob-display-val" id="valRes">5 Q</span>
           </div>
-          <div class="knob-unit">
+          <div class="knob-pod">
             <label>SPEED</label>
-            <div class="rotary-wheel" id="kSpeed" data-p="speed"><div class="rotary-pointer"></div></div>
-            <span class="rotary-val" id="lblSpeed">1.0 x</span>
+            <div class="knob-rotary" id="dialS" data-k="speed"><div class="knob-rotary-notch"></div></div>
+            <span class="knob-display-val" id="valSpeed">1.0 x</span>
           </div>
         </div>
 
-        <div class="deck-btns">
-          <button class="m-btn" id="btnRew">◀◀ REWIND</button>
-          <button class="m-btn" id="btnPlay">▶ PLAY / RESTORE</button>
-          <button class="m-btn" id="btnStop">■ STOP</button>
-          <button class="m-btn" id="btnRev" style="border-color:#8855ff; color:#caa8ff;">⟲ REVERSE</button>
+        <div class="deck-action-buttons">
+          <button class="deck-btn" id="btnRewind">◀◀ REWIND</button>
+          <button class="deck-btn" id="btnPlay">▶ PLAY / RESTORE</button>
+          <button class="deck-btn" id="btnStop">■ STOP</button>
+          <button class="deck-btn" id="btnReverse" style="border-color:#8855ff; color:#caa8ff;">⟲ REVERSE</button>
         </div>
       </div>
 
-      <div class="terminal-side" id="terminalLog">
-        <div class="log-line">
+      <div class="transcript-box" id="transcriptLog">
+        <div class="transcript-entry">
           <strong>[EVP 시스템]</strong> 다이얼을 드래그하여 숨겨진 주파수(약 850Hz)로 튜닝하십시오.
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 포인터 락 시작 안내 -->
-  <div id="startOverlay">
-    <h1 style="font-size:36px; letter-spacing:4px; color:#fff; text-shadow:0 0 20px var(--phosphor); margin-bottom:12px;">
+  <!-- 시작 런처 -->
+  <div id="launcherScreen">
+    <h1 style="font-size:38px; letter-spacing:5px; color:#fff; text-shadow:0 0 25px var(--phosphor); margin-bottom:14px;">
       ARCHIVE 1999
     </h1>
-    <p style="font-size:16px; color:#8abf9d; max-width:600px; line-height:1.8; margin-bottom:18px;">
-      1999년 12월 31일, 산속 고립된 지하 격리실.<br>
-      20년 전 불탄 정신병원의 릴 테이프를 복원하며 진실을 마주하십시오.<br>
-      (※ <strong>헤드폰 착용</strong> 및 <strong>어두운 방</strong>에서 플레이할 것을 강력히 권장합니다)
+    <p style="font-size:16px; color:#8abf9d; max-width:620px; line-height:1.8; margin-bottom:20px;">
+      1999년 12월 31일, 국립 청송 정신의학 연구소 제4병동 지하 격리실.<br>
+      불탄 릴 테이프를 복원하며 진실의 심연을 마주하십시오.<br>
+      (※ <strong>헤드폰 착용</strong> 및 <strong>어두운 방</strong>에서 플레이하십시오)
     </p>
-    <div style="font-size:13px; color:#aaa; line-height:1.6; margin-bottom:20px;">
-      [ W, A, S, D ] 이동 | [ 마우스 ] 시점 회전 | [ E ] 상호작용 | [ F ] 손전등 켜기/끄기
+    <div style="font-size:13px; color:#aaa; line-height:1.6; margin-bottom:24px;">
+      [ W, A, S, D ] 이동 | [ 마우스 ] 시점 회전 | [ E ] 상호작용 | [ F ] 손전등 토글
     </div>
-    <button class="start-btn" id="btnEnterGame">🎮 게임 시작 (ENTER THE WARD)</button>
+    <button class="start-game-btn" id="btnStartGame">🎮 입장하기 (ENTER THE WARD)</button>
   </div>
 
-  <!-- 엔딩 모달 -->
-  <div class="info-modal" id="endingModal">
-    <div class="modal-box">
-      <h2 style="color:var(--blood); margin-bottom:14px;" id="endingTitle">🚨 최종 결말: 진실의 문턱</h2>
-      <div id="endingBody"></div>
-      <div style="margin-top:20px; display:flex; justify-content:flex-end;">
-        <button class="m-btn" onclick="location.reload()" style="padding:10px 20px;">처음부터 다시하기</button>
+  <!-- 결말 모달 -->
+  <div class="modal-overlay" id="finalModal">
+    <div class="modal-card">
+      <h2 style="color:var(--blood); margin-bottom:14px;">🚨 최종 결말: 진실의 문턱</h2>
+      <div id="finalModalBody"></div>
+      <div style="margin-top:24px; display:flex; justify-content:flex-end;">
+        <button class="deck-btn" onclick="location.reload()" style="padding:10px 24px; font-size:14px;">처음부터 다시하기</button>
       </div>
     </div>
   </div>
 
   <script>
     /* ========================================================
-       1. THREE.JS FULL 3D WORLD SETUP (1인칭 탐색 호러)
+       1. 절차적 고해상도 PBR 텍스처 생성기 (Procedural Canvas Textures)
+       ======================================================== */
+    function createTileTexture() { // 곰팡이 핀 병원 바닥 타일
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 512;
+      const ctx = c.getContext('2d');
+
+      ctx.fillStyle = '#111814'; ctx.fillRect(0, 0, 512, 512);
+
+      // 타일 격자
+      ctx.strokeStyle = '#070a08'; ctx.lineWidth = 4;
+      for (let x = 0; x < 512; x += 64) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 512); ctx.stroke();
+      }
+      for (let y = 0; y < 512; y += 64) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
+      }
+
+      // 오염 얼룩 & 핏자국
+      for (let i = 0; i < 40; i++) {
+        ctx.fillStyle = Math.random() < 0.25 ? 'rgba(70, 10, 15, 0.45)' : 'rgba(10, 25, 15, 0.4)';
+        ctx.beginPath();
+        ctx.arc(Math.random() * 512, Math.random() * 512, Math.random() * 35 + 10, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(4, 5);
+      return tex;
+    }
+
+    function createWallTexture() { // 피 묻은 낙서와 콘크리트 벽
+      const c = document.createElement('canvas');
+      c.width = 1024; c.height = 512;
+      const ctx = c.getContext('2d');
+
+      ctx.fillStyle = '#17221c'; ctx.fillRect(0, 0, 1024, 512);
+
+      // 벽면 노이즈 얼룩
+      for (let i = 0; i < 150; i++) {
+        ctx.fillStyle = 'rgba(8, 14, 10, ' + (Math.random() * 0.4) + ')';
+        ctx.fillRect(Math.random() * 1024, Math.random() * 512, Math.random() * 80, Math.random() * 80);
+      }
+
+      // 섬뜩한 벽면 핏빛 낙서
+      ctx.font = 'bold 36px "Special Elite", monospace';
+      ctx.fillStyle = 'rgba(180, 20, 25, 0.75)';
+      ctx.fillText('[ CAGED 1979 ]', 120, 180);
+      ctx.fillText('108.4 Hz', 480, 260);
+      ctx.fillText('너도 여기서 못 나가', 220, 380);
+
+      // 손톱 긁힌 자국
+      ctx.strokeStyle = 'rgba(150, 20, 30, 0.6)';
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 6; i++) {
+        ctx.beginPath();
+        ctx.moveTo(750 + i * 15, 120);
+        ctx.lineTo(730 + i * 15, 300);
+        ctx.stroke();
+      }
+
+      const tex = new THREE.CanvasTexture(c);
+      return tex;
+    }
+
+    function createDoorTexture() { // 녹슨 철문
+      const c = document.createElement('canvas');
+      c.width = 256; c.height = 512;
+      const ctx = c.getContext('2d');
+
+      ctx.fillStyle = '#221517'; ctx.fillRect(0, 0, 256, 512);
+
+      // 철판 테두리 리벳
+      ctx.strokeStyle = '#12090b'; ctx.lineWidth = 8;
+      ctx.strokeRect(10, 10, 236, 492);
+
+      // 쇠창살 창문 구멍
+      ctx.fillStyle = '#020302'; ctx.fillRect(50, 60, 156, 120);
+      ctx.strokeStyle = '#3a443e'; ctx.lineWidth = 6;
+      for (let x = 70; x < 200; x += 25) {
+        ctx.beginPath(); ctx.moveTo(x, 60); ctx.lineTo(x, 180); ctx.stroke();
+      }
+
+      // 녹 자국
+      for (let i = 0; i < 40; i++) {
+        ctx.fillStyle = 'rgba(120, 40, 20, 0.35)';
+        ctx.fillRect(Math.random() * 256, Math.random() * 512, Math.random() * 40, Math.random() * 40);
+      }
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    /* ========================================================
+       2. THREE.JS 3D 공간 환경 구성 (Asylum Ward 4)
        ======================================================== */
     let scene, camera, renderer;
-    let flashlight, ambientLight, roomLight;
-    let deskMesh, monitorMesh, doorMesh, monsterMesh;
+    let flashlight, ceilingLamp, ambientGlow;
+    let deskObj, monitorObj, doorObj, monsterFigure, ceilingFan;
+    let dustParticles;
     let isFlashlightOn = true;
     let isPointerLocked = false;
-    let inTerminalUI = false;
+    let inTerminalMode = false;
 
-    // 플레이어 이동 상태
     const keys = { w: false, a: false, s: false, d: false };
-    const playerPos = new THREE.Vector3(0, 1.6, 2.5);
-    let cameraPitch = 0;
-    let cameraYaw = 0;
+    const playerPos = new THREE.Vector3(0, 1.6, 2.8);
+    let cameraPitch = 0, cameraYaw = 0;
 
-    function initThreeScene() {
+    // 헤드 바빙(걸을 때 카메라 흔들림)
+    let walkCycle = 0;
+
+    function init3DEnvironment() {
       const canvas = document.getElementById('webglCanvas');
       scene = new THREE.Scene();
-      scene.fog = new THREE.FogExp2(0x020403, 0.12);
+      scene.fog = new THREE.FogExp2(0x020503, 0.11);
 
-      camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 50);
+      camera = new THREE.PerspectiveCamera(74, window.innerWidth / window.innerHeight, 0.1, 50);
       camera.position.copy(playerPos);
 
       renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
@@ -528,156 +630,239 @@
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-      // 조명 설정
-      ambientLight = new THREE.AmbientLight(0x060c08, 0.8);
-      scene.add(ambientLight);
+      ambientGlow = new THREE.AmbientLight(0x08100a, 0.7);
+      scene.add(ambientGlow);
 
-      // 천장 백열등 (깜빡거림)
-      roomLight = new THREE.PointLight(0x44ff88, 1.2, 10);
-      roomLight.position.set(0, 3.2, 0);
-      roomLight.castShadow = true;
-      scene.add(roomLight);
+      // 천장 흔들리는 펜던트 조명
+      ceilingLamp = new THREE.PointLight(0x44ff88, 1.3, 11);
+      ceilingLamp.position.set(0, 3.4, 0);
+      ceilingLamp.castShadow = true;
+      scene.add(ceilingLamp);
 
-      // 플레이어 손전등
-      flashlight = new THREE.SpotLight(0xfff4d6, 3.5, 14, Math.PI / 6, 0.4, 1.2);
+      // 손전등
+      flashlight = new THREE.SpotLight(0xfff6dc, 3.8, 15, Math.PI / 5.5, 0.35, 1.2);
       flashlight.castShadow = true;
       scene.add(flashlight);
       scene.add(flashlight.target);
 
-      buildRoomGeometry();
-      animate3D();
+      buildAsylumWard();
+      buildDustParticles();
+      renderLoop3D();
     }
 
-    function buildRoomGeometry() {
-      // 1. 지하 격리실 벽체 및 바닥 (콘크리트 텍스처 컬러)
-      const roomGeo = new THREE.BoxGeometry(8, 4, 10);
-      const roomMat = new THREE.MeshStandardMaterial({
-        color: 0x141e17,
-        roughness: 0.85,
-        metalness: 0.1,
-        side: THREE.BackSide
-      });
-      const roomMesh = new THREE.Mesh(roomGeo, roomMat);
-      roomMesh.position.set(0, 2, 0);
-      roomMesh.receiveShadow = true;
-      scene.add(roomMesh);
+    function buildAsylumWard() {
+      const tileTex = createTileTexture();
+      const wallTex = createWallTexture();
+      const doorTex = createDoorTexture();
 
-      // 2. 작업 데스크 (정면)
-      const deskGeo = new THREE.BoxGeometry(3, 0.9, 1.2);
-      const deskMat = new THREE.MeshStandardMaterial({ color: 0x111613, roughness: 0.9 });
-      deskMesh = new THREE.Mesh(deskGeo, deskMat);
-      deskMesh.position.set(0, 0.45, -3.2);
-      deskMesh.castShadow = true;
-      deskMesh.receiveShadow = true;
-      scene.add(deskMesh);
+      // 바닥
+      const floorGeo = new THREE.PlaneGeometry(9, 12);
+      const floorMat = new THREE.MeshStandardMaterial({ map: tileTex, roughness: 0.6, metalness: 0.2 });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      floor.receiveShadow = true;
+      scene.add(floor);
 
-      // 3. CRT 모니터 & 릴 테이프 머신 (데스크 위)
-      const monGeo = new THREE.BoxGeometry(1.0, 0.8, 0.7);
-      const monMat = new THREE.MeshStandardMaterial({ color: 0x1c2e22, roughness: 0.6 });
-      monitorMesh = new THREE.Mesh(monGeo, monMat);
-      monitorMesh.position.set(0, 1.3, -3.2);
-      monitorMesh.castShadow = true;
-      scene.add(monitorMesh);
+      // 천장
+      const ceilMat = new THREE.MeshStandardMaterial({ color: 0x0f1612, roughness: 0.9 });
+      const ceiling = new THREE.Mesh(floorGeo, ceilMat);
+      ceiling.position.y = 4.0;
+      ceiling.rotation.x = Math.PI / 2;
+      scene.add(ceiling);
+
+      // 벽면 (정면, 후면, 좌, 우)
+      const wallFrontGeo = new THREE.PlaneGeometry(9, 4);
+      const wallFrontMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.85 });
+      const wallFront = new THREE.Mesh(wallFrontGeo, wallFrontMat);
+      wallFront.position.set(0, 2, -6);
+      scene.add(wallFront);
+
+      const wallBack = new THREE.Mesh(wallFrontGeo, wallFrontMat);
+      wallBack.position.set(0, 2, 6);
+      wallBack.rotation.y = Math.PI;
+      scene.add(wallBack);
+
+      const wallSideGeo = new THREE.PlaneGeometry(12, 4);
+      const wallLeft = new THREE.Mesh(wallSideGeo, wallFrontMat);
+      wallLeft.position.set(-4.5, 2, 0);
+      wallLeft.rotation.y = Math.PI / 2;
+      scene.add(wallLeft);
+
+      const wallRight = new THREE.Mesh(wallSideGeo, wallFrontMat);
+      wallRight.position.set(4.5, 2, 0);
+      wallRight.rotation.y = -Math.PI / 2;
+      scene.add(wallRight);
+
+      // 천장 배관 파이프
+      const pipeGeo = new THREE.CylinderGeometry(0.08, 0.08, 12, 8);
+      const pipeMat = new THREE.MeshStandardMaterial({ color: 0x1f2b23, metalness: 0.7, roughness: 0.5 });
+      const pipe1 = new THREE.Mesh(pipeGeo, pipeMat);
+      pipe1.rotation.x = Math.PI / 2;
+      pipe1.position.set(-3.2, 3.8, 0);
+      scene.add(pipe1);
+
+      // 회전하는 실링 팬
+      const fanHub = new THREE.CylinderGeometry(0.2, 0.2, 0.1, 8);
+      const fanMat = new THREE.MeshStandardMaterial({ color: 0x16221a });
+      ceilingFan = new THREE.Mesh(fanHub, fanMat);
+      ceilingFan.position.set(0, 3.9, 0);
+      for (let i = 0; i < 4; i++) {
+        const bladeGeo = new THREE.BoxGeometry(0.2, 0.02, 1.2);
+        const blade = new THREE.Mesh(bladeGeo, fanMat);
+        blade.position.z = 0.6;
+        blade.rotation.y = (i * Math.PI) / 2;
+        ceilingFan.add(blade);
+      }
+      scene.add(ceilingFan);
+
+      // 작업 데스크
+      const deskGeo = new THREE.BoxGeometry(3.2, 0.9, 1.4);
+      const deskMat = new THREE.MeshStandardMaterial({ color: 0x131a15, roughness: 0.85 });
+      deskObj = new THREE.Mesh(deskGeo, deskMat);
+      deskObj.position.set(0, 0.45, -4.2);
+      deskObj.castShadow = true;
+      deskObj.receiveShadow = true;
+      scene.add(deskObj);
+
+      // CRT 모니터 & 릴 테이프 머신
+      const monGeo = new THREE.BoxGeometry(1.2, 0.85, 0.8);
+      const monMat = new THREE.MeshStandardMaterial({ color: 0x18261e, roughness: 0.65 });
+      monitorObj = new THREE.Mesh(monGeo, monMat);
+      monitorObj.position.set(0, 1.35, -4.2);
+      monitorObj.castShadow = true;
+      scene.add(monitorObj);
 
       // 모니터 녹색 스크린 발광면
-      const screenGeo = new THREE.PlaneGeometry(0.7, 0.55);
+      const screenGeo = new THREE.PlaneGeometry(0.85, 0.6);
       const screenMat = new THREE.MeshBasicMaterial({ color: 0x33ff77 });
-      const screenMesh = new THREE.Mesh(screenGeo, screenMat);
-      screenMesh.position.set(0, 1.3, -2.84);
-      scene.add(screenMesh);
+      const screen = new THREE.Mesh(screenGeo, screenMat);
+      screen.position.set(0, 1.35, -3.79);
+      scene.add(screen);
 
-      // 4. 등 뒤의 잠긴 격리실 철문 (후면)
-      const doorGeo = new THREE.BoxGeometry(1.6, 2.8, 0.15);
-      const doorMat = new THREE.MeshStandardMaterial({ color: 0x221114, roughness: 0.7, metalness: 0.4 });
-      doorMesh = new THREE.Mesh(doorGeo, doorMat);
-      doorMesh.position.set(0, 1.4, 4.9);
-      doorMesh.castShadow = true;
-      scene.add(doorMesh);
+      // 등 뒤의 잠긴 404호 철문
+      const doorGeo = new THREE.BoxGeometry(1.8, 3.2, 0.15);
+      const doorMat = new THREE.MeshStandardMaterial({ map: doorTex, roughness: 0.7, metalness: 0.4 });
+      doorObj = new THREE.Mesh(doorGeo, doorMat);
+      doorObj.position.set(0, 1.6, 5.9);
+      doorObj.castShadow = true;
+      scene.add(doorObj);
 
-      // 문틈의 그림자 괴물 실루엣
-      const monBodyGeo = new THREE.CylinderGeometry(0.3, 0.4, 2.2, 8);
-      const monBodyMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-      monsterMesh = new THREE.Mesh(monBodyGeo, monBodyMat);
-      monsterMesh.position.set(0, 1.1, 4.7);
-      monsterMesh.visible = false;
-      scene.add(monsterMesh);
+      // 문틈의 그림자 괴물 인영 (출현용)
+      const monGeoShape = new THREE.CylinderGeometry(0.35, 0.45, 2.4, 8);
+      const monMatShape = new THREE.MeshBasicMaterial({ color: 0x000000 });
+      monsterFigure = new THREE.Mesh(monGeoShape, monMatShape);
+      monsterFigure.position.set(0, 1.2, 5.7);
+      monsterFigure.visible = false;
+      scene.add(monsterFigure);
     }
 
-    let flickerClock = 0;
-    function animate3D() {
-      requestAnimationFrame(animate3D);
+    // 공기 중 부유 먼지 파티클
+    function buildDustParticles() {
+      const dustGeo = new THREE.BufferGeometry();
+      const dustCount = 400;
+      const posArray = new Float32Array(dustCount * 3);
+      for (let i = 0; i < dustCount * 3; i += 3) {
+        posArray[i] = (Math.random() - 0.5) * 8;
+        posArray[i + 1] = Math.random() * 3.8;
+        posArray[i + 2] = (Math.random() - 0.5) * 10;
+      }
+      dustGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+      const dustMat = new THREE.PointsMaterial({ size: 0.03, color: 0x88ffaa, transparent: true, opacity: 0.4 });
+      dustParticles = new THREE.Points(dustGeo, dustMat);
+      scene.add(dustParticles);
+    }
 
-      // 천장 조명 깜빡임
-      flickerClock += 0.05;
-      if (Math.random() < 0.03) {
-        roomLight.intensity = Math.random() * 0.4;
+    let lampSwing = 0;
+    function renderLoop3D() {
+      requestAnimationFrame(renderLoop3D);
+
+      // 천장 팬 회전
+      if (ceilingFan) ceilingFan.rotation.y += 0.02;
+
+      // 펜던트 조명 스윙 및 깜빡임
+      lampSwing += 0.03;
+      ceilingLamp.position.x = Math.sin(lampSwing) * 0.2;
+      if (Math.random() < 0.025) {
+        ceilingLamp.intensity = Math.random() * 0.3;
       } else {
-        roomLight.intensity = 0.8 + Math.sin(flickerClock) * 0.2;
+        ceilingLamp.intensity = 0.9 + Math.sin(lampSwing * 2) * 0.25;
       }
 
-      // 플레이어 이동 처리
-      if (isPointerLocked && !inTerminalUI) {
-        const speed = 0.05;
+      // 플레이어 이동 & 발소리
+      if (isPointerLocked && !inTerminalMode) {
+        const speed = 0.045;
         const moveVec = new THREE.Vector3();
-        if (keys.w) moveVec.z -= 1;
-        if (keys.s) moveVec.z += 1;
-        if (keys.a) moveVec.x -= 1;
-        if (keys.d) moveVec.x += 1;
-        moveVec.normalize().multiplyScalar(speed);
-        moveVec.applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraYaw);
+        let isWalking = false;
 
-        playerPos.add(moveVec);
-        // 방 경계 제한
-        playerPos.x = Math.max(-3.5, Math.min(3.5, playerPos.x));
-        playerPos.z = Math.max(-2.5, Math.min(4.2, playerPos.z));
+        if (keys.w) { moveVec.z -= 1; isWalking = true; }
+        if (keys.s) { moveVec.z += 1; isWalking = true; }
+        if (keys.a) { moveVec.x -= 1; isWalking = true; }
+        if (keys.d) { moveVec.x += 1; isWalking = true; }
+
+        if (isWalking) {
+          moveVec.normalize().multiplyScalar(speed);
+          moveVec.applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraYaw);
+          playerPos.add(moveVec);
+
+          // 헤드 바빙
+          walkCycle += 0.16;
+          camera.position.y = playerPos.y + Math.sin(walkCycle) * 0.04;
+
+          // 발소리 오디오 생성
+          if (Math.sin(walkCycle) > 0.95 && Math.random() < 0.35) {
+            playFootstepSound();
+          }
+        } else {
+          camera.position.y = playerPos.y;
+        }
+
+        playerPos.x = Math.max(-3.8, Math.min(3.8, playerPos.x));
+        playerPos.z = Math.max(-3.5, Math.min(5.2, playerPos.z));
       }
 
-      camera.position.copy(playerPos);
+      camera.position.x = playerPos.x;
+      camera.position.z = playerPos.z;
       camera.rotation.set(0, 0, 0);
       camera.rotation.y = cameraYaw;
       camera.rotation.x = cameraPitch;
 
-      // 손전등 위치 및 방향 동기화
       flashlight.position.copy(camera.position);
       const dir = new THREE.Vector3(0, 0, -1).applyEuler(camera.rotation);
       flashlight.target.position.copy(camera.position).add(dir);
 
-      checkCrosshairInteraction();
+      checkInteractCrosshair();
       renderer.render(scene, camera);
     }
 
-    // 마우스 조준 상호작용 검사
-    function checkCrosshairInteraction() {
-      const crosshair = document.getElementById('crosshair');
-      const prompt = document.getElementById('promptText');
-      if (inTerminalUI) {
-        crosshair.classList.remove('interactable');
-        prompt.style.display = 'none';
+    function checkInteractCrosshair() {
+      const reticle = document.getElementById('reticle');
+      const tip = document.getElementById('actionTipBox');
+      if (inTerminalMode) {
+        reticle.classList.remove('active');
+        tip.style.display = 'none';
         return;
       }
 
-      const raycaster = new THREE.Raycaster();
-      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-      const intersects = raycaster.intersectObjects([deskMesh, monitorMesh, doorMesh]);
+      const ray = new THREE.Raycaster();
+      ray.setFromCamera(new THREE.Vector2(0, 0), camera);
+      const hits = ray.intersectObjects([deskObj, monitorObj, doorObj]);
 
-      if (intersects.length > 0 && intersects[0].distance < 3.8) {
-        const hit = intersects[0].object;
-        crosshair.classList.add('interactable');
-        prompt.style.display = 'block';
-
-        if (hit === deskMesh || hit === monitorMesh) {
-          prompt.innerText = "[ E ] 오디오 워크스테이션 튜닝";
-        } else if (hit === doorMesh) {
-          prompt.innerText = "[ E ] 잠긴 404호 철문 조사";
+      if (hits.length > 0 && hits[0].distance < 3.8) {
+        reticle.classList.add('active');
+        tip.style.display = 'block';
+        if (hits[0].object === doorObj) {
+          tip.innerText = "[ E ] 잠긴 404호 철문 조사";
+        } else {
+          tip.innerText = "[ E ] 오디오 워크스테이션 튜닝";
         }
       } else {
-        crosshair.classList.remove('interactable');
-        prompt.style.display = 'none';
+        reticle.classList.remove('active');
+        tip.style.display = 'none';
       }
     }
 
     /* ========================================================
-       2. 오디오 신시사이저 & 튜닝 엔진
+       3. Web Audio 신시사이저 (발소리, 드론, 릴 튜닝)
        ======================================================== */
     let audioCtx = null;
     let isPlaying = false;
@@ -693,7 +878,6 @@
 
     let noiseNode = null;
     let toneOsc = null;
-    let droneOsc = null;
     let filterNode = null;
     let masterGain = null;
     let heartbeatTimer = null;
@@ -709,7 +893,7 @@
           { spk: "닥터 한", txt: "그것은 존재하지 않는 망상입니다. 주파수 동기화 2단계 시작합니다. (치이익- 날카로운 기계음)" },
           { spk: "환자 17호 (왜곡)", txt: "거짓말... 여긴 병원이 아니야... [CAGED]... 너도 여기서 못 나가... 너도..." }
         ],
-        trigger: "scare1"
+        trigger: "scare"
       },
       2: {
         title: "Ch.2 격리실 404호의 주파수 (108.4 Hz)",
@@ -742,7 +926,7 @@
           { spk: "119 구조대원", txt: "착암기로 콘크리트 파쇄 중... 한진우 원장 생존 추정!" },
           { spk: "강서진 (주인공)", txt: "구조대...? 화재는 20년 전이 아니라 지금 벌어진 참극이라고?!" }
         ],
-        trigger: "shake"
+        trigger: "bangDoor"
       },
       5: {
         title: "Ch.5 잔해와 진실 (대반전 & 최종 결말)",
@@ -752,7 +936,7 @@
           { spk: "닥터 한의 자아", txt: "강서진... 아니, 한진우. 너는 1999년의 복원가가 아니다." },
           { spk: "닥터 한의 자아", txt: "불과 48시간 전 병원이 불탈 때 너는 이곳에 숨었고, 죄책감으로 기억을 지운 채 망상해왔던 것이다!" }
         ],
-        trigger: "ending"
+        trigger: "finalEnding"
       }
     };
 
@@ -766,27 +950,39 @@
       masterGain.connect(audioCtx.destination);
 
       startDrone();
-      startHeartbeat();
+      startHeartbeatTimer();
     }
 
     function startDrone() {
-      droneOsc = audioCtx.createOscillator();
+      const drone = audioCtx.createOscillator();
       const g = audioCtx.createGain();
       const f = audioCtx.createBiquadFilter();
 
-      droneOsc.type = 'sawtooth';
-      droneOsc.frequency.setValueAtTime(54, audioCtx.currentTime);
+      drone.type = 'sawtooth';
+      drone.frequency.setValueAtTime(54, audioCtx.currentTime);
       f.type = 'lowpass';
-      f.frequency.setValueAtTime(120, audioCtx.currentTime);
-      g.gain.setValueAtTime(0.22, audioCtx.currentTime);
+      f.frequency.setValueAtTime(115, audioCtx.currentTime);
+      g.gain.setValueAtTime(0.2, audioCtx.currentTime);
 
-      droneOsc.connect(f);
-      f.connect(g);
-      g.connect(masterGain);
-      droneOsc.start();
+      drone.connect(f); f.connect(g); g.connect(masterGain);
+      drone.start();
     }
 
-    function playHeartPulse() {
+    function playFootstepSound() {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(65, now);
+      osc.frequency.exponentialRampToValueAtTime(25, now + 0.08);
+      g.gain.setValueAtTime(0.12, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+      osc.connect(g); g.connect(masterGain);
+      osc.start(now); osc.stop(now + 0.1);
+    }
+
+    function playPulseBeat() {
       if (!audioCtx) return;
       const now = audioCtx.currentTime;
       const osc = audioCtx.createOscillator();
@@ -796,24 +992,22 @@
       osc.frequency.exponentialRampToValueAtTime(30, now + 0.12);
       g.gain.setValueAtTime(0.35, now);
       g.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
-      osc.connect(g);
-      g.connect(masterGain);
-      osc.start(now);
-      osc.stop(now + 0.15);
+      osc.connect(g); g.connect(masterGain);
+      osc.start(now); osc.stop(now + 0.15);
     }
 
-    function startHeartbeat() {
+    function startHeartbeatTimer() {
       if (heartbeatTimer) clearInterval(heartbeatTimer);
-      heartbeatTimer = setInterval(playHeartPulse, (60 / bpm) * 1000);
+      heartbeatTimer = setInterval(playPulseBeat, (60 / bpm) * 1000);
     }
 
-    function startTape() {
+    function startTapeEngine() {
       initAudio();
       if (isPlaying) return;
       isPlaying = true;
       document.getElementById('btnPlay').classList.add('active');
-      document.getElementById('rLeft').className = 'reel-plate ' + (isReversed ? 'reverse-spin' : 'spinning');
-      document.getElementById('rRight').className = 'reel-plate ' + (isReversed ? 'reverse-spin' : 'spinning');
+      document.getElementById('spoolL').className = 'cassette-spool ' + (isReversed ? 'reverse-spin' : 'spin');
+      document.getElementById('spoolR').className = 'cassette-spool ' + (isReversed ? 'reverse-spin' : 'spin');
 
       const bufSize = audioCtx.sampleRate * 2;
       const noiseBuf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
@@ -826,7 +1020,7 @@
 
       filterNode = audioCtx.createBiquadFilter();
       filterNode.type = 'bandpass';
-      updateFilter();
+      updateFilterSettings();
 
       const noiseGain = audioCtx.createGain();
       noiseGain.gain.setValueAtTime(0.24, audioCtx.currentTime);
@@ -836,48 +1030,46 @@
       noiseGain.connect(masterGain);
       noiseNode.start();
 
-      startTone();
-      startTuningCheck();
+      startHarmonicVoice();
+      startTuningCheckTimer();
     }
 
-    function stopTape() {
+    function stopTapeEngine() {
       if (!isPlaying) return;
       isPlaying = false;
       document.getElementById('btnPlay').classList.remove('active');
-      document.getElementById('rLeft').className = 'reel-plate';
-      document.getElementById('rRight').className = 'reel-plate';
+      document.getElementById('spoolL').className = 'cassette-spool';
+      document.getElementById('spoolR').className = 'cassette-spool';
 
       if (noiseNode) { try { noiseNode.stop(); } catch(e){} noiseNode = null; }
       if (toneOsc) { try { toneOsc.stop(); } catch(e){} toneOsc = null; }
     }
 
-    function startTone() {
+    function startHarmonicVoice() {
       toneOsc = audioCtx.createOscillator();
       const g = audioCtx.createGain();
       const ch = chapterDB[curChapter];
       toneOsc.type = 'triangle';
       toneOsc.frequency.setValueAtTime(ch.targetFreq * paramSpeed, audioCtx.currentTime);
       g.gain.setValueAtTime(0.015, audioCtx.currentTime);
-
-      toneOsc.connect(g);
-      g.connect(masterGain);
+      toneOsc.connect(g); g.connect(masterGain);
       toneOsc.start();
     }
 
-    function updateFilter() {
+    function updateFilterSettings() {
       if (!filterNode || !audioCtx) return;
       filterNode.frequency.setTargetAtTime(paramFreq, audioCtx.currentTime, 0.05);
       filterNode.Q.setTargetAtTime(paramRes, audioCtx.currentTime, 0.05);
     }
 
-    let tuningInterval = null;
+    let tuningCheckTimer = null;
     let dialogueIndex = 0;
     let syncPct = 0;
 
-    function startTuningCheck() {
-      if (tuningInterval) clearInterval(tuningInterval);
-      tuningInterval = setInterval(() => {
-        if (!isPlaying) { clearInterval(tuningInterval); return; }
+    function startTuningCheckTimer() {
+      if (tuningCheckTimer) clearInterval(tuningCheckTimer);
+      tuningCheckTimer = setInterval(() => {
+        if (!isPlaying) { clearInterval(tuningCheckTimer); return; }
 
         const ch = chapterDB[curChapter];
         const dist = Math.abs(paramFreq - ch.targetFreq);
@@ -887,13 +1079,13 @@
           syncPct = Math.min(syncPct, 20);
         }
 
-        document.getElementById('syncPctText').innerText = syncPct + '%';
+        document.getElementById('lblSyncPct').innerText = syncPct + '%';
 
-        const stateText = document.getElementById('syncStateText');
+        const stateText = document.getElementById('lblSyncState');
         if (dist <= ch.tolerance) {
           stateText.innerText = 'LOCKED (동기화 완료)';
           stateText.style.color = '#33ff77';
-          advanceDialogue();
+          progressStoryScript();
         } else {
           stateText.innerText = 'UNLOCKED';
           stateText.style.color = '#7abf94';
@@ -913,7 +1105,7 @@
       }
     }
 
-    function advanceDialogue() {
+    function progressStoryScript() {
       const ch = chapterDB[curChapter];
       if (dialogueIndex < ch.script.length) {
         const item = ch.script[dialogueIndex];
@@ -921,14 +1113,14 @@
         dialogueIndex++;
 
         playBeep(650 + dialogueIndex * 120);
-        adjustSanity(-6);
+        modifySanity(-6);
 
         if (item.spk.includes('환자') || item.spk.includes('닥터 한')) {
           playTTSWhisper(item.txt);
         }
 
         if (dialogueIndex === ch.script.length) {
-          triggerEvent(ch.trigger);
+          triggerHorrorEvent(ch.trigger);
         }
       }
     }
@@ -940,13 +1132,11 @@
       osc.frequency.setValueAtTime(f, audioCtx.currentTime);
       g.gain.setValueAtTime(0.08, audioCtx.currentTime);
       g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
-      osc.connect(g);
-      g.connect(masterGain);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.08);
+      osc.connect(g); g.connect(masterGain);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.08);
     }
 
-    function playScare() {
+    function playJumpScare() {
       if (!audioCtx) return;
       const now = audioCtx.currentTime;
       const osc = audioCtx.createOscillator();
@@ -954,76 +1144,75 @@
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(110, now);
       osc.frequency.exponentialRampToValueAtTime(25, now + 0.9);
-      g.gain.setValueAtTime(0.8, now);
+      g.gain.setValueAtTime(0.85, now);
       g.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
-      osc.connect(g);
-      g.connect(masterGain);
-      osc.start(now);
-      osc.stop(now + 0.9);
+      osc.connect(g); g.connect(masterGain);
+      osc.start(now); osc.stop(now + 0.9);
 
-      const panic = document.getElementById('panicLayer');
-      panic.style.opacity = '0.9';
-      setTimeout(() => panic.style.opacity = '0', 350);
+      const flash = document.getElementById('bloodFlash');
+      flash.style.opacity = '0.9';
+      setTimeout(() => flash.style.opacity = '0', 350);
     }
 
-    function triggerEvent(trig) {
-      if (trig === 'scare1') {
-        playScare();
-        appendLog("[경고]", "천장 조명이 깜빡이며 복도 끝에서 쇠사슬 긁는 소리가 났습니다!");
+    function triggerHorrorEvent(trig) {
+      if (trig === 'scare') {
+        playJumpScare();
+        appendLog("경고", "천장 조명이 꺼지며 복도 끝에서 쇠사슬을 질질 끄는 소리가 났습니다!");
       } else if (trig === 'monsterAppear') {
-        playScare();
-        monsterMesh.visible = true; // 철문 앞에 검은 인영 출현!
-        appendLog("[경고]", "철문 틈을 보십시오! 무언가가 문틈을 막아서고 있습니다!");
-      } else if (trig === 'shake') {
-        appendLog("[상황]", "쿵! 쿵! 잔해 밖에서 벽을 파쇄하는 119 구조대의 해머 소리가 울립니다!");
-      } else if (trig === 'ending') {
-        openEnding();
+        playJumpScare();
+        monsterFigure.visible = true;
+        appendLog("경고", "뒤쪽 철문 틈을 보십시오! 검은 인영이 문틈을 막아서고 있습니다!");
+      } else if (trig === 'bangDoor') {
+        playJumpScare();
+        appendLog("상황", "쾅! 쾅! 잔해 밖에서 벽을 파쇄하는 119 구조대의 착암기 소리가 울립니다!");
+      } else if (trig === 'finalEnding') {
+        showFinalEnding();
       }
     }
 
-    function adjustSanity(d) {
+    function modifySanity(d) {
       sanity = Math.max(10, Math.min(100, sanity + d));
       bpm = Math.min(160, Math.max(65, Math.round(180 - sanity * 1.15)));
-      document.getElementById('txtSAN').innerText = sanity + '%';
-      document.getElementById('txtBPM').innerText = bpm;
-      startHeartbeat();
+      document.getElementById('lblSAN').innerText = sanity + '%';
+      document.getElementById('lblBPM').innerText = bpm;
+      startHeartbeatTimer();
     }
 
     function appendLog(spk, txt) {
-      const container = document.getElementById('terminalLog');
+      const container = document.getElementById('transcriptLog');
       const div = document.createElement('div');
-      div.className = 'log-line' + (spk.includes('경고') || spk.includes('침입자') ? ' danger' : '');
+      div.className = 'transcript-entry' + (spk.includes('경고') ? ' alert' : '');
       div.innerHTML = `<strong>[${spk}]</strong> ${txt}`;
       container.appendChild(div);
       container.scrollTop = container.scrollHeight;
     }
 
     /* ========================================================
-       3. 터미널 조작 및 다이얼 드래그
+       4. 단말기 UI 및 마우스 노브 조작
        ======================================================== */
-    function openTerminal() {
-      inTerminalUI = true;
-      document.getElementById('terminalUI').style.display = 'flex';
+    function enterTerminal() {
+      inTerminalMode = true;
+      document.getElementById('tuningStationUI').style.display = 'flex';
       document.exitPointerLock();
     }
-    function closeTerminal() {
-      inTerminalUI = false;
-      document.getElementById('terminalUI').style.display = 'none';
+    function exitTerminal() {
+      inTerminalMode = false;
+      document.getElementById('tuningStationUI').style.display = 'none';
       renderer.domElement.requestPointerLock();
     }
 
-    document.getElementById('btnPlay').addEventListener('click', startTape);
-    document.getElementById('btnStop').addEventListener('click', stopTape);
-    document.getElementById('btnRew').addEventListener('click', () => {
+    document.getElementById('btnPlay').addEventListener('click', startTapeEngine);
+    document.getElementById('btnStop').addEventListener('click', stopTapeEngine);
+    document.getElementById('btnRewind').addEventListener('click', () => {
       dialogueIndex = 0;
-      document.getElementById('terminalLog').innerHTML = '';
+      document.getElementById('transcriptLog').innerHTML = '';
       appendLog("시스템", "테이프를 처음으로 되감았습니다.");
       playBeep(300);
     });
 
-    document.getElementById('btnRev').addEventListener('click', () => {
+    document.getElementById('btnReverse').addEventListener('click', () => {
       isReversed = !isReversed;
-      const b = document.getElementById('btnRev');
+      const b = document.getElementById('btnReverse');
       if (isReversed) {
         b.classList.add('active');
         b.innerText = "⟲ REVERSE 활성";
@@ -1035,58 +1224,58 @@
       playBeep(750);
     });
 
-    // 다이얼 드래그
-    let dragDial = null;
-    let dragY = 0;
-    let dragVal = 0;
+    // 노브 드래그
+    let activeDial = null;
+    let dragOriginY = 0;
+    let dragOriginVal = 0;
 
-    document.querySelectorAll('.rotary-wheel').forEach(w => {
-      w.addEventListener('mousedown', (e) => {
-        dragDial = w;
-        dragY = e.clientY;
-        const p = w.dataset.p;
-        if (p === 'freq') dragVal = paramFreq;
-        else if (p === 'noise') dragVal = paramNoise;
-        else if (p === 'res') dragVal = paramRes;
-        else if (p === 'speed') dragVal = paramSpeed;
+    document.querySelectorAll('.knob-rotary').forEach(dial => {
+      dial.addEventListener('mousedown', (e) => {
+        activeDial = dial;
+        dragOriginY = e.clientY;
+        const k = dial.dataset.k;
+        if (k === 'freq') dragOriginVal = paramFreq;
+        else if (k === 'noise') dragOriginVal = paramNoise;
+        else if (k === 'res') dragOriginVal = paramRes;
+        else if (k === 'speed') dragOriginVal = paramSpeed;
         e.preventDefault();
       });
     });
 
     window.addEventListener('mousemove', (e) => {
-      if (!dragDial) return;
-      const dY = dragY - e.clientY;
-      const p = dragDial.dataset.p;
+      if (!activeDial) return;
+      const deltaY = dragOriginY - e.clientY;
+      const k = activeDial.dataset.k;
 
-      if (p === 'freq') {
-        paramFreq = Math.max(80, Math.min(3800, Math.round(dragVal + dY * 8)));
-        document.getElementById('lblFreq').innerText = paramFreq + ' Hz';
-        dragDial.style.transform = `rotate(${(paramFreq / 3800) * 270 - 135}deg)`;
-        updateFilter();
-      } else if (p === 'noise') {
-        paramNoise = Math.max(0, Math.min(100, Math.round(dragVal + dY * 0.5)));
-        document.getElementById('lblNoise').innerText = paramNoise + ' %';
-        dragDial.style.transform = `rotate(${(paramNoise / 100) * 270 - 135}deg)`;
-      } else if (p === 'res') {
-        paramRes = Math.max(1, Math.min(25, Math.round(dragVal + dY * 0.1)));
-        document.getElementById('lblRes').innerText = paramRes + ' Q';
-        dragDial.style.transform = `rotate(${(paramRes / 25) * 270 - 135}deg)`;
-        updateFilter();
-      } else if (p === 'speed') {
-        paramSpeed = Math.max(0.5, Math.min(2.0, parseFloat((dragVal + dY * 0.008).toFixed(2))));
-        document.getElementById('lblSpeed').innerText = paramSpeed.toFixed(1) + ' x';
-        dragDial.style.transform = `rotate(${((paramSpeed - 0.5) / 1.5) * 270 - 135}deg)`;
+      if (k === 'freq') {
+        paramFreq = Math.max(80, Math.min(3800, Math.round(dragOriginVal + deltaY * 8)));
+        document.getElementById('valFreq').innerText = paramFreq + ' Hz';
+        activeDial.style.transform = `rotate(${(paramFreq / 3800) * 270 - 135}deg)`;
+        updateFilterSettings();
+      } else if (k === 'noise') {
+        paramNoise = Math.max(0, Math.min(100, Math.round(dragOriginVal + deltaY * 0.5)));
+        document.getElementById('valNoise').innerText = paramNoise + ' %';
+        activeDial.style.transform = `rotate(${(paramNoise / 100) * 270 - 135}deg)`;
+      } else if (k === 'res') {
+        paramRes = Math.max(1, Math.min(25, Math.round(dragOriginVal + deltaY * 0.1)));
+        document.getElementById('valRes').innerText = paramRes + ' Q';
+        activeDial.style.transform = `rotate(${(paramRes / 25) * 270 - 135}deg)`;
+        updateFilterSettings();
+      } else if (k === 'speed') {
+        paramSpeed = Math.max(0.5, Math.min(2.0, parseFloat((dragOriginVal + deltaY * 0.008).toFixed(2))));
+        document.getElementById('valSpeed').innerText = paramSpeed.toFixed(1) + ' x';
+        activeDial.style.transform = `rotate(${((paramSpeed - 0.5) / 1.5) * 270 - 135}deg)`;
       }
     });
 
-    window.addEventListener('mouseup', () => { dragDial = null; });
+    window.addEventListener('mouseup', () => { activeDial = null; });
 
     /* ========================================================
-       4. 포인터 락 & 키보드 이동 이벤트
+       5. 포인터 락 & 키보드 이동 이벤트
        ======================================================== */
-    document.getElementById('btnEnterGame').addEventListener('click', () => {
-      document.getElementById('startOverlay').style.display = 'none';
-      initThreeScene();
+    document.getElementById('btnStartGame').addEventListener('click', () => {
+      document.getElementById('launcherScreen').style.display = 'none';
+      init3DEnvironment();
       initAudio();
       renderer.domElement.requestPointerLock();
     });
@@ -1096,7 +1285,7 @@
     });
 
     window.addEventListener('mousemove', (e) => {
-      if (!isPointerLocked || inTerminalUI) return;
+      if (!isPointerLocked || inTerminalMode) return;
       cameraYaw -= e.movementX * 0.0022;
       cameraPitch -= e.movementY * 0.0022;
       cameraPitch = Math.max(-Math.PI / 2.3, Math.min(Math.PI / 2.3, cameraPitch));
@@ -1109,34 +1298,34 @@
       if (k === 's') keys.s = true;
       if (k === 'd') keys.d = true;
 
-      if (k === 'f') { // 손전등 토글
+      if (k === 'f') { // 손전등
         isFlashlightOn = !isFlashlightOn;
-        flashlight.intensity = isFlashlightOn ? 3.5 : 0;
-        document.getElementById('txtFlashlight').innerText = isFlashlightOn ? 'ON' : 'OFF';
-        playBeep(isFlashlightOn ? 800 : 400);
+        flashlight.intensity = isFlashlightOn ? 3.8 : 0;
+        document.getElementById('lblFlashlight').innerText = isFlashlightOn ? 'ON' : 'OFF';
+        playBeep(isFlashlightOn ? 850 : 420);
       }
 
       if (k === 'e') { // 상호작용
-        if (inTerminalUI) {
-          closeTerminal();
+        if (inTerminalMode) {
+          exitTerminal();
         } else {
-          const raycaster = new THREE.Raycaster();
-          raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-          const intersects = raycaster.intersectObjects([deskMesh, monitorMesh, doorMesh]);
-          if (intersects.length > 0 && intersects[0].distance < 3.8) {
-            const hit = intersects[0].object;
-            if (hit === deskMesh || hit === monitorMesh) {
-              openTerminal();
-            } else if (hit === doorMesh) {
-              playScare();
-              alert("지하 404호 격리실 철문입니다. 바깥에서 굵은 쇠사슬로 잠겨 있어 열리지 않습니다!");
+          const ray = new THREE.Raycaster();
+          ray.setFromCamera(new THREE.Vector2(0, 0), camera);
+          const hits = ray.intersectObjects([deskObj, monitorObj, doorObj]);
+          if (hits.length > 0 && hits[0].distance < 3.8) {
+            const obj = hits[0].object;
+            if (obj === deskObj || obj === monitorObj) {
+              enterTerminal();
+            } else if (obj === doorObj) {
+              playJumpScare();
+              alert("지하 404호 격리실 철문입니다. 바깥에서 굵은 쇠사슬로 굳게 잠겨 있습니다!");
             }
           }
         }
       }
 
-      if (e.key === 'Escape' && inTerminalUI) {
-        closeTerminal();
+      if (e.key === 'Escape' && inTerminalMode) {
+        exitTerminal();
       }
     });
 
@@ -1155,10 +1344,10 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    function openEnding() {
+    function showFinalEnding() {
       document.exitPointerLock();
-      document.getElementById('endingModal').style.display = 'flex';
-      document.getElementById('endingBody').innerHTML = `
+      document.getElementById('finalModal').style.display = 'flex';
+      document.getElementById('finalModalBody').innerHTML = `
         <p><strong>[충격적 진실의 밝혀짐]</strong></p>
         <p>당신은 1999년의 무고한 음향 복원가 '강서진'이 아닙니다.<br>
         당신은 바로 1979년 환자들을 잔혹하게 학대하고 뇌파를 조작해 기억을 지우던 <strong>'닥터 한(한진우 원장)' 본인</strong>입니다.</p>
