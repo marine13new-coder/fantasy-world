@@ -531,6 +531,16 @@ function createSettlementList() {
   add('caldera_fire_forge', '태고 화룡의 화염 대장간', 'town', 'underworld', 2520, 2260, 'kingdom', false, 8);
   add('underworld_crypt_pantheon', '고대 영령의 묘지 판테온', 'lair', 'underworld', 1980, 2320, 'undead', true, 11);
 
+  // =========================================================================
+  // 9. THE ARCANE CRYSTAL SPIRE PEAKS & ASTRAL RIFT (성운 비전 수정 고원 & 차원 균열)
+  // =========================================================================
+  add('astral_crystal_citadel', '성운 비전 수정 대성채', 'capital', 'astral', 3200, 280, 'celestial', true, 16);
+  add('astral_starlight_sanctum', '별빛 성소 아케인 생텀', 'castle', 'astral', 2980, 220, 'celestial', true, 13);
+  add('astral_void_gate', '공허 차원 관문 요새', 'fortress', 'astral', 3460, 340, 'monster', true, 12);
+  add('astral_aurora_monastery', '오로라 설봉 수도원', 'town', 'astral', 3120, 150, 'celestial', false, 8);
+  add('astral_chronos_observatory', '시간의 천체 관측소', 'town', 'astral', 3380, 210, 'celestial', false, 9);
+  add('astral_gemstone_cavern', '영롱한 보석 결정 동굴', 'lair', 'astral', 3020, 390, 'monster', true, 10);
+
   return list;
 }
 
@@ -752,6 +762,18 @@ function generateWorld() {
             tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.LAVA : TILE.OBSIDIAN;
           } else if (dist <= landRad + 1) {
             tiles[idx(tx, ty)] = TILE.BADLANDS;
+          }
+          continue;
+        }
+
+        // 성운의 비전 고원 & 차원 균열 전용 지형 카빙
+        if (s.continent === 'astral') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 5) ? TILE.CASTLE_FLOOR : TILE.CRYSTAL_CAVE;
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.CORAL : TILE.SNOW;
+          } else if (dist <= landRad + 1) {
+            tiles[idx(tx, ty)] = TILE.MOUNTAIN;
           }
           continue;
         }

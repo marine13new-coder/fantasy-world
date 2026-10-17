@@ -510,6 +510,40 @@ class EntityManager {
     }
   }
 
+  // 💥 [10.6] 넉백 이동 및 벽/지형 충돌 판정 (Wall Slam Impact & Stun Physics)
+  applyKnockbackWithWallImpact(ent, kx, ky, dmgBase = 20) {
+    if (!ent || ent.hp <= 0) return;
+    const steps = 4;
+    const dx = kx / steps;
+    const dy = ky / steps;
+    let hitWall = false;
+
+    for (let s = 0; s < steps; s++) {
+      const nextX = ent.x + dx;
+      const nextY = ent.y + dy;
+      if (this.world && !this.world.isWalkable(Math.floor(nextX), Math.floor(nextY))) {
+        hitWall = true;
+        break;
+      }
+      ent.x = nextX;
+      ent.y = nextY;
+    }
+
+    if (hitWall) {
+      // 🧱 벽 충돌 추가 데미지 (+45%) 및 기절(Stun) & 충돌 파티클
+      const wallDmg = Math.max(8, Math.round(dmgBase * 0.45));
+      ent.hp -= wallDmg;
+      ent.hitTimer = 0.35;
+      ent.stunTimer = Math.max(ent.stunTimer || 0, 1.0); // 1.0초 무방비 기절
+      this.addHitSparks(ent.x, ent.y, '#f59e0b', 14);
+      this.addDustPuff(ent.x, ent.y, 10);
+      this.addShockwave(ent.x, ent.y, 2.2, '#f59e0b', 0.35);
+      this.addFloatingText(ent.x, ent.y - 1.2, `💥 WALL IMPACT! -${wallDmg} (STUN!)`, '#fbbf24', 1.4);
+      if (this.camera) this.camera.shake = Math.min(16, (this.camera.shake || 0) + 5);
+      if (typeof audioMgr !== 'undefined' && audioMgr.playHit) audioMgr.playHit();
+    }
+  }
+
   // 👥 그림자 분신 (Shadow Decoy) 소환
   spawnShadowDecoy(x, y, facing) {
     if (!this.shadowDecoys) this.shadowDecoys = [];
@@ -2957,6 +2991,30 @@ class EntityManager {
     const arcEnd = angle + arcSpread / 2;
     this.addSlashArc(p.x, p.y, p.comboStep === 3 ? 3.8 : 2.4, arcStart, arcEnd, effectColor, 0.24);
 
+    // ⚔️ [10.6] 2연격 이상 공격 시 전방으로 음속 픽셀 참격 검기(Sonic Crescent Blade Wave) 사출!
+    if (p.comboStep >= 2) {
+      const isEmpowered = p.comboStep === 3;
+      const waveSpeed = isEmpowered ? 20.0 : 15.0;
+      const waveDmg = Math.round((p.atk || 25) * (isEmpowered ? 1.75 : 1.2));
+      this.projectiles.push({
+        x: p.x + Math.cos(angle) * 1.1,
+        y: p.y + Math.sin(angle) * 1.1,
+        vx: Math.cos(angle) * waveSpeed,
+        vy: Math.sin(angle) * waveSpeed,
+        angle: angle,
+        damage: waveDmg,
+        pierce: isEmpowered ? 4 : 2,
+        originX: p.x,
+        originY: p.y,
+        life: 0.75,
+        isBladeWave: true,
+        comboStep: p.comboStep,
+        isEmpowered: isEmpowered,
+        sender: p
+      });
+      this.addSlashArc(p.x + Math.cos(angle) * 0.8, p.y + Math.sin(angle) * 0.8, 2.6, angle - 0.7, angle + 0.7, isEmpowered ? '#fbbf24' : '#38bdf8', 0.22);
+    }
+
     // 💥 3단계 피니셔: 주변 360도 모든 적 광역 타격 및 넉백
     if (p.comboStep === 3) {
       const hasSolar = this.rpgManager && this.rpgManager.hasTrait('solar_aura');
@@ -2997,10 +3055,9 @@ class EntityManager {
         ent.combatTarget = p;
         this.rallyNearbyAllies(ent, p, 11.0);
 
-        // 넉백
+        // 넉백 & 벽쿵 충돌 판정 (Wall Slam Impact & Stun)
         const kAng = Math.atan2(ent.y - p.y, ent.x - p.x);
-        ent.x += Math.cos(kAng) * 1.8;
-        ent.y += Math.sin(kAng) * 1.8;
+        this.applyKnockbackWithWallImpact(ent, Math.cos(kAng) * 2.2, Math.sin(kAng) * 2.2, finalDmg);
 
         this.addHitSparks(ent.x, ent.y, isCrit ? '#facc15' : '#f97316', 10);
         this.addFloatingText(ent.x, ent.y - 1.0, isCrit ? `💥 CRIT! -${finalDmg}` : `⚔️-${finalDmg}`, isCrit ? '#fde047' : '#f97316', 1.2);
@@ -3131,6 +3188,11 @@ class EntityManager {
 
       target.combatTarget = p;
       this.rallyNearbyAllies(target, p, 11.0);
+
+      // 넉백 & 벽쿵 충돌 판정 (Wall Slam Impact & Stun)
+      const kAng = Math.atan2(target.y - p.y, target.x - p.x);
+      const knockDist = p.comboStep === 2 ? 1.5 : 0.85;
+      this.applyKnockbackWithWallImpact(target, Math.cos(kAng) * knockDist, Math.sin(kAng) * knockDist, dmg);
 
       this.addFloatingText(target.x, target.y - 0.9, isCrit ? `💥 CRIT! -${dmg}` : `-${dmg}`, isCrit ? '#fde047' : effectColor, 1.0);
 
@@ -3982,40 +4044,61 @@ class EntityManager {
         }
       }
 
-      // 🏹 화살/투사체 충돌 판정
-      if (p.isArrow && p.life > 0) {
+      // 🏹 화살 / ⚔️ 음속 픽셀 검기(Blade Wave) 충돌 판정
+      if ((p.isArrow || p.isBladeWave) && p.life > 0) {
+        const hitRadius = p.isBladeWave ? 1.4 : 0.95;
         const hits = this.spatialGrid
-          ? this.spatialGrid.query(p.x, p.y, 0.95, e => e !== p.sender && (e.faction === 'monster' || e.role === 'dragon' || e.isHostile) && e.hp > 0)
-          : this.entities.filter(e => e !== p.sender && (e.faction === 'monster' || e.role === 'dragon') && e.hp > 0 && Math.hypot(e.x - p.x, e.y - p.y) <= 0.95);
+          ? this.spatialGrid.query(p.x, p.y, hitRadius, e => e !== p.sender && (e.faction === 'monster' || e.role === 'dragon' || e.isHostile) && e.hp > 0)
+          : this.entities.filter(e => e !== p.sender && (e.faction === 'monster' || e.role === 'dragon') && e.hp > 0 && Math.hypot(e.x - p.x, e.y - p.y) <= hitRadius);
 
         p.hitList = p.hitList || new Set();
         for (const ent of hits) {
           if (p.hitList.has(ent)) continue;
           p.hitList.add(ent);
 
-          // 사거리 6.5타일 이상에서 적중 시 🎯 SNIPER CRIT (2.2배 대미지)
-          const distFromOrigin = Math.hypot(p.x - p.originX, p.y - p.originY);
-          const isSniperCrit = distFromOrigin >= 6.5;
-          const finalDmg = isSniperCrit ? Math.round(p.damage * 2.2) : p.damage;
-
-          ent.hp -= finalDmg;
-          ent.hitTimer = 0.28;
-          ent.combatTarget = p.sender || this.player;
-
-          // 넉백 (화살 진행 방향으로 밀어냄)
+          let finalDmg = p.damage;
           const kAng = p.angle || Math.atan2(p.vy, p.vx);
-          ent.x += Math.cos(kAng) * (isSniperCrit ? 0.75 : 0.35);
-          ent.y += Math.sin(kAng) * (isSniperCrit ? 0.75 : 0.35);
 
-          // 이펙트 및 플로팅 텍스트
-          if (isSniperCrit) {
-            this.addFloatingText(ent.x, ent.y - 1.2, `🎯 SNIPER CRIT! x2.2 -${finalDmg}`, '#fde047', 1.5);
-            this.addHitSparks(ent.x, ent.y, '#facc15', 16);
-            this.addShockwave(ent.x, ent.y, 2.8, '#facc15', 0.3);
-            if (this.camera) this.camera.shake = Math.min(15, (this.camera.shake || 0) + 4.5);
+          if (p.isBladeWave) {
+            ent.hp -= finalDmg;
+            ent.hitTimer = 0.30;
+            ent.combatTarget = p.sender || this.player;
+
+            // 넉백 및 벽 충돌 물리 적용
+            const knockDist = p.isEmpowered ? 1.8 : 1.2;
+            this.applyKnockbackWithWallImpact(ent, Math.cos(kAng) * knockDist, Math.sin(kAng) * knockDist, finalDmg);
+
+            // 검기 충돌 시각 효과
+            const waveCol = p.isEmpowered ? '#fbbf24' : '#38bdf8';
+            this.addFloatingText(ent.x, ent.y - 1.0, p.isEmpowered ? `⚡ 황금 대검기! -${finalDmg}` : `⚔️ 검기 참격 -${finalDmg}`, waveCol, 1.2);
+            this.addHitSparks(ent.x, ent.y, waveCol, p.isEmpowered ? 16 : 10);
+            this.addShockwave(ent.x, ent.y, p.isEmpowered ? 3.2 : 2.0, waveCol, 0.35);
+            if (this.camera) this.camera.shake = Math.min(16, (this.camera.shake || 0) + (p.isEmpowered ? 6 : 3.5));
+            if (typeof audioMgr !== 'undefined' && audioMgr.playSword) audioMgr.playSword();
           } else {
-            this.addFloatingText(ent.x, ent.y - 0.9, `🏹 -${finalDmg}`, '#38bdf8', 1.0);
-            this.addHitSparks(ent.x, ent.y, '#38bdf8', 8);
+            // 사거리 6.5타일 이상에서 적중 시 🎯 SNIPER CRIT (2.2배 대미지)
+            const distFromOrigin = Math.hypot(p.x - p.originX, p.y - p.originY);
+            const isSniperCrit = distFromOrigin >= 6.5;
+            finalDmg = isSniperCrit ? Math.round(p.damage * 2.2) : p.damage;
+
+            ent.hp -= finalDmg;
+            ent.hitTimer = 0.28;
+            ent.combatTarget = p.sender || this.player;
+
+            // 넉백 (벽쿵 적용)
+            const knockDist = isSniperCrit ? 1.2 : 0.6;
+            this.applyKnockbackWithWallImpact(ent, Math.cos(kAng) * knockDist, Math.sin(kAng) * knockDist, finalDmg);
+
+            // 이펙트 및 플로팅 텍스트
+            if (isSniperCrit) {
+              this.addFloatingText(ent.x, ent.y - 1.2, `🎯 SNIPER CRIT! x2.2 -${finalDmg}`, '#fde047', 1.5);
+              this.addHitSparks(ent.x, ent.y, '#facc15', 16);
+              this.addShockwave(ent.x, ent.y, 2.8, '#facc15', 0.3);
+              if (this.camera) this.camera.shake = Math.min(15, (this.camera.shake || 0) + 4.5);
+            } else {
+              this.addFloatingText(ent.x, ent.y - 0.9, `🏹 -${finalDmg}`, '#38bdf8', 1.0);
+              this.addHitSparks(ent.x, ent.y, '#38bdf8', 8);
+            }
           }
           this.addBloodDecal(ent.x, ent.y, '#dc2626', 1.8, ent.hp <= 0 ? 5 : 2);
 

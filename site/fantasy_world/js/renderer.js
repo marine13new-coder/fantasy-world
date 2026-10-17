@@ -424,9 +424,11 @@ class WorldRenderer {
     // 9.7. 🏹 원거리 활 차징 조준 탄도 궤적선 (Bow Aiming Trajectory)
     this.drawAimingTrajectory(ctx, this.entityMgr.player, ts, timeSec);
 
-    // 10. 투사체 (관통 화살, 대포알, 마법탄)
+    // 10. 투사체 (관통 화살, 검기 파동, 대포알, 마법탄)
     for (const p of this.entityMgr.projectiles) {
-      if (p.isArrow) {
+      if (p.isBladeWave) {
+        this.drawBladeWave(ctx, p, ts);
+      } else if (p.isArrow) {
         this.drawPixelArrow(ctx, p, ts);
       } else {
         ctx.fillStyle = p.color;
@@ -3224,6 +3226,50 @@ class WorldRenderer {
       }
     }
 
+    // 2.5. 🌌 북극광 & 성운 오로라 커튼 셰이더 (Polar Aurora Borealis & Astral Sky Curtains)
+    if ((darkness > 0.3 || h >= 19 || h <= 5) && (camY < 135 || (camX >= 40 && camX <= 180 && camY >= 40 && camY <= 170))) {
+      ctx.save();
+      const auroraAlpha = Math.min(0.45, (darkness > 0.3 ? darkness * 0.6 : 0.32));
+      ctx.globalAlpha = auroraAlpha;
+      ctx.globalCompositeOperation = 'screen';
+
+      const curtainCount = 3;
+      const waveColors = [
+        ['rgba(52, 211, 153, 0)', 'rgba(52, 211, 153, 0.42)', 'rgba(56, 189, 248, 0.52)', 'rgba(168, 85, 247, 0)'],
+        ['rgba(168, 85, 247, 0)', 'rgba(192, 132, 252, 0.42)', 'rgba(45, 212, 191, 0.38)', 'rgba(59, 130, 246, 0)'],
+        ['rgba(56, 189, 248, 0)', 'rgba(129, 140, 248, 0.48)', 'rgba(236, 72, 153, 0.32)', 'rgba(14, 165, 233, 0)']
+      ];
+
+      for (let c = 0; c < curtainCount; c++) {
+        const cColors = waveColors[c];
+        const baseY = ch * (0.07 + c * 0.08);
+        const curtainH = ch * 0.30;
+        const grad = ctx.createLinearGradient(0, baseY - curtainH * 0.3, 0, baseY + curtainH);
+        grad.addColorStop(0, cColors[0]);
+        grad.addColorStop(0.35, cColors[1]);
+        grad.addColorStop(0.7, cColors[2]);
+        grad.addColorStop(1, cColors[3]);
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        const segs = 16;
+        const segW = cw / segs;
+        ctx.moveTo(-segW, baseY);
+        for (let s = 0; s <= segs + 1; s++) {
+          const sx = s * segW;
+          const wave1 = Math.sin(timeSec * 0.65 + s * 0.42 + c * 1.7) * (curtainH * 0.28);
+          const wave2 = Math.cos(timeSec * 0.42 - s * 0.31 + c * 0.9) * (curtainH * 0.16);
+          const sy = baseY + wave1 + wave2;
+          ctx.lineTo(sx, sy);
+        }
+        ctx.lineTo(cw + segW, baseY + curtainH);
+        ctx.lineTo(-segW, baseY + curtainH);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
     // 3. 🏜️ 서부 미라주 사막 모래폭풍 (Desert Sandstorm & Heat Shimmer)
     if (worldTime.weather === 'sandstorm' || (camX < 180 && camY > 170 && camY < 320)) {
       ctx.strokeStyle = 'rgba(217, 119, 6, 0.28)';
@@ -4369,6 +4415,59 @@ class WorldRenderer {
     // 5. 발광 팁
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(8, -1, 3, 2);
+
+    ctx.restore();
+  }
+
+  // ⚔️ [10.6] 픽셀 초승달 검기 참격파 렌더러 (Sonic Crescent Blade Wave)
+  drawBladeWave(ctx, p, ts) {
+    const px = Math.round(p.x * ts);
+    const py = Math.round(p.y * ts);
+    const ang = p.angle !== undefined ? p.angle : Math.atan2(p.vy || 0, p.vx || 1);
+    const isEmpowered = (p.comboStep && p.comboStep >= 3) || p.isEmpowered;
+
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(ang);
+
+    // 1. 후방 풍압 잔상 (Trailing Wind Stream)
+    ctx.strokeStyle = isEmpowered ? 'rgba(251, 191, 36, 0.45)' : 'rgba(56, 189, 248, 0.45)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-16, -6);
+    ctx.lineTo(-6, -2);
+    ctx.moveTo(-20, 0);
+    ctx.lineTo(-4, 0);
+    ctx.moveTo(-16, 6);
+    ctx.lineTo(-6, 2);
+    ctx.stroke();
+
+    // 2. 외부 오라 초승달 호 (Outer Crescent Arc)
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 8, 20, 0, -Math.PI * 0.45, Math.PI * 0.45);
+    ctx.strokeStyle = isEmpowered ? '#fbbf24' : '#38bdf8';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    // 3. 중심 참격 섬광 (Core Sharp Blade Edge)
+    ctx.beginPath();
+    ctx.ellipse(2, 0, 6, 16, 0, -Math.PI * 0.4, Math.PI * 0.4);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 4. 선단 파동 팁 스파크 (Tip Energy Sparks)
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(4, -1, 3, 2);
+    ctx.fillRect(2, -12, 2, 2);
+    ctx.fillRect(2, 10, 2, 2);
+
+    if (isEmpowered) {
+      // 3연격 피니셔 추가 황금 충격파 오라
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(5, -6, 2, 2);
+      ctx.fillRect(5, 4, 2, 2);
+    }
 
     ctx.restore();
   }

@@ -1242,10 +1242,10 @@ function startFantasyWorld() {
     const rpg = entityMgr.rpgManager;
     const gridEl = document.getElementById('worldMapSettlementsGrid');
     if (gridEl && world.settlementList) {
-      // 주요 수도, 항구, 대성채, 천공 군도, 심연 성채, 해저 아틀란티스, 명계 제국 필터
+      // 주요 수도, 항구, 대성채, 천공 군도, 심연 성채, 해저 아틀란티스, 명계 제국, 성운 비전 고원 필터
       const keySettlements = world.settlementList.filter(s => 
-        s.type === 'capital' || s.type === 'port' || s.type === 'fortress' || s.hasWall || s.continent === 'sky' || s.continent === 'south_abyss' || s.continent === 'abyss_ocean' || s.continent === 'underworld'
-      ).slice(0, 84);
+        s.type === 'capital' || s.type === 'port' || s.type === 'fortress' || s.hasWall || s.continent === 'sky' || s.continent === 'south_abyss' || s.continent === 'abyss_ocean' || s.continent === 'underworld' || s.continent === 'astral'
+      ).slice(0, 96);
 
       gridEl.innerHTML = keySettlements.map(s => {
         let icon = '🏘️';
@@ -1253,6 +1253,7 @@ function startFantasyWorld() {
         else if (s.continent === 'south_abyss') icon = '🌋';
         else if (s.continent === 'abyss_ocean') icon = '🔱';
         else if (s.continent === 'underworld') icon = '💀';
+        else if (s.continent === 'astral') icon = '🔮';
         else if (s.type === 'capital') icon = '👑';
         else if (s.type === 'port') icon = '⚓';
         else if (s.type === 'fortress') icon = '🏰';
@@ -1262,6 +1263,7 @@ function startFantasyWorld() {
         else if (s.continent === 'south_abyss') regionName = '🌋 심연의 심층 단층';
         else if (s.continent === 'abyss_ocean') regionName = '🔱 심해 아틀란티스 신전군';
         else if (s.continent === 'underworld') regionName = '💀 태고의 칼데라 & 명계 제국';
+        else if (s.continent === 'astral') regionName = '🔮 성운 비전 고원 & 차원 균열';
         else if (s.continent === 'west') regionName = '서부 실바니아';
         else if (s.continent === 'north') regionName = '북부 노스펠';
         else if (s.continent === 'south') regionName = '남부 드라코니아';
