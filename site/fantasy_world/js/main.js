@@ -2232,10 +2232,11 @@ function startFantasyWorld() {
       entityMgr.update(simDt, worldTime, playerInput);
     }
 
-    // 카메라 추적 (플레이어 조작 중에는 플레이어를 부드럽게 팔로우)
+    // 카메라 추적 (플레이어 조작 중에는 프레임레이트 독립적 지수 보간 팔로우 - Butter Smooth Camera)
     if (camera.followEntity) {
-      camera.x += (camera.followEntity.x - camera.x) * 0.15;
-      camera.y += (camera.followEntity.y - camera.y) * 0.15;
+      const followLerp = 1 - Math.exp(-12.5 * rawDt);
+      camera.x += (camera.followEntity.x - camera.x) * followLerp;
+      camera.y += (camera.followEntity.y - camera.y) * followLerp;
     }
 
     // 카메라 셰이크 & 줌 펄스 감쇠 (Smooth Screen Shake & Lens Punch Decay)

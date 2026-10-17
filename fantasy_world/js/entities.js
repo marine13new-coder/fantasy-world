@@ -454,14 +454,15 @@ class EntityManager {
   // ✨ 야간 발광 반딧불이 군집 초기화 (Nighttime Fireflies)
   initFireflies() {
     this.fireflies = [];
-    const w = (this.world && this.world.width) ? this.world.width : 256;
-    const h = (this.world && this.world.height) ? this.world.height : 256;
+    const p = this.player;
+    const cx = p ? p.x : 1920;
+    const cy = p ? p.y : 1200;
     for (let i = 0; i < 55; i++) {
       this.fireflies.push({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        vx: (Math.random() - 0.5) * 0.35,
-        vy: (Math.random() - 0.5) * 0.35,
+        x: cx + (Math.random() - 0.5) * 50,
+        y: cy + (Math.random() - 0.5) * 40,
+        vx: (Math.random() - 0.5) * 0.45,
+        vy: (Math.random() - 0.5) * 0.45,
         size: 1.5 + Math.random() * 1.5,
         color: Math.random() < 0.65 ? '#fde047' : '#86efac',
         phase: Math.random() * Math.PI * 2
@@ -488,14 +489,30 @@ class EntityManager {
     }
   }
 
-  // 📜 고대 유물 보물지도 생성 (Ancient Treasure Map)
+  // 📜 고대 유물 보물지도 생성 (Ancient Treasure Map - Reachable Exploration Range)
   generateTreasureMap(p) {
     if (!p) p = this.spawnOrGetPlayer();
     if (p.treasureMap) return;
-    const w = (this.world && this.world.width) ? this.world.width : 256;
-    const h = (this.world && this.world.height) ? this.world.height : 256;
-    const targetX = Math.floor(40 + Math.random() * (w - 80));
-    const targetY = Math.floor(40 + Math.random() * (h - 80));
+    const w = (this.world && this.world.width) ? this.world.width : 3840;
+    const h = (this.world && this.world.height) ? this.world.height : 2400;
+
+    // 플레이어 기준 60~150타일 반경 내 걸어서 갈 수 있는 유효한 육지 탐색
+    let targetX = Math.round(p.x + 75);
+    let targetY = Math.round(p.y + 55);
+    for (let attempts = 0; attempts < 30; attempts++) {
+      const dist = 60 + Math.random() * 90;
+      const ang = Math.random() * Math.PI * 2;
+      const tx = Math.floor(p.x + Math.cos(ang) * dist);
+      const ty = Math.floor(p.y + Math.sin(ang) * dist);
+      if (tx >= 40 && tx < w - 40 && ty >= 40 && ty < h - 40) {
+        if (this.world && this.world.isWalkable && this.world.isWalkable(tx, ty)) {
+          targetX = tx;
+          targetY = ty;
+          break;
+        }
+      }
+    }
+
     p.treasureMap = { x: targetX, y: targetY, title: '📜 잃어버린 황혼의 고대 보물지도', discovered: false };
     this.addFloatingText(p.x, p.y - 1.8, `📜 [보물지도 획득!] 좌표 (X: ${targetX}, Y: ${targetY})`, '#facc15', 2.8);
     this.log('event', `📜 [고대 보물지도]가 발견되었습니다! 숨겨진 좌표 [X: ${targetX}, Y: ${targetY}] 부근에서 발굴할 수 있습니다.`, p.x, p.y);
@@ -3415,18 +3432,19 @@ class EntityManager {
       }
     }
 
-    // ✨ 야간 발광 반딧불이 군집 업데이트
+    // ✨ 야간 발광 반딧불이 군집 업데이트 (플레이어 주변 부드러운 순환)
     if (this.fireflies) {
-      const w = this.world.width;
-      const h = this.world.height;
+      const p = this.player;
+      const refX = p ? p.x : 1920;
+      const refY = p ? p.y : 1200;
       for (let i = 0; i < this.fireflies.length; i++) {
         const ff = this.fireflies[i];
         ff.x += ff.vx * dt;
         ff.y += ff.vy * dt;
-        if (ff.x < 0) ff.x += w;
-        if (ff.x >= w) ff.x -= w;
-        if (ff.y < 0) ff.y += h;
-        if (ff.y >= h) ff.y -= h;
+        if (ff.x - refX > 40) ff.x = refX - 40;
+        else if (ff.x - refX < -40) ff.x = refX + 40;
+        if (ff.y - refY > 28) ff.y = refY - 28;
+        else if (ff.y - refY < -28) ff.y = refY + 28;
       }
     }
 

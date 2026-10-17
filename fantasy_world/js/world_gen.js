@@ -984,8 +984,90 @@ function generateWorld() {
     }
   }
 
+  // 10. 🌲 [세계관 디테일 그래픽] 자연 식생 및 환경 소품 공간 그리드 생성 (High-Res Props & Spatial Chunks)
+  const propChunks = {};
+  const propList = [];
+
+  function addWorldProp(px, py, propType) {
+    if (!inBounds(px, py)) return;
+    const tileIndex = idx(px, py);
+    if (deco[tileIndex] !== 0) return; // 이미 건물이 있거나 배치된 곳 방지
+    const t = tiles[tileIndex];
+    if (t === TILE.WATER || t === TILE.DEEP_WATER || t === TILE.ROAD || t === TILE.BRIDGE || t === TILE.DOCK || t === TILE.WALL || t === TILE.LAVA) return;
+
+    deco[tileIndex] = propType;
+    const propItem = { x: px, y: py, type: propType };
+    propList.push(propItem);
+
+    const cx = Math.floor(px / 32);
+    const cy = Math.floor(py / 32);
+    const cKey = `${cx}_${cy}`;
+    if (!propChunks[cKey]) propChunks[cKey] = [];
+    propChunks[cKey].push(propItem);
+  }
+
+  // 바이옴별 고해상도 식생 분산 배치 (O(N) 초고속 분산 샘플링)
+  for (let sy = 30; sy < WORLD_HEIGHT - 30; sy += 5) {
+    for (let sx = 30; sx < WORLD_WIDTH - 30; sx += 5) {
+      const jx = sx + ((sx * 17 + sy * 31) % 5);
+      const jy = sy + ((sx * 23 + sy * 41) % 5);
+      if (!inBounds(jx, jy)) continue;
+      const t = tiles[idx(jx, jy)];
+      const hash = (jx * 101 + jy * 47) & 255;
+
+      if (t === TILE.FOREST) {
+        if (hash < 140) {
+          const sub = hash % 10;
+          const pType = sub < 6 ? 1 : (sub < 8 ? 3 : (sub < 9 ? 13 : 4)); // 참나무, 자작나무, 산딸기, 그루터기
+          addWorldProp(jx, jy, pType);
+        }
+      } else if (t === TILE.DARK_FOREST) {
+        if (hash < 150) {
+          const sub = hash % 10;
+          const pType = sub < 7 ? 2 : (sub < 9 ? 8 : 5); // 침엽수, 고목, 통나무
+          addWorldProp(jx, jy, pType);
+        }
+      } else if (t === TILE.ELVEN_FOREST) {
+        if (hash < 130) {
+          const pType = (hash % 10 < 7) ? 7 : 12; // 요정수, 발광 버섯
+          addWorldProp(jx, jy, pType);
+        }
+      } else if (t === TILE.AUTUMN_WOOD) {
+        if (hash < 140) {
+          const pType = (hash % 10 < 8) ? 6 : 4; // 황금 단풍나무, 그루터기
+          addWorldProp(jx, jy, pType);
+        }
+      } else if (t === TILE.SWAMP) {
+        if (hash < 90) {
+          const sub = hash % 10;
+          const pType = sub < 5 ? 12 : (sub < 8 ? 8 : 5); // 발광 버섯, 고목, 통나무
+          addWorldProp(jx, jy, pType);
+        }
+      } else if (t === TILE.MEADOW) {
+        if (hash < 45) {
+          const pType = (hash % 10 < 7) ? 13 : 1; // 산딸기 덤불, 드문 참나무
+          addWorldProp(jx, jy, pType);
+        }
+      } else if (t === TILE.HILLS || t === TILE.BADLANDS) {
+        if (hash < 25) {
+          const pType = (hash % 10 < 5) ? 11 : 8; // 고대 석주 유적, 마른 고목
+          addWorldProp(jx, jy, pType);
+        }
+      }
+    }
+  }
+
+  // 11. 거점 인근 오솔길 낭만 모닥불 & 울타리 포인트 배치
+  for (const s of settlements) {
+    if (s.faction !== 'monster') {
+      addWorldProp(s.x + 3, s.y + 2, 10); // 모닥불
+      addWorldProp(s.x - 3, s.y + 3, 9);  // 목조 울타리
+      addWorldProp(s.x + 4, s.y - 3, 9);
+    }
+  }
+
   const elapsed = (typeof performance !== 'undefined') ? (performance.now() - t0).toFixed(1) : (Date.now() - t0);
-  console.log(`[WorldGenerator] 3840x2400 세계관 생성 완료: ${settlements.length}개 거점, ${buildings.length}개 복합 건축물, ${roadLinks.length}개 유기적 다중 갈래길, 소요시간: ${elapsed}ms`);
+  console.log(`[WorldGenerator] 3840x2400 세계관 생성 완료: ${settlements.length}개 거점, ${buildings.length}개 복합 건축물, ${propList.length}개 정밀 환경소품, 소요시간: ${elapsed}ms`);
 
   return {
     width: WORLD_WIDTH,
@@ -993,6 +1075,8 @@ function generateWorld() {
     tileSize: TILE_SIZE,
     tiles,
     deco,
+    props: propList,
+    propChunks,
     settlements,
     settlementMap,
     buildings,

@@ -138,6 +138,21 @@ class WorldRenderer {
       }
     }
     mCtx.putImageData(mImgData, 0, 0);
+
+    // 3. 미니맵 베이스에 300개 정착지 거점 아이콘 사전 베이킹 (초당 300회 beginPath 제거)
+    if (this.world && this.world.settlements) {
+      const scaleX = mw / width;
+      const scaleY = mh / height;
+      for (const s of this.world.settlements) {
+        mCtx.fillStyle = s.faction === 'monster' ? '#dc2626' : '#fde047';
+        mCtx.beginPath();
+        mCtx.arc(s.x * scaleX, s.y * scaleY, 2.5, 0, Math.PI * 2);
+        mCtx.fill();
+        mCtx.strokeStyle = '#000000';
+        mCtx.lineWidth = 0.8;
+        mCtx.stroke();
+      }
+    }
   }
 
   render(camera, worldTime, filterCategory, selectedItem, timeSec) {
@@ -147,6 +162,7 @@ class WorldRenderer {
     const ts = TILE_SIZE;
 
     this.lastWorldTime = worldTime;
+    this.lastCameraZoom = camera.zoom;
     ctx.imageSmoothingEnabled = false; // 픽셀 아트 레더링 유지
 
     if (this.screenFlashTimer > 0) {
@@ -409,19 +425,20 @@ class WorldRenderer {
       ctx.fillRect(Math.round(p.x * ts - 1), Math.round(p.y * ts - 9), 2, 2);
     }
 
-    // 10.5. 픽셀 히트 스파크 & 레벨업 스타버스트 파티클
+    // 10.5. 픽셀 히트 스파크 & 레벨업 스타버스트 파티클 (Batched)
     if (this.entityMgr.sparkParticles && this.entityMgr.sparkParticles.length > 0) {
+      ctx.save();
       for (const sp of this.entityMgr.sparkParticles) {
         if (sp.x < minTx || sp.x > maxTx || sp.y < minTy || sp.y > maxTy) continue;
         const alpha = Math.max(0, 1 - sp.age / sp.duration);
-        ctx.save();
+        if (alpha <= 0.02) continue;
         ctx.globalAlpha = alpha;
         ctx.fillStyle = sp.color;
         const spx = Math.round(sp.x * ts);
         const spy = Math.round(sp.y * ts);
         ctx.fillRect(spx - sp.size / 2, spy - sp.size / 2, sp.size, sp.size);
-        ctx.restore();
       }
+      ctx.restore();
     }
 
     // 10.5. 💎 필드 발자국 & 전리품 드롭 & 수면 파문 & 대시 잔상 & 오버헤드 16비트 전투 체력바
@@ -689,7 +706,7 @@ class WorldRenderer {
         }
 
         // D. [CUTE FANTASY 스타일] 울창한 에메랄드 잔디 & 4잎 핑크 야생화 & 버터컵 꽃밭
-        if (t === TILE.GRASS || t === TILE.MEADOW) {
+        if ((t === TILE.GRASS || t === TILE.MEADOW) && (!this.lastCameraZoom || this.lastCameraZoom >= 0.38)) {
           // 3가닥 짙은 녹색 풀잎 클러스터 (동적 바람 흔들림 + 발걸음 짓밟힘 인터랙션 Displacement)
           if ((h % 4) === 0) {
             const gx = px + (h % 22) + 5;
@@ -705,11 +722,13 @@ class WorldRenderer {
             if (p) {
               const pdx = (tx + 0.5) - p.x;
               const pdy = (ty + 0.5) - p.y;
-              const pdist = Math.hypot(pdx, pdy);
-              if (pdist < 1.35) {
-                const trFactor = (1.35 - pdist) / 1.35;
-                trBendX = (pdx >= 0 ? 1 : -1) * trFactor * 3.5;
-                trBendY = (pdy >= 0 ? 1 : -1) * trFactor * 2.2;
+              if (Math.abs(pdx) < 1.35 && Math.abs(pdy) < 1.35) {
+                const pdist = Math.hypot(pdx, pdy);
+                if (pdist < 1.35) {
+                  const trFactor = (1.35 - pdist) / 1.35;
+                  trBendX = (pdx >= 0 ? 1 : -1) * trFactor * 3.5;
+                  trBendY = (pdy >= 0 ? 1 : -1) * trFactor * 2.2;
+                }
               }
             }
 
@@ -881,35 +900,61 @@ class WorldRenderer {
   }
 
   // 🌲 [5.5] 16/32비트 고품질 픽셀 자연 식생 & 환경 소품 렌더러 (Images 1, 2, 3, 4, 5)
+  // 🌲 [5.5] 16/32비트 고품질 픽셀 자연 식생 & 환경 소품 렌더러 (공간 청크 O(1) 초고속 컬링)
   drawDetailedPixelProps(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec) {
-    const { width, deco } = this.world;
-
     const sh = this.getSunShadowOffset(this.lastWorldTime);
 
+    // ⚡ 공간 청크(Spatial Chunks) 인덱싱이 있으면 뷰포트 범위 내 청크만 렌더링 (초당 수천 회 타일 검사 제거)
+    if (this.world && this.world.propChunks) {
+      const minCx = Math.floor(minTx / 32);
+      const maxCx = Math.floor(maxTx / 32);
+      const minCy = Math.floor(minTy / 32);
+      const maxCy = Math.floor(maxTy / 32);
+
+      for (let cy = minCy; cy <= maxCy; cy++) {
+        for (let cx = minCx; cx <= maxCx; cx++) {
+          const chunk = this.world.propChunks[`${cx}_${cy}`];
+          if (!chunk) continue;
+          for (let i = 0; i < chunk.length; i++) {
+            const p = chunk[i];
+            if (p.x < minTx || p.x > maxTx || p.y < minTy || p.y > maxTy) continue;
+            this.drawSinglePixelProp(ctx, p.x, p.y, p.type, ts, timeSec, sh);
+          }
+        }
+      }
+      return;
+    }
+
+    // 하위 호환 폴백 (Fallback)
+    const { width, deco } = this.world;
+    if (!deco) return;
     for (let ty = minTy; ty <= maxTy; ty++) {
       for (let tx = minTx; tx <= maxTx; tx++) {
-        const idx = ty * width + tx;
-        const d = deco[idx];
-        if (!d) continue;
+        const d = deco[ty * width + tx];
+        if (d) this.drawSinglePixelProp(ctx, tx, ty, d, ts, timeSec, sh);
+      }
+    }
+  }
 
-        const px = tx * ts;
-        const py = ty * ts;
+  drawSinglePixelProp(ctx, tx, ty, d, ts, timeSec, sh) {
+    const px = tx * ts;
+    const py = ty * ts;
 
-        // 1. 실시간 태양각 다이내믹 드롭 섀도우 (Dynamic Sun-Tracking Drop Shadow)
-        if (d === 1 || d === 2 || d === 6 || d === 7 || d === 8) {
-          ctx.fillStyle = `rgba(15, 23, 42, ${sh.alpha})`;
-          ctx.beginPath();
-          ctx.ellipse(px + ts / 2 + sh.dx, py + ts / 2 + sh.dy, 15 * sh.stretch, 8, 0, 0, Math.PI * 2);
-          ctx.fill();
-        } else if (d === 4 || d === 9 || d === 10 || d === 12 || d === 13) {
-          ctx.fillStyle = `rgba(15, 23, 42, ${sh.alpha * 0.9})`;
-          ctx.beginPath();
-          ctx.ellipse(px + ts / 2 + Math.round(sh.dx * 0.6), py + ts / 2 + Math.round(sh.dy * 0.8), 10 * sh.stretch, 5, 0, 0, Math.PI * 2);
-          ctx.fill();
-        }
+    // 1. 실시간 태양각 다이내믹 드롭 섀도우 (Dynamic Sun-Tracking Drop Shadow)
+    if (d === 1 || d === 2 || d === 6 || d === 7 || d === 8) {
+      ctx.fillStyle = `rgba(15, 23, 42, ${sh.alpha})`;
+      ctx.beginPath();
+      ctx.ellipse(px + ts / 2 + sh.dx, py + ts / 2 + sh.dy, 15 * sh.stretch, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (d === 4 || d === 9 || d === 10 || d === 12 || d === 13) {
+      ctx.fillStyle = `rgba(15, 23, 42, ${sh.alpha * 0.9})`;
+      ctx.beginPath();
+      ctx.ellipse(px + ts / 2 + Math.round(sh.dx * 0.6), py + ts / 2 + Math.round(sh.dy * 0.8), 10 * sh.stretch, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
-        // 2. 오브젝트별 정밀 픽셀아트 스프라이트
-        switch (d) {
+    // 2. 오브젝트별 정밀 픽셀아트 스프라이트
+    switch (d) {
           case 1: {
             // 🌳 [대형 고대 참나무] (Grand Oak - Images 1, 3, 4)
             const cx = px + ts / 2;
@@ -1334,8 +1379,6 @@ class WorldRenderer {
           }
         }
       }
-    }
-  }
 
   // 픽셀 해안선 파도 거품 애니메이션 & 수면 태양광 펄/윤슬 (Water Caustics & Shoreline Wave Foam)
   drawPixelShorelines(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec) {
@@ -2779,21 +2822,23 @@ class WorldRenderer {
     else if (h < 5) darkness = 0.48;
     else if (h < 7) darkness = Math.max(0, (7 - h) / 2 * 0.48);
 
-    // 💡 [동적 조명 엔진] 밤 대기 어둠 오버레이 & 픽셀 포인트 라이트 투과 (Dynamic Night Light Engine)
+    // 💡 [동적 조명 엔진] 밤 대기 어둠 오버레이 & 픽셀 포인트 라이트 투과 (Dynamic Night Light Engine - 1/2 Buffer Optimized)
     if (darkness > 0.01) {
+      const lw = Math.max(1, Math.ceil(cw / 2));
+      const lh = Math.max(1, Math.ceil(ch / 2));
       if (!this.lightCanvas) {
         this.lightCanvas = document.createElement('canvas');
         this.lightCtx = this.lightCanvas.getContext('2d');
       }
-      if (this.lightCanvas.width !== cw || this.lightCanvas.height !== ch) {
-        this.lightCanvas.width = cw;
-        this.lightCanvas.height = ch;
+      if (this.lightCanvas.width !== lw || this.lightCanvas.height !== lh) {
+        this.lightCanvas.width = lw;
+        this.lightCanvas.height = lh;
       }
 
       const lCtx = this.lightCtx;
-      lCtx.clearRect(0, 0, cw, ch);
+      lCtx.clearRect(0, 0, lw, lh);
       lCtx.fillStyle = `rgba(7, 13, 34, ${darkness})`;
-      lCtx.fillRect(0, 0, cw, ch);
+      lCtx.fillRect(0, 0, lw, lh);
 
       // destination-out 모드로 광원 주변 어둠을 부드럽게 뚫어냄 (Soft Light Carving)
       lCtx.globalCompositeOperation = 'destination-out';
@@ -2801,23 +2846,24 @@ class WorldRenderer {
       const ts = this.tileSize || 32;
       const cam = camera || { x: 320, y: 200, zoom: 1 };
       const zoom = cam.zoom || 1;
+      const scale = lw / cw;
 
       // 광원 뚫기 헬퍼 함수
       const carveLight = (worldX, worldY, baseRadius, intensity = 1.0) => {
-        const sx = cw / 2 + (worldX - cam.x) * ts * zoom;
-        const sy = ch / 2 + (worldY - cam.y) * ts * zoom;
-        const rad = baseRadius * zoom;
-        if (sx < -rad || sx > cw + rad || sy < -rad || sy > ch + rad) return;
+        const sx = (cw / 2 + (worldX - cam.x) * ts * zoom) * scale;
+        const sy = (ch / 2 + (worldY - cam.y) * ts * zoom) * scale;
+        const rad = baseRadius * zoom * scale;
+        if (sx < -rad || sx > lw + rad || sy < -rad || sy > lh + rad) return;
 
-        const flicker = Math.sin(timeSec * 7.5 + worldX * 1.5) * 3;
-        const grad = lCtx.createRadialGradient(sx, sy, rad * 0.15, sx, sy, rad + flicker);
+        const flicker = (Math.sin(timeSec * 7.5 + worldX * 1.5) * 3) * scale;
+        const grad = lCtx.createRadialGradient(sx, sy, Math.max(1, rad * 0.15), sx, sy, Math.max(2, rad + flicker));
         grad.addColorStop(0, `rgba(0, 0, 0, ${intensity})`);
         grad.addColorStop(0.55, `rgba(0, 0, 0, ${intensity * 0.55})`);
         grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
         lCtx.fillStyle = grad;
         lCtx.beginPath();
-        lCtx.arc(sx, sy, rad + flicker, 0, Math.PI * 2);
+        lCtx.arc(sx, sy, Math.max(2, rad + flicker), 0, Math.PI * 2);
         lCtx.fill();
       };
 
@@ -3111,15 +3157,6 @@ class WorldRenderer {
       mCtx.fillRect(e.x * scaleX - sz / 2, e.y * scaleY - sz / 2, sz, sz);
     }
 
-    for (const s of this.world.settlements) {
-      mCtx.fillStyle = s.faction === 'monster' ? '#dc2626' : '#fde047';
-      mCtx.beginPath();
-      mCtx.arc(s.x * scaleX, s.y * scaleY, 3, 0, Math.PI * 2);
-      mCtx.fill();
-      mCtx.strokeStyle = '#000';
-      mCtx.lineWidth = 1;
-      mCtx.stroke();
-    }
 
     // 🚨 월드 보스 레이드 출현 시 펄싱 붉은 해골/링 표시
     if (this.entityMgr.rpgManager && this.entityMgr.rpgManager.activeBoss && this.entityMgr.rpgManager.activeBoss.hp > 0) {
@@ -4023,22 +4060,23 @@ class WorldRenderer {
     }
   }
 
-  // 💨 [10.5-B] 회피 롤 / 대시 잔상 (Dash Ghost Trails)
+  // 💨 [10.5-B] 회피 롤 / 대시 잔상 (Dash Ghost Trails - Batched)
   drawDashGhostTrails(ctx, ts) {
     if (!this.entityMgr.ghostTrails || this.entityMgr.ghostTrails.length === 0) return;
+    ctx.save();
     for (const gt of this.entityMgr.ghostTrails) {
       const progress = gt.age / gt.duration;
       const alpha = Math.max(0, 1 - progress) * 0.55;
+      if (alpha <= 0.02) continue;
       const gx = Math.round(gt.x * ts);
       const gy = Math.round(gt.y * ts);
 
-      ctx.save();
       ctx.globalAlpha = alpha;
       ctx.fillStyle = gt.color || '#38bdf8';
       ctx.fillRect(gx - 5, gy - 12, 10, 12);
       ctx.fillRect(gx - 3, gy - 16, 6, 4);
-      ctx.restore();
     }
+    ctx.restore();
   }
 
   // ⚔️ [10.5-C] 16비트 오버헤드 전투 체력바 (Retro Overhead Combat HP Bar)
@@ -4643,18 +4681,18 @@ class WorldRenderer {
     ctx.restore();
   }
 
-  // 💎 [2.3] 다이아몬드 코스틱 굴절광 (Dynamic Water Caustics Shimmer)
+  // 💎 [2.3] 다이아몬드 코스틱 굴절광 (Dynamic Water Caustics Shimmer - Optimized)
   drawWaterCaustics(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec) {
     if (!this.world || !this.world.tiles) return;
     const tiles = this.world.tiles;
     const width = this.world.width;
     ctx.save();
-    ctx.fillStyle = 'rgba(224, 242, 254, 0.32)';
+    ctx.fillStyle = 'rgba(224, 242, 254, 0.35)';
 
-    for (let ty = minTy; ty <= maxTy; ty++) {
-      for (let tx = minTx; tx <= maxTx; tx++) {
+    for (let ty = minTy; ty <= maxTy; ty += 2) {
+      for (let tx = minTx; tx <= maxTx; tx += 2) {
         const t = tiles[ty * width + tx];
-        if (t === 0 || t === 6) { // Deep Water or Water
+        if (t === 0 || t === 1 || t === 26) { // Deep Water, Water, Oasis
           const px = tx * ts;
           const py = ty * ts;
           const w1 = Math.sin(timeSec * 2.2 + tx * 0.85 + ty * 0.45);
@@ -4671,23 +4709,24 @@ class WorldRenderer {
     ctx.restore();
   }
 
-  // 🌿 [10.6] 상호작용형 픽셀 풀잎 잔디 파티클 (Interactive Grass Blades & Foliage Debris)
+  // 🌿 [10.6] 상호작용형 픽셀 풀잎 잔디 파티클 (Interactive Grass Blades & Foliage Debris - Batched)
   drawGrassDebris(ctx, ts) {
     if (!this.entityMgr.grassLeaves || this.entityMgr.grassLeaves.length === 0) return;
+    ctx.save();
     for (const gl of this.entityMgr.grassLeaves) {
       const alpha = Math.max(0, 1 - gl.age / gl.duration);
+      if (alpha <= 0.02) continue;
       const gx = Math.round(gl.x * ts);
       const gy = Math.round(gl.y * ts);
       const sz = Math.round(gl.size);
 
-      ctx.save();
       ctx.globalAlpha = alpha;
       ctx.fillStyle = gl.color;
       ctx.fillRect(gx, gy, sz, Math.max(1, sz - 1));
       ctx.fillStyle = '#bbf7d0';
       ctx.fillRect(gx + 1, gy, 1, 1);
-      ctx.restore();
     }
+    ctx.restore();
   }
 
   // 🩸 [8.4] 다크 판타지 영구 지속 지면 전투 혈흔 및 그을음 데칼 (Ground Blood & Blast Scorch Decals)
@@ -4793,19 +4832,18 @@ class WorldRenderer {
     ctx.restore();
   }
 
-  // 🌧️ [2.4] 비/폭풍우 수면 빗방울 동심원 파문 (Dynamic Rain Water Droplet Ripples)
+  // 🌧️ [2.4] 비/폭풍우 수면 빗방울 동심원 파문 (Dynamic Rain Water Droplet Ripples - Optimized)
   drawWaterDropletRipples(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec) {
     if (!this.world || !this.world.tiles) return;
     const tiles = this.world.tiles;
     const width = this.world.width;
     ctx.save();
-    ctx.strokeStyle = 'rgba(224, 242, 254, 0.45)';
     ctx.lineWidth = 1.0;
 
     for (let ty = minTy; ty <= maxTy; ty += 2) {
       for (let tx = minTx; tx <= maxTx; tx += 2) {
         const t = tiles[ty * width + tx];
-        if (t === 0 || t === 6) { // Water or Deep Water
+        if (t === 0 || t === 1 || t === 26) { // Deep Water, Water, Oasis
           const px = tx * ts;
           const py = ty * ts;
           const hash = (tx * 137 + ty * 349) % 100;
@@ -4813,12 +4851,10 @@ class WorldRenderer {
           const r = phase * 6.5;
           const alpha = (1 - phase) * 0.55;
           if (alpha > 0.05) {
-            ctx.save();
-            ctx.globalAlpha = alpha;
+            ctx.strokeStyle = `rgba(224, 242, 254, ${alpha.toFixed(2)})`;
             ctx.beginPath();
             ctx.ellipse(px + (hash % 10) + 3, py + ((hash >> 2) % 10) + 3, r, r * 0.5, 0, 0, Math.PI * 2);
             ctx.stroke();
-            ctx.restore();
           }
         }
       }
@@ -4826,7 +4862,7 @@ class WorldRenderer {
     ctx.restore();
   }
 
-  // ✨ [10.7] 몽환적인 야간 발광 반딧불이 군집 (Nighttime Bioluminescent Fireflies)
+  // ✨ [10.7] 몽환적인 야간 발광 반딧불이 군집 (Nighttime Bioluminescent Fireflies - Batched)
   drawFireflies(ctx, ts, timeSec, cw, ch) {
     if (!this.entityMgr || !this.entityMgr.fireflies) return;
     const isNight = (this.lastWorldTime && (this.lastWorldTime.hour >= 19 || this.lastWorldTime.hour < 5));
@@ -4841,13 +4877,11 @@ class WorldRenderer {
       const fx = Math.round(ff.x * ts + Math.sin(timeSec * 1.5 + ff.phase) * 6);
       const fy = Math.round(ff.y * ts + Math.cos(timeSec * 1.2 + ff.phase) * 6);
 
-      ctx.save();
       ctx.globalAlpha = alpha;
       ctx.fillStyle = ff.color;
       ctx.fillRect(fx - 1, fy - 1, 3, 3);
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(fx, fy, 1, 1);
-      ctx.restore();
     }
     ctx.restore();
   }
@@ -4879,7 +4913,7 @@ class WorldRenderer {
     ctx.restore();
   }
 
-  // 💨 [1.4] 닷지 롤 & 착지 모래 먼지 구름 파티클 (Dodge Dust Puffs)
+  // 💨 [1.4] 닷지 롤 & 착지 모래 먼지 구름 파티클 (Dodge Dust Puffs - Batched)
   drawDustPuffs(ctx, ts) {
     if (!this.entityMgr || !this.entityMgr.dustPuffs) return;
     const dusts = this.entityMgr.dustPuffs;
@@ -4896,13 +4930,11 @@ class WorldRenderer {
       const py = Math.round(d.y * ts);
       const sz = Math.round(d.size * (1 + prog * 0.8));
 
-      ctx.save();
       ctx.globalAlpha = alpha;
       ctx.fillStyle = prog > 0.5 ? '#d97706' : '#fef08a';
       ctx.fillRect(px - sz / 2, py - sz / 2, sz, sz);
       ctx.fillStyle = '#fde68a';
       ctx.fillRect(px - sz / 4, py - sz / 4, sz / 2, sz / 2);
-      ctx.restore();
     }
     ctx.restore();
   }
