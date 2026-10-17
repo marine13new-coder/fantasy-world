@@ -1733,13 +1733,31 @@ class RPGSystemsManager {
     if (!p) p = this.em.player;
     if (!p) return false;
 
-    // 체력 회복
+    // 🏕️ 모닥불 요리 & 휴식 모션 활성화 (2.2초 동안 꼬치구이 애니메이션 및 지글거리는 연기)
+    p.isCooking = true;
+    p.cookingTimer = 2.2;
+
+    // 즉시 기본 체력 40% 회복
     const heal = Math.round(p.maxHp * 0.4);
-    p.hp = Math.min(p.maxHp, p.hp + heal);
-    if (typeof audioMgr !== 'undefined') audioMgr.playCookSizzle();
-    this.em.addEffect(p.x, p.y, 3.5, '#f97316', 0.8);
-    this.em.addFloatingText(p.x, p.y - 1.6, `🔥 모닥불 휴식 (+${heal} HP 회복)`, '#4ade80', 2.2);
-    this.em.log('quest', `🔥 [${p.name}]이(가) 야외 모닥불 곁에서 따뜻하게 휴식하며 체력을 보충했습니다.`, p.x, p.y);
+
+    // 🍖 [포만감(Well-Fed) 강화 버프]: 120초간 최대 HP +25%, 이동 속도 +15%, 초당 지속 재생
+    p.wellFedTimer = 120;
+    if (!p.baseMaxHp) p.baseMaxHp = p.maxHp;
+    const hpBonus = Math.round(p.baseMaxHp * 0.25);
+    p.wellFedHpBonus = hpBonus;
+    p.maxHp = p.baseMaxHp + hpBonus;
+    p.hp = Math.min(p.maxHp, p.hp + heal + hpBonus);
+
+    if (typeof audioMgr !== 'undefined') {
+      audioMgr.playCookSizzle();
+      if (audioMgr.playLevelUp) audioMgr.playLevelUp();
+    }
+    this.em.addEffect(p.x, p.y, 4.0, '#f97316', 0.9);
+    this.em.addShockwave(p.x, p.y, 3.2, '#f59e0b', 0.4);
+    this.em.addHitSparks(p.x, p.y, '#fde047', 16);
+    this.em.addFloatingText(p.x, p.y - 1.8, '🍖 [WELL-FED BUFF] HP+25% · 속도+15% (120초)!', '#facc15', 2.8);
+    this.em.addFloatingText(p.x, p.y - 1.1, `🔥 모닥불 직화 구이 (+${heal} HP 회복)`, '#4ade80', 2.0);
+    this.em.log('quest', `🍖 [${p.name}]이(가) 모닥불에서 꼬치 요리를 즐겨 120초 동안 [포만감(Well-Fed)] 강화 버프를 획득했습니다!`, p.x, p.y);
     return true;
   }
 

@@ -350,6 +350,7 @@ class EntityManager {
     this.deadRemains = [];
     this.dustPuffs = [];
     this.waterWakes = [];
+    this.shadowDecoys = [];
     this.falcon = { active: false, x: 0, y: 0, altitude: 28, angle: 0, wingCycle: 0, state: 'orbit', target: null, diveCooldown: 0 };
     this.witchTimeTimer = 0;
     this.witchTimeScale = 0.22;
@@ -507,6 +508,20 @@ class EntityManager {
         size: 2.0 + Math.random() * 2.5
       });
     }
+  }
+
+  // 👥 그림자 분신 (Shadow Decoy) 소환
+  spawnShadowDecoy(x, y, facing) {
+    if (!this.shadowDecoys) this.shadowDecoys = [];
+    if (this.shadowDecoys.length > 8) this.shadowDecoys.shift();
+    this.shadowDecoys.push({
+      x,
+      y,
+      facing,
+      age: 0,
+      duration: 0.75,
+      slashed: false
+    });
   }
 
   // 📜 고대 유물 보물지도 생성 (Ancient Treasure Map - Reachable Exploration Range)
@@ -2423,6 +2438,9 @@ class EntityManager {
         duration: 0.35 + i * 0.08
       });
     }
+
+    // 👥 그림자 분신 (Shadow Decoy) 소환 (0.2초 후 환영검무 광역 참격 자동 발동)
+    this.spawnShadowDecoy(p.x, p.y, p.facing);
   }
 
   // 🧪 즉시 생명력 회복 물약 (Quick Health Potion - H키)
@@ -3791,6 +3809,62 @@ class EntityManager {
       p.y += p.vy * dt;
       p.life -= dt;
 
+      // 🛡️ 적 투사체에 대한 플레이어 상호작용 (패링 튕겨내기 / 회피 / 피격)
+      if (this.player && p.sender !== this.player && p.life > 0) {
+        const distToPlayer = Math.hypot(p.x - this.player.x, p.y - this.player.y);
+
+        // 🛡️ [투사체 튕겨내기 패링 물리 - Deflect Parrying]
+        if (distToPlayer <= 1.4 && this.player.isParrying && this.player.parryTimer > 0) {
+          p.sender = this.player;
+          p.isDeflected = true;
+          p.isArrow = true;
+          p.vx = -p.vx * 1.8;
+          p.vy = -p.vy * 1.8;
+          p.angle = Math.atan2(p.vy, p.vx);
+          p.originX = this.player.x;
+          p.originY = this.player.y;
+          p.damage = Math.round((this.player.atk || 30) * 2.5);
+          p.life = 2.4;
+          p.hitList = new Set();
+          p.color = '#38bdf8';
+
+          if (typeof audioMgr !== 'undefined') {
+            audioMgr.playParry();
+            audioMgr.playHit();
+          }
+          this.addShockwave(p.x, p.y, 3.2, '#38bdf8', 0.35);
+          this.addHitSparks(p.x, p.y, '#fde047', 18);
+          this.addFloatingText(this.player.x, this.player.y - 1.4, '🛡️⚡ REFLECT PARRY! (x2.5)', '#fde047', 1.6);
+          if (this.camera) this.camera.shake = Math.min(18, (this.camera.shake || 0) + 6.0);
+          this.player.awakeningGauge = Math.min(100, (this.player.awakeningGauge || 0) + 15.0);
+          continue;
+        }
+
+        // 패링되지 않고 플레이어에게 직격한 적 투사체
+        if (distToPlayer <= 0.65) {
+          if (this.player.invulnerable || this.player.isDashing) {
+            this.addFloatingText(this.player.x, this.player.y - 1.0, '💨 DODGE!', '#38bdf8', 0.8);
+          } else {
+            let dmg = p.damage || Math.round(15 + Math.random() * 12);
+            if (this.player.combatStance === 'guardian') {
+              dmg = Math.max(1, Math.round(dmg * 0.45));
+            }
+            if (this.player.shieldBlockTimer > 0) {
+              dmg = Math.max(1, Math.round(dmg * 0.30));
+              this.addFloatingText(this.player.x, this.player.y - 1.2, '🛡️ [방패 가드 -70%]', '#38bdf8', 1.0);
+            }
+            this.player.hp = Math.max(0, this.player.hp - dmg);
+            this.player.hitTimer = 0.25;
+            this.addFloatingText(this.player.x, this.player.y - 0.8, `💥-${dmg}`, '#ef4444', 1.0);
+            this.addHitSparks(this.player.x, this.player.y, '#ef4444', 8);
+            if (this.camera) this.camera.shake = Math.min(14, (this.camera.shake || 0) + 3.5);
+          }
+          p.life = 0;
+          this.projectiles.splice(i, 1);
+          continue;
+        }
+      }
+
       // 🏹 화살/투사체 충돌 판정
       if (p.isArrow && p.life > 0) {
         const hits = this.spatialGrid
@@ -3938,6 +4012,44 @@ class EntityManager {
         const gt = this.ghostTrails[i];
         gt.age += dt;
         if (gt.age >= gt.duration) this.ghostTrails.splice(i, 1);
+      }
+    }
+
+    // 👥 그림자 분신 (Shadow Decoy) 업데이트 & 환영검무 참격 (Shadow Cleave)
+    if (this.shadowDecoys && this.shadowDecoys.length > 0) {
+      for (let i = this.shadowDecoys.length - 1; i >= 0; i--) {
+        const sd = this.shadowDecoys[i];
+        sd.age += dt;
+        if (!sd.slashed && sd.age >= 0.20) {
+          sd.slashed = true;
+          if (typeof audioMgr !== 'undefined') audioMgr.playWhirlwind();
+          this.addShockwave(sd.x, sd.y, 2.6, '#c084fc', 0.32);
+          this.addHitSparks(sd.x, sd.y, '#e879f9', 14);
+          this.addFloatingText(sd.x, sd.y - 1.2, '👥 SHADOW CLEAVE! x1.4', '#c084fc', 1.3);
+
+          const dmg = Math.round((this.player ? this.player.atk : 25) * 1.4);
+          const enemies = this.spatialGrid
+            ? this.spatialGrid.query(sd.x, sd.y, 2.2, e => (e.faction === 'monster' || e.role === 'dragon' || e.isHostile) && e.hp > 0)
+            : this.entities.filter(e => (e.faction === 'monster' || e.role === 'dragon') && e.hp > 0 && Math.hypot(e.x - sd.x, e.y - sd.y) <= 2.2);
+
+          for (const ent of enemies) {
+            ent.hp -= dmg;
+            ent.hitTimer = 0.28;
+            ent.combatTarget = this.player;
+            this.addFloatingText(ent.x, ent.y - 0.8, `🗡️-${dmg}`, '#c084fc', 1.0);
+            this.addHitSparks(ent.x, ent.y, '#c084fc', 8);
+            this.addBloodDecal(ent.x, ent.y, '#dc2626', 1.5, 2);
+            if (ent.hp <= 0 && this.player) {
+              this.player.kills = (this.player.kills || 0) + 1;
+              this.addDeadRemains(ent.x, ent.y, ent.monsterType || ent.role, ent.scale);
+              this.gainPlayerExp(ent.role === 'dragon' ? 180 : 70);
+              this.spawnLootDrop(ent.x, ent.y, { itemType: 'gold', name: '골드 주머니', icon: '🪙', gold: ent.gold || 50, color: '#facc15' });
+            }
+          }
+        }
+        if (sd.age >= sd.duration) {
+          this.shadowDecoys.splice(i, 1);
+        }
       }
     }
 
@@ -4275,8 +4387,12 @@ class EntityManager {
             y: e.y,
             vx: Math.cos(angle + b * 0.15) * 20,
             vy: Math.sin(angle + b * 0.15) * 20,
-            color: e.projColor,
-            life: minD / 20
+            color: e.projColor || '#f97316',
+            life: Math.max(0.8, minD / 20),
+            sender: e,
+            damage: 28,
+            target: target,
+            isHostileProj: true
           });
         }
         this.addEffect(e.x, e.y, 4, e.projColor, 0.6);
@@ -4366,6 +4482,34 @@ class EntityManager {
     if (p.shieldBashCooldown > 0) p.shieldBashCooldown -= dt;
     this.updatePlayerCharge(p, dt);
 
+    // 🏕️ 모닥불 요리 모션 타이머
+    if (p.isCooking) {
+      p.cookingTimer = (p.cookingTimer || 0) - dt;
+      if (p.cookingTimer <= 0) p.isCooking = false;
+    }
+
+    // 🍖 [포만감(Well-Fed)] 지속 재생 및 버프 만료 관리
+    if (p.wellFedTimer > 0) {
+      p.wellFedTimer -= dt;
+      p.wellFedRegenTimer = (p.wellFedRegenTimer || 0) + dt;
+      if (p.wellFedRegenTimer >= 1.0) {
+        p.wellFedRegenTimer = 0;
+        if (p.hp < p.maxHp) {
+          const regen = Math.max(1, Math.round(p.maxHp * 0.015));
+          p.hp = Math.min(p.maxHp, p.hp + regen);
+          this.addHitSparks(p.x, p.y, '#86efac', 3);
+        }
+      }
+      if (p.wellFedTimer <= 0) {
+        if (p.wellFedHpBonus) {
+          p.maxHp = Math.max(100, p.maxHp - p.wellFedHpBonus);
+          p.hp = Math.min(p.maxHp, p.hp);
+          p.wellFedHpBonus = 0;
+        }
+        this.addFloatingText(p.x, p.y - 1.2, '🍖 포만감 버프가 만료되었습니다.', '#94a3b8', 1.5);
+      }
+    }
+
     // 💨 대시 / 닷지 롤 진행 중 (초고속 이동 & 지면 먼지)
     if (p.isDashing) {
       p.dashTimer -= dt;
@@ -4410,7 +4554,7 @@ class EntityManager {
       }
     }
 
-    const boostMult = p.boostTimer > 0 ? 1.85 : 1.0;
+    const boostMult = (p.boostTimer > 0 ? 1.85 : 1.0) * (p.wellFedTimer > 0 ? 1.15 : 1.0);
 
     const tryMove = (mx, my) => {
       const nx = p.x + mx;
@@ -4913,8 +5057,12 @@ class EntityManager {
           y: e.y,
           vx: Math.cos(angle) * 18,
           vy: Math.sin(angle) * 18,
-          color: e.projColor,
-          life: dist / 18
+          color: e.projColor || (e.faction === 'kingdom' ? '#facc15' : '#ef4444'),
+          life: Math.max(0.6, dist / 18),
+          sender: e,
+          damage: dmg,
+          target: target,
+          isHostileProj: true
         });
       }
 

@@ -462,6 +462,7 @@ class WorldRenderer {
       this.drawDustPuffs(ctx, ts);
       this.drawTreasureExcavationSite(ctx, ts, timeSec);
       this.drawDashGhostTrails(ctx, ts);
+      this.drawShadowDecoys(ctx, ts, timeSec);
       this.drawFalconFamiliar(ctx, ts, timeSec);
       this.drawFireflies(ctx, ts, timeSec, cw, ch);
       this.drawEntityCombatHUD(ctx, ts, camera.zoom, minTx, maxTx, minTy, maxTy);
@@ -540,6 +541,9 @@ class WorldRenderer {
 
     // 13.2. 🌌 북극광 오로라 커튼 (Celestial Northern Aurora Borealis)
     this.drawAuroraBorealis(ctx, cw, ch, timeSec, worldTime, camera);
+
+    // 13.2-B. 🌌 고해상도 밤하늘 성운 & 항성계 (Dynamic Celestial Night Sky & Cosmic Nebula)
+    this.drawCelestialNightSky(ctx, cw, ch, timeSec, worldTime, camera);
 
     // 13.3. ☀️ 대기 볼류메트릭 갓레이 (God Rays / Volumetric Sunbeams)
     this.drawVolumetricGodRays(ctx, cw, ch, timeSec, worldTime);
@@ -969,6 +973,15 @@ class WorldRenderer {
       ctx.beginPath();
       ctx.ellipse(px + ts / 2 + Math.round(sh.dx * 0.6), py + ts / 2 + Math.round(sh.dy * 0.8), 10 * sh.stretch, 5, 0, 0, Math.PI * 2);
       ctx.fill();
+    }
+
+    // 1.5. 기저부 미세 밀착 그림자 (Contact Ambient Occlusion - Zero-floating Grounding)
+    if (d === 1 || d === 2 || d === 6 || d === 7 || d === 8) {
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.38)';
+      ctx.fillRect(px + ts / 2 - 8, py + ts - 2, 16, 3);
+    } else if (d === 4 || d === 9 || d === 10 || d === 12 || d === 13) {
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.32)';
+      ctx.fillRect(px + ts / 2 - 5, py + ts - 2, 10, 2);
     }
 
     // 2. 오브젝트별 정밀 픽셀아트 스프라이트
@@ -1536,6 +1549,12 @@ class WorldRenderer {
     const bw = Math.round(b.w * ts);
     const bh = Math.round(b.h * ts);
     const isNight = worldTime ? (worldTime.hour >= 19 || worldTime.hour < 6) : false;
+
+    // 0. 건축물 기저부 미세 접촉 앰비언트 오클루전 그림자 (Contact Ambient Occlusion)
+    ctx.fillStyle = 'rgba(2, 6, 23, 0.45)';
+    ctx.fillRect(px - bw / 2, py + bh / 2 - 2, bw, 4);
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.20)';
+    ctx.fillRect(px - bw / 2 - 2, py + bh / 2, bw + 4, 3);
 
     // 고품질 픽셀 건축 렌더러 우선 호출
     if (typeof PixelBuildings !== 'undefined') {
@@ -2478,6 +2497,16 @@ class WorldRenderer {
 
       // 3. 모든 영웅/NPC/몬스터/야생동물 정밀 픽셀 아트 매트릭스 렌더링
       window.PixelSprites.draw(ctx, e, px, py, bounce, timeSec, isNight);
+
+      // 3.1. 🏕️ 모닥불 야외 요리 & 휴식 모션 연출 (Campfire Skewer & Sizzle Steam)
+      if (e.role === 'player' && e.isCooking) {
+        this.drawCookingSkewerMotion(ctx, px, py, timeSec);
+      }
+
+      // 3.2. 🍖 [Well-Fed / 포만감] 활성 상태 오버헤드 룬 인디케이터
+      if (e.role === 'player' && e.wellFedTimer > 0) {
+        this.drawWellFedBuffBadge(ctx, px, py, timeSec, e.wellFedTimer);
+      }
       return;
     }
 
@@ -4405,6 +4434,74 @@ class WorldRenderer {
     ctx.restore();
   }
 
+  // 👥 [10.5-B2] 그림자 분신 & 환영검무 참격 (Shadow Decoy & Phantom Blade Cleave)
+  drawShadowDecoys(ctx, ts, timeSec) {
+    if (!this.entityMgr.shadowDecoys || this.entityMgr.shadowDecoys.length === 0) return;
+    ctx.save();
+    for (const sd of this.entityMgr.shadowDecoys) {
+      const sx = Math.round(sd.x * ts);
+      const sy = Math.round(sd.y * ts);
+      const alpha = Math.max(0, 1 - (sd.age / sd.duration));
+      if (alpha <= 0.02) continue;
+
+      ctx.save();
+      ctx.globalAlpha = alpha * 0.88;
+
+      // 1. 발밑 그림자 분신 마법진 (Purple Phantom Circle & Pulse)
+      ctx.strokeStyle = '#c084fc';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.ellipse(sx, sy + 3, 14, 6, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 분신 펄싱 외곽선
+      const ringR = 8 + (sd.age * 22) % 12;
+      ctx.strokeStyle = `rgba(192, 132, 252, ${alpha * 0.45})`;
+      ctx.beginPath();
+      ctx.ellipse(sx, sy + 3, ringR, ringR * 0.45, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 2. 환영 실루엣 렌더링 (Ethereal Phantom Shadow Hero)
+      ctx.fillStyle = '#3b0764';
+      ctx.fillRect(sx - 6, sy - 14, 12, 14);
+      ctx.fillStyle = '#6b21a8';
+      ctx.fillRect(sx - 4, sy - 18, 8, 5);
+      ctx.fillStyle = '#e879f9';
+      const eyeOff = (sd.facing === 'left') ? -3 : 2;
+      ctx.fillRect(sx + eyeOff, sy - 16, 2, 2);
+
+      // 3. 그림자 검
+      ctx.fillStyle = '#a855f7';
+      const swordX = (sd.facing === 'left') ? sx - 10 : sx + 7;
+      ctx.fillRect(swordX, sy - 12, 3, 10);
+      ctx.fillStyle = '#f0abfc';
+      ctx.fillRect(swordX, sy - 14, 3, 3);
+
+      // 4. 환영검무 참격 베기 연출 (360-Degree Phantom Crescent Cleave)
+      if (sd.slashed) {
+        const slashAge = sd.age - 0.20;
+        const slashProgress = Math.min(1, slashAge / 0.35);
+        const slashRadius = 16 + slashProgress * 22;
+        const slashAlpha = Math.max(0, 1 - slashProgress);
+
+        ctx.strokeStyle = `rgba(216, 180, 254, ${slashAlpha * 0.95})`;
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.arc(sx, sy - 6, slashRadius, timeSec * 6, timeSec * 6 + Math.PI * 1.6);
+        ctx.stroke();
+
+        ctx.strokeStyle = `rgba(240, 171, 252, ${slashAlpha * 0.7})`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(sx, sy - 6, slashRadius * 0.75, -timeSec * 5, -timeSec * 5 + Math.PI * 1.4);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
   // ⚔️ [10.5-C] 16비트 오버헤드 전투 체력바 (Retro Overhead Combat HP Bar)
   drawEntityCombatHUD(ctx, ts, zoom, minTx, maxTx, minTy, maxTy) {
     if (zoom < 0.35) return;
@@ -4874,6 +4971,159 @@ class WorldRenderer {
       ctx.fill();
     });
 
+    ctx.restore();
+  }
+
+  // 🌌 [13.2-B] 고해상도 밤하늘 성운 & 항성계 (Dynamic Celestial Night Sky & Cosmic Nebula)
+  drawCelestialNightSky(ctx, cw, ch, timeSec, worldTime, camera) {
+    if (!worldTime) return;
+    const h = worldTime.hour + worldTime.minute / 60;
+    const isNight = (h >= 19.0 || h < 5.8);
+    if (!isNight) return;
+
+    let nightFactor = 0;
+    if (h >= 19.0 && h < 21.2) nightFactor = (h - 19.0) / 2.2;
+    else if (h >= 21.2 || h < 4.2) nightFactor = 1.0;
+    else if (h >= 4.2 && h < 5.8) nightFactor = Math.max(0, (5.8 - h) / 1.6);
+
+    if (nightFactor <= 0.02) return;
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+
+    // 1. 거대 은하수 / 성운 리본 (Cosmic Nebula Ribbon)
+    const nebAlpha = 0.36 * nightFactor;
+    if (nebAlpha > 0.02) {
+      const camOffX = camera ? camera.x * 0.08 : 0;
+      const camOffY = camera ? camera.y * 0.08 : 0;
+      const nebTime = timeSec * 0.12;
+
+      // 대각선 성운 구름 3대 권역 (보랏빛 심연, 에메랄드 시안, 성운 마젠타)
+      const nebPatches = [
+        { x: cw * 0.28 - (camOffX % (cw * 0.4)), y: ch * 0.32 - (camOffY % (ch * 0.4)), rx: cw * 0.46, ry: ch * 0.22, rot: -0.38, col1: `rgba(147, 51, 234, ${nebAlpha * 0.75})`, col2: 'rgba(88, 28, 135, 0)' },
+        { x: cw * 0.68 - (camOffX % (cw * 0.4)), y: ch * 0.48 - (camOffY % (ch * 0.4)), rx: cw * 0.50, ry: ch * 0.25, rot: -0.42, col1: `rgba(45, 212, 191, ${nebAlpha * 0.65})`, col2: 'rgba(15, 118, 110, 0)' },
+        { x: cw * 0.46 - (camOffX % (cw * 0.4)), y: ch * 0.66 - (camOffY % (ch * 0.4)), rx: cw * 0.38, ry: ch * 0.18, rot: -0.34, col1: `rgba(236, 72, 153, ${nebAlpha * 0.55})`, col2: 'rgba(157, 23, 77, 0)' }
+      ];
+
+      for (let n = 0; n < nebPatches.length; n++) {
+        const np = nebPatches[n];
+        ctx.save();
+        ctx.translate(np.x + Math.sin(nebTime + n) * 12, np.y + Math.cos(nebTime * 0.8 + n) * 8);
+        ctx.rotate(np.rot + Math.sin(nebTime * 0.5 + n) * 0.05);
+        const grad = ctx.createRadialGradient(0, 0, Math.max(2, np.ry * 0.15), 0, 0, np.rx);
+        grad.addColorStop(0, np.col1);
+        grad.addColorStop(0.5, np.col1.replace(/[\d\.]+\)$/, (nebAlpha * 0.35) + ')'));
+        grad.addColorStop(1, np.col2);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, np.rx, np.ry, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // 2. 다중 등급 반짝이는 항성계 & 별자리 (Twinkling Multi-Magnitude Starfield)
+    const starAlpha = 0.85 * nightFactor;
+    const cellW = 85;
+    const cellH = 85;
+    const startCellX = Math.floor((camera ? camera.x * 0.12 : 0) / cellW) - 1;
+    const endCellX = startCellX + Math.ceil(cw / cellW) + 2;
+    const startCellY = Math.floor((camera ? camera.y * 0.12 : 0) / cellH) - 1;
+    const endCellY = startCellY + Math.ceil(ch / cellH) + 2;
+
+    const camXShift = camera ? (camera.x * 0.12) : 0;
+    const camYShift = camera ? (camera.y * 0.12) : 0;
+
+    for (let cy = startCellY; cy <= endCellY; cy++) {
+      for (let cx = startCellX; cx <= endCellX; cx++) {
+        const hash = Math.sin(cx * 127.1 + cy * 311.7) * 43758.5453123;
+        const rand1 = hash - Math.floor(hash);
+        const rand2 = (hash * 1.5) - Math.floor(hash * 1.5);
+        const rand3 = (hash * 2.3) - Math.floor(hash * 2.3);
+
+        const screenX = Math.round((cx * cellW + rand1 * (cellW - 12)) - camXShift);
+        const screenY = Math.round((cy * cellH + rand2 * (cellH - 12)) - camYShift);
+
+        if (screenX < 0 || screenX > cw || screenY < 0 || screenY > ch) continue;
+
+        const twinkle = 0.45 + 0.55 * Math.sin(timeSec * (2.2 + rand3 * 3.2) + rand1 * 6.28);
+        const curAlpha = starAlpha * twinkle;
+        if (curAlpha <= 0.05) continue;
+
+        ctx.globalAlpha = curAlpha;
+
+        if (rand3 > 0.82) {
+          // 1등급 큰 별 (십자 회절 빔 스파이크)
+          ctx.fillStyle = rand1 > 0.5 ? '#bae6fd' : '#fef08a';
+          ctx.fillRect(screenX, screenY, 2, 2);
+          ctx.globalAlpha = curAlpha * 0.65;
+          ctx.fillRect(screenX - 2, screenY, 6, 1);
+          ctx.fillRect(screenX, screenY - 2, 1, 6);
+        } else if (rand3 > 0.45) {
+          // 2등급 별 (2px 픽셀 스타)
+          ctx.fillStyle = rand2 > 0.5 ? '#e0f2fe' : '#ffffff';
+          ctx.fillRect(screenX, screenY, 2, 2);
+        } else {
+          // 3등급 미세 별 (1px)
+          ctx.fillStyle = '#cbd5e1';
+          ctx.fillRect(screenX, screenY, 1, 1);
+        }
+      }
+    }
+
+    ctx.restore();
+  }
+
+  // 🏕️ [3.1] 모닥불 꼬치구이 요리 & 지글거리는 연기 모션
+  drawCookingSkewerMotion(ctx, px, py, timeSec) {
+    ctx.save();
+    // 1. 꼬치 꼬챙이 (Wooden Skewer)
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(px + 4, py - 6, 12, 2);
+
+    // 2. 꼬치 고기 덩어리
+    ctx.fillStyle = '#ea580c';
+    ctx.fillRect(px + 6, py - 9, 8, 8);
+    // 그릴 자국
+    ctx.fillStyle = '#451a03';
+    ctx.fillRect(px + 8, py - 9, 1, 8);
+    ctx.fillRect(px + 11, py - 9, 1, 8);
+    // 황금빛 시즈닝 글레이즈
+    ctx.fillStyle = '#fde047';
+    ctx.fillRect(px + 7, py - 8, 2, 2);
+
+    // 3. 지글거리는 모락모락 연기 3줄기
+    ctx.fillStyle = 'rgba(241, 245, 249, 0.65)';
+    for (let s = 0; s < 3; s++) {
+      const sAge = (timeSec * 2.5 + s * 0.4) % 1.2;
+      const sX = px + 10 + Math.sin(timeSec * 4 + s) * 3;
+      const sY = py - 10 - sAge * 14;
+      const sAlpha = Math.max(0, 1 - sAge / 1.2) * 0.6;
+      ctx.globalAlpha = sAlpha;
+      ctx.fillRect(Math.round(sX), Math.round(sY), 2 + Math.floor(sAge * 2), 2 + Math.floor(sAge * 2));
+    }
+    ctx.restore();
+  }
+
+  // 🍖 [3.2] 포만감(Well-Fed) 활성 상태 오버헤드 룬 인디케이터
+  drawWellFedBuffBadge(ctx, px, py, timeSec, timer) {
+    ctx.save();
+    const bob = Math.sin(timeSec * 3.5) * 2;
+    const bx = px + 14;
+    const by = py - 20 + bob;
+
+    // 미니 뱃지 배경
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.fillRect(bx - 1, by - 1, 28, 10);
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(bx, by, 26, 8);
+
+    // 고기 아이콘 & 텍스트
+    ctx.font = 'bold 7px sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`🍖${Math.ceil(timer)}s`, bx + 13, by + 4);
     ctx.restore();
   }
 
