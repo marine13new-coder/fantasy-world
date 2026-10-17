@@ -1141,6 +1141,126 @@
     },
 
     // =========================================================================
+    // 11.2. 아틀란티스 해저 고대 그리스풍 신전 (Sunken Atlantis Temple of Poseidon)
+    // =========================================================================
+    drawSunkenTemple(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // 바닥 모래/산호 그림자
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.50)';
+      ctx.fillRect(px - halfW + 1, py + halfH - 2, bw - 2, 6);
+
+      // 고대 대리석 3단 기단 (3-Tier Sunken Marble Crepidoma)
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(px - halfW, py + halfH - 6, bw, 3);
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(px - halfW + 2, py + halfH - 9, bw - 4, 3);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(px - halfW + 4, py + halfH - 12, bw - 8, 3);
+
+      // 가라앉은 대리석 원주 기둥 (Fluted Submerged Columns with Sea-Moss)
+      const colCount = Math.max(4, Math.floor(bw / 9));
+      const colW = 4;
+      const colH = bh - 24;
+      const colY = py + halfH - 12 - colH;
+      const spacing = (bw - 12 - colW) / (colCount - 1);
+
+      for (let c = 0; c < colCount; c++) {
+        const cx = Math.round(px - halfW + 6 + c * spacing);
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(cx - 1, colY + colH - 2, colW + 2, 2);
+        ctx.fillRect(cx - 1, colY, colW + 2, 2);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(cx, colY + 2, colW, colH - 4);
+        ctx.fillStyle = '#e2e8f0'; // 하이라이트 능선
+        ctx.fillRect(cx + 1, colY + 2, 1, colH - 4);
+
+        if (c % 2 === 0) {
+          ctx.fillStyle = '#06b6d4';
+          ctx.fillRect(cx - 1, colY + colH - 6, 2, 4);
+        }
+      }
+
+      // 엔타블러처 & 박공 삼각 페디먼트 (Entablature & Triangular Pediment)
+      const pedY = colY - 10;
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(px - halfW + 2, colY - 3, bw - 4, 3);
+
+      ctx.fillStyle = '#cbd5e1';
+      ctx.beginPath();
+      ctx.moveTo(px - halfW + 2, colY - 3);
+      ctx.lineTo(px, pedY);
+      ctx.lineTo(px + halfW - 2, colY - 3);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // 황금 삼지창 부조 (Golden Trident Bas-Relief)
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(px - 1, colY - 8, 2, 6);
+      ctx.fillRect(px - 3, colY - 7, 6, 1);
+      ctx.fillRect(px - 3, colY - 9, 1, 2);
+      ctx.fillRect(px + 2, colY - 9, 1, 2);
+
+      // 🌊 부유하는 신성한 아틀란티스 진주 (Levitating Radiant Pearl)
+      const pearlY = pedY - 6 + Math.round(Math.sin(timeSec * 2.8) * 2);
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.35)';
+      ctx.beginPath();
+      ctx.arc(px, pearlY, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.arc(px, pearlY, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(px - 1, pearlY - 1, 2, 2);
+    },
+
+    // =========================================================================
+    // 11.3. 심해 발광 산호 첨탑 (Bioluminescent Coral Spire)
+    // =========================================================================
+    drawCoralSpire(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - halfW + 2, py + halfH - 4, bw - 4, 8);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(px - halfW + 4, py + halfH - 8, bw - 8, 5);
+
+      ctx.fillStyle = '#be123c';
+      ctx.fillRect(px - 4, py - halfH + 8, 8, bh - 16);
+      ctx.fillStyle = '#f43f5e';
+      ctx.fillRect(px - 2, py - halfH + 10, 5, bh - 18);
+
+      ctx.fillStyle = '#fb7185';
+      ctx.fillRect(px - 12, py - 4, 9, 4);
+      ctx.fillRect(px - 12, py - 12, 4, 9);
+      ctx.fillRect(px + 4, py + 2, 10, 4);
+      ctx.fillRect(px + 10, py - 8, 4, 11);
+
+      ctx.fillStyle = '#fda4af';
+      ctx.fillRect(px - 6, py - halfH + 4, 12, 6);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(px - 2, py - halfH + 2, 4, 4);
+
+      // 🫧 뿜어져 나오는 심해 수포 버블 파티클 (Rising Deep Sea Bubbles)
+      for (let b = 0; b < 4; b++) {
+        const bPhase = (timeSec * 2.2 + b * 0.7) % 2.5;
+        const bY = (py + halfH - 10) - (bPhase * 18);
+        const bX = px + Math.sin(timeSec * 4 + b) * 7;
+        ctx.fillStyle = 'rgba(186, 230, 253, 0.75)';
+        ctx.beginPath();
+        ctx.arc(bX, bY, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -1331,6 +1451,14 @@
       }
       if (type === 'windmill') {
         this.drawWindmill(ctx, px, py, bw, bh, timeSec);
+        return true;
+      }
+      if (type === 'sunken_temple' || type === 'atlantis_temple' || (type === 'temple' && b && b.continent === 'atlantis')) {
+        this.drawSunkenTemple(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'coral_spire' || type === 'abyssal_spire' || (type === 'magic_spire' && b && b.continent === 'atlantis')) {
+        this.drawCoralSpire(ctx, px, py, bw, bh, isNight, timeSec);
         return true;
       }
       if (type === 'temple' || type === 'cathedral') {

@@ -3987,10 +3987,21 @@
       const sw = cv.width;
       const sh = cv.height;
 
-      // 4. 발밑 정밀 픽셀 타원 그림자 (지면에 견고하게 접지)
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.40)';
+      // 4. 발밑 정밀 픽셀 타원 그림자 (HD-2D Multi-tier Ambient Contact Occlusion & Airborne Depth)
+      const airH = (e.airborneHeight && e.airborneHeight > 0) ? e.airborneHeight : 0;
+      const shadowScale = Math.max(0.35, 1.0 - airH / 65);
+      const shadowAlpha = Math.max(0.10, (1.0 - airH / 55) * 0.45);
+
+      // 외곽 깃털 앰비언트 차폐 그림자 (Feathered Outer Occlusion)
+      ctx.fillStyle = `rgba(15, 23, 42, ${(shadowAlpha * 0.55).toFixed(3)})`;
       ctx.beginPath();
-      ctx.ellipse(px, py + 5 * sc, 7 * sc, 3 * sc, 0, 0, Math.PI * 2);
+      ctx.ellipse(px, py + 5 * sc, 8.5 * sc * shadowScale, 3.8 * sc * shadowScale, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 발바닥 정밀 접지 접촉 그림자 (Dense Core Foot Contact)
+      ctx.fillStyle = `rgba(2, 6, 23, ${shadowAlpha.toFixed(3)})`;
+      ctx.beginPath();
+      ctx.ellipse(px, py + 5 * sc, 5.2 * sc * shadowScale, 2.2 * sc * shadowScale, 0, 0, Math.PI * 2);
       ctx.fill();
 
       // 5. 공격 시 부드러운 1~2px 전진 런지 & 피격 시 1px 부드러운 스태거 (지터링 제거)
@@ -4050,6 +4061,24 @@
 
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(cv, renderX, renderY, renderW, renderH);
+
+      // 🌟 [입체 서브픽셀 림라이트 & 환경광 셰이딩] (HD-2D Directional Rim Lighting & Eye Sparkle)
+      if (e.role === 'player' || e.role === 'crusader' || e.role === 'hero' || e.role === 'elf' || e.role === 'dwarf') {
+        const isNightTime = (typeof isNight !== 'undefined' ? isNight : false);
+        // 상단/좌측 어깨 및 머리 능선 입체 림라이트
+        ctx.fillStyle = isNightTime ? 'rgba(186, 230, 253, 0.38)' : 'rgba(254, 240, 138, 0.32)';
+        ctx.fillRect(renderX + 4 * sc, renderY + 3 * sc, 6 * sc, 1.5 * sc);
+        ctx.fillRect(renderX + 2 * sc, renderY + 5 * sc, 1.5 * sc, 5 * sc);
+
+        // 주기적 눈 깜빡임 안광 반사 (Eye-sparkle twinkle every ~3.5s)
+        const eyeSparkle = (timeSec * 0.9 + (e.id || 0)) % 3.5;
+        if (eyeSparkle < 0.22 && dir !== 'up') {
+          const eyeX = dir === 'left' ? renderX + 6 * sc : (dir === 'right' ? renderX + renderW - 9 * sc : renderX + renderW / 2 + 1 * sc);
+          const eyeY = renderY + 9 * sc;
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(eyeX, eyeY, 1.5 * sc, 1.5 * sc);
+        }
+      }
       ctx.restore();
 
       // 잠자는 닭 상공 'Zzz' 수면 말풍선 파티클 (Reference Image Match)
@@ -4443,6 +4472,22 @@
         } else {
           ctx.rotate(isLeft ? -0.35 : 0.35);
           ctx.drawImage(wCvs, -4 * sc, -12 * sc, 15 * sc, 15 * sc);
+        }
+
+        // ✨ 무기 칼날 동적 빛 반사 스파클 (Blade Ridge Gleam & Diamond Star Glint)
+        const glintCycle = (timeSec * 0.8 + (e.id || 0) * 0.35) % 2.6;
+        if (glintCycle < 0.6) {
+          const glintT = glintCycle / 0.6;
+          const tipX = -3 * sc + glintT * 8 * sc;
+          const tipY = -12 * sc + (1 - glintT) * 4 * sc;
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(tipX, tipY, 2 * sc, 2 * sc);
+          if (glintT > 0.65) {
+            // 칼끝 4각 다이아몬드 스타 플래시
+            ctx.fillStyle = '#fef08a';
+            ctx.fillRect(tipX - 1.5 * sc, tipY + 0.5 * sc, 5 * sc, 1 * sc);
+            ctx.fillRect(tipX + 0.5 * sc, tipY - 1.5 * sc, 1 * sc, 5 * sc);
+          }
         }
         ctx.restore();
       }

@@ -571,6 +571,16 @@ function createSettlementList() {
   add('yggdrasil_ancient_root_burrow', '태고 뿌리 영험한 굴', 'lair', 'yggdrasil', 2450, 620, 'beastkin', true, 10);
   add('yggdrasil_life_spring_font', '생명의 영천 신성 샘터', 'temple', 'yggdrasil', 2730, 480, 'celestial', true, 12);
 
+  // =========================================================================
+  // 13. THE SUNKEN ATLANTIS & ABYSSAL MERMAID KINGDOM (심연의 아틀란티스 해저 수도 & 산호 인어 왕국)
+  // =========================================================================
+  add('atlantis_royal_trench', '아틀란티스 심연 해저 수도', 'capital', 'atlantis', 2050, 1720, 'elf', true, 16);
+  add('atlantis_coral_pearl_sanctuary', '진주 산호초 신성 안식처', 'temple', 'atlantis', 2180, 1640, 'celestial', true, 13);
+  add('atlantis_sunken_acropolis', '가라앉은 침몰 아크로폴리스', 'castle', 'atlantis', 1940, 1820, 'elf', true, 15);
+  add('atlantis_thermal_vent_forge', '심해 열수구 티타늄 단층대', 'town', 'atlantis', 2110, 1850, 'dwarf', false, 9);
+  add('atlantis_mermaid_song_reef', '인어의 노랫소리 비전 환초', 'port', 'atlantis', 1880, 1680, 'beastkin', false, 8);
+  add('atlantis_poseidon_trident_citadel', '포세이돈 심해 삼지창 성채', 'lair', 'atlantis', 2240, 1780, 'dragon', true, 11);
+
   return list;
 }
 
@@ -840,6 +850,18 @@ function generateWorld() {
             tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.CRYSTAL_CAVE : TILE.MEADOW;
           } else if (dist <= landRad + 3) {
             tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.WATER : TILE.FOREST;
+          }
+          continue;
+        }
+
+        // 심연의 아틀란티스 해저 수도 및 산호초 전용 지형 카빙
+        if (s.continent === 'atlantis') {
+          if (dist <= landRad - 7) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.CASTLE_FLOOR : TILE.ROAD; // 가라앉은 고대 대리석 열주 바닥
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.CORAL : TILE.CRYSTAL_CAVE; // 발광 산호초 & 해저 수정동굴
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.WATER : TILE.DEEP_WATER;
           }
           continue;
         }
