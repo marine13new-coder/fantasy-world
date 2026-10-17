@@ -3252,6 +3252,234 @@
     },
 
     // =========================================================================
+    // 11.22. 달빛 은룡 천공 신사 수도 (Moonlit Silver Dragon Palace)
+    // =========================================================================
+    drawMoonlitSilverDragonPalace(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 은은한 달빛 연못 바닥 그림자
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.50)';
+      ctx.fillRect(px - halfW, py + halfH - 2, bw, 6);
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH + 1, bw * 0.52, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // B. 3단 주홍빛 칠기 기단 & 연꽃 연못 (Vermilion Podium & Lotus Pond)
+      const podW = Math.round(bw * 0.88);
+      const podHW = Math.round(podW / 2);
+      const podH = Math.round(bh * 0.22);
+      const podY = py + halfH - podH;
+
+      ctx.fillStyle = '#991b1b'; // 심홍색 칠기
+      ctx.fillRect(px - podHW, podY, podW, podH);
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(px - podHW + 2, podY + 2, podW - 4, podH - 3);
+
+      // 둥근 홍예교 아치 다리 난간 (Vermilion Moon Bridge)
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(px, podY + 3, 14, Math.PI, 0);
+      ctx.stroke();
+
+      // C. 3단 곡선 지붕 옥좌 전당 (Tiered Pagoda Shrine with Upturned Curved Eaves)
+      const tierCount = 3;
+      for (let t = 0; t < tierCount; t++) {
+        const tw = Math.round(bw * (0.82 - t * 0.22));
+        const thw = Math.round(tw / 2);
+        const ty = podY - 8 - t * 15;
+        const eaveH = 5;
+
+        // 벽체 & 기둥
+        ctx.fillStyle = '#991b1b';
+        ctx.fillRect(px - thw + 4, ty, tw - 8, 12);
+        ctx.fillStyle = '#fef3c7'; // 창호지 문
+        ctx.fillRect(px - thw + 6, ty + 2, tw - 12, 8);
+
+        // 은빛 기와 처마 (Silver Tiled Eaves with Upturned Tips)
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        ctx.moveTo(px - thw - 5, ty + 2);
+        ctx.quadraticCurveTo(px - thw, ty - eaveH, px, ty - eaveH - 2);
+        ctx.quadraticCurveTo(px + thw, ty - eaveH, px + thw + 5, ty + 2);
+        ctx.lineTo(px + thw + 2, ty + 4);
+        ctx.quadraticCurveTo(px, ty - eaveH + 2, px - thw - 2, ty + 4);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#e2e8f0'; // 은빛 기와 하이라이트
+        ctx.beginPath();
+        ctx.moveTo(px - thw - 4, ty + 1);
+        ctx.quadraticCurveTo(px, ty - eaveH - 1, px + thw + 4, ty + 1);
+        ctx.lineTo(px + thw + 2, ty + 3);
+        ctx.quadraticCurveTo(px, ty - eaveH + 1, px - thw - 2, ty + 3);
+        ctx.closePath();
+        ctx.fill();
+
+        // 처마 끝 황금 풍경 방울 (Wind Chime Bells)
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(px - thw - 4, ty + 3, 2, 2);
+        ctx.fillRect(px + thw + 2, ty + 3, 2, 2);
+      }
+
+      // D. 전당을 휘감아 승천하는 천공의 은룡 (Ascending Celestial Silver Dragon)
+      ctx.save();
+      const dragonSway = Math.sin(timeSec * 2.2) * 3;
+      const topSpireY = podY - 8 - 3 * 15;
+
+      // 은룡 몸체 곡선 (Silver Dragon Body)
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(px - 14, podY + 4);
+      ctx.quadraticCurveTo(px + 12 + dragonSway, podY - 18, px - 8, podY - 34);
+      ctx.quadraticCurveTo(px + 14 - dragonSway, podY - 44, px + 2, topSpireY - 8);
+      ctx.stroke();
+
+      // 은룡 비늘 음영 & 등지느러미 (Dragon Scales & Dorsal Fin)
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+
+      // 용의 머리 (Dragon Head) & 여의주 (Glowing Dragon Pearl)
+      const headX = px + 2;
+      const headY = topSpireY - 10;
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.moveTo(headX, headY);
+      ctx.lineTo(headX - 5, headY - 4);
+      ctx.lineTo(headX, headY - 8);
+      ctx.lineTo(headX + 6, headY - 5);
+      ctx.closePath();
+      ctx.fill();
+
+      // 뿔 (Golden Dragon Horns)
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(headX - 3, headY - 11, 2, 4);
+      ctx.fillRect(headX + 2, headY - 10, 2, 3);
+
+      // 입에 문 신비의 발광 여의주 (Glowing Tide Pearl)
+      const pearlPulse = Math.sin(timeSec * 5) * 1.5;
+      const pearlGrad = ctx.createRadialGradient(headX + 8, headY - 6, 1, headX + 8, headY - 6, 6);
+      pearlGrad.addColorStop(0, '#ffffff');
+      pearlGrad.addColorStop(0.5, '#38bdf8');
+      pearlGrad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+      ctx.fillStyle = pearlGrad;
+      ctx.beginPath();
+      ctx.arc(headX + 8, headY - 6, 6 + pearlPulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // E. 밤하늘로 떠오르는 황금 연등 3개 (Ascending Sky Lanterns)
+      for (let l = 0; l < 3; l++) {
+        const lantY = (podY + halfH) - ((timeSec * 10 + l * 18) % (bh + 20));
+        const lantX = px - halfW + 8 + l * (halfW * 0.9) + Math.sin(timeSec * 1.8 + l) * 4;
+        ctx.fillStyle = '#ea580c';
+        ctx.fillRect(lantX - 2, lantY - 2, 4, 5);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(lantX - 1, lantY - 1, 2, 3);
+      }
+    },
+
+    // =========================================================================
+    // 11.23. 구미호 영혼 불꽃 신성 성채 (Kitsune Nine-Tails Sacred Citadel)
+    // =========================================================================
+    drawKitsuneNineTailsShrine(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 신사 바닥 지면 그림자
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.52)';
+      ctx.fillRect(px - halfW + 2, py + halfH - 2, bw - 4, 6);
+
+      // B. 석조 제단 & 붉은 토리이 관문 (Stone Podium & Red Torii Portal)
+      const toriiW = Math.round(bw * 0.72);
+      const toriiHW = Math.round(toriiW / 2);
+      const toriiH = Math.round(bh * 0.65);
+      const toriiY = py + halfH - toriiH;
+
+      // 좌우 주홍빛 기둥
+      ctx.fillStyle = '#b91c1c';
+      ctx.fillRect(px - toriiHW, toriiY + 6, 4, toriiH - 6);
+      ctx.fillRect(px + toriiHW - 4, toriiY + 6, 4, toriiH - 6);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(px - toriiHW + 1, toriiY + 6, 2, toriiH - 6);
+      ctx.fillRect(px + toriiHW - 3, toriiY + 6, 2, toriiH - 6);
+
+      // 토리이 상단 2단 가로 가사기 (Curved Torii Crossbeam)
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - toriiHW - 6, toriiY + 2, toriiW + 12, 4);
+      ctx.fillStyle = '#b91c1c';
+      ctx.fillRect(px - toriiHW - 4, toriiY - 2, toriiW + 8, 4);
+
+      // 신성한 볏짚 금줄 (Shimenawa Sacred Rope & White Shide Streamers)
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(px - toriiHW + 4, toriiY + 6, toriiW - 8, 2);
+      ctx.fillStyle = '#ffffff';
+      for (let s = px - toriiHW + 10; s < px + toriiHW - 8; s += 8) {
+        ctx.fillRect(s, toriiY + 8, 2, 4);
+      }
+
+      // C. 본전 신사 정면 & 편액 (Shrine Hall Sanctuary)
+      const shrineW = Math.round(bw * 0.46);
+      const shrineHW = Math.round(shrineW / 2);
+      const shrineH = Math.round(bh * 0.48);
+      const shrineY = py + halfH - shrineH;
+
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(px - shrineHW, shrineY, shrineW, shrineH);
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillRect(px - shrineHW + 2, shrineY + 4, shrineW - 4, shrineH - 6);
+
+      // 금박 편액
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(px - 4, shrineY + 2, 8, 4);
+
+      // D. 좌우 백호/백여우 석상 수호신 (Twin Sacred White Fox Statues)
+      const drawFoxStatue = (fx, isLeft) => {
+        // 석조 좌대
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(fx - 4, py + halfH - 12, 8, 12);
+        // 백여우 몸체
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(fx - 3, py + halfH - 18, 6, 7);
+        // 붉은 턱받이 스카프 (Red Bib)
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(fx - 3, py + halfH - 16, 6, 2);
+        // 뾰족한 여우 귀
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(isLeft ? fx - 3 : fx - 2, py + halfH - 20, 2, 3);
+        ctx.fillRect(isLeft ? fx + 1 : fx + 1, py + halfH - 20, 2, 3);
+      };
+
+      drawFoxStatue(px - toriiHW - 5, true);
+      drawFoxStatue(px + toriiHW + 5, false);
+
+      // E. 신사 뒤편을 호형으로 둘러싸며 일렁이는 9개의 구미호 영혼 불꽃 (Kitsunebi Nine-Tails Fire Arc)
+      const flameCount = 9;
+      for (let f = 0; f < flameCount; f++) {
+        const ang = Math.PI * 0.85 + (f / (flameCount - 1)) * Math.PI * 1.3;
+        const dist = toriiHW + 6;
+        const flameSway = Math.sin(timeSec * 3.5 + f * 0.8) * 3;
+        const fx = px + Math.cos(ang) * dist;
+        const fy = toriiY + 2 + Math.sin(ang) * (dist * 0.5) + flameSway;
+
+        // 청록빛/보랏빛 영혼 여우불 (Foxfire Flame)
+        const isCyan = (f % 2 === 0);
+        ctx.fillStyle = isCyan ? 'rgba(6, 182, 212, 0.85)' : 'rgba(168, 85, 247, 0.85)';
+        ctx.beginPath();
+        ctx.arc(fx, fy, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(fx, fy - 1, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -3401,6 +3629,16 @@
       ctx.beginPath();
       ctx.ellipse(px + 6, py + bh / 2 + 4, bw * 0.42, 4, 0.08, 0, Math.PI * 2);
       ctx.fill();
+
+      // 🦊 달빛 은룡 천공 신사 & 구미호 영혼 제국 (Celestial Moonlit Silver Dragon & Kitsune Spirit Realm)
+      if (type === 'moonlit_dragon_palace' || (type === 'capital' && b && b.continent === 'spirit_shrine') || (type === 'palace' && b && b.continent === 'spirit_shrine')) {
+        this.drawMoonlitSilverDragonPalace(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'kitsune_shrine' || (type === 'castle' && b && b.continent === 'spirit_shrine') || (type === 'fortress' && b && b.continent === 'spirit_shrine') || (type === 'temple' && b && b.continent === 'spirit_shrine')) {
+        this.drawKitsuneNineTailsShrine(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
 
       // 🏴‍☠️ 검은 깃발 대해적 연합 & 크라켄 해골 요새 (Black Pearl Corsair Empire)
       if (type === 'corsair_flagship' || (type === 'capital' && b && b.continent === 'corsair') || (type === 'palace' && b && b.continent === 'corsair')) {

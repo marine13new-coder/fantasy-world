@@ -4461,6 +4461,7 @@
         else if (weaponId.includes('blood') || weaponId.includes('vampire') || weaponId.includes('gothic') || weaponId.includes('rose') || weaponId.includes('scythe')) { slashColor = '#f43f5e'; glowColor = 'rgba(159, 18, 57, 0.85)'; }
         else if (weaponId.includes('crystal') || weaponId.includes('prism') || weaponId.includes('starlight') || weaponId.includes('mana') || weaponId.includes('zenith')) { slashColor = '#38bdf8'; glowColor = 'rgba(232, 121, 249, 0.85)'; }
         else if (weaponId.includes('corsair') || weaponId.includes('pirate') || weaponId.includes('cutlass') || weaponId.includes('anchor') || weaponId.includes('kraken') || weaponId.includes('harpoon')) { slashColor = '#06b6d4'; glowColor = 'rgba(6, 182, 212, 0.85)'; }
+        else if (weaponId.includes('spirit') || weaponId.includes('fox') || weaponId.includes('moon') || weaponId.includes('kitsune') || weaponId.includes('katana') || weaponId.includes('shrine')) { slashColor = '#f8fafc'; glowColor = 'rgba(168, 85, 247, 0.85)'; }
 
         const arcCenter = px + sideSign * 4 * sc;
         const startAng = isLeft ? Math.PI * 0.7 : Math.PI * 0.3;
@@ -4606,6 +4607,43 @@
             // 파도 물방울 스파크
             ctx.fillStyle = '#ecfeff';
             ctx.fillRect(cX + 2 * sc, cY - 3 * sc, 1.5 * sc, 1.5 * sc);
+          }
+        }
+
+        // 🦊 달빛 은룡 천공 신사 & 구미호 영혼 제국 여우불 참격 (Kitsunebi Foxfire & Talisman Slash)
+        if (weaponId.includes('spirit') || weaponId.includes('fox') || weaponId.includes('moon') || weaponId.includes('kitsune') || weaponId.includes('katana') || weaponId.includes('shrine')) {
+          // 은빛 달빛 칼날 호
+          ctx.strokeStyle = '#e2e8f0';
+          ctx.lineWidth = 3.4 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 23 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          // 튀는 구미호 여우불(Kitsunebi) 4구 & 부적 2장 (Floating Foxfire & Talismans)
+          const foxTime = (e.animTime || 0) * 15;
+          for (let f = 0; f < 4; f++) {
+            const fAng = startAng + (f / 3) * (endAng - startAng);
+            const fDist = (21 + Math.sin(foxTime + f * 1.8) * 5) * sc;
+            const fx = arcCenter + Math.cos(fAng) * fDist;
+            const fy = py - 10 * sc - bounce + Math.sin(fAng) * fDist;
+
+            // 푸른 여우불
+            ctx.fillStyle = (f % 2 === 0) ? '#06b6d4' : '#a855f7';
+            ctx.beginPath();
+            ctx.arc(fx, fy, 3.2 * sc, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(fx, fy - 1 * sc, 1.6 * sc, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 부적 펄럭임 (Talisman)
+            if (f % 2 === 0) {
+              ctx.fillStyle = '#fef08a';
+              ctx.fillRect(fx + 3 * sc, fy - 4 * sc, 3 * sc, 5 * sc);
+              ctx.fillStyle = '#dc2626';
+              ctx.fillRect(fx + 4 * sc, fy - 3 * sc, 1 * sc, 3 * sc);
+            }
           }
         }
 

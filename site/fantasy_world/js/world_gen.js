@@ -670,6 +670,16 @@ function createSettlementList() {
   add('siren_coral_lagoon_sanctuary', '세이렌 산호초 만 비전 신전', 'temple', 'corsair', 1440, 1460, 'beastkin', true, 11);
   add('smugglers_tide_cavern_haven', '밀수꾼 조수 동굴 아지트 마을', 'town', 'corsair', 1320, 1320, 'human', false, 8);
 
+  // =========================================================================
+  // 23. THE CELESTIAL MOONLIT SILVER DRAGON SHRINE & KITSUNE SPIRIT REALM (달빛 은룡 천공 신사 & 구미호 영혼 제국)
+  // =========================================================================
+  add('moonlit_silver_dragon_capital', '달빛 은룡 천공 신사 수도', 'capital', 'spirit_shrine', 880, 680, 'dragon', true, 16);
+  add('kitsune_nine_tails_sacred_citadel', '구미호 영혼 불꽃 신성 성채', 'castle', 'spirit_shrine', 780, 740, 'beastkin', true, 14);
+  add('floating_lantern_tide_haven', '부유하는 연등 만조 항만', 'port', 'spirit_shrine', 980, 720, 'human', false, 9);
+  add('celestial_bamboo_alchemist_refinery', '천공 영혼 대나무 연금술 공방 성역', 'lair', 'spirit_shrine', 920, 600, 'elf', true, 10);
+  add('wisteria_spirit_fox_shrine', '등나무 영령 여우 신탁 성소', 'temple', 'spirit_shrine', 780, 620, 'fairy', true, 11);
+  add('thousand_lotus_mirror_grove', '천 개의 연꽃 거울 호수 마을', 'town', 'spirit_shrine', 880, 770, 'human', false, 8);
+
   return list;
 }
 
@@ -1063,6 +1073,18 @@ function generateWorld() {
           continue;
         }
 
+        // 달빛 은룡 천공 신사 & 구미호 영혼 제국 전용 신령 군도 지형 카빙
+        if (s.continent === 'spirit_shrine') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.CASTLE_FLOOR : TILE.ROAD; // 주홍빛 칠기 석조 보도
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.ELVEN_FOREST : TILE.MEADOW; // 달빛 신령 죽림 & 영혼의 연꽃 습지
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.WATER : TILE.ELVEN_FOREST; // 맑은 거울 호수 & 연등 수로
+          }
+          continue;
+        }
+
         const curT = tiles[idx(tx, ty)];
         const isWater = (curT === TILE.DEEP_WATER || curT === TILE.WATER);
 
@@ -1293,7 +1315,15 @@ function generateWorld() {
     ['corsair_black_flagship_capital', 'ghost_ship_armada_graveyard'],
     ['corsair_black_flagship_capital', 'siren_coral_lagoon_sanctuary'],
     ['kraken_abyssal_skull_citadel', 'smugglers_tide_cavern_haven'],
-    ['siren_coral_lagoon_sanctuary', 'smugglers_tide_cavern_haven']
+    ['siren_coral_lagoon_sanctuary', 'smugglers_tide_cavern_haven'],
+
+    // [달빛 은룡 천공 신사 & 구미호 영혼 제국 신령 가도 (Spirit Shrine Dragon Way)]
+    ['moonlit_silver_dragon_capital', 'kitsune_nine_tails_sacred_citadel'],
+    ['moonlit_silver_dragon_capital', 'floating_lantern_tide_haven'],
+    ['moonlit_silver_dragon_capital', 'celestial_bamboo_alchemist_refinery'],
+    ['moonlit_silver_dragon_capital', 'wisteria_spirit_fox_shrine'],
+    ['kitsune_nine_tails_sacred_citadel', 'thousand_lotus_mirror_grove'],
+    ['wisteria_spirit_fox_shrine', 'thousand_lotus_mirror_grove']
   ];
   const roadLinks = rawRoadLinks.filter(([a, b]) => settlementMap[a] && settlementMap[b]);
 
