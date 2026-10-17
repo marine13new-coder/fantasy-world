@@ -690,6 +690,16 @@ function createSettlementList() {
   add('ancient_moss_monolith_shrine', '태고 이끼 거석단 요정 신전', 'temple', 'fairy_grove', 1740, 1740, 'elf', true, 11);
   add('glowing_firefly_hollow_village', '반딧불이 숲속 통나무 마을', 'town', 'fairy_grove', 1680, 1780, 'fairy', false, 8);
 
+  // =========================================================================
+  // 25. THE LOST GOLDEN EMPIRE OF EL DORADO & SUN SERPENT CITADEL (태양신의 황금 제국 엘도라도 & 깃털 뱀신 성채)
+  // =========================================================================
+  add('el_dorado_golden_sun_pyramid_capital', '엘도라도 태양신 황금 피라미드 수도', 'capital', 'el_dorado', 380, 1960, 'human', true, 17);
+  add('quetzalcoatl_feathered_serpent_citadel', '케찰코아틀 깃털 뱀신 성채', 'castle', 'el_dorado', 480, 1900, 'beastkin', true, 15);
+  add('golden_cenote_emerald_harbor', '성스러운 세노테 에메랄드 황금 항만', 'port', 'el_dorado', 280, 1980, 'human', false, 9);
+  add('obsidian_sun_disc_alchemist_forge', '흑요석 태양원반 연금술 제련소', 'lair', 'el_dorado', 340, 2080, 'dwarf', true, 11);
+  add('solar_eclipse_monolith_shrine', '개기일식 거석 제단 태양 신전', 'temple', 'el_dorado', 460, 2040, 'celestial', true, 12);
+  add('jungle_golden_orchid_village', '밀림 황금 난초 원시 부족 마을', 'town', 'el_dorado', 420, 1860, 'human', false, 8);
+
   return list;
 }
 
@@ -1107,6 +1117,18 @@ function generateWorld() {
           continue;
         }
 
+        // 태양신의 황금 제국 엘도라도 & 깃털 뱀신 성채 전용 지형 카빙
+        if (s.continent === 'el_dorado') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.CASTLE_FLOOR : TILE.ROAD; // 찬란한 황금 석조 포장 제단 보도
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.ELVEN_FOREST : TILE.MEADOW; // 울창한 원시 밀림 & 황금 난초 개활지
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.WATER : TILE.SAND; // 성스러운 에메랄드 세노테 싱크홀 연못 & 백사장
+          }
+          continue;
+        }
+
         const curT = tiles[idx(tx, ty)];
         const isWater = (curT === TILE.DEEP_WATER || curT === TILE.WATER);
 
@@ -1353,7 +1375,15 @@ function generateWorld() {
     ['elder_fairy_world_tree_capital', 'pixie_alchemical_nectar_distillery'],
     ['elder_fairy_world_tree_capital', 'ancient_moss_monolith_shrine'],
     ['luminescent_spore_citadel', 'glowing_firefly_hollow_village'],
-    ['ancient_moss_monolith_shrine', 'glowing_firefly_hollow_village']
+    ['ancient_moss_monolith_shrine', 'glowing_firefly_hollow_village'],
+
+    // [태양신의 황금 제국 엘도라도 가도 (Golden Sun Serpent Leyline Highway)]
+    ['el_dorado_golden_sun_pyramid_capital', 'quetzalcoatl_feathered_serpent_citadel'],
+    ['el_dorado_golden_sun_pyramid_capital', 'golden_cenote_emerald_harbor'],
+    ['el_dorado_golden_sun_pyramid_capital', 'obsidian_sun_disc_alchemist_forge'],
+    ['el_dorado_golden_sun_pyramid_capital', 'solar_eclipse_monolith_shrine'],
+    ['quetzalcoatl_feathered_serpent_citadel', 'jungle_golden_orchid_village'],
+    ['solar_eclipse_monolith_shrine', 'jungle_golden_orchid_village']
   ];
   const roadLinks = rawRoadLinks.filter(([a, b]) => settlementMap[a] && settlementMap[b]);
 

@@ -1269,6 +1269,7 @@ function startFantasyWorld() {
         else if (s.continent === 'corsair') icon = '🏴‍☠️';
         else if (s.continent === 'spirit_shrine') icon = '🦊';
         else if (s.continent === 'fairy_grove') icon = '🌿';
+        else if (s.continent === 'el_dorado') icon = '☀️';
         else if (s.type === 'capital') icon = '👑';
         else if (s.type === 'port') icon = '⚓';
         else if (s.type === 'fortress') icon = '🏰';
@@ -1292,6 +1293,7 @@ function startFantasyWorld() {
         else if (s.continent === 'corsair') regionName = '🏴‍☠️ 검은 깃발 대해적 연합 & 크라켄 해골 요새';
         else if (s.continent === 'spirit_shrine') regionName = '🦊 달빛 은룡 천공 신사 & 구미호 영혼 제국';
         else if (s.continent === 'fairy_grove') regionName = '🌿 태고 요정 숲 에메랄드 거목 성소 & 발광 포자 성채';
+        else if (s.continent === 'el_dorado') regionName = '☀️ 태양신의 황금 제국 엘도라도 & 깃털 뱀신 성채';
         else if (s.continent === 'west') regionName = '서부 실바니아';
         else if (s.continent === 'north') regionName = '북부 노스펠';
         else if (s.continent === 'south') regionName = '남부 드라코니아';

@@ -3797,6 +3797,246 @@
     },
 
     // =========================================================================
+    // 11.26. 엘도라도 태양신 황금 피라미드 (El Dorado Golden Sun Pyramid)
+    // =========================================================================
+    drawElDoradoSunPyramid(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 바닥 지면 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.58)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 2, halfW + 8, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // B. 4단 계단식 황금 피라미드 테라스 (4-Tier Mesoamerican Stepped Ziggurat)
+      const tiers = [
+        { w: bw, h: 10, y: py + halfH - 10, c: '#b45309', light: '#d97706' },
+        { w: Math.round(bw * 0.80), h: 9, y: py + halfH - 19, c: '#d97706', light: '#f59e0b' },
+        { w: Math.round(bw * 0.62), h: 9, y: py + halfH - 28, c: '#f59e0b', light: '#fbbf24' },
+        { w: Math.round(bw * 0.44), h: 8, y: py + halfH - 36, c: '#facc15', light: '#fef08a' }
+      ];
+
+      for (const t of tiers) {
+        const twHalf = Math.round(t.w / 2);
+        // 베이스 단
+        ctx.fillStyle = t.c;
+        ctx.fillRect(px - twHalf, t.y, t.w, t.h);
+        // 상단 황금 광채 하이라이트 림
+        ctx.fillStyle = t.light;
+        ctx.fillRect(px - twHalf, t.y, t.w, 2);
+        // 좌우 경사 그림자
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+        ctx.fillRect(px + twHalf - 4, t.y, 4, t.h);
+      }
+
+      // C. 중앙 황금 대계단 (Central Ceremonial Golden Staircase)
+      const stairW = Math.round(bw * 0.18);
+      const stairHW = Math.round(stairW / 2);
+      const stairTopY = py + halfH - 36;
+      const stairBottomY = py + halfH;
+
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(px - stairHW - 2, stairTopY, stairW + 4, stairBottomY - stairTopY);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(px - stairHW, stairTopY, stairW, stairBottomY - stairTopY);
+
+      // 계단 층층 디테일
+      ctx.fillStyle = '#fef08a';
+      for (let sy = stairTopY; sy < stairBottomY; sy += 3) {
+        ctx.fillRect(px - stairHW, sy, stairW, 1);
+      }
+
+      // 좌우 터키석 난간 (Turquoise Balustrades)
+      ctx.fillStyle = '#06b6d4';
+      ctx.fillRect(px - stairHW - 2, stairTopY, 2, stairBottomY - stairTopY);
+      ctx.fillRect(px + stairHW, stairTopY, 2, stairBottomY - stairTopY);
+
+      // D. 피라미드 정상 태양의 사당 (Summit Sun Temple Shrine)
+      const shrineW = Math.round(bw * 0.28);
+      const shrineHW = Math.round(shrineW / 2);
+      const shrineH = 12;
+      const shrineY = stairTopY - shrineH;
+
+      ctx.fillStyle = '#92400e';
+      ctx.fillRect(px - shrineHW, shrineY, shrineW, shrineH);
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(px - shrineHW + 1, shrineY + 1, shrineW - 2, shrineH - 2);
+
+      // 사당 정면 아치 관문
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - 4, shrineY + 3, 8, shrineH - 3);
+      ctx.fillStyle = '#ef4444'; // 내부 성스러운 불길
+      ctx.fillRect(px - 2, shrineY + 5, 4, shrineH - 5);
+
+      // E. 최상단 순금 거대 태양 원반 (Solid Gold Sun Disc Monolith)
+      const discR = 8;
+      const discY = shrineY - discR - 2;
+      const solarPulse = Math.sin(timeSec * 3) * 0.2 + 0.8;
+
+      // 후광 광선 8방향 방사
+      ctx.strokeStyle = `rgba(250, 204, 21, ${solarPulse})`;
+      ctx.lineWidth = 1.5;
+      for (let r = 0; r < 8; r++) {
+        const rAng = (r * Math.PI) / 4 + timeSec * 0.6;
+        ctx.beginPath();
+        ctx.moveTo(px + Math.cos(rAng) * (discR + 1), discY + Math.sin(rAng) * (discR + 1));
+        ctx.lineTo(px + Math.cos(rAng) * (discR + 6), discY + Math.sin(rAng) * (discR + 6));
+        ctx.stroke();
+      }
+
+      // 태양 원반 본체
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.arc(px, discY, discR, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.arc(px, discY, discR - 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 중심 붉은 루비 보석
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(px - 2, discY - 2, 4, 4);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 1, discY - 2, 2, 1);
+
+      // F. 계단 하단 좌우 흑요석 화로 (Twin Obsidian Flame Cauldrons)
+      const cauldrons = [px - stairHW - 8, px + stairHW + 8];
+      for (const cx of cauldrons) {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(cx - 3, py + halfH - 6, 6, 6);
+        // 타오르는 황금 성화
+        const fH = 5 + Math.sin(timeSec * 8 + cx) * 2;
+        ctx.fillStyle = '#f97316';
+        ctx.beginPath();
+        ctx.moveTo(cx - 3, py + halfH - 6);
+        ctx.lineTo(cx, py + halfH - 6 - fH);
+        ctx.lineTo(cx + 3, py + halfH - 6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(cx - 1, py + halfH - 6 - Math.round(fH * 0.6), 2, 3);
+      }
+
+      // G. 공중으로 솟구치는 황금 가루 & 태양 스파크 파티클 (Ascending Golden Sparks)
+      for (let g = 0; g < 5; g++) {
+        const gTime = (timeSec * 2.5 + g * 1.5) % 3.5;
+        const gProg = gTime / 3.5;
+        const gx = px + Math.sin(timeSec * 2.8 + g * 2) * (halfW * 0.7);
+        const gy = (py + halfH) - gProg * (bh * 0.95);
+        const gAlpha = (1 - gProg) * 0.9;
+
+        ctx.fillStyle = (g % 2 === 0) ? `rgba(254, 240, 138, ${gAlpha})` : `rgba(245, 158, 11, ${gAlpha})`;
+        ctx.beginPath();
+        ctx.arc(gx, gy, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    },
+
+    // =========================================================================
+    // 11.27. 케찰코아틀 깃털 뱀신 성채 (Quetzalcoatl Feathered Serpent Citadel)
+    // =========================================================================
+    drawQuetzalcoatlSerpentCitadel(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 지면 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.55)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 2, halfW + 6, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // B. 비취 석조 성채 본당 (Jade Cyclopean Fortress Bastion)
+      const fortW = Math.round(bw * 0.78);
+      const fortHW = Math.round(fortW / 2);
+      const fortH = Math.round(bh * 0.65);
+      const fortY = py + halfH - fortH;
+
+      ctx.fillStyle = '#064e3b';
+      ctx.fillRect(px - fortHW, fortY, fortW, fortH);
+      ctx.fillStyle = '#047857';
+      ctx.fillRect(px - fortHW + 2, fortY + 2, fortW - 4, fortH - 4);
+
+      // 황금 총안 (Golden Crenellations)
+      ctx.fillStyle = '#f59e0b';
+      for (let c = px - fortHW; c < px + fortHW - 4; c += 8) {
+        ctx.fillRect(c, fortY - 3, 5, 3);
+      }
+
+      // C. 성채를 감아 오르는 거대 깃털 뱀신 케찰코아틀 (Coiling Feathered Serpent Body)
+      const sway = Math.sin(timeSec * 2.2) * 4;
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 6;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(px - fortHW - 4, py + halfH - 4);
+      ctx.quadraticCurveTo(px - fortHW + 12 + sway, fortY + fortH * 0.5, px, fortY + 12);
+      ctx.quadraticCurveTo(px + fortHW - 12 - sway, fortY + fortH * 0.5, px + fortHW + 4, py + halfH - 4);
+      ctx.stroke();
+
+      // 뱀 비늘 터키석 & 황금 장식 하이라이트 (Turquoise & Gold Plumes)
+      ctx.strokeStyle = '#22d3ee';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // D. 거대한 깃털 뱀 머리 조각 (Feathered Serpent Head at Apex)
+      const headX = px;
+      const headY = fortY + 4;
+
+      ctx.fillStyle = '#059669';
+      ctx.beginPath();
+      ctx.arc(headX, headY, 7, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 뱀 깃털 볏 (Feathered Crest)
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(headX - 6, headY - 8, 3, 5);
+      ctx.fillRect(headX - 1, headY - 10, 3, 6);
+      ctx.fillRect(headX + 4, headY - 8, 3, 5);
+
+      // 루비 눈동자
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(headX - 4, headY - 2, 2, 2);
+      ctx.fillRect(headX + 2, headY - 2, 2, 2);
+
+      // E. 하단 뱀의 턱뼈 입구 관문 (Serpent Maw Portal)
+      const gateW = 14;
+      const gateHW = 7;
+      const gateH = 14;
+      const gateY = py + halfH - gateH;
+
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - gateHW, gateY, gateW, gateH);
+
+      // 날카로운 상아 이빨
+      ctx.fillStyle = '#ffffff';
+      for (let tx = px - gateHW + 1; tx < px + gateHW - 2; tx += 3) {
+        ctx.fillRect(tx, gateY, 2, 3);
+        ctx.fillRect(tx, gateY + gateH - 3, 2, 3);
+      }
+
+      // F. 흩날리는 신성한 케찰 새의 초록/청록 깃털 (Floating Quetzal Feathers)
+      for (let f = 0; f < 4; f++) {
+        const fTime = (timeSec * 2.0 + f * 1.6);
+        const fx = px + Math.sin(fTime) * (halfW * 0.75);
+        const fy = fortY + Math.cos(fTime * 0.8) * 12 + 6;
+
+        ctx.save();
+        ctx.translate(fx, fy);
+        ctx.rotate(Math.sin(fTime * 1.5) * 0.6);
+        ctx.fillStyle = (f % 2 === 0) ? '#34d399' : '#38bdf8';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 4, 1.8, 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(-0.5, -2, 1, 4);
+        ctx.restore();
+      }
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -3946,6 +4186,16 @@
       ctx.beginPath();
       ctx.ellipse(px + 6, py + bh / 2 + 4, bw * 0.42, 4, 0.08, 0, Math.PI * 2);
       ctx.fill();
+
+      // ☀️ 태양신의 황금 제국 엘도라도 & 깃털 뱀신 성채 (El Dorado Sun Pyramid & Quetzalcoatl Citadel)
+      if (type === 'sun_pyramid' || (type === 'capital' && b && b.continent === 'el_dorado') || (type === 'palace' && b && b.continent === 'el_dorado')) {
+        this.drawElDoradoSunPyramid(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'serpent_citadel' || (type === 'castle' && b && b.continent === 'el_dorado') || (type === 'fortress' && b && b.continent === 'el_dorado') || (type === 'temple' && b && b.continent === 'el_dorado') || (type === 'lair' && b && b.continent === 'el_dorado')) {
+        this.drawQuetzalcoatlSerpentCitadel(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
 
       // 🌿 태고 요정 숲 에메랄드 거목 성소 & 발광 포자 거대 버섯 성채 (Elder Fairy World Tree & Spore Citadel)
       if (type === 'fairy_tree' || (type === 'capital' && b && b.continent === 'fairy_grove') || (type === 'palace' && b && b.continent === 'fairy_grove')) {

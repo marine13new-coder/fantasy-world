@@ -4463,6 +4463,7 @@
         else if (weaponId.includes('corsair') || weaponId.includes('pirate') || weaponId.includes('cutlass') || weaponId.includes('anchor') || weaponId.includes('kraken') || weaponId.includes('harpoon')) { slashColor = '#06b6d4'; glowColor = 'rgba(6, 182, 212, 0.85)'; }
         else if (weaponId.includes('spirit') || weaponId.includes('fox') || weaponId.includes('moon') || weaponId.includes('kitsune') || weaponId.includes('katana') || weaponId.includes('shrine')) { slashColor = '#f8fafc'; glowColor = 'rgba(168, 85, 247, 0.85)'; }
         else if (weaponId.includes('fairy') || weaponId.includes('flora') || weaponId.includes('leaf') || weaponId.includes('spore') || weaponId.includes('sylph') || weaponId.includes('nectar') || weaponId.includes('pixie')) { slashColor = '#10b981'; glowColor = 'rgba(74, 222, 128, 0.85)'; }
+        else if (weaponId.includes('dorado') || weaponId.includes('sun') || weaponId.includes('solar') || weaponId.includes('serpent') || weaponId.includes('quetzal') || weaponId.includes('macuahuitl') || weaponId.includes('aztec') || weaponId.includes('inca')) { slashColor = '#facc15'; glowColor = 'rgba(234, 179, 8, 0.9)'; }
 
         const arcCenter = px + sideSign * 4 * sc;
         const startAng = isLeft ? Math.PI * 0.7 : Math.PI * 0.3;
@@ -4674,6 +4675,41 @@
             // 발광 픽시 요정 가루 (Pixie Dust Spark)
             ctx.fillStyle = '#fef08a';
             ctx.fillRect(pxLeaf + 2 * sc, pyLeaf - 3 * sc, 1.8 * sc, 1.8 * sc);
+          }
+        }
+
+        // ☀️ 태양신의 황금 제국 엘도라도 태양검 & 깃털 뱀신 참격 (Sun God Macuahuitl & Quetzal Feather Flurry)
+        if (weaponId.includes('dorado') || weaponId.includes('sun') || weaponId.includes('solar') || weaponId.includes('serpent') || weaponId.includes('quetzal') || weaponId.includes('macuahuitl') || weaponId.includes('aztec') || weaponId.includes('inca')) {
+          // 태양의 황금빛 섬광 호
+          ctx.strokeStyle = '#fef08a';
+          ctx.lineWidth = 3.8 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 24 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          // 튀어나가는 4개의 흑요석 칼날 조각 & 3장의 케찰 깃털
+          const solarTime = (e.animTime || 0) * 18;
+          for (let s = 0; s < 4; s++) {
+            const sAng = startAng + (s / 3) * (endAng - startAng);
+            const sDist = (23 + Math.sin(solarTime + s * 2.2) * 6) * sc;
+            const sx = arcCenter + Math.cos(sAng) * sDist;
+            const sy = py - 10 * sc - bounce + Math.sin(sAng) * sDist;
+
+            // 흑요석 칼날 파편 (Obsidian Shard)
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(sx - 1.5 * sc, sy - 1.5 * sc, 3 * sc, 3 * sc);
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillRect(sx - 0.5 * sc, sy - 0.5 * sc, 1 * sc, 1 * sc);
+
+            // 흩날리는 케찰코아틀 녹색/청록 깃털 (Quetzal Feather)
+            if (s % 2 === 0) {
+              ctx.fillStyle = '#10b981';
+              ctx.beginPath();
+              ctx.ellipse(sx + 3 * sc, sy - 4 * sc, 3.5 * sc, 1.8 * sc, sAng, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.fillStyle = '#facc15';
+              ctx.fillRect(sx + 3 * sc, sy - 4 * sc, 1.5 * sc, 1.5 * sc);
+            }
           }
         }
 

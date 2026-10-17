@@ -6025,6 +6025,10 @@ class WorldRenderer {
       else if (cx >= 3150 && cx <= 3500 && cy >= 1650 && cy <= 2000) {
         tintColor = 'rgba(245, 158, 11, 0.085)';
       }
+      // 엘도라도 태양 제국: 눈부신 황금빛 태양열 에메랄드 림
+      else if (cx >= 240 && cx <= 540 && cy >= 1800 && cy <= 2150) {
+        tintColor = 'rgba(234, 179, 8, 0.095)';
+      }
 
       if (tintColor) {
         const bGrad = ctx.createRadialGradient(cw / 2, ch / 2, radius * 0.35, cw / 2, ch / 2, radius);
