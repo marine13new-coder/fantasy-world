@@ -340,6 +340,9 @@ class EntityManager {
     this.sparkParticles = [];
     this.waterRipples = [];
     this.ghostTrails = [];
+    this.droppedLoot = [];
+    this.hazardZones = [];
+    this.footprints = [];
     this.activeBattles = 0;
     this.player = null;
     this.pet = null;
@@ -361,10 +364,66 @@ class EntityManager {
     this.onEventLog({ type, text, x, y, time: Date.now() });
   }
 
+  // 💎 필드 전리품 드롭 (Loot Drop with Vacuum Magnet)
+  spawnLootDrop(x, y, loot) {
+    if (!this.droppedLoot) this.droppedLoot = [];
+    if (this.droppedLoot.length > 150) this.droppedLoot.shift();
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 0.8 + Math.random() * 1.6;
+    this.droppedLoot.push({
+      id: 'loot_' + Date.now() + '_' + Math.random(),
+      x: x + (Math.random() - 0.5) * 0.4,
+      y: y + (Math.random() - 0.5) * 0.4,
+      vx: Math.cos(angle) * speed,
+      vy: -2.4 - Math.random() * 1.2, // 공중으로 튀어오름
+      bounceY: 0,
+      itemType: loot.itemType || 'gold',
+      name: loot.name || '골드',
+      icon: loot.icon || '🪙',
+      gold: loot.gold || 0,
+      exp: loot.exp || 0,
+      resourceKey: loot.resourceKey || null,
+      resourceCount: loot.resourceCount || 0,
+      color: loot.color || '#facc15',
+      age: 0,
+      duration: 55.0
+    });
+  }
+
+  // ⚠️ 보스/엘리트 공격 전조 위험 장판 (Telegraphed Hazard Zone)
+  addHazardZone(x, y, radius, timer = 1.3, damage = 85, name = '폭발', color = '#ef4444') {
+    if (!this.hazardZones) this.hazardZones = [];
+    if (this.hazardZones.length > 30) this.hazardZones.shift();
+    this.hazardZones.push({
+      id: 'hz_' + Date.now() + '_' + Math.random(),
+      x,
+      y,
+      radius,
+      timer,
+      maxTimer: timer,
+      damage,
+      name,
+      color
+    });
+  }
+
   addWaterRipple(x, y) {
     if (!this.waterRipples) this.waterRipples = [];
     if (this.waterRipples.length > 90) this.waterRipples.shift();
     this.waterRipples.push({ x, y, radius: 2.5, maxRadius: 15, age: 0, duration: 0.85 });
+  }
+
+  // 👣 동적 발자국 & 수면 항적 생성 (Dynamic Footprints & Foaming Wakes)
+  addFootprint(x, y, angle, type, tile) {
+    if (!this.footprints) this.footprints = [];
+    if (this.footprints.length > 100) this.footprints.shift();
+    this.footstepCounter = (this.footstepCounter || 0) + 1;
+    this.footprints.push({
+      x, y, angle, type, tile,
+      age: 0,
+      duration: type === 'wake' ? 2.8 : 4.5,
+      side: this.footstepCounter % 2
+    });
   }
 
   addFloatingText(x, y, text, color = '#ffffff', duration = 1.6) {
@@ -1582,6 +1641,11 @@ class EntityManager {
       return;
     }
 
+    if (skillKey === 'H' || skillKey === 'potion') {
+      this.useHealthPotion(p);
+      return;
+    }
+
     if (skillKey === 'Q') {
       if (typeof audioMgr !== 'undefined') audioMgr.playMagic();
       this.addEffect(p.x, p.y, 11, '#f97316', 0.85);
@@ -1680,6 +1744,32 @@ class EntityManager {
     }
   }
 
+  // 🧪 즉시 생명력 회복 물약 (Quick Health Potion - H키)
+  useHealthPotion(p) {
+    if (!p) p = this.spawnOrGetPlayer();
+    if (p.potionCooldown > 0) {
+      this.addFloatingText(p.x, p.y - 1.0, `⏳ 물약 쿨다운 (${p.potionCooldown.toFixed(1)}초)`, '#94a3b8', 0.8);
+      return;
+    }
+    const potCount = p.inventory.potions || 0;
+    if (potCount <= 0 && p.gold < 80) {
+      this.addFloatingText(p.x, p.y - 1.0, '⚠️ 회복 물약이 부족합니다! (상점에서 80G로 구매 가능)', '#f87171', 1.4);
+      return;
+    }
+    if (potCount > 0) {
+      p.inventory.potions--;
+    } else {
+      p.gold -= 80;
+    }
+    p.potionCooldown = 3.5;
+    const healAmount = Math.round(p.maxHp * 0.45 + 100);
+    p.hp = Math.min(p.maxHp, p.hp + healAmount);
+    if (typeof audioMgr !== 'undefined') audioMgr.playPotion();
+    this.addEffect(p.x, p.y, 4.5, '#4ade80', 0.8);
+    this.addHitSparks(p.x, p.y, '#86efac', 10);
+    this.addFloatingText(p.x, p.y - 1.5, `🧪 생명력 회복! (+${healAmount} HP ❤️)`, '#4ade80', 2.0);
+  }
+
   // 🌲 필드 지형/자원 노드 수동 채집 (나무 벌목 / 암석 채광)
   tryHarvestFieldObject(p) {
     const tx = Math.floor(p.x);
@@ -1691,17 +1781,15 @@ class EntityManager {
       for (const node of this.world.resourceNodes) {
         if (Math.hypot(node.x - p.x, node.y - p.y) <= 2.4 && node.amount > 0) {
           node.amount--;
+          node.shakeTimer = 0.35;
           const isTree = (node.type === 'tree');
           if (isTree) {
-            p.inventory.wood = (p.inventory.wood || 0) + 1;
+            this.spawnLootDrop(node.x, node.y, { itemType: 'wood', name: '단단한 통나무', icon: '🪵', resourceKey: 'wood', resourceCount: 1, exp: 25, color: '#84cc16' });
             this.addHitSparks(node.x, node.y, '#84cc16', 7);
-            this.addFloatingText(node.x, node.y - 1.0, '🪵 +1 목재 (벌목)', '#84cc16', 1.2);
           } else {
-            p.inventory.ore = (p.inventory.ore || 0) + 1;
+            this.spawnLootDrop(node.x, node.y, { itemType: 'ore', name: '반짝이는 광석', icon: '⛏️', resourceKey: 'ore', resourceCount: 1, exp: 25, color: '#facc15' });
             this.addHitSparks(node.x, node.y, '#facc15', 8);
-            this.addFloatingText(node.x, node.y - 1.0, '⛏️ +1 광석 (채광)', '#facc15', 1.2);
           }
-          this.gainPlayerExp(25);
           return true;
         }
       }
@@ -1709,16 +1797,12 @@ class EntityManager {
 
     // 일반 지형 타일 벌목/채광
     if (tile === TILE.FOREST || tile === TILE.AUTUMN_WOOD || tile === TILE.MEADOW) {
-      p.inventory.wood = (p.inventory.wood || 0) + 1;
+      this.spawnLootDrop(p.x, p.y, { itemType: 'wood', name: '원목 목재', icon: '🪵', resourceKey: 'wood', resourceCount: 1, exp: 15, color: '#84cc16' });
       this.addHitSparks(p.x, p.y, '#84cc16', 6);
-      this.addFloatingText(p.x, p.y - 1.2, '🪵 +1 목재 (벌목)', '#84cc16', 1.2);
-      this.gainPlayerExp(15);
       return true;
     } else if (tile === TILE.MOUNTAIN || tile === TILE.HILLS) {
-      p.inventory.ore = (p.inventory.ore || 0) + 1;
+      this.spawnLootDrop(p.x, p.y, { itemType: 'ore', name: '천연 암석 광석', icon: '⛏️', resourceKey: 'ore', resourceCount: 1, exp: 15, color: '#94a3b8' });
       this.addHitSparks(p.x, p.y, '#94a3b8', 6);
-      this.addFloatingText(p.x, p.y - 1.2, '⛏️ +1 광석 (채광)', '#94a3b8', 1.2);
-      this.gainPlayerExp(15);
       return true;
     }
     return false;
@@ -1809,14 +1893,23 @@ class EntityManager {
 
         if (ent.hp <= 0) {
           p.kills = (p.kills || 0) + 1;
-          p.gold += (ent.gold || 50);
-          p.inventory.gems = (p.inventory.gems || 0) + 1;
           this.gainPlayerExp(ent.role === 'dragon' ? 180 : 70);
           if (this.questSystem && this.questSystem.onMonsterSlain) {
             this.questSystem.onMonsterSlain(ent);
           }
-          this.addFloatingText(p.x, p.y - 1.4, `+${ent.gold}G 토벌!`, '#4ade80', 1.5);
+          // 💎 물리 전리품 드롭
+          this.spawnLootDrop(ent.x, ent.y, { itemType: 'gold', name: '골드 주머니', icon: '🪙', gold: ent.gold || 50, color: '#facc15' });
+          if (ent.role === 'dragon') {
+            this.spawnLootDrop(ent.x + 0.4, ent.y, { itemType: 'gem', name: '용의 마정석', icon: '💎', resourceKey: 'gems', resourceCount: 2, color: '#c084fc' });
+            this.spawnLootDrop(ent.x - 0.4, ent.y, { itemType: 'potion', name: '영약', icon: '🧪', resourceKey: 'potions', resourceCount: 1, color: '#f43f5e' });
+          } else if (Math.random() < 0.45) {
+            this.spawnLootDrop(ent.x + 0.3, ent.y, { itemType: 'food', name: '야생 고기', icon: '🥩', resourceKey: 'food', resourceCount: 1, color: '#f87171' });
+          }
         }
+      }
+      if (window.renderer) {
+        window.renderer.screenFlashTimer = 0.08;
+        window.renderer.screenFlashColor = '#fef08a';
       }
       this.addFloatingText(p.x, p.y - 1.8, `🔥 [피니셔 작렬!] (${hits}기 타격)`, '#facc15', 1.4);
       return;
@@ -1834,6 +1927,11 @@ class EntityManager {
       const baseDmg = Math.round(p.atk * comboMultiplier * comboMult * (1.0 + Math.random() * 0.3));
       const dmg = isCrit ? Math.round(baseDmg * 1.5) : baseDmg;
 
+      if (isCrit && window.renderer) {
+        window.renderer.screenFlashTimer = 0.05;
+        window.renderer.screenFlashColor = '#ffffff';
+      }
+
       target.hp -= dmg;
       target.hitTimer = 0.25;
 
@@ -1849,14 +1947,19 @@ class EntityManager {
 
       if (target.hp <= 0) {
         p.kills = (p.kills || 0) + 1;
-        p.gold += (target.gold || 50);
-        p.inventory.gems = (p.inventory.gems || 0) + 1;
         this.gainPlayerExp(target.role === 'dragon' ? 180 : 70);
         if (this.rpgManager) this.rpgManager.addCombo(2);
         if (this.questSystem && this.questSystem.onMonsterSlain) {
           this.questSystem.onMonsterSlain(target);
         }
-        this.addFloatingText(p.x, p.y - 1.2, `+${target.gold}G 격파!`, '#4ade80', 1.5);
+        // 💎 물리 전리품 드롭
+        this.spawnLootDrop(target.x, target.y, { itemType: 'gold', name: '골드 주머니', icon: '🪙', gold: target.gold || 50, color: '#facc15' });
+        if (target.role === 'dragon') {
+          this.spawnLootDrop(target.x + 0.4, target.y, { itemType: 'gem', name: '용의 마정석', icon: '💎', resourceKey: 'gems', resourceCount: 2, color: '#c084fc' });
+          this.spawnLootDrop(target.x - 0.4, target.y, { itemType: 'potion', name: '영약', icon: '🧪', resourceKey: 'potions', resourceCount: 1, color: '#f43f5e' });
+        } else if (Math.random() < 0.45) {
+          this.spawnLootDrop(target.x + 0.3, target.y, { itemType: 'food', name: '야생 고기', icon: '🥩', resourceKey: 'food', resourceCount: 1, color: '#f87171' });
+        }
       }
     } else {
       // 적이 없으면 필드 채집 시도 (벌목/채광)
@@ -2311,9 +2414,10 @@ class EntityManager {
       if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
     }
 
-    // 자원 노드 리스폰 진행
+    // 자원 노드 리스폰 & 피격 흔들림 타이머 진행
     if (this.world.resourceNodes) {
       for (const node of this.world.resourceNodes) {
+        if (node.shakeTimer > 0) node.shakeTimer -= dt;
         if (node.amount <= 0 && node.respawn > 0) {
           node.respawn -= dt;
           if (node.respawn <= 0) {
@@ -2518,6 +2622,113 @@ class EntityManager {
         const gt = this.ghostTrails[i];
         gt.age += dt;
         if (gt.age >= gt.duration) this.ghostTrails.splice(i, 1);
+      }
+    }
+
+    // 💎 필드 전리품 물리 & 자석 흡수 (Vacuum Magnet Pickup)
+    if (this.droppedLoot) {
+      const p = this.player;
+      for (let i = this.droppedLoot.length - 1; i >= 0; i--) {
+        const item = this.droppedLoot[i];
+        item.age += dt;
+
+        // 바운스 물리
+        if (item.vy < 3.0) {
+          item.vy += dt * 7.5;
+          item.bounceY += item.vy * dt * 4.0;
+          if (item.bounceY >= 0) {
+            item.bounceY = 0;
+            item.vy = 0;
+            item.vx *= 0.5;
+          }
+        }
+
+        // 플레이어 자석 흡수 (반경 3.4타일 내 진입 시 플레이어로 고속 이동)
+        if (p) {
+          const dx = p.x - item.x;
+          const dy = p.y - item.y;
+          const dist = Math.hypot(dx, dy);
+
+          if (dist < 3.4) {
+            const pullSpeed = (12.0 / Math.max(0.4, dist)) * dt;
+            item.x += (dx / dist) * Math.min(dist, pullSpeed);
+            item.y += (dy / dist) * Math.min(dist, pullSpeed);
+
+            // 흡수 완료
+            if (dist < 0.65) {
+              if (item.gold > 0) {
+                p.gold += item.gold;
+                if (typeof audioMgr !== 'undefined') audioMgr.playCoin();
+                this.addFloatingText(p.x, p.y - 1.2, `+${item.gold}G 🪙`, '#fde047', 1.0);
+              }
+              if (item.exp > 0) {
+                this.gainPlayerExp(item.exp);
+              }
+              if (item.resourceKey) {
+                p.inventory[item.resourceKey] = (p.inventory[item.resourceKey] || 0) + (item.resourceCount || 1);
+                this.addFloatingText(p.x, p.y - 1.2, `${item.icon} +${item.resourceCount || 1} ${item.name}`, '#4ade80', 1.2);
+                if (typeof audioMgr !== 'undefined') audioMgr.playCoin();
+              }
+              this.addHitSparks(item.x, item.y, item.color, 6);
+              this.droppedLoot.splice(i, 1);
+              continue;
+            }
+          }
+        }
+
+        if (item.age >= item.duration) {
+          this.droppedLoot.splice(i, 1);
+        }
+      }
+    }
+
+    // ⚠️ 보스 공격 위험 장판 (Hazard Zones) 업데이트 및 기폭
+    if (this.hazardZones) {
+      const p = this.player;
+      for (let i = this.hazardZones.length - 1; i >= 0; i--) {
+        const hz = this.hazardZones[i];
+        hz.timer -= dt;
+        if (hz.timer <= 0) {
+          // 기폭! (Detonation)
+          this.addEffect(hz.x, hz.y, hz.radius * 1.2, hz.color, 0.7);
+          this.addHitSparks(hz.x, hz.y, hz.color, 14);
+          if (typeof audioMgr !== 'undefined') audioMgr.playMeteor();
+          if (this.camera) this.camera.shake = Math.min(22, (this.camera.shake || 0) + 9);
+
+          // 범위 내 플레이어 및 아군 피해 (닷지 롤 무적 상태면 회피!)
+          if (p && Math.hypot(p.x - hz.x, p.y - hz.y) <= hz.radius) {
+            if (p.invulnerable) {
+              this.addFloatingText(p.x, p.y - 1.2, '🛡️ PERFECT DODGE! (회피 성공)', '#38bdf8', 1.5);
+              if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+            } else {
+              p.hp -= hz.damage;
+              p.hitTimer = 0.35;
+              this.addFloatingText(p.x, p.y - 1.2, `💥-${hz.damage} [장판 피격!]`, '#ef4444', 1.5);
+            }
+          }
+
+          // 범위 내 일반 몬스터/동물/기사 피해
+          const affected = this.spatialGrid
+            ? this.spatialGrid.query(hz.x, hz.y, hz.radius, ent => ent !== p && ent.hp > 0)
+            : this.entities.filter(ent => ent !== p && ent.hp > 0 && Math.hypot(ent.x - hz.x, ent.y - hz.y) <= hz.radius);
+          for (const ent of affected) {
+            ent.hp -= hz.damage;
+            ent.hitTimer = 0.25;
+            this.addFloatingText(ent.x, ent.y - 1.0, `💥-${hz.damage}`, '#ef4444', 1.0);
+          }
+
+          this.hazardZones.splice(i, 1);
+        }
+      }
+    }
+
+    // 👣 동적 지형 발자국 및 항적 수명 관리
+    if (this.footprints && this.footprints.length > 0) {
+      for (let i = this.footprints.length - 1; i >= 0; i--) {
+        this.footprints[i].age += dt;
+        if (this.footprints[i].age >= this.footprints[i].duration) {
+          this.footprints.splice(i, 1);
+        }
       }
     }
   }
@@ -2774,6 +2985,7 @@ class EntityManager {
     }
     if (p.hitTimer > 0) p.hitTimer -= dt;
     if (p.boostTimer > 0) p.boostTimer -= dt;
+    if (p.potionCooldown > 0) p.potionCooldown -= dt;
 
     // 💨 대시 / 닷지 롤 진행 중 (초고속 이동 & 지면 먼지)
     if (p.isDashing) {
@@ -2799,6 +3011,15 @@ class EntityManager {
     if ((curTile === TILE.WATER || curTile === TILE.DOCK || p.isShip) && (p.vx !== 0 || p.vy !== 0)) {
       if (Math.random() < 0.28) {
         this.addWaterRipple(p.x, p.y);
+      }
+    }
+
+    // 👣 동적 발자국 / 항적 시스템 (Footprints & Ship Wakes)
+    if (p.vx !== 0 || p.vy !== 0) {
+      p.footstepDist = (p.footstepDist || 0) + Math.hypot(p.vx, p.vy) * dt;
+      if (p.footstepDist >= 0.72) {
+        p.footstepDist = 0;
+        this.addFootprint(p.x, p.y, Math.atan2(p.vy, p.vx), p.isShip ? 'wake' : (p.mount || 'human'), curTile);
       }
     }
 

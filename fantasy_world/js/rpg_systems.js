@@ -547,9 +547,14 @@ class RPGSystemsManager {
     if (this.activeBoss && this.activeBossEntity) {
       this.activeBoss.hp = this.activeBossEntity.hp;
 
-      // 보스 스킬 공격 (주변 충격파)
-      if (Math.random() < 0.05 && this.activeBoss.hp > 0) {
-        this.em.addEffect(this.activeBossEntity.x, this.activeBossEntity.y, 9.0, '#ef4444', 0.8);
+      // 보스 스킬 공격 (전조 경고 장판 Telegraphed Hazard Zone)
+      if (Math.random() < 0.04 && this.activeBoss.hp > 0 && this.em.player) {
+        const p = this.em.player;
+        const targetX = p.x + (Math.random() - 0.5) * 2.5;
+        const targetY = p.y + (Math.random() - 0.5) * 2.5;
+        this.em.addHazardZone(targetX, targetY, 3.5, 1.25, 95, `[${this.activeBoss.name}] 멸망의 강타`, '#ef4444');
+        this.em.addFloatingText(this.activeBossEntity.x, this.activeBossEntity.y - 1.8, '⚠️ 보스 특수기 시전! 회피하세요!', '#ef4444', 1.2);
+        if (typeof audioMgr !== 'undefined') audioMgr.playBossHorn();
       }
 
       // 보스 처치 체크
@@ -587,6 +592,10 @@ class RPGSystemsManager {
     }
 
     if (window.audioMgr) window.audioMgr.playFanfare();
+    if (window.renderer) {
+      window.renderer.screenFlashTimer = 0.15;
+      window.renderer.screenFlashColor = '#fef08a';
+    }
     this.em.addEffect(p ? p.x : b.x, p ? p.y : b.y, 16, '#facc15', 2.5);
     this.em.addFloatingText(p ? p.x : b.x, (p ? p.y : b.y) - 2.5, `🏆 레이드 보스 [${b.name}] 격퇴!`, '#fde047', 3.5);
     this.em.log('battle', `🎉 [보스 토벌] 위대한 영웅들이 '${b.name}'을(를) 격퇴하여 평화를 되찾았습니다! (+${b.goldReward}G, 명성 +${b.fameReward})`, b.x, b.y);

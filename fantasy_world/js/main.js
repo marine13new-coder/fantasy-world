@@ -60,6 +60,7 @@ function startFantasyWorld() {
   const player = entityMgr.spawnOrGetPlayer();
 
   const renderer = new WorldRenderer(canvas, minimapCanvas, world, entityMgr);
+  window.renderer = renderer;
 
   // 2. 카메라 및 시뮬레이션 상태
   let isPlayerControlActive = true;
@@ -258,6 +259,13 @@ function startFantasyWorld() {
   if (btnDodgeRoll) {
     btnDodgeRoll.addEventListener('click', () => {
       entityMgr.playerDodgeRoll();
+    });
+  }
+
+  const btnSkillPotion = document.getElementById('btnSkillPotion');
+  if (btnSkillPotion) {
+    btnSkillPotion.addEventListener('click', () => {
+      entityMgr.triggerPlayerSkill('H');
     });
   }
 
@@ -769,6 +777,45 @@ function startFantasyWorld() {
       const expPct = Math.max(0, Math.min(100, ((p.exp || 0) / (p.maxExp || 120)) * 100));
       expFill.style.width = `${expPct}%`;
     }
+    updateSkillCooldownsUI();
+  }
+
+  function updateSkillCooldownsUI() {
+    const p = player;
+    if (!p) return;
+    const rpg = entityMgr.rpgManager;
+
+    // 회피 롤 (Space)
+    const dodgeBtn = document.getElementById('btnDodgeRoll');
+    if (dodgeBtn) {
+      dodgeBtn.style.opacity = p.dodgeCooldown > 0 ? '0.5' : '1.0';
+    }
+
+    // 회복 물약 (H)
+    const potBtn = document.getElementById('btnSkillPotion');
+    if (potBtn) {
+      potBtn.style.opacity = p.potionCooldown > 0 ? '0.5' : '1.0';
+    }
+
+    // 공격 스킬 1~4
+    if (rpg && rpg.skills) {
+      const s1 = document.getElementById('btnSkill1');
+      if (s1 && rpg.skills.whirlwind) {
+        s1.style.opacity = rpg.skills.whirlwind.cd > 0 ? '0.5' : '1.0';
+      }
+      const s2 = document.getElementById('btnSkill2');
+      if (s2 && rpg.skills.frostNova) {
+        s2.style.opacity = rpg.skills.frostNova.cd > 0 ? '0.5' : '1.0';
+      }
+      const s3 = document.getElementById('btnSkill3');
+      if (s3 && rpg.skills.meteor) {
+        s3.style.opacity = rpg.skills.meteor.cd > 0 ? '0.5' : '1.0';
+      }
+      const s4 = document.getElementById('btnSkill4');
+      if (s4 && rpg.skills.barrage) {
+        s4.style.opacity = rpg.skills.barrage.cd > 0 ? '0.5' : '1.0';
+      }
+    }
   }
 
   // 군주 칙령 토글 팝업 바인딩
@@ -1006,6 +1053,8 @@ function startFantasyWorld() {
     } else if (e.code === 'BracketRight' || e.code === 'Backquote') {
       if (btnToggleRightSidebar) btnToggleRightSidebar.click();
     } else if (e.code === 'KeyH') {
+      entityMgr.triggerPlayerSkill('H');
+    } else if (e.code === 'KeyY') {
       document.body.classList.toggle('cinematic-mode');
     } else if (e.code === 'F11') {
       e.preventDefault();

@@ -41,6 +41,9 @@ class WorldRenderer {
       });
     }
 
+    this.screenFlashTimer = 0;
+    this.screenFlashColor = '#ffffff';
+
     this.bakeStaticTerrain();
   }
 
@@ -107,6 +110,10 @@ class WorldRenderer {
 
     this.lastWorldTime = worldTime;
     ctx.imageSmoothingEnabled = false; // 픽셀 아트 레더링 유지
+
+    if (this.screenFlashTimer > 0) {
+      this.screenFlashTimer = Math.max(0, this.screenFlashTimer - 0.016);
+    }
 
     ctx.clearRect(0, 0, cw, ch);
     ctx.fillStyle = '#061320';
@@ -312,6 +319,9 @@ class WorldRenderer {
       return e.category === filter || e.role === filter;
     }
 
+    // 8.5. ⚠️ 보스/엘리트 공격 전조 위험 장판 (Telegraphed Hazard Zones)
+    this.drawHazardZones(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy);
+
     // 9. 수제 픽셀아트 엔티티 (영웅, 기사, 마법사, 엘프, 드워프, 범선, 드래곤 등)
     const midX = (minTx + maxTx) / 2;
     const midY = (minTy + maxTy) / 2;
@@ -351,8 +361,10 @@ class WorldRenderer {
       }
     }
 
-    // 10.5. 수면 파문 & 대시 잔상 & 오버헤드 16비트 전투 체력바
+    // 10.5. 💎 필드 발자국 & 전리품 드롭 & 수면 파문 & 대시 잔상 & 오버헤드 16비트 전투 체력바
     if (camera.zoom > 0.30) {
+      this.drawFootprints(ctx, ts, minTx, maxTx, minTy, maxTy);
+      this.drawDroppedLoot(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy);
       this.drawWaterWadingRipples(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy);
       this.drawDashGhostTrails(ctx, ts);
       this.drawEntityCombatHUD(ctx, ts, camera.zoom, minTx, maxTx, minTy, maxTy);
@@ -2540,6 +2552,26 @@ class WorldRenderer {
         ctx.fillRect(fx, fy, 2, 2);
       }
     }
+
+    // 7. 🩸 치명상 위기 심장박동 비네트 (Low HP Pulsating Crimson Vignette)
+    const p = this.entityMgr.player;
+    if (p && p.hp > 0 && (p.hp / p.maxHp) < 0.28) {
+      const pulse = 0.26 + 0.16 * Math.sin(timeSec * 7.5);
+      const radGrad = ctx.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * 0.35, cw / 2, ch / 2, Math.max(cw, ch) * 0.72);
+      radGrad.addColorStop(0, 'rgba(220, 38, 38, 0)');
+      radGrad.addColorStop(1, `rgba(185, 28, 28, ${pulse})`);
+      ctx.fillStyle = radGrad;
+      ctx.fillRect(0, 0, cw, ch);
+    }
+
+    // 8. ⚡ 피격 / 치명타 / 피니셔 화면 섬광 (Impact Screen Flash)
+    if (this.screenFlashTimer > 0) {
+      ctx.save();
+      ctx.fillStyle = this.screenFlashColor || '#ffffff';
+      ctx.globalAlpha = Math.min(0.42, this.screenFlashTimer * 3.5);
+      ctx.fillRect(0, 0, cw, ch);
+      ctx.restore();
+    }
   }
 
   renderMinimap(camera, cw, ch, filterCategory) {
@@ -2578,6 +2610,42 @@ class WorldRenderer {
       mCtx.strokeStyle = '#000';
       mCtx.lineWidth = 1;
       mCtx.stroke();
+    }
+
+    // 🚨 월드 보스 레이드 출현 시 펄싱 붉은 해골/링 표시
+    if (this.entityMgr.rpgManager && this.entityMgr.rpgManager.activeBoss && this.entityMgr.rpgManager.activeBoss.hp > 0) {
+      const b = this.entityMgr.rpgManager.activeBoss;
+      const bx = b.x * scaleX;
+      const by = b.y * scaleY;
+      const pulseR = 5 + Math.sin(Date.now() / 150) * 2;
+      mCtx.save();
+      mCtx.strokeStyle = '#ef4444';
+      mCtx.lineWidth = 1.5;
+      mCtx.beginPath();
+      mCtx.arc(bx, by, pulseR, 0, Math.PI * 2);
+      mCtx.stroke();
+      mCtx.fillStyle = '#dc2626';
+      mCtx.beginPath();
+      mCtx.arc(bx, by, 3.5, 0, Math.PI * 2);
+      mCtx.fill();
+      mCtx.restore();
+    }
+
+    // 🌟 플레이어 레이더 위치 강조 (백색 + 황금 펄스 링)
+    if (this.entityMgr.player) {
+      const px = this.entityMgr.player.x * scaleX;
+      const py = this.entityMgr.player.y * scaleY;
+      mCtx.save();
+      mCtx.strokeStyle = '#facc15';
+      mCtx.lineWidth = 1.6;
+      mCtx.beginPath();
+      mCtx.arc(px, py, 4.5, 0, Math.PI * 2);
+      mCtx.stroke();
+      mCtx.fillStyle = '#ffffff';
+      mCtx.beginPath();
+      mCtx.arc(px, py, 2.5, 0, Math.PI * 2);
+      mCtx.fill();
+      mCtx.restore();
     }
 
     // 퀘스트 목표 위치 반짝이는 황금 별 표시
@@ -2869,7 +2937,8 @@ class WorldRenderer {
     if (!this.world.resourceNodes) return;
     for (const n of this.world.resourceNodes) {
       if (n.amount <= 0) continue;
-      const px = Math.round(n.x * ts);
+      const shake = (n.shakeTimer && n.shakeTimer > 0) ? Math.sin(timeSec * 45) * 3 : 0;
+      const px = Math.round(n.x * ts + shake);
       const py = Math.round(n.y * ts);
       const bob = Math.sin(timeSec * 3 + n.x) * 1.5;
 
@@ -3045,7 +3114,146 @@ class WorldRenderer {
       ctx.fill();
     }
 
+    // 4. 모닥불 & 야외 화로 따뜻한 깜빡임 조명 (Campfire Flicker Glow)
+    if (this.world.props) {
+      for (const pr of this.world.props) {
+        if (pr.type === 'campfire' || pr.type === 'campfire_stools') {
+          if (Math.abs(pr.x - camera.x) > 28 || Math.abs(pr.y - camera.y) > 22) continue;
+          const cx = Math.round(pr.x * ts);
+          const cy = Math.round(pr.y * ts);
+          const flickerRad = 32 + Math.sin(timeSec * 8 + pr.x) * 4;
+          const cGrad = ctx.createRadialGradient(cx, cy, 2, cx, cy, flickerRad);
+          cGrad.addColorStop(0, 'rgba(251, 146, 60, 0.48)');
+          cGrad.addColorStop(0.6, 'rgba(234, 88, 12, 0.18)');
+          cGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = cGrad;
+          ctx.beginPath();
+          ctx.arc(cx, cy, flickerRad, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    // 5. 어둠 속 몬스터 & 포식자의 영롱한 야광 안광 (Predator Glowing Eyes)
+    for (const ent of this.entityMgr.entities) {
+      if (ent.hp <= 0) continue;
+      if (Math.abs(ent.x - camera.x) > 26 || Math.abs(ent.y - camera.y) > 20) continue;
+      if (ent.faction === 'monster' || ent.isPredator || ent.role === 'dragon') {
+        const ex = Math.round(ent.x * ts);
+        const ey = Math.round(ent.y * ts - 11 * (ent.scale || 1));
+        const eyeColor = ent.role === 'dragon' ? '#fde047' : (ent.race === 'undead' ? '#c084fc' : '#ef4444');
+        ctx.fillStyle = eyeColor;
+        ctx.fillRect(ex - 2, ey, 1.5, 1.5);
+        ctx.fillRect(ex + 1, ey, 1.5, 1.5);
+      }
+    }
+
     ctx.restore();
+  }
+
+  // ⚠️ [8.5] 보스/엘리트 공격 전조 위험 장판 렌더러 (Telegraphed Hazard Zones)
+  drawHazardZones(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy) {
+    if (!this.entityMgr.hazardZones || this.entityMgr.hazardZones.length === 0) return;
+    for (const hz of this.entityMgr.hazardZones) {
+      if (hz.x < minTx || hz.x > maxTx || hz.y < minTy || hz.y > maxTy) continue;
+      const hx = Math.round(hz.x * ts);
+      const hy = Math.round(hz.y * ts);
+      const rad = Math.round(hz.radius * ts);
+      const progress = Math.max(0, Math.min(1, 1 - (hz.timer / hz.maxTimer)));
+
+      ctx.save();
+      // 위험 장판 내부 반투명 붉은 점멸 채우기
+      const pulseAlpha = 0.18 + Math.sin(timeSec * 14) * 0.08;
+      ctx.fillStyle = `rgba(239, 68, 68, ${pulseAlpha})`;
+      ctx.beginPath();
+      ctx.arc(hx, hy, rad, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 외곽 점선 회전 경고 림
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 2.0;
+      ctx.setLineDash([6, 4]);
+      ctx.lineDashOffset = -timeSec * 18;
+      ctx.beginPath();
+      ctx.arc(hx, hy, rad, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 내부에서 외곽으로 차오르는 전조 카운트다운 링
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 3.0;
+      ctx.beginPath();
+      ctx.arc(hx, hy, Math.round(rad * progress), 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 중심부 위험 경고 표식
+      ctx.font = 'bold 15px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ef4444';
+      ctx.fillText('⚠️', hx, hy + 5);
+
+      ctx.restore();
+    }
+  }
+
+  // 💎 [10.5-D] 필드 전리품 드롭 렌더러 (Bouncing Loot Drops & Floating Pickups)
+  drawDroppedLoot(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy) {
+    if (!this.entityMgr.droppedLoot || this.entityMgr.droppedLoot.length === 0) return;
+    for (const loot of this.entityMgr.droppedLoot) {
+      if (loot.x < minTx || loot.x > maxTx || loot.y < minTy || loot.y > maxTy) continue;
+      const lx = Math.round(loot.x * ts);
+      const ly = Math.round(loot.y * ts);
+      const bob = Math.sin(timeSec * 4.5 + (loot.x * 3)) * 2.5;
+      const itemY = Math.round(ly + (loot.bounceY || 0) + bob);
+
+      ctx.save();
+      // 1. 지면 타원형 드롭 섀도우
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.beginPath();
+      ctx.ellipse(lx, ly + 2, 6, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. 황금빛 / 비전 에너지 오라 광채
+      ctx.fillStyle = loot.itemType === 'gem' ? 'rgba(168, 85, 247, 0.28)' : 'rgba(250, 204, 21, 0.32)';
+      ctx.beginPath();
+      ctx.arc(lx, itemY - 4, 9, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 3. 16비트 픽셀 아이템 렌더링
+      if (loot.itemType === 'gold') {
+        // 회전하는 16비트 황금 코인
+        const coinW = Math.max(2, Math.round(Math.abs(Math.sin(timeSec * 6 + loot.x)) * 8));
+        ctx.fillStyle = '#ca8a04';
+        ctx.fillRect(lx - coinW / 2 - 1, itemY - 8, coinW + 2, 8);
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(lx - coinW / 2, itemY - 7, coinW, 6);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(lx - coinW / 4, itemY - 6, Math.max(1, coinW / 2), 2);
+      } else if (loot.itemType === 'wood') {
+        // 나이테 통나무
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(lx - 5, itemY - 6, 10, 6);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(lx - 4, itemY - 5, 8, 4);
+        ctx.fillStyle = '#fef3c7';
+        ctx.fillRect(lx + 2, itemY - 4, 2, 2);
+      } else if (loot.itemType === 'ore') {
+        // 반짝이는 마정석/철광석
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(lx - 4, itemY - 6, 8, 7);
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(lx - 2, itemY - 5, 4, 4);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(lx - 1, itemY - 4, 2, 2);
+      } else {
+        // 기타 전리품 이모지 (고기 🥩, 물약 🧪, 보석 💎)
+        ctx.font = '13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(loot.icon, lx, itemY - 1);
+      }
+
+      ctx.restore();
+    }
   }
 
   // 🌊 [10.5-A] 수면 보행 & 항해 파문 링 (Water Wading Ripples)
@@ -3065,6 +3273,63 @@ class WorldRenderer {
       ctx.beginPath();
       ctx.ellipse(rx, ry + 2, curRadius, curRadius * 0.5, 0, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  // 👣 [10.5-A2] 동적 지형 발자국 및 선박 항적 (Dynamic Footprints & Foaming Wakes)
+  drawFootprints(ctx, ts, minTx, maxTx, minTy, maxTy) {
+    if (!this.entityMgr.footprints || this.entityMgr.footprints.length === 0) return;
+    for (const fp of this.entityMgr.footprints) {
+      if (fp.x < minTx || fp.x > maxTx || fp.y < minTy || fp.y > maxTy) continue;
+      const progress = fp.age / fp.duration;
+      const alpha = Math.max(0, 1 - progress);
+      const fx = Math.round(fp.x * ts);
+      const fy = Math.round(fp.y * ts);
+
+      ctx.save();
+      ctx.translate(fx, fy);
+      ctx.rotate(fp.angle || 0);
+
+      if (fp.type === 'wake') {
+        // 선박 쌍발 거품 항적
+        ctx.strokeStyle = `rgba(224, 242, 254, ${alpha * 0.6})`;
+        ctx.lineWidth = 1.4;
+        const wakeSpread = (progress * 7) + 3;
+        ctx.beginPath();
+        ctx.moveTo(0, -wakeSpread);
+        ctx.lineTo(-14, -wakeSpread * 2);
+        ctx.moveTo(0, wakeSpread);
+        ctx.lineTo(-14, wakeSpread * 2);
+        ctx.stroke();
+      } else if (fp.type === 'horse') {
+        // 말발굽 편자 자국
+        const col = (fp.tile === TILE.SNOW || fp.tile === TILE.ICE)
+          ? `rgba(186, 230, 253, ${alpha * 0.7})`
+          : (fp.tile === TILE.SAND || fp.tile === TILE.DESERT_DUNES
+            ? `rgba(180, 83, 9, ${alpha * 0.5})`
+            : `rgba(20, 40, 20, ${alpha * 0.35})`);
+        ctx.fillStyle = col;
+        const offset = fp.side ? 2.5 : -2.5;
+        ctx.fillRect(-2, offset - 1, 4, 3);
+        ctx.clearRect(-1, offset, 2, 1);
+      } else if (fp.type === 'dragon') {
+        // 비룡 발톱 흔적
+        ctx.fillStyle = `rgba(15, 23, 42, ${alpha * 0.4})`;
+        ctx.fillRect(-2, -3, 3, 2);
+        ctx.fillRect(0, -1, 3, 2);
+        ctx.fillRect(-2, 1, 3, 2);
+      } else {
+        // 도보 인간 발자국
+        const col = (fp.tile === TILE.SNOW || fp.tile === TILE.ICE)
+          ? `rgba(186, 230, 253, ${alpha * 0.75})`
+          : (fp.tile === TILE.SAND || fp.tile === TILE.DESERT_DUNES
+            ? `rgba(180, 83, 9, ${alpha * 0.55})`
+            : `rgba(20, 40, 20, ${alpha * 0.35})`);
+        ctx.fillStyle = col;
+        const offset = fp.side ? 2 : -2;
+        ctx.fillRect(-2, offset - 1, 4, 2);
+      }
       ctx.restore();
     }
   }
