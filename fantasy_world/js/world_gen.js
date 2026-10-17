@@ -660,6 +660,16 @@ function createSettlementList() {
   add('diamond_constellation_oracle_shrine', '다이아몬드 별자리 신탁 성소', 'temple', 'crystal_zenith', 2540, 1620, 'elf', true, 11);
   add('celestial_quartz_crystal_gardens', '천공 석영 수정 정원 마을', 'town', 'crystal_zenith', 2640, 1800, 'fairy', false, 8);
 
+  // =========================================================================
+  // 22. THE BLACK PEARL ABYSSAL CORSAIR ARMADA & KRAKEN CITADEL (검은 깃발 해적 연합 & 크라켄 해골 요새 제국)
+  // =========================================================================
+  add('corsair_black_flagship_capital', '검은 깃발 해적 연합 수도 & 드레드노트 기함 성채', 'capital', 'corsair', 1380, 1380, 'monster', true, 16);
+  add('kraken_abyssal_skull_citadel', '크라켄 거수 해골 요새 성채', 'castle', 'corsair', 1280, 1440, 'monster', true, 14);
+  add('tortuga_rum_bazaar_freeport', '토르투가 럼주 암시장 자유 무역항', 'port', 'corsair', 1480, 1340, 'human', false, 9);
+  add('ghost_ship_armada_graveyard', '유령선 함대 난파선 묘지 은신처', 'lair', 'corsair', 1340, 1480, 'undead', true, 10);
+  add('siren_coral_lagoon_sanctuary', '세이렌 산호초 만 비전 신전', 'temple', 'corsair', 1440, 1460, 'beastkin', true, 11);
+  add('smugglers_tide_cavern_haven', '밀수꾼 조수 동굴 아지트 마을', 'town', 'corsair', 1320, 1320, 'human', false, 8);
+
   return list;
 }
 
@@ -1041,6 +1051,18 @@ function generateWorld() {
           continue;
         }
 
+        // 검은 깃발 해적 연합 & 크라켄 해골 요새 제국 전용 해양 산호초 환초 카빙
+        if (s.continent === 'corsair') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.CASTLE_FLOOR : TILE.ROAD; // 흑요석 해적 데크 보도
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.SAND : TILE.GRASS; // 야자수 열대 해변 & 산호초 환초
+          } else if (dist <= landRad + 4) {
+            tiles[idx(tx, ty)] = TILE.WATER; // 에메랄드 청록빛 라군 얕은 바다
+          }
+          continue;
+        }
+
         const curT = tiles[idx(tx, ty)];
         const isWater = (curT === TILE.DEEP_WATER || curT === TILE.WATER);
 
@@ -1263,7 +1285,15 @@ function generateWorld() {
     ['crystal_prism_zenith_capital', 'astral_gem_alchemist_refinery'],
     ['crystal_prism_zenith_capital', 'diamond_constellation_oracle_shrine'],
     ['starlight_mana_spire_citadel', 'celestial_quartz_crystal_gardens'],
-    ['diamond_constellation_oracle_shrine', 'celestial_quartz_crystal_gardens']
+    ['diamond_constellation_oracle_shrine', 'celestial_quartz_crystal_gardens'],
+
+    // [검은 깃발 해적 연합 & 크라켄 해골 요새 바닷길 항로 (Corsair Skull Sea Lane)]
+    ['corsair_black_flagship_capital', 'kraken_abyssal_skull_citadel'],
+    ['corsair_black_flagship_capital', 'tortuga_rum_bazaar_freeport'],
+    ['corsair_black_flagship_capital', 'ghost_ship_armada_graveyard'],
+    ['corsair_black_flagship_capital', 'siren_coral_lagoon_sanctuary'],
+    ['kraken_abyssal_skull_citadel', 'smugglers_tide_cavern_haven'],
+    ['siren_coral_lagoon_sanctuary', 'smugglers_tide_cavern_haven']
   ];
   const roadLinks = rawRoadLinks.filter(([a, b]) => settlementMap[a] && settlementMap[b]);
 

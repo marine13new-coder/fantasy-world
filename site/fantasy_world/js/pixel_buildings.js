@@ -2972,6 +2972,286 @@
     },
 
     // =========================================================================
+    // 11.20. 검은 깃발 해적 연합 드레드노트 기함 성채 (Corsair Black Flagship Citadel)
+    // =========================================================================
+    drawCorsairFlagshipCitadel(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 바닷물 파도 & 포말 그림자
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.55)';
+      ctx.fillRect(px - halfW - 2, py + halfH - 2, bw + 4, 6);
+      ctx.fillStyle = 'rgba(6, 182, 212, 0.35)';
+      ctx.fillRect(px - halfW - 4, py + halfH - 1, bw + 8, 4);
+
+      // B. 거대 흑단 목조 갤리온 선체 (Black Ebony Galleon Hull)
+      const hullW = Math.round(bw * 0.92);
+      const hullHW = Math.round(hullW / 2);
+      const hullH = Math.round(bh * 0.52);
+      const hullY = py + halfH - hullH;
+
+      ctx.fillStyle = '#0f172a'; // 흑단 오크 외벽
+      ctx.beginPath();
+      ctx.moveTo(px - hullHW, hullY + 6);
+      ctx.lineTo(px - hullHW + 12, py + halfH);
+      ctx.lineTo(px + hullHW - 8, py + halfH);
+      ctx.lineTo(px + hullHW, hullY);
+      ctx.lineTo(px + hullHW - 12, hullY);
+      ctx.lineTo(px - hullHW, hullY + 6);
+      ctx.closePath();
+      ctx.fill();
+
+      // 선체 목재 판자 결 & 황금 장식 라인 (Golden Hull Plating)
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(px - hullHW + 8, hullY + 8, hullW - 16, 2);
+      ctx.fillRect(px - hullHW + 12, hullY + 16, hullW - 22, 2);
+      ctx.fillStyle = '#d97706'; // 황금 트림
+      ctx.fillRect(px - hullHW + 6, hullY + 12, hullW - 12, 2);
+
+      // 함수(Prow) 황금 드래곤 선수상 (Golden Dragon Figurehead)
+      const prowX = px + hullHW - 2;
+      const prowY = hullY - 4;
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.moveTo(prowX, prowY + 8);
+      ctx.lineTo(prowX + 7, prowY + 2);
+      ctx.lineTo(prowX + 9, prowY);
+      ctx.lineTo(prowX + 5, prowY + 5);
+      ctx.closePath();
+      ctx.fill();
+
+      // 함포 포문 4문 & 포신 (Bronze Broadside Cannons)
+      for (let c = 0; c < 4; c++) {
+        const canX = px - hullHW + 16 + c * 14;
+        const canY = hullY + 9;
+        ctx.fillStyle = '#020617';
+        ctx.fillRect(canX, canY, 5, 5);
+        ctx.fillStyle = '#d97706'; // 청동 포신
+        ctx.fillRect(canX - 2, canY + 1, 3, 3);
+
+        // 주기적 함포 발사 연기 퍼프 (Occasional Cannon Smoke Puff)
+        const fireCycle = (timeSec * 3 + c * 1.5) % 8;
+        if (fireCycle < 0.6) {
+          ctx.fillStyle = 'rgba(254, 240, 138, 0.85)';
+          ctx.fillRect(canX - 5, canY, 3, 3);
+          ctx.fillStyle = 'rgba(226, 232, 240, 0.6)';
+          ctx.beginPath();
+          ctx.arc(canX - 7, canY - 2, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // C. 선미 루프탑 캐빈 & 스테인드글라스 창 (Aft Captain Quarters)
+      const sternW = Math.round(bw * 0.35);
+      const sternH = Math.round(bh * 0.42);
+      const sternX = px - hullHW + 4;
+      const sternY = hullY - sternH + 6;
+
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(sternX, sternY, sternW, sternH);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(sternX + 2, sternY + 2, sternW - 4, sternH - 4);
+
+      // 선미 격자 황금 창문 (Lantern-Lit Bay Windows)
+      ctx.fillStyle = isNight ? '#fef08a' : '#bae6fd';
+      ctx.fillRect(sternX + 4, sternY + 6, sternW - 8, 8);
+      ctx.fillStyle = '#78350f';
+      for (let wx = sternX + 7; wx < sternX + sternW - 6; wx += 4) {
+        ctx.fillRect(wx, sternY + 6, 1, 8);
+      }
+
+      // 선미 난간 발코니
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(sternX - 2, sternY - 2, sternW + 4, 3);
+
+      // D. 거대한 삼각 3단 돛대 & 해골 깃발 (Masts, Rigging & Jolly Roger Sails)
+      const mastX = px + Math.round(bw * 0.08);
+      const mastH = Math.round(bh * 0.88);
+      const mastY = py + halfH - mastH;
+
+      // 주 돛대 (Main Mast)
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(mastX - 2, mastY, 4, mastH - 10);
+
+      // 가로 활대 (Yardarms)
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(mastX - 16, mastY + 12, 32, 2);
+      ctx.fillRect(mastX - 22, mastY + 28, 44, 2);
+
+      // 펄럭이는 검은 해골 돛 (Fluttering Black Sails)
+      const windBillow = Math.sin(timeSec * 2.5) * 2.5;
+
+      ctx.fillStyle = '#020617';
+      // 상단 돛
+      ctx.beginPath();
+      ctx.moveTo(mastX - 15, mastY + 14);
+      ctx.quadraticCurveTo(mastX + windBillow, mastY + 20, mastX + 15, mastY + 14);
+      ctx.lineTo(mastX + 13, mastY + 26);
+      ctx.quadraticCurveTo(mastX + windBillow, mastY + 28, mastX - 13, mastY + 26);
+      ctx.closePath();
+      ctx.fill();
+
+      // 해골 마크 (Skull and Crossbones Emblem)
+      ctx.fillStyle = '#f8fafc';
+      const skullY = mastY + 18;
+      ctx.fillRect(mastX - 2 + windBillow * 0.4, skullY, 4, 3);
+      ctx.fillRect(mastX - 3 + windBillow * 0.4, skullY + 3, 6, 1);
+      // 교차된 뼈
+      ctx.fillRect(mastX - 4 + windBillow * 0.4, skullY + 5, 8, 1);
+
+      // 돛대 꼭대기 까마귀 둥지 망루 (Crow's Nest)
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(mastX - 4, mastY + 4, 8, 4);
+      ctx.fillStyle = '#f43f5e'; // 붉은 해적 삼각 깃발
+      ctx.beginPath();
+      ctx.moveTo(mastX, mastY);
+      ctx.lineTo(mastX - 9, mastY - 3);
+      ctx.lineTo(mastX, mastY - 6);
+      ctx.closePath();
+      ctx.fill();
+
+      // E. 갑판 위 보물상자 & 럼주통 (Deck Treasures & Rum)
+      this.drawProp(ctx, px + 8, hullY - 4, 'crate', isNight, timeSec);
+      this.drawProp(ctx, px + 18, hullY - 3, 'barrel', isNight, timeSec);
+      // 황금 보물상자
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(px - 6, hullY - 4, 7, 5);
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(px - 5, hullY - 5, 5, 2);
+      ctx.fillRect(px - 3, hullY - 3, 2, 2);
+    },
+
+    // =========================================================================
+    // 11.21. 크라켄 거수 해골 요새 성채 (Kraken Abyssal Skull Citadel)
+    // =========================================================================
+    drawKrakenSkullFortress(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 심해 바다 소용돌이 & 산호 그림자
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.65)';
+      ctx.fillRect(px - halfW, py + halfH - 2, bw, 6);
+      ctx.fillStyle = 'rgba(6, 182, 212, 0.3)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH, bw * 0.55, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // B. 화산 현무암 암초 기단 (Basalt Sea Crag Foundation)
+      const baseH = Math.round(bh * 0.45);
+      const baseY = py + halfH - baseH;
+
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - halfW + 2, baseY, bw - 4, baseH);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(px - halfW + 4, baseY + 2, bw - 8, baseH - 3);
+
+      // C. 거대 크라켄 레비아탄 해골 (Gigantic Carved Kraken Skull)
+      const skullW = Math.round(bw * 0.65);
+      const skullHW = Math.round(skullW / 2);
+      const skullH = Math.round(bh * 0.72);
+      const skullY = py + halfH - skullH;
+
+      // 두개골 돔
+      ctx.fillStyle = '#e2e8f0'; // 석회화된 고대 뼈
+      ctx.beginPath();
+      ctx.moveTo(px - skullHW, skullY + skullH * 0.4);
+      ctx.quadraticCurveTo(px, skullY - 12, px + skullHW, skullY + skullH * 0.4);
+      ctx.lineTo(px + skullHW - 6, skullY + skullH);
+      ctx.lineTo(px - skullHW + 6, skullY + skullH);
+      ctx.closePath();
+      ctx.fill();
+
+      // 뼈 음영 및 균열
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(px - 1, skullY + 4, 2, skullH * 0.4);
+      ctx.fillRect(px - skullHW + 6, skullY + 14, 4, skullH * 0.5);
+
+      // 깊고 거대한 안구 구멍 (Giant Glowing Abyssal Eye Sockets)
+      const eyeR = 6;
+      const eyeY = skullY + Math.round(skullH * 0.42);
+      const drawEye = (ex) => {
+        ctx.fillStyle = '#020617';
+        ctx.beginPath();
+        ctx.arc(ex, eyeY, eyeR, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 심해 생체 발광 청록빛 안광 (Bioluminescent Cyan Eye Fire)
+        const eyePulse = Math.sin(timeSec * 4 + ex) * 0.3 + 0.7;
+        ctx.fillStyle = `rgba(6, 182, 212, ${eyePulse})`;
+        ctx.beginPath();
+        ctx.arc(ex, eyeY, eyeR - 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(ex - 1, eyeY - 1, 2, 2);
+      };
+
+      drawEye(px - 10);
+      drawEye(px + 10);
+
+      // D. 꿈틀거리는 4개의 거대 크라켄 촉수 (Writhing Kraken Tentacles)
+      const tentacleColors = ['#0891b2', '#06b6d4', '#0891b2', '#06b6d4'];
+      for (let t = 0; t < 4; t++) {
+        const tSign = (t < 2) ? -1 : 1;
+        const tBaseX = px + (tSign * (halfW - 8 + (t % 2) * 6));
+        const tBaseY = py + halfH - 2;
+        const tSway = Math.sin(timeSec * 2.8 + t * 1.5) * 6;
+        const tH = Math.round(bh * (0.65 + (t % 2) * 0.25));
+
+        ctx.strokeStyle = tentacleColors[t];
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(tBaseX, tBaseY);
+        ctx.quadraticCurveTo(tBaseX + tSway * 1.5, tBaseY - tH * 0.6, tBaseX + tSign * 8 + tSway, tBaseY - tH);
+        ctx.stroke();
+
+        // 촉수 흡반 (Suction Cups)
+        ctx.fillStyle = '#a5f3fc';
+        for (let s = 1; s <= 3; s++) {
+          const sy = tBaseY - (tH * s) / 4;
+          ctx.fillRect(tBaseX + tSway * (s / 4) + tSign * 2, sy, 2, 2);
+        }
+      }
+
+      // E. 바다 닻 & 철제 사슬 (Giant Anchors & Heavy Chains)
+      const ancX = px - skullHW - 4;
+      const ancY = py + halfH - 12;
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(ancX, ancY, 3, 10); // 닻대
+      ctx.fillRect(ancX - 3, ancY + 2, 9, 2);
+      ctx.beginPath();
+      ctx.arc(ancX + 1.5, ancY + 10, 4, 0, Math.PI);
+      ctx.stroke();
+
+      // F. 성문 - 악어/상어 이빨 형태의 턱뼈 입구 (Serrated Jawbone Portal)
+      const jawW = 14;
+      const jawH = 14;
+      const jawX = px - 7;
+      const jawY = py + halfH - jawH;
+
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(jawX, jawY, jawW, jawH);
+
+      // 날카로운 상하 이빨
+      ctx.fillStyle = '#f8fafc';
+      for (let tx = jawX + 1; tx < jawX + jawW - 2; tx += 3) {
+        // 상부 이빨
+        ctx.beginPath();
+        ctx.moveTo(tx, jawY);
+        ctx.lineTo(tx + 1.5, jawY + 4);
+        ctx.lineTo(tx + 3, jawY);
+        ctx.closePath();
+        ctx.fill();
+        // 하부 이빨
+        ctx.beginPath();
+        ctx.moveTo(tx, jawY + jawH);
+        ctx.lineTo(tx + 1.5, jawY + jawH - 4);
+        ctx.lineTo(tx + 3, jawY + jawH);
+        ctx.closePath();
+        ctx.fill();
+      }
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -3121,6 +3401,16 @@
       ctx.beginPath();
       ctx.ellipse(px + 6, py + bh / 2 + 4, bw * 0.42, 4, 0.08, 0, Math.PI * 2);
       ctx.fill();
+
+      // 🏴‍☠️ 검은 깃발 대해적 연합 & 크라켄 해골 요새 (Black Pearl Corsair Empire)
+      if (type === 'corsair_flagship' || (type === 'capital' && b && b.continent === 'corsair') || (type === 'palace' && b && b.continent === 'corsair')) {
+        this.drawCorsairFlagshipCitadel(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'kraken_fortress' || (type === 'castle' && b && b.continent === 'corsair') || (type === 'fortress' && b && b.continent === 'corsair') || (type === 'temple' && b && b.continent === 'corsair')) {
+        this.drawKrakenSkullFortress(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
 
       // 💎 영롱한 프리즘 수정 제국 & 별빛 마나 성채 (Crystal Prism Zenith Empire)
       if (type === 'crystal_prism_palace' || (type === 'capital' && b && b.continent === 'crystal_zenith') || (type === 'palace' && b && b.continent === 'crystal_zenith')) {

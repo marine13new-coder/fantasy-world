@@ -4460,6 +4460,7 @@
         else if (weaponId.includes('holy') || weaponId.includes('gold')) { slashColor = '#facc15'; glowColor = 'rgba(250, 204, 21, 0.6)'; }
         else if (weaponId.includes('blood') || weaponId.includes('vampire') || weaponId.includes('gothic') || weaponId.includes('rose') || weaponId.includes('scythe')) { slashColor = '#f43f5e'; glowColor = 'rgba(159, 18, 57, 0.85)'; }
         else if (weaponId.includes('crystal') || weaponId.includes('prism') || weaponId.includes('starlight') || weaponId.includes('mana') || weaponId.includes('zenith')) { slashColor = '#38bdf8'; glowColor = 'rgba(232, 121, 249, 0.85)'; }
+        else if (weaponId.includes('corsair') || weaponId.includes('pirate') || weaponId.includes('cutlass') || weaponId.includes('anchor') || weaponId.includes('kraken') || weaponId.includes('harpoon')) { slashColor = '#06b6d4'; glowColor = 'rgba(6, 182, 212, 0.85)'; }
 
         const arcCenter = px + sideSign * 4 * sc;
         const startAng = isLeft ? Math.PI * 0.7 : Math.PI * 0.3;
@@ -4571,6 +4572,40 @@
             ctx.lineTo(shX - 2 * sc, shY);
             ctx.closePath();
             ctx.fill();
+          }
+        }
+
+        // 🏴‍☠️ 검은 깃발 대해적 연합 커틀러스 파도 & 황금 더블룬 금화 비산 (Corsair Golden Doubloon & Seafoam Flurry)
+        if (weaponId.includes('corsair') || weaponId.includes('pirate') || weaponId.includes('cutlass') || weaponId.includes('anchor') || weaponId.includes('kraken') || weaponId.includes('harpoon')) {
+          // 청록빛 파도 호
+          ctx.strokeStyle = '#0891b2';
+          ctx.lineWidth = 3.2 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 22 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          // 튀는 황금 더블룬 금화 4개 & 바다 포말 물방울
+          const coinTime = (e.animTime || 0) * 14;
+          for (let c = 0; c < 4; c++) {
+            const cAng = startAng + (c / 3) * (endAng - startAng);
+            const cDist = (19 + Math.sin(coinTime + c * 2) * 5) * sc;
+            const cX = arcCenter + Math.cos(cAng) * cDist;
+            const cY = py - 10 * sc - bounce + Math.sin(cAng) * cDist;
+
+            // 금화 외곽
+            ctx.fillStyle = '#ca8a04';
+            ctx.beginPath();
+            ctx.arc(cX, cY, 2.5 * sc, 0, Math.PI * 2);
+            ctx.fill();
+            // 금화 내부 반짝임
+            ctx.fillStyle = '#fde047';
+            ctx.beginPath();
+            ctx.arc(cX, cY, 1.8 * sc, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 파도 물방울 스파크
+            ctx.fillStyle = '#ecfeff';
+            ctx.fillRect(cX + 2 * sc, cY - 3 * sc, 1.5 * sc, 1.5 * sc);
           }
         }
 
