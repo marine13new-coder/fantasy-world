@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>은하아파트 13동 : 심야 순찰 (Apartment 13: The Blackout) - Steam Master Edition</title>
+  <title>은하아파트 13동 : 심야 순찰 (Apartment 13: The Blackout) - Masterpiece Edition</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&family=Nanum+Myeongjo:wght@700;800&family=Share+Tech+Mono&display=swap');
 
     :root {
       --bg-dark: #010204;
-      --corridor-fog: #040609;
+      --corridor-fog: #030508;
       --emergency-red: #ff1122;
       --sensor-yellow: #ffc44d;
       --hud-text: #edf2f7;
@@ -39,12 +39,12 @@
       display: block;
     }
 
-    /* 포스트 프로세싱 시각 효과 */
+    /* 포스트 프로세싱 */
     #vignette {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none;
-      background: radial-gradient(circle at center, transparent 35%, rgba(0, 0, 0, 0.94) 100%);
+      background: radial-gradient(circle at center, transparent 32%, rgba(0, 0, 0, 0.95) 100%);
       z-index: 10;
     }
 
@@ -52,7 +52,7 @@
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none;
-      background: radial-gradient(circle at center, transparent 20%, rgba(220, 15, 25, 0.82) 100%);
+      background: radial-gradient(circle at center, transparent 18%, rgba(220, 15, 25, 0.85) 100%);
       opacity: 0;
       transition: opacity 0.15s ease-out;
       z-index: 11;
@@ -72,14 +72,14 @@
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.38) 50%),
-                  linear-gradient(90deg, rgba(255, 0, 0, 0.035), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.035));
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%),
+                  linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.04));
       background-size: 100% 3px, 5px 100%;
-      opacity: 0.88;
+      opacity: 0.9;
       z-index: 13;
     }
 
-    /* 점프스케어 플래시 */
+    /* 점프스케어 팝업 */
     #scareFaceOverlay {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -87,27 +87,26 @@
       display: none;
       justify-content: center;
       align-items: center;
-      background: rgba(0,0,0,0.92);
+      background: rgba(0,0,0,0.94);
       z-index: 95;
     }
     #scareFaceOverlay svg {
-      width: 82vh;
-      height: 82vh;
-      filter: contrast(190%) brightness(85%) drop-shadow(0 0 50px #ff0000);
+      width: 85vh;
+      height: 85vh;
+      filter: contrast(200%) brightness(85%) drop-shadow(0 0 60px #ff0000);
       animation: scareShake 0.04s infinite;
     }
     @keyframes scareShake {
-      0% { transform: translate(-5px, 3px) scale(1.06); }
-      50% { transform: translate(6px, -4px) scale(1.1); }
-      100% { transform: translate(-3px, -5px) scale(1.04); }
+      0% { transform: translate(-6px, 4px) scale(1.08); }
+      50% { transform: translate(7px, -5px) scale(1.12); }
+      100% { transform: translate(-4px, -6px) scale(1.05); }
     }
 
-    /* 크로스헤어 */
     #crosshair {
       position: absolute;
       top: 50%; left: 50%;
       width: 5px; height: 5px;
-      background: rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.75);
       border-radius: 50%;
       transform: translate(-50%, -50%);
       pointer-events: none;
@@ -115,12 +114,12 @@
       transition: all 0.15s ease-out;
     }
     #crosshair.interactable {
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       background: rgba(255, 215, 60, 0.95);
       border: 2px solid #000;
-      box-shadow: 0 0 14px rgba(255, 215, 60, 0.85);
-      transform: translate(-50%, -50%) scale(1.3);
+      box-shadow: 0 0 16px rgba(255, 215, 60, 0.9);
+      transform: translate(-50%, -50%) scale(1.35);
     }
 
     /* HUD */
@@ -143,7 +142,7 @@
     }
 
     .time-badge {
-      background: rgba(6, 10, 15, 0.88);
+      background: rgba(5, 8, 12, 0.9);
       border-left: 3px solid #ff3b30;
       padding: 10px 18px;
       backdrop-filter: blur(6px);
@@ -158,7 +157,7 @@
       gap: 16px;
     }
     .status-box {
-      background: rgba(6, 10, 15, 0.88);
+      background: rgba(5, 8, 12, 0.9);
       padding: 10px 16px;
       border: 1px solid #233446;
       min-width: 130px;
@@ -173,11 +172,10 @@
     #breathBar { background: #f59e0b; }
     #sanityVal { font-size: 18px; font-weight: 900; color: #ff4d4d; letter-spacing: 1px; }
 
-    /* 현재 목표창 */
     .hud-objective {
       position: absolute;
       top: 92px; left: 24px;
-      background: rgba(10, 14, 20, 0.9);
+      background: rgba(8, 12, 18, 0.92);
       border-left: 4px solid #ffcc00;
       padding: 12px 20px;
       max-width: 450px;
@@ -188,12 +186,11 @@
     .obj-title { font-size: 11px; font-weight: 900; color: #ffcc00; letter-spacing: 1.5px; }
     .obj-text { font-size: 14px; margin-top: 5px; color: #fff; line-height: 1.45; }
 
-    /* 상호작용 툴팁 */
     #interactPrompt {
       position: absolute;
       top: 57%; left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(4, 6, 9, 0.94);
+      background: rgba(3, 5, 8, 0.95);
       border: 1px solid #ffcc44;
       padding: 7px 18px;
       border-radius: 4px;
@@ -214,11 +211,10 @@
       margin-right: 7px;
     }
 
-    /* 자막 / 대사 연출 */
     #subtitles {
       align-self: center;
       margin-bottom: 28px;
-      background: rgba(2, 4, 7, 0.9);
+      background: rgba(2, 4, 7, 0.92);
       padding: 14px 28px;
       border-radius: 4px;
       font-size: 16px;
@@ -233,12 +229,11 @@
       box-shadow: 0 4px 25px rgba(0,0,0,0.8);
     }
 
-    /* 은신/숨기 UI */
     #hidingBanner {
       position: absolute;
       top: 18%; left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(30, 5, 5, 0.92);
+      background: rgba(30, 5, 5, 0.94);
       border: 1px solid #ff3b30;
       padding: 12px 28px;
       font-size: 14px;
@@ -254,7 +249,56 @@
       50% { opacity: 1; transform: translate(-50%, -50%) scale(1.02); }
     }
 
-    /* 키패드 도어락 인터랙티브 모달 */
+    /* 퓨즈 박스 미니게임 모달 */
+    #fuseboxModal {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(2, 3, 5, 0.92);
+      z-index: 106;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(8px);
+    }
+    .fusebox-panel {
+      background: #1e242c;
+      border: 4px solid #3c4959;
+      border-radius: 8px;
+      width: 420px;
+      padding: 26px;
+      box-shadow: 0 0 40px rgba(0,0,0,0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .fuse-slots {
+      display: flex;
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .fuse-slot-box {
+      width: 80px;
+      height: 120px;
+      background: #0f1318;
+      border: 2px dashed #445566;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .fuse-slot-box.burned {
+      border-color: #ff4444;
+      background: #2a1111;
+    }
+    .fuse-slot-box.repaired {
+      border-color: #33ff66;
+      background: #112a18;
+    }
+
+    /* 404호 키패드 도어락 모달 */
     #keypadModal {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -370,7 +414,6 @@
       gap: 16px;
     }
 
-    /* 문서 뷰어 */
     .document-paper {
       background: #e9e3d3;
       color: #1a1a1a;
@@ -391,7 +434,6 @@
       color: #000;
     }
 
-    /* 인벤토리 */
     .inv-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -487,7 +529,6 @@
     }
     .secondary-btn:hover { background: #233446; color: #fff; }
 
-    /* 쫄보 맞춤 배려 토글 */
     .brave-mode-toggle {
       margin-top: 16px;
       font-size: 12.5px;
@@ -584,14 +625,12 @@
 
   <canvas id="gameCanvas"></canvas>
 
-  <!-- 포스트 프로세싱 레이어 -->
   <div id="vignette"></div>
   <div id="panicVignette"></div>
   <div id="lightningFlash"></div>
   <div id="filmGrain"></div>
   <div id="crosshair"></div>
 
-  <!-- 점프스케어 팝업 -->
   <div id="scareFaceOverlay">
     <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="100" cy="100" r="85" fill="#150a0a" stroke="#aa0000" stroke-width="4"/>
@@ -605,7 +644,6 @@
     </svg>
   </div>
 
-  <!-- HUD 레이어 -->
   <div id="hud">
     <div class="hud-top">
       <div class="time-badge">
@@ -615,7 +653,7 @@
       </div>
       <div class="status-panel">
         <div class="status-box">
-          <div class="status-label">손전등 배터리 (F)</div>
+          <div class="status-label">손전등 배터리 (F/R)</div>
           <div class="bar-wrap"><div class="bar-inner" id="batteryBar"></div></div>
         </div>
         <div class="status-box">
@@ -633,18 +671,39 @@
       </div>
     </div>
 
-    <!-- 목표 -->
     <div class="hud-objective">
       <div class="obj-title">현재 임무</div>
       <div class="obj-text" id="objectiveText">경비실 책상 위에서 '야간 순찰 수칙서'와 손전등을 획득하시오.</div>
     </div>
 
-    <!-- 자막/독백 -->
     <div id="subtitles"></div>
   </div>
 
   <div id="interactPrompt"><kbd>E</kbd> <span id="promptAction">조사하기</span></div>
   <div id="hidingBanner">캐비닛 안에 몸을 숨겼습니다.<br><kbd>SPACE</kbd> 숨 참기 (게이지 주의) / <kbd>E</kbd> 나가기</div>
+
+  <!-- 퓨즈 박스 미니게임 모달 -->
+  <div id="fuseboxModal">
+    <div class="fusebox-panel">
+      <div style="font-size: 15px; color: #ffaa33; font-weight: bold; margin-bottom: 6px;">지하 보일러실 중앙 배전반</div>
+      <div style="font-size: 12px; color: #9ab0c4; margin-bottom: 16px;">타버린 퓨즈를 클릭하여 교체하십시오.</div>
+      <div class="fuse-slots">
+        <div class="fuse-slot-box" id="fuseSlot1" style="border-color: #33ff66;">
+          <span style="font-size: 24px;">🔌</span>
+          <span style="font-size: 11px; margin-top: 6px; color:#33ff66;">정상 (1F)</span>
+        </div>
+        <div class="fuse-slot-box burned" id="fuseSlot2" onclick="repairFuse()">
+          <span style="font-size: 24px;">💥</span>
+          <span style="font-size: 11px; margin-top: 6px; color:#ff5555;" id="fuse2Label">단락 (교체)</span>
+        </div>
+        <div class="fuse-slot-box" id="fuseSlot3" style="border-color: #33ff66;">
+          <span style="font-size: 24px;">🔌</span>
+          <span style="font-size: 11px; margin-top: 6px; color:#33ff66;">정상 (3F)</span>
+        </div>
+      </div>
+      <button class="keypad-close" onclick="closeFuseboxModal()">배전반 닫기</button>
+    </div>
+  </div>
 
   <!-- 404호 키패드 도어락 모달 -->
   <div id="keypadModal">
@@ -669,7 +728,6 @@
     </div>
   </div>
 
-  <!-- 인벤토리 모달 -->
   <div id="inventoryModal">
     <div class="modal-card">
       <div class="modal-header">
@@ -685,7 +743,6 @@
     </div>
   </div>
 
-  <!-- 문서 뷰어 모달 -->
   <div id="documentModal">
     <div class="modal-card">
       <div class="modal-header">
@@ -698,7 +755,6 @@
     </div>
   </div>
 
-  <!-- 일시정지 메뉴 -->
   <div id="pauseModal">
     <div class="modal-card" style="width: 440px;">
       <div class="modal-header">
@@ -715,7 +771,6 @@
     </div>
   </div>
 
-  <!-- 시작 화면 -->
   <div id="startScreen">
     <div class="game-logo">은하아파트 13동</div>
     <div class="game-sublogo">APARTMENT 13 : THE BLACKOUT</div>
@@ -761,6 +816,7 @@
       <span><kbd>Mouse</kbd> 둘러보기</span>
       <span><kbd>E</kbd> 상호작용 / 조사</span>
       <span><kbd>F</kbd> 손전등 (우클릭: 털기)</span>
+      <span><kbd>R</kbd> 배터리 장전</span>
       <span><kbd>Shift</kbd> 달리기</span>
       <span><kbd>C</kbd> 웅크리기</span>
       <span><kbd>Space</kbd> 숨 참기</span>
@@ -769,7 +825,6 @@
     </div>
   </div>
 
-  <!-- 엔딩 화면 -->
   <div id="endingScreen">
     <div class="ending-badge" id="endingBadge">ENDING A</div>
     <div class="ending-title" id="endingTitle">영원한 순찰 (The Eternal Shift)</div>
@@ -779,7 +834,7 @@
 
   <script>
     /* =========================================================
-       1. 프로급 오디오 엔진 (Web Audio API)
+       1. 오디오 신시사이저 엔진
        ========================================================= */
     class ProHorrorAudio {
       constructor() {
@@ -806,7 +861,7 @@
         this.ambientGain.connect(this.masterGain);
 
         this.rainGain = this.ctx.createGain();
-        this.rainGain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+        this.rainGain.gain.setValueAtTime(0.24, this.ctx.currentTime);
         this.rainGain.connect(this.masterGain);
 
         this.startWindAndRumble();
@@ -1028,12 +1083,41 @@
         osc.start();
         osc.stop(this.ctx.currentTime + 0.09);
       }
+
+      playElectricBuzz() {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(60, this.ctx.currentTime);
+        gain.gain.setValueAtTime(0.22, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.4);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.45);
+      }
+
+      playReloadBattery() {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+        osc.frequency.setValueAtTime(550, this.ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.25);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.26);
+      }
     }
 
     const audio = new ProHorrorAudio();
 
     /* =========================================================
-       2. 고해상도 절차적 텍스처
+       2. 고해상도 절차적 텍스처 (1998년 한국 아파트 디테일)
        ========================================================= */
     class ProceduralTextures {
       static createWallTexture() {
@@ -1041,7 +1125,7 @@
         canvas.width = 512; canvas.height = 512;
         const ctx = canvas.getContext('2d');
 
-        ctx.fillStyle = '#6a736d';
+        ctx.fillStyle = '#68726c';
         ctx.fillRect(0, 0, 512, 512);
 
         ctx.fillStyle = '#9b9e95';
@@ -1074,7 +1158,7 @@
         const canvas = document.createElement('canvas');
         canvas.width = 512; canvas.height = 512;
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#32363a';
+        ctx.fillStyle = '#2f3438';
         ctx.fillRect(0, 0, 512, 512);
 
         for (let i = 0; i < 2200; i++) {
@@ -1143,7 +1227,7 @@
         const canvas = document.createElement('canvas');
         canvas.width = 256; canvas.height = 256;
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#1f2227';
+        ctx.fillStyle = '#1e2126';
         ctx.fillRect(0, 0, 256, 256);
         ctx.strokeStyle = '#14161a';
         ctx.lineWidth = 2;
@@ -1170,6 +1254,7 @@
       currentAct: 1,
       clockSeconds: 23 * 3600 + 55 * 60,
       battery: 100,
+      spareBatteries: 2,
       flashlightOn: true,
       stamina: 100,
       breath: 100,
@@ -1178,7 +1263,7 @@
       isHiding: false,
       isHoldingBreath: false,
       sanity: 72,
-      safeTour: false, // 쫄보 맞춤 배려 모드
+      safeTour: false,
 
       inventory: [],
       collectedClues: [],
@@ -1209,7 +1294,8 @@
       burntBabyCloth: { name: '타버린 배냇저고리', icon: '👕', desc: '2층 소화전에서 발견된 불탄 아기 옷. ‘수진’이라고 수놓아져 있다.' },
       residentRoster: { name: '1998년 입주민 명부', icon: '📑', desc: '502호 세대주 이름에 내 이름 [최진우]가 적혀 있다.' },
       radioTape: { name: '카세트 뉴스 테이프', icon: '📼', desc: '1998년 10월 17일 참사 속보가 녹음된 테이프.' },
-      rooftopKey: { name: '옥상 비상계단 열쇠', icon: '🗝️', desc: '25년간 굳게 닫혀 있던 탈출구의 녹슨 열쇠.' }
+      rooftopKey: { name: '옥상 비상계단 열쇠', icon: '🗝️', desc: '25년간 굳게 닫혀 있던 탈출구의 녹슨 열쇠.' },
+      spareBatteryItem: { name: '순찰용 AA 건전지', icon: '🔋', desc: '손전등 배터리가 떨어졌을 때 [R] 키로 교체할 수 있다.' }
     };
 
     const DOC_DB = {
@@ -1263,7 +1349,7 @@
     };
 
     /* =========================================================
-       4. 3D 월드 & 1인칭 뷰모델 (FPS Viewmodel) 손전등
+       4. 3D 월드 & 1인칭 뷰모델 (FPS Hand & Flashlight)
        ========================================================= */
     const canvas = document.getElementById('gameCanvas');
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -1273,8 +1359,8 @@
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x030508);
-    scene.fog = new THREE.FogExp2(0x040609, 0.05);
+    scene.background = new THREE.Color(0x020306);
+    scene.fog = new THREE.FogExp2(0x030508, 0.048);
 
     const camera = new THREE.PerspectiveCamera(74, window.innerWidth / window.innerHeight, 0.1, 100);
     camera.position.set(0, 1.6, 2);
@@ -1291,23 +1377,20 @@
     ceilTex.repeat.set(2, 20);
     const ceilMat = new THREE.MeshStandardMaterial({ map: ceilTex, roughness: 0.9 });
 
-    // 손전등 라이트
     const flashlight = new THREE.SpotLight(0xfff1d0, 3.4, 24, Math.PI / 5.2, 0.38, 1.3);
     flashlight.position.set(0.2, -0.15, 0);
     flashlight.target.position.set(0, 0, -5);
     camera.add(flashlight);
     camera.add(flashlight.target);
 
-    // ★ 1인칭 뷰모델 (플레이어의 손 & 메탈 손전등 모델)
+    // 1인칭 뷰모델
     const viewmodelGroup = new THREE.Group();
-    // 손전등 본체 실린더
     const flashBodyGeo = new THREE.CylinderGeometry(0.024, 0.024, 0.18, 16);
     const flashBodyMat = new THREE.MeshStandardMaterial({ color: 0x444a50, metalness: 0.8, roughness: 0.3 });
     const flashBody = new THREE.Mesh(flashBodyGeo, flashBodyMat);
     flashBody.rotation.x = Math.PI / 2;
     viewmodelGroup.add(flashBody);
 
-    // 손전등 림/헤드
     const flashHeadGeo = new THREE.CylinderGeometry(0.038, 0.024, 0.05, 16);
     const flashHeadMat = new THREE.MeshStandardMaterial({ color: 0x22262a, metalness: 0.9, roughness: 0.2 });
     const flashHead = new THREE.Mesh(flashHeadGeo, flashHeadMat);
@@ -1315,14 +1398,12 @@
     flashHead.rotation.x = Math.PI / 2;
     viewmodelGroup.add(flashHead);
 
-    // 렌즈 글래스
     const lensGeo = new THREE.CircleGeometry(0.036, 16);
     const lensMat = new THREE.MeshBasicMaterial({ color: 0xffffcc });
     const lens = new THREE.Mesh(lensGeo, lensMat);
     lens.position.z = -0.136;
     viewmodelGroup.add(lens);
 
-    // 플레이어의 장갑/소매 손
     const handGeo = new THREE.CylinderGeometry(0.032, 0.042, 0.15, 12);
     const handMat = new THREE.MeshStandardMaterial({ color: 0x1a242f, roughness: 0.9 });
     const hand = new THREE.Mesh(handGeo, handMat);
@@ -1334,7 +1415,7 @@
     camera.add(viewmodelGroup);
     scene.add(camera);
 
-    const ambientLight = new THREE.AmbientLight(0x06090e, 0.32);
+    const ambientLight = new THREE.AmbientLight(0x05080c, 0.3);
     scene.add(ambientLight);
 
     const colliders = [];
@@ -1342,6 +1423,28 @@
     const sensorLights = [];
     let stalkerEnemy = null;
     let dustParticles = null;
+    let rainParticles = null;
+
+    function createRainParticles() {
+      const pCount = 800;
+      const geo = new THREE.BufferGeometry();
+      const pos = new Float32Array(pCount * 3);
+      for (let i = 0; i < pCount * 3; i += 3) {
+        pos[i] = 1.8 + Math.random() * 4.0;
+        pos[i + 1] = Math.random() * 12;
+        pos[i + 2] = (Math.random() - 0.5) * 65 - 15;
+      }
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const mat = new THREE.PointsMaterial({
+        color: 0x7799bb,
+        size: 0.05,
+        transparent: true,
+        opacity: 0.55
+      });
+      rainParticles = new THREE.Points(geo, mat);
+      scene.add(rainParticles);
+    }
+    createRainParticles();
 
     function createDustParticles() {
       const pCount = 380;
@@ -1375,16 +1478,32 @@
       ceiling.position.set(0, 2.8, -15);
       scene.add(ceiling);
 
-      const wallGeo = new THREE.BoxGeometry(0.2, 2.8, 62);
-      const leftWall = new THREE.Mesh(wallGeo, wallMat);
+      const leftWallGeo = new THREE.BoxGeometry(0.2, 2.8, 62);
+      const leftWall = new THREE.Mesh(leftWallGeo, wallMat);
       leftWall.position.set(-1.6, 1.4, -15);
       scene.add(leftWall);
       colliders.push(leftWall);
 
-      const rightWall = new THREE.Mesh(wallGeo, wallMat);
-      rightWall.position.set(1.6, 1.4, -15);
-      scene.add(rightWall);
-      colliders.push(rightWall);
+      const railWallGeo = new THREE.BoxGeometry(0.2, 1.1, 62);
+      const railWall = new THREE.Mesh(railWallGeo, wallMat);
+      railWall.position.set(1.6, 0.55, -15);
+      scene.add(railWall);
+      colliders.push(railWall);
+
+      for (let z = -44; z <= 14; z += 3) {
+        const pillar = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.02, 0.02, 1.6),
+          new THREE.MeshStandardMaterial({ color: 0x22262a, metalness: 0.8 })
+        );
+        pillar.position.set(1.6, 1.9, z);
+        scene.add(pillar);
+      }
+
+      const oppositeBldgGeo = new THREE.BoxGeometry(8, 25, 70);
+      const oppositeBldgMat = new THREE.MeshBasicMaterial({ color: 0x05070a });
+      const oppositeBldg = new THREE.Mesh(oppositeBldgGeo, oppositeBldgMat);
+      oppositeBldg.position.set(16, 8, -15);
+      scene.add(oppositeBldg);
 
       const endWallGeo = new THREE.BoxGeometry(3.2, 2.8, 0.2);
       const northWall = new THREE.Mesh(endWallGeo, wallMat);
@@ -1454,11 +1573,11 @@
     function buildDoorsAndProps() {
       const doorData = [
         { z: 6, side: 'left', num: '101' },
-        { z: 0, side: 'right', num: '102' },
+        { z: 0, side: 'left', num: '102' },
         { z: -8, side: 'left', num: '201' },
-        { z: -14, side: 'right', num: '202' },
+        { z: -14, side: 'left', num: '202' },
         { z: -22, side: 'left', num: '304' },
-        { z: -30, side: 'right', num: '404' },
+        { z: -30, side: 'left', num: '404' },
         { z: -38, side: 'left', num: '502' }
       ];
 
@@ -1468,9 +1587,14 @@
         const doorMat = new THREE.MeshStandardMaterial({ map: doorTex, roughness: 0.5, metalness: 0.3 });
         const doorMesh = new THREE.Mesh(doorGeo, doorMat);
 
-        const xPos = d.side === 'left' ? -1.54 : 1.54;
-        doorMesh.position.set(xPos, 1.05, d.z);
+        doorMesh.position.set(-1.54, 1.05, d.z);
         scene.add(doorMesh);
+
+        const pouchGeo = new THREE.BoxGeometry(0.08, 0.22, 0.14);
+        const pouchMat = new THREE.MeshStandardMaterial({ color: 0x1e40af, roughness: 0.8 });
+        const pouch = new THREE.Mesh(pouchGeo, pouchMat);
+        pouch.position.set(-1.52, 1.1, d.z + 0.65);
+        scene.add(pouch);
 
         interactables.push({
           mesh: doorMesh,
@@ -1483,13 +1607,26 @@
         new THREE.BoxGeometry(0.15, 0.9, 0.7),
         new THREE.MeshStandardMaterial({ color: 0xaa2222, roughness: 0.4 })
       );
-      hydrantBox.position.set(1.5, 1.1, -10);
+      hydrantBox.position.set(-1.5, 1.1, -10);
       scene.add(hydrantBox);
 
       interactables.push({
         mesh: hydrantBox,
         prompt: '비상 소화전 점검함 열기',
         action: () => handleHydrantInspection()
+      });
+
+      const fuseBoxMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(0.15, 0.7, 0.5),
+        new THREE.MeshStandardMaterial({ color: 0x334455, roughness: 0.5 })
+      );
+      fuseBoxMesh.position.set(-1.5, 1.2, 12);
+      scene.add(fuseBoxMesh);
+
+      interactables.push({
+        mesh: fuseBoxMesh,
+        prompt: '중앙 배전반 점검/수리',
+        action: () => openFuseboxModal()
       });
 
       const exitLightMat = new THREE.MeshBasicMaterial({ color: 0x11ff44 });
@@ -1570,6 +1707,13 @@
       eyeLight.position.set(0, 1.85, 0.25);
       stalkerGroup.add(eyeLight);
 
+      const wrenchGeo = new THREE.BoxGeometry(0.06, 0.9, 0.08);
+      const wrenchMat = new THREE.MeshStandardMaterial({ color: 0x551111, metalness: 0.8 });
+      const wrench = new THREE.Mesh(wrenchGeo, wrenchMat);
+      wrench.position.set(0.45, 0.7, 0.2);
+      wrench.rotation.z = Math.PI / 6;
+      stalkerGroup.add(wrench);
+
       stalkerGroup.position.set(0, 0, -38);
       stalkerGroup.visible = false;
       scene.add(stalkerGroup);
@@ -1586,7 +1730,7 @@
     buildApartmentWorld();
 
     /* =========================================================
-       5. 1인칭 조작 및 물리 / 심박 / 폐활량 / 핸드 밥
+       5. 1인칭 조작 및 물리 / 심박 / 폐활량 / 건전지 장전
        ========================================================= */
     const keys = {};
     let isPointerLocked = false;
@@ -1602,6 +1746,7 @@
     window.addEventListener('keydown', e => {
       keys[e.code] = true;
       if (e.code === 'KeyF') toggleFlashlight();
+      if (e.code === 'KeyR') reloadFlashlightBattery();
       if (e.code === 'KeyE') triggerInteraction();
       if (e.code === 'Tab') { e.preventDefault(); toggleInventory(); }
       if (e.code === 'Escape') togglePause();
@@ -1625,12 +1770,10 @@
       }
     });
 
-    // 손전등 접촉 불량 털기 (우클릭)
     canvas.addEventListener('contextmenu', e => {
       e.preventDefault();
       if (!isPointerLocked) return;
       audio.playFlashlightClick();
-      // 뷰모델 셰이크 모션
       viewmodelGroup.position.y += 0.04;
       setTimeout(() => { viewmodelGroup.position.y -= 0.04; }, 120);
 
@@ -1665,6 +1808,22 @@
       lens.material.color.setHex(GAME_DATA.flashlightOn ? 0xffffcc : 0x222222);
       audio.playFlashlightClick();
       showSubtitle(GAME_DATA.flashlightOn ? "[손전등을 켰다]" : "[손전등을 껐다]", 1200);
+    }
+
+    // [R] 키로 건전지 재장전
+    function reloadFlashlightBattery() {
+      if (GAME_DATA.spareBatteries > 0) {
+        GAME_DATA.spareBatteries--;
+        GAME_DATA.battery = 100;
+        batteryBar.style.width = '100%';
+        GAME_DATA.flashlightOn = true;
+        flashlight.visible = true;
+        lens.material.color.setHex(0xffffcc);
+        audio.playReloadBattery();
+        showSubtitle(`[새 AA 건전지를 장전했다! 남은 건전지: ${GAME_DATA.spareBatteries}개]`, 2500);
+      } else {
+        showSubtitle("[여분의 건전지가 없다! 복도나 우유 주머니를 수색하라.]", 2500);
+      }
     }
 
     const raycaster = new THREE.Raycaster();
@@ -1710,7 +1869,7 @@
     }
 
     /* =========================================================
-       6. 게임 루프 & 천둥 번개 & 심박 / 폐활량 / 뷰모델 밥
+       6. 게임 루프 & 천둥 번개 & 심박 / 폐활량 / 빗줄기
        ========================================================= */
     let lastFrameTime = performance.now();
 
@@ -1740,6 +1899,15 @@
         dustParticles.rotation.y += 0.0008;
       }
 
+      if (rainParticles) {
+        const positions = rainParticles.geometry.attributes.position.array;
+        for (let i = 1; i < positions.length; i += 3) {
+          positions[i] -= delta * 18;
+          if (positions[i] < -2) positions[i] = 12;
+        }
+        rainParticles.geometry.attributes.position.needsUpdate = true;
+      }
+
       renderer.render(scene, camera);
     }
 
@@ -1767,7 +1935,6 @@
 
       const isMoving = (moveX !== 0 || moveZ !== 0);
 
-      // ★ 뷰모델 핸드 밥(Hand Bobbing) 및 헤드 밥 계산
       if (isMoving) {
         const bobSpeed = GAME_DATA.isSprinting ? 14 : 9;
         walkBobTimer += delta * bobSpeed;
@@ -1806,7 +1973,6 @@
           lastStepTime = now;
         }
       } else {
-        // 정지 시 미세 숨쉬기 모션
         walkBobTimer += delta * 1.5;
         viewmodelGroup.position.y = -0.25 + Math.sin(walkBobTimer) * 0.003;
       }
@@ -1829,7 +1995,7 @@
           GAME_DATA.flashlightOn = false;
           flashlight.visible = false;
           lens.material.color.setHex(0x222222);
-          showSubtitle("[손전등 배터리가 방전되었다! 아무것도 보이지 않는다...]", 3000);
+          showSubtitle("[손전등 배터리가 방전되었다! [R] 키로 건전지를 교체하라!]", 3000);
         }
       }
 
@@ -1906,7 +2072,6 @@
       const playerPos = camera.position;
       const dist = stalkerPos.distanceTo(playerPos);
 
-      // 쫄보 배려 모드(Safe Tour)일 경우 공격하지 않고 배회만 함
       if (GAME_DATA.safeTour) {
         stalkerPos.z += delta * 1.0;
         if (stalkerPos.z > 2) stalkerPos.z = -38;
@@ -2003,12 +2168,39 @@
       }
     }
 
+    function openFuseboxModal() {
+      document.exitPointerLock();
+      document.getElementById('fuseboxModal').style.display = 'flex';
+    }
+
+    function closeFuseboxModal() {
+      document.getElementById('fuseboxModal').style.display = 'none';
+      if (!GAME_DATA.isHiding) canvas.requestPointerLock();
+    }
+
+    function repairFuse() {
+      if (GAME_DATA.currentAct < 2) {
+        showSubtitle("현재 전력 회로는 정상 작동 중이다.", 2500);
+        return;
+      }
+      audio.playElectricBuzz();
+      const slot = document.getElementById('fuseSlot2');
+      slot.className = 'fuse-slot-box repaired';
+      slot.innerHTML = '<span style="font-size:24px;">🔌</span><span style="font-size:11px;margin-top:6px;color:#33ff66;">수리 완료</span>';
+      GAME_DATA.flags.repairedPower = true;
+      closeFuseboxModal();
+      showSubtitle("[새 퓨즈를 장착하자 지지직 소리와 함께 비상 전력이 복구되었다!]", 4000);
+      setTimeout(() => {
+        advanceToAct(3);
+      }, 1500);
+    }
+
     function advanceToAct(actNum) {
       GAME_DATA.currentAct = actNum;
 
       if (actNum === 2) {
         actTagDisplay.innerText = "ACT 2 : 어둠과 센서등 (Flickering Shadows)";
-        setObjective("정전 발생! 1층 복도 끝 지하 보일러실에서 '예비 퓨즈'를 찾아 전력을 복구하시오.");
+        setObjective("정전 발생! 1층 복도 끝 중앙 배전반에서 단락된 퓨즈를 교체하여 전력을 복구하시오.");
         audio.playScareStab();
 
         sensorLights.forEach(sl => { sl.light.intensity = 0; sl.active = false; });
@@ -2048,7 +2240,6 @@
         if (GAME_DATA.currentAct < 3) {
           showSubtitle("404호 문 앞에는 붉은 경고문이 붙어 있다: [절대 개방 금지]", 3000);
         } else if (!GAME_DATA.flags.unlocked404Keypad) {
-          // 키패드 도어락 열기
           openKeypadModal();
         } else {
           showSubtitle("[404호 안으로 진입했다. 수십 개의 촛불과 라디오 뉴스 속보가 흘러나온다]", 4000);
@@ -2073,7 +2264,6 @@
       }
     }
 
-    // ★ 도어락 키패드 로직
     let keypadBuffer = "";
     function openKeypadModal() {
       document.exitPointerLock();
@@ -2112,7 +2302,6 @@
 
     function submitKeypad() {
       if (keypadBuffer === "1017") {
-        // 참사일 10월 17일 암호 일치!
         audio.playKeypadBeep(1800);
         GAME_DATA.flags.unlocked404Keypad = true;
         closeKeypadModal();
@@ -2230,6 +2419,7 @@
       document.getElementById('documentModal').style.display = 'none';
       document.getElementById('pauseModal').style.display = 'none';
       document.getElementById('keypadModal').style.display = 'none';
+      document.getElementById('fuseboxModal').style.display = 'none';
       if (!GAME_DATA.isHiding) canvas.requestPointerLock();
     }
 

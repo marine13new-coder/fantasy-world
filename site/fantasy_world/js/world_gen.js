@@ -640,6 +640,16 @@ function createSettlementList() {
   add('mithril_deep_vein_quarry', '미스릴 심층 광맥 채굴 대성채', 'town', 'steamforge', 280, 580, 'crusader', false, 8);
   add('valkyrie_brazen_bull_altar', '청동 거신 마그마 화로 제단', 'temple', 'steamforge', 210, 640, 'monster', true, 10);
 
+  // =========================================================================
+  // 20. THE ROYAL GOTHIC BLOOD ROSE CATHEDRAL & VAMPIRE CASTLEVANIA CITADEL (핏빛 장미의 고딕 뱀파이어 제국 & 월하의 야상곡 성채)
+  // =========================================================================
+  add('gothic_blood_rose_cathedral_capital', '핏빛 장미의 고딕 대성당 수도', 'capital', 'gothic', 2850, 1980, 'undead', true, 16);
+  add('vampire_moonlit_castlevania_keep', '월하의 야상곡 캐슬바니아 성채', 'castle', 'gothic', 2740, 2040, 'undead', true, 14);
+  add('nocturnal_shadow_fog_haven', '영야의 그림자 안개 항만', 'port', 'gothic', 2960, 2040, 'undead', false, 9);
+  add('crypt_alchemist_blood_forge', '지하 납골당 연금술 혈액 대장간', 'lair', 'gothic', 2910, 1910, 'human', true, 10);
+  add('crimson_belfry_coven_shrine', '진홍빛 종탑 마녀 집회소 신전', 'temple', 'gothic', 2780, 1920, 'elf', true, 11);
+  add('weeping_willow_mausoleum', '수양버들 영혼의 묘소 거석단', 'town', 'gothic', 2850, 2090, 'undead', false, 8);
+
   return list;
 }
 
@@ -997,6 +1007,18 @@ function generateWorld() {
           continue;
         }
 
+        // 핏빛 장미의 고딕 뱀파이어 제국 전용 지형 카빙
+        if (s.continent === 'gothic') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.CASTLE_FLOOR : TILE.ROAD; // 고딕 흑요석 슬레이트 보도
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.DARK_FOREST : TILE.SWAMP; // 안개 낀 그림자 침엽수림 & 보랏빛 늪지
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.DEEP_WATER : TILE.DARK_FOREST;
+          }
+          continue;
+        }
+
         const curT = tiles[idx(tx, ty)];
         const isWater = (curT === TILE.DEEP_WATER || curT === TILE.WATER);
 
@@ -1203,7 +1225,15 @@ function generateWorld() {
     ['steamforge_dwarven_high_throne', 'runic_golem_assembly_sanctum'],
     ['titan_magma_smelting_foundry', 'mithril_deep_vein_quarry'],
     ['titan_magma_smelting_foundry', 'valkyrie_brazen_bull_altar'],
-    ['mithril_deep_vein_quarry', 'valkyrie_brazen_bull_altar']
+    ['mithril_deep_vein_quarry', 'valkyrie_brazen_bull_altar'],
+
+    // [핏빛 장미의 고딕 뱀파이어 제국 안개 가도 (Gothic Blood Rose Highway)]
+    ['gothic_blood_rose_cathedral_capital', 'vampire_moonlit_castlevania_keep'],
+    ['gothic_blood_rose_cathedral_capital', 'nocturnal_shadow_fog_haven'],
+    ['gothic_blood_rose_cathedral_capital', 'crypt_alchemist_blood_forge'],
+    ['gothic_blood_rose_cathedral_capital', 'crimson_belfry_coven_shrine'],
+    ['vampire_moonlit_castlevania_keep', 'weeping_willow_mausoleum'],
+    ['crimson_belfry_coven_shrine', 'weeping_willow_mausoleum']
   ];
   const roadLinks = rawRoadLinks.filter(([a, b]) => settlementMap[a] && settlementMap[b]);
 

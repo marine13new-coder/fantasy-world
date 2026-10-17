@@ -4458,6 +4458,7 @@
         else if (weaponId.includes('poison') || weaponId.includes('nature')) { slashColor = '#4ade80'; glowColor = 'rgba(74, 222, 128, 0.6)'; }
         else if (weaponId.includes('shadow') || weaponId.includes('arcane')) { slashColor = '#c084fc'; glowColor = 'rgba(192, 132, 252, 0.6)'; }
         else if (weaponId.includes('holy') || weaponId.includes('gold')) { slashColor = '#facc15'; glowColor = 'rgba(250, 204, 21, 0.6)'; }
+        else if (weaponId.includes('blood') || weaponId.includes('vampire') || weaponId.includes('gothic') || weaponId.includes('rose') || weaponId.includes('scythe')) { slashColor = '#f43f5e'; glowColor = 'rgba(159, 18, 57, 0.85)'; }
 
         const arcCenter = px + sideSign * 4 * sc;
         const startAng = isLeft ? Math.PI * 0.7 : Math.PI * 0.3;
@@ -4522,6 +4523,28 @@
           ctx.fillRect(arcCenter + sideSign * 18 * sc, py - 14 * sc - bounce, 3 * sc, 3 * sc);
           ctx.fillStyle = '#ea580c';
           ctx.fillRect(arcCenter + sideSign * 15 * sc, py - 6 * sc - bounce, 2 * sc, 2 * sc);
+        }
+
+        // 🦇 핏빛 장미의 고딕 뱀파이어 핏빛 검무 & 장미 꽃잎 참격 (Gothic Blood Rose & Petal Flurry Slash)
+        if (weaponId.includes('blood') || weaponId.includes('vampire') || weaponId.includes('gothic') || weaponId.includes('rose') || weaponId.includes('scythe') || (e.role === 'player' && e.comboStep === 1)) {
+          ctx.strokeStyle = '#e11d48';
+          ctx.lineWidth = 2.6 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 20 * sc, startAng + 0.1, endAng - 0.1, isLeft);
+          ctx.stroke();
+
+          // 흩날리는 핏빛 장미 꽃잎 4개 (Scattered Crimson Rose Petals)
+          const petalTime = (e.animTime || 0) * 12;
+          for (let p = 0; p < 4; p++) {
+            const ptAng = startAng + (p / 3) * (endAng - startAng);
+            const ptDist = (18 + Math.sin(petalTime + p * 1.5) * 4) * sc;
+            const ptX = arcCenter + Math.cos(ptAng) * ptDist;
+            const ptY = py - 10 * sc - bounce + Math.sin(ptAng) * ptDist;
+            ctx.fillStyle = (p % 2 === 0) ? '#f43f5e' : '#be123c';
+            ctx.beginPath();
+            ctx.ellipse(ptX, ptY, 2.5 * sc, 1.4 * sc, ptAng + Math.PI / 4, 0, Math.PI * 2);
+            ctx.fill();
+          }
         }
 
         // 반짝이는 참격 스파크 및 엠버

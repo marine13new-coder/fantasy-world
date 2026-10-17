@@ -2376,6 +2376,352 @@
     },
 
     // =========================================================================
+    // 11.16. 핏빛 장미의 고딕 대성당 (Gothic Blood Rose Cathedral)
+    // =========================================================================
+    drawGothicCathedral(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 어두운 지면 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.55)';
+      ctx.fillRect(px - halfW + 1, py + halfH - 2, bw - 2, 6);
+
+      // B. 흑요석 슬레이트 본당 (Dark Slate Obsidian Nave)
+      const naveW = Math.round(bw * 0.62);
+      const naveHW = Math.round(naveW / 2);
+      const naveH = Math.round(bh * 0.75);
+      const naveY = py + halfH - naveH;
+
+      ctx.fillStyle = '#0f172a'; // 흑요석 심층
+      ctx.fillRect(px - naveHW, naveY, naveW, naveH);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(px - naveHW + 2, naveY + 2, naveW - 4, naveH - 3);
+
+      // 플라잉 버트레스 (Flying Buttresses - 좌우 2단 버트레스 아치)
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(px - naveHW, naveY + 8);
+      ctx.lineTo(px - halfW + 2, py + halfH - 6);
+      ctx.moveTo(px + naveHW, naveY + 8);
+      ctx.lineTo(px + halfW - 2, py + halfH - 6);
+      ctx.stroke();
+
+      // 양쪽 버트레스 기둥 피너클 첨탑 (Buttress Pinnacles)
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(px - halfW + 1, py + halfH - 14, 4, 12);
+      ctx.fillRect(px + halfW - 5, py + halfH - 14, 4, 12);
+      ctx.fillStyle = '#f43f5e'; // 진홍빛 장식 핀
+      ctx.fillRect(px - halfW + 2, py + halfH - 17, 2, 3);
+      ctx.fillRect(px + halfW - 4, py + halfH - 17, 2, 3);
+
+      // C. 좌우 솟구치는 고딕 쌍둥이 첨탑 (Twin Soaring Gothic Lancet Spires)
+      const towerW = Math.round(bw * 0.22);
+      const towerH = Math.round(bh * 0.95);
+      const towerY = py + halfH - towerH;
+
+      const drawSpire = (tx, isLeft) => {
+        // 탑 기단
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(tx, towerY, towerW, towerH);
+        ctx.fillStyle = '#1e1b4b'; // 미스티 다크 바이올렛
+        ctx.fillRect(tx + 1, towerY + 1, towerW - 2, towerH - 2);
+
+        // 탑 층계 배틀먼트 & 가고일 (Tower Gargoyles)
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(tx - 1, towerY + 14, towerW + 2, 3);
+        const gX = isLeft ? tx - 3 : tx + towerW + 1;
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(gX, towerY + 13, 3, 3);
+        ctx.fillStyle = '#ef4444'; // 가고일 붉은 안광
+        ctx.fillRect(isLeft ? gX : gX + 1, towerY + 14, 1, 1);
+
+        // 뾰족한 고딕 원추 지붕 (Sharp Lancet Spire Roof)
+        ctx.fillStyle = '#090d16';
+        ctx.beginPath();
+        ctx.moveTo(tx - 1, towerY);
+        ctx.lineTo(tx + Math.round(towerW / 2), towerY - 18);
+        ctx.lineTo(tx + towerW + 1, towerY);
+        ctx.closePath();
+        ctx.fill();
+
+        // 첨탑 루비 크로스 & 핀 (Ruby Finial)
+        const finX = tx + Math.round(towerW / 2);
+        ctx.fillStyle = '#f43f5e';
+        ctx.fillRect(finX - 1, towerY - 24, 2, 6);
+        ctx.fillRect(finX - 3, towerY - 22, 6, 2);
+
+        // 슬릿 란셋 창문 (Lancet Window)
+        ctx.fillStyle = isNight ? '#fda4af' : '#881337';
+        ctx.fillRect(tx + Math.round(towerW / 2) - 1, towerY + 20, 2, 8);
+      };
+
+      drawSpire(px - halfW + 1, true);
+      drawSpire(px + halfW - towerW - 1, false);
+
+      // D. 중앙 거대 스테인드글라스 핏빛 장미창 (The Great Crimson Rose Stained Glass)
+      const roseY = naveY + Math.round(naveH * 0.32);
+      const roseR = Math.min(10, Math.round(naveW * 0.28));
+
+      // 외곽 흑요석 프레임
+      ctx.fillStyle = '#020617';
+      ctx.beginPath();
+      ctx.arc(px, roseY, roseR + 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 진홍빛 장미창 발광 효과 (Rose Window Divine/Vampiric Glow)
+      const roseGlow = Math.sin(timeSec * 3) * 0.2 + 0.8;
+      ctx.save();
+      const roseGrad = ctx.createRadialGradient(px, roseY, 1, px, roseY, roseR + 4);
+      roseGrad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+      roseGrad.addColorStop(0.3, 'rgba(244, 63, 94, 0.85)');
+      roseGrad.addColorStop(0.7, 'rgba(159, 18, 57, 0.7)');
+      roseGrad.addColorStop(1, 'rgba(76, 5, 25, 0.4)');
+      ctx.fillStyle = roseGrad;
+      ctx.beginPath();
+      ctx.arc(px, roseY, roseR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 장미창 방사형 8방향 살 (Tracery Spokes)
+      ctx.strokeStyle = '#020617';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 8; i++) {
+        const ang = (i * Math.PI) / 4;
+        ctx.beginPath();
+        ctx.moveTo(px, roseY);
+        ctx.lineTo(px + Math.cos(ang) * roseR, roseY + Math.sin(ang) * roseR);
+        ctx.stroke();
+      }
+
+      // 야간 장미창 하향 투사 빔 (Downward Stained Glass Light Rays)
+      if (isNight) {
+        ctx.fillStyle = `rgba(244, 63, 94, ${0.12 * roseGlow})`;
+        ctx.beginPath();
+        ctx.moveTo(px - roseR, roseY);
+        ctx.lineTo(px + roseR, roseY);
+        ctx.lineTo(px + naveHW, py + halfH);
+        ctx.lineTo(px - naveHW, py + halfH);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // E. 중앙 고딕 뾰족 아치 성문 & 장미 덩굴 철제 문 (Pointed Portal & Wrought Iron Gate)
+      const gateW = 10;
+      const gateH = 14;
+      const gateX = px - 5;
+      const gateY = py + halfH - gateH;
+
+      ctx.fillStyle = '#020617';
+      ctx.beginPath();
+      ctx.moveTo(gateX, py + halfH);
+      ctx.lineTo(gateX, gateY + 4);
+      ctx.lineTo(px, gateY);
+      ctx.lineTo(gateX + gateW, gateY + 4);
+      ctx.lineTo(gateX + gateW, py + halfH);
+      ctx.closePath();
+      ctx.fill();
+
+      // 핏빛 룬 도어 빗장
+      ctx.fillStyle = '#881337';
+      ctx.fillRect(gateX + 2, gateY + 4, gateW - 4, gateH - 4);
+      ctx.fillStyle = '#f43f5e';
+      ctx.fillRect(px - 1, gateY + 5, 2, gateH - 6);
+
+      // F. 야간 밤하늘을 선회하는 박쥐 3마리 (Nocturnal Circling Bats)
+      if (isNight) {
+        ctx.fillStyle = '#0f172a';
+        for (let b = 0; b < 3; b++) {
+          const batAng = timeSec * 2.5 + (b * Math.PI * 2) / 3;
+          const batR = 18 + b * 4;
+          const batX = px + Math.cos(batAng) * batR;
+          const batY = (towerY - 10) + Math.sin(batAng) * 6;
+          const flap = Math.sin(timeSec * 16 + b) > 0 ? 2 : -2;
+
+          ctx.beginPath();
+          ctx.moveTo(batX, batY);
+          ctx.lineTo(batX - 3, batY + flap);
+          ctx.lineTo(batX, batY + 1);
+          ctx.lineTo(batX + 3, batY + flap);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+    },
+
+    // =========================================================================
+    // 11.17. 월하의 야상곡 캐슬바니아 성채 (Vampire Moonlit Castlevania Keep)
+    // =========================================================================
+    drawVampireCastlevaniaKeep(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 거대한 진홍빛 붉은 달 후광 백드롭 (Blood Moon Backdrop & Halo)
+      const moonR = Math.min(22, Math.round(bw * 0.42));
+      const moonX = px + Math.round(bw * 0.18);
+      const moonY = py - halfH + 8;
+
+      ctx.save();
+      const moonGlow = ctx.createRadialGradient(moonX, moonY, moonR * 0.4, moonX, moonY, moonR * 1.5);
+      moonGlow.addColorStop(0, 'rgba(255, 228, 230, 0.9)');
+      moonGlow.addColorStop(0.4, 'rgba(225, 29, 72, 0.7)');
+      moonGlow.addColorStop(0.8, 'rgba(159, 18, 57, 0.3)');
+      moonGlow.addColorStop(1, 'rgba(88, 28, 135, 0)');
+
+      ctx.fillStyle = moonGlow;
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 달 본체
+      ctx.fillStyle = '#ffe4e6';
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 달 표면 크레이터 실루엣
+      ctx.fillStyle = 'rgba(225, 29, 72, 0.35)';
+      ctx.beginPath();
+      ctx.arc(moonX - 4, moonY - 3, 5, 0, Math.PI * 2);
+      ctx.arc(moonX + 6, moonY + 4, 7, 0, Math.PI * 2);
+      ctx.arc(moonX - 2, moonY + 7, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // B. 흑암 성채 기단 (Dark Obsidian Bastion Foundation)
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+      ctx.fillRect(px - halfW, py + halfH - 2, bw, 6);
+
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(px - halfW + 2, py + halfH - 12, bw - 4, 12);
+      ctx.fillStyle = '#1e1b4b';
+      ctx.fillRect(px - halfW + 4, py + halfH - 10, bw - 8, 8);
+
+      // C. 비대칭 고딕 주탑 & 종탑 (Asymmetrical Castlevania Main Spire & Belfry)
+      // 왼쪽 보조 첨탑
+      const lW = Math.round(bw * 0.28);
+      const lH = Math.round(bh * 0.65);
+      const lX = px - halfW + 3;
+      const lY = py + halfH - lH;
+
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(lX, lY, lW, lH);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(lX + 2, lY + 2, lW - 4, lH - 4);
+
+      // 왼쪽 첨탑 뾰족 지붕
+      ctx.fillStyle = '#020617';
+      ctx.beginPath();
+      ctx.moveTo(lX - 1, lY);
+      ctx.lineTo(lX + Math.round(lW / 2), lY - 14);
+      ctx.lineTo(lX + lW + 1, lY);
+      ctx.closePath();
+      ctx.fill();
+
+      // 중앙 메인 캐슬바니아 로얄 타워 (Monumental Center Tower)
+      const cW = Math.round(bw * 0.42);
+      const cH = Math.round(bh * 0.95);
+      const cX = px - Math.round(cW / 2) + 2;
+      const cY = py + halfH - cH;
+
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(cX, cY, cW, cH);
+      ctx.fillStyle = '#1e1b4b';
+      ctx.fillRect(cX + 2, cY + 2, cW - 4, cH - 4);
+
+      // 중앙 종탑 아치 개구부 & 황동 종 (Suspended Belfry Bell)
+      const belfryY = cY + 12;
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(px - 4, belfryY, 8, 12);
+      // 황동 종
+      const bellSway = Math.sin(timeSec * 3) * 1.5;
+      ctx.fillStyle = '#d97706';
+      ctx.beginPath();
+      ctx.arc(px + bellSway, belfryY + 5, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(px - 1 + bellSway, belfryY + 7, 2, 4);
+
+      // 초승달 모양 캐슬바니아 주탑 돔 & 피너클 (Castlevania Spire Finial)
+      ctx.fillStyle = '#090d16';
+      ctx.beginPath();
+      ctx.moveTo(cX - 2, cY);
+      ctx.lineTo(px + 2, cY - 22);
+      ctx.lineTo(cX + cW + 2, cY);
+      ctx.closePath();
+      ctx.fill();
+
+      // 꼭대기 핏빛 루비 십자가 (Blood Ruby Cross)
+      ctx.fillStyle = '#f43f5e';
+      ctx.fillRect(px + 1, cY - 28, 2, 7);
+      ctx.fillRect(px - 1, cY - 25, 6, 2);
+
+      // D. 고딕 공중 연결 회랑 (Flying Stone Rampart Bridge)
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(lX + lW - 1, lY + 8, cX - (lX + lW) + 2, 4);
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(lX + lW, lY + 6, cX - (lX + lW), 2);
+
+      // E. 성벽 위 보랏빛 마녀불 브레이저 (Violet Witchfire Braziers)
+      const drawBrazier = (bx, by) => {
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(bx - 2, by, 4, 3);
+        // 타오르는 보랏빛/청색 마녀불꽃
+        const flamePulse = Math.sin(timeSec * 8 + bx) * 2;
+        ctx.fillStyle = '#a855f7';
+        ctx.beginPath();
+        ctx.arc(bx, by - 2 + flamePulse * 0.3, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ec4899';
+        ctx.fillRect(bx - 1, by - 4, 2, 3);
+        ctx.fillStyle = '#fdf4ff';
+        ctx.fillRect(bx, by - 3, 1, 1);
+      };
+
+      drawBrazier(cX - 1, cY + 4);
+      drawBrazier(cX + cW + 1, cY + 4);
+      drawBrazier(lX - 1, lY + 4);
+
+      // F. 성문 - 뱀파이어 송곳니 문양 철제 낙하문 (Vampiric Fang Portcullis)
+      const gateW = 12;
+      const gateH = 14;
+      const gateX = px - 6;
+      const gateY = py + halfH - gateH;
+
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(gateX, gateY, gateW, gateH);
+
+      // 철창 창살
+      ctx.fillStyle = '#64748b';
+      for (let bar = gateX + 2; bar < gateX + gateW; bar += 2) {
+        ctx.fillRect(bar, gateY + 2, 1, gateH - 2);
+      }
+
+      // 문 상단 송곳니 문양
+      ctx.fillStyle = '#fda4af';
+      ctx.beginPath();
+      ctx.moveTo(gateX + 3, gateY + 2);
+      ctx.lineTo(gateX + 5, gateY + 6);
+      ctx.lineTo(gateX + 4, gateY + 2);
+      ctx.moveTo(gateX + 9, gateY + 2);
+      ctx.lineTo(gateX + 7, gateY + 6);
+      ctx.lineTo(gateX + 8, gateY + 2);
+      ctx.fill();
+
+      // G. 핏빛 영혼 미스트 & 장미 꽃잎 (Floating Crimson Soul Mist)
+      const mistCount = 4;
+      for (let m = 0; m < mistCount; m++) {
+        const mistY = py + halfH - 4 - ((timeSec * 8 + m * 7) % 24);
+        const mistX = px + Math.sin(timeSec * 2 + m) * (halfW - 6);
+        const mistAlpha = Math.max(0, 0.4 - ((py + halfH - mistY) / 24) * 0.4);
+        ctx.fillStyle = `rgba(244, 63, 94, ${mistAlpha})`;
+        ctx.beginPath();
+        ctx.arc(mistX, mistY, 2 + (m % 2), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -2526,6 +2872,87 @@
       ctx.ellipse(px + 6, py + bh / 2 + 4, bw * 0.42, 4, 0.08, 0, Math.PI * 2);
       ctx.fill();
 
+      // 🦇 핏빛 장미의 고딕 뱀파이어 제국 (Gothic Blood Rose Empire)
+      if (type === 'gothic_cathedral' || (type === 'palace' && b && b.continent === 'gothic') || (type === 'temple' && b && b.continent === 'gothic')) {
+        this.drawGothicCathedral(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'castlevania_keep' || (type === 'castle' && b && b.continent === 'gothic') || (type === 'fortress' && b && b.continent === 'gothic')) {
+        this.drawVampireCastlevaniaKeep(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+
+      // ⚙️ 태고 드워프 증기 요새 & 마그마 제국 (Steamforge Dwarven Empire)
+      if (type === 'steamforge_citadel' || (type === 'capital' && b && b.continent === 'steamforge') || (type === 'palace' && b && b.continent === 'steamforge')) {
+        this.drawSteamforgeCitadel(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'magma_foundry' || (type === 'castle' && b && b.continent === 'steamforge') || (type === 'temple' && b && b.continent === 'steamforge')) {
+        this.drawMagmaFoundry(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+
+      // ⚡ 올림포스 판테온 & 신들의 티탄 검투장 (Olympus Thunder Peak & Titan Colosseum)
+      if (type === 'olympus_pantheon' || (type === 'capital' && b && b.continent === 'olympus') || (type === 'palace' && b && b.continent === 'olympus')) {
+        this.drawOlympusPantheon(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'titan_colosseum' || (type === 'castle' && b && b.continent === 'olympus') || (type === 'temple' && b && b.continent === 'olympus')) {
+        this.drawTitanColosseum(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+
+      // 🕌 환영의 모래바다 신기루 제국 (Mirage Sandsea Empire)
+      if (type === 'sultan_palace' || (type === 'capital' && b && b.continent === 'mirage') || (type === 'palace' && b && b.continent === 'mirage')) {
+        this.drawSultanPalace(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'sandstone_pyramid' || (type === 'castle' && b && b.continent === 'mirage') || (type === 'temple' && b && b.continent === 'mirage')) {
+        this.drawSandstonePyramid(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+
+      // ⛩️ 동방 벚꽃 옥룡 제국 (Sakura Empire)
+      if (type === 'pagoda_tower' || (type === 'castle' && b && b.continent === 'sakura') || (type === 'capital' && b && b.continent === 'sakura')) {
+        this.drawPagodaTower(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'torii_shrine' || (type === 'temple' && b && b.continent === 'sakura')) {
+        this.drawToriiShrine(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+
+      // ❄️ 발키리 오로라 성역 (Valkyrie Aurora)
+      if (type === 'glacial_citadel' || (type === 'castle' && b && b.continent === 'valkyrie')) {
+        this.drawGlacialCitadel(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'aurora_monolith' || (type === 'temple' && b && b.continent === 'valkyrie')) {
+        this.drawAuroraMonolith(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+
+      // ⏳ 크로노스 시공간 시계탑 (Chrono Clocktower)
+      if (type === 'clockwork_tower' || type === 'chrono_tower' || (type === 'castle' && b && b.continent === 'chrono')) {
+        this.drawClockworkTower(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'star_observatory' || type === 'observatory' || (type === 'temple' && b && b.continent === 'chrono')) {
+        this.drawStarObservatory(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+
+      // 🔱 해저 아틀란티스 (Atlantis)
+      if (type === 'sunken_temple' || type === 'atlantis_temple' || (type === 'temple' && b && b.continent === 'atlantis')) {
+        this.drawSunkenTemple(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'coral_spire' || type === 'abyssal_spire' || (type === 'magic_spire' && b && b.continent === 'atlantis')) {
+        this.drawCoralSpire(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+
+      // 범용 성채 / 요새 / 병영 (Generic Castles & Fortresses)
       if (type === 'palace' || type === 'capital_keep') {
         this.drawCastleKeep(ctx, px, py, bw, bh, 0, isNight, timeSec);
         return true;
@@ -2566,62 +2993,6 @@
       }
       if (type === 'windmill') {
         this.drawWindmill(ctx, px, py, bw, bh, timeSec);
-        return true;
-      }
-      if (type === 'sunken_temple' || type === 'atlantis_temple' || (type === 'temple' && b && b.continent === 'atlantis')) {
-        this.drawSunkenTemple(ctx, px, py, bw, bh, isNight, timeSec);
-        return true;
-      }
-      if (type === 'coral_spire' || type === 'abyssal_spire' || (type === 'magic_spire' && b && b.continent === 'atlantis')) {
-        this.drawCoralSpire(ctx, px, py, bw, bh, isNight, timeSec);
-        return true;
-      }
-      if (type === 'clockwork_tower' || type === 'chrono_tower' || (type === 'castle' && b && b.continent === 'chrono')) {
-        this.drawClockworkTower(ctx, px, py, bw, bh, isNight, timeSec);
-        return true;
-      }
-      if (type === 'star_observatory' || type === 'observatory' || (type === 'temple' && b && b.continent === 'chrono')) {
-        this.drawStarObservatory(ctx, px, py, bw, bh, isNight, timeSec);
-        return true;
-      }
-      if (type === 'glacial_citadel' || (type === 'castle' && b && b.continent === 'valkyrie')) {
-        this.drawGlacialCitadel(ctx, px, py, bw, bh, isNight, timeSec);
-        return true;
-      }
-      if (type === 'aurora_monolith' || (type === 'temple' && b && b.continent === 'valkyrie')) {
-        this.drawAuroraMonolith(ctx, px, py, bw, bh, isNight, timeSec);
-        return true;
-      }
-      if (type === 'pagoda_tower' || (type === 'castle' && b && b.continent === 'sakura') || (type === 'capital' && b && b.continent === 'sakura')) {
-        this.drawPagodaTower(ctx, px, py, bw, bh, isNight, timeSec);
-        return true;
-      }
-      if (type === 'torii_shrine' || (type === 'temple' && b && b.continent === 'sakura')) {
-        this.drawToriiShrine(ctx, px, py, bw, bh, isNight, timeSec);
-        return true;
-      }
-      if (type === 'sultan_palace' || (type === 'capital' && b && b.continent === 'mirage') || (type === 'palace' && b && b.continent === 'mirage')) {
-        this.drawSultanPalace(ctx, px, py, bw, bh, isNight, timeSec);
-        return true;
-      }
-      if (type === 'sandstone_pyramid' || (type === 'castle' && b && b.continent === 'mirage') || (type === 'temple' && b && b.continent === 'mirage')) {
-        this.drawSandstonePyramid(ctx, px, py, bw, bh, isNight, timeSec);
-        return true;
-      }
-      if (type === 'olympus_pantheon' || (type === 'capital' && b && b.continent === 'olympus') || (type === 'palace' && b && b.continent === 'olympus')) {
-        this.drawOlympusPantheon(ctx, px, py, bw, bh, isNight, timeSec);
-        return true;
-      }
-      if (type === 'titan_colosseum' || (type === 'castle' && b && b.continent === 'olympus') || (type === 'temple' && b && b.continent === 'olympus')) {
-        this.drawTitanColosseum(ctx, px, py, bw, bh, isNight, timeSec);
-        return true;
-      }
-      if (type === 'steamforge_citadel' || (type === 'capital' && b && b.continent === 'steamforge') || (type === 'palace' && b && b.continent === 'steamforge')) {
-        this.drawSteamforgeCitadel(ctx, px, py, bw, bh, isNight, timeSec);
-        return true;
-      }
-      if (type === 'magma_foundry' || (type === 'castle' && b && b.continent === 'steamforge') || (type === 'temple' && b && b.continent === 'steamforge')) {
-        this.drawMagmaFoundry(ctx, px, py, bw, bh, isNight, timeSec);
         return true;
       }
       if (type === 'temple' || type === 'cathedral') {
