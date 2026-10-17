@@ -172,6 +172,48 @@ const MERCENARY_CLASSES = [
   }
 ];
 
+const AWAKENING_CLASSES = [
+  {
+    id: 'blademaster',
+    name: '소드마스터',
+    title: '무극의 검성 (Blademaster)',
+    icon: '⚔️',
+    color: '#f59e0b',
+    levelReq: 5,
+    desc: '검의 극의를 터득한 대검호. 3단 콤보 피니셔가 주변에 3중 십자 검기를 방출하며 적을 찢어발깁니다.',
+    perks: ['근접 치명타 확률 +25%', '기본 공격력 +35', '피니셔 검기 범위 +40%'],
+    skillName: '천공 멸신 검무 (Omnislash)',
+    skillDesc: 'G키 시전: 8.5타일 내 모든 적에게 잔상으로 고속 텔레포트하며 8연속 참격(각 280 피해) 및 3중 충격파 폭발!',
+    skillCd: 18.0
+  },
+  {
+    id: 'archmage',
+    name: '대현자 아크메이지',
+    title: '태고의 비전 마도사 (Archmage)',
+    icon: '🔮',
+    color: '#a855f7',
+    levelReq: 5,
+    desc: '고대 원소의 심연을 깨우친 마도사. 모든 마법 쿨다운이 40% 단축되며 일반 공격에 비전 유도탄이 방출됩니다.',
+    perks: ['모든 스킬 쿨다운 40% 단축', '마법 공격력 +45', '공격 시 비전 유도탄 발사'],
+    skillName: '시공간 초신성 붕괴 (Supernova)',
+    skillDesc: 'G키 시전: 거대 차원 블랙홀 초신성을 소환하여 주변 적들을 강제 흡인 후 초극대 360 피해 + 2.5초 완전 빙결!',
+    skillCd: 22.0
+  },
+  {
+    id: 'skyhunter',
+    name: '천공의 스카이 헌터',
+    title: '신궁의 질풍 저격수 (Sky Hunter)',
+    icon: '🏹',
+    color: '#10b981',
+    levelReq: 5,
+    desc: '바람의 정령과 교감하는 대륙 최고의 명사수. 모든 지형 이동속도 +30% 및 사격 공격이 지형과 적들을 관통합니다.',
+    perks: ['영구 이동속도 +30%', '회피 확률 +20%', '공격 시 3발의 유도 바람화살 추가'],
+    skillName: '태양의 유성 화살비 (Rain of Solar Arrows)',
+    skillDesc: 'G키 시전: 창공으로 황금 태양화살을 발사하여 6초간 화면 전역에 24발의 유성 화살 폭격(각 180 피해)!',
+    skillCd: 20.0
+  }
+];
+
 class RPGSystemsManager {
   constructor(world, entityMgr) {
     this.world = world;
@@ -323,6 +365,11 @@ class RPGSystemsManager {
     // 14. 🍻 용병 길드 주점 & 동료 육성 시스템 (Tavern Mercenaries)
     this.mercenaries = MERCENARY_CLASSES;
     this.recruitedMercenaryIds = ['paladin'];
+
+    // 15. ✨ 영웅 2차 각성 / 마스터리 전직 시스템 (Hero Awakening & Mastery)
+    this.awakeningClasses = AWAKENING_CLASSES;
+    this.awakening = null;
+    this.awakeningSkillCd = 0;
 
     this.initTreasureChests();
   }
@@ -1373,6 +1420,7 @@ class RPGSystemsManager {
     if (this.skills.frostNova.cd > 0) this.skills.frostNova.cd -= dt;
     if (this.skills.meteor.cd > 0) this.skills.meteor.cd -= dt;
     if (this.skills.barrage.cd > 0) this.skills.barrage.cd -= dt;
+    if (this.awakeningSkillCd > 0) this.awakeningSkillCd -= dt;
 
     this.updateCombo(dt);
     this.updateStructures(dt);
@@ -1615,7 +1663,7 @@ class RPGSystemsManager {
 
   triggerRandomContinentalEvent() {
     this.worldEventTimer = 140.0; // 다음 이벤트까지 140초
-    const types = ['pirate_raid', 'void_rift', 'golden_harvest'];
+    const types = ['pirate_raid', 'void_rift', 'golden_harvest', 'caravan_escort'];
     const chosenType = types[Math.floor(Math.random() * types.length)];
     const sMap = this.world.settlementMap || {};
 
@@ -1686,6 +1734,39 @@ class RPGSystemsManager {
       this.em.addEffect(loc.x, loc.y, 8.0, '#a855f7', 1.2);
       this.em.addFloatingText(loc.x, loc.y - 2, '🌋 긴급: 공허의 네더 차원 균열 개방!', '#c084fc', 3.0);
       this.em.log('battle', '🌋 [대륙 긴급 이벤트] 대륙 동부 황무지에 공허의 네더 차원 균열이 열려 마수가 쏟아져 나옵니다!', loc.x, loc.y);
+    } else if (chosenType === 'caravan_escort') {
+      const loc = { x: 1980, y: 1520 };
+      const eventMonsters = [];
+      for (let i = 0; i < 5; i++) {
+        const ox = (Math.random() - 0.5) * 8;
+        const oy = (Math.random() - 0.5) * 8;
+        const pMonster = this.em.spawnMonsterAt(loc.x + ox, loc.y + oy, 'orc');
+        if (pMonster) {
+          pMonster.name = i === 0 ? '⚔️ 붉은두건 산적두목 바르가스' : '🗡️ 붉은두건 도적 약탈병';
+          pMonster.maxHp = i === 0 ? 820 : 320;
+          pMonster.hp = pMonster.maxHp;
+          pMonster.atk = i === 0 ? 38 : 22;
+          pMonster.gold = i === 0 ? 1100 : 250;
+          pMonster.color = '#dc2626';
+          eventMonsters.push(pMonster);
+        }
+      }
+      this.activeContinentalEvent = {
+        type: 'caravan_escort',
+        name: '👑 왕실 황금 무역 상단 호위 & 산적단 기습',
+        desc: '왕도와 대항구를 오가는 왕실 황금 상단이 산적단의 매복 기습을 받았습니다! 상단을 구출하십시오.',
+        icon: '👑',
+        x: loc.x,
+        y: loc.y,
+        timer: 110.0,
+        maxTimer: 110.0,
+        monsters: eventMonsters,
+        monstersLeft: eventMonsters.length
+      };
+      if (typeof audioMgr !== 'undefined') audioMgr.playBossHorn();
+      this.em.addEffect(loc.x, loc.y, 8.0, '#f59e0b', 1.2);
+      this.em.addFloatingText(loc.x, loc.y - 2, '👑 긴급: 왕실 황금 상단 산적 매복 기습 발생!', '#f59e0b', 3.0);
+      this.em.log('battle', '👑 [대륙 긴급 이벤트] 대륙 황금 대로에서 왕실 황금 무역 상단이 붉은두건 산적단의 기습을 당했습니다!', loc.x, loc.y);
     } else {
       // golden_harvest
       const loc = sMap.solaris || { x: 1960, y: 1400 };
@@ -1718,8 +1799,8 @@ class RPGSystemsManager {
 
     if (success) {
       if (p) {
-        const rewardGold = evt.type === 'golden_harvest' ? 1200 : 2000;
-        const rewardFame = 60;
+        const rewardGold = evt.type === 'golden_harvest' ? 1200 : (evt.type === 'caravan_escort' ? 2500 : 2000);
+        const rewardFame = evt.type === 'caravan_escort' ? 95 : 60;
         p.gold += rewardGold;
         p.fame = (p.fame || 0) + rewardFame;
         if (this.em.addFloatingText) {
@@ -1966,6 +2047,144 @@ class RPGSystemsManager {
     });
     this.companionsActive = true;
   }
+
+  // ==========================================================================
+  // 15. ✨ 영웅 2차 각성 및 마스터리 전직 시스템
+  // ==========================================================================
+  selectAwakening(classId) {
+    const p = this.em.player;
+    if (!p) return { ok: false, msg: '플레이어를 찾을 수 없습니다.' };
+    const awk = AWAKENING_CLASSES.find(c => c.id === classId);
+    if (!awk) return { ok: false, msg: '존재하지 않는 각성 클래스입니다.' };
+
+    const oldAwakening = this.awakening;
+    if (oldAwakening) {
+      if (oldAwakening.id === 'blademaster') {
+        p.atk -= 35;
+      } else if (oldAwakening.id === 'archmage') {
+        p.atk -= 45;
+      } else if (oldAwakening.id === 'skyhunter') {
+        p.speed -= 0.6;
+        p.atk -= 30;
+      }
+    }
+
+    this.awakening = awk;
+    if (awk.id === 'blademaster') {
+      p.atk += 35;
+    } else if (awk.id === 'archmage') {
+      p.atk += 45;
+    } else if (awk.id === 'skyhunter') {
+      p.speed += 0.6;
+      p.atk += 30;
+    }
+
+    if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+    this.em.addEffect(p.x, p.y, 8.0, awk.color, 1.8);
+    this.em.addShockwave(p.x, p.y, 7.5, awk.color, 0.7);
+    this.em.addHitSparks(p.x, p.y, '#ffffff', 18);
+    this.em.addFloatingText(p.x, p.y - 2.0, `✨ [영웅 2차 각성] ${awk.title} 달성!`, awk.color, 3.0);
+    this.em.log('quest', `✨ [영웅 2차 각성] 플레이어가 [${awk.title}]으로 전직하여 강력한 각성 오라와 각성기(G키)를 획득했습니다!`, p.x, p.y);
+
+    return { ok: true, class: awk };
+  }
+
+  castAwakeningSkill() {
+    const p = this.em.player;
+    if (!p || !this.awakening) return;
+    if (this.awakeningSkillCd > 0) {
+      this.em.addFloatingText(p.x, p.y - 1.2, `⏳ 각성기 쿨다운 (${this.awakeningSkillCd.toFixed(1)}초)`, '#94a3b8', 1.0);
+      return;
+    }
+
+    const awk = this.awakening;
+    const maxCd = awk.id === 'archmage' ? awk.skillCd * 0.6 : awk.skillCd;
+    this.awakeningSkillCd = maxCd;
+
+    if (awk.id === 'blademaster') {
+      const targets = this.em.spatialGrid
+        ? this.em.spatialGrid.query(p.x, p.y, 8.5, ent => ent !== p && ent.hp > 0 && this.em.isHostile(p, ent))
+        : this.em.entities.filter(ent => ent !== p && ent.hp > 0 && this.em.isHostile(p, ent) && Math.hypot(ent.x - p.x, ent.y - p.y) <= 8.5);
+
+      if (typeof audioMgr !== 'undefined') audioMgr.playWhirlwind();
+      this.em.addShockwave(p.x, p.y, 7.0, '#f59e0b', 0.6);
+      this.em.addFloatingText(p.x, p.y - 2.2, '⚔️ [천공 멸신 검무: 8연속 참격!]', '#f59e0b', 2.0);
+
+      const slashTargets = targets.slice(0, 8);
+      slashTargets.forEach((t, idx) => {
+        setTimeout(() => {
+          if (!t || t.hp <= 0) return;
+          const dmg = Math.round(p.atk * 2.8 + 120);
+          t.hp -= dmg;
+          t.hitTimer = 0.35;
+          this.em.addEffect(t.x, t.y, 3.2, '#facc15', 0.4);
+          this.em.addHitSparks(t.x, t.y, '#f59e0b', 10);
+          this.em.addShockwave(t.x, t.y, 3.5, '#f59e0b', 0.35);
+          this.em.addFloatingText(t.x, t.y - 1.0, `💥 멸신참! -${dmg}`, '#fde047', 1.2);
+          if (t.hp <= 0 && this.checkDungeonBossDefeat) this.checkDungeonBossDefeat(t);
+        }, idx * 65);
+      });
+
+      if (this.em.camera) this.em.camera.shake = 16;
+    } else if (awk.id === 'archmage') {
+      if (typeof audioMgr !== 'undefined') audioMgr.playMeteor();
+      this.em.addShockwave(p.x, p.y, 9.5, '#a855f7', 0.8);
+      this.em.addShockwave(p.x, p.y, 6.0, '#c084fc', 0.5);
+      this.em.addEffect(p.x, p.y, 8.5, '#7e22ce', 1.4);
+      this.em.addFloatingText(p.x, p.y - 2.2, '🔮 [시공간 왜곡 초신성 대폭발!]', '#c084fc', 2.2);
+
+      const targets = this.em.spatialGrid
+        ? this.em.spatialGrid.query(p.x, p.y, 9.5, ent => ent !== p && ent.hp > 0 && this.em.isHostile(p, ent))
+        : this.em.entities.filter(ent => ent !== p && ent.hp > 0 && this.em.isHostile(p, ent) && Math.hypot(ent.x - p.x, ent.y - p.y) <= 9.5);
+
+      targets.forEach(t => {
+        const dx = p.x - t.x;
+        const dy = p.y - t.y;
+        const d = Math.hypot(dx, dy) || 1;
+        t.x += (dx / d) * 2.2;
+        t.y += (dy / d) * 2.2;
+        const dmg = Math.round(p.atk * 3.4 + 160);
+        t.hp -= dmg;
+        t.frozenTimer = 2.5;
+        t.hitTimer = 0.35;
+        this.em.addHitSparks(t.x, t.y, '#e9d5ff', 8);
+        this.em.addFloatingText(t.x, t.y - 1.0, `❄️ 초신성 붕괴! -${dmg} (빙결)`, '#e9d5ff', 1.5);
+        if (t.hp <= 0 && this.checkDungeonBossDefeat) this.checkDungeonBossDefeat(t);
+      });
+
+      if (this.em.camera) this.em.camera.shake = 18;
+    } else if (awk.id === 'skyhunter') {
+      if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+      this.em.addShockwave(p.x, p.y, 8.0, '#10b981', 0.65);
+      this.em.addFloatingText(p.x, p.y - 2.2, '🏹 [태양의 유성 화살 폭격 개시!]', '#34d399', 2.2);
+
+      for (let i = 0; i < 20; i++) {
+        setTimeout(() => {
+          if (!p) return;
+          const ox = (Math.random() - 0.5) * 16;
+          const oy = (Math.random() - 0.5) * 16;
+          const ax = p.x + ox;
+          const ay = p.y + oy;
+          this.em.addEffect(ax, ay, 2.5, '#facc15', 0.4);
+          this.em.addShockwave(ax, ay, 2.8, '#34d399', 0.3);
+          this.em.addHitSparks(ax, ay, '#fef08a', 6);
+
+          const hitTargets = this.em.spatialGrid
+            ? this.em.spatialGrid.query(ax, ay, 2.5, ent => ent !== p && ent.hp > 0 && this.em.isHostile(p, ent))
+            : [];
+          hitTargets.forEach(t => {
+            const dmg = Math.round(p.atk * 1.6 + 60);
+            t.hp -= dmg;
+            t.hitTimer = 0.2;
+            this.em.addFloatingText(t.x, t.y - 0.8, `🏹-${dmg}`, '#34d399', 0.9);
+            if (t.hp <= 0 && this.checkDungeonBossDefeat) this.checkDungeonBossDefeat(t);
+          });
+        }, i * 90);
+      }
+
+      if (this.em.camera) this.em.camera.shake = 12;
+    }
+  }
 }
 
 const CRAFTING_RECIPES = [
@@ -2066,3 +2285,4 @@ window.RPGSystemsManager = RPGSystemsManager;
 window.STRUCTURE_DEFS = STRUCTURE_DEFS;
 window.LEGENDARY_ITEMS = LEGENDARY_ITEMS;
 window.CRAFTING_RECIPES = CRAFTING_RECIPES;
+window.AWAKENING_CLASSES = AWAKENING_CLASSES;

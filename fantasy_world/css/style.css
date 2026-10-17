@@ -2481,6 +2481,157 @@ body.cinematic-mode #followBanner {
   cursor: default;
 }
 
+/* ==========================================================================
+   영웅 2차 각성 & 마스터리 전직 모달 (Awakening Modal)
+   ========================================================================== */
+.awakening-modal-card {
+  max-width: 720px;
+  width: 92%;
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(30, 27, 75, 0.96));
+  border: 1.5px solid rgba(250, 204, 21, 0.55);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(250, 204, 21, 0.15);
+}
+
+.awakening-banner {
+  background: rgba(250, 204, 21, 0.08);
+  border: 1px solid rgba(250, 204, 21, 0.25);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #fef08a;
+  line-height: 1.45;
+  margin-bottom: 12px;
+}
+
+.awakening-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.awk-card {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.awk-card:hover {
+  background: rgba(30, 41, 59, 0.95);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.awk-card.selected {
+  border-color: #facc15;
+  background: rgba(49, 46, 129, 0.5);
+  box-shadow: 0 0 16px rgba(250, 204, 21, 0.25);
+}
+
+.awk-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.awk-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.awk-name-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.awk-name {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.awk-title {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.awk-desc {
+  font-size: 11px;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+.awk-perks-box {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.awk-perk-item {
+  font-size: 10.5px;
+  color: #86efac;
+}
+
+.awk-skill-box {
+  background: rgba(250, 204, 21, 0.08);
+  border: 1px solid rgba(250, 204, 21, 0.2);
+  border-radius: 6px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.awk-skill-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fde047;
+}
+
+.awk-skill-desc {
+  font-size: 10px;
+  color: #e2e8f0;
+  line-height: 1.35;
+}
+
+.btn-awaken {
+  margin-top: auto;
+  background: #f59e0b;
+  color: #000;
+  font-weight: 800;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-awaken:hover {
+  background: #fbbf24;
+}
+
+.btn-awaken.current {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  cursor: default;
+}
+
 
 
 

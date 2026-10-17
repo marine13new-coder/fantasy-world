@@ -350,6 +350,9 @@ class WorldRenderer {
     // 8.5. ⚠️ 보스/엘리트 공격 전조 위험 장판 (Telegraphed Hazard Zones)
     this.drawHazardZones(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy);
 
+    // 8.6. 💥 방사형 충격파 링 (Expanding Shockwaves)
+    this.drawShockwaves(ctx, ts);
+
     // 9. 수제 픽셀아트 엔티티 (영웅, 기사, 마법사, 엘프, 드워프, 범선, 드래곤 등)
     const midX = (minTx + maxTx) / 2;
     const midY = (minTy + maxTy) / 2;
@@ -443,6 +446,9 @@ class WorldRenderer {
 
     // 12.3. 펫 컴패니언 (Pet Companion)
     this.drawPetCompanion(ctx, ts, timeSec, camera.zoom);
+
+    // 12.35. ☁️ 대륙 대기 입체 구름 그림자 (Volumetric Cloud Shadows)
+    this.drawCloudShadows(ctx, ts, timeSec, camera, worldTime, minTx, maxTx, minTy, maxTy);
 
     // 12.4. 밤/황혼 동적 2D 조명 (Dynamic Lighting & Lighthouse Beam)
     this.drawDynamicLighting(ctx, ts, timeSec, camera, worldTime);
@@ -2262,6 +2268,11 @@ class WorldRenderer {
         return;
       }
 
+      // 2.8. 플레이어 영웅 2차 각성 회전 룬 마법진 오라 (Awakening Sacred Aura)
+      if (e.role === 'player' && this.entityMgr.rpgManager && this.entityMgr.rpgManager.awakening) {
+        this.drawHeroAwakeningAura(ctx, px, py + 3 * sc, sc, timeSec, this.entityMgr.rpgManager.awakening);
+      }
+
       // 3. 모든 영웅/NPC/몬스터/야생동물 정밀 픽셀 아트 매트릭스 렌더링
       window.PixelSprites.draw(ctx, e, px, py, bounce, timeSec, isNight);
       return;
@@ -3953,6 +3964,161 @@ class WorldRenderer {
         }
       }
     }
+  }
+
+  // 💥 [8.6] 방사형 충격파 링 렌더러 (Expanding Radial Shockwave Renderer)
+  drawShockwaves(ctx, ts) {
+    if (!this.entityMgr.shockwaves || this.entityMgr.shockwaves.length === 0) return;
+    for (const sw of this.entityMgr.shockwaves) {
+      const progress = sw.age / sw.duration;
+      const curR = Math.round(sw.maxRadius * ts * Math.sin(progress * Math.PI * 0.5));
+      const alpha = Math.max(0, 1 - progress);
+      const px = Math.round(sw.x * ts);
+      const py = Math.round(sw.y * ts);
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+
+      // 외곽 팽창 충격파 링 (Outer shockwave ring)
+      ctx.strokeStyle = sw.color;
+      ctx.lineWidth = Math.max(1, 4 * (1 - progress));
+      ctx.beginPath();
+      ctx.arc(px, py, curR, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 내부 광채 링 (Inner luminous rim)
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = Math.max(0.5, 2 * (1 - progress));
+      ctx.beginPath();
+      ctx.arc(px, py, Math.max(1, curR * 0.82), 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 바닥 잔광 왜곡 필드 (Soft luminous glow fill)
+      ctx.fillStyle = sw.color;
+      ctx.globalAlpha = alpha * 0.15;
+      ctx.beginPath();
+      ctx.arc(px, py, curR, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+  }
+
+  // ☁️ [12.35] 대륙 대기 입체 구름 그림자 (Volumetric Cloud Shadows Drifting Across Continent)
+  drawCloudShadows(ctx, ts, timeSec, camera, worldTime, minTx, maxTx, minTy, maxTy) {
+    const hour = worldTime ? worldTime.hour : 12;
+    // 주간(6시~18시) 동안 부드럽게 나타나고 아침/저녁에 페이드인/아웃
+    let daylight = 0;
+    if (hour >= 6 && hour < 8) {
+      daylight = (hour - 6) / 2;
+    } else if (hour >= 8 && hour < 17) {
+      daylight = 1.0;
+    } else if (hour >= 17 && hour < 19) {
+      daylight = 1.0 - (hour - 17) / 2;
+    } else {
+      return; // 야간에는 구름 그림자 숨김
+    }
+
+    const worldPixelW = this.world.width * ts;
+    const worldPixelH = this.world.height * ts;
+    const speed = 24; // 초당 24픽셀 속도로 북동쪽으로 자연스럽게 부유
+    const offsetX = (timeSec * speed) % (worldPixelW * 0.5);
+    const offsetY = (timeSec * (speed * 0.45)) % (worldPixelH * 0.5);
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.18)'; // 깊이감 있는 푸른 네이비톤 그림자
+    ctx.globalAlpha = daylight * 0.85;
+
+    const stepX = 460;
+    const stepY = 360;
+    const startX = Math.floor((minTx * ts - offsetX) / stepX) * stepX + offsetX;
+    const endX = maxTx * ts + 260;
+    const startY = Math.floor((minTy * ts - offsetY) / stepY) * stepY + offsetY;
+    const endY = maxTy * ts + 260;
+
+    for (let cx = startX; cx <= endX; cx += stepX) {
+      for (let cy = startY; cy <= endY; cy += stepY) {
+        const gx = Math.floor(cx / stepX);
+        const gy = Math.floor(cy / stepY);
+        const seed = Math.sin(gx * 12.9898 + gy * 78.233) * 43758.5453;
+        const rand = seed - Math.floor(seed);
+        if (rand > 0.65) continue; // 일부 구역은 맑은 하늘 연출
+
+        const r1 = 85 + (rand * 65);
+        const r2 = r1 * (0.58 + (rand * 0.28));
+        const rot = rand * Math.PI;
+
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, r1, r2, rot, 0, Math.PI * 2);
+        ctx.ellipse(cx + r1 * 0.52, cy - r2 * 0.28, r1 * 0.65, r2 * 0.6, rot + 0.35, 0, Math.PI * 2);
+        ctx.ellipse(cx - r1 * 0.42, cy + r2 * 0.25, r1 * 0.55, r2 * 0.5, rot - 0.25, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    ctx.restore();
+  }
+
+  // ✨ [2.8] 플레이어 영웅 2차 각성 회전 룬 마법진 오라 (Hero Awakening Aura)
+  drawHeroAwakeningAura(ctx, px, py, sc, timeSec, awakening) {
+    ctx.save();
+    const rot = timeSec * 1.8;
+    const col = awakening.color || '#f59e0b';
+
+    // 1. 발밑 회전 마법진 링
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = 0.68 + Math.sin(timeSec * 4) * 0.2;
+
+    ctx.beginPath();
+    ctx.ellipse(px, py, 14 * sc, 7 * sc, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.ellipse(px, py, 10 * sc, 5 * sc, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 2. 4방위 회전 룬 표식
+    for (let i = 0; i < 4; i++) {
+      const ang = rot + (Math.PI / 2) * i;
+      const rx = px + Math.cos(ang) * (14 * sc);
+      const ry = py + Math.sin(ang) * (7 * sc);
+      ctx.fillStyle = col;
+      ctx.fillRect(rx - 1.5 * sc, ry - 1.5 * sc, 3 * sc, 3 * sc);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(rx - 0.5 * sc, ry - 0.5 * sc, 1 * sc, 1 * sc);
+    }
+
+    // 3. 클래스별 고유 오라 효과
+    if (awakening.id === 'blademaster') {
+      // ⚔️ 검성: 회전하는 황금 검기 잔영
+      const sAng = -rot * 2.2;
+      const sx = px + Math.cos(sAng) * (18 * sc);
+      const sy = py - 8 * sc + Math.sin(sAng) * (6 * sc);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(sx - 1 * sc, sy - 4 * sc, 2 * sc, 8 * sc);
+    } else if (awakening.id === 'archmage') {
+      // 🔮 아크메이지: 궤도 선회 비전 보주 3개
+      for (let j = 0; j < 3; j++) {
+        const oAng = rot * 1.5 + (Math.PI * 2 / 3) * j;
+        const ox = px + Math.cos(oAng) * (15 * sc);
+        const oy = py - 10 * sc + Math.sin(oAng) * (7 * sc);
+        ctx.fillStyle = '#c084fc';
+        ctx.fillRect(ox - 2 * sc, oy - 2 * sc, 4 * sc, 4 * sc);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(ox - 1 * sc, oy - 1 * sc, 2 * sc, 2 * sc);
+      }
+    } else if (awakening.id === 'skyhunter') {
+      // 🏹 스카이헌터: 상승하는 에메랄드 깃털 스파크
+      const featherY = py - ((timeSec * 25) % (24 * sc));
+      const featherX = px + Math.sin(timeSec * 5) * (8 * sc);
+      ctx.fillStyle = '#6ee7b7';
+      ctx.fillRect(featherX, featherY, 2 * sc, 3 * sc);
+    }
+
+    ctx.restore();
   }
 }
 

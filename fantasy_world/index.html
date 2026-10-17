@@ -383,6 +383,11 @@
           <span class="skill-icon">💀</span>
           <span class="skill-name">던전</span>
         </button>
+        <button class="skill-btn util" id="btnOpenAwakening" title="영웅 2차 각성 & 마스터리 전직 (G)">
+          <span class="key-badge">G</span>
+          <span class="skill-icon">✨</span>
+          <span class="skill-name">각성</span>
+        </button>
         <button class="skill-btn util" id="btnToggleInventory" title="장비 & 인벤토리 가방 (I)">
           <span class="key-badge">I</span>
           <span class="skill-icon">🎒</span>
@@ -651,6 +656,24 @@
     </div>
   </div>
 
+  <!-- 영웅 2차 각성 & 마스터리 전직 모달 (Hero Awakening Mastery Modal) -->
+  <div id="awakeningModal" class="modal-overlay hidden">
+    <div class="inventory-card awakening-modal-card">
+      <div class="inv-header">
+        <h2>✨ 영웅 2차 각성 & 마스터리 전직 (Hero Awakening)</h2>
+        <button id="btnCloseAwakeningModal" class="close-btn">✖</button>
+      </div>
+      <div class="awakening-modal-body">
+        <div class="awakening-banner">
+          <span>대륙의 영웅이여! 무한한 잠재력을 일깨워 상위 마스터리 클래스로 각성하고 고유 각성기(G키)와 영구 룬 오라를 획득하세요.</span>
+        </div>
+        <div class="awakening-cards-grid" id="awakeningCardsGrid">
+          <!-- JS 동적 렌더링 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 하단 카메라 추적 배너 -->
   <div id="followBanner" class="follow-banner hidden">
     <span id="followBannerText">🎥 추적 중: -</span>
@@ -658,14 +681,14 @@
   </div>
 
   <!-- 스크립트 로드 -->
-  <script src="js/audio.js?v=20"></script>
-  <script src="js/world_gen.js?v=20"></script>
-  <script src="js/pixel_buildings.js?v=20"></script>
-  <script src="js/entities.js?v=20"></script>
-  <script src="js/rpg_systems.js?v=20"></script>
-  <script src="js/pixel_items.js?v=20"></script>
-  <script src="js/pixel_sprites.js?v=20"></script>
-  <script src="js/renderer.js?v=20"></script>
-  <script src="js/main.js?v=20"></script>
+  <script src="js/audio.js?v=21"></script>
+  <script src="js/world_gen.js?v=21"></script>
+  <script src="js/pixel_buildings.js?v=21"></script>
+  <script src="js/entities.js?v=21"></script>
+  <script src="js/rpg_systems.js?v=21"></script>
+  <script src="js/pixel_items.js?v=21"></script>
+  <script src="js/pixel_sprites.js?v=21"></script>
+  <script src="js/renderer.js?v=21"></script>
+  <script src="js/main.js?v=21"></script>
 </body>
 </html>

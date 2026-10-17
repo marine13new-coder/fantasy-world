@@ -855,6 +855,88 @@ function startFantasyWorld() {
     });
   }
 
+  // ==========================================================================
+  // 영웅 2차 각성 & 마스터리 전직 컨트롤러
+  // ==========================================================================
+  const awakeningModalEl = document.getElementById('awakeningModal');
+  const btnCloseAwakeningModal = document.getElementById('btnCloseAwakeningModal');
+  const btnOpenAwakening = document.getElementById('btnOpenAwakening');
+
+  window.openAwakeningModal = function() {
+    if (!awakeningModalEl) return;
+    const rpg = entityMgr.rpgManager;
+    if (!rpg || !rpg.awakeningClasses) return;
+
+    const gridEl = document.getElementById('awakeningCardsGrid');
+    if (gridEl) {
+      gridEl.innerHTML = rpg.awakeningClasses.map(awk => {
+        const isCurrent = rpg.awakening && rpg.awakening.id === awk.id;
+        const perksHtml = awk.perks.map(p => `<span class="awk-perk-item">✓ ${p}</span>`).join('');
+        return `
+          <div class="awk-card ${isCurrent ? 'selected' : ''}" style="border-top: 3px solid ${awk.color}">
+            <div class="awk-header">
+              <div class="awk-icon-box" style="border: 1px solid ${awk.color}66">${awk.icon}</div>
+              <div class="awk-name-block">
+                <span class="awk-name" style="color: ${awk.color}">${awk.name}</span>
+                <span class="awk-title">${awk.title}</span>
+              </div>
+            </div>
+            <div class="awk-desc">${awk.desc}</div>
+            <div class="awk-perks-box">
+              ${perksHtml}
+            </div>
+            <div class="awk-skill-box">
+              <span class="awk-skill-name">⚡ 각성기: ${awk.skillName}</span>
+              <span class="awk-skill-desc">${awk.skillDesc}</span>
+            </div>
+            <button class="btn-awaken ${isCurrent ? 'current' : ''}" data-awk="${awk.id}">
+              ${isCurrent ? '✓ 현재 각성 클래스' : `✨ ${awk.name}으로 각성하기`}
+            </button>
+          </div>
+        `;
+      }).join('');
+
+      const awkBtns = gridEl.querySelectorAll('.btn-awaken:not(.current)');
+      awkBtns.forEach(b => {
+        b.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const cid = b.getAttribute('data-awk');
+          if (cid && rpg) {
+            const res = rpg.selectAwakening(cid);
+            if (res.ok) {
+              window.openAwakeningModal();
+              if (btnOpenAwakening) {
+                btnOpenAwakening.classList.add('active');
+                const nameEl = btnOpenAwakening.querySelector('.skill-name');
+                if (nameEl) nameEl.textContent = res.class.name;
+              }
+            }
+          }
+        });
+      });
+    }
+
+    awakeningModalEl.classList.remove('hidden');
+    if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+  };
+
+  if (btnCloseAwakeningModal) {
+    btnCloseAwakeningModal.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (awakeningModalEl) awakeningModalEl.classList.add('hidden');
+    });
+  }
+  if (awakeningModalEl) {
+    awakeningModalEl.addEventListener('click', (e) => {
+      if (e.target === awakeningModalEl) awakeningModalEl.classList.add('hidden');
+    });
+  }
+  if (btnOpenAwakening) {
+    btnOpenAwakening.addEventListener('click', () => {
+      window.openAwakeningModal();
+    });
+  }
+
   // 전체화면 및 시네마틱 모드
   const btnToggleFullscreen = document.getElementById('btnToggleFullscreen');
   if (btnToggleFullscreen) {
@@ -1197,6 +1279,12 @@ function startFantasyWorld() {
       entityMgr.triggerPlayerSkill('E');
     } else if (e.code === 'KeyF') {
       entityMgr.triggerPlayerSkill('F');
+    } else if (e.code === 'KeyG') {
+      if (entityMgr.rpgManager && entityMgr.rpgManager.awakening) {
+        entityMgr.triggerPlayerSkill('G');
+      } else {
+        if (typeof window.openAwakeningModal === 'function') window.openAwakeningModal();
+      }
     } else if (e.code === 'KeyR') {
       entityMgr.togglePlayerMount();
       updateMountUI();
@@ -1251,6 +1339,7 @@ function startFantasyWorld() {
       if (statsModalEl) statsModalEl.classList.add('hidden');
       if (dungeonModalEl) dungeonModalEl.classList.add('hidden');
       if (tavernModalEl) tavernModalEl.classList.add('hidden');
+      if (awakeningModalEl) awakeningModalEl.classList.add('hidden');
       if (buildPaletteEl) buildPaletteEl.classList.add('hidden');
       if (entityMgr.rpgManager) entityMgr.rpgManager.isBuildModeActive = false;
       if (btnToggleBuild) btnToggleBuild.classList.remove('active');

@@ -343,6 +343,7 @@ class EntityManager {
     this.droppedLoot = [];
     this.hazardZones = [];
     this.footprints = [];
+    this.shockwaves = [];
     this.activeBattles = 0;
     this.player = null;
     this.pet = null;
@@ -433,6 +434,13 @@ class EntityManager {
 
   addEffect(x, y, radius, color = '#facc15', duration = 0.7) {
     this.specialEffects.push({ x, y, radius, color, age: 0, duration });
+  }
+
+  // 💥 방사형 충격파 (Expanding Radial Shockwave)
+  addShockwave(x, y, maxRadius = 5.0, color = '#facc15', duration = 0.55) {
+    if (!this.shockwaves) this.shockwaves = [];
+    if (this.shockwaves.length > 40) this.shockwaves.shift();
+    this.shockwaves.push({ x, y, maxRadius, color, age: 0, duration });
   }
 
   // 💥 정밀 픽셀 히트 스파크 (Hit Sparks)
@@ -1725,6 +1733,14 @@ class EntityManager {
       this.playerPerformAttack(p);
     } else if (skillKey === 'SPACE' || skillKey === 'dodge' || skillKey === 'dash') {
       this.playerDodgeRoll(p);
+    } else if (skillKey === 'G' || skillKey === 'awakening') {
+      if (this.rpgManager) {
+        if (this.rpgManager.awakening) {
+          this.rpgManager.castAwakeningSkill();
+        } else if (typeof window.openAwakeningModal === 'function') {
+          window.openAwakeningModal();
+        }
+      }
     }
   }
 
@@ -1756,6 +1772,7 @@ class EntityManager {
 
     if (typeof audioMgr !== 'undefined') audioMgr.playWhirlwind();
     this.addEffect(p.x, p.y, 2.8, '#38bdf8', 0.4);
+    this.addShockwave(p.x, p.y, 2.6, '#38bdf8', 0.32);
     this.addHitSparks(p.x, p.y, '#bae6fd', 8);
     this.addFloatingText(p.x, p.y - 1.2, '💨 닷지 롤 (무적 회피!)', '#38bdf8', 0.9);
 
@@ -1894,6 +1911,11 @@ class EntityManager {
       const hasSolar = this.rpgManager && this.rpgManager.hasTrait('solar_aura');
       const aoeRadius = hasSolar ? 6.2 : 4.2;
       this.addEffect(p.x, p.y, aoeRadius * 0.9, '#facc15', 0.45);
+      this.addShockwave(p.x, p.y, aoeRadius, '#facc15', 0.55);
+      if (this.rpgManager && this.rpgManager.awakening && this.rpgManager.awakening.id === 'blademaster') {
+        this.addShockwave(p.x, p.y, aoeRadius * 1.35, '#f59e0b', 0.65);
+        this.addFloatingText(p.x, p.y - 1.8, '⚔️ 소드마스터 삼단 십자검기 폭발!', '#f59e0b', 1.5);
+      }
       if (this.camera) this.camera.shake = Math.min(22, (this.camera.shake || 0) + 7.5);
 
       const aoeTargets = this.spatialGrid
@@ -2666,6 +2688,15 @@ class EntityManager {
       const fx = this.specialEffects[i];
       fx.age += dt;
       if (fx.age >= fx.duration) this.specialEffects.splice(i, 1);
+    }
+
+    // 💥 방사형 충격파 (Expanding Radial Shockwaves) 업데이트
+    if (this.shockwaves && this.shockwaves.length > 0) {
+      for (let i = this.shockwaves.length - 1; i >= 0; i--) {
+        const sw = this.shockwaves[i];
+        sw.age += dt;
+        if (sw.age >= sw.duration) this.shockwaves.splice(i, 1);
+      }
     }
 
     // 💥 픽셀 히트 스파크 & 스타버스트 파티클 업데이트
