@@ -347,6 +347,8 @@ class EntityManager {
     this.slashArcs = [];
     this.bloodDecals = [];
     this.grassLeaves = [];
+    this.deadRemains = [];
+    this.initFireflies();
     this.activeBattles = 0;
     this.player = null;
     this.pet = null;
@@ -446,6 +448,39 @@ class EntityManager {
         size: 1.6 + Math.random() * 1.4
       });
     }
+  }
+
+  // ✨ 야간 발광 반딧불이 군집 초기화 (Nighttime Fireflies)
+  initFireflies() {
+    this.fireflies = [];
+    const w = (this.world && this.world.width) ? this.world.width : 256;
+    const h = (this.world && this.world.height) ? this.world.height : 256;
+    for (let i = 0; i < 55; i++) {
+      this.fireflies.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        vx: (Math.random() - 0.5) * 0.35,
+        vy: (Math.random() - 0.5) * 0.35,
+        size: 1.5 + Math.random() * 1.5,
+        color: Math.random() < 0.65 ? '#fde047' : '#86efac',
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  // 💀 영구 지속 전사자 유골 잔해 데칼 (Persistent Skeletal Remains & Carcasses)
+  addDeadRemains(x, y, monsterType = 'skeleton', scale = 1.0) {
+    if (!this.deadRemains) this.deadRemains = [];
+    if (this.deadRemains.length > 80) this.deadRemains.shift();
+    this.deadRemains.push({
+      x: x + (Math.random() - 0.5) * 0.4,
+      y: y + (Math.random() - 0.5) * 0.4,
+      monsterType,
+      scale,
+      angle: (Math.random() - 0.5) * 0.6,
+      age: 0,
+      duration: 50.0 + Math.random() * 30.0
+    });
   }
 
   // 🩸 다크 판타지 전투 혈흔 및 그을음 지면 데칼 (Persistent Ground Blood & Scorch Decals)
@@ -2299,6 +2334,16 @@ class EntityManager {
 
         if (ent.hp <= 0) {
           p.kills = (p.kills || 0) + 1;
+          this.addDeadRemains(ent.x, ent.y, ent.monsterType || ent.role, ent.scale);
+          p.killstreak = (p.killstreak || 0) + 1;
+          p.killstreakTimer = 5.5;
+          if (p.killstreak === 3) {
+            this.addFloatingText(p.x, p.y - 2.0, '🔥 TRIPLE KILL! (광폭화 발동)', '#f97316', 1.8);
+          } else if (p.killstreak === 5) {
+            this.addFloatingText(p.x, p.y - 2.2, '⚡ RAMPAGE! 광란의 연쇄 학살! (공속+35%)', '#facc15', 2.0);
+          } else if (p.killstreak >= 8) {
+            this.addFloatingText(p.x, p.y - 2.4, '👑 GODLIKE! 신의 경지 피버 돌입!', '#ef4444', 2.2);
+          }
           this.gainPlayerExp(ent.role === 'dragon' ? 180 : 70);
           if (this.questSystem && this.questSystem.onMonsterSlain) {
             this.questSystem.onMonsterSlain(ent);
@@ -2374,6 +2419,13 @@ class EntityManager {
       target.hitTimer = 0.25;
       this.checkEnemyExecutable(target);
 
+      // 🌀 2타 어퍼 크로스: 공중 띄우기 (Airborne Launch)
+      if (p.comboStep === 2) {
+        target.airborneHeight = 16 * (target.scale || 1.0);
+        target.airborneTimer = 0.45;
+        this.addFloatingText(target.x, target.y - 1.6, '🌀 AIRBORNE! 공중 띄우기!', '#38bdf8', 1.2);
+      }
+
       // 🩸 다크 판타지 전투 혈흔 / 체액 지면 데칼 생성
       const bloodColor = (target.role === 'dragon' || (target.name && target.name.includes('용')) || target.monsterType === 'fire_drake') ? '#f97316'
         : (target.monsterType === 'kraken' || target.monsterType === 'abyss_witch') ? '#8b5cf6'
@@ -2401,6 +2453,16 @@ class EntityManager {
 
       if (target.hp <= 0) {
         p.kills = (p.kills || 0) + 1;
+        this.addDeadRemains(target.x, target.y, target.monsterType || target.role, target.scale);
+        p.killstreak = (p.killstreak || 0) + 1;
+        p.killstreakTimer = 5.5;
+        if (p.killstreak === 3) {
+          this.addFloatingText(p.x, p.y - 2.0, '🔥 TRIPLE KILL! (광폭화 발동)', '#f97316', 1.8);
+        } else if (p.killstreak === 5) {
+          this.addFloatingText(p.x, p.y - 2.2, '⚡ RAMPAGE! 광란의 연쇄 학살! (공속+35%)', '#facc15', 2.0);
+        } else if (p.killstreak >= 8) {
+          this.addFloatingText(p.x, p.y - 2.4, '👑 GODLIKE! 신의 경지 피버 돌입!', '#ef4444', 2.2);
+        }
         this.gainPlayerExp(target.role === 'dragon' ? 180 : 70);
         if (this.rpgManager) this.rpgManager.addCombo(2);
         if (this.questSystem && this.questSystem.onMonsterSlain) {
@@ -3136,6 +3198,12 @@ class EntityManager {
           break;
       }
 
+      if (e.airborneTimer > 0) {
+        e.airborneTimer -= dt;
+        e.airborneHeight = Math.max(0, (e.airborneTimer / 0.45) * 16 * (e.scale || 1.0));
+        if (e.airborneTimer <= 0) e.airborneHeight = 0;
+      }
+
       this.moveTowardTarget(e, dt);
     }
 
@@ -3241,6 +3309,30 @@ class EntityManager {
         const gt = this.ghostTrails[i];
         gt.age += dt;
         if (gt.age >= gt.duration) this.ghostTrails.splice(i, 1);
+      }
+    }
+
+    // 💀 영구 지속 유골 잔해 데칼 업데이트
+    if (this.deadRemains) {
+      for (let i = this.deadRemains.length - 1; i >= 0; i--) {
+        const dr = this.deadRemains[i];
+        dr.age += dt;
+        if (dr.age >= dr.duration) this.deadRemains.splice(i, 1);
+      }
+    }
+
+    // ✨ 야간 발광 반딧불이 군집 업데이트
+    if (this.fireflies) {
+      const w = this.world.width;
+      const h = this.world.height;
+      for (let i = 0; i < this.fireflies.length; i++) {
+        const ff = this.fireflies[i];
+        ff.x += ff.vx * dt;
+        ff.y += ff.vy * dt;
+        if (ff.x < 0) ff.x += w;
+        if (ff.x >= w) ff.x -= w;
+        if (ff.y < 0) ff.y += h;
+        if (ff.y >= h) ff.y -= h;
       }
     }
 
@@ -3624,6 +3716,10 @@ class EntityManager {
     if (p.riposteTimer > 0) {
       p.riposteTimer -= dt;
       if (p.riposteTimer <= 0) p.riposteReady = false;
+    }
+    if (p.killstreakTimer > 0) {
+      p.killstreakTimer -= dt;
+      if (p.killstreakTimer <= 0) p.killstreak = 0;
     }
 
     // 💨 대시 / 닷지 롤 진행 중 (초고속 이동 & 지면 먼지)

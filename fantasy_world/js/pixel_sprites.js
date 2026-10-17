@@ -4018,8 +4018,9 @@
       // 6. 스프라이트 블릿 (High-Res 1.5x Scaling, Somersault 360° Roll & Walk Tilt Physics)
       const renderW = Math.round(sw * sc * 1.5);
       const renderH = Math.round(sh * sc * 1.5);
+      const airborneOffset = (e.airborneHeight && e.airborneHeight > 0) ? Math.round(e.airborneHeight) : 0;
       const renderX = Math.round(px - renderW / 2 + offsetX);
-      const renderY = Math.round(py - renderH + 6 * sc - bounce + offsetY);
+      const renderY = Math.round(py - renderH + 6 * sc - bounce - airborneOffset + offsetY);
 
       ctx.save();
       // 덤블링 360° 공중제비 닷지 롤 (Somersault 360° Dodge Roll Animation)

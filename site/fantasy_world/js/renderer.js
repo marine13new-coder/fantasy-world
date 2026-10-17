@@ -203,6 +203,9 @@ class WorldRenderer {
       this.drawPixelShorelines(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
       this.drawOceanFoam(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
       this.drawWaterCaustics(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
+      if (worldTime && (worldTime.weather === 'rain' || worldTime.weather === 'storm')) {
+        this.drawWaterDropletRipples(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
+      }
       this.drawWaterReflections(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy);
     }
 
@@ -427,7 +430,9 @@ class WorldRenderer {
       this.drawDroppedLoot(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy);
       this.drawWaterWadingRipples(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy);
       this.drawGrassDebris(ctx, ts);
+      this.drawDeadRemains(ctx, ts, minTx, maxTx, minTy, maxTy);
       this.drawDashGhostTrails(ctx, ts);
+      this.drawFireflies(ctx, ts, timeSec, cw, ch);
       this.drawEntityCombatHUD(ctx, ts, camera.zoom, minTx, maxTx, minTy, maxTy);
     }
 
@@ -507,6 +512,9 @@ class WorldRenderer {
 
     // 13.8. 🎬 다크 판타지 시네마틱 비네트 & 콘트라스트 렌즈 림 (Cinematic Vignette Rim)
     this.drawCinematicVignette(ctx, cw, ch);
+
+    // 13.9. 🔥 연속 킬스트릭 피버 모드 화면 테두리 화염 (Killstreak Fever Rim)
+    this.drawKillstreakFeverRim(ctx, cw, ch, timeSec, this.entityMgr.player);
 
     // 14. 미니맵 렌더링
     this.renderMinimap(camera, cw, ch, filterCategory);
@@ -4727,6 +4735,136 @@ class WorldRenderer {
     grad.addColorStop(1, 'rgba(2, 6, 18, 0.58)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, cw, ch);
+    ctx.restore();
+  }
+
+  // 💀 [8.5] 영구 지속 픽셀 유골 및 전사자 잔해 (Persistent Skeletal Remains & Carcasses)
+  drawDeadRemains(ctx, ts, minTx, maxTx, minTy, maxTy) {
+    if (!this.entityMgr || !this.entityMgr.deadRemains) return;
+    const remains = this.entityMgr.deadRemains;
+    if (remains.length === 0) return;
+
+    ctx.save();
+    for (let i = 0; i < remains.length; i++) {
+      const r = remains[i];
+      if (r.x < minTx - 1 || r.x > maxTx + 1 || r.y < minTy - 1 || r.y > maxTy + 1) continue;
+      const progress = r.age / r.duration;
+      const alpha = Math.max(0, 1 - progress * 0.7);
+      if (alpha <= 0.05) continue;
+
+      const px = Math.round(r.x * ts);
+      const py = Math.round(r.y * ts);
+      const sc = r.scale || 1.0;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(px, py + 2);
+      ctx.rotate(r.angle || 0);
+
+      // 바닥 픽셀 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.55)';
+      ctx.fillRect(-7 * sc, 1 * sc, 14 * sc, 3 * sc);
+
+      // 해골 뼈대 & 잔해 픽셀 (Skeletal Remains)
+      ctx.fillStyle = '#cbd5e1'; // 뼈대
+      ctx.fillRect(-5 * sc, -2 * sc, 10 * sc, 3 * sc); // 척추
+      ctx.fillRect(-4 * sc, -4 * sc, 4 * sc, 3 * sc);  // 두개골
+      ctx.fillRect(2 * sc, -3 * sc, 3 * sc, 2 * sc);   // 늑골
+
+      ctx.fillStyle = '#64748b'; // 부서진 금속 파편
+      ctx.fillRect(-6 * sc, 0, 3 * sc, 2 * sc);
+      ctx.fillRect(4 * sc, -1 * sc, 3 * sc, 2 * sc);
+
+      ctx.fillStyle = '#475569'; // 눈구멍 암영
+      ctx.fillRect(-3 * sc, -3 * sc, 1 * sc, 1 * sc);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // 🌧️ [2.4] 비/폭풍우 수면 빗방울 동심원 파문 (Dynamic Rain Water Droplet Ripples)
+  drawWaterDropletRipples(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec) {
+    if (!this.world || !this.world.tiles) return;
+    const tiles = this.world.tiles;
+    const width = this.world.width;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(224, 242, 254, 0.45)';
+    ctx.lineWidth = 1.0;
+
+    for (let ty = minTy; ty <= maxTy; ty += 2) {
+      for (let tx = minTx; tx <= maxTx; tx += 2) {
+        const t = tiles[ty * width + tx];
+        if (t === 0 || t === 6) { // Water or Deep Water
+          const px = tx * ts;
+          const py = ty * ts;
+          const hash = (tx * 137 + ty * 349) % 100;
+          const phase = (timeSec * 3.5 + hash * 0.1) % 1.0;
+          const r = phase * 6.5;
+          const alpha = (1 - phase) * 0.55;
+          if (alpha > 0.05) {
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.beginPath();
+            ctx.ellipse(px + (hash % 10) + 3, py + ((hash >> 2) % 10) + 3, r, r * 0.5, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+      }
+    }
+    ctx.restore();
+  }
+
+  // ✨ [10.7] 몽환적인 야간 발광 반딧불이 군집 (Nighttime Bioluminescent Fireflies)
+  drawFireflies(ctx, ts, timeSec, cw, ch) {
+    if (!this.entityMgr || !this.entityMgr.fireflies) return;
+    const isNight = (this.lastWorldTime && (this.lastWorldTime.hour >= 19 || this.lastWorldTime.hour < 5));
+    if (!isNight) return;
+
+    ctx.save();
+    for (const ff of this.entityMgr.fireflies) {
+      const pulse = Math.sin(timeSec * 4.0 + ff.phase);
+      if (pulse < -0.2) continue; // 깜빡임
+      const alpha = Math.max(0, pulse) * 0.85;
+
+      const fx = Math.round(ff.x * ts + Math.sin(timeSec * 1.5 + ff.phase) * 6);
+      const fy = Math.round(ff.y * ts + Math.cos(timeSec * 1.2 + ff.phase) * 6);
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = ff.color;
+      ctx.fillRect(fx - 1, fy - 1, 3, 3);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(fx, fy, 1, 1);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // 🔥 [13.9] 연속 킬스트릭 피버 모드 화면 테두리 화염 (Killstreak Fever Rim)
+  drawKillstreakFeverRim(ctx, cw, ch, timeSec, player) {
+    if (!player || (player.killstreak || 0) < 3) return;
+    const ks = player.killstreak;
+    const feverAlpha = Math.min(0.55, 0.2 + (ks >= 8 ? 0.35 : (ks >= 5 ? 0.22 : 0.1)));
+    const feverColor = ks >= 8 ? '#ef4444' : (ks >= 5 ? '#f59e0b' : '#f97316');
+
+    ctx.save();
+    const grad = ctx.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * 0.42, cw / 2, ch / 2, Math.max(cw, ch) * 0.72);
+    grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    grad.addColorStop(1, feverColor);
+    ctx.globalAlpha = feverAlpha * (0.8 + Math.sin(timeSec * 8) * 0.2);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, cw, ch);
+
+    // 킬스트릭 배너
+    ctx.font = 'bold 13px Pretendard, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 3;
+    const title = ks >= 8 ? '👑 GODLIKE FEVER x' + ks : (ks >= 5 ? '⚡ RAMPAGE x' + ks : '🔥 TRIPLE KILL x' + ks);
+    ctx.strokeText(title, cw / 2, 48);
+    ctx.fillText(title, cw / 2, 48);
     ctx.restore();
   }
 }
