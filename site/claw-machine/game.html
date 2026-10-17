@@ -592,9 +592,10 @@
     }
   </style>
 
-  <!-- Three.js r128 & OrbitControls via CDN -->
+  <!-- Three.js r128, OrbitControls & Cannon.js Physics via CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
 </head>
 <body>
 
@@ -1226,6 +1227,65 @@
     scene.add(bottomGlow);
 
     /* ==========================================================================
+       4.5. CANNON.JS 3D RIGID BODY PHYSICS ENGINE
+       ========================================================================== */
+    const world = new CANNON.World();
+    world.gravity.set(0, -22, 0); // Fast realistic arcade gravity
+    world.broadphase = new CANNON.NaiveBroadphase();
+    world.solver.iterations = 14;
+
+    // Physical Materials
+    const dollPhysMat = new CANNON.Material('doll');
+    const clawPhysMat = new CANNON.Material('claw');
+    const wallPhysMat = new CANNON.Material('wall');
+
+    // Contact material: Doll vs Doll (plush friction, bouncy)
+    world.addContactMaterial(new CANNON.ContactMaterial(dollPhysMat, dollPhysMat, {
+      friction: 0.45,
+      restitution: 0.2
+    }));
+    // Contact material: Claw vs Doll (High traction grip!)
+    world.addContactMaterial(new CANNON.ContactMaterial(clawPhysMat, dollPhysMat, {
+      friction: 0.90,
+      restitution: 0.05
+    }));
+    // Contact material: Doll vs Cabinet Floor & Walls
+    world.addContactMaterial(new CANNON.ContactMaterial(wallPhysMat, dollPhysMat, {
+      friction: 0.40,
+      restitution: 0.25
+    }));
+
+    // Cabinet Physical Solid Boundaries
+    // Floor slabs around the chute hole at (-5, 5)
+    const floorBody = new CANNON.Body({ mass: 0, material: wallPhysMat });
+    // Back half slab
+    floorBody.addShape(new CANNON.Box(new CANNON.Vec3(7.2, 0.5, 3.6)), new CANNON.Vec3(0, -0.5, -3.6));
+    // Front right slab
+    floorBody.addShape(new CANNON.Box(new CANNON.Vec3(3.6, 0.5, 3.6)), new CANNON.Vec3(3.6, -0.5, 3.6));
+    // Front left border strip
+    floorBody.addShape(new CANNON.Box(new CANNON.Vec3(1.2, 0.5, 3.6)), new CANNON.Vec3(-6.0, -0.5, 3.6));
+    floorBody.addShape(new CANNON.Box(new CANNON.Vec3(2.4, 0.5, 1.2)), new CANNON.Vec3(-4.8, -0.5, 6.0));
+    world.addBody(floorBody);
+
+    // 4 Solid Enclosure Walls
+    const wThick = 0.8;
+    const lWall = new CANNON.Body({ mass: 0, material: wallPhysMat });
+    lWall.addShape(new CANNON.Box(new CANNON.Vec3(wThick, 10, 7.5)), new CANNON.Vec3(-7 - wThick, 8, 0));
+    world.addBody(lWall);
+
+    const rWall = new CANNON.Body({ mass: 0, material: wallPhysMat });
+    rWall.addShape(new CANNON.Box(new CANNON.Vec3(wThick, 10, 7.5)), new CANNON.Vec3(7 + wThick, 8, 0));
+    world.addBody(rWall);
+
+    const bWall = new CANNON.Body({ mass: 0, material: wallPhysMat });
+    bWall.addShape(new CANNON.Box(new CANNON.Vec3(7.5, 10, wThick)), new CANNON.Vec3(0, 8, -7 - wThick));
+    world.addBody(bWall);
+
+    const fWall = new CANNON.Body({ mass: 0, material: wallPhysMat });
+    fWall.addShape(new CANNON.Box(new CANNON.Vec3(7.5, 10, wThick)), new CANNON.Vec3(0, 8, 7 + wThick));
+    world.addBody(fWall);
+
+    /* ==========================================================================
        5. BUILD THE 3D ARCADE CABINET
        ========================================================================== */
     const cabinetGroup = new THREE.Group();
@@ -1723,10 +1783,54 @@
       group.userData.friction = friction;
       group.userData.mass = mass;
 
+      // Real Cannon.js 3D Rigid Body
+      const dollBody = new CANNON.Body({
+        mass: mass,
+        material: dollPhysMat,
+        linearDamping: 0.28,
+        angularDamping: 0.38
+      });
+
+      // Compound Collision Shapes matching visual anatomy
+      if (config.shape === 'bunny') {
+        dollBody.addShape(new CANNON.Sphere(0.65), new CANNON.Vec3(0, 0, 0));
+        dollBody.addShape(new CANNON.Sphere(0.52), new CANNON.Vec3(0, 0.8, 0.05));
+        // Real rigid ears for mechanical hook catching!
+        dollBody.addShape(new CANNON.Box(new CANNON.Vec3(0.12, 0.45, 0.08)), new CANNON.Vec3(-0.35, 1.35, -0.05));
+        dollBody.addShape(new CANNON.Box(new CANNON.Vec3(0.12, 0.45, 0.08)), new CANNON.Vec3(0.35, 1.35, -0.05));
+      } else if (config.shape === 'bear' || config.shape === 'panda') {
+        dollBody.addShape(new CANNON.Sphere(0.70), new CANNON.Vec3(0, 0, 0));
+        dollBody.addShape(new CANNON.Sphere(0.55), new CANNON.Vec3(0, 0.85, 0.1));
+        // Real rigid arms
+        dollBody.addShape(new CANNON.Box(new CANNON.Vec3(0.16, 0.32, 0.14)), new CANNON.Vec3(-0.6, 0.2, 0));
+        dollBody.addShape(new CANNON.Box(new CANNON.Vec3(0.16, 0.32, 0.14)), new CANNON.Vec3(0.6, 0.2, 0));
+      } else if (config.shape === 'duck') {
+        dollBody.addShape(new CANNON.Sphere(0.82), new CANNON.Vec3(0, 0, 0));
+        dollBody.addShape(new CANNON.Sphere(0.52), new CANNON.Vec3(0, 0.7, 0.35));
+        dollBody.material = new CANNON.Material({ friction: 0.10, restitution: 0.35 }); // Super slick!
+      } else if (config.shape === 'octopus') {
+        dollBody.addShape(new CANNON.Sphere(0.70), new CANNON.Vec3(0, 0.4, 0));
+        for (let t = 0; t < 6; t++) {
+          const ang = (t * 2 * Math.PI) / 6;
+          dollBody.addShape(new CANNON.Box(new CANNON.Vec3(0.14, 0.14, 0.22)), new CANNON.Vec3(Math.cos(ang) * 0.55, -0.1, Math.sin(ang) * 0.55));
+        }
+      } else if (config.shape === 'pig') {
+        dollBody.addShape(new CANNON.Sphere(0.95), new CANNON.Vec3(0, 0, 0));
+        dollBody.material = new CANNON.Material({ friction: 0.18, restitution: 0.2 });
+      } else {
+        dollBody.addShape(new CANNON.Sphere(0.72), new CANNON.Vec3(0, 0, 0));
+        dollBody.addShape(new CANNON.Sphere(0.55), new CANNON.Vec3(0, 0.65, 0.25));
+      }
+
+      dollBody.position.set(posX, posY, posZ);
+      const randYaw = Math.random() * Math.PI * 2;
+      dollBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), randYaw);
+      world.addBody(dollBody);
+
+      group.userData.physBody = dollBody;
+
       group.position.set(posX, posY, posZ);
-      group.rotation.y = Math.random() * Math.PI * 2;
-      group.rotation.x = (Math.random() - 0.5) * 0.4;
-      group.rotation.z = (Math.random() - 0.5) * 0.4;
+      group.rotation.y = randYaw;
 
       dollGroup.add(group);
       dolls.push(group);
@@ -1735,7 +1839,12 @@
 
     // Populate Machine with a delicious mound of dolls!
     function populateMachine() {
-      // Clear existing
+      // Clear existing Three.js and Cannon.js bodies
+      dolls.forEach(d => {
+        if (d.userData.physBody) {
+          world.removeBody(d.userData.physBody);
+        }
+      });
       while (dollGroup.children.length > 0) {
         dollGroup.remove(dollGroup.children[0]);
       }
@@ -2221,39 +2330,46 @@
         clawFingers[i].knee.rotation.x = THREE.MathUtils.lerp(-0.40, 0.25, ratio);
       }
 
-      // 6. Complete 6-DOF Rigid Body & Tumbling Physics (NO MAGNETS)
-      dolls.forEach(doll => {
-        if (doll.userData.isGrabbed) {
-          // Resting inside claw cup (smooth mechanical spring-follow, NOT teleportation!)
-          const targetY = clawHangY - 1.25 - (c.slipOffset || 0);
-          doll.position.x = THREE.MathUtils.lerp(doll.position.x, clawHangX, 0.22);
-          doll.position.y = THREE.MathUtils.lerp(doll.position.y, targetY, 0.22);
-          doll.position.z = THREE.MathUtils.lerp(doll.position.z, clawHangZ, 0.22);
-          
-          doll.rotation.z = -c.swayAngleX * 0.9;
-          doll.rotation.x = c.swayAngleZ * 0.9;
-        } else {
-          // Rigid Body Motion: Velocity & Angular Tumbling
-          doll.userData.velocity.y -= gravity * 0.9 * delta;
-          doll.position.addScaledVector(doll.userData.velocity, delta);
+      // Synchronize Claw Prong Physics Kinematic Bodies with Three.js Bone Transforms
+      for (let i = 0; i < 3; i++) {
+        const prong = clawFingers[i];
+        if (prong.physBody) {
+          const tipPos = new THREE.Vector3();
+          prong.tip.getWorldPosition(tipPos);
+          const tipQuat = new THREE.Quaternion();
+          prong.tip.getWorldQuaternion(tipQuat);
+          prong.physBody.position.copy(tipPos);
+          prong.physBody.quaternion.copy(tipQuat);
+        }
+      }
 
-          // Tumbling angular rotation
-          doll.rotation.x += doll.userData.angularVel.x * delta;
-          doll.rotation.z += doll.userData.angularVel.z * delta;
+      // 6. Complete Cannon.js Rigid Body Synchronization for all dolls
+      dolls.forEach(doll => {
+        const b = doll.userData.physBody;
+        if (!b) return;
+
+        if (doll.userData.isGrabbed) {
+          // In claw cradle: smoothly track the physical contact cradle position
+          const targetY = clawHangY - 1.25 - (c.slipOffset || 0);
+          b.position.x = THREE.MathUtils.lerp(b.position.x, clawHangX, 0.22);
+          b.position.y = THREE.MathUtils.lerp(b.position.y, targetY, 0.22);
+          b.position.z = THREE.MathUtils.lerp(b.position.z, clawHangZ, 0.22);
+          b.velocity.set(c.velX, 0, c.velZ);
+          
+          doll.position.copy(b.position);
+          doll.quaternion.copy(b.quaternion);
+        } else {
+          // Free rigid body simulated by Cannon.js!
+          doll.position.copy(b.position);
+          doll.quaternion.copy(b.quaternion);
 
           // Chute Fall Detection (Winning condition!)
-          const distToChute = Math.hypot(doll.position.x - state.cabinet.chute.x, doll.position.z - state.cabinet.chute.z);
-          if (distToChute < state.cabinet.chute.radius && doll.position.y < 1.0) {
-            if (!doll.userData.isInChute) {
+          if (b.position.y < -0.3 && !doll.userData.isInChute) {
+            const distToChute = Math.hypot(b.position.x - state.cabinet.chute.x, b.position.z - state.cabinet.chute.z);
+            if (distToChute < state.cabinet.chute.radius + 0.6) {
               doll.userData.isInChute = true;
               onPrizeWon(doll.userData.config);
             }
-          } else if (doll.position.y <= 0.85) {
-            // Hit Floor: Bounce damping & rolling friction
-            doll.position.y = 0.85;
-            doll.userData.velocity.y = 0;
-            doll.userData.velocity.multiplyScalar(0.86);
-            doll.userData.angularVel.multiplyScalar(0.82); // slows down tumbling
           }
         }
       });
@@ -2387,12 +2503,14 @@
       sound.playThud();
       state.tiltCount++;
 
-      // Shake Cabinet & Doll stack
+      // Shake Cabinet & Doll stack with true rigid body impulses!
       dolls.forEach(doll => {
-        if (!doll.userData.isGrabbed) {
-          doll.userData.velocity.x += (Math.random() - 0.5) * 2.5;
-          doll.userData.velocity.z += (Math.random() - 0.5) * 2.5;
-          doll.userData.velocity.y += 0.8;
+        const b = doll.userData.physBody;
+        if (b && !doll.userData.isGrabbed) {
+          b.applyImpulse(
+            new CANNON.Vec3((Math.random() - 0.5) * 8.0, 4.5, (Math.random() - 0.5) * 8.0),
+            new CANNON.Vec3(b.position.x, b.position.y, b.position.z)
+          );
         }
       });
 
@@ -2652,6 +2770,9 @@
       requestAnimationFrame(animate);
 
       const delta = Math.min(clock.getDelta(), 0.1);
+
+      // Step Cannon.js 3D Rigid Body Physics World
+      world.step(1 / 60, delta, 3);
 
       updatePhysics(delta);
 
