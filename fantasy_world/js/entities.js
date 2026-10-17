@@ -2564,7 +2564,23 @@ class EntityManager {
       this.addHitSparks(attacker.x, attacker.y, '#fde047', 12);
     }
 
+    // 💥 [저스트 가드 반격 폭발] 주변 5타일 모든 적 광역 넉백 & 스턴
+    const nearby = this.spatialGrid
+      ? this.spatialGrid.query(p.x, p.y, 5.0, other => other !== p && other.hp > 0 && this.isHostile(p, other))
+      : this.entities.filter(other => other !== p && other.hp > 0 && this.isHostile(p, other) && Math.hypot(other.x - p.x, other.y - p.y) <= 5.0);
+
+    for (const ent of nearby) {
+      if (ent !== attacker) {
+        ent.stunTimer = 1.2;
+        const eAng = Math.atan2(ent.y - p.y, ent.x - p.x);
+        ent.x += Math.cos(eAng) * 1.8;
+        ent.y += Math.sin(eAng) * 1.8;
+      }
+    }
+    p.attackCooldown = 0; // 즉각 반격 태세 개방!
+
     this.addShockwave(p.x, p.y, 5.2, '#38bdf8', 0.6);
+    this.addShockwave(p.x, p.y, 4.2, '#facc15', 0.55);
     this.addShockwave(p.x, p.y, 3.2, '#ffffff', 0.4);
     this.addHitSparks(p.x, p.y, '#ffffff', 22);
     this.addFloatingText(p.x, p.y - 2.0, `⚡ [PERFECT PARRY!] 320% 리포스트 반격! (각성 +22% -> ${Math.floor(p.awakeningGauge)}%)`, '#facc15', 2.2);

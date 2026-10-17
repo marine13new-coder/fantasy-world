@@ -31,14 +31,15 @@ class WorldRenderer {
 
     // 🌸 대기 환경 파티클 (꽃잎, 반딧불이, 단풍잎, 눈꽃 결정, 화산 불꽃재, 수면 반짝임)
     this.ambientParticles = [];
-    for (let i = 0; i < 110; i++) {
+    for (let i = 0; i < 115; i++) {
       let pType = 'petal';
       let pColor = '#f472b6';
-      if (i < 25) { pType = 'petal'; pColor = Math.random() > 0.4 ? '#f472b6' : '#ffffff'; }
-      else if (i < 45) { pType = 'firefly'; pColor = '#bef264'; }
-      else if (i < 65) { pType = 'leaf'; pColor = Math.random() > 0.5 ? '#ea580c' : '#d97706'; }
-      else if (i < 85) { pType = 'snow'; pColor = '#f8fafc'; }
-      else if (i < 98) { pType = 'ash'; pColor = Math.random() > 0.5 ? '#f97316' : '#ef4444'; }
+      if (i < 20) { pType = 'petal'; pColor = Math.random() > 0.4 ? '#f472b6' : '#ffffff'; }
+      else if (i < 38) { pType = 'firefly'; pColor = '#bef264'; }
+      else if (i < 54) { pType = 'leaf'; pColor = Math.random() > 0.5 ? '#ea580c' : '#d97706'; }
+      else if (i < 70) { pType = 'snow'; pColor = '#f8fafc'; }
+      else if (i < 85) { pType = 'ash'; pColor = Math.random() > 0.5 ? '#f97316' : '#ef4444'; }
+      else if (i < 100) { pType = 'spore'; pColor = '#c084fc'; }
       else { pType = 'shimmer'; pColor = '#ffffff'; }
 
       this.ambientParticles.push({
@@ -4665,18 +4666,54 @@ class WorldRenderer {
       const px = Math.round(e.x * ts);
       const sc = e.scale || 1.0;
       const py = Math.round(e.y * ts - 19 * sc);
+      const isPlayer = (e.role === 'player');
+      const isBoss = (e.isBoss || (this.entityMgr.rpgManager && this.entityMgr.rpgManager.activeBoss === e));
+      const pct = Math.max(0, Math.min(1, e.hp / e.maxHp));
+
+      if (isBoss) {
+        const bw = Math.max(54, Math.round(50 * sc));
+        const bh = 7;
+        const bpy = Math.round(e.y * ts - 26 * sc);
+
+        // 황금 보스 프레임 외곽 테두리 (Golden Ornate Boss Frame)
+        ctx.fillStyle = '#090d16';
+        ctx.fillRect(px - Math.floor(bw / 2) - 2, bpy - 2, bw + 4, bh + 4);
+        ctx.fillStyle = '#ca8a04';
+        ctx.fillRect(px - Math.floor(bw / 2) - 1, bpy - 1, bw + 2, 1);
+        ctx.fillRect(px - Math.floor(bw / 2) - 1, bpy + bh, bw + 2, 1);
+
+        // 양 날개 황금 장식 돌기
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(px - Math.floor(bw / 2) - 4, bpy - 2, 3, bh + 4);
+        ctx.fillRect(px + Math.floor(bw / 2) + 1, bpy - 2, 3, bh + 4);
+
+        // 체력 바 본체 (Crimson / Enrage Phase)
+        const isEnraged = (e.hp <= e.maxHp * 0.5);
+        ctx.fillStyle = isEnraged ? '#dc2626' : '#ea580c';
+        ctx.fillRect(px - Math.floor(bw / 2), bpy, Math.round(bw * pct), bh);
+
+        // 상단 광원 하이라이트
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+        ctx.fillRect(px - Math.floor(bw / 2), bpy, Math.round(bw * pct), 2);
+
+        // 보스 명칭 & 페이즈 뱃지
+        ctx.font = 'bold 9px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = isEnraged ? '#ef4444' : '#fde047';
+        const phaseText = isEnraged ? '🔥 [2페이즈 광폭화]' : (e.name || '대륙 군주 보스');
+        ctx.fillText(phaseText, px, bpy - 4);
+        continue;
+      }
+
       const w = Math.round(22 * Math.max(0.8, Math.min(1.6, sc)));
       const h = 4;
-      const pct = Math.max(0, Math.min(1, e.hp / e.maxHp));
 
       // 16비트 픽셀 테두리 & 배경
       ctx.fillStyle = '#090d16';
       ctx.fillRect(px - Math.floor(w / 2) - 1, py - 1, w + 2, h + 2);
 
-      // 체력 바 색상 (플레이어/아군: 에메랄드, 몬스터: 루비레드, 보스: 골든오렌지)
-      const isPlayer = (e.role === 'player');
-      const isBoss = (e.isBoss || (this.entityMgr.rpgManager && this.entityMgr.rpgManager.activeBoss === e));
-      const barColor = isBoss ? '#f97316' : (isPlayer ? '#22c55e' : (e.faction === 'monster' ? '#ef4444' : '#38bdf8'));
+      // 체력 바 색상 (플레이어/아군: 에메랄드, 몬스터: 루비레드)
+      const barColor = isPlayer ? '#22c55e' : (e.faction === 'monster' ? '#ef4444' : '#38bdf8');
 
       ctx.fillStyle = barColor;
       ctx.fillRect(px - Math.floor(w / 2), py, Math.round(w * pct), h);
@@ -4771,6 +4808,17 @@ class WorldRenderer {
         ctx.fillStyle = ashGlow > 0 ? '#f97316' : '#ef4444';
         ctx.globalAlpha = 0.7;
         ctx.fillRect(p.x, p.y, 2, 2);
+        ctx.restore();
+      } else if (p.type === 'spore') {
+        // 🧚 엘프 숲과 천공 군도의 신비로운 에테르 요정 포자 (Fairy Spores)
+        ctx.save();
+        const spGlow = Math.max(0, Math.sin(timeSec * 3.0 + p.phase));
+        ctx.fillStyle = `rgba(192, 132, 252, ${spGlow * 0.75})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(p.x - 0.5, p.y - 0.5, 1, 1);
         ctx.restore();
       }
     }

@@ -521,6 +521,16 @@ function createSettlementList() {
   add('abyss_tide_sanctuary', '파도소리 성역 신전', 'town', 'abyss_ocean', 720, 920, 'oceanic', false, 8);
   add('abyss_siren_grotto', '세이렌의 심해 유적 동굴', 'lair', 'abyss_ocean', 440, 560, 'monster', true, 10);
 
+  // =========================================================================
+  // 8. THE PRIMORDIAL MAGMA CALDERA & UNDERWORLD (태고의 마그마 칼데라 & 명계 제국)
+  // =========================================================================
+  add('underworld_styx_citadel', '명계 스틱스 흑요석 대성채', 'capital', 'underworld', 2180, 2180, 'undead', true, 16);
+  add('underworld_tartarus_gate', '타르타로스 심연의 문', 'fortress', 'underworld', 1720, 2220, 'monster', true, 13);
+  add('caldera_molten_spire', '용암 칼데라 화염 첨탑', 'castle', 'underworld', 2360, 2120, 'monster', true, 12);
+  add('underworld_asphodel_meadows', '아스포델 망자의 안식처', 'town', 'underworld', 1540, 2160, 'undead', false, 9);
+  add('caldera_fire_forge', '태고 화룡의 화염 대장간', 'town', 'underworld', 2520, 2260, 'kingdom', false, 8);
+  add('underworld_crypt_pantheon', '고대 영령의 묘지 판테온', 'lair', 'underworld', 1980, 2320, 'undead', true, 11);
+
   return list;
 }
 
@@ -730,6 +740,18 @@ function generateWorld() {
             tiles[idx(tx, ty)] = TILE.CORAL;
           } else if (dist <= landRad + 2) {
             tiles[idx(tx, ty)] = TILE.WATER;
+          }
+          continue;
+        }
+
+        // 태고의 칼데라 & 명계 제국 전용 지형 카빙
+        if (s.continent === 'underworld') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 5) ? TILE.CASTLE_FLOOR : TILE.OBSIDIAN;
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.LAVA : TILE.OBSIDIAN;
+          } else if (dist <= landRad + 1) {
+            tiles[idx(tx, ty)] = TILE.BADLANDS;
           }
           continue;
         }
