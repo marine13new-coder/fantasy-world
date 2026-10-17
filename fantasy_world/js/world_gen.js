@@ -700,6 +700,16 @@ function createSettlementList() {
   add('solar_eclipse_monolith_shrine', '개기일식 거석 제단 태양 신전', 'temple', 'el_dorado', 460, 2040, 'celestial', true, 12);
   add('jungle_golden_orchid_village', '밀림 황금 난초 원시 부족 마을', 'town', 'el_dorado', 420, 1860, 'human', false, 8);
 
+  // =========================================================================
+  // 26. THE FROST WYRM GLACIER NECROPOLIS & ICECROWN CITADEL (혹한의 서리고룡 빙하 요새 & 영구동토 네크로폴리스)
+  // =========================================================================
+  add('frost_wyrm_glacial_citadel', '서리고룡왕의 만년빙하 대성채', 'capital', 'frost_necropolis', 960, 160, 'undead', true, 18);
+  add('lich_king_frozen_throne_sanctum', '영구동토 리치 킹의 얼어붙은 옥좌', 'castle', 'frost_necropolis', 1080, 220, 'undead', true, 16);
+  add('permafrost_mammoth_bone_haven', '만년설 매머드 골각 부족 요새', 'town', 'frost_necropolis', 880, 260, 'human', true, 12);
+  add('rime_alchemist_cryo_laboratory', '서리서약 연금술 한랭 연구소', 'lair', 'frost_necropolis', 1140, 140, 'elf', true, 10);
+  add('sunken_iceberg_shipwreck_cove', '빙산 좌초 유령선 난파선 만', 'port', 'frost_necropolis', 910, 340, 'corsair', false, 9);
+  add('aurora_borealis_valkyrie_shrine', '오로라 극광 발키리 비천 제단', 'temple', 'frost_necropolis', 1020, 80, 'celestial', true, 13);
+
   return list;
 }
 
@@ -1129,6 +1139,18 @@ function generateWorld() {
           continue;
         }
 
+        // 혹한의 서리고룡 빙하 요새 & 영구동토 네크로폴리스 전용 지형 카빙
+        if (s.continent === 'frost_necropolis') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.OBSIDIAN : TILE.CASTLE_FLOOR; // 칠흑의 흑요석 만년빙하 성채 바닥 및 서리 룬 도로
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.SNOW : TILE.TUNDRA; // 만년설 영구동토 빙하 및 혹한의 툰드라 대지
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.SNOW : TILE.CRYSTAL_CAVE; // 부유하는 푸른 만년빙산 조각 및 서리 결정지
+          }
+          continue;
+        }
+
         const curT = tiles[idx(tx, ty)];
         const isWater = (curT === TILE.DEEP_WATER || curT === TILE.WATER);
 
@@ -1383,7 +1405,16 @@ function generateWorld() {
     ['el_dorado_golden_sun_pyramid_capital', 'obsidian_sun_disc_alchemist_forge'],
     ['el_dorado_golden_sun_pyramid_capital', 'solar_eclipse_monolith_shrine'],
     ['quetzalcoatl_feathered_serpent_citadel', 'jungle_golden_orchid_village'],
-    ['solar_eclipse_monolith_shrine', 'jungle_golden_orchid_village']
+    ['solar_eclipse_monolith_shrine', 'jungle_golden_orchid_village'],
+
+    // [혹한의 서리고룡 빙하 네크로폴리스 가도 (Permafrost Glacial Highway)]
+    ['frost_wyrm_glacial_citadel', 'lich_king_frozen_throne_sanctum'],
+    ['frost_wyrm_glacial_citadel', 'permafrost_mammoth_bone_haven'],
+    ['frost_wyrm_glacial_citadel', 'aurora_borealis_valkyrie_shrine'],
+    ['lich_king_frozen_throne_sanctum', 'rime_alchemist_cryo_laboratory'],
+    ['permafrost_mammoth_bone_haven', 'sunken_iceberg_shipwreck_cove'],
+    ['sunken_iceberg_shipwreck_cove', 'frost_wyrm_glacial_citadel'],
+    ['permafrost_mammoth_bone_haven', 'pegasus_aether_skydock_port']
   ];
   const roadLinks = rawRoadLinks.filter(([a, b]) => settlementMap[a] && settlementMap[b]);
 

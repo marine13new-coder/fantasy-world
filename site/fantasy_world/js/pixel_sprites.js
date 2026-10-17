@@ -4713,6 +4713,43 @@
           }
         }
 
+        // ❄️ 혹한의 서리고룡 영구빙하 마검 참격 & 얼음 파편 폭발 (Frost Wyrm Glacial Slash & Shattered Ice Burst)
+        if (weaponId.includes('frost') || weaponId.includes('glacier') || weaponId.includes('ice') || weaponId.includes('rime') || weaponId.includes('blizzard') || weaponId.includes('cryo') || weaponId.includes('necropolis')) {
+          // 혹한의 청람색 초승달 빙결 섬광 호
+          ctx.strokeStyle = '#bae6fd';
+          ctx.lineWidth = 4.0 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 24 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          // 튀어나가는 5개의 다이아몬드형 얼음 결정 파편 (Shattered Ice Diamond Shards)
+          const cryoTime = (e.animTime || 0) * 16;
+          for (let ic = 0; ic < 5; ic++) {
+            const icAng = startAng + (ic / 4) * (endAng - startAng);
+            const icDist = (22 + Math.sin(cryoTime + ic * 2.1) * 7) * sc;
+            const icx = arcCenter + Math.cos(icAng) * icDist;
+            const icy = py - 10 * sc - bounce + Math.sin(icAng) * icDist;
+
+            // 투명 푸른 만년빙 다이아몬드 조각
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath();
+            ctx.moveTo(icx, icy - 3 * sc);
+            ctx.lineTo(icx + 2.5 * sc, icy);
+            ctx.lineTo(icx, icy + 3 * sc);
+            ctx.lineTo(icx - 2.5 * sc, icy);
+            ctx.closePath();
+            ctx.fill();
+
+            // 순백의 서리광 하이라이트 코어
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(icx - 0.8 * sc, icy - 0.8 * sc, 1.6 * sc, 1.6 * sc);
+
+            // 휘날리는 서리 눈보라 입자 (Glacial Mist Particle)
+            ctx.fillStyle = 'rgba(224, 242, 254, 0.7)';
+            ctx.fillRect(icx + sideSign * 4 * sc, icy - 2 * sc, 1.5 * sc, 1.5 * sc);
+          }
+        }
+
         // 반짝이는 참격 스파크 및 엠버
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(arcCenter + sideSign * 14 * sc, py - 14 * sc - bounce, 3 * sc, 3 * sc);

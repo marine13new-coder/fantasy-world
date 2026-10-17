@@ -50,7 +50,8 @@ const LEGENDARY_ITEMS = [
   { id: 'aegis', slot: 'shield', name: '용비늘 이지스 방패', icon: '🛡️', atk: 10, hp: 160, desc: '고대 드래곤의 비늘로 벼려낸 불멸의 방패. 받는 피해를 크게 경감합니다.' },
   { id: 'mithril_armor', slot: 'armor', name: '왕실 미스릴 판금갑옷', icon: '🦺', atk: 15, hp: 200, desc: '드워프 명장이 제련한 미스릴 갑주. 최대 생명력이 대폭 증가합니다.' },
   { id: 'ocean_heart', slot: 'relic', name: '대양의 심장 심해진주', icon: '💎', atk: 20, hp: 80, desc: '바다의 여신 탈라사의 축복. 항해 속도와 무역 이윤이 증가합니다.' },
-  { id: 'dragon_crown', slot: 'helmet', name: '정복자의 황금 용관', icon: '👑', atk: 30, hp: 120, desc: '천공의 비룡을 제압한 대영웅의 관. 명성치 획득량이 증폭됩니다.' }
+  { id: 'dragon_crown', slot: 'helmet', name: '정복자의 황금 용관', icon: '👑', atk: 30, hp: 120, desc: '천공의 비룡을 제압한 대영웅의 관. 명성치 획득량이 증폭됩니다.' },
+  { id: 'frostmourne_glacial_blade', slot: 'weapon', name: '서리고룡의 영구빙하 마검', icon: '❄️', atk: 62, hp: 140, desc: '혹한의 만년빙하에서 벼려낸 서리고룡의 마검. 타격 시 서리 파편이 폭발하며 적을 동결시킵니다.' }
 ];
 
 const DUNGEONS = [
@@ -122,6 +123,29 @@ const DUNGEONS = [
     },
     goldReward: 6000,
     fameReward: 120
+  },
+  {
+    id: 'dungeon_frost_wyrm',
+    name: '서리고룡의 영구빙하 묘실',
+    icon: '❄️',
+    levelReq: 12,
+    x: 960, y: 160,
+    color: '#38bdf8',
+    desc: '혹한의 만년빙하 정상에 군림하는 태고의 서리고룡 신드라고사의 거처. 영하 50도의 절대영도 눈보라가 몰아칩니다.',
+    bossName: '만년빙룡 신드라고사 (Sindragosa)',
+    bossHp: 4500,
+    bossAtk: 68,
+    relicReward: {
+      id: 'relic_glacial_heart',
+      slot: 'relic',
+      name: '서리고룡의 만년빙정 심장',
+      icon: '💎',
+      atk: 50,
+      hp: 240,
+      desc: '피격 시 주변 모든 적에게 혹한의 동결 냉기를 폭발시켜 이동속도를 50% 둔화시킵니다.'
+    },
+    goldReward: 7500,
+    fameReward: 150
   }
 ];
 
@@ -3034,6 +3058,17 @@ const TOWN_LORE_DATABASE = {
     tavernToast: '차가운 카카오 고추 음료(Xocolatl)와 황금 옥수수 토르티야를 맛보았습니다! 전신에 태양신의 불꽃과 원기가 솟구칩니다.',
     questTitle: '밀림 흑요석 약탈자 분쇄',
     questDesc: '피라미드 외곽 밀림에서 태양신의 황금 원반을 훔쳐 달아난 약탈자 무리를 토벌하고 성물을 회수하시오.'
+  },
+  frost_necropolis: {
+    npcName: '리치 로드 발라자르 & 서리 감시자 베르단디 (Valazar & Verdandi)',
+    npcRole: '영구동토 만년빙하 네크로폴리스 고대 서리고룡 수호자',
+    icon: '❄️',
+    disposition: '💀 영하 50도의 침묵과 절대영도 마법의 비정함',
+    quote: '"숨을 쉴 때마다 폐포가 얼어붙어 부스러지는 소리가 들리는가? 산 자들이여, 그대들이 타오르는 심장을 안고 이 얼음 무덤에 발을 디딘 순간, 이미 그 온기는 서리고룡의 첫 숨결에 저당 잡힌 것이다. 맹세를 저버리지 마라. 영하의 침묵만이 거짓을 말하지 않으니."',
+    rumor: '💡 만년빙하 깊은 곳의 기록: "빙룡의 심장을 감싼 청람색 영구빙은 보통의 칼날로 쪼갤 수 없다. 오직 태양의 제단에서 벼려낸 흑요석 불꽃만이 그 얼음을 녹여 신화 시대의 용언(龍言)을 깨울 수 있지."',
+    tavernToast: '영구동토 빙하 송어 회와 백년 묵은 서리이끼 증류주(Glacial Schnapps)를 들이켰습니다! 뼛속까지 찌르던 혹한이 단숨에 타오르는 얼음불꽃으로 변합니다.',
+    questTitle: '만년설 고룡 능선 영혼 빙식(氷蝕) 골렘 파괴',
+    questDesc: '영구동토의 냉기를 흡수해 비대해진 얼음 골렘 핵을 부수고 영구빙 파편을 회수하시오.'
   },
   gothic: {
     npcName: '밤의 대주교 발렌타인 (Archbishop Valentine)',

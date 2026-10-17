@@ -6029,6 +6029,10 @@ class WorldRenderer {
       else if (cx >= 240 && cx <= 540 && cy >= 1800 && cy <= 2150) {
         tintColor = 'rgba(234, 179, 8, 0.095)';
       }
+      // 서리고룡 혹한의 영구동토 빙하 네크로폴리스: 극한의 서리빛 청람색 영구빙 림
+      else if (cx >= 840 && cx <= 1200 && cy >= 40 && cy <= 380) {
+        tintColor = 'rgba(14, 165, 233, 0.11)';
+      }
 
       if (tintColor) {
         const bGrad = ctx.createRadialGradient(cw / 2, ch / 2, radius * 0.35, cw / 2, ch / 2, radius);

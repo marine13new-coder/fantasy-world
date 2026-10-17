@@ -4037,6 +4037,232 @@
     },
 
     // =========================================================================
+    // 26. 서리고룡왕의 만년빙하 대성채 (Frost Wyrm Glacial Citadel)
+    // =========================================================================
+    drawFrostWyrmGlacialCitadel(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 지면 극한의 냉기 그림자 (Sub-Zero Cast Shadow)
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.62)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 2, halfW + 10, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 바닥 영구동토 얼음 균열 서리광 (Permafrost Frost Cracks)
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(px - halfW - 6, py + halfH);
+      ctx.lineTo(px - halfW / 2, py + halfH - 3);
+      ctx.lineTo(px, py + halfH + 2);
+      ctx.lineTo(px + halfW / 2, py + halfH - 2);
+      ctx.lineTo(px + halfW + 6, py + halfH);
+      ctx.stroke();
+
+      // B. 3단 흑요석 & 영구빙하 흑암 성채 본체 (Obsidian Permafrost Bastion)
+      const bastW = Math.round(bw * 0.82);
+      const bastHW = Math.round(bastW / 2);
+      const bastH = Math.round(bh * 0.72);
+      const bastY = py + halfH - bastH;
+
+      // 흑암 기단
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - bastHW, bastY, bastW, bastH);
+      // 청람색 빙하 지층
+      ctx.fillStyle = '#0369a1';
+      ctx.fillRect(px - bastHW + 2, bastY + 2, bastW - 4, bastH - 4);
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(px - bastHW + 4, bastY + 6, bastW - 8, bastH - 10);
+
+      // C. 좌우 솟구치는 서리고룡 빙하 첨탑 (Twin Jagged Ice Spire Sentinels)
+      const spireW = Math.max(6, Math.round(bw * 0.14));
+      const spireH = Math.round(bh * 0.85);
+
+      // 좌측 첨탑
+      ctx.fillStyle = '#0ea5e9';
+      ctx.beginPath();
+      ctx.moveTo(px - bastHW - 4, py + halfH);
+      ctx.lineTo(px - bastHW, py + halfH - spireH);
+      ctx.lineTo(px - bastHW + spireW, py + halfH);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#bae6fd';
+      ctx.fillRect(px - bastHW - 1, py + halfH - spireH + 6, 2, spireH - 12);
+
+      // 우측 첨탑
+      ctx.fillStyle = '#0ea5e9';
+      ctx.beginPath();
+      ctx.moveTo(px + bastHW + 4, py + halfH);
+      ctx.lineTo(px + bastHW, py + halfH - spireH);
+      ctx.lineTo(px + bastHW - spireW, py + halfH);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#bae6fd';
+      ctx.fillRect(px + bastHW - 1, py + halfH - spireH + 6, 2, spireH - 12);
+
+      // D. 성채 상단에 웅크린 거대 서리고룡 해골 & 갈비뼈 날개 (Colossal Frost Wyrm Skeleton Perch)
+      const wyrmY = bastY - 10;
+      const breathe = Math.sin(timeSec * 2.5);
+
+      // 고룡의 거대한 흉곽 & 늑골 (Ribcage)
+      ctx.strokeStyle = '#e0f2fe';
+      ctx.lineWidth = 2.2;
+      for (let r = -2; r <= 2; r++) {
+        ctx.beginPath();
+        ctx.ellipse(px + r * 6, wyrmY + 6, 5, 8, 0, 0, Math.PI);
+        ctx.stroke();
+      }
+
+      // 고룡의 얼음 뼈대 날개 (Ribbed Frost Wyrm Wings)
+      const wingFlap = Math.sin(timeSec * 3.0) * 4;
+      ctx.strokeStyle = '#7dd3fc';
+      ctx.lineWidth = 2.5;
+      // 좌측 날개
+      ctx.beginPath();
+      ctx.moveTo(px - 6, wyrmY + 2);
+      ctx.lineTo(px - halfW - 14, wyrmY - 14 + wingFlap);
+      ctx.lineTo(px - halfW - 2, wyrmY + 4);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.35)';
+      ctx.fill();
+
+      // 우측 날개
+      ctx.beginPath();
+      ctx.moveTo(px + 6, wyrmY + 2);
+      ctx.lineTo(px + halfW + 14, wyrmY - 14 + wingFlap);
+      ctx.lineTo(px + halfW + 2, wyrmY + 4);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.35)';
+      ctx.fill();
+
+      // 고룡 두개골 (Draconic Skull)
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(px - 5, wyrmY - 6 + breathe, 10, 8);
+      // 고룡 뿔 (Horns)
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(px - 4, wyrmY - 5 + breathe);
+      ctx.lineTo(px - 9, wyrmY - 15 + breathe);
+      ctx.moveTo(px + 4, wyrmY - 5 + breathe);
+      ctx.lineTo(px + 9, wyrmY - 15 + breathe);
+      ctx.stroke();
+
+      // 푸른 서리 안광 (Cyan Frost Eyes)
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(px - 3, wyrmY - 3 + breathe, 2, 2);
+      ctx.fillRect(px + 1, wyrmY - 3 + breathe, 2, 2);
+
+      // E. 입에서 뿜어지는 주기적 극저온 한기/냉기 숨결 (Cryogenic Breath Particles)
+      const frostPulse = (timeSec * 4) % 1;
+      const breathY = wyrmY + 4 + frostPulse * 18;
+      ctx.fillStyle = 'rgba(186, 230, 253, 0.75)';
+      ctx.beginPath();
+      ctx.arc(px + (Math.sin(timeSec * 8) * 4), breathY, 3 + frostPulse * 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // F. 성문 포탈: 얼어붙은 푸른 영혼불길 (Frozen Soulfire Gateway)
+      const gateW = Math.round(bw * 0.22);
+      const gateH = Math.round(bh * 0.32);
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(px - gateW / 2, py + halfH - gateH, gateW, gateH);
+      ctx.fillStyle = isNight ? '#38bdf8' : '#0284c7';
+      ctx.fillRect(px - gateW / 2 + 2, py + halfH - gateH + 2, gateW - 4, gateH - 2);
+
+      // 좌우 영혼불 화로 (Twin Soulfire Cauldrons)
+      const c1x = px - bastHW + 5;
+      const c2x = px + bastHW - 5;
+      const cy = py + halfH - 6;
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(c1x - 3, cy, 6, 6);
+      ctx.fillRect(c2x - 3, cy, 6, 6);
+
+      const fGlow = 3 + Math.sin(timeSec * 6) * 1.5;
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(c1x, cy - 2, fGlow, 0, Math.PI * 2);
+      ctx.arc(c2x, cy - 2, fGlow, 0, Math.PI * 2);
+      ctx.fill();
+    },
+
+    // =========================================================================
+    // 27. 영구동토 리치 킹의 얼어붙은 옥좌 (Lich King Frozen Throne Sanctum)
+    // =========================================================================
+    drawLichKingFrozenThrone(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 바닥 심연 얼음 그림자
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.60)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 2, halfW + 8, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // B. 3단 룬 석조 계단 (Runic Stepped Dais)
+      const steps = [
+        { w: bw, h: 7, y: py + halfH - 7, c: '#0f172a' },
+        { w: Math.round(bw * 0.78), h: 7, y: py + halfH - 14, c: '#1e293b' },
+        { w: Math.round(bw * 0.58), h: 7, y: py + halfH - 21, c: '#0369a1' }
+      ];
+      for (const st of steps) {
+        const swHalf = Math.round(st.w / 2);
+        ctx.fillStyle = st.c;
+        ctx.fillRect(px - swHalf, st.y, st.w, st.h);
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(px - swHalf, st.y, st.w, 1.5);
+      }
+
+      // C. 거대 얼어붙은 옥좌 본체 (The Monolithic Frozen Throne Spire)
+      const throneW = Math.round(bw * 0.40);
+      const throneHW = Math.round(throneW / 2);
+      const throneH = Math.round(bh * 0.68);
+      const throneY = py + halfH - 21 - throneH;
+
+      // 옥좌 뒷받침 영구빙하 쐐기 (Jagged Permafrost Throne Backrest)
+      ctx.fillStyle = '#0284c7';
+      ctx.beginPath();
+      ctx.moveTo(px - throneHW, throneY + throneH);
+      ctx.lineTo(px - throneHW + 3, throneY);
+      ctx.lineTo(px, throneY - 8);
+      ctx.lineTo(px + throneHW - 3, throneY);
+      ctx.lineTo(px + throneHW, throneY + throneH);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#7dd3fc';
+      ctx.fillRect(px - throneHW + 4, throneY + 4, throneW - 8, throneH - 8);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 1, throneY - 6, 2, throneH - 4);
+
+      // D. 공중에 부유하는 3개의 서리 영혼 결정체 (Levitating Cryo Runestones)
+      for (let cr = 0; cr < 3; cr++) {
+        const crAngle = (timeSec * 2.0) + (cr * (Math.PI * 2 / 3));
+        const crX = px + Math.cos(crAngle) * (throneHW + 8);
+        const crY = throneY + throneH * 0.4 + Math.sin(crAngle) * 5;
+
+        ctx.fillStyle = '#bae6fd';
+        ctx.beginPath();
+        ctx.moveTo(crX, crY - 5);
+        ctx.lineTo(crX + 3, crY);
+        ctx.lineTo(crX, crY + 5);
+        ctx.lineTo(crX - 3, crY);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(crX - 1, crY - 1, 2, 2);
+      }
+
+      // E. 바닥에 드리우는 서리 안개 (Ground Cryo Mist)
+      const mistOffset = Math.sin(timeSec * 3) * 6;
+      ctx.fillStyle = 'rgba(186, 230, 253, 0.28)';
+      ctx.beginPath();
+      ctx.ellipse(px + mistOffset, py + halfH - 4, halfW * 0.7, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -4194,6 +4420,16 @@
       }
       if (type === 'serpent_citadel' || (type === 'castle' && b && b.continent === 'el_dorado') || (type === 'fortress' && b && b.continent === 'el_dorado') || (type === 'temple' && b && b.continent === 'el_dorado') || (type === 'lair' && b && b.continent === 'el_dorado')) {
         this.drawQuetzalcoatlSerpentCitadel(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+
+      // ❄️ 혹한의 서리고룡 빙하 요새 & 리치 킹의 얼어붙은 옥좌 (Frost Wyrm Glacial Citadel & Frozen Throne)
+      if (type === 'frost_wyrm_citadel' || (type === 'capital' && b && b.continent === 'frost_necropolis') || (type === 'palace' && b && b.continent === 'frost_necropolis')) {
+        this.drawFrostWyrmGlacialCitadel(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'frozen_throne' || (type === 'castle' && b && b.continent === 'frost_necropolis') || (type === 'fortress' && b && b.continent === 'frost_necropolis') || (type === 'temple' && b && b.continent === 'frost_necropolis') || (type === 'lair' && b && b.continent === 'frost_necropolis')) {
+        this.drawLichKingFrozenThrone(ctx, px, py, bw, bh, isNight, timeSec);
         return true;
       }
 
