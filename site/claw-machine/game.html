@@ -1179,13 +1179,18 @@
     renderer.toneMappingExposure = 1.1;
     container.appendChild(renderer.domElement);
 
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.maxPolarAngle = Math.PI / 2 - 0.05; // don't go below floor
-    controls.minDistance = 8;
-    controls.maxDistance = 45;
-    controls.enabled = false; // enabled only in 'free' mode
+    let controls;
+    if (typeof THREE.OrbitControls === 'function') {
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.maxPolarAngle = Math.PI / 2 - 0.05; // don't go below floor
+      controls.minDistance = 8;
+      controls.maxDistance = 45;
+      controls.enabled = false; // enabled only in 'free' mode
+    } else {
+      controls = { enabled: false, update: () => {}, target: new THREE.Vector3() };
+    }
 
     // Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
@@ -1475,7 +1480,7 @@
         group.add(eyeL, eyeR);
 
         // Limbs (Arms / Legs)
-        const armGeo = new THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(0.18, 0.4, 8, 8) : new THREE.CylinderGeometry(0.18, 0.18, 0.5, 8);
+        const armGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.5, 8);
         const armL = new THREE.Mesh(armGeo, matBody);
         armL.position.set(-0.65, 0.1, 0);
         armL.rotation.z = 0.5;
