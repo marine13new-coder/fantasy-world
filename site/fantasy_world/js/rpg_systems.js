@@ -395,6 +395,36 @@ class RPGSystemsManager {
         activeTrial: false,
         guardians: [],
         guardiansLeft: 0
+      },
+      {
+        id: 'shrine_abyss_tide',
+        name: '심해 파도의 성소',
+        element: 'tide',
+        x: 720, y: 920,
+        color: '#06b6d4',
+        icon: '🔱',
+        traitId: 'tide_sovereign',
+        traitName: '해신의 가호',
+        traitDesc: '영구 수면/수상 이동속도 +50% 및 기본 공격력 +20 상승.',
+        cleared: false,
+        activeTrial: false,
+        guardians: [],
+        guardiansLeft: 0
+      },
+      {
+        id: 'shrine_sky_aether',
+        name: '천공 에테르 성소',
+        element: 'aether',
+        x: 1920, y: 360,
+        color: '#c084fc',
+        icon: '🌌',
+        traitId: 'aether_wings',
+        traitName: '에테르 천공의 날개',
+        traitDesc: '영구 이동속도 +30% 및 쾌도난마 대시 찌르기 공격력 +40% 극대화.',
+        cleared: false,
+        activeTrial: false,
+        guardians: [],
+        guardiansLeft: 0
       }
     ];
     this.unlockedTraits = [];
@@ -1893,6 +1923,12 @@ class RPGSystemsManager {
         p.atk += 25;
       } else if (shrine.traitId === 'windstrider') {
         p.speed += 0.4;
+      } else if (shrine.traitId === 'tide_sovereign') {
+        p.atk += 20;
+        p.speed += 0.35;
+      } else if (shrine.traitId === 'aether_wings') {
+        p.speed += 0.5;
+        p.atk += 22;
       }
     }
 

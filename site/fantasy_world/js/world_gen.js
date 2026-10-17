@@ -511,6 +511,16 @@ function createSettlementList() {
   add('sky_starlight_forge', '별빛 결정 주조소 타운', 'town', 'sky', 2460, 300, 'celestial', false, 8);
   add('magma_abyss_chasm', '심연 화염 열곡 드워프 용광로', 'castle', 'south', 1920, 2140, 'kingdom', true, 14);
 
+  // =========================================================================
+  // 7. THE SUNKEN ATLANTEAN ABYSS & DEEP OCEAN SHRINES (해저 아틀란티스 신전 & 심해 성소)
+  // =========================================================================
+  add('abyss_poseidonia', '아틀란티스 해저 수도 포세이도니아', 'capital', 'abyss_ocean', 640, 420, 'oceanic', true, 16);
+  add('abyss_sunken_atlantis', '가라앉은 태고의 대신전 (포세이돈의 성역)', 'castle', 'abyss_ocean', 880, 520, 'oceanic', true, 14);
+  add('abyss_kraken_depths', '크라켄의 심연 해구 요새', 'fortress', 'abyss_ocean', 480, 780, 'monster', true, 12);
+  add('abyss_lumina_reef', '생체 발광 산호초 군락 성채', 'town', 'abyss_ocean', 1080, 460, 'oceanic', false, 9);
+  add('abyss_tide_sanctuary', '파도소리 성역 신전', 'town', 'abyss_ocean', 720, 920, 'oceanic', false, 8);
+  add('abyss_siren_grotto', '세이렌의 심해 유적 동굴', 'lair', 'abyss_ocean', 440, 560, 'monster', true, 10);
+
   return list;
 }
 
@@ -707,6 +717,18 @@ function generateWorld() {
           } else if (dist <= landRad - 2) {
             tiles[idx(tx, ty)] = TILE.CORAL;
           } else if (dist <= landRad + 1) {
+            tiles[idx(tx, ty)] = TILE.WATER;
+          }
+          continue;
+        }
+
+        // 심해 아틀란티스 해저 신전군 전용 지형 카빙
+        if (s.continent === 'abyss_ocean') {
+          if (dist <= landRad - 7) {
+            tiles[idx(tx, ty)] = (dist <= 5) ? TILE.CASTLE_FLOOR : TILE.CRYSTAL_CAVE;
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = TILE.CORAL;
+          } else if (dist <= landRad + 2) {
             tiles[idx(tx, ty)] = TILE.WATER;
           }
           continue;

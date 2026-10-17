@@ -979,6 +979,47 @@ class WorldRenderer {
             ctx.fillRect(emberX, emberY + 1, 2, 1);
           }
         }
+
+        // I. 🔱 심해 아틀란티스 & 생체 발광 해저 유적 (Bioluminescent Deep Abyss & Sunken Ruins)
+        if (t === TILE.CORAL || (t === TILE.WATER && tx < 1200 && ty < 1000)) {
+          // 🪼 부유하는 생체 발광 심해 해파리 & 에테르 빛가루
+          if ((h % 7) === 0) {
+            const jx = px + ((h >> 2) % 20) + 6 + Math.sin(timeSec * 1.5 + tx * 0.4) * 3;
+            const jy = py + ((h >> 4) % 18) + 6 + Math.cos(timeSec * 2.0 + ty * 0.4) * 2;
+            const jAlpha = 0.5 + Math.sin(timeSec * 2.5 + tx + ty) * 0.3;
+
+            // 반투명 발광 헤드
+            ctx.fillStyle = `rgba(56, 189, 248, ${jAlpha * 0.4})`;
+            ctx.beginPath();
+            ctx.arc(jx, jy, 4, Math.PI, 0);
+            ctx.fill();
+
+            // 촉수 리본
+            ctx.fillStyle = `rgba(168, 85, 247, ${jAlpha * 0.7})`;
+            ctx.fillRect(jx - 2, jy, 1, 4);
+            ctx.fillRect(jx, jy + 1, 1, 5);
+            ctx.fillRect(jx + 2, jy, 1, 4);
+
+            // 코어 발광점
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(jx - 0.5, jy - 1, 1, 1);
+          }
+
+          // 🏛️ 침식된 고대 아틀란티스 대리석 원주 기둥 잔해 (Sunken Atlantean Pillars)
+          if ((h % 17) === 0 && t !== TILE.CORAL) {
+            const pxCol = px + 8;
+            const pyCol = py + 4;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+            ctx.fillRect(pxCol - 2, pyCol + 14, 12, 4);
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(pxCol, pyCol, 8, 14);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(pxCol + 1, pyCol + 1, 2, 12);
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillRect(pxCol + 3, pyCol + 4, 2, 3);
+            ctx.fillRect(pxCol + 3, pyCol + 9, 2, 2);
+          }
+        }
       }
     }
   }
@@ -2332,6 +2373,25 @@ class WorldRenderer {
     ctx.beginPath();
     ctx.ellipse(px, py + 8 * sc, 26 * sc, 8 * sc, 0, 0, Math.PI * 2);
     ctx.fill();
+
+    // 1.1. 지면 비룡 날개 풍압 돌풍 링 (Wing-Downwash Vortex Rings)
+    const downwashPhase = (timeSec * 7) % (Math.PI * 2);
+    const downwashScale = 1.0 + Math.sin(downwashPhase) * 0.25;
+    ctx.strokeStyle = `rgba(255, 255, 255, ${Math.max(0, 0.35 - Math.sin(downwashPhase) * 0.2)})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(px, py + 8 * sc, 30 * sc * downwashScale, 10 * sc * downwashScale, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 1.2. 비행 꼬리 불티 / 냉기 / 전격 파티클 트레일
+    const trailY = dy + 6 * sc;
+    for (let tIdx = 0; tIdx < 3; tIdx++) {
+      const pOff = ((timeSec * 24 + tIdx * 9) % 24) * sc;
+      const pX = px - dir * (28 * sc + pOff);
+      const pY = trailY + Math.sin(timeSec * 10 + tIdx) * 6 * sc;
+      ctx.fillStyle = (tIdx === 0) ? coreColor : auraColor;
+      ctx.fillRect(pX, pY, 2.5 * sc, 2.5 * sc);
+    }
 
     // 2. 후방 날개 (Back Wing - Behind Body)
     const backWingY = dy - 18 * sc - wingFlap * 0.8;
@@ -4958,6 +5018,15 @@ class WorldRenderer {
       ctx.beginPath();
       ctx.arc(px, py, r * 0.96, arc.startAngle, arc.endAngle);
       ctx.stroke();
+
+      // 4. 슬래시 궤적 첨두부 크로스 스타 하이라이트 (Sparkling Blade Tip Highlights)
+      const tipX = px + Math.cos(arc.endAngle) * r;
+      const tipY = py + Math.sin(arc.endAngle) * r;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(tipX - 1.5, tipY - 1.5, 3, 3);
+      ctx.fillStyle = arc.color || '#facc15';
+      ctx.fillRect(tipX - 3, tipY - 0.5, 6, 1);
+      ctx.fillRect(tipX - 0.5, tipY - 3, 1, 6);
 
       ctx.restore();
     }
