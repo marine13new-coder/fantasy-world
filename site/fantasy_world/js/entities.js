@@ -908,23 +908,30 @@ class EntityManager {
     if (f.diveCooldown > 0) f.diveCooldown -= dt;
 
     if (f.state === 'dive' && f.target && f.target.hp > 0) {
-      // 적을 향해 고속 급강하 타격
+      // 적을 향해 초음속 급강하 타격 (34타일/초 & 공기역학 돌풍 잔상)
       const dx = f.target.x - f.x;
       const dy = f.target.y - f.y;
       const dist = Math.hypot(dx, dy);
+      if (Math.random() < 0.45) {
+        this.addHitSparks(f.x, f.y, '#bae6fd', 2);
+      }
       if (dist < 1.0) {
         // 적중!
-        const dmg = Math.round((p.atk || 25) * 1.65);
+        const dmg = Math.round((p.atk || 25) * 1.85);
         f.target.hp -= dmg;
         f.target.hitTimer = 0.28;
-        f.target.stunTimer = 1.4; // 1.4초 기절
-        this.addHitSparks(f.target.x, f.target.y, '#facc15', 12);
-        this.addFloatingText(f.target.x, f.target.y - 1.2, `🦅 강습 탈론! -${dmg} (기절)`, '#facc15', 1.2);
+        f.target.stunTimer = 1.8; // 1.8초 기절
+        this.addShockwave(f.target.x, f.target.y, 2.5, '#fde047', 0.28);
+        this.addHitSparks(f.target.x, f.target.y, '#facc15', 16);
+        this.addFloatingText(f.target.x, f.target.y - 1.2, `🦅 강습 탈론! -${dmg} (1.8s 기절)`, '#facc15', 1.4);
+        if (Math.random() < 0.5) {
+          this.spawnLootDrop(f.target.x, f.target.y, { itemType: 'gold', name: '약탈 금화', icon: '🪙', gold: 35, color: '#facc15' });
+        }
         f.state = 'ascend';
-        f.diveCooldown = 5.0;
+        f.diveCooldown = 4.5;
       } else {
-        f.x += (dx / dist) * dt * 26;
-        f.y += (dy / dist) * dt * 26;
+        f.x += (dx / dist) * dt * 34;
+        f.y += (dy / dist) * dt * 34;
       }
     } else if (f.state === 'ascend') {
       // 상공 원형 궤도로 복귀
@@ -2816,42 +2823,56 @@ class EntityManager {
         ? this.spatialGrid.findNearest(p.x, p.y, 4.8, other => other !== p && other.hp > 0 && this.isHostile(p, other))
         : null;
     }
+    const angle = target
+      ? Math.atan2(target.y - p.y, target.x - p.x)
+      : (p.facing === 'left' ? Math.PI : (p.facing === 'up' ? -Math.PI / 2 : (p.facing === 'down' ? Math.PI / 2 : 0)));
 
     let comboMultiplier = 1.0;
-    let cdTime = 0.32;
-    let effectColor = '#ffffff';
-    let comboText = '1타 [신속베기]';
+    let cdTime = 0.28;
+    let effectColor = '#38bdf8';
+    let comboText = '⚔️ 1타 [신속 수평베기]';
 
-    if (p.comboStep === 2) {
-      comboMultiplier = 1.35;
-      cdTime = 0.32;
-      effectColor = '#f97316';
-      comboText = '2타 [어퍼 크로스]';
+    if (p.comboStep === 1) {
+      comboMultiplier = 1.0;
+      cdTime = 0.28;
+      effectColor = '#38bdf8';
+      comboText = '⚔️ 1타 [신속 수평베기]';
       if (typeof audioMgr !== 'undefined') audioMgr.playSword();
+      p.x += Math.cos(angle) * 0.22;
+      p.y += Math.sin(angle) * 0.22;
+    } else if (p.comboStep === 2) {
+      comboMultiplier = 1.45;
+      cdTime = 0.32;
+      effectColor = '#818cf8';
+      comboText = '⚡ 2타 [대각 상승 뇌전베기!]';
+      if (typeof audioMgr !== 'undefined') audioMgr.playSword();
+      p.x += Math.cos(angle) * 0.35;
+      p.y += Math.sin(angle) * 0.35;
+      if (target) {
+        target.y -= 0.35; // 에어본 띄우기
+        this.addHitSparks(target.x, target.y, '#818cf8', 10);
+      }
     } else if (p.comboStep === 3) {
-      comboMultiplier = 2.2;
-      cdTime = 0.50;
+      comboMultiplier = 2.5;
+      cdTime = 0.52;
       effectColor = '#facc15';
-      comboText = '🔥 3타 피니셔 [360도 회전베기!]';
+      comboText = '🔥 3타 피니셔 [360도 대회전 파쇄!]';
       if (typeof audioMgr !== 'undefined') audioMgr.playWhirlwind();
+      this.addDustPuff(p.x, p.y, 8);
     } else {
       if (typeof audioMgr !== 'undefined') audioMgr.playSword();
     }
 
     p.attackCooldown = cdTime;
 
-    const angle = target
-      ? Math.atan2(target.y - p.y, target.x - p.x)
-      : (p.facing === 'left' ? Math.PI : (p.facing === 'up' ? -Math.PI / 2 : (p.facing === 'down' ? Math.PI / 2 : 0)));
-
     const slashX = p.x + Math.cos(angle) * 1.2;
     const slashY = p.y + Math.sin(angle) * 1.2;
 
     // ⚔️ 무기 궤적 슬래시 리본 아크
-    const arcSpread = p.comboStep === 3 ? Math.PI * 2 : 1.45;
+    const arcSpread = p.comboStep === 3 ? Math.PI * 2 : (p.comboStep === 2 ? 1.75 : 1.45);
     const arcStart = angle - arcSpread / 2;
     const arcEnd = angle + arcSpread / 2;
-    this.addSlashArc(p.x, p.y, p.comboStep === 3 ? 3.6 : 2.2, arcStart, arcEnd, effectColor, 0.22);
+    this.addSlashArc(p.x, p.y, p.comboStep === 3 ? 3.8 : 2.4, arcStart, arcEnd, effectColor, 0.24);
 
     // 💥 3단계 피니셔: 주변 360도 모든 적 광역 타격 및 넉백
     if (p.comboStep === 3) {

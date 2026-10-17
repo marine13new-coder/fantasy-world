@@ -506,6 +506,7 @@ class WorldRenderer {
       this.drawAncientShrines(ctx, ts, timeSec, camera.zoom);
       this.drawDungeonPortals(ctx, ts, timeSec, camera.zoom);
       this.drawMonolithSteles(ctx, ts, timeSec, camera.zoom);
+      this.drawBossArenaBarrier(ctx, ts, timeSec, camera.zoom);
       this.drawBuildPreview(ctx, ts, camera);
     }
 
@@ -1075,7 +1076,16 @@ class WorldRenderer {
           }
 
           case 3: {
-            // 🌸 [야생화 무리] (Wildflower Patches - Images 1, 3, 5)
+            // 🌸 [야생화 무리] (Wildflower Patches - Wind Sway & Proximity Bending)
+            let bendX = 0;
+            if (this.entityMgr && this.entityMgr.player) {
+              const p = this.entityMgr.player;
+              const pDist = Math.hypot((tx + 0.5) - p.x, (ty + 0.5) - p.y);
+              if (pDist < 1.25) {
+                bendX = Math.round((p.vx !== 0 ? Math.sign(p.vx) : ((tx + 0.5) - p.x)) * 2.5);
+              }
+            }
+
             const flowers = [
               { ox: 6, oy: 8, col: '#facc15', cCol: '#ffffff' },
               { ox: 14, oy: 5, col: '#ffffff', cCol: '#facc15' },
@@ -1085,7 +1095,8 @@ class WorldRenderer {
               { ox: 25, oy: 16, col: '#ffffff', cCol: '#facc15' }
             ];
             for (const f of flowers) {
-              const fSway = Math.round(Math.sin(timeSec * 3.5 + tx + f.ox) * 1.0);
+              const windSway = Math.sin(timeSec * 3.2 + tx * 0.7 + f.ox * 0.3);
+              const fSway = Math.round(windSway * 1.2) + bendX;
               ctx.fillStyle = '#16a34a';
               ctx.fillRect(px + f.ox, py + f.oy + 2, 1, 3);
               ctx.fillStyle = f.col;
@@ -1118,6 +1129,13 @@ class WorldRenderer {
 
             ctx.fillStyle = '#65a30d';
             ctx.fillRect(bx + 4, by + 12, 6, 3);
+
+            // 우천 시 바위 상단 젖은 표면 스페큘러 광택
+            if (this.lastWorldTime && (this.lastWorldTime.weather === 'rain' || this.lastWorldTime.weather === 'storm')) {
+              ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+              ctx.fillRect(bx + 6, by + 1, 12, 1.5);
+            }
+            ctx.fillStyle = '#65a30d';
             ctx.fillRect(bx + 14, by + 13, 5, 2);
             break;
           }
@@ -4279,16 +4297,22 @@ class WorldRenderer {
 
     const fx = Math.round(f.x * ts);
     const fy = Math.round((f.y - 0.7) * ts);
-    const altY = 24;
 
-    // 1. 지면 정찰매 투영 그림자
+    // 1. 고도 동적 보간 (급강하 시 지면으로 수직 하강 24px -> 4px)
+    const isDiving = (f.state === 'dive' && f.target);
+    const diveDist = isDiving ? Math.hypot(f.target.x - f.x, f.target.y - f.y) : 6.0;
+    const altY = isDiving ? Math.max(4, Math.round(24 * Math.min(1.0, diveDist / 4.5))) : 24;
+
+    // 2. 지면 정찰매 투영 그림자 (고도가 낮아질수록 더 크고 짙어짐)
     ctx.save();
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.28)';
+    const shadowScale = isDiving ? (1.6 - (altY / 24) * 0.6) : 1.0;
+    const shadowAlpha = isDiving ? (0.55 - (altY / 24) * 0.25) : 0.28;
+    ctx.fillStyle = `rgba(15, 23, 42, ${shadowAlpha})`;
     ctx.beginPath();
-    ctx.ellipse(fx, fy, 8, 4, 0, 0, Math.PI * 2);
+    ctx.ellipse(fx, fy, 8 * shadowScale, 4 * shadowScale, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // 2. 상공 비행체 드로잉
+    // 3. 상공 비행체 드로잉
     ctx.translate(fx, fy - altY);
 
     let flightAngle = f.angle || 0;
@@ -4297,8 +4321,8 @@ class WorldRenderer {
     }
     ctx.rotate(flightAngle);
 
-    // 날개짓 애니메이션
-    const wingFlap = Math.sin(f.wingCycle || 0) * 5;
+    // 날개짓 애니메이션 (급강하 시에는 날개를 쐐기형으로 접어 공기저항 최소화)
+    const wingFlap = isDiving ? -2 : Math.sin(f.wingCycle || 0) * 5;
 
     // 솔개 몸통 (Golden Falcon Body)
     ctx.fillStyle = '#b45309';
@@ -4310,16 +4334,16 @@ class WorldRenderer {
     ctx.fillStyle = '#f59e0b';
     ctx.beginPath();
     ctx.moveTo(0, -2);
-    ctx.lineTo(2, -8 + wingFlap);
-    ctx.lineTo(-4, -6 + wingFlap);
+    ctx.lineTo(isDiving ? -3 : 2, -8 + wingFlap);
+    ctx.lineTo(-5, -5 + wingFlap);
     ctx.lineTo(-2, -2);
     ctx.closePath();
     ctx.fill();
 
     ctx.beginPath();
     ctx.moveTo(0, 2);
-    ctx.lineTo(2, 8 - wingFlap);
-    ctx.lineTo(-4, 6 - wingFlap);
+    ctx.lineTo(isDiving ? -3 : 2, 8 - wingFlap);
+    ctx.lineTo(-5, 5 - wingFlap);
     ctx.lineTo(-2, 2);
     ctx.closePath();
     ctx.fill();
@@ -4330,15 +4354,22 @@ class WorldRenderer {
     ctx.fillStyle = '#0f172a';
     ctx.fillRect(4, -1, 1, 1);
 
-    // 급강하 시 황금빛 기류 잔상
-    if (f.state === 'dive') {
-      ctx.strokeStyle = 'rgba(250, 204, 21, 0.75)';
+    // 급강하 시 초음속 기류풍 및 깃털 잔상
+    if (isDiving) {
+      ctx.strokeStyle = 'rgba(250, 204, 21, 0.85)';
       ctx.lineWidth = 2.0;
       ctx.beginPath();
-      ctx.moveTo(-16, -2);
-      ctx.lineTo(0, -2);
-      ctx.moveTo(-16, 2);
-      ctx.lineTo(0, 2);
+      ctx.moveTo(-18, -3);
+      ctx.lineTo(0, -3);
+      ctx.moveTo(-18, 3);
+      ctx.lineTo(0, 3);
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(-24, 0);
+      ctx.lineTo(-4, 0);
       ctx.stroke();
     }
 
@@ -4779,33 +4810,50 @@ class WorldRenderer {
     ctx.restore();
   }
 
-  // 🌧️ [1.5-B] 비 올 때 도로/흙길 지면 물웅덩이 & 빗방울 파문 (Rain Puddles & Concentric Droplet Ripples)
+  // 🌧️ [1.5-B] 비 올 때 도로/흙길 지면 물웅덩이 & 하늘 반사 & 젖은 표면 스페큘러 광택 (Rain Puddles & Specular Sheen)
   drawRainPuddles(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec) {
     const { width, tiles } = this.world;
     for (let ty = minTy; ty <= maxTy; ty += 2) {
       for (let tx = minTx; tx <= maxTx; tx += 2) {
         const idx = ty * width + tx;
         const t = tiles[idx];
-        if (t === TILE.ROAD || t === TILE.DIRT || t === TILE.COBBLESTONE || t === TILE.CASTLE_FLOOR) {
+        if (t === TILE.ROAD || t === TILE.DIRT || t === TILE.COBBLESTONE || t === TILE.CASTLE_FLOOR || t === TILE.BRIDGE) {
+          // 1. 젖은 노면 상단 1px 스페큘러 광택선 (Wet Surface Specular Gloss)
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+          ctx.fillRect(tx * ts, ty * ts, ts, 1.5);
+
           const h = (tx * 31 + ty * 59) & 63;
-          if (h < 18) {
+          if (h < 22) {
             const px = tx * ts + (h % 12);
             const py = ty * ts + ((h >> 2) % 12);
-            const pw = 14 + (h % 10);
-            const ph = 8 + (h % 6);
+            const pw = 16 + (h % 12);
+            const ph = 9 + (h % 6);
 
             ctx.save();
-            ctx.fillStyle = 'rgba(147, 197, 253, 0.28)';
+            // 2. 웅덩이 수면 하늘 반사 그래디언트 (Sky Reflection Sheen)
+            const grad = ctx.createLinearGradient(px, py, px, py + ph);
+            grad.addColorStop(0, 'rgba(186, 230, 253, 0.42)');
+            grad.addColorStop(0.4, 'rgba(96, 165, 250, 0.28)');
+            grad.addColorStop(1, 'rgba(30, 58, 138, 0.38)');
+            ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.ellipse(px + pw / 2, py + ph / 2, pw / 2, ph / 2, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            const ripPhase = (timeSec * 2.8 + h * 0.2) % 1.0;
-            const ripR = (pw / 2) * ripPhase;
-            ctx.strokeStyle = `rgba(240, 249, 255, ${0.45 * (1 - ripPhase)})`;
+            // 3. 다중 빗방울 동심 파문 (Dual Concentric Ripples)
+            const ripPhase1 = (timeSec * 3.2 + h * 0.18) % 1.0;
+            const ripR1 = (pw / 2) * ripPhase1;
+            ctx.strokeStyle = `rgba(240, 249, 255, ${0.55 * (1 - ripPhase1)})`;
             ctx.lineWidth = 1.0;
             ctx.beginPath();
-            ctx.ellipse(px + pw / 2, py + ph / 2, Math.max(1, ripR), Math.max(0.5, ripR * 0.5), 0, 0, Math.PI * 2);
+            ctx.ellipse(px + pw / 2, py + ph / 2, Math.max(1, ripR1), Math.max(0.5, ripR1 * 0.5), 0, 0, Math.PI * 2);
+            ctx.stroke();
+
+            const ripPhase2 = (timeSec * 3.2 + h * 0.18 + 0.45) % 1.0;
+            const ripR2 = (pw / 2) * ripPhase2;
+            ctx.strokeStyle = `rgba(224, 242, 254, ${0.40 * (1 - ripPhase2)})`;
+            ctx.beginPath();
+            ctx.ellipse(px + pw / 2, py + ph / 2, Math.max(1, ripR2), Math.max(0.5, ripR2 * 0.5), 0, 0, Math.PI * 2);
             ctx.stroke();
 
             ctx.restore();
@@ -4815,7 +4863,7 @@ class WorldRenderer {
     }
   }
 
-  // ⚔️ [8.7] 무기 궤적 슬래시 리본 아크 (Melee Weapon Arc Trails)
+  // ⚔️ [8.7] 무기 궤적 슬래시 리본 아크 (Melee Weapon Arc Trails - Multi-Layer Fluid Dissolve)
   drawWeaponSlashArcs(ctx, ts) {
     if (!this.entityMgr.slashArcs || this.entityMgr.slashArcs.length === 0) return;
     for (const arc of this.entityMgr.slashArcs) {
@@ -4826,17 +4874,28 @@ class WorldRenderer {
       const r = arc.radius * ts;
 
       ctx.save();
-      ctx.globalAlpha = alpha;
+      // 1. 외곽 에너지 분산 발광 림
+      ctx.globalAlpha = alpha * 0.45;
       ctx.strokeStyle = arc.color || '#facc15';
-      ctx.lineWidth = Math.max(1.5, 4.5 * (1 - progress));
+      ctx.lineWidth = Math.max(2.5, 7.5 * (1 - progress));
       ctx.beginPath();
       ctx.arc(px, py, r, arc.startAngle, arc.endAngle);
       ctx.stroke();
 
+      // 2. 주 검기 리본 아크
+      ctx.globalAlpha = alpha * 0.90;
+      ctx.strokeStyle = arc.color || '#facc15';
+      ctx.lineWidth = Math.max(1.8, 4.2 * (1 - progress));
+      ctx.beginPath();
+      ctx.arc(px, py, r, arc.startAngle, arc.endAngle);
+      ctx.stroke();
+
+      // 3. 백색 고에너지 칼날 코어 (Hot White Blade Core)
+      ctx.globalAlpha = alpha;
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = Math.max(0.8, 2.0 * (1 - progress));
       ctx.beginPath();
-      ctx.arc(px, py, r * 0.95, arc.startAngle, arc.endAngle);
+      ctx.arc(px, py, r * 0.96, arc.startAngle, arc.endAngle);
       ctx.stroke();
 
       ctx.restore();
@@ -5199,6 +5258,76 @@ class WorldRenderer {
 
       ctx.restore();
     }
+  }
+
+  // ⚔️ [12.1-D] 보스 결계 룬 링 & 2페이즈 광폭화 오라 (Boss Arena Barrier & Phase 2 Enrage Aura)
+  drawBossArenaBarrier(ctx, ts, timeSec, zoom) {
+    const rpg = this.entityMgr.rpgManager;
+    if (!rpg || !rpg.activeBoss || rpg.activeBoss.hp <= 0) return;
+    const boss = rpg.activeBoss;
+
+    const bx = Math.round(boss.x * ts);
+    const by = Math.round(boss.y * ts);
+
+    ctx.save();
+
+    // 1. 2페이즈 광폭화 시 보스 본체 화염 오라 (Pulsing Crimson Enrage Aura)
+    if (boss.phase2) {
+      const auraR = (boss.scale || 1.3) * 26 + Math.sin(timeSec * 6) * 4;
+      const grad = ctx.createRadialGradient(bx, by, Math.max(2, auraR * 0.2), bx, by, auraR);
+      grad.addColorStop(0, 'rgba(239, 68, 68, 0.45)');
+      grad.addColorStop(0.6, 'rgba(220, 38, 38, 0.22)');
+      grad.addColorStop(1, 'rgba(153, 27, 27, 0)');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(bx, by, auraR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 주변을 맴도는 붉은 룬 스파크
+      for (let s = 0; s < 4; s++) {
+        const sAng = timeSec * 5 + (s * Math.PI / 2);
+        const sx = bx + Math.cos(sAng) * (auraR * 0.85);
+        const sy = by + Math.sin(sAng) * (auraR * 0.85);
+        ctx.fillStyle = '#fde047';
+        ctx.fillRect(Math.round(sx - 1), Math.round(sy - 1), 3, 3);
+      }
+    }
+
+    // 2. 던전 또는 보스 전장 결계 원형 배리어 (Runic Arena Barrier)
+    const barrierRadius = 9.5 * ts;
+    const isEnraged = !!boss.phase2;
+    const barrierColor = isEnraged ? '#ef4444' : '#a855f7';
+    const barrierAlpha = 0.55 + Math.sin(timeSec * 3) * 0.15;
+
+    ctx.globalAlpha = barrierAlpha;
+    ctx.strokeStyle = barrierColor;
+    ctx.lineWidth = 2.0;
+
+    // 회전하는 룬 배리어 링
+    ctx.beginPath();
+    ctx.arc(bx, by, barrierRadius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 동심 보조 링
+    ctx.lineWidth = 1.0;
+    ctx.strokeStyle = isEnraged ? '#fca5a5' : '#e9d5ff';
+    ctx.beginPath();
+    ctx.arc(bx, by, barrierRadius * 0.96, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 8방위 룬 기둥 표식
+    for (let r = 0; r < 8; r++) {
+      const rAng = (r * Math.PI / 4) + (timeSec * 0.4 * (isEnraged ? 2.0 : 1.0));
+      const rx = bx + Math.cos(rAng) * barrierRadius;
+      const ry = by + Math.sin(rAng) * barrierRadius;
+      ctx.fillStyle = isEnraged ? '#fef08a' : '#c084fc';
+      ctx.fillRect(Math.round(rx - 2), Math.round(ry - 2), 5, 5);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(Math.round(rx - 1), Math.round(ry - 1), 2, 2);
+    }
+
+    ctx.restore();
   }
 
   // 🌊 [2.2] 수면 거울 반사 효과 (Dynamic Water Mirror Reflections & Distorted Ripples)

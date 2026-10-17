@@ -1106,17 +1106,41 @@ class RPGSystemsManager {
     const bar = document.getElementById('bossBarContainer');
     if (!bar) return;
     if (this.activeBoss && this.activeBoss.hp > 0) {
+      const boss = this.activeBoss;
+
+      // 🚨 [보스 2페이즈 광폭화 시스템 - Phase 2 Enrage Trigger]
+      if (boss.hp <= boss.maxHp * 0.5 && !boss.phase2) {
+        boss.phase2 = true;
+        boss.scale = (boss.scale || 1.3) * 1.25;
+        boss.atk = Math.round((boss.atk || 28) * 1.35);
+        boss.speed = (boss.speed || 1.8) * 1.3;
+        boss.attackCooldown = 0.45;
+
+        if (this.em) {
+          if (typeof audioMgr !== 'undefined' && audioMgr.playRoar) audioMgr.playRoar();
+          this.em.addShockwave(boss.x, boss.y, 6.5, '#ef4444', 0.65);
+          this.em.addHitSparks(boss.x, boss.y, '#f87171', 28);
+          this.em.addHitSparks(boss.x, boss.y, '#facc15', 20);
+          this.em.addFloatingText(boss.x, boss.y - 2.2, '🚨 [PHASE 2 ENRAGE] 보스 광폭화 돌입! (공격력·이속 폭증)', '#ef4444', 3.0);
+          if (this.em.camera) {
+            this.em.camera.shake = 18;
+            this.em.camera.screenFreeze = 0.08;
+          }
+        }
+      }
+
       bar.classList.remove('hidden');
       const nameEl = document.getElementById('bossName');
       const iconEl = document.getElementById('bossIcon');
       const subEl = document.getElementById('bossSubtitle');
       const fillEl = document.getElementById('bossHpFill');
-      if (nameEl) nameEl.textContent = this.activeBoss.name;
-      if (iconEl) iconEl.textContent = this.activeBoss.icon;
-      if (subEl) subEl.textContent = this.activeBoss.subtitle;
+      if (nameEl) nameEl.textContent = boss.phase2 ? `🔥 [광폭화] ${boss.name}` : boss.name;
+      if (iconEl) iconEl.textContent = boss.icon;
+      if (subEl) subEl.textContent = boss.phase2 ? `⚡ 2페이즈 각성 상태! 폭풍 공격 주의` : boss.subtitle;
       if (fillEl) {
-        const pct = Math.max(0, Math.min(100, Math.round((this.activeBoss.hp / this.activeBoss.maxHp) * 100)));
+        const pct = Math.max(0, Math.min(100, Math.round((boss.hp / boss.maxHp) * 100)));
         fillEl.style.width = `${pct}%`;
+        fillEl.style.backgroundColor = boss.phase2 ? '#dc2626' : '#f97316';
       }
     } else {
       bar.classList.add('hidden');
