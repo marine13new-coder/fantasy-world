@@ -53,6 +53,125 @@ const LEGENDARY_ITEMS = [
   { id: 'dragon_crown', slot: 'helmet', name: '정복자의 황금 용관', icon: '👑', atk: 30, hp: 120, desc: '천공의 비룡을 제압한 대영웅의 관. 명성치 획득량이 증폭됩니다.' }
 ];
 
+const DUNGEONS = [
+  {
+    id: 'dungeon_necropolis',
+    name: '네크로폴리스 고대 카타콤',
+    icon: '💀',
+    levelReq: 5,
+    x: 1450, y: 480,
+    color: '#a855f7',
+    desc: '고대 왕국의 타락한 고위 사제와 언데드 군단이 잠들어 있는 지하 묘실. 3층 심연에 리치 로드가 도사립니다.',
+    bossName: '심연의 리치 로드 발라자르',
+    bossHp: 2400,
+    bossAtk: 45,
+    relicReward: {
+      id: 'relic_soul_gem',
+      slot: 'relic',
+      name: '네크로맨서의 영혼 보옥',
+      icon: '🔮',
+      atk: 32,
+      hp: 120,
+      desc: '모든 공격 시 피해량의 15% 생명력을 흡수하는 고대 암흑 보옥.'
+    },
+    goldReward: 3500,
+    fameReward: 80
+  },
+  {
+    id: 'dungeon_balrog',
+    name: '발록의 심연 용암 미궁',
+    icon: '🌋',
+    levelReq: 8,
+    x: 380, y: 1850,
+    color: '#ef4444',
+    desc: '화산섬 지하 마그마가 끓어넘치는 심연의 동굴. 태고의 화염 악마 발록이 깨어나 불길을 내뿜습니다.',
+    bossName: '태고의 화염 마신 발록',
+    bossHp: 3200,
+    bossAtk: 58,
+    relicReward: {
+      id: 'relic_balrog_heart',
+      slot: 'relic',
+      name: '발록의 지옥불 심장',
+      icon: '❤️‍🔥',
+      atk: 45,
+      hp: 180,
+      desc: '주변 4.5타일 내 모든 적에게 초당 22의 화염 연소 피해를 입히는 영구 오라.'
+    },
+    goldReward: 5000,
+    fameReward: 100
+  },
+  {
+    id: 'dungeon_atlantis',
+    name: '침몰도시 아틀란티스 해저 신전',
+    icon: '🔱',
+    levelReq: 10,
+    x: 3100, y: 2250,
+    color: '#06b6d4',
+    desc: '대양 깊은 해저에 가라앉은 초고대 문명의 신전. 바다의 지배자 해신 포세이돈 골렘이 유적을 수호합니다.',
+    bossName: '심해의 티탄 포세이돈 골렘',
+    bossHp: 3800,
+    bossAtk: 52,
+    relicReward: {
+      id: 'relic_abyssal_trident',
+      slot: 'weapon',
+      name: '아비스 트라이던트 삼지창',
+      icon: '🔱',
+      atk: 40,
+      hp: 220,
+      desc: '3단 콤보 피니셔 시 전방에 거대한 해일 폭풍을 발사하여 180의 광역 수격 피해를 입힙니다.'
+    },
+    goldReward: 6000,
+    fameReward: 120
+  }
+];
+
+const MERCENARY_CLASSES = [
+  {
+    id: 'paladin',
+    name: '근위 성전사 가웨인',
+    role: 'soldier',
+    icon: '🛡️',
+    color: '#3b82f6',
+    hp: 650,
+    atk: 28,
+    cost: 300,
+    desc: '단단한 성기사 판금 갑주와 신성 방패로 적의 공격을 온몸으로 막아내는 수호자.'
+  },
+  {
+    id: 'ranger',
+    name: '엘븐 윈드레인저 실바나',
+    role: 'archer',
+    icon: '🏹',
+    color: '#22c55e',
+    hp: 420,
+    atk: 46,
+    cost: 450,
+    desc: '세계수의 축복을 받은 엘프 명궁. 9타일 초장거리에서 관통 바람 화살을 연사합니다.'
+  },
+  {
+    id: 'sorceress',
+    name: '아케인 소서리스 이클립스',
+    role: 'mage',
+    icon: '🧙',
+    color: '#a855f7',
+    hp: 380,
+    atk: 54,
+    cost: 600,
+    desc: '별빛 비전 마법사. 다중 체인 라이트닝으로 몬스터 무리를 일망타진합니다.'
+  },
+  {
+    id: 'assassin',
+    name: '그림자 어쌔신 발터',
+    role: 'wolfrider',
+    icon: '🗡️',
+    color: '#e11d48',
+    hp: 460,
+    atk: 62,
+    cost: 700,
+    desc: '어둠의 길드 암살자. 적 배후로 순간이동하여 2.5배 치명타 출혈 일격을 가합니다.'
+  }
+];
+
 class RPGSystemsManager {
   constructor(world, entityMgr) {
     this.world = world;
@@ -196,6 +315,14 @@ class RPGSystemsManager {
 
     // 12. 🏰 왕국 요새 & 도시 주둔군 감시탑 자동 방어 시스템
     this.garrisonDefenseTimer = 1.6;
+
+    // 13. 💀 고대 심연 던전 카타콤 원정 시스템 (Ancient Dungeon Catacombs)
+    this.dungeons = DUNGEONS;
+    this.activeDungeon = null;
+
+    // 14. 🍻 용병 길드 주점 & 동료 육성 시스템 (Tavern Mercenaries)
+    this.mercenaries = MERCENARY_CLASSES;
+    this.recruitedMercenaryIds = ['paladin'];
 
     this.initTreasureChests();
   }
@@ -1683,6 +1810,161 @@ class RPGSystemsManager {
         break; // 프레임당 거점별 1발씩 집중
       }
     }
+  }
+
+  // ==========================================================================
+  // L. 고대 심연 던전 카타콤 원정 시스템 (Ancient Dungeon Expeditions)
+  // ==========================================================================
+  checkNearbyDungeon(player) {
+    if (!player || !this.dungeons) return null;
+    return this.dungeons.find(dg => Math.hypot(dg.x - player.x, dg.y - player.y) <= 4.5);
+  }
+
+  enterDungeonExpedition(dungeonId) {
+    const dg = this.dungeons.find(d => d.id === dungeonId);
+    const p = this.em.player;
+    if (!dg || !p) return false;
+
+    if (p.level < dg.levelReq) {
+      this.em.addFloatingText(p.x, p.y - 1.5, `⚠️ 입장 불가: 권장 레벨 Lv.${dg.levelReq} 이상 필요!`, '#f87171', 2.0);
+      return false;
+    }
+
+    this.activeDungeon = dg;
+    dg.active = true;
+
+    // 플레이어를 던전 포탈 입구로 정렬
+    p.x = dg.x;
+    p.y = dg.y + 2.5;
+    p.targetX = p.x;
+    p.targetY = p.y;
+
+    // 던전 보스 및 엘리트 수호병 4마리 스폰
+    const mobType = dg.id === 'dungeon_necropolis' ? 'skeleton' : (dg.id === 'dungeon_balrog' ? 'dragonkin' : 'golem');
+    for (let i = 0; i < 4; i++) {
+      const angle = (i / 4) * Math.PI * 2;
+      const sx = dg.x + Math.cos(angle) * 3.5;
+      const sy = dg.y + Math.sin(angle) * 3.5;
+      const mob = this.em.spawnMonsterAt(sx, sy, mobType);
+      if (mob) {
+        mob.name = `${dg.name} 심연 수호병`;
+        mob.maxHp = 350;
+        mob.hp = mob.maxHp;
+        mob.atk = 24;
+        mob.color = dg.color;
+      }
+    }
+
+    // 전설 던전 보스 스폰
+    const boss = this.em.spawnMonsterAt(dg.x, dg.y - 1.5, dg.id === 'dungeon_balrog' ? 'dragonkin' : 'lich');
+    if (boss) {
+      boss.name = dg.bossName;
+      boss.maxHp = dg.bossHp;
+      boss.hp = dg.bossHp;
+      boss.atk = dg.bossAtk;
+      boss.scale = 1.6;
+      boss.color = dg.color;
+      boss.isDungeonBoss = true;
+      boss.dungeonId = dg.id;
+      boss.gold = dg.goldReward;
+      dg.bossEntity = boss;
+    }
+
+    if (typeof audioMgr !== 'undefined') audioMgr.playBossHorn();
+    if (window.renderer) {
+      window.renderer.screenFlashTimer = 0.3;
+      window.renderer.screenFlashColor = dg.color;
+    }
+    this.em.addEffect(dg.x, dg.y, 16.0, dg.color, 1.8);
+    this.em.addFloatingText(dg.x, dg.y - 2.5, `⚔️ [${dg.name}] 심연 보스전 돌입!`, dg.color, 3.2);
+    this.em.log('battle', `💀 [던전 원정 개시] 플레이어가 [${dg.name}]에 진입하여 [${dg.bossName}]과의 사투를 시작했습니다!`, dg.x, dg.y);
+    return true;
+  }
+
+  checkDungeonBossDefeat(monster) {
+    if (!monster || !monster.isDungeonBoss || !monster.dungeonId) return;
+    const dg = this.dungeons.find(d => d.id === monster.dungeonId);
+    if (!dg) return;
+
+    dg.cleared = true;
+    this.activeDungeon = null;
+    const p = this.em.player;
+
+    if (p) {
+      p.gold += dg.goldReward;
+      p.fame = (p.fame || 0) + dg.fameReward;
+      // 유물 보상 자동 지급
+      if (dg.relicReward) {
+        const slot = dg.relicReward.slot || 'relic';
+        this.equipment[slot] = dg.relicReward;
+        this.recalculateEquipmentStats();
+        this.em.addFloatingText(p.x, p.y - 2.5, `👑 신화 유물 획득: [${dg.relicReward.name}]! (+${dg.goldReward}G / 명성+${dg.fameReward})`, '#facc15', 4.0);
+      }
+    }
+
+    if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+    if (window.renderer) {
+      window.renderer.screenFlashTimer = 0.4;
+      window.renderer.screenFlashColor = '#facc15';
+    }
+    this.em.addEffect(dg.x, dg.y, 22.0, '#facc15', 3.0);
+    this.em.log('quest', `🏆 [던전 토벌 완료] [${dg.name}]의 군주 [${dg.bossName}]을 격파하고 전설의 유물 [${dg.relicReward.name}]을 차지했습니다!`, dg.x, dg.y);
+  }
+
+  // ==========================================================================
+  // M. 용병 길드 주점 & 동료 특수 클래스 고용 (Mercenary Guild Tavern)
+  // ==========================================================================
+  recruitMercenary(classId) {
+    const p = this.em.player;
+    const merc = this.mercenaries.find(m => m.id === classId);
+    if (!p || !merc) return { ok: false, reason: '유효하지 않은 용병입니다.' };
+
+    if (!this.recruitedMercenaryIds.includes(classId)) {
+      if (p.gold < merc.cost) {
+        return { ok: false, reason: `골드가 부족합니다! (필요: ${merc.cost}G / 보유: ${p.gold}G)` };
+      }
+      p.gold -= merc.cost;
+      this.recruitedMercenaryIds.push(classId);
+    }
+
+    // 동료 스쿼드 갱신
+    this.rebuildCompanionSquad();
+    if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+    this.em.addFloatingText(p.x, p.y - 1.5, `👥 [${merc.name}] 호위단 합류 완료!`, merc.color, 2.2);
+    this.em.log('trade', `🍺 [용병 길드 고용] 플레이어가 주점에서 [${merc.name}]을 영입하여 호위 분대에 배치했습니다.`, p.x, p.y);
+    return { ok: true, name: merc.name };
+  }
+
+  rebuildCompanionSquad() {
+    const p = this.em.player;
+    if (!p) return;
+
+    // 기존 동료 위치 재구성
+    this.companions = [];
+    this.recruitedMercenaryIds.forEach((id, idx) => {
+      const def = this.mercenaries.find(m => m.id === id);
+      if (!def) return;
+      const angle = (idx / this.recruitedMercenaryIds.length) * Math.PI * 2;
+      const comp = this.em.createEntity({
+        name: def.name,
+        race: 'human',
+        role: def.role,
+        subClass: def.name,
+        customIcon: def.icon,
+        faction: 'kingdom',
+        homeId: 'solaris',
+        x: p.x + Math.cos(angle) * 2,
+        y: p.y + Math.sin(angle) * 2,
+        speed: 2.7,
+        maxHp: def.hp,
+        hp: def.hp,
+        atk: def.atk,
+        color: def.color,
+        isCompanion: true
+      });
+      this.companions.push(comp);
+    });
+    this.companionsActive = true;
   }
 }
 

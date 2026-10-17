@@ -719,6 +719,142 @@ function startFantasyWorld() {
     });
   }
 
+  // ==========================================================================
+  // 고대 심연 던전 모달 & 원정 컨트롤러
+  // ==========================================================================
+  const dungeonModalEl = document.getElementById('dungeonModal');
+  const btnCloseDungeonModal = document.getElementById('btnCloseDungeonModal');
+  const btnStartDungeonExpedition = document.getElementById('btnStartDungeonExpedition');
+  const btnOpenDungeon = document.getElementById('btnOpenDungeon');
+  let currentViewingDungeon = null;
+
+  window.openDungeonModal = function(dungeon) {
+    if (!dungeonModalEl) return;
+    const rpg = entityMgr.rpgManager;
+    const dg = dungeon || (rpg && rpg.dungeons ? rpg.dungeons[0] : null);
+    if (!dg) return;
+    currentViewingDungeon = dg;
+
+    const titleEl = document.getElementById('dungeonModalTitle');
+    const descEl = document.getElementById('dungeonModalDesc');
+    const lvlEl = document.getElementById('dungeonModalLevel');
+    const bossEl = document.getElementById('dungeonModalBoss');
+    const relicEl = document.getElementById('dungeonModalRelic');
+    const iconEl = document.getElementById('dungeonBannerIcon');
+
+    if (titleEl) titleEl.textContent = dg.name;
+    if (descEl) descEl.textContent = dg.desc;
+    if (lvlEl) lvlEl.textContent = `Lv. ${dg.levelReq}+`;
+    if (bossEl) bossEl.textContent = dg.bossName;
+    if (relicEl) relicEl.textContent = `${dg.relicReward.icon} ${dg.relicReward.name}`;
+    if (iconEl) iconEl.textContent = dg.icon;
+
+    dungeonModalEl.classList.remove('hidden');
+    if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+  };
+
+  if (btnCloseDungeonModal) {
+    btnCloseDungeonModal.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (dungeonModalEl) dungeonModalEl.classList.add('hidden');
+    });
+  }
+  if (dungeonModalEl) {
+    dungeonModalEl.addEventListener('click', (e) => {
+      if (e.target === dungeonModalEl) dungeonModalEl.classList.add('hidden');
+    });
+  }
+  if (btnStartDungeonExpedition) {
+    btnStartDungeonExpedition.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (currentViewingDungeon && entityMgr.rpgManager) {
+        entityMgr.rpgManager.enterDungeonExpedition(currentViewingDungeon.id);
+        if (dungeonModalEl) dungeonModalEl.classList.add('hidden');
+      }
+    });
+  }
+  if (btnOpenDungeon) {
+    btnOpenDungeon.addEventListener('click', () => {
+      const rpg = entityMgr.rpgManager;
+      if (!rpg || !rpg.dungeons) return;
+      const nearest = rpg.checkNearbyDungeon(player) || rpg.dungeons[0];
+      window.openDungeonModal(nearest);
+    });
+  }
+
+  // ==========================================================================
+  // 용병 길드 주점 모달 & 고용 컨트롤러
+  // ==========================================================================
+  const tavernModalEl = document.getElementById('tavernModal');
+  const btnCloseTavernModal = document.getElementById('btnCloseTavernModal');
+
+  window.openTavernModal = function() {
+    if (!tavernModalEl) return;
+    const rpg = entityMgr.rpgManager;
+    if (!rpg || !rpg.mercenaries) return;
+
+    const gridEl = document.getElementById('mercenaryCardsGrid');
+    if (gridEl) {
+      gridEl.innerHTML = rpg.mercenaries.map(m => {
+        const isHired = rpg.recruitedMercenaryIds.includes(m.id);
+        return `
+          <div class="merc-card">
+            <div class="merc-card-header">
+              <div class="merc-icon-box" style="border: 1px solid ${m.color}66">${m.icon}</div>
+              <div class="merc-header-text">
+                <span class="merc-name" style="color: ${m.color}">${m.name}</span>
+                <span class="merc-stats">체력: ${m.hp} | 공격력: ${m.atk}</span>
+              </div>
+            </div>
+            <div class="merc-desc">${m.desc}</div>
+            <div class="merc-action-row">
+              <button class="btn-recruit-merc ${isHired ? 'hired' : ''}" data-class="${m.id}">
+                ${isHired ? '✓ 출격 호위 중' : `💰 ${m.cost}G 고용`}
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const hireBtns = gridEl.querySelectorAll('.btn-recruit-merc:not(.hired)');
+      hireBtns.forEach(b => {
+        b.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const cid = b.getAttribute('data-class');
+          if (cid && rpg) {
+            const res = rpg.recruitMercenary(cid);
+            if (res.ok) {
+              window.openTavernModal();
+            }
+          }
+        });
+      });
+    }
+
+    tavernModalEl.classList.remove('hidden');
+    if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+  };
+
+  if (btnCloseTavernModal) {
+    btnCloseTavernModal.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (tavernModalEl) tavernModalEl.classList.add('hidden');
+    });
+  }
+  if (tavernModalEl) {
+    tavernModalEl.addEventListener('click', (e) => {
+      if (e.target === tavernModalEl) tavernModalEl.classList.add('hidden');
+    });
+  }
+
+  // C키 용병 버튼 우클릭 시 주점 모달 열기
+  if (btnToggleCompanions) {
+    btnToggleCompanions.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      window.openTavernModal();
+    });
+  }
+
   // 전체화면 및 시네마틱 모드
   const btnToggleFullscreen = document.getElementById('btnToggleFullscreen');
   if (btnToggleFullscreen) {
@@ -1106,11 +1242,15 @@ function startFantasyWorld() {
     } else if (e.code === 'KeyM') {
       stopFollow();
       smoothMoveCamera(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0.18);
+    } else if (e.code === 'KeyO') {
+      if (btnOpenDungeon) btnOpenDungeon.click();
     } else if (e.code === 'Escape') {
       stopFollow();
       if (inventoryModalEl) inventoryModalEl.classList.add('hidden');
       if (craftingModalEl) craftingModalEl.classList.add('hidden');
       if (statsModalEl) statsModalEl.classList.add('hidden');
+      if (dungeonModalEl) dungeonModalEl.classList.add('hidden');
+      if (tavernModalEl) tavernModalEl.classList.add('hidden');
       if (buildPaletteEl) buildPaletteEl.classList.add('hidden');
       if (entityMgr.rpgManager) entityMgr.rpgManager.isBuildModeActive = false;
       if (btnToggleBuild) btnToggleBuild.classList.remove('active');

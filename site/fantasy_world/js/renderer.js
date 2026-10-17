@@ -434,6 +434,7 @@ class WorldRenderer {
       this.drawPlayerStructures(ctx, ts, timeSec, camera.zoom);
       this.drawTreasureChests(ctx, ts, timeSec, camera.zoom);
       this.drawAncientShrines(ctx, ts, timeSec, camera.zoom);
+      this.drawDungeonPortals(ctx, ts, timeSec, camera.zoom);
       this.drawBuildPreview(ctx, ts, camera);
     }
 
@@ -886,13 +887,15 @@ class WorldRenderer {
             // 🌲 [고산 침엽수] (Pine / Conifer - Images 2, 5)
             const cx = px + ts / 2;
             const cy = py + ts - 3;
+            const sway = Math.round(Math.sin(timeSec * 2.2 + tx * 0.7) * 1.5);
             ctx.fillStyle = '#27190d';
             ctx.fillRect(cx - 3, cy - 8, 6, 8);
 
-            const drawPineSkirt = (sy, w, h) => {
+            const drawPineSkirt = (sy, w, h, skirtSway = 0) => {
+              const topX = cx + skirtSway;
               ctx.fillStyle = '#064e3b';
               ctx.beginPath();
-              ctx.moveTo(cx, sy - h);
+              ctx.moveTo(topX, sy - h);
               ctx.lineTo(cx - w, sy);
               ctx.lineTo(cx + w, sy);
               ctx.closePath();
@@ -900,21 +903,21 @@ class WorldRenderer {
 
               ctx.fillStyle = '#059669';
               ctx.beginPath();
-              ctx.moveTo(cx, sy - h);
+              ctx.moveTo(topX, sy - h);
               ctx.lineTo(cx - w + 3, sy - 1);
               ctx.lineTo(cx + w - 3, sy - 1);
               ctx.closePath();
               ctx.fill();
 
               ctx.fillStyle = '#34d399';
-              ctx.fillRect(cx - 1, sy - h, 2, 2);
+              ctx.fillRect(topX - 1, sy - h, 2, 2);
               ctx.fillRect(cx - w + 2, sy - 2, 2, 2);
               ctx.fillRect(cx + w - 4, sy - 2, 2, 2);
             };
 
-            drawPineSkirt(cy - 6, 14, 10);
-            drawPineSkirt(cy - 13, 11, 9);
-            drawPineSkirt(cy - 20, 8, 8);
+            drawPineSkirt(cy - 6, 14, 10, 0);
+            drawPineSkirt(cy - 13, 11, 9, Math.round(sway * 0.6));
+            drawPineSkirt(cy - 20, 8, 8, sway);
             break;
           }
 
@@ -929,12 +932,13 @@ class WorldRenderer {
               { ox: 25, oy: 16, col: '#ffffff', cCol: '#facc15' }
             ];
             for (const f of flowers) {
+              const fSway = Math.round(Math.sin(timeSec * 3.5 + tx + f.ox) * 1.0);
               ctx.fillStyle = '#16a34a';
               ctx.fillRect(px + f.ox, py + f.oy + 2, 1, 3);
               ctx.fillStyle = f.col;
-              ctx.fillRect(px + f.ox - 1, py + f.oy - 1, 3, 3);
+              ctx.fillRect(px + f.ox - 1 + fSway, py + f.oy - 1, 3, 3);
               ctx.fillStyle = f.cCol;
-              ctx.fillRect(px + f.ox, py + f.oy, 1, 1);
+              ctx.fillRect(px + f.ox + fSway, py + f.oy, 1, 1);
             }
             break;
           }
@@ -2622,10 +2626,120 @@ class WorldRenderer {
     else if (h < 5) darkness = 0.48;
     else if (h < 7) darkness = Math.max(0, (7 - h) / 2 * 0.48);
 
-    // 밤 조명 오버레이
+    // 💡 [동적 조명 엔진] 밤 대기 어둠 오버레이 & 픽셀 포인트 라이트 투과 (Dynamic Night Light Engine)
     if (darkness > 0.01) {
-      ctx.fillStyle = `rgba(7, 13, 34, ${darkness})`;
-      ctx.fillRect(0, 0, cw, ch);
+      if (!this.lightCanvas) {
+        this.lightCanvas = document.createElement('canvas');
+        this.lightCtx = this.lightCanvas.getContext('2d');
+      }
+      if (this.lightCanvas.width !== cw || this.lightCanvas.height !== ch) {
+        this.lightCanvas.width = cw;
+        this.lightCanvas.height = ch;
+      }
+
+      const lCtx = this.lightCtx;
+      lCtx.clearRect(0, 0, cw, ch);
+      lCtx.fillStyle = `rgba(7, 13, 34, ${darkness})`;
+      lCtx.fillRect(0, 0, cw, ch);
+
+      // destination-out 모드로 광원 주변 어둠을 부드럽게 뚫어냄 (Soft Light Carving)
+      lCtx.globalCompositeOperation = 'destination-out';
+
+      const ts = this.tileSize || 32;
+      const cam = camera || { x: 320, y: 200, zoom: 1 };
+      const zoom = cam.zoom || 1;
+
+      // 광원 뚫기 헬퍼 함수
+      const carveLight = (worldX, worldY, baseRadius, intensity = 1.0) => {
+        const sx = cw / 2 + (worldX - cam.x) * ts * zoom;
+        const sy = ch / 2 + (worldY - cam.y) * ts * zoom;
+        const rad = baseRadius * zoom;
+        if (sx < -rad || sx > cw + rad || sy < -rad || sy > ch + rad) return;
+
+        const flicker = Math.sin(timeSec * 7.5 + worldX * 1.5) * 3;
+        const grad = lCtx.createRadialGradient(sx, sy, rad * 0.15, sx, sy, rad + flicker);
+        grad.addColorStop(0, `rgba(0, 0, 0, ${intensity})`);
+        grad.addColorStop(0.55, `rgba(0, 0, 0, ${intensity * 0.55})`);
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        lCtx.fillStyle = grad;
+        lCtx.beginPath();
+        lCtx.arc(sx, sy, rad + flicker, 0, Math.PI * 2);
+        lCtx.fill();
+      };
+
+      // 1. 플레이어 랜턴 / 횃불 광원
+      if (this.entityMgr && this.entityMgr.player) {
+        const p = this.entityMgr.player;
+        carveLight(p.x, p.y, p.isFlying ? 160 : 125, 0.95);
+      }
+
+      // 2. 동료 호위단 광원
+      if (this.entityMgr && this.entityMgr.rpgManager && this.entityMgr.rpgManager.companionsActive) {
+        for (const c of this.entityMgr.rpgManager.companions) {
+          if (c.x > 0) carveLight(c.x, c.y, 75, 0.7);
+        }
+      }
+
+      // 3. 주요 도시 및 거점 화톳불 & 가로등
+      if (this.world && this.world.settlements) {
+        for (const s of this.world.settlements) {
+          carveLight(s.x, s.y, 140, 0.9);
+        }
+      }
+
+      // 4. 고대 시련 성소의 룬 광원
+      if (this.entityMgr && this.entityMgr.rpgManager && this.entityMgr.rpgManager.ancientShrines) {
+        for (const shrine of this.entityMgr.rpgManager.ancientShrines) {
+          carveLight(shrine.x, shrine.y, 160, 0.95);
+        }
+      }
+
+      // 5. 고대 던전 포탈의 심연 광원
+      if (this.entityMgr && this.entityMgr.rpgManager && this.entityMgr.rpgManager.dungeons) {
+        for (const dg of this.entityMgr.rpgManager.dungeons) {
+          carveLight(dg.x, dg.y, 150, 0.9);
+        }
+      }
+
+      // 6. 플레이어 설치 건축물 (성채, 타워)
+      if (this.entityMgr && this.entityMgr.rpgManager && this.entityMgr.rpgManager.structures) {
+        for (const st of this.entityMgr.rpgManager.structures) {
+          carveLight(st.x, st.y, 110, 0.85);
+        }
+      }
+
+      lCtx.globalCompositeOperation = 'source-over';
+
+      // 어둠 마스크 합성
+      ctx.drawImage(this.lightCanvas, 0, 0);
+
+      // 부드러운 호박색 & 룬 색상 광원 블룸 후광 (Warm Atmospheric Bloom)
+      ctx.save();
+      const drawWarmHalo = (worldX, worldY, radius, col) => {
+        const sx = cw / 2 + (worldX - cam.x) * ts * zoom;
+        const sy = ch / 2 + (worldY - cam.y) * ts * zoom;
+        const rad = radius * zoom;
+        if (sx < -rad || sx > cw + rad || sy < -rad || sy > ch + rad) return;
+        const grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, rad);
+        grad.addColorStop(0, col);
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(sx, sy, rad, 0, Math.PI * 2);
+        ctx.fill();
+      };
+
+      if (this.entityMgr && this.entityMgr.player) {
+        const p = this.entityMgr.player;
+        drawWarmHalo(p.x, p.y, 75, 'rgba(251, 191, 36, 0.18)');
+      }
+      if (this.entityMgr && this.entityMgr.rpgManager && this.entityMgr.rpgManager.ancientShrines) {
+        for (const shrine of this.entityMgr.rpgManager.ancientShrines) {
+          drawWarmHalo(shrine.x, shrine.y, 90, shrine.cleared ? 'rgba(250, 204, 21, 0.22)' : 'rgba(56, 189, 248, 0.18)');
+        }
+      }
+      ctx.restore();
     }
 
     // 황혼/새벽의 골든아워 노을
@@ -3200,6 +3314,83 @@ class WorldRenderer {
           ctx.fillText(`${sh.icon} ${sh.name}`, px, py - 23 + bobY);
         }
       }
+      ctx.restore();
+    }
+  }
+
+  // 💀 [12.1-C] 고대 심연 던전 카타콤 차원문 픽셀아트 렌더러 (Ancient Dungeon Portals)
+  drawDungeonPortals(ctx, ts, timeSec, zoom) {
+    const rpg = this.entityMgr.rpgManager;
+    if (!rpg || !rpg.dungeons) return;
+
+    for (const dg of rpg.dungeons) {
+      const px = Math.round(dg.x * ts);
+      const py = Math.round(dg.y * ts);
+
+      ctx.save();
+
+      // 1. 심연 차원 균열 오라 (Abyssal Swirling Void Energy)
+      const pulse = 0.5 + 0.5 * Math.sin(timeSec * 3.5 + dg.x);
+      const grad = ctx.createRadialGradient(px, py - 10, 4, px, py - 10, 24 + pulse * 6);
+      grad.addColorStop(0, dg.color);
+      grad.addColorStop(0.65, `${dg.color}66`);
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(px, py - 10, 24 + pulse * 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. 석조 아치형 포탈 게이트 기둥 & 아치 (Carved Stone Portal Arch)
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - 16, py - 26, 32, 28);
+      ctx.fillStyle = '#1e293b';
+      // 좌우 지주석
+      ctx.fillRect(px - 15, py - 24, 6, 24);
+      ctx.fillRect(px + 9, py - 24, 6, 24);
+      // 상단 아치 린텔
+      ctx.fillRect(px - 17, py - 28, 34, 6);
+      // 룬 음각 조각
+      ctx.fillStyle = dg.color;
+      ctx.fillRect(px - 14, py - 20, 2, 4);
+      ctx.fillRect(px - 14, py - 12, 2, 4);
+      ctx.fillRect(px + 12, py - 20, 2, 4);
+      ctx.fillRect(px + 12, py - 12, 2, 4);
+      ctx.fillRect(px - 4, py - 27, 8, 2);
+
+      // 3. 차원 포탈 소용돌이 게이트 내부 (Swirling Portal Vortex)
+      ctx.save();
+      ctx.translate(px, py - 10);
+      ctx.rotate(timeSec * 2.2);
+      ctx.fillStyle = '#020617';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 7, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = dg.color;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
+
+      // 4. 배출되는 픽셀 파티클 스파크
+      for (let p = 0; p < 3; p++) {
+        const pPhase = (timeSec * 2.5 + p * 0.7) % 1.0;
+        const spY = py - 10 - pPhase * 16;
+        const spX = px + Math.sin(timeSec * 4 + p) * 8;
+        ctx.fillStyle = dg.color;
+        ctx.fillRect(spX, spY, 2, 2);
+      }
+
+      // 5. 상단 이름표 및 레벨 배지
+      if (zoom > 0.35) {
+        ctx.font = 'bold 11px Pretendard, sans-serif';
+        ctx.textAlign = 'center';
+        const nameText = `${dg.icon} ${dg.name} [Lv.${dg.levelReq}+]`;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        const tw = ctx.measureText(nameText).width;
+        ctx.fillRect(px - tw / 2 - 5, py - 38, tw + 10, 16);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillText(nameText, px, py - 26);
+      }
+
       ctx.restore();
     }
   }

@@ -373,10 +373,15 @@
           <span class="skill-icon">🏗️</span>
           <span class="skill-name">건축</span>
         </button>
-        <button class="skill-btn util" id="btnToggleCompanions" title="정예 호위 용병단 (C)">
+        <button class="skill-btn util" id="btnToggleCompanions" title="정예 호위 용병단 & 주점 고용 (C)">
           <span class="key-badge">C</span>
           <span class="skill-icon">👥</span>
           <span class="skill-name">용병</span>
+        </button>
+        <button class="skill-btn util" id="btnOpenDungeon" title="고대 심연 던전 원정 (O)">
+          <span class="key-badge">O</span>
+          <span class="skill-icon">💀</span>
+          <span class="skill-name">던전</span>
         </button>
         <button class="skill-btn util" id="btnToggleInventory" title="장비 & 인벤토리 가방 (I)">
           <span class="key-badge">I</span>
@@ -587,6 +592,60 @@
           <div class="traits-grid" id="ancientTraitsGrid">
             <!-- JS 동적 렌더링 -->
           </div>
+        </div>
+      </div>
+    </div>
+  <!-- 고대 심연 던전 카타콤 원정 모달 -->
+  <div id="dungeonModal" class="modal-overlay hidden">
+    <div class="inventory-card dungeon-modal-card">
+      <div class="inv-header">
+        <h2>💀 고대 심연 던전 & 카타콤 원정대</h2>
+        <button id="btnCloseDungeonModal" class="close-btn">✖</button>
+      </div>
+      <div class="dungeon-modal-body">
+        <div class="dungeon-banner">
+          <span id="dungeonBannerIcon" class="dungeon-banner-icon">💀</span>
+          <div class="dungeon-banner-text">
+            <h3 id="dungeonModalTitle">네크로폴리스 고대 카타콤</h3>
+            <p id="dungeonModalDesc">고대 왕국의 타락한 고위 사제와 언데드 군단이 잠들어 있는 지하 묘실...</p>
+          </div>
+        </div>
+        <div class="dungeon-info-grid">
+          <div class="dungeon-info-card">
+            <span class="d-info-label">권장 도전 레벨</span>
+            <strong id="dungeonModalLevel" class="d-info-val">Lv. 5+</strong>
+          </div>
+          <div class="dungeon-info-card">
+            <span class="d-info-label">출현 심연 보스</span>
+            <strong id="dungeonModalBoss" class="d-info-val danger">심연의 리치 로드 발라자르</strong>
+          </div>
+          <div class="dungeon-info-card">
+            <span class="d-info-label">첫 토벌 확정 유물</span>
+            <strong id="dungeonModalRelic" class="d-info-val gold">🔮 네크로맨서의 영혼 보옥</strong>
+          </div>
+        </div>
+        <div class="dungeon-actions-row">
+          <button id="btnStartDungeonExpedition" class="dungeon-enter-btn">
+            <span>⚔️</span> 심연 던전 보스전 돌입
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 용병 길드 주점 모달 (Tavern Guild Mercenaries) -->
+  <div id="tavernModal" class="modal-overlay hidden">
+    <div class="inventory-card tavern-modal-card">
+      <div class="inv-header">
+        <h2>🍻 모험가 주점 & 용병 길드 고용</h2>
+        <button id="btnCloseTavernModal" class="close-btn">✖</button>
+      </div>
+      <div class="tavern-modal-body">
+        <div class="tavern-banner">
+          <span>대륙 각지의 일류 모험가를 고용하여 영구 호위 분대(최대 4인)를 편성하세요! (C키로 언제든 소집/해산)</span>
+        </div>
+        <div class="mercenary-cards-grid" id="mercenaryCardsGrid">
+          <!-- JS 동적 렌더링 -->
         </div>
       </div>
     </div>

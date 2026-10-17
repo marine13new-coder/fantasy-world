@@ -1700,6 +1700,16 @@ class EntityManager {
           this.rpgManager.startShrineTrial(shrine.id);
           return;
         }
+
+        const dungeon = this.rpgManager.checkNearbyDungeon(p);
+        if (dungeon) {
+          if (typeof window.openDungeonModal === 'function') {
+            window.openDungeonModal(dungeon);
+          } else {
+            this.rpgManager.enterDungeonExpedition(dungeon.id);
+          }
+          return;
+        }
       }
       // 1순위: 근접 NPC와의 전용 상호작용 및 보상 대화
       const talked = this.interactWithNearestNPC(p);
@@ -1982,6 +1992,9 @@ class EntityManager {
         if (this.rpgManager) this.rpgManager.addCombo(2);
         if (this.questSystem && this.questSystem.onMonsterSlain) {
           this.questSystem.onMonsterSlain(target);
+        }
+        if (this.rpgManager && this.rpgManager.checkDungeonBossDefeat) {
+          this.rpgManager.checkDungeonBossDefeat(target);
         }
         // 💎 물리 전리품 드롭
         this.spawnLootDrop(target.x, target.y, { itemType: 'gold', name: '골드 주머니', icon: '🪙', gold: target.gold || 50, color: '#facc15' });
@@ -3560,6 +3573,9 @@ class EntityManager {
         e.kills++;
         const reward = Math.max(12, Math.round(target.gold * 0.65));
         e.gold += reward;
+        if (this.rpgManager && this.rpgManager.checkDungeonBossDefeat) {
+          this.rpgManager.checkDungeonBossDefeat(target);
+        }
         if (e.faction === 'kingdom' && target.faction === 'monster') {
           e.inventory.gems = (e.inventory.gems || 0) + 1;
           this.addFloatingText(e.x, e.y - 1.2, `+${reward}G 전리품!`, '#fde047', 1.5);
