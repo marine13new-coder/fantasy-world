@@ -264,11 +264,25 @@ function startFantasyWorld() {
   const btnSkillJ = document.getElementById('btnSkillJ');
   if (btnSkillJ) btnSkillJ.addEventListener('click', () => entityMgr.triggerPlayerSkill('J'));
 
-  // 3단 콤보 공격 & 닷지 롤 버튼
+  // 3단 콤보 공격 & 기 모으기 차징 강공격 버튼
   const btnSkillAttack = document.getElementById('btnSkillAttack');
   if (btnSkillAttack) {
-    btnSkillAttack.addEventListener('click', () => {
-      entityMgr.playerPerformAttack();
+    let attackPressedTime = 0;
+    btnSkillAttack.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      attackPressedTime = Date.now();
+      entityMgr.startPlayerCharge(player);
+    });
+    btnSkillAttack.addEventListener('pointerup', (e) => {
+      e.preventDefault();
+      entityMgr.releasePlayerCharge(player);
+    });
+    btnSkillAttack.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (Date.now() - attackPressedTime < 350) {
+        if (player.weaponMode === 'ranged') entityMgr.shootPlayerArrow(player);
+        else entityMgr.playerPerformAttack(player);
+      }
     });
   }
 
@@ -1789,7 +1803,9 @@ function startFantasyWorld() {
     } else if (e.code === 'Digit4') {
       entityMgr.triggerPlayerSkill('4');
     } else if (e.code === 'KeyJ') {
-      entityMgr.triggerPlayerSkill('J');
+      if (!e.repeat) {
+        entityMgr.startPlayerCharge(player);
+      }
     } else if (e.code === 'KeyQ') {
       entityMgr.triggerPlayerSkill('Q');
     } else if (e.code === 'KeyE') {
@@ -1919,6 +1935,9 @@ function startFantasyWorld() {
 
   window.addEventListener('keyup', (e) => {
     keys[e.code] = false;
+    if (e.code === 'KeyJ') {
+      entityMgr.releasePlayerCharge(player);
+    }
   });
 
   // 클릭 시 대상 선택 및 건축 배치

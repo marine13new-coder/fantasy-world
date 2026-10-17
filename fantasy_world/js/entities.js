@@ -351,6 +351,8 @@ class EntityManager {
     this.dustPuffs = [];
     this.waterWakes = [];
     this.falcon = { active: false, x: 0, y: 0, altitude: 28, angle: 0, wingCycle: 0, state: 'orbit', target: null, diveCooldown: 0 };
+    this.witchTimeTimer = 0;
+    this.witchTimeScale = 0.22;
     this.initFireflies();
     this.activeBattles = 0;
     this.player = null;
@@ -645,6 +647,204 @@ class EntityManager {
     if (typeof audioMgr !== 'undefined') audioMgr.playShoot();
     this.addSlashArc(p.x + nx * 0.9, p.y + ny * 0.9, 1.2, Math.atan2(ny, nx) - 0.4, Math.atan2(ny, nx) + 0.4, '#38bdf8', 0.15);
     return true;
+  }
+
+  // ⚡ 불릿 타임 (Witch Time / Bullet Time) 시공간 감속 발동
+  triggerWitchTime(duration = 0.85, scale = 0.22) {
+    this.witchTimeTimer = duration;
+    this.witchTimeScale = scale;
+    if (this.camera) {
+      this.camera.screenFreeze = 0.06;
+      this.camera.zoomPulse = 1.25;
+      this.camera.shake = Math.min(18, (this.camera.shake || 0) + 6.0);
+    }
+  }
+
+  // 🛡️ 방패 돌진 & 가드 브레이크 (Shield Bash & Guard Break)
+  playerShieldBash(p) {
+    if (!p) p = this.spawnOrGetPlayer();
+    if (p.shieldBashCooldown > 0 || p.isDashing || p.isShip) return false;
+
+    p.shieldBashCooldown = 1.35;
+    p.isDashing = true;
+    p.dashTimer = 0.18;
+    p.dashDuration = 0.18;
+
+    let fx = 0, fy = 0;
+    if (p.facing === 'left') fx = -1;
+    else if (p.facing === 'right') fx = 1;
+    else if (p.facing === 'up') fy = -1;
+    else fy = 1;
+
+    p.dashVx = fx * 14.0;
+    p.dashVy = fy * 14.0;
+
+    // 전방 원뿔 범위 내 적 충격 & 가드 브레이크
+    const bashX = p.x + fx * 1.6;
+    const bashY = p.y + fy * 1.6;
+    const targets = this.spatialGrid
+      ? this.spatialGrid.query(bashX, bashY, 2.0, other => other !== p && other.hp > 0 && this.isHostile(p, other))
+      : this.entities.filter(other => other !== p && other.hp > 0 && this.isHostile(p, other) && Math.hypot(other.x - bashX, other.y - bashY) <= 2.0);
+
+    for (const ent of targets) {
+      const dmg = Math.round((p.atk || 25) * 1.65);
+      ent.hp -= dmg;
+      ent.hitTimer = 0.35;
+      ent.stunTimer = 1.6; // 1.6초 무방비 기절 (Guard Break)
+      ent.x += fx * 2.2;
+      ent.y += fy * 2.2;
+      this.addHitSparks(ent.x, ent.y, '#38bdf8', 14);
+      this.addBloodDecal(ent.x, ent.y, '#dc2626', 1.8, ent.hp <= 0 ? 5 : 2);
+      this.addFloatingText(ent.x, ent.y - 1.2, `💥 SHIELD BASH! -${dmg} (기절)`, '#38bdf8', 1.6);
+    }
+
+    this.addShockwave(bashX, bashY, 3.8, '#38bdf8', 0.4);
+    this.addSlashArc(bashX, bashY, 2.4, Math.atan2(fy, fx) - 0.7, Math.atan2(fy, fx) + 0.7, '#ffffff', 0.25);
+    if (typeof audioMgr !== 'undefined' && audioMgr.playShieldBlock) audioMgr.playShieldBlock();
+    if (this.camera) this.camera.shake = Math.min(15, (this.camera.shake || 0) + 7);
+    return true;
+  }
+
+  // ⚡ 기 모으기 차징 어택 (Charge Attack: Whirlwind Cleave & Solar Piercing Beam)
+  startPlayerCharge(p) {
+    if (!p) p = this.spawnOrGetPlayer();
+    if (p.isDashing || p.isAttacking || p.attackCooldown > 0) return;
+    p.isCharging = true;
+    p.chargeTime = 0;
+    p.chargeMaxReached = false;
+  }
+
+  updatePlayerCharge(p, dt) {
+    if (!p || !p.isCharging) return;
+    p.chargeTime += dt;
+
+    // 기 모으는 파티클 수렴
+    const auraColor = (p.weaponMode === 'ranged') ? '#38bdf8' : '#facc15';
+    if (Math.random() < 0.65) {
+      const ang = Math.random() * Math.PI * 2;
+      const dist = 1.2 + Math.random() * 0.8;
+      this.sparkParticles.push({
+        x: p.x + Math.cos(ang) * dist,
+        y: p.y + Math.sin(ang) * dist,
+        vx: -Math.cos(ang) * 4.5,
+        vy: -Math.sin(ang) * 4.5,
+        color: auraColor,
+        size: 2.2,
+        age: 0,
+        duration: 0.28
+      });
+    }
+
+    // 최대 충전 도달 (0.85초)
+    if (p.chargeTime >= 0.85 && !p.chargeMaxReached) {
+      p.chargeMaxReached = true;
+      this.addFloatingText(p.x, p.y - 1.8, '⚡ [MAX OVERCHARGE!]', '#fde047', 1.2);
+      this.addShockwave(p.x, p.y, 3.2, '#fde047', 0.35);
+      if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+    }
+  }
+
+  releasePlayerCharge(p, targetX = null, targetY = null) {
+    if (!p || !p.isCharging) return false;
+    const ct = p.chargeTime;
+    p.isCharging = false;
+    const isMax = p.chargeMaxReached || ct >= 0.85;
+    p.chargeMaxReached = false;
+    p.chargeTime = 0;
+
+    // 0.35초 미만은 일반 공격으로 전환
+    if (ct < 0.35) {
+      if (p.weaponMode === 'ranged') {
+        return this.shootPlayerArrow(p, targetX, targetY);
+      } else {
+        return this.playerPerformAttack(p);
+      }
+    }
+
+    // 🌟 차징 특수 공격 발동!
+    if (p.weaponMode === 'ranged') {
+      // ⚡ 태양의 관통 광선화살 (Solar Piercing Beam Arrow)
+      let dx = (typeof targetX === 'number') ? (targetX - p.x) : 0;
+      let dy = (typeof targetY === 'number') ? (targetY - p.y) : 0;
+      if (dx === 0 && dy === 0) {
+        if (p.facing === 'left') dx = -1;
+        else if (p.facing === 'right') dx = 1;
+        else if (p.facing === 'up') dy = -1;
+        else dy = 1;
+      }
+      const len = Math.hypot(dx, dy) || 1;
+      const nx = dx / len;
+      const ny = dy / len;
+      const mult = isMax ? 4.2 : 2.5;
+      const dmg = Math.round((p.atk || 25) * mult);
+
+      this.projectiles.push({
+        x: p.x + nx * 1.0,
+        y: p.y + ny * 1.0,
+        vx: nx * 32.0,
+        vy: ny * 32.0,
+        angle: Math.atan2(ny, nx),
+        color: '#f59e0b',
+        damage: dmg,
+        pierce: 99, // 무한 관통
+        originX: p.x,
+        originY: p.y,
+        life: 0.95,
+        isArrow: true,
+        isSolarBeam: true,
+        sender: p
+      });
+
+      this.addShockwave(p.x, p.y, 4.2, '#f59e0b', 0.45);
+      this.addSlashArc(p.x, p.y, 3.0, Math.atan2(ny, nx) - 0.6, Math.atan2(ny, nx) + 0.6, '#fde047', 0.25);
+      this.addFloatingText(p.x, p.y - 1.8, `⚡ [태양의 관통광선!] x${mult.toFixed(1)}`, '#f59e0b', 1.8);
+      if (this.camera) this.camera.shake = Math.min(18, (this.camera.shake || 0) + 8);
+      if (typeof audioMgr !== 'undefined') audioMgr.playShoot();
+      return true;
+    } else {
+      // 🌪️ 황금 대폭풍 대회전베기 (Great Whirlwind Cleave)
+      const mult = isMax ? 4.5 : 2.8;
+      const dmg = Math.round((p.atk || 25) * mult);
+      const cleaveRadius = isMax ? 5.2 : 3.8;
+
+      p.isAttacking = true;
+      p.attackAnimTimer = 0.35;
+      p.attackCooldown = 0.55;
+
+      const targets = this.spatialGrid
+        ? this.spatialGrid.query(p.x, p.y, cleaveRadius, other => other !== p && other.hp > 0 && this.isHostile(p, other))
+        : this.entities.filter(other => other !== p && other.hp > 0 && this.isHostile(p, other) && Math.hypot(other.x - p.x, other.y - p.y) <= cleaveRadius);
+
+      for (const ent of targets) {
+        ent.hp -= dmg;
+        ent.hitTimer = 0.35;
+        ent.stunTimer = 1.4;
+        const kAng = Math.atan2(ent.y - p.y, ent.x - p.x);
+        ent.x += Math.cos(kAng) * 2.8;
+        ent.y += Math.sin(kAng) * 2.8;
+        this.addHitSparks(ent.x, ent.y, '#fde047', 16);
+        this.addBloodDecal(ent.x, ent.y, '#dc2626', 2.2, ent.hp <= 0 ? 6 : 2);
+        this.addFloatingText(ent.x, ent.y - 1.2, `💥 CRIT x${mult.toFixed(1)} -${dmg}`, '#fde047', 1.5);
+
+        if (ent.hp <= 0) {
+          p.kills = (p.kills || 0) + 1;
+          this.addDeadRemains(ent.x, ent.y, ent.monsterType || ent.role, ent.scale);
+          this.gainPlayerExp(ent.role === 'dragon' ? 180 : 70);
+          this.spawnLootDrop(ent.x, ent.y, { itemType: 'gold', name: '골드 주머니', icon: '🪙', gold: ent.gold || 60, color: '#facc15' });
+        }
+      }
+
+      this.addShockwave(p.x, p.y, cleaveRadius, '#facc15', 0.5);
+      this.addSlashArc(p.x, p.y, cleaveRadius, 0, Math.PI * 2, '#fde047', 0.38);
+      this.addFloatingText(p.x, p.y - 2.0, `🌪️ [대폭풍 대회전베기!] (${targets.length}기 분쇄)`, '#facc15', 2.0);
+
+      if (this.camera) {
+        this.camera.shake = Math.min(22, (this.camera.shake || 0) + 12);
+        this.camera.screenFreeze = 0.08;
+      }
+      if (typeof audioMgr !== 'undefined') audioMgr.playSword();
+      return true;
+    }
   }
 
   // 🦅 상공 정찰매 사역마 동료 토글 (Spirit Falcon Scouting Companion)
@@ -2276,6 +2476,12 @@ class EntityManager {
   // 🛡️ 방패 가드 & 퍼펙트 패링 시스템 (Shield Guard & Perfect Parry Riposte)
   playerPerformParry(p) {
     if (!p) p = this.spawnOrGetPlayer();
+
+    // 이동 중일 경우 전방 돌진 방패 강타 (Shield Bash) 발동!
+    if (Math.hypot(p.vx || 0, p.vy || 0) > 0.08) {
+      return this.playerShieldBash(p);
+    }
+
     if (p.parryCooldown > 0) {
       this.addFloatingText(p.x, p.y - 1.2, `🛡️ 패링 쿨다운 (${p.parryCooldown.toFixed(1)}s)`, '#94a3b8', 0.8);
       return false;
@@ -3765,7 +3971,11 @@ class EntityManager {
           // 범위 내 플레이어 및 아군 피해 (닷지 롤 무적 상태면 회피!)
           if (p && Math.hypot(p.x - hz.x, p.y - hz.y) <= hz.radius) {
             if (p.invulnerable) {
-              this.addFloatingText(p.x, p.y - 1.2, '🛡️ PERFECT DODGE! (회피 성공)', '#38bdf8', 1.5);
+              this.triggerWitchTime(0.85, 0.22);
+              p.awakeningGauge = Math.min(100, (p.awakeningGauge || 0) + 25);
+              this.addFloatingText(p.x, p.y - 1.4, '⚡ [WITCH TIME!] 불릿 타임 회피! (각성 +25%)', '#facc15', 2.0);
+              this.addShockwave(p.x, p.y, 4.2, '#38bdf8', 0.4);
+              this.addHitSparks(p.x, p.y, '#fde047', 16);
               if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
             } else {
               p.hp -= hz.damage;
@@ -4085,6 +4295,8 @@ class EntityManager {
     }
     if (p.bowCooldown > 0) p.bowCooldown -= dt;
     if (p.bowDrawTimer > 0) p.bowDrawTimer -= dt;
+    if (p.shieldBashCooldown > 0) p.shieldBashCooldown -= dt;
+    this.updatePlayerCharge(p, dt);
 
     // 💨 대시 / 닷지 롤 진행 중 (초고속 이동 & 지면 먼지)
     if (p.isDashing) {

@@ -417,6 +417,9 @@ class WorldRenderer {
     // 9.5. ⚡ 인챈트 무기 원소 오라 & 회전 위스프 (Enchanted Weapon Aura)
     this.drawEnchantedWeaponAura(ctx, ts, timeSec);
 
+    // 9.6. ⚡ 플레이어 기 모으기 차징 오라 (Charge Aura)
+    this.drawPlayerChargeAura(ctx, ts, timeSec);
+
     // 10. 투사체 (관통 화살, 대포알, 마법탄)
     for (const p of this.entityMgr.projectiles) {
       if (p.isArrow) {
@@ -529,8 +532,14 @@ class WorldRenderer {
     // 13. 대기 및 날씨 조명 오버레이
     this.drawAtmosphereOverlay(ctx, cw, ch, worldTime, timeSec, camera);
 
+    // 13.1. ⚡ 불릿 타임 (Witch Time) 시공간 왜곡 스피드 비네트
+    this.drawWitchTimeVignette(ctx, cw, ch, timeSec);
+
     // 13.2. 🌌 북극광 오로라 커튼 (Celestial Northern Aurora Borealis)
     this.drawAuroraBorealis(ctx, cw, ch, timeSec, worldTime, camera);
+
+    // 13.3. ☀️ 대기 볼류메트릭 갓레이 (God Rays / Volumetric Sunbeams)
+    this.drawVolumetricGodRays(ctx, cw, ch, timeSec, worldTime);
 
     // 13.5. 🌸 대기 환경 부유 파티클 (꽃잎, 밤 반딧불이, 사막 먼지, 불꽃, 수면 반짝임)
     this.drawAtmosphericParticles(ctx, cw, ch, timeSec, camera, worldTime);
@@ -3996,6 +4005,111 @@ class WorldRenderer {
     }
   }
 
+  // ⚡ [9.6] 플레이어 기 모으기 차징 오라 (Charge Aura & Overcharge Sparks)
+  drawPlayerChargeAura(ctx, ts, timeSec) {
+    const p = this.entityMgr.player;
+    if (!p || !p.isCharging) return;
+
+    const px = Math.round(p.x * ts);
+    const py = Math.round(p.y * ts + 4);
+    const ct = p.chargeTime || 0;
+    const progress = Math.min(1.0, ct / 0.85);
+    const isMax = p.chargeMaxReached || progress >= 1.0;
+    const auraColor = (p.weaponMode === 'ranged') ? '#38bdf8' : '#facc15';
+
+    ctx.save();
+
+    // 1. 바닥 마법진 회전 룬 링
+    const spin = timeSec * (isMax ? 12 : 5);
+    const baseRadius = 16 + progress * 6;
+
+    ctx.strokeStyle = isMax ? '#ffffff' : auraColor;
+    ctx.lineWidth = isMax ? 2.5 : 1.8;
+    ctx.beginPath();
+    ctx.arc(px, py, baseRadius, spin, spin + Math.PI * 2 * progress);
+    ctx.stroke();
+
+    // 내부 반투명 에너지 웰
+    ctx.fillStyle = isMax ? 'rgba(254, 240, 138, 0.35)' : 'rgba(56, 189, 248, 0.18)';
+    ctx.beginPath();
+    ctx.arc(px, py, baseRadius * 0.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. 최대 충전 시 8방향 스타버스트 빔
+    if (isMax) {
+      const pulse = (Math.sin(timeSec * 22) + 1) * 0.5;
+      ctx.strokeStyle = '#fde047';
+      ctx.lineWidth = 2.0;
+      for (let i = 0; i < 8; i++) {
+        const rayAng = (Math.PI / 4) * i + timeSec * 4;
+        const r1 = baseRadius + 2;
+        const r2 = baseRadius + 10 + pulse * 6;
+        ctx.beginPath();
+        ctx.moveTo(px + Math.cos(rayAng) * r1, py + Math.sin(rayAng) * r1);
+        ctx.lineTo(px + Math.cos(rayAng) * r2, py + Math.sin(rayAng) * r2);
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore();
+  }
+
+  // ⚡ [13.1] 불릿 타임 (Witch Time) 시공간 왜곡 스피드 비네트
+  drawWitchTimeVignette(ctx, cw, ch, timeSec) {
+    if (!this.entityMgr || this.entityMgr.witchTimeTimer <= 0) return;
+
+    ctx.save();
+    const pulse = (Math.sin(timeSec * 16) + 1) * 0.5;
+
+    // 외곽 골든-시안 래디얼 글로우
+    const grad = ctx.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * 0.35, cw / 2, ch / 2, Math.max(cw, ch) * 0.72);
+    grad.addColorStop(0, 'rgba(14, 165, 233, 0)');
+    grad.addColorStop(0.7, `rgba(56, 189, 248, ${0.18 + pulse * 0.12})`);
+    grad.addColorStop(1, `rgba(250, 204, 21, ${0.45 + pulse * 0.25})`);
+
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, cw, ch);
+
+    // 스피드 라인 림
+    ctx.strokeStyle = `rgba(255, 255, 255, ${0.25 + pulse * 0.35})`;
+    ctx.lineWidth = 3.0;
+    ctx.strokeRect(10, 10, cw - 20, ch - 20);
+
+    ctx.restore();
+  }
+
+  // ☀️ [13.3] 대기 볼류메트릭 갓레이 (God Rays / Volumetric Sunbeams)
+  drawVolumetricGodRays(ctx, cw, ch, timeSec, worldTime) {
+    if (!worldTime) return;
+    const h = worldTime.hour + worldTime.minute / 60;
+    if (h < 6.0 || h > 18.5) return;
+    if (worldTime.weather === 'rain' || worldTime.weather === 'storm') return;
+
+    const isGoldenHour = (h >= 6.0 && h <= 8.5) || (h >= 16.5 && h <= 18.5);
+    const rayColor = isGoldenHour ? 'rgba(251, 191, 36, 0.055)' : 'rgba(254, 249, 195, 0.038)';
+
+    ctx.save();
+    ctx.translate(cw * 0.25, -50);
+    ctx.rotate(0.38);
+
+    const numRays = 7;
+    for (let i = 0; i < numRays; i++) {
+      const rayX = i * (cw / 5) + Math.sin(timeSec * 0.4 + i * 1.5) * 45;
+      const rayWidth = 45 + Math.sin(timeSec * 0.6 + i) * 18;
+      const alpha = (Math.sin(timeSec * 0.8 + i * 2) + 1.2) * 0.5;
+
+      const rayGrad = ctx.createLinearGradient(rayX, 0, rayX, ch * 1.6);
+      rayGrad.addColorStop(0, rayColor.replace(/0\.\d+\)/, `${0.12 * alpha})`));
+      rayGrad.addColorStop(0.5, rayColor.replace(/0\.\d+\)/, `${0.06 * alpha})`));
+      rayGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+      ctx.fillStyle = rayGrad;
+      ctx.fillRect(rayX - rayWidth / 2, 0, rayWidth, ch * 1.6);
+    }
+
+    ctx.restore();
+  }
+
   // 🏹 [10.1] 정밀 픽셀 화살 렌더링 (Elven Piercing Arrow with Wind Trail)
   drawPixelArrow(ctx, p, ts) {
     const px = Math.round(p.x * ts);
@@ -4005,6 +4119,41 @@ class WorldRenderer {
     ctx.save();
     ctx.translate(px, py);
     ctx.rotate(ang);
+
+    if (p.isSolarBeam) {
+      // ⚡ [태양의 관통 광선화살] (Solar Piercing Beam Arrow)
+      const trailLen = 38;
+      const grad = ctx.createLinearGradient(-trailLen, 0, 0, 0);
+      grad.addColorStop(0, 'rgba(245, 158, 11, 0)');
+      grad.addColorStop(0.6, 'rgba(251, 191, 36, 0.85)');
+      grad.addColorStop(1, 'rgba(255, 255, 255, 1.0)');
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 6.0;
+      ctx.beginPath();
+      ctx.moveTo(-trailLen, 0);
+      ctx.lineTo(12, 0);
+      ctx.stroke();
+
+      // 내부 백색 레이저 코어
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(-trailLen * 0.7, 0);
+      ctx.lineTo(16, 0);
+      ctx.stroke();
+
+      // 태양 화살촉
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.moveTo(10, -5);
+      ctx.lineTo(20, 0);
+      ctx.lineTo(10, 5);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
+      return;
+    }
 
     // 1. 바람 꼬리 궤적 리본 (Wind Trail Ribbon)
     const trailLen = 18;
