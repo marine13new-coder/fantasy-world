@@ -255,6 +255,13 @@ function startFantasyWorld() {
     });
   }
 
+  const btnSkillParry = document.getElementById('btnSkillParry');
+  if (btnSkillParry) {
+    btnSkillParry.addEventListener('click', () => {
+      entityMgr.triggerPlayerSkill('parry');
+    });
+  }
+
   const btnDodgeRoll = document.getElementById('btnDodgeRoll');
   if (btnDodgeRoll) {
     btnDodgeRoll.addEventListener('click', () => {
@@ -1556,10 +1563,19 @@ function startFantasyWorld() {
 
   canvas.addEventListener('contextmenu', (e) => {
     e.preventDefault(); // 우클릭 메뉴 차단
-    // 우클릭으로 플레이어 이동 또는 타겟팅
-    const wx = camera.x + (e.clientX - canvas.width / 2) / (TILE_SIZE * camera.zoom);
-    const wy = camera.y + (e.clientY - canvas.height / 2) / (TILE_SIZE * camera.zoom);
     if (player) {
+      // 🛡️ 우클릭: 적이 인근(5.0타일)에 있거나 교전 중일 때 방패 가드 & 퍼펙트 패링 우선 발동!
+      const nearestHostile = entityMgr.spatialGrid
+        ? entityMgr.spatialGrid.findNearest(player.x, player.y, 5.0, other => other !== player && other.hp > 0 && entityMgr.isHostile(player, other))
+        : null;
+      if (nearestHostile || player.state === 'combat' || player.combatTarget) {
+        entityMgr.playerPerformParry(player);
+        return;
+      }
+
+      // 평시 우클릭: 지정 위치로 플레이어 자동 이동
+      const wx = camera.x + (e.clientX - canvas.width / 2) / (TILE_SIZE * camera.zoom);
+      const wy = camera.y + (e.clientY - canvas.height / 2) / (TILE_SIZE * camera.zoom);
       isPlayerControlActive = true;
       updatePlayerControlUI();
       startFollow(player);
@@ -1687,6 +1703,8 @@ function startFantasyWorld() {
       entityMgr.triggerPlayerSkill('E');
     } else if (e.code === 'KeyF') {
       entityMgr.triggerPlayerSkill('F');
+    } else if (e.code === 'KeyZ' || e.code === 'KeyV') {
+      entityMgr.triggerPlayerSkill('parry');
     } else if (e.code === 'KeyG') {
       if (entityMgr.rpgManager && entityMgr.rpgManager.awakening) {
         entityMgr.triggerPlayerSkill('G');

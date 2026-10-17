@@ -345,6 +345,7 @@ class EntityManager {
     this.footprints = [];
     this.shockwaves = [];
     this.slashArcs = [];
+    this.bloodDecals = [];
     this.activeBattles = 0;
     this.player = null;
     this.pet = null;
@@ -426,6 +427,28 @@ class EntityManager {
       duration: type === 'wake' ? 2.8 : 4.5,
       side: this.footstepCounter % 2
     });
+  }
+
+  // 🩸 다크 판타지 전투 혈흔 및 그을음 지면 데칼 (Persistent Ground Blood & Scorch Decals)
+  addBloodDecal(x, y, color = '#991b1b', size = 2.4, count = 3) {
+    if (!this.bloodDecals) this.bloodDecals = [];
+    if (this.bloodDecals.length > 220) {
+      this.bloodDecals.splice(0, count);
+    }
+    for (let i = 0; i < count; i++) {
+      const offsetX = (Math.random() - 0.5) * 1.5;
+      const offsetY = (Math.random() - 0.5) * 1.5;
+      const radius = size * (0.6 + Math.random() * 0.7);
+      this.bloodDecals.push({
+        x: x + offsetX,
+        y: y + offsetY,
+        radius,
+        color,
+        age: 0,
+        duration: 35.0 + Math.random() * 25.0, // 35~60초간 바닥에 지속되며 서서히 어둡게 마름
+        shape: Math.floor(Math.random() * 3)
+      });
+    }
   }
 
   addFloatingText(x, y, text, color = '#ffffff', duration = 1.6) {
@@ -1690,6 +1713,11 @@ class EntityManager {
       return;
     }
 
+    if (skillKey === 'Z' || skillKey === 'V' || skillKey === 'parry' || skillKey === 'block') {
+      this.playerPerformParry(p);
+      return;
+    }
+
     if (skillKey === 'Q') {
       if (typeof audioMgr !== 'undefined') audioMgr.playMagic();
       this.addEffect(p.x, p.y, 11, '#f97316', 0.85);
@@ -1897,6 +1925,64 @@ class EntityManager {
     return false;
   }
 
+  // 🛡️ 방패 가드 & 퍼펙트 패링 시스템 (Shield Guard & Perfect Parry Riposte)
+  playerPerformParry(p) {
+    if (!p) p = this.spawnOrGetPlayer();
+    if (p.parryCooldown > 0) {
+      this.addFloatingText(p.x, p.y - 1.2, `🛡️ 패링 쿨다운 (${p.parryCooldown.toFixed(1)}s)`, '#94a3b8', 0.8);
+      return false;
+    }
+
+    p.isParrying = true;
+    p.parryTimer = 0.22; // 0.22초 내에 적 공격이 닿으면 퍼펙트 패링
+    p.parryCooldown = 1.6; // 재사용 쿨다운 1.6초
+    p.shieldBlockTimer = 0.65; // 전체 방패 거치 모션
+
+    this.addSlashArc(p.x, p.y, 2.2, 0, Math.PI * 2, '#38bdf8', 0.22);
+    this.addFloatingText(p.x, p.y - 1.2, '🛡️ 방패 가드 자세!', '#38bdf8', 0.8);
+    if (typeof audioMgr !== 'undefined' && audioMgr.playShieldBlock) {
+      audioMgr.playShieldBlock();
+    }
+    return true;
+  }
+
+  // ⚡ 퍼펙트 패링 성공: 공격자 2.4초 스턴 + 320% 크리티컬 리포스트 반격 버프
+  triggerPlayerParrySuccess(attacker) {
+    const p = this.player;
+    if (!p) return;
+
+    p.isParrying = false;
+    p.parryTimer = 0;
+    p.riposteReady = true;
+    p.riposteTimer = 4.5; // 4.5초간 반격 버프 유지
+
+    if (attacker) {
+      attacker.stunTimer = 2.4;
+      attacker.vx = 0;
+      attacker.vy = 0;
+      const kAng = Math.atan2(attacker.y - p.y, attacker.x - p.x);
+      attacker.x += Math.cos(kAng) * 1.6;
+      attacker.y += Math.sin(kAng) * 1.6;
+      this.addFloatingText(attacker.x, attacker.y - 1.6, '💫 [STUNNED!] 2.4초 무방비', '#fde047', 2.0);
+      this.addHitSparks(attacker.x, attacker.y, '#fde047', 12);
+    }
+
+    this.addShockwave(p.x, p.y, 5.2, '#38bdf8', 0.6);
+    this.addShockwave(p.x, p.y, 3.2, '#ffffff', 0.4);
+    this.addHitSparks(p.x, p.y, '#ffffff', 22);
+    this.addFloatingText(p.x, p.y - 2.0, '⚡ [PERFECT PARRY!] 320% 리포스트 반격 준비!', '#facc15', 2.2);
+
+    if (this.camera) {
+      this.camera.screenFreeze = 0.12; // 패링 타격감 역경직
+      this.camera.shake = 11;
+      this.camera.zoomPulse = 1.0;
+    }
+    if (window.renderer) {
+      window.renderer.screenFlashTimer = 0.08;
+      window.renderer.screenFlashColor = '#ffffff';
+    }
+  }
+
   // ⚔️ 3단 연속 콤보 공격 시스템 (1타 신속베기 -> 2타 어퍼크로스 -> 3타 360도 회전베기 피니셔)
   playerPerformAttack(p, target = null) {
     if (!p) p = this.spawnOrGetPlayer();
@@ -2034,8 +2120,22 @@ class EntityManager {
       if (this.rpgManager) {
         comboMult = this.rpgManager.addCombo(1);
       }
-      const isCrit = Math.random() < 0.25;
-      const baseDmg = Math.round(p.atk * comboMultiplier * comboMult * (1.0 + Math.random() * 0.3));
+
+      let riposteMult = 1.0;
+      if (p.riposteReady) {
+        riposteMult = 3.2;
+        p.riposteReady = false;
+        p.riposteTimer = 0;
+        this.addFloatingText(p.x, p.y - 1.8, '⚡ [CRITICAL RIPOSTE x3.2!]', '#fde047', 1.8);
+        this.addShockwave(slashX, slashY, 4.8, '#ffffff', 0.45);
+        if (this.camera) {
+          this.camera.screenFreeze = 0.085;
+          this.camera.shake = 12;
+        }
+      }
+
+      const isCrit = (riposteMult > 1.0) || (Math.random() < 0.25);
+      const baseDmg = Math.round(p.atk * comboMultiplier * comboMult * riposteMult * (1.0 + Math.random() * 0.3));
       const dmg = isCrit ? Math.round(baseDmg * 1.5) : baseDmg;
 
       if (isCrit && window.renderer) {
@@ -2050,6 +2150,14 @@ class EntityManager {
 
       target.hp -= dmg;
       target.hitTimer = 0.25;
+
+      // 🩸 다크 판타지 전투 혈흔 / 체액 지면 데칼 생성
+      const bloodColor = (target.role === 'dragon' || (target.name && target.name.includes('용')) || target.monsterType === 'fire_drake') ? '#f97316'
+        : (target.monsterType === 'kraken' || target.monsterType === 'abyss_witch') ? '#8b5cf6'
+        : (target.race === 'orc' || target.monsterType === 'orc') ? '#15803d'
+        : (target.monsterType === 'golem' || target.monsterType === 'skeleton') ? '#64748b'
+        : '#dc2626';
+      this.addBloodDecal(target.x, target.y, bloodColor, 2.2, target.hp <= 0 ? 6 : 2);
 
       this.addHitSparks(target.x, target.y, isCrit ? '#facc15' : effectColor, 8);
       if (this.camera) {
@@ -2669,6 +2777,38 @@ class EntityManager {
         continue;
       }
 
+      // 🔥 보스 & 고대 드래곤 광폭화 모드 (Boss Enrage Mode at HP <= 35%)
+      if ((e.isBoss || e.role === 'dragon' || e.isBountyTarget) && e.hp > 0) {
+        if (!e.isEnraged && e.hp <= e.maxHp * 0.35) {
+          e.isEnraged = true;
+          e.atk = Math.round(e.atk * 1.35);
+          e.speed = (e.speed || 1.6) * 1.25;
+          this.addFloatingText(e.x, e.y - 2.2, `🔥 [광폭화/ENRAGED!] 공격력 +35%, 폭주!`, '#ef4444', 3.0);
+          this.addShockwave(e.x, e.y, 6.0, '#ef4444', 0.8);
+          this.addHitSparks(e.x, e.y, '#f97316', 16);
+          if (this.camera) {
+            this.camera.shake = 16;
+            this.camera.screenFreeze = 0.08;
+          }
+          if (window.renderer) {
+            window.renderer.screenFlashTimer = 0.12;
+            window.renderer.screenFlashColor = '#ef4444';
+          }
+        }
+        if (e.isEnraged && Math.random() < 0.22) {
+          this.sparkParticles.push({
+            x: e.x + (Math.random() - 0.5) * 1.8,
+            y: e.y + (Math.random() - 0.5) * 1.8,
+            vx: (Math.random() - 0.5) * 1.5,
+            vy: -2.0 - Math.random() * 2.0,
+            color: Math.random() < 0.5 ? '#ef4444' : '#f97316',
+            size: 2.5,
+            age: 0,
+            duration: 0.45
+          });
+        }
+      }
+
       if (!e.combatTarget && e.hp < e.maxHp) {
         e.hp = Math.min(e.maxHp, e.hp + dt * 3.0);
       }
@@ -2950,6 +3090,16 @@ class EntityManager {
         }
       }
     }
+
+    // 🩸 다크 판타지 전투 혈흔 및 데칼 수명 관리
+    if (this.bloodDecals && this.bloodDecals.length > 0) {
+      for (let i = this.bloodDecals.length - 1; i >= 0; i--) {
+        this.bloodDecals[i].age += dt;
+        if (this.bloodDecals[i].age >= this.bloodDecals[i].duration) {
+          this.bloodDecals.splice(i, 1);
+        }
+      }
+    }
   }
 
   // 🐾 야생 동물 생태계 AI (포식자 사냥 추적 및 초식 동물 무리 도주 시스템)
@@ -3205,6 +3355,16 @@ class EntityManager {
     if (p.hitTimer > 0) p.hitTimer -= dt;
     if (p.boostTimer > 0) p.boostTimer -= dt;
     if (p.potionCooldown > 0) p.potionCooldown -= dt;
+    if (p.parryCooldown > 0) p.parryCooldown -= dt;
+    if (p.parryTimer > 0) {
+      p.parryTimer -= dt;
+      if (p.parryTimer <= 0) p.isParrying = false;
+    }
+    if (p.shieldBlockTimer > 0) p.shieldBlockTimer -= dt;
+    if (p.riposteTimer > 0) {
+      p.riposteTimer -= dt;
+      if (p.riposteTimer <= 0) p.riposteReady = false;
+    }
 
     // 💨 대시 / 닷지 롤 진행 중 (초고속 이동 & 지면 먼지)
     if (p.isDashing) {
@@ -3679,10 +3839,29 @@ class EntityManager {
       this.moveTowardTarget(e, dt * 1.25);
     } else if (e.attackCooldown <= 0) {
       e.attackCooldown = 0.85 + Math.random() * 0.35;
-      const dmg = Math.max(5, Math.round(e.atk * (0.85 + Math.random() * 0.35)));
+
+      // 🛡️ 플레이어 퍼펙트 패링 감지! (0.22초 내 완벽한 타이밍에 공격 방어)
+      if (target === this.player && this.player.isParrying && this.player.parryTimer > 0) {
+        this.triggerPlayerParrySuccess(e);
+        return true;
+      }
+
+      // 일반 방패 블록 (parryTimer는 끝났으나 shieldBlockTimer 유지 중인 가드 상태 -> 데미지 70% 차단)
+      let dmg = Math.max(5, Math.round(e.atk * (0.85 + Math.random() * 0.35)));
+      if (target === this.player && this.player.shieldBlockTimer > 0) {
+        dmg = Math.max(1, Math.round(dmg * 0.30));
+        this.addFloatingText(target.x, target.y - 1.4, '🛡️ [방패 가드 -70%]', '#38bdf8', 1.0);
+        this.addHitSparks(target.x, target.y, '#38bdf8', 6);
+      }
+
       target.hp -= dmg;
       target.combatTarget = e;
       target.hitTimer = 0.25;
+
+      // 🩸 다크 판타지 전투 혈흔 지면 데칼 생성
+      const bloodColor = (target.role === 'dragon' || (target.name && target.name.includes('용'))) ? '#f97316'
+        : (target.faction === 'monster') ? '#991b1b' : '#dc2626';
+      this.addBloodDecal(target.x, target.y, bloodColor, 2.0, target.hp <= 0 ? 5 : 2);
 
       // ❄️ 혹한의 방벽 (Frost Aegis) 영구 특성: 플레이어 피격 시 공격자 즉시 1.8초 동결
       if (target === this.player && this.rpgManager && this.rpgManager.hasTrait('frost_aegis')) {

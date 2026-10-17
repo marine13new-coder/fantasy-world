@@ -888,6 +888,16 @@ body, html {
   box-shadow: 0 0 10px rgba(239, 68, 68, 0.45);
 }
 
+.skill-btn.parry {
+  border-color: rgba(56, 189, 248, 0.7);
+  background: rgba(14, 165, 233, 0.2);
+}
+.skill-btn.parry:hover {
+  border-color: #38bdf8;
+  background: rgba(14, 165, 233, 0.38);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.55);
+}
+
 .skill-btn.dodge {
   border-color: rgba(56, 189, 248, 0.65);
   background: rgba(56, 189, 248, 0.16);

@@ -185,10 +185,11 @@ class WorldRenderer {
       }
     }
 
-    // 2. 동적 해안선 픽셀 파도 거품 애니메이션 & 대양 백색 포말 물결
+    // 2. 동적 해안선 픽셀 파도 거품 애니메이션 & 대양 백색 포말 물결 & 수면 거울 반사
     if (camera.zoom > 0.36) {
       this.drawPixelShorelines(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
       this.drawOceanFoam(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
+      this.drawWaterReflections(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy);
     }
 
     // 3. 해상 무역 항로 점선
@@ -351,6 +352,9 @@ class WorldRenderer {
       if (filter === 'beastkin') return e.race === 'beastkin';
       return e.category === filter || e.role === filter;
     }
+
+    // 8.4. 🩸 다크 판타지 영구 지속 지면 전투 혈흔 및 그을음 데칼
+    this.drawGroundDecals(ctx, ts, minTx, maxTx, minTy, maxTy);
 
     // 8.5. ⚠️ 보스/엘리트 공격 전조 위험 장판 (Telegraphed Hazard Zones)
     this.drawHazardZones(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy);
@@ -658,14 +662,38 @@ class WorldRenderer {
 
         // D. [CUTE FANTASY 스타일] 울창한 에메랄드 잔디 & 4잎 핑크 야생화 & 버터컵 꽃밭
         if (t === TILE.GRASS || t === TILE.MEADOW) {
-          // 3가닥 짙은 녹색 풀잎 클러스터 (Cute Grass Blade Tufts)
+          // 3가닥 짙은 녹색 풀잎 클러스터 (동적 바람 흔들림 + 발걸음 짓밟힘 인터랙션 Displacement)
           if ((h % 4) === 0) {
             const gx = px + (h % 22) + 5;
             const gy = py + ((h >> 2) % 22) + 5;
-            ctx.fillStyle = '#286b30';
-            ctx.fillRect(gx, gy + 1, 1, 3);
-            ctx.fillRect(gx + 2, gy, 1, 4);
-            ctx.fillRect(gx + 4, gy + 2, 1, 2);
+
+            // 🌿 바람 살랑임
+            const windSway = Math.sin(timeSec * 2.4 + tx * 0.5 + ty * 0.3) * 1.5;
+
+            // 👣 플레이어 짓밟힘 반발력 (Interactive Grass Trampling Displacement)
+            let trBendX = 0;
+            let trBendY = 0;
+            const p = this.entityMgr ? this.entityMgr.player : null;
+            if (p) {
+              const pdx = (tx + 0.5) - p.x;
+              const pdy = (ty + 0.5) - p.y;
+              const pdist = Math.hypot(pdx, pdy);
+              if (pdist < 1.35) {
+                const trFactor = (1.35 - pdist) / 1.35;
+                trBendX = (pdx >= 0 ? 1 : -1) * trFactor * 3.5;
+                trBendY = (pdy >= 0 ? 1 : -1) * trFactor * 2.2;
+              }
+            }
+
+            const bx = Math.round(gx + windSway + trBendX);
+            const by = Math.round(gy + trBendY);
+
+            ctx.fillStyle = '#1e3a1f';
+            ctx.fillRect(bx, by + 1, 1, 3);
+            ctx.fillRect(bx + 2, by, 1, 4);
+            ctx.fillRect(bx + 4, by + 2, 1, 2);
+            ctx.fillStyle = '#4ade80';
+            ctx.fillRect(bx + 2, by, 1, 1);
           }
 
           // 🌸 귀여운 4잎 핑크 꽃 & 노란 버터컵 & 하얀 데이지 (Reference Image Match)
@@ -4424,6 +4452,108 @@ class WorldRenderer {
 
       ctx.restore();
     }
+  }
+
+  // 🌊 [2.2] 수면 거울 반사 효과 (Dynamic Water Mirror Reflections & Distorted Ripples)
+  drawWaterReflections(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy) {
+    if (!this.entityMgr || !this.entityMgr.entities) return;
+    const ents = this.entityMgr.entities;
+    if (!ents || ents.length === 0) return;
+
+    ctx.save();
+    for (let i = 0; i < ents.length; i++) {
+      const e = ents[i];
+      if (e.hp <= 0) continue;
+      if (e.x < minTx - 1 || e.x > maxTx + 1 || e.y < minTy - 1 || e.y > maxTy + 2) continue;
+
+      const tx = Math.floor(e.x);
+      const ty = Math.floor(e.y);
+      const tileCur = this.world.getTile(tx, ty);
+      const tileBelow = this.world.getTile(tx, ty + 1);
+
+      const onWater = (tileCur === TILE.WATER || tileCur === TILE.DEEP_WATER);
+      const nearWater = (tileBelow === TILE.WATER || tileBelow === TILE.DEEP_WATER);
+      if (!onWater && !nearWater && !e.isShip) continue;
+
+      const px = Math.round(e.x * ts);
+      const py = Math.round(e.y * ts);
+
+      // 수면 파동 왜곡 (Wave displacement)
+      const rippleDisplace = Math.sin(timeSec * 3.5 + e.x * 2.0 + e.y) * 2.4;
+
+      ctx.save();
+      ctx.globalAlpha = 0.28;
+      ctx.translate(px + rippleDisplace, py + 8);
+      ctx.scale(1.0, -0.6); // 상하 반전 및 납작하게 왜곡
+
+      const col = e.isShip ? '#38bdf8' : (e.role === 'dragon' ? '#ef4444' : (e.color || '#94a3b8'));
+      ctx.fillStyle = col;
+
+      const radX = (e.role === 'dragon' || e.isShip) ? 20 : 10;
+      const radY = (e.role === 'dragon' || e.isShip) ? 14 : 7;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, radX, radY, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 수면 거울 물결 줄무늬
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-radX * 0.9, 2);
+      ctx.lineTo(radX * 0.9, 2);
+      ctx.moveTo(-radX * 0.6, 5);
+      ctx.lineTo(radX * 0.6, 5);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // 🩸 [8.4] 다크 판타지 영구 지속 지면 전투 혈흔 및 그을음 데칼 (Ground Blood & Blast Scorch Decals)
+  drawGroundDecals(ctx, ts, minTx, maxTx, minTy, maxTy) {
+    if (!this.entityMgr || !this.entityMgr.bloodDecals) return;
+    const decals = this.entityMgr.bloodDecals;
+    if (decals.length === 0) return;
+
+    ctx.save();
+    for (let i = 0; i < decals.length; i++) {
+      const d = decals[i];
+      if (d.x < minTx - 1 || d.x > maxTx + 1 || d.y < minTy - 1 || d.y > maxTy + 1) continue;
+      const progress = d.age / d.duration;
+      const alpha = Math.max(0, 1 - progress * 0.85) * 0.84;
+      if (alpha <= 0.02) continue;
+
+      const px = Math.round(d.x * ts);
+      const py = Math.round(d.y * ts);
+      const r = d.radius;
+
+      ctx.fillStyle = d.color;
+      ctx.globalAlpha = alpha;
+
+      ctx.beginPath();
+      if (d.shape === 0) {
+        ctx.arc(px, py, r, 0, Math.PI * 2);
+        ctx.arc(px + r * 0.7, py - r * 0.5, r * 0.4, 0, Math.PI * 2);
+        ctx.arc(px - r * 0.8, py + r * 0.3, r * 0.35, 0, Math.PI * 2);
+      } else if (d.shape === 1) {
+        ctx.ellipse(px, py, r * 1.5, r * 0.65, 0.45, 0, Math.PI * 2);
+        ctx.arc(px + r * 1.1, py + r * 0.4, r * 0.3, 0, Math.PI * 2);
+      } else {
+        ctx.ellipse(px, py, r * 1.2, r * 0.8, -0.6, 0, Math.PI * 2);
+        ctx.arc(px - r * 0.6, py - r * 0.6, r * 0.45, 0, Math.PI * 2);
+        ctx.arc(px + r * 0.7, py + r * 0.4, r * 0.25, 0, Math.PI * 2);
+      }
+      ctx.fill();
+
+      // 시간이 흐를수록 응고되어 어둡게 변하는 중심 핵
+      ctx.fillStyle = '#1c1917';
+      ctx.globalAlpha = alpha * 0.45;
+      ctx.beginPath();
+      ctx.arc(px, py, r * 0.45, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
   }
 }
 

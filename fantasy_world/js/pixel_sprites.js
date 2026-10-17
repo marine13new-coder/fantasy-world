@@ -4259,14 +4259,30 @@
         ctx.restore();
       }
 
-      // 방패 렌더링 (반대편 손)
-      if (shieldId && (dir === 'down' || dir === 'left' || dir === 'right')) {
-        const sCvs = window.PixelItems.getCanvas(shieldId);
+      // 🛡️ 방패 렌더링 (일반 파지 & 패링 가드 전방 거치 자세)
+      const hasShieldActive = shieldId || (e && (e.isParrying || e.shieldBlockTimer > 0));
+      if (hasShieldActive && (dir === 'down' || dir === 'left' || dir === 'right' || dir === 'up')) {
+        const sCvs = window.PixelItems.getCanvas(shieldId || 'shield_iron');
         if (sCvs) {
           ctx.save();
-          const shieldX = px - sideSign * 7 * sc;
-          const shieldY = py - 9 * sc - bounce;
-          ctx.drawImage(sCvs, shieldX - 6 * sc, shieldY - 7 * sc, 13 * sc, 13 * sc);
+          if (e && (e.isParrying || e.shieldBlockTimer > 0)) {
+            // 전방 거치 방패 가드 자세 (Forward braced shield)
+            const fwdX = dir === 'left' ? -9 * sc : (dir === 'right' ? 9 * sc : 0);
+            const fwdY = dir === 'up' ? -13 * sc : (dir === 'down' ? -4 * sc : -8 * sc);
+            ctx.translate(px + fwdX, py + fwdY - bounce);
+            ctx.drawImage(sCvs, -7 * sc, -7 * sc, 14 * sc, 14 * sc);
+
+            // 🛡️ 마법 방패 펄스 배리어 링
+            ctx.strokeStyle = (e.parryTimer > 0) ? '#38bdf8' : 'rgba(148, 163, 184, 0.65)';
+            ctx.lineWidth = 1.8;
+            ctx.beginPath();
+            ctx.arc(0, 0, 10 * sc, 0, Math.PI * 2);
+            ctx.stroke();
+          } else {
+            const shieldX = px - sideSign * 7 * sc;
+            const shieldY = py - 9 * sc - bounce;
+            ctx.drawImage(sCvs, shieldX - 6 * sc, shieldY - 7 * sc, 13 * sc, 13 * sc);
+          }
           ctx.restore();
         }
       }
