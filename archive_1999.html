@@ -13,6 +13,7 @@
       --phosphor: #33ff77;
       --blood: #e61c24;
       --amber: #ffaa11;
+      --uv-violet: #aa44ff;
       --hud-bg: rgba(6, 10, 8, 0.92);
       --tape-active: #44ee88;
       --tape-locked: #445544;
@@ -77,6 +78,17 @@
       background: radial-gradient(circle at center, transparent 55%, rgba(0,0,0,0.6) 100%);
     }
 
+    /* UV 블랙라이트 오버레이 */
+    #uvOverlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(circle at center, rgba(140, 40, 255, 0.12) 0%, rgba(30, 0, 60, 0.65) 100%);
+      z-index: 42;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+    }
+
     #bloodFlash {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -128,13 +140,19 @@
       transition: all 0.12s;
     }
     #reticle.active {
-      width: 20px; height: 20px;
+      width: 22px; height: 22px;
       border-color: var(--phosphor);
       box-shadow: 0 0 14px var(--phosphor);
       background: rgba(51, 255, 119, 0.2);
     }
+    #reticle.active-uv {
+      width: 22px; height: 22px;
+      border-color: var(--uv-violet);
+      box-shadow: 0 0 14px var(--uv-violet);
+      background: rgba(170, 68, 255, 0.25);
+    }
 
-    /* 상단 HUD */
+    /* 상단 HUD 컨트롤 */
     #hudHeader {
       position: fixed;
       top: 16px; right: 24px;
@@ -215,12 +233,12 @@
     }
     @keyframes pulse-tip { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
 
-    /* 전화 벨 HUD 알림 */
-    #phoneRingingBanner {
+    /* 정전 / 비상 상황 배너 */
+    #blackoutBanner {
       position: fixed;
       top: 75px; left: 50%;
       transform: translateX(-50%);
-      background: rgba(180, 20, 30, 0.92);
+      background: rgba(180, 20, 30, 0.95);
       border: 2px solid #ff3344;
       color: #fff;
       padding: 12px 30px;
@@ -228,24 +246,43 @@
       font-size: 15px;
       font-weight: bold;
       letter-spacing: 2px;
-      box-shadow: 0 0 30px #ff2233;
+      box-shadow: 0 0 35px #ff2233;
       z-index: 60;
       display: none;
       animation: phone-blink 0.8s infinite;
     }
     @keyframes phone-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
+    /* 전화 벨 HUD 알림 */
+    #phoneRingingBanner {
+      position: fixed;
+      top: 130px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(140, 20, 180, 0.95);
+      border: 2px solid #cc44ff;
+      color: #fff;
+      padding: 12px 30px;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      box-shadow: 0 0 30px #cc33ff;
+      z-index: 60;
+      display: none;
+      animation: phone-blink 0.8s infinite;
+    }
+
     /* 단말기 튜닝 UI (E 키) */
     #tuningStationUI {
       position: fixed;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      width: 980px;
+      width: 1020px;
       max-width: 96vw;
       background: rgba(7, 13, 9, 0.98);
       border: 2px solid var(--phosphor);
       border-radius: 6px;
-      box-shadow: 0 0 60px rgba(51, 255, 119, 0.35);
+      box-shadow: 0 0 65px rgba(51, 255, 119, 0.35);
       z-index: 70;
       display: none;
       flex-direction: column;
@@ -329,7 +366,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       position: relative;
       overflow: hidden;
     }
@@ -350,11 +387,11 @@
       justify-content: space-around;
       width: 100%;
       position: relative;
-      padding: 8px 0;
+      padding: 6px 0;
     }
 
     .cassette-spool {
-      width: 90px; height: 90px;
+      width: 85px; height: 85px;
       border-radius: 50%;
       border: 4px dashed #225235;
       background: radial-gradient(circle, #0e1a12 30%, #030604 75%);
@@ -366,7 +403,7 @@
     }
     .cassette-spool::after {
       content: "";
-      width: 20px; height: 20px;
+      width: 18px; height: 18px;
       border-radius: 50%;
       background: var(--phosphor);
       opacity: 0.75;
@@ -375,10 +412,17 @@
     .cassette-spool.reverse-spin { animation: spool-rotate 1.8s linear infinite reverse; }
     @keyframes spool-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-    /* 실시간 오실로스코프 캔버스 */
-    #oscCanvas {
+    /* 실시간 오실로스코프 및 스펙트로그램 폭포수 캔버스 */
+    .vis-dual-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
       width: 100%;
-      height: 60px;
+    }
+
+    #oscCanvas, #specCanvas {
+      width: 100%;
+      height: 55px;
       background: #020603;
       border: 1px solid #163622;
       border-radius: 3px;
@@ -449,7 +493,7 @@
       gap: 10px;
       font-size: 12px;
       overflow-y: auto;
-      max-height: 340px;
+      max-height: 350px;
     }
 
     .transcript-entry {
@@ -459,6 +503,7 @@
     }
     .transcript-entry strong { color: var(--amber); }
     .transcript-entry.alert strong { color: var(--blood); }
+    .transcript-entry.uv-clue strong { color: #aa44ff; text-shadow: 0 0 6px #aa44ff; }
 
     /* 시작 런처 */
     #launcherScreen {
@@ -530,14 +575,14 @@
       width: 580px;
       max-width: 90vw;
       background: rgba(8, 14, 10, 0.98);
-      border: 2px solid #ff3344;
+      border: 2px solid #cc44ff;
       border-radius: 6px;
       padding: 22px;
       z-index: 85;
       display: none;
       flex-direction: column;
       gap: 14px;
-      box-shadow: 0 0 50px rgba(255, 30, 40, 0.4);
+      box-shadow: 0 0 50px rgba(180, 50, 255, 0.4);
     }
 
     /* 결말 모달 */
@@ -570,6 +615,7 @@
   <div class="vhs-overlay"></div>
   <div class="vhs-tracking-bar"></div>
   <div class="vignette-lens"></div>
+  <div id="uvOverlay"></div>
   <div id="bloodFlash"></div>
   <div id="reticle"></div>
 
@@ -586,7 +632,7 @@
       🎬 자동 스토리 관전 (Cinema)
     </button>
     <div class="capsule">
-      <span>손전등 [F]: <strong id="lblFlashlight" style="color:var(--phosphor);">ON</strong></span>
+      <span>라이트 [F/G]: <strong id="lblLightMode" style="color:var(--phosphor);">FLASHLIGHT</strong></span>
     </div>
     <div class="capsule">
       <div class="heart-pulse-dot"></div>
@@ -600,10 +646,11 @@
     </div>
   </div>
 
+  <div id="blackoutBanner">⚡ 전력 차단! 왼쪽 벽면의 배전반(Breaker)을 찾아 레버를 올리십시오! [ E ]</div>
   <div id="phoneRingingBanner">📞 따르르릉! 데스크의 전화기가 울리고 있습니다! [ E ] 상호작용</div>
 
   <div id="hudActionGuide">
-    <div class="action-tip" id="actionTipBox">[ E ] 오디오 워크스테이션 튜닝</div>
+    <div class="action-tip" id="actionTipBox">[ E ] 상호작용</div>
   </div>
 
   <canvas id="webglCanvas"></canvas>
@@ -611,8 +658,8 @@
   <!-- 전화 통화 모달 -->
   <div id="telephoneCallModal">
     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #441a22; padding-bottom:8px;">
-      <span style="color:#ff4455; font-weight:bold; letter-spacing:1px;">📞 내선 통화 수신: [발신처 불명]</span>
-      <button class="deck-btn" onclick="hangupPhone()" style="padding:4px 10px; border-color:#ff4455; color:#ff8899;">통화 종료 (ESC)</button>
+      <span style="color:#cc44ff; font-weight:bold; letter-spacing:1px;">📞 내선 통화 수신: [발신처 불명]</span>
+      <button class="deck-btn" onclick="hangupPhone()" style="padding:4px 10px; border-color:#cc44ff; color:#e0aaff;">통화 종료 (ESC)</button>
     </div>
     <div id="phoneDialogBody" style="font-size:14px; line-height:1.8; color:#ffd0d5; min-height:80px; padding:10px 0;">
       <!-- 전화 대사 동적 렌더링 -->
@@ -664,8 +711,17 @@
           <div class="cassette-spool" id="spoolR"></div>
         </div>
 
-        <!-- 실시간 오실로스코프 파형 -->
-        <canvas id="oscCanvas"></canvas>
+        <!-- 듀얼 오실로스코프 및 스펙트로그램 폭포수 -->
+        <div class="vis-dual-container">
+          <div>
+            <div style="font-size:10px; color:#7abf94; margin-bottom:2px;">OSCILLOSCOPE WAVEFORM</div>
+            <canvas id="oscCanvas"></canvas>
+          </div>
+          <div>
+            <div style="font-size:10px; color:#aa66ff; margin-bottom:2px;">CASCADE SPECTROGRAM</div>
+            <canvas id="specCanvas"></canvas>
+          </div>
+        </div>
 
         <div style="display:flex; justify-content:space-between; width:100%; font-size:12px;">
           <span>주파수 상태: <strong id="lblSyncState" style="color:#7abf94;">UNLOCKED</strong></span>
@@ -707,7 +763,10 @@
 
       <div class="transcript-box" id="transcriptLog">
         <div class="transcript-entry">
-          <strong>[EVP 워크스테이션 안내]</strong> 테이프 랙에서 복원할 카트리지를 선택하고, [▶ 재생] 후 주파수 노브(FREQ)를 조절하여 숨겨진 음성을 복원하십시오.
+          <strong>[EVP 워크스테이션 안내]</strong> 테이프 랙에서 복원할 카트리지를 선택하고, [▶ 재생] 후 주파수 노브(FREQ)를 조절하십시오.
+        </div>
+        <div class="transcript-entry uv-clue">
+          <strong>[조사 가이드]</strong> 3D 격리실에서 <strong>[ G ] 키로 UV 블랙라이트</strong>를 켜면 벽면에 숨겨진 주파수 암호와 피 묻은 단서를 발견할 수 있습니다.
         </div>
       </div>
     </div>
@@ -721,9 +780,9 @@
     <div style="font-size:12px; letter-spacing:3px; color:var(--phosphor); margin-bottom:16px;">
       STEAM MASTERPIECE GOLD EDITION
     </div>
-    <p style="font-size:15px; color:#8abf9d; max-width:640px; line-height:1.8; margin-bottom:14px;">
+    <p style="font-size:15px; color:#8abf9d; max-width:650px; line-height:1.8; margin-bottom:14px;">
       1999년 12월 31일, 국립 청송 정신의학 연구소 제4병동 지하 404호 격리실.<br>
-      불탄 릴 테이프를 주파수 동기화하여 진실의 심연을 마주하십시오.
+      일반 손전등(F)과 UV 자외선 탐조등(G)을 교차 활용하여 불탄 릴 테이프를 복원하십시오.
     </p>
 
     <!-- 공포 모드 선택 (쫄보 배려 모드 완비) -->
@@ -734,7 +793,7 @@
     </div>
 
     <div style="font-size:13px; color:#888; line-height:1.6; margin-top:20px; margin-bottom:14px;">
-      [ W, A, S, D ] 이동 | [ 마우스 ] 시점 회전 | [ E ] 상호작용 | [ F ] 손전등 토글
+      [ W, A, S, D ] 이동 | [ 마우스 ] 시점 회전 | [ E ] 상호작용 | [ F ] 손전등 | [ G ] UV 자외선등
     </div>
     <button class="start-game-btn" id="btnStartGame">🎮 입장하기 (ENTER THE WARD)</button>
   </div>
@@ -759,6 +818,8 @@
     let unlockedChapters = [1];
     let curChapter = 1;
     let isPhoneRinging = false;
+    let isBlackoutActive = false;
+    let lightMode = 'flashlight'; // 'flashlight', 'uv', 'off'
 
     function setPlayMode(mode) {
       if (mode === 'safe') {
@@ -781,6 +842,7 @@
         document.body.classList.add('safe-mode-active');
         if (ambientGlow) ambientGlow.intensity = 1.6;
         if (ceilingLamp) ceilingLamp.intensity = 1.8;
+        if (isBlackoutActive) repairBreaker();
       } else {
         document.body.classList.remove('safe-mode-active');
         if (ambientGlow) ambientGlow.intensity = 0.7;
@@ -809,7 +871,7 @@
     }, 1000);
 
     /* ========================================================
-       1. 절차적 고해상도 PBR 텍스처 생성기
+       1. 절차적 고해상도 PBR 텍스처 & UV 형광 텍스처 생성기
        ======================================================== */
     function createTileTexture() {
       const c = document.createElement('canvas');
@@ -817,7 +879,6 @@
       const ctx = c.getContext('2d');
       ctx.fillStyle = '#111814'; ctx.fillRect(0, 0, 512, 512);
 
-      // 타일 경계선
       ctx.strokeStyle = '#070a08'; ctx.lineWidth = 4;
       for (let x = 0; x < 512; x += 64) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 512); ctx.stroke();
@@ -826,7 +887,6 @@
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
       }
 
-      // 오염 얼룩 및 핏자국
       for (let i = 0; i < 45; i++) {
         ctx.fillStyle = Math.random() < 0.3 ? 'rgba(75, 10, 15, 0.45)' : 'rgba(10, 25, 15, 0.35)';
         ctx.beginPath();
@@ -851,18 +911,46 @@
         ctx.fillRect(Math.random() * 1024, Math.random() * 512, Math.random() * 80, Math.random() * 80);
       }
 
-      // 긁힌 낙서 및 암시
       ctx.font = 'bold 36px "Special Elite", monospace';
       ctx.fillStyle = 'rgba(180, 20, 25, 0.78)';
       ctx.fillText('[ CAGED 1979 ]', 120, 180);
       ctx.fillText('108.4 Hz', 480, 260);
       ctx.fillText('너도 여기서 못 나가', 220, 380);
-      ctx.fillText('WHO IS DR. HAN?', 720, 420);
 
       ctx.strokeStyle = 'rgba(150, 20, 30, 0.6)';
       ctx.lineWidth = 3;
       for (let i = 0; i < 6; i++) {
         ctx.beginPath(); ctx.moveTo(750 + i * 15, 120); ctx.lineTo(730 + i * 15, 300); ctx.stroke();
+      }
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    // UV 라이트 전용 자외선 형광 텍스처 (숨겨진 피문서와 암호)
+    function createUVClueTexture() {
+      const c = document.createElement('canvas');
+      c.width = 1024; c.height = 512;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = 'rgba(0, 0, 0, 0)'; ctx.clearRect(0, 0, 1024, 512);
+
+      ctx.font = 'bold 32px "Share Tech Mono", monospace';
+      ctx.fillStyle = '#00ffff';
+      ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 15;
+      ctx.fillText('⚡ TAPE 01: 850 Hz (환자 17호 뇌파 동기화)', 80, 120);
+      ctx.fillText('⚡ TAPE 02: 108.4 Hz (기억 소거 펄스)', 80, 200);
+
+      ctx.fillStyle = '#ff00ff';
+      ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 15;
+      ctx.fillText('⚡ TAPE 03: 1850 Hz (닥터 한의 자아 분열)', 80, 280);
+      ctx.fillText('⚡ TAPE 04: REVERSE 2400 Hz (뒤집힌 구조대 무전)', 80, 360);
+      ctx.fillText('⚡ TAPE 05: 440 Hz (진실의 기준음: 너 자신이 한진우다)', 80, 440);
+
+      // 발자국 형광 자국
+      ctx.fillStyle = 'rgba(0, 255, 200, 0.8)';
+      for (let i = 0; i < 12; i++) {
+        ctx.beginPath();
+        ctx.ellipse(800 + (i % 2) * 40, 100 + i * 35, 16, 28, 0.2, 0, Math.PI * 2);
+        ctx.fill();
       }
 
       return new THREE.CanvasTexture(c);
@@ -892,13 +980,12 @@
     }
 
     /* ========================================================
-       2. THREE.JS 3D 공간 환경 구성 (손전등, 소품, 배관, 먼지 입자)
+       2. THREE.JS 3D 환경 (CCTV, 배전반, UV 라이트, 먼지)
        ======================================================== */
     let scene, camera, renderer;
     let flashlight, ceilingLamp, ambientGlow;
-    let deskObj, monitorObj, doorObj, monsterFigure, ceilingFan, wheelchairObj, ivStandObj, gurneyObj, phoneObj;
-    let dustParticles, waterDropMesh;
-    let isFlashlightOn = true;
+    let deskObj, monitorObj, doorObj, monsterFigure, ceilingFan, wheelchairObj, ivStandObj, gurneyObj, phoneObj, breakerBoxObj, cctvCameraObj;
+    let uvClueMesh, dustParticles, waterDropMesh;
     let isPointerLocked = false;
     let inTerminalMode = false;
 
@@ -929,6 +1016,7 @@
       ceilingLamp.castShadow = true;
       scene.add(ceilingLamp);
 
+      // 손전등 / UV 탐조등 스포트라이트
       flashlight = new THREE.SpotLight(0xfff6dc, 4.0, 16, Math.PI / 5.5, 0.35, 1.2);
       flashlight.castShadow = true;
       scene.add(flashlight);
@@ -938,11 +1026,13 @@
       buildVolumetricDust();
       renderLoop3D();
       initOscilloscopeCanvas();
+      initSpectrogramCanvas();
     }
 
     function buildAsylumWard() {
       const tileTex = createTileTexture();
       const wallTex = createWallTexture();
+      const uvTex = createUVClueTexture();
       const doorTex = createDoorTexture();
 
       // 바닥
@@ -983,7 +1073,19 @@
       wallRight.rotation.y = -Math.PI / 2;
       scene.add(wallRight);
 
-      // 천장 배관 파이프 (Industrial Ceiling Pipes)
+      // UV 형광 비밀 단서 패널 (벽면에 덧씌워짐)
+      const uvClueMat = new THREE.MeshBasicMaterial({
+        map: uvTex,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending
+      });
+      uvClueMesh = new THREE.Mesh(new THREE.PlaneGeometry(9, 4), uvClueMat);
+      uvClueMesh.position.set(-4.48, 2, 0);
+      uvClueMesh.rotation.y = Math.PI / 2;
+      scene.add(uvClueMesh);
+
+      // 천장 배관 파이프
       buildCeilingPipes();
 
       // 회전 실링 팬
@@ -1009,7 +1111,7 @@
       deskObj.receiveShadow = true;
       scene.add(deskObj);
 
-      // CRT 모니터 & 릴 테이프 머신 본체
+      // CRT 모니터 & 릴 테이프 머신
       const monGeo = new THREE.BoxGeometry(1.2, 0.85, 0.8);
       const monMat = new THREE.MeshStandardMaterial({ color: 0x18261e, roughness: 0.65 });
       monitorObj = new THREE.Mesh(monGeo, monMat);
@@ -1023,8 +1125,14 @@
       screen.position.set(0, 1.35, -3.79);
       scene.add(screen);
 
-      // 데스크 위 빈티지 1970년대 로터리 전화기
+      // 데스크 위 로터리 전화기
       buildDeskTelephone();
+
+      // 왼쪽 벽면 누전 차단기(Breaker Box)
+      buildBreakerBox();
+
+      // 모퉁이 천장 회전형 CCTV 감시 카메라
+      buildCCTVCamera();
 
       // 등 뒤 철문
       const doorGeo = new THREE.BoxGeometry(1.8, 3.2, 0.15);
@@ -1034,7 +1142,7 @@
       doorObj.castShadow = true;
       scene.add(doorObj);
 
-      // 병원 소품 (휠체어, 링거대, 부검/수술 들것)
+      // 병원 소품 (휠체어, 링거대, 수술용 들것)
       buildWheelchairProp();
       buildIVStandProp();
       buildGurneyProp();
@@ -1046,7 +1154,7 @@
       waterDropMesh.position.set(-2.2, 3.8, 1.0);
       scene.add(waterDropMesh);
 
-      // 기괴한 3D 그림자 괴물 (Nightmare Entity)
+      // 기괴한 3D 그림자 괴물
       buildMonsterEntity();
     }
 
@@ -1065,27 +1173,71 @@
       scene.add(p2);
     }
 
+    function buildBreakerBox() {
+      breakerBoxObj = new THREE.Group();
+      const metalMat = new THREE.MeshStandardMaterial({ color: 0x334433, metalness: 0.8 });
+      const redMat = new THREE.MeshBasicMaterial({ color: 0xff2222 });
+
+      // 차단기 함체
+      const box = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.7, 0.5), metalMat);
+      breakerBoxObj.add(box);
+
+      // 레버 스위치
+      const lever = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.25, 8), new THREE.MeshStandardMaterial({ color: 0xffaa00 }));
+      lever.rotation.x = Math.PI / 4;
+      lever.position.set(0.08, 0, 0);
+      breakerBoxObj.add(lever);
+
+      // 상태 표시등 LED
+      const led = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), redMat);
+      led.position.set(0.07, 0.25, 0.15);
+      breakerBoxObj.add(led);
+
+      breakerBoxObj.position.set(-4.42, 1.7, -1.8);
+      scene.add(breakerBoxObj);
+    }
+
+    function buildCCTVCamera() {
+      cctvCameraObj = new THREE.Group();
+      const cMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.7 });
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
+
+      // 브라켓
+      const bracket = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.4, 8), cMat);
+      cctvCameraObj.add(bracket);
+
+      // 카메라 본체 하우징
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.16, 0.45), cMat);
+      body.position.set(0, -0.2, 0.1);
+      cctvCameraObj.add(body);
+
+      // 적색 감시 렌즈
+      const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.06, 12), eyeMat);
+      lens.rotation.x = Math.PI / 2;
+      lens.position.set(0, -0.2, 0.33);
+      cctvCameraObj.add(lens);
+
+      cctvCameraObj.position.set(3.8, 3.6, -5.2);
+      scene.add(cctvCameraObj);
+    }
+
     function buildDeskTelephone() {
       phoneObj = new THREE.Group();
       const phoneMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.6 });
       const redMat = new THREE.MeshStandardMaterial({ color: 0xaa2222 });
 
-      // 본체 받침대
       const base = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.08, 0.3), phoneMat);
       base.position.y = 0.04;
       phoneObj.add(base);
 
-      // 다이얼 링
       const dialRing = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.02, 16), new THREE.MeshStandardMaterial({ color: 0xcccccc }));
       dialRing.position.set(0, 0.09, 0.04);
       phoneObj.add(dialRing);
 
-      // 수화기 (Handset)
       const handset = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.06, 0.08), phoneMat);
       handset.position.set(0, 0.14, -0.06);
       phoneObj.add(handset);
 
-      // 전화 벨 울림 표시등
       const indicator = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), redMat);
       indicator.position.set(0.1, 0.1, -0.1);
       phoneObj.add(indicator);
@@ -1172,12 +1324,10 @@
       const metalMat = new THREE.MeshStandardMaterial({ color: 0x2f3a34, metalness: 0.7 });
       const sheetMat = new THREE.MeshStandardMaterial({ color: 0x222a25, roughness: 0.9 });
 
-      // 들것 프레임
       const bed = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.1, 2.4), metalMat);
       bed.position.y = 0.75;
       gurneyObj.add(bed);
 
-      // 다리 4개
       for (let x of [-0.5, 0.5]) {
         for (let z of [-1.0, 1.0]) {
           const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.7, 8), metalMat);
@@ -1186,7 +1336,6 @@
         }
       }
 
-      // 덮여있는 천 아래 기괴한 형상
       const contour = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.35, 1.8), sheetMat);
       contour.position.set(0, 0.95, 0);
       gurneyObj.add(contour);
@@ -1239,6 +1388,11 @@
         dustParticles.rotation.y += 0.0008;
       }
 
+      // CCTV 카메라의 플레이어 실시간 추적 (Tracking Eye)
+      if (cctvCameraObj) {
+        cctvCameraObj.lookAt(playerPos.x, playerPos.y, playerPos.z);
+      }
+
       // 천장 물방울 누수
       if (waterDropMesh) {
         waterDropY -= 0.055;
@@ -1254,10 +1408,12 @@
         phoneObj.position.x = 1.1 + Math.sin(Date.now() * 0.05) * 0.015;
       }
 
-      // 조명 흔들림
+      // 조명 흔들림 (정전 상태일 경우 조명 완전 OFF)
       lampSwing += 0.03;
       ceilingLamp.position.x = Math.sin(lampSwing) * 0.2;
-      if (!isSafeMode) {
+      if (isBlackoutActive) {
+        ceilingLamp.intensity = 0;
+      } else if (!isSafeMode) {
         if (Math.random() < 0.025) {
           ceilingLamp.intensity = Math.random() * 0.3;
         } else {
@@ -1313,7 +1469,7 @@
       const reticle = document.getElementById('reticle');
       const tip = document.getElementById('actionTipBox');
       if (inTerminalMode) {
-        reticle.classList.remove('active');
+        reticle.classList.remove('active', 'active-uv');
         tip.style.display = 'none';
         return;
       }
@@ -1322,17 +1478,20 @@
       ray.setFromCamera(new THREE.Vector2(0, 0), camera);
       const targets = [deskObj, monitorObj, doorObj];
       if (phoneObj) targets.push(phoneObj);
+      if (breakerBoxObj) targets.push(breakerBoxObj);
 
       const hits = ray.intersectObjects(targets, true);
 
       if (hits.length > 0 && hits[0].distance < 3.8) {
-        reticle.classList.add('active');
+        reticle.classList.add(lightMode === 'uv' ? 'active-uv' : 'active');
         tip.style.display = 'block';
 
         let rootHit = hits[0].object;
         while (rootHit.parent && rootHit.parent !== scene) rootHit = rootHit.parent;
 
-        if (rootHit === phoneObj && isPhoneRinging) {
+        if (rootHit === breakerBoxObj) {
+          tip.innerText = isBlackoutActive ? "[ E ] 배전반 차단기 레버 복원" : "[ E ] 배전반 점검 (정상)";
+        } else if (rootHit === phoneObj && isPhoneRinging) {
           tip.innerText = "[ E ] 울리는 전화기 받기";
         } else if (rootHit === doorObj) {
           tip.innerText = "[ E ] 잠긴 404호 철문 조사";
@@ -1340,7 +1499,7 @@
           tip.innerText = "[ E ] 오디오 워크스테이션 튜닝";
         }
       } else {
-        reticle.classList.remove('active');
+        reticle.classList.remove('active', 'active-uv');
         tip.style.display = 'none';
       }
     }
@@ -1389,7 +1548,7 @@
           { spk: "닥터 한 (기록)", txt: "환자는 자신의 이름과 가족을 완전히 망각했다. 하지만 극심한 환각과 자해를 보인다." },
           { spk: "강서진 (주인공)", txt: "윽... 머리가 깨질 것 같아... 왜 내 귀에서도 이 소리가 계속 울리는 거지?!" }
         ],
-        trigger: "tinnitus"
+        trigger: "blackout"
       },
       3: {
         title: "CH.3 얼굴 없는 목격자 (Sensory Derangement)",
@@ -1493,6 +1652,20 @@
       g.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
       osc.connect(g); g.connect(masterGain);
       osc.start(now); osc.stop(now + 0.09);
+    }
+
+    function playBreakerSound() {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(60, now);
+      osc.frequency.exponentialRampToValueAtTime(120, now + 0.2);
+      g.gain.setValueAtTime(0.4, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      osc.connect(g); g.connect(masterGain);
+      osc.start(now); osc.stop(now + 0.3);
     }
 
     function startHeartbeatTimer() {
@@ -1645,7 +1818,6 @@
       appendLog("시스템", `[카트리지 복원 완료] ${ch.title} 해독이 끝났습니다.`);
       triggerHorrorEvent(ch.trigger);
 
-      // 다음 테이프 잠금 해제
       if (curChapter < 5) {
         const nextCh = curChapter + 1;
         if (!unlockedChapters.includes(nextCh)) {
@@ -1679,7 +1851,6 @@
       appendLog("시스템", `카트리지 #${chNum} 테이프가 헤드에 로드되었습니다.`);
       document.getElementById('btnNextTape').style.display = 'none';
 
-      // 4장 기본 속성 셋업
       if (chNum === 4 && !isReversed) {
         appendLog("주의", "이 테이프는 역방향으로 녹음되었습니다. [⟲ REVERSE] 버튼을 활성화하십시오.");
       }
@@ -1787,10 +1958,28 @@
       document.getElementById('telephoneCallModal').style.display = 'none';
     }
 
+    /* 정전(Blackout) 이벤트 및 배전반 복원 */
+    function triggerBlackoutEvent() {
+      if (isSafeMode) return;
+      isBlackoutActive = true;
+      document.getElementById('blackoutBanner').style.display = 'block';
+      playJumpScare();
+      appendLog("위험", "쿵! 전력 과부하로 차단기가 내려갔습니다! 왼쪽 벽면의 배전반 레버를 올려 복원하십시오!");
+    }
+
+    function repairBreaker() {
+      isBlackoutActive = false;
+      document.getElementById('blackoutBanner').style.display = 'none';
+      playBreakerSound();
+      appendLog("시스템", "배전반 차단기가 복구되어 조명이 정상 복원되었습니다.");
+    }
+
     function triggerHorrorEvent(trig) {
       if (trig === 'scare') {
         playJumpScare();
         appendLog("경고", "천장 조명이 요동치며 복도 끝에서 쇠사슬을 질질 끄는 소리가 났습니다!");
+      } else if (trig === 'blackout') {
+        triggerBlackoutEvent();
       } else if (trig === 'phoneCall') {
         playJumpScare();
         monsterFigure.visible = true;
@@ -1821,20 +2010,22 @@
     function appendLog(spk, txt) {
       const container = document.getElementById('transcriptLog');
       const div = document.createElement('div');
-      div.className = 'transcript-entry' + (spk.includes('경고') ? ' alert' : '');
+      div.className = 'transcript-entry' + (spk.includes('경고') || spk.includes('위험') ? ' alert' : '');
       div.innerHTML = `<strong>[${spk}]</strong> ${txt}`;
       container.appendChild(div);
       container.scrollTop = container.scrollHeight;
     }
 
     /* ========================================================
-       4. 실시간 오실로스코프 파형 렌더러
+       4. 실시간 오실로스코프 및 스펙트로그램 폭포수 렌더러
        ======================================================== */
     let oscCtx = null;
+    let specCtx = null;
+
     function initOscilloscopeCanvas() {
       const c = document.getElementById('oscCanvas');
       if (!c) return;
-      c.width = 460; c.height = 60;
+      c.width = 240; c.height = 55;
       oscCtx = c.getContext('2d');
       drawOscWave();
     }
@@ -1843,22 +2034,60 @@
       requestAnimationFrame(drawOscWave);
       if (!oscCtx) return;
       oscCtx.fillStyle = '#020603';
-      oscCtx.fillRect(0, 0, 460, 60);
+      oscCtx.fillRect(0, 0, 240, 55);
 
       oscCtx.strokeStyle = isPlaying ? (syncPct > 80 ? '#33ff77' : '#ffaa11') : '#225533';
       oscCtx.lineWidth = 2;
       oscCtx.beginPath();
 
       const time = Date.now() * 0.008;
-      const amp = isPlaying ? (20 * (syncPct / 100) + 4) : 2;
+      const amp = isPlaying ? (18 * (syncPct / 100) + 4) : 2;
       const freqFactor = (paramFreq / 1000);
 
-      for (let x = 0; x < 460; x += 4) {
-        const y = 30 + Math.sin(x * 0.06 * freqFactor + time) * amp + (isPlaying ? (Math.random() - 0.5) * (paramNoise * 0.15) : 0);
+      for (let x = 0; x < 240; x += 4) {
+        const y = 28 + Math.sin(x * 0.07 * freqFactor + time) * amp + (isPlaying ? (Math.random() - 0.5) * (paramNoise * 0.15) : 0);
         if (x === 0) oscCtx.moveTo(x, y);
         else oscCtx.lineTo(x, y);
       }
       oscCtx.stroke();
+    }
+
+    function initSpectrogramCanvas() {
+      const c = document.getElementById('specCanvas');
+      if (!c) return;
+      c.width = 240; c.height = 55;
+      specCtx = c.getContext('2d');
+      drawSpectrogramWaterfall();
+    }
+
+    function drawSpectrogramWaterfall() {
+      requestAnimationFrame(drawSpectrogramWaterfall);
+      if (!specCtx) return;
+
+      // 이전 프레임을 아래로 1px 스크롤
+      const imgData = specCtx.getImageData(0, 0, 240, 54);
+      specCtx.putImageData(imgData, 0, 1);
+
+      // 최상단 한 줄에 새로운 주파수 히트맵 라인 렌더링
+      const line = specCtx.createImageData(240, 1);
+      const data = line.data;
+      const targetPos = (paramFreq / 3800) * 240;
+
+      for (let x = 0; x < 240; x++) {
+        const idx = x * 4;
+        let intensity = isPlaying ? Math.random() * (paramNoise * 2.5) : 0;
+        const dist = Math.abs(x - targetPos);
+        if (dist < 15 && isPlaying) {
+          intensity += (1 - dist / 15) * 255 * (syncPct / 100);
+        }
+
+        intensity = Math.min(255, intensity);
+        data[idx] = intensity; // R
+        data[idx + 1] = intensity > 120 ? intensity : 0; // G
+        data[idx + 2] = 255 - intensity; // B
+        data[idx + 3] = 255;
+      }
+      specCtx.putImageData(line, 0, 0);
     }
 
     /* ========================================================
@@ -1958,6 +2187,7 @@
         btn.classList.add('active');
         btn.innerText = "🎬 자동 관전 중 (클릭 시 중지)";
         setPlayMode('safe');
+        if (isBlackoutActive) repairBreaker();
         enterTerminal();
         startAutoCinemaLoop();
       } else {
@@ -1977,22 +2207,56 @@
         }
         autoTuneAssist();
 
-        // 챕터가 완료되고 다음 테이프 버튼이 보이면 자동 클릭
         const nextBtn = document.getElementById('btnNextTape');
         if (nextBtn && nextBtn.style.display !== 'none') {
           proceedToNextTape();
         }
 
-        // 전화기가 울리고 있으면 자동 응답
         if (isPhoneRinging) {
           answerPhone();
           setTimeout(hangupPhone, 4000);
+        }
+
+        if (isBlackoutActive) {
+          repairBreaker();
         }
       }, 2500);
     }
 
     /* ========================================================
-       7. 포인터 락 & 키보드 이동 이벤트
+       7. 조명 토글 (F: 손전등 / G: UV 블랙라이트)
+       ======================================================== */
+    function setLightMode(mode) {
+      lightMode = mode;
+      const lbl = document.getElementById('lblLightMode');
+      const uvLayer = document.getElementById('uvOverlay');
+
+      if (mode === 'flashlight') {
+        flashlight.intensity = 4.0;
+        flashlight.color.setHex(0xfff6dc);
+        if (uvClueMesh) uvClueMesh.material.opacity = 0;
+        uvLayer.style.opacity = '0';
+        lbl.innerText = 'FLASHLIGHT (일반)';
+        lbl.style.color = '#33ff77';
+      } else if (mode === 'uv') {
+        flashlight.intensity = 5.0;
+        flashlight.color.setHex(0xaa33ff);
+        if (uvClueMesh) uvClueMesh.material.opacity = 0.95;
+        uvLayer.style.opacity = '1';
+        lbl.innerText = 'UV BLACKLIGHT (자외선)';
+        lbl.style.color = '#cc55ff';
+      } else {
+        flashlight.intensity = 0;
+        if (uvClueMesh) uvClueMesh.material.opacity = 0;
+        uvLayer.style.opacity = '0';
+        lbl.innerText = 'LIGHT OFF';
+        lbl.style.color = '#888888';
+      }
+      playBeep(mode === 'uv' ? 1200 : (mode === 'flashlight' ? 850 : 350));
+    }
+
+    /* ========================================================
+       8. 포인터 락 & 키보드 이동 이벤트
        ======================================================== */
     document.getElementById('btnStartGame').addEventListener('click', () => {
       document.getElementById('launcherScreen').style.display = 'none';
@@ -2022,11 +2286,16 @@
       if (k === 's') keys.s = true;
       if (k === 'd') keys.d = true;
 
+      // 손전등 일반 토글
       if (k === 'f') {
-        isFlashlightOn = !isFlashlightOn;
-        flashlight.intensity = isFlashlightOn ? 4.0 : 0;
-        document.getElementById('lblFlashlight').innerText = isFlashlightOn ? 'ON' : 'OFF';
-        playBeep(isFlashlightOn ? 850 : 420);
+        if (lightMode === 'flashlight') setLightMode('off');
+        else setLightMode('flashlight');
+      }
+
+      // UV 자외선 탐조등 토글
+      if (k === 'g') {
+        if (lightMode === 'uv') setLightMode('flashlight');
+        else setLightMode('uv');
       }
 
       if (k === 'e') {
@@ -2037,13 +2306,16 @@
           ray.setFromCamera(new THREE.Vector2(0, 0), camera);
           const targets = [deskObj, monitorObj, doorObj];
           if (phoneObj) targets.push(phoneObj);
+          if (breakerBoxObj) targets.push(breakerBoxObj);
 
           const hits = ray.intersectObjects(targets, true);
           if (hits.length > 0 && hits[0].distance < 3.8) {
             let rootHit = hits[0].object;
             while (rootHit.parent && rootHit.parent !== scene) rootHit = rootHit.parent;
 
-            if (rootHit === phoneObj && isPhoneRinging) {
+            if (rootHit === breakerBoxObj) {
+              repairBreaker();
+            } else if (rootHit === phoneObj && isPhoneRinging) {
               answerPhone();
             } else if (rootHit === deskObj || rootHit === monitorObj || rootHit === phoneObj) {
               enterTerminal();
