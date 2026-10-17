@@ -346,6 +346,7 @@ class EntityManager {
     this.shockwaves = [];
     this.slashArcs = [];
     this.bloodDecals = [];
+    this.grassLeaves = [];
     this.activeBattles = 0;
     this.player = null;
     this.pet = null;
@@ -427,6 +428,24 @@ class EntityManager {
       duration: type === 'wake' ? 2.8 : 4.5,
       side: this.footstepCounter % 2
     });
+  }
+
+  // 🌿 상호작용형 픽셀 풀잎 파티클 (Interactive Grass Blades & Foliage Debris)
+  addGrassDebris(x, y) {
+    if (!this.grassLeaves) this.grassLeaves = [];
+    if (this.grassLeaves.length > 90) this.grassLeaves.shift();
+    for (let i = 0; i < 2; i++) {
+      this.grassLeaves.push({
+        x: x + (Math.random() - 0.5) * 0.7,
+        y: y + (Math.random() - 0.5) * 0.7,
+        vx: (Math.random() - 0.5) * 1.2,
+        vy: -0.6 - Math.random() * 0.8,
+        color: Math.random() < 0.5 ? '#4ade80' : '#16a34a',
+        age: 0,
+        duration: 0.65 + Math.random() * 0.45,
+        size: 1.6 + Math.random() * 1.4
+      });
+    }
   }
 
   // 🩸 다크 판타지 전투 혈흔 및 그을음 지면 데칼 (Persistent Ground Blood & Scorch Decals)
@@ -1754,7 +1773,11 @@ class EntityManager {
       }
       this.addFloatingText(p.x, p.y - 1.5, hitCount > 0 ? `⚡ 천공의 심판! (${hitCount}기 타격)` : '⚡ 천공의 심판!', '#fde047', 1.4);
     } else if (skillKey === 'E') {
-      // 0순위: 고대 석판 모놀리스 판독
+      // 0순위: 처형 피니셔 (Glory Kill / Execution Finisher)
+      if (this.checkExecutionTrigger(p)) {
+        return;
+      }
+      // 1순위: 고대 석판 모놀리스 판독
       if (p.nearMonolith && this.rpgManager && this.rpgManager.inspectMonolith) {
         this.rpgManager.inspectMonolith(p.nearMonolith.id);
         return;
@@ -1836,6 +1859,7 @@ class EntityManager {
     p.dodgeCooldown = hasWindstrider ? 0.62 : 0.95;
     p.isDashing = true;
     p.dashTimer = 0.28;
+    p.dashDuration = 0.28;
     p.invulnerableTimer = 0.32;
     p.invulnerable = true;
 
@@ -2087,10 +2111,90 @@ class EntityManager {
     return true;
   }
 
+  // 💀 적 처형 가능(Execution / Glory Kill) 상태 판정 (체력 22% 이하 엘리트/보스/강적)
+  checkEnemyExecutable(e) {
+    if (!e || e.faction !== 'monster' || e.hp <= 0 || !e.maxHp) return;
+    if ((e.hp / e.maxHp) <= 0.22 && (e.isElite || e.isBoss || e.maxHp >= 100)) {
+      e.canExecute = true;
+    } else {
+      e.canExecute = false;
+    }
+  }
+
+  // 💀 인근 처형 대상 탐색 및 처형 트리거
+  checkExecutionTrigger(p) {
+    if (!p) p = this.spawnOrGetPlayer();
+    const nearestExecutable = this.spatialGrid
+      ? this.spatialGrid.findNearest(p.x, p.y, 4.2, other => other !== p && other.hp > 0 && other.canExecute && this.isHostile(p, other))
+      : this.entities.find(other => other !== p && other.hp > 0 && other.canExecute && this.isHostile(p, other) && Math.hypot(other.x - p.x, other.y - p.y) <= 4.2);
+    if (nearestExecutable) {
+      this.executeEnemy(p, nearestExecutable);
+      return true;
+    }
+    return false;
+  }
+
+  // ⚡ 시네마틱 일격처형 (Cinematic Execution Finisher)
+  executeEnemy(p, target) {
+    if (!target || target.hp <= 0) return;
+
+    // 1. 적 전방으로 즉각 런지 질주
+    const kAng = Math.atan2(target.y - p.y, target.x - p.x);
+    p.x = target.x - Math.cos(kAng) * 0.9;
+    p.y = target.y - Math.sin(kAng) * 0.9;
+    p.facing = Math.cos(kAng) < 0 ? 'left' : 'right';
+    p.attackAnimTimer = 0.35;
+    p.isAttacking = true;
+
+    // 2. 극적인 카메라 슬로우모션 프리즈 & 줌 쇼크
+    if (this.camera) {
+      this.camera.screenFreeze = 0.12;
+      this.camera.shake = 18.0;
+      this.camera.zoomPulse = 1.35;
+    }
+
+    // 3. 거대 X자 크림슨 참격검기 & 피보라 파티클
+    this.addSlashArc(target.x, target.y, 4.5, -Math.PI * 0.75, Math.PI * 0.75, '#dc2626', 0.45);
+    this.addSlashArc(target.x, target.y, 4.5, Math.PI * 0.25, Math.PI * 1.25, '#f87171', 0.45);
+    this.addShockwave(target.x, target.y, 5.0, '#ef4444', 0.6);
+    this.addHitSparks(target.x, target.y, '#f87171', 28);
+    this.addHitSparks(target.x, target.y, '#facc15', 20);
+    this.addBloodDecal(target.x, target.y, '#991b1b', target.isBoss ? 4.8 : 3.0, 4);
+
+    if (typeof audioMgr !== 'undefined') {
+      audioMgr.playSword();
+      audioMgr.playFanfare();
+    }
+
+    // 4. 즉사 치명타 및 대량 골드/EXP/각성 게이지 분출
+    target.hp = 0;
+    target.canExecute = false;
+    p.kills = (p.kills || 0) + 1;
+    const bonusGold = (target.isBoss ? 800 : (target.isElite ? 280 : 90));
+    p.gold = (p.gold || 0) + bonusGold;
+    p.awakeningGauge = Math.min(100, (p.awakeningGauge || 0) + 35); // 초필살기 게이지 35% 즉시 충전!
+    this.gainPlayerExp(target.isBoss ? 350 : 120);
+
+    this.spawnLootDrop(target.x, target.y, { itemType: 'gold', name: '처형 전리품', icon: '🪙', gold: bonusGold, color: '#facc15' });
+    this.spawnLootDrop(target.x + 0.3, target.y, { itemType: 'gem', name: '영혼 파편', icon: '💎', resourceKey: 'gems', resourceCount: 3, color: '#c084fc' });
+
+    this.addFloatingText(target.x, target.y - 1.5, `💀 EXECUTION! 처형 완료! (+${bonusGold}G)`, '#f87171', 2.5);
+    this.log('battle', `⚔️ 플레이어가 [${target.name}]을(를) 화려한 처형 피니셔로 단칼에 베어 넘겼습니다! (+${bonusGold}G, 각성 게이지 +35%)`, target.x, target.y);
+
+    if (this.questSystem && this.questSystem.onMonsterSlain) {
+      this.questSystem.onMonsterSlain(target);
+    }
+  }
+
   // ⚔️ 3단 연속 콤보 공격 시스템 (1타 신속베기 -> 2타 어퍼크로스 -> 3타 360도 회전베기 피니셔)
   playerPerformAttack(p, target = null) {
     if (!p) p = this.spawnOrGetPlayer();
     if (p.attackCooldown > 0) return;
+
+    // 0순위: 인근 처형 가능 대상(canExecute)이 있을 시 즉시 일격처형(Glory Kill) 발동
+    if (this.checkExecutionTrigger(p)) {
+      return;
+    }
 
     const now = Date.now();
     if (!p.lastAttackTime || (now - p.lastAttackTime > 1150)) {
@@ -2181,6 +2285,7 @@ class EntityManager {
 
         ent.hp -= finalDmg;
         ent.hitTimer = 0.28;
+        this.checkEnemyExecutable(ent);
         ent.combatTarget = p;
         this.rallyNearbyAllies(ent, p, 11.0);
 
@@ -2267,6 +2372,7 @@ class EntityManager {
 
       target.hp -= dmg;
       target.hitTimer = 0.25;
+      this.checkEnemyExecutable(target);
 
       // 🩸 다크 판타지 전투 혈흔 / 체액 지면 데칼 생성
       const bloodColor = (target.role === 'dragon' || (target.name && target.name.includes('용')) || target.monsterType === 'fire_drake') ? '#f97316'
@@ -3107,6 +3213,18 @@ class EntityManager {
       }
     }
 
+    // 🌿 픽셀 풀잎 잔디 파티클 (Grass Debris) 업데이트
+    if (this.grassLeaves) {
+      for (let i = this.grassLeaves.length - 1; i >= 0; i--) {
+        const gl = this.grassLeaves[i];
+        gl.age += dt;
+        gl.x += gl.vx * dt;
+        gl.y += gl.vy * dt;
+        gl.vy += dt * 2.2;
+        if (gl.age >= gl.duration) this.grassLeaves.splice(i, 1);
+      }
+    }
+
     // 🌊 수면 파문 링 (Water Wading Ripples) 업데이트
     if (this.waterRipples) {
       for (let i = this.waterRipples.length - 1; i >= 0; i--) {
@@ -3541,6 +3659,9 @@ class EntityManager {
       if (p.footstepDist >= 0.72) {
         p.footstepDist = 0;
         this.addFootprint(p.x, p.y, Math.atan2(p.vy, p.vx), p.isShip ? 'wake' : (p.mount || 'human'), curTile);
+        if (curTile === 1 || curTile === 2 || curTile === 3) {
+          this.addGrassDebris(p.x, p.y);
+        }
       }
     }
 

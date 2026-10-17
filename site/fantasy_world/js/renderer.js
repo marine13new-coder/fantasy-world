@@ -198,10 +198,11 @@ class WorldRenderer {
       }
     }
 
-    // 2. 동적 해안선 픽셀 파도 거품 애니메이션 & 대양 백색 포말 물결 & 수면 거울 반사
+    // 2. 동적 해안선 픽셀 파도 거품 애니메이션 & 대양 백색 포말 물결 & 수면 거울 반사 & 다이아몬드 코스틱 굴절광
     if (camera.zoom > 0.36) {
       this.drawPixelShorelines(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
       this.drawOceanFoam(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
+      this.drawWaterCaustics(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
       this.drawWaterReflections(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy);
     }
 
@@ -425,6 +426,7 @@ class WorldRenderer {
       this.drawFootprints(ctx, ts, minTx, maxTx, minTy, maxTy);
       this.drawDroppedLoot(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy);
       this.drawWaterWadingRipples(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy);
+      this.drawGrassDebris(ctx, ts);
       this.drawDashGhostTrails(ctx, ts);
       this.drawEntityCombatHUD(ctx, ts, camera.zoom, minTx, maxTx, minTy, maxTy);
     }
@@ -1932,6 +1934,40 @@ class WorldRenderer {
       ctx.font = '12px serif';
       ctx.textAlign = 'center';
       ctx.fillText('👑', px, py - 30 * e.scale);
+      ctx.restore();
+    }
+
+    // 💀 처형 가능 표식 (Glory Kill / Execution Finisher Marker)
+    if (e.canExecute && e.hp > 0) {
+      ctx.save();
+      const exBob = Math.sin(timeSec * 7) * 3;
+      const exY = py - (e.isShip ? 40 : 34) * e.scale + exBob;
+
+      // 붉은 해골 펄스 광배
+      const pulseR = 14 + Math.sin(timeSec * 10) * 3;
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.arc(px, exY - 2, pulseR, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 배지 텍스트
+      ctx.font = 'bold 11px Pretendard, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#fef2f2';
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 3;
+      ctx.strokeText('💀 EXECUTE [E]', px, exY);
+      ctx.fillText('💀 EXECUTE [E]', px, exY);
+
+      // 하향 붉은 화살표
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.moveTo(px - 4, exY + 4);
+      ctx.lineTo(px + 4, exY + 4);
+      ctx.lineTo(px, exY + 9);
+      ctx.closePath();
+      ctx.fill();
       ctx.restore();
     }
 
@@ -4586,6 +4622,53 @@ class WorldRenderer {
       ctx.restore();
     }
     ctx.restore();
+  }
+
+  // 💎 [2.3] 다이아몬드 코스틱 굴절광 (Dynamic Water Caustics Shimmer)
+  drawWaterCaustics(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec) {
+    if (!this.world || !this.world.tiles) return;
+    const tiles = this.world.tiles;
+    const width = this.world.width;
+    ctx.save();
+    ctx.fillStyle = 'rgba(224, 242, 254, 0.32)';
+
+    for (let ty = minTy; ty <= maxTy; ty++) {
+      for (let tx = minTx; tx <= maxTx; tx++) {
+        const t = tiles[ty * width + tx];
+        if (t === 0 || t === 6) { // Deep Water or Water
+          const px = tx * ts;
+          const py = ty * ts;
+          const w1 = Math.sin(timeSec * 2.2 + tx * 0.85 + ty * 0.45);
+          const w2 = Math.cos(timeSec * 1.7 - tx * 0.55 + ty * 0.95);
+          if (w1 + w2 > 0.88) {
+            const cx = px + (w1 * 0.5 + 0.5) * (ts - 6);
+            const cy = py + (w2 * 0.5 + 0.5) * (ts - 6);
+            ctx.fillRect(Math.round(cx), Math.round(cy), 4, 2);
+            ctx.fillRect(Math.round(cx + 1), Math.round(cy - 1), 2, 4);
+          }
+        }
+      }
+    }
+    ctx.restore();
+  }
+
+  // 🌿 [10.6] 상호작용형 픽셀 풀잎 잔디 파티클 (Interactive Grass Blades & Foliage Debris)
+  drawGrassDebris(ctx, ts) {
+    if (!this.entityMgr.grassLeaves || this.entityMgr.grassLeaves.length === 0) return;
+    for (const gl of this.entityMgr.grassLeaves) {
+      const alpha = Math.max(0, 1 - gl.age / gl.duration);
+      const gx = Math.round(gl.x * ts);
+      const gy = Math.round(gl.y * ts);
+      const sz = Math.round(gl.size);
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = gl.color;
+      ctx.fillRect(gx, gy, sz, Math.max(1, sz - 1));
+      ctx.fillStyle = '#bbf7d0';
+      ctx.fillRect(gx + 1, gy, 1, 1);
+      ctx.restore();
+    }
   }
 
   // 🩸 [8.4] 다크 판타지 영구 지속 지면 전투 혈흔 및 그을음 데칼 (Ground Blood & Blast Scorch Decals)

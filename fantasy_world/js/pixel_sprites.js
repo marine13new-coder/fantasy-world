@@ -4015,14 +4015,36 @@
         else if (dir === 'right') offsetX -= flinch;
       }
 
-      // 6. 스프라이트 블릿 (High-Res 1.5x Scaling, Zero-Pop 고정 높이)
+      // 6. 스프라이트 블릿 (High-Res 1.5x Scaling, Somersault 360° Roll & Walk Tilt Physics)
       const renderW = Math.round(sw * sc * 1.5);
       const renderH = Math.round(sh * sc * 1.5);
       const renderX = Math.round(px - renderW / 2 + offsetX);
       const renderY = Math.round(py - renderH + 6 * sc - bounce + offsetY);
 
+      ctx.save();
+      // 덤블링 360° 공중제비 닷지 롤 (Somersault 360° Dodge Roll Animation)
+      if (e.isDashing) {
+        const dashDur = e.dashDuration || 0.28;
+        const dashProg = Math.max(0, Math.min(1, 1 - (e.dashTimer || 0) / dashDur));
+        const rollAngle = (dir === 'left' || (e.vx || 0) < 0 ? -1 : 1) * dashProg * Math.PI * 2;
+        ctx.translate(px, py - 8 * sc);
+        ctx.rotate(rollAngle);
+        ctx.translate(-px, -(py - 8 * sc));
+      } else if (isMoving) {
+        // 보행/질주 시 바디 틸트 & 관성 물결 (Dynamic Body Tilt & Step Sway)
+        const walkTilt = Math.sin((e.animPhase || 0) * 1.8) * 0.08 * (dir === 'left' ? -1 : 1);
+        ctx.translate(px, py);
+        ctx.rotate(walkTilt);
+        ctx.translate(-px, -py);
+      } else {
+        // 대기 시 부드러운 호흡 바운스 (Idle Breathing)
+        const breathY = Math.sin(timeSec * 2.8 + (e.id || 0)) * 0.8 * sc;
+        ctx.translate(0, breathY);
+      }
+
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(cv, renderX, renderY, renderW, renderH);
+      ctx.restore();
 
       // 잠자는 닭 상공 'Zzz' 수면 말풍선 파티클 (Reference Image Match)
       if (baseKey === 'chicken' && animFrame === 'sleep') {
@@ -4214,37 +4236,66 @@
       const handY = py - 10 * sc - bounce;
 
       if (isAttacking) {
-        // 공격 모션: 검기 호(Slash Arc) 및 무기 휘두르기 회전
-        const swingProgress = (Math.sin(timeSec * 16 + (e.id || 0)) + 1) / 2;
-        const swingAngle = (isLeft ? -1 : 1) * (0.8 - swingProgress * 1.8);
+        // 공격 모션: 3단계 가속 키프레임 (1. 준비 후퇴 -> 2. 초고속 하향 스냅 -> 3. 후속 감속 복귀)
+        let swingAngle = 0;
+        if (e.role === 'player' && e.attackAnimTimer !== undefined && e.attackAnimTimer > 0) {
+          const atkNorm = Math.max(0, Math.min(1, 1 - e.attackAnimTimer / 0.28));
+          if (atkNorm < 0.20) {
+            // 1단계: 칼끝을 뒤로 당기는 준비 모션 (Windup)
+            swingAngle = (isLeft ? -1 : 1) * (-0.45 * (atkNorm / 0.20));
+          } else if (atkNorm < 0.65) {
+            // 2단계: 번개같은 호를 그리는 가속 참격 (Snappy Fast Arc)
+            const snapT = (atkNorm - 0.20) / 0.45;
+            swingAngle = (isLeft ? -1 : 1) * (-0.45 + snapT * 2.3);
+          } else {
+            // 3단계: 자연스러운 복귀 (Follow-Through Recovery)
+            const recT = (atkNorm - 0.65) / 0.35;
+            swingAngle = (isLeft ? -1 : 1) * (1.85 - recT * 0.75);
+          }
+        } else {
+          const swingProgress = (Math.sin(timeSec * 16 + (e.id || 0)) + 1) / 2;
+          swingAngle = (isLeft ? -1 : 1) * (0.8 - swingProgress * 1.8);
+        }
 
         ctx.translate(handX, handY);
         ctx.rotate(swingAngle);
         ctx.drawImage(wCvs, -6 * sc, -18 * sc, 18 * sc, 18 * sc);
         ctx.restore();
 
-        // 화려한 픽셀 참격 궤적 (Slash Arc Particle Trail)
+        // 화려한 픽셀 참격 궤적 & 이중 칼날 잔상 리본 (Dual Ghost Arc Ribbon)
         ctx.save();
         let slashColor = '#f8fafc';
-        if (weaponId.includes('flame') || weaponId.includes('magma')) slashColor = '#f97316';
-        else if (weaponId.includes('excalibur') || weaponId.includes('frost')) slashColor = '#38bdf8';
-        else if (weaponId.includes('poison') || weaponId.includes('nature')) slashColor = '#4ade80';
-        else if (weaponId.includes('shadow') || weaponId.includes('arcane')) slashColor = '#c084fc';
-        else if (weaponId.includes('holy') || weaponId.includes('gold')) slashColor = '#facc15';
+        let glowColor = 'rgba(255, 255, 255, 0.4)';
+        if (weaponId.includes('flame') || weaponId.includes('magma')) { slashColor = '#f97316'; glowColor = 'rgba(249, 115, 22, 0.6)'; }
+        else if (weaponId.includes('excalibur') || weaponId.includes('frost')) { slashColor = '#38bdf8'; glowColor = 'rgba(56, 189, 248, 0.6)'; }
+        else if (weaponId.includes('poison') || weaponId.includes('nature')) { slashColor = '#4ade80'; glowColor = 'rgba(74, 222, 128, 0.6)'; }
+        else if (weaponId.includes('shadow') || weaponId.includes('arcane')) { slashColor = '#c084fc'; glowColor = 'rgba(192, 132, 252, 0.6)'; }
+        else if (weaponId.includes('holy') || weaponId.includes('gold')) { slashColor = '#facc15'; glowColor = 'rgba(250, 204, 21, 0.6)'; }
 
-        ctx.strokeStyle = slashColor;
-        ctx.lineWidth = 2 * sc;
-        ctx.beginPath();
         const arcCenter = px + sideSign * 4 * sc;
         const startAng = isLeft ? Math.PI * 0.7 : Math.PI * 0.3;
         const endAng = isLeft ? Math.PI * 1.3 : -Math.PI * 0.3;
+
+        // 외부 광채 궤적 (Outer Glow Arc)
+        ctx.strokeStyle = glowColor;
+        ctx.lineWidth = 4 * sc;
+        ctx.beginPath();
+        ctx.arc(arcCenter, py - 10 * sc - bounce, 17 * sc, startAng, endAng, isLeft);
+        ctx.stroke();
+
+        // 내부 선명한 칼날 궤적 (Inner Sharp Blade Arc)
+        ctx.strokeStyle = slashColor;
+        ctx.lineWidth = 1.8 * sc;
+        ctx.beginPath();
         ctx.arc(arcCenter, py - 10 * sc - bounce, 16 * sc, startAng, endAng, isLeft);
         ctx.stroke();
 
-        // 반짝이는 참격 스파크 픽셀
+        // 반짝이는 참격 스파크 및 엠버
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(arcCenter + sideSign * 14 * sc, py - 14 * sc - bounce, 3 * sc, 3 * sc);
         ctx.fillRect(arcCenter + sideSign * 18 * sc, py - 6 * sc - bounce, 2 * sc, 2 * sc);
+        ctx.fillStyle = slashColor;
+        ctx.fillRect(arcCenter + sideSign * 11 * sc, py - 18 * sc - bounce, 2 * sc, 2 * sc);
         ctx.restore();
       } else {
         // 대기 / 이동 모션: 자연스럽게 손에 쥐거나 옆구리에 찬 모습
