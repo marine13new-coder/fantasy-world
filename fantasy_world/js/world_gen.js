@@ -541,6 +541,16 @@ function createSettlementList() {
   add('astral_chronos_observatory', '시간의 천체 관측소', 'town', 'astral', 3380, 210, 'celestial', false, 9);
   add('astral_gemstone_cavern', '영롱한 보석 결정 동굴', 'lair', 'astral', 3020, 390, 'monster', true, 10);
 
+  // =========================================================================
+  // 10. THE SUNKEN ATLANTEAN ABYSS & CORAL TRENCH (심해 해저 아틀란티스 신전 & 산호 해구 제국)
+  // =========================================================================
+  add('atlantis_sunken_pantheon', '아틀란티스 가라앉은 신전 판테온', 'capital', 'atlantis', 720, 2180, 'merfolk', true, 16);
+  add('atlantis_coral_citadel', '발광 산호 대성채', 'castle', 'atlantis', 560, 2080, 'merfolk', true, 14);
+  add('atlantis_leviathan_trench', '레비아탄 심해 해구 요새', 'fortress', 'atlantis', 910, 2260, 'monster', true, 12);
+  add('atlantis_siren_grotto', '세이렌 유혹의 산호 동굴', 'town', 'atlantis', 640, 2290, 'merfolk', false, 8);
+  add('atlantis_pearl_reef_harbor', '진주 조개초 심해 항만', 'port', 'atlantis', 840, 2060, 'merfolk', false, 9);
+  add('atlantis_poseidon_trident_altar', '포세이돈 삼지창 고대 제단', 'temple', 'atlantis', 780, 2210, 'merfolk', true, 11);
+
   return list;
 }
 
@@ -774,6 +784,18 @@ function generateWorld() {
             tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.CORAL : TILE.SNOW;
           } else if (dist <= landRad + 1) {
             tiles[idx(tx, ty)] = TILE.MOUNTAIN;
+          }
+          continue;
+        }
+
+        // 고대 심해 아틀란티스 신전 & 산호 해구 전용 지형 카빙
+        if (s.continent === 'atlantis') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 5) ? TILE.CASTLE_FLOOR : TILE.CRYSTAL_CAVE;
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.CORAL : TILE.SAND;
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.CORAL : TILE.SHALLOW_WATER;
           }
           continue;
         }

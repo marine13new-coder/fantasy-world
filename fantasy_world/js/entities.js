@@ -2949,6 +2949,18 @@ class EntityManager {
     let effectColor = '#38bdf8';
     let comboText = '⚔️ 1타 [신속 수평베기]';
 
+    let justDodgeBonus = 1.0;
+    if (p.justDodgeEmpowered) {
+      justDodgeBonus = 2.0;
+      p.justDodgeEmpowered = false;
+      this.addFloatingText(p.x, p.y - 1.8, '⚡ [불릿 타임 카운터 일격! x2.0]', '#38bdf8', 2.0);
+      this.addShockwave(p.x, p.y, 4.2, '#38bdf8', 0.4);
+      if (window.renderer) {
+        window.renderer.screenFlashTimer = 0.08;
+        window.renderer.screenFlashColor = '#38bdf8';
+      }
+    }
+
     if (p.comboStep === 1) {
       comboMultiplier = 1.0;
       cdTime = 0.28;
@@ -2991,11 +3003,11 @@ class EntityManager {
     const arcEnd = angle + arcSpread / 2;
     this.addSlashArc(p.x, p.y, p.comboStep === 3 ? 3.8 : 2.4, arcStart, arcEnd, effectColor, 0.24);
 
-    // ⚔️ [10.6] 2연격 이상 공격 시 전방으로 음속 픽셀 참격 검기(Sonic Crescent Blade Wave) 사출!
-    if (p.comboStep >= 2) {
-      const isEmpowered = p.comboStep === 3;
+    // ⚔️ [10.6] 2연격 이상 공격 또는 저스트 회피 카운터 시 전방으로 음속 픽셀 참격 검기(Sonic Crescent Blade Wave) 사출!
+    if (p.comboStep >= 2 || justDodgeBonus > 1.0) {
+      const isEmpowered = (p.comboStep === 3 || justDodgeBonus > 1.0);
       const waveSpeed = isEmpowered ? 20.0 : 15.0;
-      const waveDmg = Math.round((p.atk || 25) * (isEmpowered ? 1.75 : 1.2));
+      const waveDmg = Math.round((p.atk || 25) * (isEmpowered ? 1.75 : 1.2) * (justDodgeBonus > 1.0 ? 1.35 : 1.0));
       this.projectiles.push({
         x: p.x + Math.cos(angle) * 1.1,
         y: p.y + Math.sin(angle) * 1.1,
@@ -3040,8 +3052,8 @@ class EntityManager {
         hits++;
         let mult = 1.0;
         if (this.rpgManager) mult = this.rpgManager.addCombo(1);
-        const dmg = Math.round(p.atk * comboMultiplier * mult * (1.1 + Math.random() * 0.3));
-        const isCrit = Math.random() < 0.35;
+        const dmg = Math.round(p.atk * comboMultiplier * mult * justDodgeBonus * (1.1 + Math.random() * 0.3));
+        const isCrit = (justDodgeBonus > 1.0) || Math.random() < 0.35;
         const finalDmg = isCrit ? Math.round(dmg * 1.5) : dmg;
 
         // 화염의 각인 특성
@@ -3141,8 +3153,8 @@ class EntityManager {
         stanceDmgMult = 0.90;
       }
 
-      const isCrit = (riposteMult > 1.0) || (Math.random() < (0.25 + stanceCritBonus));
-      const baseDmg = Math.round(p.atk * comboMultiplier * comboMult * riposteMult * stanceDmgMult * (1.0 + Math.random() * 0.3));
+      const isCrit = (riposteMult > 1.0) || (justDodgeBonus > 1.0) || (Math.random() < (0.25 + stanceCritBonus));
+      const baseDmg = Math.round(p.atk * comboMultiplier * comboMult * riposteMult * stanceDmgMult * justDodgeBonus * (1.0 + Math.random() * 0.3));
       const dmg = isCrit ? Math.round(baseDmg * 1.5) : baseDmg;
 
       // 💥 공격 적중 시 각성 게이지 축적 (+3.5%)
@@ -4350,17 +4362,32 @@ class EntityManager {
 
           // 범위 내 플레이어 및 아군 피해 (닷지 롤 무적 상태면 회피!)
           if (p && Math.hypot(p.x - hz.x, p.y - hz.y) <= hz.radius) {
-            if (p.invulnerable) {
-              this.triggerWitchTime(0.85, 0.22);
-              p.awakeningGauge = Math.min(100, (p.awakeningGauge || 0) + 25);
-              this.addFloatingText(p.x, p.y - 1.4, '⚡ [WITCH TIME!] 불릿 타임 회피! (각성 +25%)', '#facc15', 2.0);
-              this.addShockwave(p.x, p.y, 4.2, '#38bdf8', 0.4);
-              this.addHitSparks(p.x, p.y, '#fde047', 16);
-              if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+            if (p.invulnerable || p.isDashing) {
+              this.triggerWitchTime(1.0, 0.22);
+              p.awakeningGauge = Math.min(100, (p.awakeningGauge || 0) + 30);
+              p.attackCooldown = 0;
+              p.justDodgeEmpowered = true; // 다음 공격 치명타 확정 & 참격파 강화
+              this.addFloatingText(p.x, p.y - 1.6, '⚡ [JUST DODGE!] 초감각 불릿 타임 (공격 즉시 리셋!)', '#38bdf8', 2.2);
+              this.addShockwave(p.x, p.y, 4.8, '#38bdf8', 0.45);
+              this.addHitSparks(p.x, p.y, '#ffffff', 24);
+              if (this.camera) {
+                this.camera.screenFreeze = 0.07;
+                this.camera.zoomPulse = 1.3;
+                this.camera.shake = 14;
+              }
+              if (window.renderer) {
+                window.renderer.screenFlashTimer = 0.09;
+                window.renderer.screenFlashColor = '#38bdf8';
+              }
+              if (typeof audioMgr !== 'undefined') {
+                if (audioMgr.playParry) audioMgr.playParry();
+                if (audioMgr.playWhirlwind) audioMgr.playWhirlwind();
+              }
             } else {
               p.hp -= hz.damage;
               p.hitTimer = 0.35;
               this.addFloatingText(p.x, p.y - 1.2, `💥-${hz.damage} [장판 피격!]`, '#ef4444', 1.5);
+              if (this.camera) this.camera.shake = Math.min(22, (this.camera.shake || 0) + 9);
             }
           }
 
@@ -4573,6 +4600,15 @@ class EntityManager {
       e.targetX = target.x;
       e.targetY = target.y;
       e.thought = `🐉 [${target.name}]을(를) 향해 파괴적인 브레스 방출!`;
+
+      // ⚠️ 드래곤 지면 융해 대재앙 전조 장판 시전
+      if (!e.dragonHazardCd || e.dragonHazardCd <= 0) {
+        e.dragonHazardCd = 3.6;
+        this.addHazardZone(target.x, target.y, 4.0, 1.25, Math.round(e.atk * 1.6), '🐉 고대 드래곤 겁화 맹폭', '#f97316');
+        this.addFloatingText(e.x, e.y - 2.0, '🔥 [드래곤 겁화 장판 충전!]', '#ef4444', 1.6);
+      }
+      if (e.dragonHazardCd > 0) e.dragonHazardCd -= dt;
+
       if (e.attackCooldown <= 0) {
         e.attackCooldown = 1.35;
         const dmg = Math.round(e.atk * 1.3);
@@ -5200,6 +5236,18 @@ class EntityManager {
       this.moveTowardTarget(e, dt * 1.25);
     } else if (e.attackCooldown <= 0) {
       e.attackCooldown = 0.85 + Math.random() * 0.35;
+
+      // ⚠️ 보스 및 엘리트 몬스터의 전조 위험 장판 스킬 시전
+      if ((e.isBoss || e.isElite || e.scale >= 1.4) && (!e.hazardCd || e.hazardCd <= 0)) {
+        e.hazardCd = 4.2 + Math.random() * 2.0;
+        const hRad = e.isBoss ? 3.6 : 2.6;
+        const hDmg = Math.round(e.atk * 1.5);
+        const hCol = e.isEnraged ? '#ef4444' : (e.eliteAffix === 'glacial' ? '#38bdf8' : '#f59e0b');
+        const hName = e.name ? `[${e.name}] 멸망 강타` : '엘리트 강타';
+        this.addHazardZone(target.x, target.y, hRad, 1.25, hDmg, hName, hCol);
+        this.addFloatingText(e.x, e.y - 1.8, '⚠️ [위험 장판 충전 중!]', '#facc15', 1.4);
+      }
+      if (e.hazardCd > 0) e.hazardCd -= dt;
 
       // 🛡️ 플레이어 퍼펙트 패링 감지! (0.22초 내 완벽한 타이밍에 공격 방어)
       if (target === this.player && this.player.isParrying && this.player.parryTimer > 0) {

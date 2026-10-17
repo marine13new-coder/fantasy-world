@@ -1244,14 +1244,14 @@ function startFantasyWorld() {
     if (gridEl && world.settlementList) {
       // 주요 수도, 항구, 대성채, 천공 군도, 심연 성채, 해저 아틀란티스, 명계 제국, 성운 비전 고원 필터
       const keySettlements = world.settlementList.filter(s => 
-        s.type === 'capital' || s.type === 'port' || s.type === 'fortress' || s.hasWall || s.continent === 'sky' || s.continent === 'south_abyss' || s.continent === 'abyss_ocean' || s.continent === 'underworld' || s.continent === 'astral'
-      ).slice(0, 96);
+        s.type === 'capital' || s.type === 'port' || s.type === 'fortress' || s.hasWall || s.continent === 'sky' || s.continent === 'south_abyss' || s.continent === 'abyss_ocean' || s.continent === 'underworld' || s.continent === 'astral' || s.continent === 'atlantis'
+      ).slice(0, 108);
 
       gridEl.innerHTML = keySettlements.map(s => {
         let icon = '🏘️';
         if (s.continent === 'sky') icon = '🌌';
         else if (s.continent === 'south_abyss') icon = '🌋';
-        else if (s.continent === 'abyss_ocean') icon = '🔱';
+        else if (s.continent === 'abyss_ocean' || s.continent === 'atlantis') icon = '🔱';
         else if (s.continent === 'underworld') icon = '💀';
         else if (s.continent === 'astral') icon = '🔮';
         else if (s.type === 'capital') icon = '👑';
@@ -1261,7 +1261,7 @@ function startFantasyWorld() {
         let regionName = '중앙 제국';
         if (s.continent === 'sky') regionName = '🌌 천공의 부유 군도';
         else if (s.continent === 'south_abyss') regionName = '🌋 심연의 심층 단층';
-        else if (s.continent === 'abyss_ocean') regionName = '🔱 심해 아틀란티스 신전군';
+        else if (s.continent === 'abyss_ocean' || s.continent === 'atlantis') regionName = '🔱 심해 아틀란티스 신전 & 산호 해구';
         else if (s.continent === 'underworld') regionName = '💀 태고의 칼데라 & 명계 제국';
         else if (s.continent === 'astral') regionName = '🔮 성운 비전 고원 & 차원 균열';
         else if (s.continent === 'west') regionName = '서부 실바니아';
@@ -2271,11 +2271,14 @@ function startFantasyWorld() {
     camera.x = Math.max(0, Math.min(WORLD_WIDTH, camera.x));
     camera.y = Math.max(0, Math.min(WORLD_HEIGHT, camera.y));
 
-    // 시뮬레이션 시간 진행 (타격 정지 피격 스톱: camera.screenFreeze)
+    // 시뮬레이션 시간 진행 (타격 정지 피격 스톱: camera.screenFreeze, 불릿타임 저스트 회피 시간왜곡: entityMgr.bulletTimeTimer)
     let simDt = rawDt * worldTime.speed;
     if (camera.screenFreeze > 0) {
       camera.screenFreeze -= rawDt;
       simDt = 0;
+    } else if (entityMgr && entityMgr.bulletTimeTimer > 0) {
+      entityMgr.bulletTimeTimer -= rawDt;
+      simDt *= 0.28; // 극적인 1/4 슬로우모션 연출!
     }
     if (simDt > 0) {
       worldTime.minute += simDt * 8;

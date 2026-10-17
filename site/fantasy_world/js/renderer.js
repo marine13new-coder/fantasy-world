@@ -3310,6 +3310,27 @@ class WorldRenderer {
       }
     }
 
+    // 5.5. 🌫️ 고해상도 대기 롤링 안개 & 바람 기류 (Volumetric Rolling Fog & Wind Currents)
+    if (worldTime.weather === 'cloudy' || worldTime.weather === 'rain' || (h >= 4 && h <= 8) || (camX > 430 && camY > 100 && camY < 300)) {
+      ctx.save();
+      const fogAlpha = (worldTime.weather === 'cloudy' || worldTime.weather === 'rain') ? 0.14 : 0.08;
+      const fogSpeed = timeSec * 24;
+      for (let f = 0; f < 6; f++) {
+        const fy = Math.floor((f * (ch / 5) + Math.sin(timeSec * 0.4 + f) * 22) % ch);
+        const fx = Math.floor((fogSpeed * (0.8 + f * 0.2) + f * 220) % (cw + 340) - 170);
+        const fw = 320 + (f % 3) * 90;
+        const fh = 75 + (f % 2) * 40;
+        const fGrad = ctx.createRadialGradient(fx + fw / 2, fy + fh / 2, 12, fx + fw / 2, fy + fh / 2, fw / 2);
+        fGrad.addColorStop(0, (darkness > 0.3) ? `rgba(148, 163, 184, ${fogAlpha * 1.5})` : `rgba(255, 255, 255, ${fogAlpha * 1.2})`);
+        fGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = fGrad;
+        ctx.beginPath();
+        ctx.ellipse(fx + fw / 2, fy + fh / 2, fw / 2, fh / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
     // 6. 밤의 신비로운 황금 반딧불이 (Night Fireflies)
     if (darkness > 0.25) {
       ctx.fillStyle = '#fde047';
@@ -4106,37 +4127,63 @@ class WorldRenderer {
       const hy = Math.round(hz.y * ts);
       const rad = Math.round(hz.radius * ts);
       const progress = Math.max(0, Math.min(1, 1 - (hz.timer / hz.maxTimer)));
+      const baseCol = hz.color || '#ef4444';
 
       ctx.save();
-      // 위험 장판 내부 반투명 붉은 점멸 채우기
-      const pulseAlpha = 0.18 + Math.sin(timeSec * 14) * 0.08;
+
+      // 1. 위험 장판 지면 내부 반투명 점멸 채우기
+      const pulseAlpha = 0.16 + Math.sin(timeSec * 16) * 0.09;
       ctx.fillStyle = `rgba(239, 68, 68, ${pulseAlpha})`;
       ctx.beginPath();
       ctx.arc(hx, hy, rad, 0, Math.PI * 2);
       ctx.fill();
 
-      // 외곽 점선 회전 경고 림
-      ctx.strokeStyle = '#ef4444';
-      ctx.lineWidth = 2.0;
-      ctx.setLineDash([6, 4]);
-      ctx.lineDashOffset = -timeSec * 18;
+      // 2. 바닥 십자 조준선 및 균열선 (Runic Hazard Crosshair)
+      ctx.strokeStyle = `rgba(239, 68, 68, ${0.28 + pulseAlpha})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(hx - rad * 0.85, hy); ctx.lineTo(hx + rad * 0.85, hy);
+      ctx.moveTo(hx, hy - rad * 0.85); ctx.lineTo(hx, hy + rad * 0.85);
+      ctx.stroke();
+
+      // 3. 외곽 점선 회전 경고 림
+      ctx.strokeStyle = baseCol;
+      ctx.lineWidth = 2.2;
+      ctx.setLineDash([8, 5]);
+      ctx.lineDashOffset = -timeSec * 22;
       ctx.beginPath();
       ctx.arc(hx, hy, rad, 0, Math.PI * 2);
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // 내부에서 외곽으로 차오르는 전조 카운트다운 링
-      ctx.strokeStyle = '#facc15';
-      ctx.lineWidth = 3.0;
+      // 4. 내부에서 외곽으로 차오르는 전조 카운트다운 링 & 시계방향 채움
+      ctx.strokeStyle = progress > 0.82 ? '#ef4444' : '#facc15';
+      ctx.lineWidth = 3.5;
       ctx.beginPath();
       ctx.arc(hx, hy, Math.round(rad * progress), 0, Math.PI * 2);
       ctx.stroke();
 
-      // 중심부 위험 경고 표식
+      // 시계방향 게이지 호
+      ctx.beginPath();
+      ctx.arc(hx, hy, rad, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress);
+      ctx.strokeStyle = progress > 0.82 ? '#ff0000' : '#f59e0b';
+      ctx.lineWidth = 4.0;
+      ctx.stroke();
+
+      // 5. 기폭 직전(progress > 0.82) 긴급 백색 펄스 림
+      if (progress > 0.82) {
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.arc(hx, hy, rad + (Math.sin(timeSec * 25) * 4), 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // 6. 중심부 위험 경고 표식
       ctx.font = 'bold 15px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillStyle = '#ef4444';
-      ctx.fillText('⚠️', hx, hy + 5);
+      ctx.fillText(progress > 0.85 ? '💥' : '⚠️', hx, hy + 5);
 
       ctx.restore();
     }
