@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Pixel Art Sprite Preview</title>
+  <style>
+    body {
+      background: #373a46;
+      color: #fff;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 { margin-bottom: 8px; font-size: 22px; }
+    p { margin-top: 0; color: #cbd5e1; font-size: 14px; }
+    canvas {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      border: 3px solid #1e293b;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      background: #4a4e5d;
+    }
+    .grid {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🏰 Tiny RPG Custom Pixel Art Engine Showcase</h1>
+  <p>16x16 & 24x24 순수 픽셀 도트 매트릭스 렌더링 (4x 스케일 정밀 픽셀화)</p>
+  <canvas id="cv" width="640" height="420"></canvas>
+
+  <script>
+    const PALETTE = {
+      '.': null,
+      '#': '#0f172a',
+      'k': '#1e293b',
+      's': '#475569',
+      'm': '#94a3b8',
+      'h': '#e2e8f0',
+      'w': '#ffffff',
+      'f': '#fed7aa',
+      'F': '#ea580c',
+      'd': '#9a3412',
+      'r': '#dc2626',
+      'R': '#ef4444',
+      'g': '#ca8a04',
+      'G': '#facc15',
+      'y': '#fef08a',
+      'b': '#1d4ed8',
+      'B': '#3b82f6',
+      'c': '#0284c7',
+      'C': '#38bdf8',
+      'p': '#7e22ce',
+      'P': '#c084fc',
+      'e': '#15803d',
+      'E': '#22c55e',
+      'L': '#86efac',
+      'o': '#78350f',
+      'O': '#b45309',
+      'x': '#451a03'
+    };
+
+    const SPRITES = {
+      knight: [
+        "......####......",
+        ".....#RRrr#.....",
+        "....#Rkddrr#....",
+        "...#hhmhhhh#....",
+        "..#h#m#h#m##....",
+        "..#hhsmhhhsh#...",
+        "...#ssssss#.....",
+        "..#bbGssGbb#....",
+        ".#bb#GssG#bb#...",
+        ".#f#ssssss#f#h..",
+        "..#hssssssh#wh#.",
+        "..#hh#ss#hh#wh#.",
+        "...##ssss##.wh#.",
+        "...#kk##kk#.wh#.",
+        "..#hh#..#hh#G##.",
+        "..####..####.##."
+      ],
+      wizard: [
+        "......##........",
+        ".....#bb#.......",
+        "....#bbbb#......",
+        "...#bGGbbb#.....",
+        "..#bbbbbbbb#....",
+        ".############...",
+        "...#FffffF#..y..",
+        "...#f#ff#f#.yCy.",
+        "...#wwwwww#..y..",
+        "...#wwwwww#..x..",
+        "..#bbbbbbbb#GxG.",
+        ".#b#bbbbbb#b#x..",
+        ".#b#bbbbbb#b#x..",
+        "..#bbbbbbbb#x...",
+        "...#kk##kk#.x...",
+        "..####..####x..."
+      ],
+      priestess: [
+        "....######......",
+        "...#wwwwww#.....",
+        "..#wwwGGwww#....",
+        "..#wwGGGGww#....",
+        "..#wwwGGwww#....",
+        "..#w#FffF#w#....",
+        "..#w#f##f#w#....",
+        "..#w#ffff#w#....",
+        "...#wwwwww#..O..",
+        "..#bbwwwwbb#.OxO",
+        ".#bb#wwww#bb#.x.",
+        ".#f#bbwwbb#f#.x.",
+        "..#bbbbbbbb#..x.",
+        "..#bbbbbbbb#..x.",
+        "...#kk##kk#...x.",
+        "..####..####..x."
+      ],
+      paladin: [
+        ".....######.....",
+        "....#hhhhhh#....",
+        "...#hhGGGGhh#...",
+        "...#hh#GG#hh#...",
+        "...#GGGGGGGG#...",
+        "...#hh#GG#hh#...",
+        "....#hhhhhh#....",
+        "..#h#hhhhhh#h#h.",
+        ".#Rh#hhmmhh#hR#h",
+        ".#Rh#hhsshh#hR#h",
+        ".#Rh#hhhhhh#hR#h",
+        "..#G#hhsshh#G##.",
+        "...##hhhhhh##.x.",
+        "...#kk##kk#...x.",
+        "..#hh#..#hh#..x.",
+        "..####..####..x."
+      ],
+      goblin: [
+        "................",
+        "..##........##..",
+        ".#EE#..##..#EE#.",
+        "#EEEE##ee##EEEE#",
+        "#EEEEeeeeeeEEEE#",
+        ".#eERRReeRRRe#..",
+        "..#ee##ee##e#...",
+        "...#eeeeee#.....",
+        "....#eeee#...hh.",
+        "...#oooooo#.#mh#",
+        "..#e#oooo#e#xm##",
+        "..#e#oooo#e#xx..",
+        "...#ee##ee#.xx..",
+        "...#ee##ee#.xx..",
+        "..#ee#..#ee#xx..",
+        "..####..####...."
+      ],
+      skeleton: [
+        ".....####.......",
+        "....#wwww#......",
+        "...#w#ww#w#.....",
+        "...#k#ww#k#.....",
+        "...#wwwwww#.....",
+        "....#w#w#w#.....",
+        ".....####.......",
+        "..#h#wwww#h#....",
+        ".#hh#w##w#hh#...",
+        ".#hh#wwww#hh#h..",
+        "..#h#w##w#h#wh#.",
+        "...#wwwwww#.wh#.",
+        "....#w##w#..wh#.",
+        "....#w##w#..G##.",
+        "...#ww##ww#..##.",
+        "...###..###....."
+      ],
+      reaper: [
+        "......####......",
+        ".....#kkkk#.....",
+        "....#kRRkk#.....",
+        "...#kR##Rkk#....",
+        "...#kkkkkkk#.hh.",
+        "...#w#ww#w##hhhh",
+        "....#w##w#..#sh#",
+        "...#kkkkkk#..x..",
+        "..#p#kkkk#p#.x..",
+        ".#pp#kkkk#pp#x..",
+        ".#pp#kkkk#pp#x..",
+        "..#p#kkkk#p#.x..",
+        "...#kk##kk#..x..",
+        "...#kk##kk#..x..",
+        "..#kk#..#kk#.x..",
+        "..####..####.x.."
+      ],
+      slime: [
+        "................",
+        "................",
+        "......####......",
+        "....##LLLE##....",
+        "...#LLLEEEEE#...",
+        "..#LLEEEEEEEE#..",
+        ".#LEEE##EE##EE#.",
+        "#LEEEE##EE##EEE#",
+        "#LEEEEEEEEEEEEE#",
+        "#LEEEEEEEEEEEEE#",
+        "#EEEEEEEEEEEEEE#",
+        "#EEEEEEEEEEEEEE#",
+        ".#eeeeeeeeeeee#.",
+        "..#eeeeeeeeee#..",
+        "...##########...",
+        "................"
+      ]
+    };
+
+    const canvas = document.getElementById('cv');
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+
+    // Draw grid of characters
+    const names = Object.keys(SPRITES);
+    const scale = 3.5;
+    const spacingX = 76;
+    const spacingY = 90;
+
+    names.forEach((name, idx) => {
+      const col = idx % 8;
+      const row = Math.floor(idx / 8);
+      const startX = 20 + col * spacingX;
+      const startY = 30 + row * spacingY;
+
+      const matrix = SPRITES[name];
+
+      // Draw drop shadow
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+      ctx.beginPath();
+      ctx.ellipse(startX + 8 * scale, startY + 16 * scale, 8 * scale, 3 * scale, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Render pixels
+      for (let r = 0; r < 16; r++) {
+        for (let c = 0; c < 16; c++) {
+          const ch = matrix[r][c];
+          const color = PALETTE[ch];
+          if (color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(startX + c * scale, startY + r * scale, Math.ceil(scale), Math.ceil(scale));
+          }
+        }
+      }
+
+      // Draw label
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(name.toUpperCase(), startX + 8 * scale, startY + 16 * scale + 18);
+    });
+  </script>
+</body>
+</html>

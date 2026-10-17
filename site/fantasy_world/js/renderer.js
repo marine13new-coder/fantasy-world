@@ -17,14 +17,14 @@ class WorldRenderer {
     this.ctx.imageSmoothingEnabled = false;
     this.minimapCtx.imageSmoothingEnabled = false;
 
-    this.bakeScale = 4; // 타일당 4픽셀 정밀 베이킹 (960x600 타일 -> 3840 x 2400: 4096px GPU/모바일 텍스처 한계 완전 호환 & 60 FPS 극대화)
+    this.bakeScale = 1; // 3840 x 2400 1:1 베이킹 (GPU 4096px 텍스처 한계 완전 호환 & 60 FPS 보장)
     this.terrainCanvas = document.createElement('canvas');
     this.terrainCanvas.width = world.width * this.bakeScale;
     this.terrainCanvas.height = world.height * this.bakeScale;
 
     this.minimapBaseCanvas = document.createElement('canvas');
-    this.minimapBaseCanvas.width = world.width;
-    this.minimapBaseCanvas.height = world.height;
+    this.minimapBaseCanvas.width = Math.round(world.width / 10);
+    this.minimapBaseCanvas.height = Math.round(world.height / 10);
 
     this.bakeStaticTerrain();
   }
@@ -35,350 +35,54 @@ class WorldRenderer {
     tCtx.imageSmoothingEnabled = false;
     mCtx.imageSmoothingEnabled = false;
 
-    const s = this.bakeScale;
-    const { width, height, tiles, deco } = this.world;
+    const { width, height, tiles } = this.world;
 
-    // Fast deterministic integer hash for procedural micro-texture variations
-    function tHash(tx, ty) {
-      let h = (tx * 374761393) ^ (ty * 668265263);
-      h = (h ^ (h >>> 13)) * 1274126177;
-      return (h ^ (h >>> 16)) >>> 0;
+    // 타일별 32비트 Little-Endian 색상 (0xAABBGGRR) 사전 계산
+    const colorMap32 = new Uint32Array(32);
+    const miniColorMap32 = new Uint32Array(32);
+
+    for (let i = 0; i < 32; i++) {
+      const info = TILE_INFO[i] || TILE_INFO[TILE.GRASS];
+      const hex = (info.color || '#386934').replace('#', '');
+      const r = parseInt(hex.substring(0, 2), 16) || 0;
+      const g = parseInt(hex.substring(2, 4), 16) || 0;
+      const b = parseInt(hex.substring(4, 6), 16) || 0;
+      colorMap32[i] = (255 << 24) | (b << 16) | (g << 8) | r;
+
+      const mHex = (info.miniColor || info.color || '#386934').replace('#', '');
+      const mr = parseInt(mHex.substring(0, 2), 16) || 0;
+      const mg = parseInt(mHex.substring(2, 4), 16) || 0;
+      const mb = parseInt(mHex.substring(4, 6), 16) || 0;
+      miniColorMap32[i] = (255 << 24) | (mb << 16) | (mg << 8) | mr;
     }
 
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        const idx = y * width + x;
-        const t = tiles[idx];
-        const info = TILE_INFO[t] || TILE_INFO[TILE.GRASS];
-        const px = x * s;
-        const py = y * s;
-        const h = tHash(x, y);
+    // 1. 초대형 월드 지형 캔버스 (3840 x 2400) 10ms 초고속 버퍼 베이킹
+    const tImgData = tCtx.createImageData(width, height);
+    const tData32 = new Uint32Array(tImgData.data.buffer);
+    const totalTiles = width * height;
+    for (let i = 0; i < totalTiles; i++) {
+      tData32[i] = colorMap32[tiles[i]] || colorMap32[TILE.GRASS];
+    }
+    tCtx.putImageData(tImgData, 0, 0);
 
-        // 1. 기본 베이스 픽셀 컬러
-        tCtx.fillStyle = info.color;
-        tCtx.fillRect(px, py, s, s);
+    // 2. 미니맵 베이스 캔버스 (384 x 240) 초경량 래스터라이징
+    const mw = this.minimapBaseCanvas.width;
+    const mh = this.minimapBaseCanvas.height;
+    const mImgData = mCtx.createImageData(mw, mh);
+    const mData32 = new Uint32Array(mImgData.data.buffer);
+    const stepX = width / mw;
+    const stepY = height / mh;
 
-        // 인접 4방향 타일 감지 (Autotiling Edge Sensing)
-        const tU = y > 0 ? tiles[(y - 1) * width + x] : t;
-        const tD = y < height - 1 ? tiles[(y + 1) * width + x] : t;
-        const tL = x > 0 ? tiles[y * width + (x - 1)] : t;
-        const tR = x < width - 1 ? tiles[y * width + (x + 1)] : t;
-
-        // 2. 고해상도 픽셀아트 타일 텍스처 & 오토타일링 블렌딩
-        if (t === TILE.DEEP_WATER) {
-          // [심해/대해양] 깊은 해저 심연 그라데이션, 미세 파도 글리터
-          tCtx.fillStyle = '#061320';
-          tCtx.fillRect(px + 1, py + 1, 3, 1);
-          tCtx.fillRect(px + 4, py + 5, 3, 1);
-          if (h % 7 === 0) {
-            tCtx.fillStyle = 'rgba(56, 189, 248, 0.35)';
-            tCtx.fillRect(px + (h % 5), py + ((h >> 3) % 5), 2, 1);
-          }
-        } else if (t === TILE.WATER) {
-          // [연안/강] 잔잔한 청색 물결 + 심해 경계선 섀도우
-          tCtx.fillStyle = '#1e40af';
-          tCtx.fillRect(px, py + 2, s - 1, 1);
-          tCtx.fillRect(px + 1, py + 6, s - 2, 1);
-          tCtx.fillStyle = 'rgba(147, 197, 253, 0.40)';
-          tCtx.fillRect(px + (h % 4) + 1, py + 3, 2, 1);
-
-          // 심해와 접하는 경계면에 드롭오프 해구 암영 라인
-          tCtx.fillStyle = '#0f2b5c';
-          if (tU === TILE.DEEP_WATER) tCtx.fillRect(px, py, s, 1);
-          if (tD === TILE.DEEP_WATER) tCtx.fillRect(px, py + s - 1, s, 1);
-          if (tL === TILE.DEEP_WATER) tCtx.fillRect(px, py, 1, s);
-          if (tR === TILE.DEEP_WATER) tCtx.fillRect(px + s - 1, py, 1, s);
-        } else if (t === TILE.SAND) {
-          // [해변/모래사장] 고운 모래언덕 결 + 물과 만나는 축축한 모래 띠
-          tCtx.fillStyle = '#b45309';
-          tCtx.fillRect(px + 1, py + 3, s - 2, 1);
-          tCtx.fillRect(px + 2, py + 7, s - 4, 1);
-
-          // 모래사장 조개껍질 & 자갈 도트
-          if (h % 4 === 0) {
-            tCtx.fillStyle = '#ffffff';
-            tCtx.fillRect(px + (h % 6) + 1, py + ((h >> 4) % 6) + 1, 1, 1);
-          } else if (h % 4 === 1) {
-            tCtx.fillStyle = '#fde68a';
-            tCtx.fillRect(px + (h % 6) + 1, py + ((h >> 4) % 6) + 1, 1.5, 1);
-          }
-
-          // 물과 접하는 해변선: 촉촉한 젖은 모래 & 포말 라인
-          tCtx.fillStyle = '#78350f';
-          if (tU === TILE.WATER || tU === TILE.DEEP_WATER) {
-            tCtx.fillRect(px, py, s, 1);
-            tCtx.fillStyle = 'rgba(240, 249, 255, 0.6)';
-            tCtx.fillRect(px, py + 1, s, 1);
-          }
-          if (tD === TILE.WATER || tD === TILE.DEEP_WATER) {
-            tCtx.fillStyle = '#78350f';
-            tCtx.fillRect(px, py + s - 1, s, 1);
-            tCtx.fillStyle = 'rgba(240, 249, 255, 0.6)';
-            tCtx.fillRect(px, py + s - 2, s, 1);
-          }
-          if (tL === TILE.WATER || tL === TILE.DEEP_WATER) {
-            tCtx.fillStyle = '#78350f';
-            tCtx.fillRect(px, py, 1, s);
-            tCtx.fillStyle = 'rgba(240, 249, 255, 0.6)';
-            tCtx.fillRect(px + 1, py, 1, s);
-          }
-          if (tR === TILE.WATER || tR === TILE.DEEP_WATER) {
-            tCtx.fillStyle = '#78350f';
-            tCtx.fillRect(px + s - 1, py, 1, s);
-            tCtx.fillStyle = 'rgba(240, 249, 255, 0.6)';
-            tCtx.fillRect(px + s - 2, py, 1, s);
-          }
-        } else if (t === TILE.GRASS || t === TILE.MEADOW) {
-          // [초원 & 평야] 4가지 자연스러운 풀잎 & 야생화 도트 변이
-          const v = h % 4;
-          if (v === 0) {
-            // 풀잎 클러스터
-            tCtx.fillStyle = '#15803d';
-            tCtx.fillRect(px + 2, py + 2, 1, 2);
-            tCtx.fillRect(px + 5, py + 5, 1, 2);
-            tCtx.fillStyle = '#4ade80';
-            tCtx.fillRect(px + 3, py + 2, 1, 1);
-          } else if (v === 1) {
-            // 노란 들꽃 (Buttercup)
-            tCtx.fillStyle = '#22c55e';
-            tCtx.fillRect(px + 2, py + 4, 1, 2);
-            tCtx.fillStyle = '#facc15';
-            tCtx.fillRect(px + 4, py + 3, 2, 2);
-            tCtx.fillStyle = '#ffffff';
-            tCtx.fillRect(px + 5, py + 3, 1, 1);
-          } else if (v === 2) {
-            // 분홍 야생화 & 클로버
-            tCtx.fillStyle = '#16a34a';
-            tCtx.fillRect(px + 6, py + 3, 1, 2);
-            tCtx.fillStyle = '#f472b6';
-            tCtx.fillRect(px + 3, py + 5, 2, 2);
-          } else {
-            // 짙은 흙 그림자 풀
-            tCtx.fillStyle = '#14532d';
-            tCtx.fillRect(px + 1, py + 3, 2, 1);
-            tCtx.fillRect(px + 4, py + 6, 2, 1);
-          }
-
-          // 모래/가도/물 경계면에 부드러운 풀잎 오버랩 스캘럽 (Edge fringe)
-          tCtx.fillStyle = '#15803d';
-          if (tU === TILE.SAND || tU === TILE.ROAD || tU === TILE.WATER) {
-            tCtx.fillRect(px + 1, py, 2, 1);
-            tCtx.fillRect(px + 5, py, 2, 1);
-          }
-          if (tD === TILE.SAND || tD === TILE.ROAD || tD === TILE.WATER) {
-            tCtx.fillRect(px + 2, py + s - 1, 2, 1);
-            tCtx.fillRect(px + 6, py + s - 1, 2, 1);
-          }
-          if (tL === TILE.SAND || tL === TILE.ROAD || tL === TILE.WATER) {
-            tCtx.fillRect(px, py + 1, 1, 2);
-            tCtx.fillRect(px, py + 5, 1, 2);
-          }
-          if (tR === TILE.SAND || tR === TILE.ROAD || tR === TILE.WATER) {
-            tCtx.fillRect(px + s - 1, py + 2, 1, 2);
-            tCtx.fillRect(px + s - 1, py + 6, 1, 2);
-          }
-        } else if (t === TILE.ROAD) {
-          // [왕국 가도] 고전 JRPG 스타일 인터로킹 조약돌 포장로
-          tCtx.fillStyle = '#5c4d3c';
-          tCtx.fillRect(px, py, s, s);
-
-          // 포장된 4개의 주 조약돌 블록
-          tCtx.fillStyle = '#857560';
-          tCtx.fillRect(px + 1, py + 1, 3, 3);
-          tCtx.fillRect(px + 5, py + 1, 2, 3);
-          tCtx.fillRect(px + 1, py + 5, 3, 2);
-          tCtx.fillRect(px + 5, py + 5, 2, 2);
-
-          // 조약돌 상단 하이라이트
-          tCtx.fillStyle = '#a89882';
-          tCtx.fillRect(px + 1, py + 1, 1, 1);
-          tCtx.fillRect(px + 5, py + 1, 1, 1);
-          tCtx.fillRect(px + 1, py + 5, 1, 1);
-
-          // 이웃 가도와 매끄러운 연속성 연결
-          tCtx.fillStyle = '#857560';
-          if (tU === TILE.ROAD) tCtx.fillRect(px + 2, py, 4, 1);
-          if (tD === TILE.ROAD) tCtx.fillRect(px + 2, py + s - 1, 4, 1);
-          if (tL === TILE.ROAD) tCtx.fillRect(px, py + 2, 1, 4);
-          if (tR === TILE.ROAD) tCtx.fillRect(px + s - 1, py + 2, 1, 4);
-        } else if (t === TILE.MOUNTAIN || t === TILE.SNOW_MOUNTAIN) {
-          // [암벽 / 설산] 입체 3D 크랙과 서쪽 하이라이트 & 동쪽 암영
-          const isSnow = (t === TILE.SNOW_MOUNTAIN);
-          tCtx.fillStyle = isSnow ? '#64748b' : '#3f3f46';
-          tCtx.fillRect(px, py, s, s);
-
-          // 서쪽 채광 하이라이트 능선
-          tCtx.fillStyle = isSnow ? '#f8fafc' : '#94a3b8';
-          tCtx.fillRect(px + 1, py + 1, 3, 2);
-          tCtx.fillRect(px + 2, py + 3, 2, 3);
-
-          // 동쪽 협곡 암영
-          tCtx.fillStyle = '#18181b';
-          tCtx.fillRect(px + 5, py + 2, 2, 4);
-          tCtx.fillRect(px + 4, py + 6, 3, 2);
-        } else if (t === TILE.SNOW) {
-          // [설원] 파우더 스노우와 크리스탈 눈꽃 반사광
-          tCtx.fillStyle = '#e2e8f0';
-          tCtx.fillRect(px, py, s, s);
-          tCtx.fillStyle = '#f8fafc';
-          tCtx.fillRect(px + 1, py + 1, s - 2, s - 2);
-          tCtx.fillStyle = '#38bdf8';
-          if (h % 3 === 0) tCtx.fillRect(px + (h % 5) + 1, py + ((h >> 2) % 5) + 1, 1, 1);
-        } else if (t === TILE.LAVA) {
-          // [용암] 타오르는 마그마 대류와 흑요석 바위 껍질
-          tCtx.fillStyle = '#dc2626';
-          tCtx.fillRect(px, py, s, s);
-          tCtx.fillStyle = '#f97316';
-          tCtx.fillRect(px + 1, py + 1, s - 2, s - 2);
-          tCtx.fillStyle = '#fef08a';
-          tCtx.fillRect(px + (h % 4) + 2, py + ((h >> 2) % 4) + 2, 2, 2);
-          // 굳은 흑요석 껍질 조각
-          tCtx.fillStyle = '#1e293b';
-          tCtx.fillRect(px + (h % 3), py + ((h >> 3) % 3), 2, 1);
-        } else if (t === TILE.BRIDGE) {
-          // [목조 다리] 널빤지 결 & 대못 자국
-          tCtx.fillStyle = '#4a2f18';
-          tCtx.fillRect(px, py, s, s);
-          tCtx.fillStyle = '#855834';
-          tCtx.fillRect(px + 1, py + 1, s - 2, 2);
-          tCtx.fillRect(px + 1, py + 4, s - 2, 2);
-          tCtx.fillStyle = '#29180c';
-          tCtx.fillRect(px + 1, py + 1, 1, 1);
-          tCtx.fillRect(px + s - 2, py + 1, 1, 1);
-        } else if (t === TILE.CASTLE_FLOOR) {
-          // [성채 바닥] 로열 석재 바닥 타일
-          tCtx.fillStyle = '#475569';
-          tCtx.fillRect(px, py, s, s);
-          tCtx.fillStyle = '#94a3b8';
-          tCtx.fillRect(px + 1, py + 1, s - 2, s - 2);
-          tCtx.fillStyle = '#cbd5e1';
-          tCtx.fillRect(px + 2, py + 2, 2, 2);
-        } else if (t === TILE.WALL) {
-          // [성벽] 3D 입체 성곽과 총안구
-          tCtx.fillStyle = '#1e293b';
-          tCtx.fillRect(px, py, s, s);
-          tCtx.fillStyle = '#64748b';
-          tCtx.fillRect(px + 1, py + 1, s - 2, 3);
-          tCtx.fillStyle = '#94a3b8';
-          tCtx.fillRect(px + 1, py + 1, 2, 2);
-          tCtx.fillRect(px + s - 3, py + 1, 2, 2);
-        } else if (t === TILE.DOCK) {
-          // [부두 데크]
-          tCtx.fillStyle = '#54361b';
-          tCtx.fillRect(px, py, s, s);
-          tCtx.fillStyle = '#855831';
-          tCtx.fillRect(px + 1, py + 1, s - 2, 3);
-          tCtx.fillRect(px + 1, py + 5, s - 2, 2);
-        } else if (t === TILE.FARMLAND) {
-          // [경작지/밭] 밭고랑과 연두빛 싹
-          tCtx.fillStyle = '#452b14';
-          tCtx.fillRect(px, py, s, s);
-          tCtx.fillStyle = '#684f2b';
-          tCtx.fillRect(px + 1, py + 1, s - 2, 2);
-          tCtx.fillRect(px + 1, py + 5, s - 2, 2);
-          tCtx.fillStyle = '#84cc16';
-          tCtx.fillRect(px + 3, py + 2, 1, 1);
-          tCtx.fillRect(px + 6, py + 6, 1, 1);
-        } else if (t === TILE.DESERT) {
-          // [사막] 황금 모래언덕
-          tCtx.fillStyle = '#b45309';
-          tCtx.fillRect(px + 1, py + 3, s - 2, 1);
-          tCtx.fillStyle = '#fde68a';
-          tCtx.fillRect(px + 2, py + 2, 2, 1);
-        } else if (t === TILE.CORAL) {
-          // [산호초]
-          tCtx.fillStyle = '#0284c7';
-          tCtx.fillRect(px + 2, py + 2, 2, 2);
-          tCtx.fillStyle = '#f472b6';
-          tCtx.fillRect(px + 5, py + 4, 2, 2);
-        } else if (t === TILE.SWAMP) {
-          // [안개 늪지대] 어두운 늪물과 썩은 이끼 & 맹독성 기포
-          tCtx.fillStyle = '#1c2416';
-          tCtx.fillRect(px, py, s, s);
-          tCtx.fillStyle = '#3a4a2b';
-          tCtx.fillRect(px + 1, py + 1, s - 2, s - 2);
-          tCtx.fillStyle = '#1e3a1f';
-          tCtx.fillRect(px + 2, py + 2, 3, 2);
-          if (h % 3 === 0) {
-            tCtx.fillStyle = '#84cc16'; // 독성 거품
-            tCtx.fillRect(px + (h % 4) + 1, py + ((h >> 2) % 4) + 1, 1, 1);
-          }
-        } else if (t === TILE.TUNDRA) {
-          // [영구동토 툰드라] 서리 맺힌 냉대 지의류 & 동토 크랙
-          tCtx.fillStyle = '#475569';
-          tCtx.fillRect(px, py, s, s);
-          tCtx.fillStyle = '#64748b';
-          tCtx.fillRect(px + 1, py + 1, s - 2, s - 2);
-          tCtx.fillStyle = '#cbd5e1'; // 서리 림
-          tCtx.fillRect(px + 1, py + 1, 2, 1);
-          tCtx.fillRect(px + 3, py + 3, 2, 1);
-          if (h % 2 === 0) {
-            tCtx.fillStyle = '#94a3b8';
-            tCtx.fillRect(px + (h % 4) + 1, py + ((h >> 2) % 4) + 1, 2, 1);
-          }
-        } else if (t === TILE.OBSIDIAN) {
-          // [흑요석 지대] 날카로운 유리질 암반 & 마그마 틈새 붉은 빛
-          tCtx.fillStyle = '#0f172a';
-          tCtx.fillRect(px, py, s, s);
-          tCtx.fillStyle = '#1e293b';
-          tCtx.fillRect(px + 1, py + 1, s - 2, s - 2);
-          tCtx.fillStyle = '#334155';
-          tCtx.fillRect(px + 1, py + 1, 2, 2);
-          if (h % 3 === 0) {
-            tCtx.fillStyle = '#ef4444'; // 흑요석 틈 마그마 열기
-            tCtx.fillRect(px + (h % 4) + 1, py + ((h >> 2) % 4) + 1, 1, 1);
-          }
-        } else if (t === TILE.CRYSTAL_CAVE) {
-          // [비전 수정 광맥] 신비로운 보랏빛 아케인 수정 결정체 & 에테르 광채
-          tCtx.fillStyle = '#3b0764';
-          tCtx.fillRect(px, py, s, s);
-          tCtx.fillStyle = '#6b21a8';
-          tCtx.fillRect(px + 1, py + 1, s - 2, s - 2);
-          tCtx.fillStyle = '#c084fc';
-          tCtx.fillRect(px + 2, py + 1, 2, 4);
-          tCtx.fillStyle = '#f3e8ff';
-          tCtx.fillRect(px + 2, py + 2, 1, 2);
-          if (h % 2 === 0) {
-            tCtx.fillStyle = '#e879f9';
-            tCtx.fillRect(px + 4, py + 3, 1, 1);
-          }
-        } else if (t === TILE.OASIS_WATER) {
-          // [오아시스 에메랄드 담수] 맑고 투명한 에메랄드 물결 & 수련
-          tCtx.fillStyle = '#0f766e';
-          tCtx.fillRect(px, py, s, s);
-          tCtx.fillStyle = '#14b8a6';
-          tCtx.fillRect(px + 1, py + 1, s - 2, s - 2);
-          tCtx.fillStyle = '#5eead4';
-          tCtx.fillRect(px + 2, py + 2, 2, 1);
-          if (h % 3 === 0) {
-            tCtx.fillStyle = '#f472b6'; // 수련 꽃
-            tCtx.fillRect(px + 3, py + 3, 2, 2);
-          }
-        } else if (t === TILE.ELVEN_FOREST) {
-          // [요정림] 청록빛 신성한 숲바닥과 별가루
-          tCtx.fillStyle = '#115e59';
-          tCtx.fillRect(px, py, s, s);
-          tCtx.fillStyle = '#14b8a6';
-          tCtx.fillRect(px + 1, py + 1, s - 2, s - 2);
-          if (h % 2 === 0) {
-            tCtx.fillStyle = '#99f6e4';
-            tCtx.fillRect(px + (h % 4) + 1, py + ((h >> 2) % 4) + 1, 1, 1);
-          }
-        } else if (t === TILE.AUTUMN_WOOD) {
-          // [단풍림] 붉은 낙엽 카펫
-          tCtx.fillStyle = '#7c2d12';
-          tCtx.fillRect(px, py, s, s);
-          tCtx.fillStyle = '#c2410c';
-          tCtx.fillRect(px + 1, py + 1, s - 2, s - 2);
-          tCtx.fillStyle = '#fbbf24';
-          tCtx.fillRect(px + (h % 4) + 1, py + ((h >> 2) % 4) + 1, 2, 1);
-        }
-
-        // 미니맵 픽셀
-        mCtx.fillStyle = info.miniColor;
-        mCtx.fillRect(x, y, 1, 1);
+    for (let my = 0; my < mh; my++) {
+      const ty = Math.floor(my * stepY);
+      const mRow = my * mw;
+      const tRow = ty * width;
+      for (let mx = 0; mx < mw; mx++) {
+        const tx = Math.floor(mx * stepX);
+        mData32[mRow + mx] = miniColorMap32[tiles[tRow + tx]] || miniColorMap32[TILE.GRASS];
       }
     }
+    mCtx.putImageData(mImgData, 0, 0);
   }
 
   render(camera, worldTime, filterCategory, selectedItem, timeSec) {
@@ -1356,6 +1060,14 @@ class WorldRenderer {
     const bw = Math.round(b.w * ts);
     const bh = Math.round(b.h * ts);
     const isNight = worldTime ? (worldTime.hour >= 19 || worldTime.hour < 6) : false;
+
+    // 고품질 픽셀 건축 렌더러 우선 호출
+    if (typeof PixelBuildings !== 'undefined') {
+      if (PixelBuildings.render(ctx, b, px, py, bw, bh, timeSec, isNight)) {
+        return;
+      }
+    }
+
 
     // 1. 발밑 그림자 (Pixel Drop Shadow)
     ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
