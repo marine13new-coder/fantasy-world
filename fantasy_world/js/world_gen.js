@@ -1,12 +1,8 @@
 // ============================================================================
 // world_gen.js - 5대 대륙 초대형 오픈월드 (3840x2400 타일, 9,216,000 타일)
-// [1] 중앙 아테리아 제국 본토 (솔라리스 황도 등 100개 거점)
-// [2] 서부 실바니아 요정림 & 미라주 사막 제국 & 천공 용의 고원 (55개 거점)
-// [3] 북부 노스펠름 혹한 영구동토 대륙 (45개 거점)
-// [4] 남부 드라코니아 화염·용족 대륙 (45개 거점)
-// [5] 동부 신비 & 네크로폴리스 대륙 (35개 거점)
-// [해양] 대양 군도 & 환초 & 해협 (20개 거점)
-// 총 300개 대륙 거점 · 복합 건물 단지 · 정밀 성벽 시스템
+// [젤다의 전설 BotW & 스카이림 스타일] 유기적 다중 갈래길, 오솔길, 산악 고갯길, 
+// 전 대륙 300개 거점 및 자연 도서 지형 카빙 (바다 위 성채 부유 원천 차단),
+// 복합 건물 단지 및 정밀 성벽 시스템
 // ============================================================================
 
 const WORLD_WIDTH = 3840;  // 가로 3,840 타일 (122,880px)
@@ -533,19 +529,19 @@ function generateWorld() {
       // 기온: 북쪽 혹한(-1.1), 남쪽 열대·화산(+1.1)
       macroTemp[mIdx] = (normY - 0.5) * 2.2;
 
-      // 5대 대륙 마스크 거리 계산
-      const dCentral = Math.hypot((normX - 0.50) * 2.4, (normY - 0.50) * 2.8);
-      const dWest = Math.hypot((normX - 0.15) * 2.8, (normY - 0.50) * 1.5);
-      const dNorth = Math.hypot((normX - 0.50) * 1.6, (normY - 0.12) * 5.0);
-      const dSouth = Math.hypot((normX - 0.50) * 1.7, (normY - 0.88) * 5.0);
-      const dEast = Math.hypot((normX - 0.85) * 2.8, (normY - 0.50) * 1.6);
+      // 5대 대륙 마스크 거리 계산 (중앙 대륙을 더욱 풍성하고 광활하게 확장)
+      const dCentral = Math.hypot((normX - 0.50) * 2.0, (normY - 0.50) * 2.4);
+      const dWest    = Math.hypot((normX - 0.16) * 2.6, (normY - 0.50) * 1.6);
+      const dNorth   = Math.hypot((normX - 0.50) * 1.7, (normY - 0.14) * 4.5);
+      const dSouth   = Math.hypot((normX - 0.50) * 1.8, (normY - 0.86) * 4.5);
+      const dEast    = Math.hypot((normX - 0.84) * 2.6, (normY - 0.50) * 1.6);
 
       let elev = 0;
-      elev = Math.max(elev, 1.25 - dCentral * 2.2);
-      elev = Math.max(elev, 1.15 - dWest * 2.4);
-      elev = Math.max(elev, 1.10 - dNorth * 2.6);
-      elev = Math.max(elev, 1.10 - dSouth * 2.6);
-      elev = Math.max(elev, 1.15 - dEast * 2.4);
+      elev = Math.max(elev, 1.35 - dCentral * 1.9);
+      elev = Math.max(elev, 1.20 - dWest * 2.1);
+      elev = Math.max(elev, 1.15 - dNorth * 2.3);
+      elev = Math.max(elev, 1.15 - dSouth * 2.3);
+      elev = Math.max(elev, 1.20 - dEast * 2.1);
 
       // 해협 도서 및 암초 자연 노이즈
       const noise = Math.sin(mx * 0.45) * Math.cos(my * 0.45) * 0.18;
@@ -585,10 +581,10 @@ function generateWorld() {
       const moist = macroMoist[my0 * mw + mx0];
 
       let t = TILE.DEEP_WATER;
-      if (elev > 0.45) {
-        if (elev < 0.48) {
+      if (elev > 0.42) {
+        if (elev < 0.46) {
           t = TILE.WATER;
-        } else if (elev < 0.52) {
+        } else if (elev < 0.50) {
           t = TILE.SAND;
         } else if (temp < -0.45) {
           // 북부 노스펠름 혹한 기후
@@ -600,22 +596,22 @@ function generateWorld() {
           if (elev > 0.88) t = TILE.LAVA;
           else if (elev > 0.75) t = TILE.OBSIDIAN;
           else t = TILE.BADLANDS;
-        } else if (x < 1100 && y > 1200) {
+        } else if (x < 1150 && y > 1150) {
           // 서부 미라주 사막
-          if (elev > 0.75) t = TILE.MOUNTAIN;
+          if (elev > 0.78) t = TILE.MOUNTAIN;
           else if (elev > 0.65) t = TILE.DESERT;
           else t = TILE.DESERT;
-        } else if (x > 2800 && moist > 0.55) {
+        } else if (x > 2750 && moist > 0.52) {
           // 동부 신비 늪지대 & 수정동굴
-          if (elev > 0.78) t = TILE.CRYSTAL_CAVE;
-          else if (elev < 0.58) t = TILE.SWAMP;
+          if (elev > 0.80) t = TILE.CRYSTAL_CAVE;
+          else if (elev < 0.60) t = TILE.SWAMP;
           else t = TILE.DARK_FOREST;
         } else {
           // 중앙 제국 본토 & 서부 요정림
-          if (elev > 0.82) t = TILE.MOUNTAIN;
-          else if (elev > 0.74) t = TILE.HILLS;
-          else if (elev > 0.65) t = (x < 1100) ? TILE.ELVEN_FOREST : TILE.FOREST;
-          else if (elev > 0.58) t = TILE.MEADOW;
+          if (elev > 0.85) t = TILE.MOUNTAIN;
+          else if (elev > 0.76) t = TILE.HILLS;
+          else if (elev > 0.66) t = (x < 1150) ? TILE.ELVEN_FOREST : TILE.FOREST;
+          else if (elev > 0.56) t = TILE.MEADOW;
           else t = TILE.GRASS;
         }
       }
@@ -669,7 +665,45 @@ function generateWorld() {
     settlementMap[s.id] = s;
   });
 
-  // 6. 성벽 보유 거점 (hasWall: true) 석조 성벽 배틀먼트 및 안뜰 광장 카빙
+  // 6. [중요!] 전 대륙 및 해양 거점 자연 도서/대지 지형 카빙 (바다 위 성채 부유 원천 차단)
+  // 해상에 위치한 성채/요새/마을/항구 둘레에 넉넉한 반경의 자연 섬과 모래사장을 확실하게 카빙
+  settlements.forEach(s => {
+    const isWalled = !!s.hasWall;
+    const isSeaSettlement = (s.continent === 'strait');
+    const landRad = isWalled ? Math.max(28, (s.wallRadius || 8) + 16) : (isSeaSettlement ? 22 : 18);
+
+    let baseLandTile = TILE.GRASS;
+    if (s.continent === 'north') baseLandTile = TILE.TUNDRA;
+    else if (s.continent === 'south') baseLandTile = TILE.BADLANDS;
+    else if (s.continent === 'west') baseLandTile = (s.y > 1200) ? TILE.DESERT : TILE.ELVEN_FOREST;
+    else if (s.continent === 'east') baseLandTile = TILE.SWAMP;
+    else if (s.continent === 'strait') baseLandTile = TILE.GRASS;
+
+    for (let dy = -landRad; dy <= landRad; dy++) {
+      for (let dx = -landRad; dx <= landRad; dx++) {
+        const dist = Math.hypot(dx, dy);
+        const tx = s.x + dx;
+        const ty = s.y + dy;
+        if (!inBounds(tx, ty)) continue;
+
+        const curT = tiles[idx(tx, ty)];
+        const isWater = (curT === TILE.DEEP_WATER || curT === TILE.WATER);
+
+        // 물 타일 위에 거점이 놓인 경우 풍성하고 아름다운 자연 섬과 해변으로 전환
+        if (isWater) {
+          if (dist <= landRad - 5) {
+            tiles[idx(tx, ty)] = baseLandTile;
+          } else if (dist <= landRad - 1) {
+            tiles[idx(tx, ty)] = TILE.SAND; // 자연스러운 황금 모래사장
+          } else if (dist <= landRad + 2) {
+            tiles[idx(tx, ty)] = TILE.WATER; // 섬 주변 얕은 바다 연안
+          }
+        }
+      }
+    }
+  });
+
+  // 7. 성벽 보유 거점 (hasWall: true) 석조 성벽 배틀먼트 및 안뜰 광장 카빙
   settlements.forEach(s => {
     if (s.hasWall) {
       const rad = s.wallRadius || 8;
@@ -693,7 +727,7 @@ function generateWorld() {
     }
   });
 
-  // 7. 복합 건물 단지 (Compound Buildings) 생성 - 하나의 건물이 아닌 유기적 마을/성채/군락지
+  // 8. 복합 건물 단지 (Compound Buildings) 생성 - 하나의 건물이 아닌 유기적 마을/성채/군락지
   const buildings = [];
   function addCompoundBuildings(s) {
     const sx = s.x, sy = s.y;
@@ -741,6 +775,25 @@ function generateWorld() {
 
   settlements.forEach(s => addCompoundBuildings(s));
 
+  // 모든 건물 풋프린트 아래 대지 보장 (물 위 부유 100% 방지)
+  buildings.forEach(b => {
+    if (b.type !== 'dock' && b.type !== 'wharf' && b.type !== 'shipyard') {
+      const halfW = Math.ceil(b.w / 2) + 1;
+      const halfH = Math.ceil(b.h / 2) + 1;
+      for (let by = b.y - halfH; by <= b.y + halfH; by++) {
+        for (let bx = b.x - halfW; bx <= b.x + halfW; bx++) {
+          if (inBounds(bx, by)) {
+            const cur = tiles[idx(bx, by)];
+            if (cur === TILE.DEEP_WATER || cur === TILE.WATER) {
+              tiles[idx(bx, by)] = TILE.CASTLE_FLOOR;
+              deco[idx(bx, by)] = 0;
+            }
+          }
+        }
+      }
+    }
+  });
+
   // 거점 중심 타일 보행 가능 보장
   settlements.forEach(s => {
     const cur = tiles[idx(s.x, s.y)];
@@ -750,53 +803,78 @@ function generateWorld() {
     }
   });
 
-  // 8. 도로 가도 연결
-  const roadLinks = [
+  // 9. [젤다 BotW & 스카이림 스타일] 유기적 다중 갈래길 및 횡단 가도 시스템
+  // 고속도로 같은 직선이 아닌, 지형을 따라 굽이치는 굴곡(Meandering)과 다양한 보조 갈래길
+  const rawRoadLinks = [
+    // [중앙 제국 1등급 왕실 주간선 대가도 (Royal Highways)]
     ['solaris', 'bluewave'], ['solaris', 'solhaven'], ['solaris', 'veronia'],
     ['solaris', 'goldenwheat'], ['solaris', 'oakwood'], ['solaris', 'ironforge'],
     ['solaris', 'valor_fort'], ['solaris', 'silverleaf'], ['solaris', 'riverfall'],
     ['solaris', 'stonehaven'], ['solaris', 'windmill_valley'],
-    ['veronia', 'bluewave'], ['veronia', 'goblin_camp'],
-    ['goldenwheat', 'riverfall'], ['goldenwheat', 'windmill_valley'],
-    ['oakwood', 'silverleaf'], ['ironforge', 'solhaven'],
-    ['valor_fort', 'blackwolf_stronghold'], ['stonehaven', 'solhaven'],
-    ['silverleaf', 'stonehaven'], ['riverfall', 'bluewave'],
+
+    // [중앙 제국 2등급 영지 순환로 & 갈래길 (Secondary Regional Loops)]
+    ['veronia', 'bluewave'], ['veronia', 'goblin_camp'], ['veronia', 'highland_keep'],
+    ['goldenwheat', 'riverfall'], ['goldenwheat', 'windmill_valley'], ['goldenwheat', 'amber_meadow'],
+    ['oakwood', 'silverleaf'], ['oakwood', 'greenbriar'], ['ironforge', 'solhaven'],
+    ['ironforge', 'copper_hill'], ['ironforge', 'boulder_quarry'],
+    ['valor_fort', 'blackwolf_stronghold'], ['valor_fort', 'stags_leap'],
+    ['stonehaven', 'solhaven'], ['silverleaf', 'stonehaven'], ['riverfall', 'bluewave'],
+    ['bluewave', 'falcon_perch'], ['solhaven', 'east_meadows'], ['solaris', 'kings_crossing'],
+    ['kings_crossing', 'royal_vineyard'], ['kings_crossing', 'shield_bastion'],
+
+    // [서부 실바니아 요정림 & 사막 대상로 (Caravan Trails & Forest Paths)]
     ['elvenheim', 'fairy_glade'], ['elvenheim', 'breeze_gate'],
-    ['mirage_oasis', 'sphinx_pyramid'], ['mirage_oasis', 'dune_bazaar'],
-    ['mirage_oasis', 'scorpion_canyon'], ['breeze_gate', 'dragon_eyrie'],
+    ['fairy_glade', 'whispering_canopy'], ['mirage_oasis', 'sphinx_pyramid'],
+    ['mirage_oasis', 'dune_bazaar'], ['mirage_oasis', 'scorpion_canyon'],
+    ['dune_bazaar', 'sandstone_citadel'], ['breeze_gate', 'dragon_eyrie'],
+
+    // [북부 노스펠름 혹한 고갯길 (Mountain Passes & Tundra Tracks)]
     ['frost_citadel', 'st_mare'], ['frost_citadel', 'valkyrie_gate'],
     ['frost_citadel', 'orc_stronghold'], ['frost_citadel', 'frostwolf_den'],
+    ['st_mare', 'glacier_port'], ['valkyrie_gate', 'valkyrie_sanctum'],
+
+    // [남부 드라코니아 화산 협곡 가도 (Volcanic Passes & Basalt Roads)]
     ['obsidian_keep', 'obsidian_haven'], ['obsidian_keep', 'magma_underforge'],
     ['obsidian_keep', 'volcano_isle'], ['obsidian_keep', 'dragon_graveyard'],
+    ['obsidian_haven', 'sulfur_spring_harbor'],
+
+    // [동부 신비 & 네크로폴리스 수렁 둑길 (Swamp Boardwalks & Runic Trails)]
     ['obsidian_necropolis', 'whispering_woods'], ['obsidian_necropolis', 'crystal_caverns'],
     ['crystal_caverns', 'mist_haven'], ['mist_haven', 'croc_bayou'],
-    ['dragon_ruins', 'obsidian_necropolis']
+    ['crystal_caverns', 'crystal_refinery'], ['dragon_ruins', 'obsidian_necropolis']
   ];
+  const roadLinks = rawRoadLinks.filter(([a, b]) => settlementMap[a] && settlementMap[b]);
 
-  function carveRoad(fromS, toS) {
-    let curX = fromS.x, curY = fromS.y;
-    const destX = toS.x, destY = toS.y;
-    const maxSteps = Math.ceil(Math.hypot(destX - curX, destY - curY) * 2.2);
-    let step = 0;
+  // 유기적 굴곡 곡선 도로 카빙 함수 (Organic Meandering Spline Carving)
+  function carveOrganicRoad(p0, p1, width = 2.4, meanderAmp = 3.5) {
+    const dist = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+    const steps = Math.ceil(dist * 1.6);
+    const dirX = (p1.x - p0.x) / dist;
+    const dirY = (p1.y - p0.y) / dist;
+    const normX = -dirY;
+    const normY = dirX;
 
-    while ((Math.abs(curX - destX) > 1 || Math.abs(curY - destY) > 1) && step++ < maxSteps) {
-      const dx = destX - curX;
-      const dy = destY - curY;
-      if (Math.abs(dx) > Math.abs(dy)) curX += Math.sign(dx);
-      else curY += Math.sign(dy);
+    const r = Math.ceil(width);
+    for (let s = 0; s <= steps; s++) {
+      const t = s / steps;
+      // 부드러운 자연 사인파 요동으로 인공적인 직선 도로 타파
+      const wobble = Math.sin(t * Math.PI * 3.5) * meanderAmp * Math.sin(t * Math.PI);
+      const cx = Math.round(p0.x + (p1.x - p0.x) * t + normX * wobble);
+      const cy = Math.round(p0.y + (p1.y - p0.y) * t + normY * wobble);
 
-      for (let oy = -1; oy <= 1; oy++) {
-        for (let ox = -1; ox <= 1; ox++) {
-          const rx = curX + ox;
-          const ry = curY + oy;
-          if (!inBounds(rx, ry)) continue;
-          const ct = tiles[idx(rx, ry)];
-          if (ct === TILE.WATER || ct === TILE.DEEP_WATER) {
-            tiles[idx(rx, ry)] = TILE.BRIDGE;
-            deco[idx(rx, ry)] = 0;
-          } else if (ct !== TILE.BRIDGE && ct !== TILE.CASTLE_FLOOR && ct !== TILE.DOCK && ct !== TILE.WALL) {
-            tiles[idx(rx, ry)] = TILE.ROAD;
-            deco[idx(rx, ry)] = 0;
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          if (Math.hypot(dx, dy) <= width) {
+            const rx = cx + dx, ry = cy + dy;
+            if (!inBounds(rx, ry)) continue;
+            const cur = tiles[idx(rx, ry)];
+            if (cur === TILE.WATER || cur === TILE.DEEP_WATER) {
+              tiles[idx(rx, ry)] = TILE.BRIDGE;
+              deco[idx(rx, ry)] = 0;
+            } else if (cur !== TILE.BRIDGE && cur !== TILE.CASTLE_FLOOR && cur !== TILE.DOCK && cur !== TILE.WALL) {
+              tiles[idx(rx, ry)] = TILE.ROAD;
+              deco[idx(rx, ry)] = 0;
+            }
           }
         }
       }
@@ -805,11 +883,14 @@ function generateWorld() {
 
   for (const [aId, bId] of roadLinks) {
     if (settlementMap[aId] && settlementMap[bId]) {
-      carveRoad(settlementMap[aId], settlementMap[bId]);
+      const sA = settlementMap[aId];
+      const sB = settlementMap[bId];
+      const isMajor = (sA.type === 'capital' || sB.type === 'capital' || sA.type === 'castle' || sB.type === 'castle');
+      carveOrganicRoad(sA, sB, isMajor ? 2.6 : 2.0, isMajor ? 4.0 : 5.5);
     }
   }
 
-  // 9. 해상 무역 항로
+  // 10. 해상 무역 항로
   const seaRoutes = [
     { fromId: 'bluewave', toId: 'lone_beacon', name: '황금해협 북부 항로' },
     { fromId: 'lone_beacon', toId: 'elvenheim', name: '등대-엘븐하임 항로' },
@@ -827,7 +908,7 @@ function generateWorld() {
     { fromId: 'solhaven', toId: 'kraken_abyss', name: '심연 크라켄 위험항로' }
   ];
 
-  // 10. 농경지, 부두/낚시터, 광물 노드 생성
+  // 11. 농경지, 부두/낚시터, 광물 노드 생성
   const farmPlots = [];
   const farmSettlements = ['goldenwheat', 'amber_meadow', 'sunflower_valley', 'royal_vineyard'];
   farmSettlements.forEach(fid => {
@@ -882,7 +963,7 @@ function generateWorld() {
   }
 
   const elapsed = (typeof performance !== 'undefined') ? (performance.now() - t0).toFixed(1) : (Date.now() - t0);
-  console.log(`[WorldGenerator] 3840x2400 세계관 생성 완료: ${settlements.length}개 거점, ${buildings.length}개 복합 건축물, 소요시간: ${elapsed}ms`);
+  console.log(`[WorldGenerator] 3840x2400 세계관 생성 완료: ${settlements.length}개 거점, ${buildings.length}개 복합 건축물, ${roadLinks.length}개 유기적 다중 갈래길, 소요시간: ${elapsed}ms`);
 
   return {
     width: WORLD_WIDTH,

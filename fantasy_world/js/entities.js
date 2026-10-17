@@ -3008,12 +3008,14 @@ class EntityManager {
           const pair = links[Math.floor(Math.random() * links.length)];
           const otherId = pair[0] === e.homeId ? pair[1] : pair[0];
           const other = this.world.settlementMap[otherId];
-          const ratio = other.faction === 'monster' ? 0.55 : (0.3 + Math.random() * 0.5);
-          e.targetX = home.x + (other.x - home.x) * ratio + (Math.random() - 0.5) * 4;
-          e.targetY = home.y + (other.y - home.y) * ratio + (Math.random() - 0.5) * 4;
-          e.state = 'patrol';
-          e.thought = `🛡️ ${home.name} ↔ ${other.name} 가도 순찰 중`;
-          return;
+          if (other) {
+            const ratio = other.faction === 'monster' ? 0.55 : (0.3 + Math.random() * 0.5);
+            e.targetX = home.x + (other.x - home.x) * ratio + (Math.random() - 0.5) * 4;
+            e.targetY = home.y + (other.y - home.y) * ratio + (Math.random() - 0.5) * 4;
+            e.state = 'patrol';
+            e.thought = `🛡️ ${home.name} ↔ ${other.name} 가도 순찰 중`;
+            return;
+          }
         }
       }
       const angle = Math.random() * Math.PI * 2;
