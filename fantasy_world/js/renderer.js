@@ -420,6 +420,9 @@ class WorldRenderer {
     // 9.6. ⚡ 플레이어 기 모으기 차징 오라 (Charge Aura)
     this.drawPlayerChargeAura(ctx, ts, timeSec);
 
+    // 9.7. 🏹 원거리 활 차징 조준 탄도 궤적선 (Bow Aiming Trajectory)
+    this.drawAimingTrajectory(ctx, this.entityMgr.player, ts, timeSec);
+
     // 10. 투사체 (관통 화살, 대포알, 마법탄)
     for (const p of this.entityMgr.projectiles) {
       if (p.isArrow) {
@@ -5004,13 +5007,12 @@ class WorldRenderer {
     ctx.restore();
   }
 
-  // 💎 [2.3] 다이아몬드 코스틱 굴절광 (Dynamic Water Caustics Shimmer - Optimized)
+  // 💎 [2.3] 다이아몬드 코스틱 굴절광 (Dynamic Water Caustics Shimmer - High Resolution Dual Layer)
   drawWaterCaustics(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec) {
     if (!this.world || !this.world.tiles) return;
     const tiles = this.world.tiles;
     const width = this.world.width;
     ctx.save();
-    ctx.fillStyle = 'rgba(224, 242, 254, 0.35)';
 
     for (let ty = minTy; ty <= maxTy; ty += 2) {
       for (let tx = minTx; tx <= maxTx; tx += 2) {
@@ -5020,15 +5022,82 @@ class WorldRenderer {
           const py = ty * ts;
           const w1 = Math.sin(timeSec * 2.2 + tx * 0.85 + ty * 0.45);
           const w2 = Math.cos(timeSec * 1.7 - tx * 0.55 + ty * 0.95);
-          if (w1 + w2 > 0.88) {
+          if (w1 + w2 > 0.82) {
             const cx = px + (w1 * 0.5 + 0.5) * (ts - 6);
             const cy = py + (w2 * 0.5 + 0.5) * (ts - 6);
+
+            // 1층: 시안 수면 굴절 코스틱
+            ctx.fillStyle = 'rgba(186, 230, 253, 0.45)';
             ctx.fillRect(Math.round(cx), Math.round(cy), 4, 2);
             ctx.fillRect(Math.round(cx + 1), Math.round(cy - 1), 2, 4);
+
+            // 2층: 얕은 물 햇살 황금빛 윤슬 (Shallow Sunlight Ribbons)
+            if (t === 1) {
+              ctx.fillStyle = 'rgba(254, 240, 138, 0.32)';
+              ctx.fillRect(Math.round(cx - 1), Math.round(cy), 2, 1);
+              ctx.fillRect(Math.round(cx + 1), Math.round(cy + 1), 1, 2);
+            }
           }
         }
       }
     }
+    ctx.restore();
+  }
+
+  // 🏹 [9.7] 원거리 활 차징 조준 탄도 궤적선 (Bow Aiming Trajectory & Reticle)
+  drawAimingTrajectory(ctx, p, ts, timeSec) {
+    if (!p || !p.isCharging || p.weaponMode !== 'ranged') return;
+
+    let targetX = p.x;
+    let targetY = p.y;
+    if (this.mouseWorldTile) {
+      targetX = this.mouseWorldTile.x + 0.5;
+      targetY = this.mouseWorldTile.y + 0.5;
+    }
+    let dx = targetX - p.x;
+    let dy = targetY - p.y;
+    if (Math.hypot(dx, dy) < 0.5) {
+      if (p.facing === 'left') dx = -1;
+      else if (p.facing === 'right') dx = 1;
+      else if (p.facing === 'up') dy = -1;
+      else dy = 1;
+    }
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = dx / len;
+    const ny = dy / len;
+    const trajDist = 18.0;
+
+    const startX = Math.round(p.x * ts);
+    const startY = Math.round(p.y * ts);
+    const endX = Math.round((p.x + nx * trajDist) * ts);
+    const endY = Math.round((p.y + ny * trajDist) * ts);
+
+    ctx.save();
+
+    // 1. 점선 조준 궤적선 (Dotted glowing laser guide)
+    ctx.strokeStyle = p.chargeMaxReached ? '#fde047' : '#38bdf8';
+    ctx.lineWidth = 1.6;
+    ctx.setLineDash([4, 6]);
+    ctx.lineDashOffset = -timeSec * 35;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+
+    // 2. 조준점 십자선 (Crosshair Target Reticle)
+    const retX = Math.round((p.x + nx * Math.min(len, trajDist)) * ts);
+    const retY = Math.round((p.y + ny * Math.min(len, trajDist)) * ts);
+    const retR = 7 + Math.sin(timeSec * 12) * 2;
+
+    ctx.setLineDash([]);
+    ctx.strokeStyle = p.chargeMaxReached ? '#fde047' : '#ffffff';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.arc(retX, retY, retR, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = p.chargeMaxReached ? '#facc15' : '#38bdf8';
+    ctx.fillRect(retX - 1, retY - 1, 3, 3);
     ctx.restore();
   }
 

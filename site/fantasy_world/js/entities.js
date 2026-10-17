@@ -437,20 +437,36 @@ class EntityManager {
     });
   }
 
-  // 🌿 상호작용형 픽셀 풀잎 파티클 (Interactive Grass Blades & Foliage Debris)
-  addGrassDebris(x, y) {
+  // 🌿 상호작용형 픽셀 풀잎 및 꽃잎/단풍 파티클 (Interactive Foliage & Petals)
+  addGrassDebris(x, y, tile = 1) {
     if (!this.grassLeaves) this.grassLeaves = [];
-    if (this.grassLeaves.length > 90) this.grassLeaves.shift();
+    if (this.grassLeaves.length > 110) this.grassLeaves.shift();
+
+    let primaryColor = '#4ade80';
+    let secondaryColor = '#16a34a';
+
+    // 꽃밭 초원 (Meadow) -> 핑크/라벤더 꽃잎 흩날림
+    if (tile === 2) {
+      primaryColor = Math.random() < 0.5 ? '#f472b6' : '#fb7185';
+      secondaryColor = '#fde047';
+    } else if (tile === 24) { // 단풍 숲 -> 단풍 낙엽
+      primaryColor = '#ea580c';
+      secondaryColor = '#dc2626';
+    } else if (tile === 11 || tile === 12) { // 설산/툰드라 -> 눈꽃 파편
+      primaryColor = '#f8fafc';
+      secondaryColor = '#e0f2fe';
+    }
+
     for (let i = 0; i < 2; i++) {
       this.grassLeaves.push({
-        x: x + (Math.random() - 0.5) * 0.7,
-        y: y + (Math.random() - 0.5) * 0.7,
-        vx: (Math.random() - 0.5) * 1.2,
-        vy: -0.6 - Math.random() * 0.8,
-        color: Math.random() < 0.5 ? '#4ade80' : '#16a34a',
+        x: x + (Math.random() - 0.5) * 0.75,
+        y: y + (Math.random() - 0.5) * 0.75,
+        vx: (Math.random() - 0.5) * 1.5,
+        vy: -0.8 - Math.random() * 1.0,
+        color: Math.random() < 0.5 ? primaryColor : secondaryColor,
         age: 0,
-        duration: 0.65 + Math.random() * 0.45,
-        size: 1.6 + Math.random() * 1.4
+        duration: 0.75 + Math.random() * 0.5,
+        size: 1.8 + Math.random() * 1.5
       });
     }
   }
@@ -2704,6 +2720,53 @@ class EntityManager {
     }
   }
 
+  // ⚡ 공중 연격 & 투구 깨기 (Aerial Helm Breaker Downward Slam)
+  playerPerformHelmBreaker(p, target) {
+    if (!p) p = this.spawnOrGetPlayer();
+    p.isAttacking = true;
+    p.attackAnimTimer = 0.38;
+    p.attackCooldown = 0.45;
+    p.airborneTimer = 0.38;
+    p.airborneHeight = 20;
+
+    // 공중 도약 후 수직 파멸 강타
+    const slamDmg = Math.round((p.atk || 25) * 2.85 * (1.1 + Math.random() * 0.25));
+    target.airborneTimer = 0;
+    target.airborneHeight = 0;
+    target.hp -= slamDmg;
+    target.hitTimer = 0.40;
+    target.stunTimer = 1.6; // 지면에 처박히며 1.6초 무방비 기절
+
+    // 지면 크레이터 균열 & 충격파 & 검기 파편
+    this.addShockwave(target.x, target.y, 4.8, '#facc15', 0.55);
+    this.addSlashArc(target.x, target.y, 3.5, -Math.PI * 0.5, Math.PI * 0.5, '#ffffff', 0.35);
+    this.addHitSparks(target.x, target.y, '#fde047', 24);
+    this.addBloodDecal(target.x, target.y, '#991b1b', 2.8, target.hp <= 0 ? 6 : 3);
+    this.addFloatingText(target.x, target.y - 1.5, `⚡ [HELM BREAKER!] -${slamDmg} (투구깨기)`, '#fde047', 1.8);
+
+    if (this.camera) {
+      this.camera.shake = 18;
+      this.camera.screenFreeze = 0.08;
+      this.camera.zoomPulse = 1.25;
+    }
+    if (window.renderer) {
+      window.renderer.screenFlashTimer = 0.08;
+      window.renderer.screenFlashColor = '#fef08a';
+    }
+    if (typeof audioMgr !== 'undefined') {
+      audioMgr.playSword();
+      audioMgr.playMeteor();
+    }
+
+    if (target.hp <= 0) {
+      p.kills = (p.kills || 0) + 1;
+      this.addDeadRemains(target.x, target.y, target.monsterType || target.role, target.scale);
+      this.gainPlayerExp(target.role === 'dragon' ? 180 : 70);
+      this.spawnLootDrop(target.x, target.y, { itemType: 'gold', name: '골드 주머니', icon: '🪙', gold: target.gold || 60, color: '#facc15' });
+    }
+    return true;
+  }
+
   // ⚔️ 3단 연속 콤보 공격 시스템 (1타 신속베기 -> 2타 어퍼크로스 -> 3타 360도 회전베기 피니셔)
   playerPerformAttack(p, target = null) {
     if (!p) p = this.spawnOrGetPlayer();
@@ -2712,6 +2775,11 @@ class EntityManager {
     // 0순위: 인근 처형 가능 대상(canExecute)이 있을 시 즉시 일격처형(Glory Kill) 발동
     if (this.checkExecutionTrigger(p)) {
       return;
+    }
+
+    // 0.5순위: 대상이 공중에 떠있는 경우(Airborne) 즉시 공중 연격 헬름 브레이커 발동!
+    if (target && target.airborneTimer > 0) {
+      return this.playerPerformHelmBreaker(p, target);
     }
 
     const now = Date.now();
@@ -4336,8 +4404,8 @@ class EntityManager {
       if (p.footstepDist >= 0.72) {
         p.footstepDist = 0;
         this.addFootprint(p.x, p.y, Math.atan2(p.vy, p.vx), p.isShip ? 'wake' : (p.mount || 'human'), curTile);
-        if (curTile === 1 || curTile === 2 || curTile === 3) {
-          this.addGrassDebris(p.x, p.y);
+        if (curTile === 1 || curTile === 2 || curTile === 3 || curTile === 24 || curTile === 11 || curTile === 12) {
+          this.addGrassDebris(p.x, p.y, curTile);
         }
       }
     }
