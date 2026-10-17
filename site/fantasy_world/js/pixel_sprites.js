@@ -4451,6 +4451,7 @@
         let slashColor = '#f8fafc';
         let glowColor = 'rgba(255, 255, 255, 0.4)';
         if (weaponId.includes('flame') || weaponId.includes('magma')) { slashColor = '#f97316'; glowColor = 'rgba(249, 115, 22, 0.6)'; }
+        else if (weaponId.includes('thunder') || weaponId.includes('lightning') || weaponId.includes('zeus') || weaponId.includes('storm')) { slashColor = '#fef08a'; glowColor = 'rgba(56, 189, 248, 0.85)'; }
         else if (weaponId.includes('mirage') || weaponId.includes('scimitar') || weaponId.includes('sand') || weaponId.includes('djinn')) { slashColor = '#fde68a'; glowColor = 'rgba(245, 158, 11, 0.75)'; }
         else if (weaponId.includes('excalibur') || weaponId.includes('frost')) { slashColor = '#38bdf8'; glowColor = 'rgba(56, 189, 248, 0.6)'; }
         else if (weaponId.includes('poison') || weaponId.includes('nature')) { slashColor = '#4ade80'; glowColor = 'rgba(74, 222, 128, 0.6)'; }
@@ -4474,6 +4475,23 @@
         ctx.beginPath();
         ctx.arc(arcCenter, py - 10 * sc - bounce, 16 * sc, startAng, endAng, isLeft);
         ctx.stroke();
+
+        // ⚡ 제우스 신성 뇌전 지그재그 방전 이펙트 (Zeus Divine Thunderbolt Discharge)
+        if (weaponId.includes('thunder') || weaponId.includes('lightning') || weaponId.includes('zeus') || weaponId.includes('storm') || (e.role === 'player' && e.comboStep === 4)) {
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 1.6 * sc;
+          ctx.beginPath();
+          const midAng = (startAng + endAng) / 2;
+          ctx.moveTo(arcCenter + Math.cos(startAng) * 16 * sc, py - 10 * sc + Math.sin(startAng) * 16 * sc);
+          ctx.lineTo(arcCenter + Math.cos(midAng - 0.2) * 21 * sc, py - 10 * sc + Math.sin(midAng - 0.2) * 21 * sc);
+          ctx.lineTo(arcCenter + Math.cos(midAng + 0.2) * 15 * sc, py - 10 * sc + Math.sin(midAng + 0.2) * 15 * sc);
+          ctx.lineTo(arcCenter + Math.cos(endAng) * 18 * sc, py - 10 * sc + Math.sin(endAng) * 18 * sc);
+          ctx.stroke();
+
+          // 뇌전 스파크
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(arcCenter + Math.cos(midAng) * 20 * sc, py - 10 * sc + Math.sin(midAng) * 20 * sc, 2 * sc, 2 * sc);
+        }
 
         // 🏜️ 환영의 시미터 초승달 미라주 잔상 (Curved Scimitar Mirage Afterimage Flurry)
         if (weaponId.includes('mirage') || weaponId.includes('scimitar') || weaponId.includes('sand') || weaponId.includes('djinn') || (e.role === 'player' && e.comboStep >= 2)) {

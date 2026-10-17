@@ -620,6 +620,16 @@ function createSettlementList() {
   add('lapis_lazuli_gem_forge', '청금석 비전 보석 대장간', 'lair', 'mirage', 3280, 1860, 'dwarf', true, 10);
   add('astral_dune_sphinx_monolith', '천체 사구 스핑크스 수호 거석', 'town', 'mirage', 3390, 1920, 'beastkin', false, 8);
 
+  // =========================================================================
+  // 18. THE MOUNT OLYMPUS THUNDER PEAK & TITAN COLOSSEUM (천둥의 올림포스 제우스 판테온 & 신들의 티탄 검투장 대륙)
+  // =========================================================================
+  add('olympus_zeus_throne_pantheon', '올림포스 제우스 천공 옥좌 판테온', 'capital', 'olympus', 650, 190, 'celestial', true, 16);
+  add('titan_colosseum_grand_arena', '티탄 천공 검투장 대투기장', 'castle', 'olympus', 520, 240, 'crusader', true, 14);
+  add('pegasus_aether_skydock_port', '페가수스 에테르 비행선 계류 항만', 'port', 'olympus', 780, 220, 'human', false, 9);
+  add('hephaestus_divine_thunder_forge', '헤파이토스 신성 번개 제련 대장간', 'lair', 'olympus', 710, 130, 'dwarf', true, 11);
+  add('athena_wisdom_marble_academy', '아테나 지혜의 대리석 학술 아카데미', 'town', 'olympus', 580, 150, 'elf', false, 8);
+  add('delphi_prophecy_oracle_spring', '델포이 신탁의 신성 샘터 성역', 'temple', 'olympus', 460, 180, 'beastkin', true, 10);
+
   return list;
 }
 
@@ -953,6 +963,18 @@ function generateWorld() {
           continue;
         }
 
+        // 천둥의 올림포스 판테온 & 신들의 티탄 검투장 전용 고원 지형 카빙
+        if (s.continent === 'olympus') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.CASTLE_FLOOR : TILE.ROAD; // 신성 백옥 대리석 열주 광장 & 황금 보도
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.SNOW : TILE.HILLS; // 올림포스 만년설 고원 & 성스러운 구릉지
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.MOUNTAIN : TILE.SNOW; // 신들의 영봉 암벽 봉우리
+          }
+          continue;
+        }
+
         const curT = tiles[idx(tx, ty)];
         const isWater = (curT === TILE.DEEP_WATER || curT === TILE.WATER);
 
@@ -1143,7 +1165,15 @@ function generateWorld() {
     ['mirage_sultan_palace_capital', 'ancient_pharaoh_pyramid_necropolis'],
     ['mirage_sultan_palace_capital', 'lapis_lazuli_gem_forge'],
     ['sandsea_caravan_bazaar_port', 'astral_dune_sphinx_monolith'],
-    ['djinn_sacred_oasis_font', 'ancient_pharaoh_pyramid_necropolis']
+    ['djinn_sacred_oasis_font', 'ancient_pharaoh_pyramid_necropolis'],
+
+    // [천둥의 올림포스 판테온 & 신들의 황금 대로 (Olympus Divine Skyway)]
+    ['olympus_zeus_throne_pantheon', 'titan_colosseum_grand_arena'],
+    ['olympus_zeus_throne_pantheon', 'pegasus_aether_skydock_port'],
+    ['olympus_zeus_throne_pantheon', 'hephaestus_divine_thunder_forge'],
+    ['olympus_zeus_throne_pantheon', 'athena_wisdom_marble_academy'],
+    ['titan_colosseum_grand_arena', 'delphi_prophecy_oracle_spring'],
+    ['athena_wisdom_marble_academy', 'delphi_prophecy_oracle_spring']
   ];
   const roadLinks = rawRoadLinks.filter(([a, b]) => settlementMap[a] && settlementMap[b]);
 

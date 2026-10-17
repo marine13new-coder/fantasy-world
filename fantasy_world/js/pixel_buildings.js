@@ -1940,6 +1940,237 @@
     },
 
     // =========================================================================
+    // 11.12. 천둥의 올림포스 백옥 대리석 판테온 (Olympus Marble Pantheon)
+    // =========================================================================
+    drawOlympusPantheon(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 지면 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+      ctx.fillRect(px - halfW + 2, py + halfH - 2, bw - 4, 6);
+
+      // B. 3단 그리스식 크레피도마 대리석 기단 (3-Tiered Marble Crepidoma Steps)
+      for (let s = 0; s < 3; s++) {
+        const stepW = bw - (2 - s) * 4;
+        const stepHW = Math.round(stepW / 2);
+        const stepY = py + halfH - (s + 1) * 3;
+        ctx.fillStyle = '#64748b'; // 기단 그림자
+        ctx.fillRect(px - stepHW, stepY, stepW, 3);
+        ctx.fillStyle = '#e2e8f0'; // 백옥 대리석 면
+        ctx.fillRect(px - stepHW + 1, stepY, stepW - 2, 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(px - stepHW + 2, stepY, stepW - 4, 1);
+      }
+
+      // C. 중앙 신성한 셀라(내실) 암흑 & 제우스 황금상 실루엣 (Inner Sanctuary Cella)
+      const baseTopY = py + halfH - 9;
+      const cellaW = Math.round(bw * 0.68);
+      const cellaHW = Math.round(cellaW / 2);
+      const colH = Math.round(bh * 0.46);
+      const entablatureY = baseTopY - colH;
+
+      ctx.fillStyle = '#090d16'; // 신비로운 어둠
+      ctx.fillRect(px - cellaHW, entablatureY, cellaW, colH);
+
+      // 제우스 황금 뇌전 실루엣
+      ctx.fillStyle = isNight ? '#fef08a' : '#f59e0b';
+      ctx.fillRect(px - 3, baseTopY - Math.round(colH * 0.65), 6, Math.round(colH * 0.65));
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(px - 1.5, baseTopY - Math.round(colH * 0.82), 3, 4);
+
+      // D. 전면 코린트식 백옥 대리석 열주 (Corinthian Fluted Marble Columns)
+      const colCount = 6;
+      const colSpacing = (bw - 10) / (colCount - 1);
+      for (let c = 0; c < colCount; c++) {
+        const cx = Math.round(px - halfW + 5 + c * colSpacing);
+        // 기둥 베이스
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(cx - 3, baseTopY - 2, 6, 2);
+        // 기둥 몸통 (Fluted Shaft)
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(cx - 2, entablatureY + 3, 4, colH - 5);
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(cx - 1, entablatureY + 3, 2, colH - 5);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(cx, entablatureY + 3, 1, colH - 5);
+        // 주두 (Capital)
+        ctx.fillStyle = '#facc15'; // 황금 코린트 주두 장식
+        ctx.fillRect(cx - 3, entablatureY, 6, 3);
+      }
+
+      // E. 엔타블러처 (보 및 프리즈 황금 월계관 부조)
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(px - halfW, entablatureY - 5, bw, 6);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(px - halfW + 1, entablatureY - 4, bw - 2, 4);
+      // 황금 월계관 부조 프리즈
+      ctx.fillStyle = '#facc15';
+      for (let fx = px - halfW + 8; fx < px + halfW - 8; fx += 10) {
+        ctx.fillRect(fx, entablatureY - 3, 4, 2);
+      }
+
+      // F. 삼각 페디먼트 박공 지붕 (Triangular Pediment & Tympanum)
+      const pedH = Math.round(bh * 0.32);
+      const pedTopY = entablatureY - 5 - pedH;
+
+      ctx.fillStyle = '#475569';
+      ctx.beginPath();
+      ctx.moveTo(px - halfW - 2, entablatureY - 5);
+      ctx.lineTo(px, pedTopY);
+      ctx.lineTo(px + halfW + 2, entablatureY - 5);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#cbd5e1';
+      ctx.beginPath();
+      ctx.moveTo(px - halfW, entablatureY - 5);
+      ctx.lineTo(px, pedTopY + 2);
+      ctx.lineTo(px + halfW, entablatureY - 5);
+      ctx.closePath();
+      ctx.fill();
+
+      // 박공 중앙 황금 제우스 뇌전 심볼 (Zeus Lightning Bolt Tympanum Emblem)
+      ctx.fillStyle = '#facc15';
+      const tymY = entablatureY - 5 - Math.round(pedH * 0.45);
+      ctx.beginPath();
+      ctx.moveTo(px + 2, tymY - 5);
+      ctx.lineTo(px - 3, tymY);
+      ctx.lineTo(px + 1, tymY);
+      ctx.lineTo(px - 2, tymY + 6);
+      ctx.lineTo(px + 4, tymY);
+      ctx.lineTo(px, tymY);
+      ctx.closePath();
+      ctx.fill();
+
+      // G. 지붕 정상의 황금 제우스 뇌전 아크로테리온 (Golden Lightning Finial)
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 1, pedTopY - 12, 2, 13);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(px - 2.5, pedTopY - 8, 5, 2);
+      ctx.fillRect(px - 1.5, pedTopY - 14, 3, 3);
+
+      // 번개 스파크 효과 (Lightning Crackle Sparkles)
+      if (Math.sin(timeSec * 22) > 0.35) {
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(px + (Math.sin(timeSec * 40) > 0 ? 4 : -4), pedTopY - 10, 2, 2);
+      }
+
+      // H. 야간 올림포스 성화 및 뇌전 오라 (Night Divine Blue Flame)
+      if (isNight) {
+        const flameY = baseTopY - 6;
+        const drawFlame = (fx) => {
+          ctx.fillStyle = '#38bdf8';
+          ctx.beginPath();
+          ctx.arc(fx, flameY, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(fx - 1, flameY - 1, 2, 2);
+        };
+        drawFlame(px - halfW + 8);
+        drawFlame(px + halfW - 8);
+      }
+    },
+
+    // =========================================================================
+    // 11.13. 티탄 천공 원형 검투장 (Titan Celestial Colosseum Arena)
+    // =========================================================================
+    drawTitanColosseum(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 지면 거대 타원형 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.48)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 2, halfW + 4, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // B. 3층 로마식 곡면 아케이드 석조 외벽 (3-Tiered Roman Arcade Façade)
+      const tiers = 3;
+      const tierH = Math.round((bh - 8) / tiers);
+      for (let t = 0; t < tiers; t++) {
+        const curY = py + halfH - 4 - (t + 1) * tierH;
+        const curW = bw - t * 4;
+        const curHW = Math.round(curW / 2);
+
+        // 석조 층 외벽
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(px - curHW, curY, curW, tierH);
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(px - curHW + 1, curY + 1, curW - 2, tierH - 1);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(px - curHW + 2, curY + 1, curW - 4, 2);
+
+        // 아치 창문 열주 (Curved Arcades)
+        const arcCount = 5 - t;
+        const arcSpacing = (curW - 12) / (arcCount - 1);
+        for (let a = 0; a < arcCount; a++) {
+          const ax = Math.round(px - curHW + 6 + a * arcSpacing);
+          const archW = 6;
+          const archH = tierH - 5;
+          ctx.fillStyle = '#090d16'; // 개방형 아치 내부
+          ctx.fillRect(ax - Math.round(archW / 2), curY + 4, archW, archH);
+          ctx.beginPath();
+          ctx.arc(ax, curY + 4, archW / 2, Math.PI, 0);
+          ctx.fill();
+
+          // 아치 황금 테두리 키스톤 (Keystone & Sconces)
+          ctx.fillStyle = '#f59e0b';
+          ctx.fillRect(ax - 1, curY + 1, 2, 2);
+        }
+      }
+
+      // C. 중앙 원형 투기장 모래 경기장 & 개선문 (Central Gladiator Arena Sand Pit & Royal Gate)
+      const gateW = Math.round(bw * 0.28);
+      const gateHW = Math.round(gateW / 2);
+      const gateH = Math.round(tierH * 1.5);
+      const gateY = py + halfH - 4 - gateH;
+
+      ctx.fillStyle = '#d97706'; // 황금빛 모래 투기장 링
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 6, gateHW + 3, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fde68a';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 6, gateHW, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // D. 거대한 황금 영웅 챔피언 석상 (Twin Gilded Gladiator Statues)
+      const statLeftX = px - halfW + 8;
+      const statRightX = px + halfW - 10;
+      const statY = py + halfH - tierH - 8;
+
+      const drawStatue = (sx) => {
+        ctx.fillStyle = '#b45309';
+        ctx.fillRect(sx, statY, 4, 8);
+        ctx.fillStyle = '#facc15'; // 황금 조각상
+        ctx.fillRect(sx + 1, statY, 2, 7);
+        // 황금 삼지창 / 검
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(sx + 3, statY - 4, 1, 10);
+      };
+      drawStatue(statLeftX);
+      drawStatue(statRightX);
+
+      // E. 상단 난간 펄럭이는 진홍빛 제국 배너 (Imperial Crimson Banners)
+      const topY = py - halfH + 4;
+      for (let b = 0; b < 4; b++) {
+        const bx = px - halfW + 10 + b * Math.round((bw - 20) / 3);
+        const wave = Math.sin(timeSec * 4 + b) * 2;
+        ctx.fillStyle = '#dc2626';
+        ctx.beginPath();
+        ctx.moveTo(bx, topY);
+        ctx.lineTo(bx + 4 + wave, topY + 2);
+        ctx.lineTo(bx + 3 + wave, topY + 8);
+        ctx.lineTo(bx, topY + 5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(bx - 0.5, topY - 3, 1, 8);
+      }
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -2170,6 +2401,14 @@
       }
       if (type === 'sandstone_pyramid' || (type === 'castle' && b && b.continent === 'mirage') || (type === 'temple' && b && b.continent === 'mirage')) {
         this.drawSandstonePyramid(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'olympus_pantheon' || (type === 'capital' && b && b.continent === 'olympus') || (type === 'palace' && b && b.continent === 'olympus')) {
+        this.drawOlympusPantheon(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'titan_colosseum' || (type === 'castle' && b && b.continent === 'olympus') || (type === 'temple' && b && b.continent === 'olympus')) {
+        this.drawTitanColosseum(ctx, px, py, bw, bh, isNight, timeSec);
         return true;
       }
       if (type === 'temple' || type === 'cathedral') {
