@@ -344,6 +344,7 @@ class EntityManager {
     this.hazardZones = [];
     this.footprints = [];
     this.shockwaves = [];
+    this.slashArcs = [];
     this.activeBattles = 0;
     this.player = null;
     this.pet = null;
@@ -441,6 +442,13 @@ class EntityManager {
     if (!this.shockwaves) this.shockwaves = [];
     if (this.shockwaves.length > 40) this.shockwaves.shift();
     this.shockwaves.push({ x, y, maxRadius, color, age: 0, duration });
+  }
+
+  // ⚔️ 무기 궤적 슬래시 리본 아크 (Weapon Slash Arc Trail)
+  addSlashArc(x, y, radius = 2.4, startAngle = 0, endAngle = Math.PI, color = '#facc15', duration = 0.22) {
+    if (!this.slashArcs) this.slashArcs = [];
+    if (this.slashArcs.length > 30) this.slashArcs.shift();
+    this.slashArcs.push({ x, y, radius, startAngle, endAngle, color, age: 0, duration });
   }
 
   // 💥 정밀 픽셀 히트 스파크 (Hit Sparks)
@@ -1741,6 +1749,18 @@ class EntityManager {
           window.openAwakeningModal();
         }
       }
+    } else if (skillKey === 'Z' || skillKey === 'enchant') {
+      if (typeof window.openRuneforgeModal === 'function') {
+        window.openRuneforgeModal();
+      }
+    } else if (skillKey === 'V' || skillKey === 'colosseum') {
+      if (typeof window.openColosseumModal === 'function') {
+        window.openColosseumModal();
+      }
+    } else if (skillKey === 'M' || skillKey === 'map') {
+      if (typeof window.openWorldMapModal === 'function') {
+        window.openWorldMapModal();
+      }
     }
   }
 
@@ -1906,6 +1926,12 @@ class EntityManager {
     const slashX = p.x + Math.cos(angle) * 1.2;
     const slashY = p.y + Math.sin(angle) * 1.2;
 
+    // ⚔️ 무기 궤적 슬래시 리본 아크
+    const arcSpread = p.comboStep === 3 ? Math.PI * 2 : 1.45;
+    const arcStart = angle - arcSpread / 2;
+    const arcEnd = angle + arcSpread / 2;
+    this.addSlashArc(p.x, p.y, p.comboStep === 3 ? 3.6 : 2.2, arcStart, arcEnd, effectColor, 0.22);
+
     // 💥 3단계 피니셔: 주변 360도 모든 적 광역 타격 및 넉백
     if (p.comboStep === 3) {
       const hasSolar = this.rpgManager && this.rpgManager.hasTrait('solar_aura');
@@ -2008,6 +2034,9 @@ class EntityManager {
 
       this.addFloatingText(target.x, target.y - 0.9, isCrit ? `💥 CRIT! -${dmg}` : `-${dmg}`, isCrit ? '#fde047' : effectColor, 1.0);
 
+      // ⚡ 룬 인챈트 효과 발동
+      this.triggerRuneProc(p, target, slashX, slashY, dmg);
+
       if (target.hp <= 0) {
         p.kills = (p.kills || 0) + 1;
         this.gainPlayerExp(target.role === 'dragon' ? 180 : 70);
@@ -2017,6 +2046,9 @@ class EntityManager {
         }
         if (this.rpgManager && this.rpgManager.checkDungeonBossDefeat) {
           this.rpgManager.checkDungeonBossDefeat(target);
+        }
+        if (this.rpgManager && this.rpgManager.checkColosseumProgress) {
+          this.rpgManager.checkColosseumProgress(target);
         }
         // 💎 물리 전리품 드롭
         this.spawnLootDrop(target.x, target.y, { itemType: 'gold', name: '골드 주머니', icon: '🪙', gold: target.gold || 50, color: '#facc15' });
@@ -2033,6 +2065,45 @@ class EntityManager {
       if (!gathered) {
         this.addFloatingText(slashX, slashY - 0.5, comboText, '#94a3b8', 0.6);
       }
+    }
+  }
+
+  // ⚡ 무기 룬 인챈트 원소 발동 헬퍼 (Runestone Elemental Proc)
+  triggerRuneProc(p, target, slashX, slashY, dmg) {
+    if (!this.rpgManager || !this.rpgManager.enchantedRunes || !this.rpgManager.enchantedRunes.weapon) return;
+    const rId = this.rpgManager.enchantedRunes.weapon;
+
+    if (rId === 'rune_fulgur') {
+      const chainTargets = this.spatialGrid
+        ? this.spatialGrid.query(p.x, p.y, 6.0, ent => ent !== p && ent !== target && ent.hp > 0 && this.isHostile(p, ent)).slice(0, 3)
+        : [];
+      chainTargets.forEach(ct => {
+        ct.hp -= 95;
+        ct.hitTimer = 0.25;
+        this.addEffect(ct.x, ct.y, 2.0, '#facc15', 0.25);
+        this.addHitSparks(ct.x, ct.y, '#fef08a', 6);
+        this.addFloatingText(ct.x, ct.y - 1.0, '⚡ 뇌전 -95', '#fde047', 1.0);
+        if (ct.hp <= 0 && this.rpgManager.checkColosseumProgress) this.rpgManager.checkColosseumProgress(ct);
+      });
+    } else if (rId === 'rune_ignis') {
+      if (target) {
+        target.burningTimer = 4.0;
+        this.addHitSparks(target.x, target.y, '#f97316', 8);
+        this.addFloatingText(target.x, target.y - 1.4, '🔥 화염 폭발!', '#f97316', 1.0);
+      }
+    } else if (rId === 'rune_glacies') {
+      if (target) {
+        target.frozenTimer = 1.8;
+        this.addHitSparks(target.x, target.y, '#38bdf8', 8);
+        this.addFloatingText(target.x, target.y - 1.4, '❄️ 빙결!', '#38bdf8', 1.0);
+      }
+    } else if (rId === 'rune_terra') {
+      const heal = Math.round(dmg * 0.18 + 14);
+      p.hp = Math.min(p.maxHp, p.hp + heal);
+      this.addFloatingText(p.x, p.y - 1.4, `+${heal} HP 🌿 [흡혈]`, '#4ade80', 1.0);
+    } else if (rId === 'rune_solaris') {
+      this.addShockwave(slashX, slashY, 3.8, '#facc15', 0.35);
+      this.addFloatingText(p.x, p.y - 1.4, '👑 태양의 섬광!', '#facc15', 1.0);
     }
   }
 
@@ -2696,6 +2767,15 @@ class EntityManager {
         const sw = this.shockwaves[i];
         sw.age += dt;
         if (sw.age >= sw.duration) this.shockwaves.splice(i, 1);
+      }
+    }
+
+    // ⚔️ 무기 궤적 슬래시 리본 아크 업데이트
+    if (this.slashArcs && this.slashArcs.length > 0) {
+      for (let i = this.slashArcs.length - 1; i >= 0; i--) {
+        const arc = this.slashArcs[i];
+        arc.age += dt;
+        if (arc.age >= arc.duration) this.slashArcs.splice(i, 1);
       }
     }
 

@@ -179,6 +179,9 @@ class WorldRenderer {
     // 1.5. 강/호수 3D 절벽 암벽, 흙길 자갈/잔디 오버행, 코블스톤 광장 디테일 렌더링
     if (camera.zoom > 0.28) {
       this.drawEnhancedTerrainFeatures(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
+      if (worldTime && (worldTime.weather === 'rain' || worldTime.weather === 'storm')) {
+        this.drawRainPuddles(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
+      }
     }
 
     // 2. 동적 해안선 픽셀 파도 거품 애니메이션
@@ -352,6 +355,9 @@ class WorldRenderer {
 
     // 8.6. 💥 방사형 충격파 링 (Expanding Shockwaves)
     this.drawShockwaves(ctx, ts);
+
+    // 8.7. ⚔️ 무기 궤적 슬래시 리본 아크 (Melee Weapon Arc Trails)
+    this.drawWeaponSlashArcs(ctx, ts);
 
     // 9. 수제 픽셀아트 엔티티 (영웅, 기사, 마법사, 엘프, 드워프, 범선, 드래곤 등)
     const midX = (minTx + maxTx) / 2;
@@ -2890,6 +2896,27 @@ class WorldRenderer {
       }
     }
 
+    // 6.5. ☀️ 천공의 황금빛 틈새 광선 (Sunbeam God Rays / Crepuscular Sunlight)
+    if (darkness < 0.22 && worldTime.weather !== 'storm') {
+      const sunAlpha = (h >= 7 && h <= 17) ? 0.12 : ((h >= 5 && h < 7) ? 0.08 : 0);
+      if (sunAlpha > 0) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(254, 240, 138, 0.08)';
+        const rayOffset = (timeSec * 14) % 240;
+        for (let r = -cw * 0.4; r < cw * 1.4; r += 160) {
+          const rx = r + rayOffset;
+          ctx.beginPath();
+          ctx.moveTo(rx, 0);
+          ctx.lineTo(rx + 65, 0);
+          ctx.lineTo(rx + 210, ch);
+          ctx.lineTo(rx + 110, ch);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+
     // 7. 🩸 치명상 위기 심장박동 비네트 (Low HP Pulsating Crimson Vignette)
     const p = this.entityMgr.player;
     if (p && p.hp > 0 && (p.hp / p.maxHp) < 0.28) {
@@ -4119,6 +4146,70 @@ class WorldRenderer {
     }
 
     ctx.restore();
+  }
+
+  // 🌧️ [1.5-B] 비 올 때 도로/흙길 지면 물웅덩이 & 빗방울 파문 (Rain Puddles & Concentric Droplet Ripples)
+  drawRainPuddles(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec) {
+    const { width, tiles } = this.world;
+    for (let ty = minTy; ty <= maxTy; ty += 2) {
+      for (let tx = minTx; tx <= maxTx; tx += 2) {
+        const idx = ty * width + tx;
+        const t = tiles[idx];
+        if (t === TILE.ROAD || t === TILE.DIRT || t === TILE.COBBLESTONE || t === TILE.CASTLE_FLOOR) {
+          const h = (tx * 31 + ty * 59) & 63;
+          if (h < 18) {
+            const px = tx * ts + (h % 12);
+            const py = ty * ts + ((h >> 2) % 12);
+            const pw = 14 + (h % 10);
+            const ph = 8 + (h % 6);
+
+            ctx.save();
+            ctx.fillStyle = 'rgba(147, 197, 253, 0.28)';
+            ctx.beginPath();
+            ctx.ellipse(px + pw / 2, py + ph / 2, pw / 2, ph / 2, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            const ripPhase = (timeSec * 2.8 + h * 0.2) % 1.0;
+            const ripR = (pw / 2) * ripPhase;
+            ctx.strokeStyle = `rgba(240, 249, 255, ${0.45 * (1 - ripPhase)})`;
+            ctx.lineWidth = 1.0;
+            ctx.beginPath();
+            ctx.ellipse(px + pw / 2, py + ph / 2, Math.max(1, ripR), Math.max(0.5, ripR * 0.5), 0, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.restore();
+          }
+        }
+      }
+    }
+  }
+
+  // ⚔️ [8.7] 무기 궤적 슬래시 리본 아크 (Melee Weapon Arc Trails)
+  drawWeaponSlashArcs(ctx, ts) {
+    if (!this.entityMgr.slashArcs || this.entityMgr.slashArcs.length === 0) return;
+    for (const arc of this.entityMgr.slashArcs) {
+      const progress = arc.age / arc.duration;
+      const alpha = Math.max(0, 1 - progress);
+      const px = Math.round(arc.x * ts);
+      const py = Math.round(arc.y * ts);
+      const r = arc.radius * ts;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = arc.color || '#facc15';
+      ctx.lineWidth = Math.max(1.5, 4.5 * (1 - progress));
+      ctx.beginPath();
+      ctx.arc(px, py, r, arc.startAngle, arc.endAngle);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = Math.max(0.8, 2.0 * (1 - progress));
+      ctx.beginPath();
+      ctx.arc(px, py, r * 0.95, arc.startAngle, arc.endAngle);
+      ctx.stroke();
+
+      ctx.restore();
+    }
   }
 }
 

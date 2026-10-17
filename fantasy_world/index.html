@@ -388,6 +388,21 @@
           <span class="skill-icon">✨</span>
           <span class="skill-name">각성</span>
         </button>
+        <button class="skill-btn util" id="btnOpenWorldMap" title="대륙 전도 & 거점 순간이동 (M)">
+          <span class="key-badge">M</span>
+          <span class="skill-icon">🗺️</span>
+          <span class="skill-name">지도</span>
+        </button>
+        <button class="skill-btn util" id="btnOpenRuneforge" title="고대 룬 제련소 & 인챈트 (Z)">
+          <span class="key-badge">Z</span>
+          <span class="skill-icon">⚡</span>
+          <span class="skill-name">인챈트</span>
+        </button>
+        <button class="skill-btn util" id="btnOpenColosseum" title="발로르 왕국 투기장 (V)">
+          <span class="key-badge">V</span>
+          <span class="skill-icon">🏟️</span>
+          <span class="skill-name">투기장</span>
+        </button>
         <button class="skill-btn util" id="btnToggleInventory" title="장비 & 인벤토리 가방 (I)">
           <span class="key-badge">I</span>
           <span class="skill-icon">🎒</span>
@@ -674,6 +689,76 @@
     </div>
   </div>
 
+  <!-- 룬 제련소 & 인챈트 모달 (Runeforge Modal) -->
+  <div id="runeforgeModal" class="modal-overlay hidden">
+    <div class="inventory-card runeforge-modal-card">
+      <div class="inv-header">
+        <h2>⚡ 고대 룬 제련소 & 원소 인챈트 (Runeforge Enchanter)</h2>
+        <button id="btnCloseRuneforgeModal" class="close-btn">✖</button>
+      </div>
+      <div class="runeforge-modal-body">
+        <div class="runeforge-banner">
+          <span>고대 원소 룬스톤을 무기, 방패, 갑옷 슬롯에 각인하여 연쇄 번개, 서리 동결, 화염 폭발 등의 초월 속성을 부여하세요! (Z키)</span>
+        </div>
+        <div class="runeforge-layout">
+          <div class="runeforge-slots-section">
+            <h3 class="section-title">🛡️ 장착된 룬 슬롯</h3>
+            <div class="rune-socket-slots" id="runeSocketSlots">
+              <!-- JS 동적 렌더링 -->
+            </div>
+          </div>
+          <div class="runeforge-inventory-section">
+            <h3 class="section-title">💎 보유 룬스톤 보관함</h3>
+            <div class="rune-inventory-list" id="runeInventoryList">
+              <!-- JS 동적 렌더링 -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 발로르 콜로세움 투기장 모달 (Balor Colosseum Modal) -->
+  <div id="colosseumModal" class="modal-overlay hidden">
+    <div class="inventory-card colosseum-modal-card">
+      <div class="inv-header">
+        <h2>🏟️ 발로르 왕국 콜로세움 투기장 (Gladiator Arena)</h2>
+        <button id="btnCloseColosseumModal" class="close-btn">✖</button>
+      </div>
+      <div class="colosseum-modal-body">
+        <div class="colosseum-banner">
+          <span>황도 솔라리스 대투기장에서 5라운드 서바이벌 혈투에 도전하세요! 승리 시 무패 챔피언 칭호와 전설 룬, 2000 골드가 주어집니다! (V키)</span>
+        </div>
+        <div class="colosseum-info-panel">
+          <div class="colosseum-status-card" id="colosseumStatusCard">
+            <!-- JS 동적 렌더링 -->
+          </div>
+          <div class="colosseum-action-bar">
+            <button id="btnEnterColosseum" class="colosseum-btn start-btn">⚔️ 투기장 경기장 입장 & 토너먼트 개막</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 대륙 전도 & 거점 순간이동 모달 (Continental World Map & Fast Travel) -->
+  <div id="worldMapModal" class="modal-overlay hidden">
+    <div class="inventory-card world-map-modal-card">
+      <div class="inv-header">
+        <h2>🗺️ 판타시아 대륙 전도 & 거점 순간이동 (Atlas Navigation)</h2>
+        <button id="btnCloseWorldMapModal" class="close-btn">✖</button>
+      </div>
+      <div class="world-map-modal-body">
+        <div class="world-map-banner">
+          <span>대륙의 주요 수도, 대항구, 요새 거점을 탐색하고 차원문을 통해 원하는 목적지로 즉시 순간이동할 수 있습니다! (M키)</span>
+        </div>
+        <div class="world-map-settlements-grid" id="worldMapSettlementsGrid">
+          <!-- JS 동적 렌더링 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 하단 카메라 추적 배너 -->
   <div id="followBanner" class="follow-banner hidden">
     <span id="followBannerText">🎥 추적 중: -</span>
@@ -681,14 +766,14 @@
   </div>
 
   <!-- 스크립트 로드 -->
-  <script src="js/audio.js?v=21"></script>
-  <script src="js/world_gen.js?v=21"></script>
-  <script src="js/pixel_buildings.js?v=21"></script>
-  <script src="js/entities.js?v=21"></script>
-  <script src="js/rpg_systems.js?v=21"></script>
-  <script src="js/pixel_items.js?v=21"></script>
-  <script src="js/pixel_sprites.js?v=21"></script>
-  <script src="js/renderer.js?v=21"></script>
-  <script src="js/main.js?v=21"></script>
+  <script src="js/audio.js?v=22"></script>
+  <script src="js/world_gen.js?v=22"></script>
+  <script src="js/pixel_buildings.js?v=22"></script>
+  <script src="js/entities.js?v=22"></script>
+  <script src="js/rpg_systems.js?v=22"></script>
+  <script src="js/pixel_items.js?v=22"></script>
+  <script src="js/pixel_sprites.js?v=22"></script>
+  <script src="js/renderer.js?v=22"></script>
+  <script src="js/main.js?v=22"></script>
 </body>
 </html>

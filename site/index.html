@@ -1,65 +1,288 @@
 <!DOCTYPE html>
-<html lang="ko"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Game Arcade - Gallery</title>
-<style>
-  :root{--bg:#070a14;--card:#101728;--line:#1f2b48;--ink:#eef2fb;--sub:#8a96b3;--accent:#00f0ff}
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.6}
-  .wrap{max-width:1080px;margin:0 auto;padding:60px 24px}
-  .eyebrow{color:var(--accent);font-weight:700;letter-spacing:.15em;font-size:.82rem;text-transform:uppercase}
-  h1{font-size:clamp(2.2rem,5vw,3.2rem);margin:.2em 0;letter-spacing:-.02em;background:linear-gradient(45deg,#00f0ff,#ff007f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:900;}
-  p.lead{color:var(--sub);margin:0 0 40px;font-size:1.1rem;}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:25px}
-  .card{background:var(--card);border:2px solid var(--line);border-radius:14px;overflow:hidden;color:inherit;text-decoration:none;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
-  .card:hover{transform:translateY(-6px);border-color:var(--accent);box-shadow:0 12px 30px rgba(0,240,255,0.25);}
-  .thumb{aspect-ratio:16/10;background:#03050a;display:grid;place-items:center;overflow:hidden;border-bottom:1px solid var(--line);}
-  .thumb img{width:100%;height:100%;object-fit:cover}
-  .meta{padding:18px 22px}
-  .meta h2{margin:0 0 8px 0;font-size:1.28rem;font-weight:800;}
-  .score{color:var(--accent);font-size:.88rem;font-weight:700;background:rgba(0,240,255,0.1);padding:4px 10px;border-radius:6px;border:1px solid rgba(0,240,255,0.3);}
-</style></head><body>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Game Arcade - 전체 게임 갤러리 포털</title>
+  <style>
+    :root {
+      --bg: #070a14;
+      --card: #101728;
+      --line: #1f2b48;
+      --ink: #eef2fb;
+      --sub: #8a96b3;
+      --accent: #00f0ff;
+      --accent-pink: #ff007f;
+      --accent-gold: #ffb703;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Pretendard', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+    }
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 50px 24px 80px;
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-weight: 800;
+      letter-spacing: .2em;
+      font-size: .85rem;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: clamp(2.4rem, 5vw, 3.4rem);
+      margin: .1em 0;
+      letter-spacing: -.02em;
+      background: linear-gradient(45deg, #00f0ff, #ff007f, #ffb703);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 900;
+    }
+    p.lead {
+      color: var(--sub);
+      margin: 0 0 35px;
+      font-size: 1.15rem;
+    }
+    .stats-bar {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 35px;
+      background: rgba(16, 23, 40, 0.7);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 20px;
+      flex-wrap: wrap;
+    }
+    .stat-badge {
+      font-size: 0.95rem;
+      color: var(--sub);
+    }
+    .stat-badge strong {
+      color: #fff;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 28px;
+    }
+    .card {
+      background: var(--card);
+      border: 2px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      color: inherit;
+      text-decoration: none;
+      transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .card:hover {
+      transform: translateY(-8px);
+      border-color: var(--accent);
+      box-shadow: 0 16px 36px rgba(0, 240, 255, 0.25);
+    }
+    .card-badge-new {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: #ff0055;
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 20px;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 12px rgba(255, 0, 85, 0.4);
+      z-index: 2;
+    }
+    .thumb {
+      aspect-ratio: 16/10;
+      background: #03050a;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border-bottom: 1px solid var(--line);
+      position: relative;
+    }
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .meta {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      justify-content: space-between;
+    }
+    .meta h2 {
+      margin: 0 0 8px 0;
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    .meta p {
+      color: var(--sub);
+      font-size: 0.92rem;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .tag {
+      font-size: 0.78rem;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 3px 8px;
+      border-radius: 6px;
+      color: #c5d2e8;
+    }
+    .score {
+      color: var(--accent);
+      font-size: .88rem;
+      font-weight: 700;
+      background: rgba(0,240,255,0.1);
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(0,240,255,0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      width: fit-content;
+    }
+  </style>
+</head>
+<body>
 <div class="wrap">
-  <div class="eyebrow">AI Game Arcade Pipeline</div>
-  <h1>AI Arcade Showcase</h1>
-  <p class="lead">기획 → 생성 → 정적 검사 → 렌더 스크린샷 → CDP 헤드리스 플레이테스트를 완벽하게 통과한 아케이드 갤러리</p>
+  <div class="eyebrow">Interactive 3D & 2D Arcade Portal</div>
+  <h1>🎮 AI Game Arcade Gallery</h1>
+  <p class="lead">제작된 모든 웹 게임들을 언제든 한곳에서 클릭 한 번으로 플레이할 수 있는 통합 게임 아케이드입니다.</p>
+
+  <div class="stats-bar">
+    <div class="stat-badge">🎯 등록된 게임: <strong>5개</strong></div>
+    <div class="stat-badge">🕹️ 장르: <strong>3D 비행 시뮬레이터, 3D 물리 인형뽑기, 오픈월드 샌드박스, 액션 서바이벌</strong></div>
+    <div class="stat-badge">⚡ 플랫폼: <strong>웹 브라우저 무설치 즉시 실행</strong></div>
+  </div>
+
   <div class="grid">
-      <a class="card" href="claw-machine/index.html">
-        <div class="thumb" style="background:linear-gradient(135deg,#ff2a7a,#240046,#00f0ff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
-          <span style="font-size:3.5rem;">🧸🕹️✨</span>
-          <span style="color:#ffe600;font-weight:700;font-size:1.0rem;">3D 리얼 아케이드 인형뽑기</span>
+    <!-- 1. 스카이 에이스 3D (신규 비행기 게임) -->
+    <a class="card" href="flight-3d/index.html">
+      <span class="card-badge-new">NEW HOT 🔥</span>
+      <div class="thumb" style="background: linear-gradient(135deg, #0284c7, #0f172a, #10b981); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
+        <span style="font-size: 4rem;">✈️☁️💥</span>
+        <span style="color: #38bdf8; font-weight: 800; font-size: 1.1rem; text-shadow: 0 0 10px rgba(56,189,248,0.5);">3D 항공 비행 시뮬레이터</span>
+      </div>
+      <div class="meta">
+        <div>
+          <h2>스카이 에이스 3D (Sky Ace 3D)</h2>
+          <p>푸른 하늘을 가르는 창공의 비행기 조종 게임! 골드 링 레이싱, 공중 표적 격추, 1인칭/3인칭 시점 및 시간대 변경 지원.</p>
+          <div class="tags">
+            <span class="tag">#3D Three.js</span>
+            <span class="tag">#비행 시뮬레이션</span>
+            <span class="tag">#자체 신스 사운드</span>
+          </div>
         </div>
-        <div class="meta">
+        <span class="score" style="border-color:#00d2ff; color:#00d2ff; background:rgba(0,210,255,0.15);">
+          ✈️ 비행 시작하기 (PLAY)
+        </span>
+      </div>
+    </a>
+
+    <!-- 2. 3D 리얼 아케이드 인형뽑기 -->
+    <a class="card" href="claw-machine/index.html">
+      <span class="card-badge-new">POPULAR ⭐</span>
+      <div class="thumb" style="background:linear-gradient(135deg,#ff2a7a,#240046,#00f0ff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
+        <span style="font-size:3.8rem;">🧸🕹️✨</span>
+        <span style="color:#ffe600;font-weight:800;font-size:1.1rem; text-shadow: 0 0 10px rgba(255,230,0,0.5);">3D 리얼 아케이드 인형뽑기</span>
+      </div>
+      <div class="meta">
+        <div>
           <h2>CLAW MASTER 3000</h2>
-          <span class="score" style="border-color:#ff2a7a;color:#ff2a7a;background:rgba(255,42,122,0.15);">NEW · 손맛 물리 & 오락실 2버튼 탑재</span>
+          <p>오락실 2버튼 크레인 조작과 실시간 물리 엔진을 적용하여 진짜 인형을 뽑는 듯한 손맛을 자랑하는 3D 인형뽑기 머신.</p>
+          <div class="tags">
+            <span class="tag">#물리 엔진</span>
+            <span class="tag">#오락실 감성</span>
+            <span class="tag">#인형 콜렉션</span>
+          </div>
         </div>
-      </a>
+        <span class="score" style="border-color:#ff2a7a;color:#ff2a7a;background:rgba(255,42,122,0.15);">
+          🕹️ 크레인 조작하기 (PLAY)
+        </span>
+      </div>
+    </a>
 
-      <a class="card" href="fantasy_world/index.html">
-        <div class="thumb" style="background:linear-gradient(135deg,#0f172a,#1e3a8a,#14532d);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
-          <span style="font-size:3.4rem;">👑🗺️⚔️</span>
-          <span style="color:#fde047;font-weight:700;font-size:.95rem;">오픈월드 판타지 생태계 · 경제 · 무역 시뮬레이션</span>
+    <!-- 3. 판타지 오픈월드 시뮬레이션 -->
+    <a class="card" href="fantasy_world/index.html">
+      <div class="thumb" style="background:linear-gradient(135deg,#0f172a,#1e3a8a,#14532d);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
+        <span style="font-size:3.6rem;">👑🗺️⚔️</span>
+        <span style="color:#fde047;font-weight:800;font-size:1.0rem;">오픈월드 판타지 생태계 시뮬레이션</span>
+      </div>
+      <div class="meta">
+        <div>
+          <h2>아테리아 대륙 연대기</h2>
+          <p>대륙의 문명과 도시, 국가 간의 무역, 영웅 탐험, 몬스터 생태계가 실시간으로 자율 작동하는 오픈월드 샌드박스 대서사시.</p>
+          <div class="tags">
+            <span class="tag">#오픈월드</span>
+            <span class="tag">#경제/무역 시스템</span>
+            <span class="tag">#실시간 시뮬레이션</span>
+          </div>
         </div>
-        <div class="meta">
-          <h2>아테리아 대륙 연대기 (Chronicles of Aetheria)</h2>
-          <span class="score">오픈월드 샌드박스 · 실시간 생태계 시뮬레이션</span>
-        </div>
-      </a>
+        <span class="score" style="border-color:#fde047;color:#fde047;background:rgba(253,224,71,0.15);">
+          👑 대륙 탐험하기 (PLAY)
+        </span>
+      </div>
+    </a>
 
-      <a class="card" href="chrono-blade/index.html">
-        <div class="thumb"><img src="chrono-blade/thumb.png" alt="CHRONO BLADE: Time Slicer"></div>
-        <div class="meta">
+    <!-- 4. CHRONO BLADE -->
+    <a class="card" href="chrono-blade/index.html">
+      <div class="thumb">
+        <img src="chrono-blade/thumb.png" alt="CHRONO BLADE" onerror="this.parentElement.innerHTML='<div style=\'font-size:3.5rem;\'>⏳⚔️⚡</div>'">
+      </div>
+      <div class="meta">
+        <div>
           <h2>CHRONO BLADE: Time Slicer</h2>
-          <span class="score">비전 98 · 재미 94 · PASS</span>
+          <p>시간을 느리게 흐르게 하며 날아오는 탄환을 베어넘기는 고속 타임 슬라이싱 아케이드 액션 게임.</p>
+          <div class="tags">
+            <span class="tag">#슬로모션</span>
+            <span class="tag">#아케이드 액션</span>
+            <span class="tag">#패링 & 콤보</span>
+          </div>
         </div>
-      </a>
+        <span class="score">⚔️ 배틀 시작 (PLAY)</span>
+      </div>
+    </a>
 
-      <a class="card" href="neon-survivor/index.html">
-        <div class="thumb"><img src="neon-survivor/thumb.png" alt="NEON SURVIVOR"></div>
-        <div class="meta">
+    <!-- 5. NEON SURVIVOR -->
+    <a class="card" href="neon-survivor/index.html">
+      <div class="thumb">
+        <img src="neon-survivor/thumb.png" alt="NEON SURVIVOR" onerror="this.parentElement.innerHTML='<div style=\'font-size:3.5rem;\'>👾🔫⚡</div>'">
+      </div>
+      <div class="meta">
+        <div>
           <h2>NEON SURVIVOR</h2>
-          <span class="score">비전 95 · 재미 88 · PASS</span>
+          <p>사방에서 몰려오는 네온 사이버 드론들을 격파하고 스킬을 조합하여 생존하는 탑다운 로그라이크 서바이벌.</p>
+          <div class="tags">
+            <span class="tag">#서바이벌</span>
+            <span class="tag">#로그라이크</span>
+            <span class="tag">#네온 그래픽</span>
+          </div>
         </div>
-      </a></div>
+        <span class="score">👾 생존 시작 (PLAY)</span>
+      </div>
+    </a>
+  </div>
 </div>
-</body></html>
+</body>
+</html>

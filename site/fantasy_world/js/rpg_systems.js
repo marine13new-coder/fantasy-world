@@ -214,6 +214,54 @@ const AWAKENING_CLASSES = [
   }
 ];
 
+const RUNESTONES = [
+  {
+    id: 'rune_ignis',
+    name: '이그니스 화룡의 룬',
+    element: 'fire',
+    icon: '🔥',
+    color: '#ef4444',
+    bonusText: '공격력 +28 & 적 타격 시 화염 폭발 + 5초간 지속 화상 화염 피해',
+    desc: '붉은 용의 심장에서 추출된 불꽃의 정수. 무기에 깃들어 타격 시 맹렬한 화염 폭발을 일으킵니다.'
+  },
+  {
+    id: 'rune_glacies',
+    name: '글라키에스 절대영도의 룬',
+    element: 'ice',
+    icon: '❄️',
+    color: '#38bdf8',
+    bonusText: '방어력 +22 & 타격 시 서리 충격 방출 및 2초간 적 이동/공격 완전 동결',
+    desc: '영구 동토의 고대 빙하핵에서 벼려낸 룬. 공격 시 적의 관절과 혈류를 즉시 얼려버립니다.'
+  },
+  {
+    id: 'rune_fulgur',
+    name: '풀구르 천벌 벼락의 룬',
+    element: 'lightning',
+    icon: '⚡',
+    color: '#eab308',
+    bonusText: '치명타 +18% & 타격 시 연쇄 번개가 발동하여 주변 최대 3명의 적을 연쇄 감전 타격',
+    desc: '천공의 폭풍 구름에서 벼락을 봉인한 룬. 전격이 연쇄되어 다수의 적을 순식간에 섬멸합니다.'
+  },
+  {
+    id: 'rune_terra',
+    name: '테라 대지 생명력의 룬',
+    element: 'earth',
+    icon: '🌿',
+    color: '#22c55e',
+    bonusText: '최대 체력 +180 & 타격 시 피해량의 35%를 생명력으로 즉시 흡수(뱀파이어릭)',
+    desc: '대지의 여신이 깃든 에메랄드 룬. 적의 생기를 흡수하여 전투 중 끊임없이 플레이어를 치유합니다.'
+  },
+  {
+    id: 'rune_solaris',
+    name: '솔라리스 태양왕 신성의 룬',
+    element: 'holy',
+    icon: '☀️',
+    color: '#f59e0b',
+    bonusText: '모든 속성 +20 & 타격 시 황금빛 태양 충격파를 폭발시켜 주변 적 1.5초 기절 스턴',
+    desc: '태양의 신성한 광휘가 각인된 전설의 룬. 어둠을 몰아내고 거대한 파동으로 적들을 무력화합니다.'
+  }
+];
+
 class RPGSystemsManager {
   constructor(world, entityMgr) {
     this.world = world;
@@ -370,6 +418,26 @@ class RPGSystemsManager {
     this.awakeningClasses = AWAKENING_CLASSES;
     this.awakening = null;
     this.awakeningSkillCd = 0;
+
+    // 16. ⚡ 룬 인챈트 제련 시스템 (Runeforge Enchantment System)
+    this.runestones = RUNESTONES;
+    this.enchantedRunes = {
+      weapon: 'rune_ignis',
+      shield: 'rune_terra',
+      armor: 'rune_glacies'
+    };
+    this.runeInventory = ['rune_ignis', 'rune_glacies', 'rune_fulgur', 'rune_terra', 'rune_solaris'];
+
+    // 17. 🏟️ 발로르 왕국 콜로세움 투기장 시스템 (Balor Colosseum Gladiator Tournament)
+    this.colosseum = {
+      active: false,
+      wave: 0,
+      maxWaves: 5,
+      monsters: [],
+      timer: 0,
+      cleared: false,
+      title: null
+    };
 
     this.initTreasureChests();
   }
@@ -1431,6 +1499,7 @@ class RPGSystemsManager {
     this.updateShrines(dt);
     this.updateContinentalEvents(dt);
     this.updateSettlementGarrisonDefense(dt);
+    this.updateColosseum(dt);
 
     if (this.em.player) {
       this.checkTreasureInteraction(this.em.player);
@@ -2185,6 +2254,237 @@ class RPGSystemsManager {
       if (this.em.camera) this.em.camera.shake = 12;
     }
   }
+
+  // ==========================================================================
+  // P. ⚡ 룬 제련 & 인챈트 시스템 (Runeforge Enchantment System)
+  // ==========================================================================
+  socketRune(slot, runeId) {
+    if (!['weapon', 'shield', 'armor'].includes(slot)) return false;
+    const rune = this.runestones.find(r => r.id === runeId);
+    if (!rune) return false;
+
+    this.enchantedRunes[slot] = runeId;
+    const p = this.em.player;
+    if (p) {
+      this.em.addEffect(p.x, p.y, 4.0, rune.color, 0.8);
+      this.em.addShockwave(p.x, p.y, 3.5, rune.color, 0.5);
+      this.em.addFloatingText(p.x, p.y - 1.5, `⚡ [${rune.name}] 각인 완료!`, rune.color, 1.8);
+    }
+    if (typeof audioMgr !== 'undefined' && audioMgr.playCraft) audioMgr.playCraft();
+    this.em.log('quest', `⚡ [룬 제련소] ${slot.toUpperCase()} 슬롯에 [${rune.name}] 인챈트 룬이 각인되었습니다!`);
+    return true;
+  }
+
+  unsocketRune(slot) {
+    if (!this.enchantedRunes[slot]) return false;
+    this.enchantedRunes[slot] = null;
+    const p = this.em.player;
+    if (p) {
+      this.em.addFloatingText(p.x, p.y - 1.2, `💨 룬 해제 완료`, '#94a3b8', 1.0);
+    }
+    return true;
+  }
+
+  // ==========================================================================
+  // Q. 🏟️ 발로르 왕국 콜로세움 투기장 시스템 (Balor Colosseum Gladiator Tournament)
+  // ==========================================================================
+  startColosseumTournament() {
+    const p = this.em.player;
+    if (!p) return;
+
+    if (this.colosseum.active) {
+      this.em.addFloatingText(p.x, p.y - 1.5, '⚠️ 투기장 전투가 이미 진행 중입니다!', '#f87171', 1.5);
+      return;
+    }
+
+    // 경기장으로 순간이동 (솔라리스 대도시 아레나 광장 부근 x: 1935, y: 1205)
+    p.x = 1935;
+    p.y = 1205;
+    p.targetX = p.x;
+    p.targetY = p.y;
+    if (this.companionsActive && this.companions) {
+      this.companions.forEach(c => {
+        c.x = p.x + (Math.random() - 0.5) * 3;
+        c.y = p.y + (Math.random() - 0.5) * 3;
+        c.targetX = c.x;
+        c.targetY = c.y;
+      });
+    }
+
+    this.colosseum.active = true;
+    this.colosseum.wave = 0;
+    this.colosseum.monsters = [];
+    this.colosseum.timer = 0;
+    this.colosseum.cleared = false;
+
+    this.em.addEffect(p.x, p.y, 6.0, '#f59e0b', 1.2);
+    this.em.addShockwave(p.x, p.y, 5.0, '#ef4444', 0.8);
+    this.em.addFloatingText(p.x, p.y - 2.0, '🏟️ [발로르 콜로세움] 투기장 개막! 1라운드 진입!', '#fbbf24', 2.5);
+    this.em.log('boss', '🏟️ [왕국 콜로세움] 발로르 투기장 서바이벌 토너먼트가 개막되었습니다! 영광의 챔피언에 도전하십시오!');
+
+    if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+
+    this.startColosseumWave(1);
+  }
+
+  startColosseumWave(waveNum) {
+    const p = this.em.player;
+    if (!p || !this.colosseum.active) return;
+
+    this.colosseum.wave = waveNum;
+    this.colosseum.monsters = [];
+
+    const waveConfigs = [
+      {
+        title: '제 1라운드: 야만의 검투사 & 군견',
+        mobs: [
+          { type: 'gladiator', name: '야만의 검투사', hp: 450, atk: 28, speed: 2.1, color: '#b45309' },
+          { type: 'gladiator', name: '야만의 검투사', hp: 450, atk: 28, speed: 2.1, color: '#b45309' },
+          { type: 'hound', name: '투기장 전투군견', hp: 280, atk: 22, speed: 3.0, color: '#78350f' },
+          { type: 'hound', name: '투기장 전투군견', hp: 280, atk: 22, speed: 3.0, color: '#78350f' }
+        ]
+      },
+      {
+        title: '제 2라운드: 화염의 마도 결투사단',
+        mobs: [
+          { type: 'firemage', name: '화염 마도사', hp: 600, atk: 35, speed: 1.8, color: '#dc2626' },
+          { type: 'gladiator', name: '오크 챔피언', hp: 750, atk: 36, speed: 2.2, color: '#15803d' },
+          { type: 'gladiator', name: '오크 챔피언', hp: 750, atk: 36, speed: 2.2, color: '#15803d' }
+        ]
+      },
+      {
+        title: '제 3라운드: 지하감옥 무쇠 골렘 & 암살자',
+        mobs: [
+          { type: 'golem', name: '투기장 무쇠 골렘', hp: 1600, atk: 48, speed: 1.3, color: '#475569' },
+          { type: 'assassin', name: '그림자 암살자', hp: 520, atk: 42, speed: 3.2, color: '#6b21a8' },
+          { type: 'assassin', name: '그림자 암살자', hp: 520, atk: 42, speed: 3.2, color: '#6b21a8' }
+        ]
+      },
+      {
+        title: '제 4라운드: 심연의 네크로맨서 & 망령 군단',
+        mobs: [
+          { type: 'lich', name: '심연의 리치 소환사', hp: 1800, atk: 52, speed: 1.7, color: '#9333ea' },
+          { type: 'spectre', name: '저주받은 망령 기사', hp: 700, atk: 38, speed: 2.4, color: '#38bdf8' },
+          { type: 'spectre', name: '저주받은 망령 기사', hp: 700, atk: 38, speed: 2.4, color: '#38bdf8' },
+          { type: 'spectre', name: '저주받은 망령 기사', hp: 700, atk: 38, speed: 2.4, color: '#38bdf8' }
+        ]
+      },
+      {
+        title: '최종 결전: 멸망의 검성 챔피언 발로르',
+        mobs: [
+          { type: 'champion', name: '검성 챔피언 발로르', hp: 3500, atk: 68, speed: 2.6, color: '#e11d48', isColosseumBoss: true }
+        ]
+      }
+    ];
+
+    const currentCfg = waveConfigs[waveNum - 1];
+    if (!currentCfg) return;
+
+    this.em.addFloatingText(p.x, p.y - 2.2, `⚔️ ${currentCfg.title}!`, '#f43f5e', 3.0);
+    this.em.log('boss', `🏟️ [콜로세움 Wave ${waveNum}/5] ${currentCfg.title} 전투가 시작되었습니다!`);
+
+    currentCfg.mobs.forEach((mDef, idx) => {
+      const angle = (idx / currentCfg.mobs.length) * Math.PI * 2;
+      const spawnDist = 7.0 + Math.random() * 2.5;
+      const sx = p.x + Math.cos(angle) * spawnDist;
+      const sy = p.y + Math.sin(angle) * spawnDist;
+
+      const ent = this.em.spawnMonster('orc', sx, sy);
+      if (ent) {
+        ent.name = mDef.name;
+        ent.maxHp = mDef.hp;
+        ent.hp = mDef.hp;
+        ent.atk = mDef.atk;
+        ent.speed = mDef.speed;
+        ent.color = mDef.color;
+        ent.isColosseumMob = true;
+        ent.colosseumWave = waveNum;
+        if (mDef.isColosseumBoss) {
+          ent.isColosseumBoss = true;
+          ent.radius = 1.4;
+        }
+        this.colosseum.monsters.push(ent);
+        this.em.addEffect(sx, sy, 3.5, '#ef4444', 0.6);
+        this.em.addHitSparks(sx, sy, '#f59e0b', 8);
+      }
+    });
+  }
+
+  checkColosseumProgress(deadMob) {
+    if (!this.colosseum.active || !deadMob.isColosseumMob) return;
+
+    this.colosseum.monsters = this.colosseum.monsters.filter(m => m !== deadMob && m.hp > 0);
+
+    // 잔여 몬스터 확인
+    if (this.colosseum.monsters.length === 0) {
+      const p = this.em.player;
+      if (this.colosseum.wave < this.colosseum.maxWaves) {
+        const nextWave = this.colosseum.wave + 1;
+        this.em.addFloatingText(p.x, p.y - 1.8, `🎉 Wave ${this.colosseum.wave} 돌파 성공! 3초 후 다음 라운드!`, '#22c55e', 2.8);
+        if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+
+        setTimeout(() => {
+          if (this.colosseum.active) {
+            this.startColosseumWave(nextWave);
+          }
+        }, 3000);
+      } else {
+        // 최종 라운드 클리어! 챔피언 등극!
+        this.colosseum.active = false;
+        this.colosseum.cleared = true;
+        this.colosseum.title = '투기장의 무패 챔피언';
+
+        if (p) {
+          p.gold = (p.gold || 0) + 2000;
+          p.maxHp += 150;
+          p.hp = p.maxHp;
+          p.atk += 20;
+
+          // 보상 룬 지급
+          if (!this.runeInventory.includes('rune_solaris')) this.runeInventory.push('rune_solaris');
+          if (!this.runeInventory.includes('rune_fulgur')) this.runeInventory.push('rune_fulgur');
+
+          this.em.addEffect(p.x, p.y, 8.0, '#facc15', 1.8);
+          this.em.addShockwave(p.x, p.y, 7.0, '#f59e0b', 1.2);
+          this.em.addFloatingText(p.x, p.y - 2.5, '🏆 [콜로세움 제패] 투기장 무패 챔피언 등극!! (+2000G, 영구 스탯 대폭 상승)', '#fbbf24', 4.0);
+          this.em.log('boss', '👑 [콜로세움 정복] 플레이어가 발로르 콜로세움 5개 라운드를 모두 정복하고 대륙 투기장의 전설적 챔피언에 올랐습니다! (+2000G, HP+150, ATK+20, 태양/뇌전 룬 획득)');
+          if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+        }
+      }
+    }
+  }
+
+  updateColosseum(dt) {
+    if (!this.colosseum.active) return;
+    const p = this.em.player;
+    if (!p || p.hp <= 0) {
+      // 패배 시 투기장 종료
+      this.colosseum.active = false;
+      this.colosseum.monsters = [];
+      this.em.log('boss', '💀 [콜로세움 패배] 플레이어가 투기장 전투 도중 쓰러져 경기가 중단되었습니다.');
+      return;
+    }
+
+    // 보스 특수 스킬 (발로르 검풍)
+    if (this.colosseum.wave === 5) {
+      this.colosseum.timer += dt;
+      if (this.colosseum.timer >= 4.5) {
+        this.colosseum.timer = 0;
+        const boss = this.colosseum.monsters.find(m => m.isColosseumBoss && m.hp > 0);
+        if (boss) {
+          this.em.addShockwave(boss.x, boss.y, 5.0, '#e11d48', 0.6);
+          this.em.addFloatingText(boss.x, boss.y - 1.5, '💥 멸망의 검성 회전참격!', '#f43f5e', 1.5);
+          if (typeof audioMgr !== 'undefined') audioMgr.playSlash();
+          const dist = Math.hypot(p.x - boss.x, p.y - boss.y);
+          if (dist < 4.5) {
+            p.hp -= 45;
+            p.hitTimer = 0.3;
+            this.em.addFloatingText(p.x, p.y - 1.0, '💥 -45', '#ef4444', 1.2);
+          }
+        }
+      }
+    }
+  }
 }
 
 const CRAFTING_RECIPES = [
@@ -2286,3 +2586,4 @@ window.STRUCTURE_DEFS = STRUCTURE_DEFS;
 window.LEGENDARY_ITEMS = LEGENDARY_ITEMS;
 window.CRAFTING_RECIPES = CRAFTING_RECIPES;
 window.AWAKENING_CLASSES = AWAKENING_CLASSES;
+window.RUNESTONES = RUNESTONES;
