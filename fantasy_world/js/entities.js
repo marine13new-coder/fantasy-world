@@ -2983,7 +2983,7 @@ class EntityManager {
     if (!p.lastAttackTime || (now - p.lastAttackTime > 1150)) {
       p.comboStep = 1;
     } else {
-      p.comboStep = (p.comboStep % 3) + 1;
+      p.comboStep = (p.comboStep % 4) + 1;
     }
     p.lastAttackTime = now;
     p.isAttacking = true;
@@ -3002,7 +3002,7 @@ class EntityManager {
     let comboMultiplier = 1.0;
     let cdTime = 0.28;
     let effectColor = '#38bdf8';
-    let comboText = '⚔️ 1타 [신속 수평베기]';
+    let comboText = '⚔️ 1타 [신속 쾌도 수평베기]';
 
     let justDodgeBonus = 1.0;
     if (p.justDodgeEmpowered) {
@@ -3018,15 +3018,15 @@ class EntityManager {
 
     if (p.comboStep === 1) {
       comboMultiplier = 1.0;
-      cdTime = 0.28;
+      cdTime = 0.26;
       effectColor = '#38bdf8';
-      comboText = '⚔️ 1타 [신속 수평베기]';
+      comboText = '⚔️ 1타 [신속 쾌도 수평베기]';
       if (typeof audioMgr !== 'undefined') audioMgr.playSword();
       p.x += Math.cos(angle) * 0.22;
       p.y += Math.sin(angle) * 0.22;
     } else if (p.comboStep === 2) {
       comboMultiplier = 1.45;
-      cdTime = 0.32;
+      cdTime = 0.30;
       effectColor = '#818cf8';
       comboText = '⚡ 2타 [대각 상승 뇌전베기!]';
       if (typeof audioMgr !== 'undefined') audioMgr.playSword();
@@ -3037,12 +3037,31 @@ class EntityManager {
         this.addHitSparks(target.x, target.y, '#818cf8', 10);
       }
     } else if (p.comboStep === 3) {
-      comboMultiplier = 2.5;
-      cdTime = 0.52;
+      comboMultiplier = 2.0;
+      cdTime = 0.36;
       effectColor = '#facc15';
-      comboText = '🔥 3타 피니셔 [360도 대회전 파쇄!]';
+      comboText = '🌪️ 3타 [360도 대회전 회오리!]';
       if (typeof audioMgr !== 'undefined') audioMgr.playWhirlwind();
       this.addDustPuff(p.x, p.y, 8);
+    } else if (p.comboStep === 4) {
+      comboMultiplier = 3.2;
+      cdTime = 0.52;
+      effectColor = '#ef4444';
+      comboText = '☄️ 4타 궁극 피니셔 [극의: 유성 쌍룡 십자참격!]';
+      if (typeof audioMgr !== 'undefined') {
+        audioMgr.playWhirlwind();
+        audioMgr.playSword();
+      }
+      p.x += Math.cos(angle) * 0.45;
+      p.y += Math.sin(angle) * 0.45;
+      this.addDustPuff(p.x, p.y, 14);
+      this.addGroundFissure(p.x, p.y, angle - 0.45, 3.8, '#ef4444');
+      this.addGroundFissure(p.x, p.y, angle + 0.45, 3.8, '#f59e0b');
+      if (this.camera) {
+        this.camera.shake = Math.min(22, (this.camera.shake || 0) + 14);
+        this.camera.screenFreeze = 0.09;
+        this.camera.cinematicBarsTimer = 0.45;
+      }
     } else {
       if (typeof audioMgr !== 'undefined') audioMgr.playSword();
     }

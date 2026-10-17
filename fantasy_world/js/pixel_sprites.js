@@ -4127,7 +4127,39 @@
         const arcCenterX = px + (dir === 'left' ? -12 : (dir === 'right' ? 12 : 0)) * sc;
         const arcCenterY = py - 7 * sc - bounce + (dir === 'down' ? 6 : (dir === 'up' ? -6 : 0)) * sc;
 
-        if (e.comboStep === 3) {
+        if (e.comboStep === 4) {
+          // ☄️ [4단계 궁극 피니셔] 유성 쌍룡 십자참격호 (Dual Meteor Cross Cleave)
+          ctx.strokeStyle = 'rgba(239, 68, 68, 0.9)';
+          ctx.lineWidth = 6.0 * sc;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(arcCenterX - 18 * sc, arcCenterY - 18 * sc);
+          ctx.lineTo(arcCenterX + 18 * sc, arcCenterY + 18 * sc);
+          ctx.stroke();
+
+          ctx.strokeStyle = 'rgba(250, 204, 21, 0.9)';
+          ctx.beginPath();
+          ctx.moveTo(arcCenterX + 18 * sc, arcCenterY - 18 * sc);
+          ctx.lineTo(arcCenterX - 18 * sc, arcCenterY + 18 * sc);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2.8 * sc;
+          ctx.beginPath();
+          ctx.moveTo(arcCenterX - 16 * sc, arcCenterY - 16 * sc);
+          ctx.lineTo(arcCenterX + 16 * sc, arcCenterY + 16 * sc);
+          ctx.moveTo(arcCenterX + 16 * sc, arcCenterY - 16 * sc);
+          ctx.lineTo(arcCenterX - 16 * sc, arcCenterY + 16 * sc);
+          ctx.stroke();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(arcCenterX - 4 * sc, arcCenterY - 4 * sc, 8 * sc, 8 * sc);
+          for (let sp = 0; sp < 12; sp++) {
+            const spAng = (Math.PI / 6) * sp;
+            ctx.fillStyle = sp % 2 === 0 ? '#ef4444' : '#fef08a';
+            ctx.fillRect(arcCenterX + Math.cos(spAng) * 22 * sc, arcCenterY + Math.sin(spAng) * 22 * sc, 3 * sc, 3 * sc);
+          }
+        } else if (e.comboStep === 3) {
           // 💥 [3단계 피니셔] 360도 전방위 골든 회전참격호 (Giant 360 Spin Cleave Finisher)
           ctx.strokeStyle = 'rgba(250, 204, 21, 0.85)';
           ctx.lineWidth = 5.5 * sc;

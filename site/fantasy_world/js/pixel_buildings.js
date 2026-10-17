@@ -1401,6 +1401,108 @@
     },
 
     // =========================================================================
+    // 11.6. 극지방 서리한 만년설 빙하 요새 (Glacial Frostmourne Citadel)
+    // =========================================================================
+    drawGlacialCitadel(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // 바닥 푸른 빙하 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+      ctx.fillRect(px - halfW + 2, py + halfH - 2, bw - 4, 6);
+
+      // 서리 크리스탈 요새 외벽 (Translucent Cyan/Azure Ice Ramparts)
+      ctx.fillStyle = '#0369a1';
+      ctx.fillRect(px - halfW + 3, py - halfH + 8, bw - 6, bh - 9);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(px - halfW + 5, py - halfH + 10, bw - 10, bh - 13);
+      ctx.fillStyle = '#bae6fd';
+      ctx.fillRect(px - halfW + 5, py - halfH + 10, bw - 10, 3);
+
+      // 뾰족한 얼음 고드름 성채 배틀먼트 (Crystalline Ice Icicles & Pinnacles)
+      const pinCount = Math.max(3, Math.floor(bw / 7));
+      const spacing = (bw - 10) / pinCount;
+      for (let p = 0; p < pinCount; p++) {
+        const pinX = px - halfW + 6 + p * spacing;
+        const pinH = 8 + (p % 2 ? 4 : 0);
+        ctx.fillStyle = '#e0f2fe';
+        ctx.beginPath();
+        ctx.moveTo(pinX, py - halfH + 10);
+        ctx.lineTo(pinX + 3, py - halfH + 10 - pinH);
+        ctx.lineTo(pinX + 6, py - halfH + 10);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // 중앙 서리 룬 크리스탈 핵 (Pulsing Frost Rune Core)
+      const coreY = py + 2;
+      const pulse = 0.8 + Math.sin(timeSec * 3) * 0.2;
+      ctx.fillStyle = '#0284c7';
+      ctx.beginPath();
+      ctx.arc(px, coreY, 6 * pulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 1, coreY - 4, 2, 8);
+      ctx.fillRect(px - 4, coreY - 1, 8, 2);
+
+      // 공중 부유 서리 파편 (Orbiting Frost Shards)
+      for (let s = 0; s < 3; s++) {
+        const sAng = timeSec * 2.5 + (s * Math.PI * 2 / 3);
+        const sx = px + Math.cos(sAng) * (halfW - 2);
+        const sy = py - 6 + Math.sin(sAng) * 5;
+        ctx.fillStyle = '#e0f2fe';
+        ctx.fillRect(sx, sy, 2, 3);
+      }
+    },
+
+    // =========================================================================
+    // 11.7. 북극광 오로라 성좌 거석 신전 (Aurora Borealis Monolith Shrine)
+    // =========================================================================
+    drawAuroraMonolith(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // 바닥 설원 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+      ctx.fillRect(px - halfW + 2, py + halfH - 2, bw - 4, 6);
+
+      // 서리 거석 3주 (Trio of Runed Ice Monoliths)
+      const pillars = [-halfW + 6, 0, halfW - 6];
+      for (let i = 0; i < pillars.length; i++) {
+        const mx = px + pillars[i];
+        const mH = bh - 12 - (i === 1 ? 0 : 6);
+        const mY = py + halfH - 4 - mH;
+
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(mx - 3, mY, 6, mH);
+        ctx.fillStyle = '#0ea5e9';
+        ctx.fillRect(mx - 2, mY + 2, 4, mH - 4);
+        ctx.fillStyle = '#e0f2fe';
+        ctx.fillRect(mx - 1, mY + 2, 2, mH - 4);
+
+        ctx.fillStyle = (i === 1) ? '#facc15' : '#38bdf8';
+        ctx.fillRect(mx - 1, mY + Math.round(mH * 0.4), 2, 2);
+      }
+
+      // 🌌 상공으로 솟구치는 오로라 커튼 (Ascending Aurora Borealis Curtain)
+      ctx.save();
+      const wave = Math.sin(timeSec * 2.0) * 8;
+      const grad = ctx.createLinearGradient(px, py - halfH, px + wave, py - halfH - 24);
+      grad.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
+      grad.addColorStop(0.5, 'rgba(74, 222, 128, 0.35)');
+      grad.addColorStop(1, 'rgba(168, 85, 247, 0)');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(px - halfW + 4, py - halfH + 4);
+      ctx.quadraticCurveTo(px + wave, py - halfH - 12, px + halfW - 4 + wave, py - halfH - 24);
+      ctx.lineTo(px - halfW + wave, py - halfH - 24);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -1607,6 +1709,14 @@
       }
       if (type === 'star_observatory' || type === 'observatory' || (type === 'temple' && b && b.continent === 'chrono')) {
         this.drawStarObservatory(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'glacial_citadel' || (type === 'castle' && b && b.continent === 'valkyrie')) {
+        this.drawGlacialCitadel(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'aurora_monolith' || (type === 'temple' && b && b.continent === 'valkyrie')) {
+        this.drawAuroraMonolith(ctx, px, py, bw, bh, isNight, timeSec);
         return true;
       }
       if (type === 'temple' || type === 'cathedral') {

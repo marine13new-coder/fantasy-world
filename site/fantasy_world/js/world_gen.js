@@ -591,6 +591,16 @@ function createSettlementList() {
   add('chrono_zodiac_sun_dial_plaza', '황도 12궁 해시계 대성채', 'castle', 'chrono', 1490, 480, 'crusader', true, 13);
   add('chrono_perpetual_motion_forge', '영구기관 비전 기어 용광로', 'lair', 'chrono', 1210, 360, 'dwarf', true, 11);
 
+  // =========================================================================
+  // 15. THE FROSTMOURNE GLACIAL SPIRE & AURORA VALKYRIE (극지방 오로라 발키리 성역 & 빙하 요새 제국)
+  // =========================================================================
+  add('valkyrie_aurora_throne', '발키리 오로라 천공 옥좌 수도', 'capital', 'valkyrie', 2150, 220, 'elf', true, 16);
+  add('valkyrie_frostmourne_citadel', '서리한 빙하 만년설 대성채', 'castle', 'valkyrie', 2020, 160, 'crusader', true, 14);
+  add('valkyrie_rime_crystal_fjord', '서리 결정 피오르드 항만', 'port', 'valkyrie', 2280, 290, 'human', false, 9);
+  add('valkyrie_mammoth_tundra_camp', '고대 매머드 툰드라 부족 거점', 'town', 'valkyrie', 1940, 260, 'beastkin', false, 8);
+  add('valkyrie_permafrost_ice_forge', '영구동토 비전 서리 대장간', 'lair', 'valkyrie', 2340, 180, 'dwarf', true, 11);
+  add('valkyrie_borealis_monolith_shrine', '북극광 성좌 거석 신성 제단', 'temple', 'valkyrie', 2090, 310, 'celestial', true, 12);
+
   return list;
 }
 
@@ -884,6 +894,18 @@ function generateWorld() {
             tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.CRYSTAL_CAVE : TILE.MEADOW; // 성운 별빛 초원 & 시간 수정동굴
           } else if (dist <= landRad + 3) {
             tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.ROAD : TILE.FOREST;
+          }
+          continue;
+        }
+
+        // 극지방 오로라 발키리 성역 및 빙하 대성채 전용 지형 카빙
+        if (s.continent === 'valkyrie') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.CASTLE_FLOOR : TILE.SNOW; // 순백 만년설 바닥
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.CRYSTAL_CAVE : TILE.SNOW; // 서리 크리스탈 동굴 & 설원
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.WATER : TILE.SNOW;
           }
           continue;
         }
