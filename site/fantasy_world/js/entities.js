@@ -1942,7 +1942,11 @@ class EntityManager {
         this.addShockwave(p.x, p.y, aoeRadius * 1.35, '#f59e0b', 0.65);
         this.addFloatingText(p.x, p.y - 1.8, '⚔️ 소드마스터 삼단 십자검기 폭발!', '#f59e0b', 1.5);
       }
-      if (this.camera) this.camera.shake = Math.min(22, (this.camera.shake || 0) + 7.5);
+      if (this.camera) {
+        this.camera.shake = Math.min(22, (this.camera.shake || 0) + 7.5);
+        this.camera.screenFreeze = 0.065;
+        this.camera.zoomPulse = 1.0;
+      }
 
       const aoeTargets = this.spatialGrid
         ? this.spatialGrid.query(p.x, p.y, aoeRadius, other => other !== p && other.hp > 0 && this.isHostile(p, other))
@@ -2027,6 +2031,10 @@ class EntityManager {
       this.addHitSparks(target.x, target.y, isCrit ? '#facc15' : effectColor, 8);
       if (this.camera) {
         this.camera.shake = Math.min(18, (this.camera.shake || 0) + (isCrit ? 6 : 3.5));
+        if (isCrit || p.comboStage === 3) {
+          this.camera.screenFreeze = 0.055;
+          this.camera.zoomPulse = 1.0;
+        }
       }
 
       target.combatTarget = p;

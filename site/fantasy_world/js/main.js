@@ -1936,8 +1936,12 @@ function startFantasyWorld() {
     camera.x = Math.max(0, Math.min(WORLD_WIDTH, camera.x));
     camera.y = Math.max(0, Math.min(WORLD_HEIGHT, camera.y));
 
-    // 시뮬레이션 시간 진행
-    const simDt = rawDt * worldTime.speed;
+    // 시뮬레이션 시간 진행 (타격 정지 피격 스톱: camera.screenFreeze)
+    let simDt = rawDt * worldTime.speed;
+    if (camera.screenFreeze > 0) {
+      camera.screenFreeze -= rawDt;
+      simDt = 0;
+    }
     if (simDt > 0) {
       worldTime.minute += simDt * 8;
       if (worldTime.minute >= 60) {
@@ -1968,9 +1972,12 @@ function startFantasyWorld() {
       camera.y += (camera.followEntity.y - camera.y) * 0.15;
     }
 
-    // 카메라 셰이크 감쇠 (Smooth Screen Shake Decay)
+    // 카메라 셰이크 & 줌 펄스 감쇠 (Smooth Screen Shake & Lens Punch Decay)
     if (camera.shake > 0) {
       camera.shake = Math.max(0, camera.shake - rawDt * 22);
+    }
+    if (camera.zoomPulse > 0) {
+      camera.zoomPulse = Math.max(0, camera.zoomPulse - rawDt * 4.0);
     }
 
     renderer.render(camera, worldTime, filterCategory, selectedItem, now / 1000);

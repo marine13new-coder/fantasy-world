@@ -148,8 +148,9 @@ class WorldRenderer {
     const shakeMag = camera.shake || 0;
     const shakeX = shakeMag > 0 ? (Math.random() - 0.5) * shakeMag * 2 : 0;
     const shakeY = shakeMag > 0 ? (Math.random() - 0.5) * shakeMag * 2 : 0;
+    const effectiveZoom = camera.zoom * (1 + (camera.zoomPulse || 0) * 0.06);
     ctx.translate(cw / 2 + shakeX, ch / 2 + shakeY);
-    ctx.scale(camera.zoom, camera.zoom);
+    ctx.scale(effectiveZoom, effectiveZoom);
     ctx.translate(-camera.x * ts, -camera.y * ts);
 
     // 뷰포트 컬링 바운드
@@ -374,6 +375,9 @@ class WorldRenderer {
       const isSelected = selectedItem && selectedItem.type === 'entity' && selectedItem.data && selectedItem.data.id === e.id;
       this.drawPixelEntity(ctx, e, ts, timeSec, camera.zoom, isFilteredOut, isSelected);
     }
+
+    // 9.5. ⚡ 인챈트 무기 원소 오라 & 회전 위스프 (Enchanted Weapon Aura)
+    this.drawEnchantedWeaponAura(ctx, ts, timeSec);
 
     // 10. 투사체 (대포알, 화살, 마법탄)
     for (const p of this.entityMgr.projectiles) {
@@ -4210,6 +4214,56 @@ class WorldRenderer {
 
       ctx.restore();
     }
+  }
+
+  // ⚡ [8.8] 인챈트 무기 원소 오라 & 회전 위스프 (Enchanted Weapon Aura & Wisps)
+  drawEnchantedWeaponAura(ctx, ts, timeSec) {
+    const p = this.entityMgr.player;
+    const rpg = this.entityMgr.rpgManager;
+    if (!p || !rpg || !rpg.enchantedRunes || !rpg.enchantedRunes.weapon) return;
+    const runeId = rpg.enchantedRunes.weapon;
+    const rune = rpg.runestones ? rpg.runestones.find(r => r.id === runeId) : null;
+    if (!rune) return;
+
+    const px = Math.round(p.x * ts);
+    const py = Math.round(p.y * ts);
+
+    ctx.save();
+    // 룬별 고유 회전 에너지 위스프 파티클 & 오라 링
+    const numWisps = 4;
+    for (let i = 0; i < numWisps; i++) {
+      const angle = timeSec * 3.5 + (i / numWisps) * Math.PI * 2;
+      const dist = 13 + Math.sin(timeSec * 5 + i * 1.5) * 3;
+      const wx = px + Math.cos(angle) * dist;
+      const wy = py + Math.sin(angle) * dist - 6;
+
+      ctx.globalAlpha = 0.65 + Math.sin(timeSec * 8 + i) * 0.25;
+      ctx.fillStyle = rune.color;
+      ctx.shadowColor = rune.color;
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(wx, wy, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 위스프 꼬리 잔상
+      const tailAngle = angle - 0.25;
+      const tx = px + Math.cos(tailAngle) * (dist * 0.95);
+      const ty = py + Math.sin(tailAngle) * (dist * 0.95) - 6;
+      ctx.globalAlpha = 0.35;
+      ctx.beginPath();
+      ctx.arc(tx, ty, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 발밑 원형 원소 마법진 펄스
+    ctx.globalAlpha = 0.25 + Math.sin(timeSec * 4) * 0.1;
+    ctx.strokeStyle = rune.color;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.ellipse(px, py + 2, 12, 6, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.restore();
   }
 }
 
