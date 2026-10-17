@@ -937,6 +937,258 @@ function startFantasyWorld() {
     });
   }
 
+  // ==========================================================================
+  // ⚡ 룬 제련소 & 인챈트 컨트롤러
+  // ==========================================================================
+  const runeforgeModalEl = document.getElementById('runeforgeModal');
+  const btnCloseRuneforgeModal = document.getElementById('btnCloseRuneforgeModal');
+  const btnOpenRuneforge = document.getElementById('btnOpenRuneforge');
+
+  window.openRuneforgeModal = function() {
+    if (!runeforgeModalEl) return;
+    const rpg = entityMgr.rpgManager;
+    if (!rpg || !rpg.runestones) return;
+
+    // 장착된 슬롯 렌더링
+    const slotsEl = document.getElementById('runeSocketSlots');
+    if (slotsEl) {
+      const slotTypes = [
+        { key: 'weapon', label: '무기 룬 슬롯 (Weapon)', icon: '⚔️' },
+        { key: 'shield', label: '방패 룬 슬롯 (Shield)', icon: '🛡️' },
+        { key: 'armor', label: '갑옷 룬 슬롯 (Armor)', icon: '🦺' }
+      ];
+
+      slotsEl.innerHTML = slotTypes.map(st => {
+        const runeId = rpg.enchantedRunes ? rpg.enchantedRunes[st.key] : null;
+        const rune = runeId ? rpg.runestones.find(r => r.id === runeId) : null;
+        if (rune) {
+          return `
+            <div class="rune-slot-card filled">
+              <div class="rune-slot-info">
+                <div class="rune-slot-icon" style="box-shadow: 0 0 10px ${rune.color}66">${rune.icon}</div>
+                <div class="rune-slot-text">
+                  <span class="rune-slot-name" style="color: ${rune.color}">${st.label}: ${rune.name}</span>
+                  <span class="rune-slot-bonus">${rune.bonusText}</span>
+                </div>
+              </div>
+              <button class="btn-rune-action danger" data-slot="${st.key}" data-action="unsocket">해제</button>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="rune-slot-card">
+              <div class="rune-slot-info">
+                <div class="rune-slot-icon">${st.icon}</div>
+                <div class="rune-slot-text">
+                  <span class="rune-slot-name">${st.label} (비어있음)</span>
+                  <span class="rune-slot-bonus">보관함에서 룬을 선택하여 장착하십시오.</span>
+                </div>
+              </div>
+              <span style="font-size: 11px; color: #64748b;">미장착</span>
+            </div>
+          `;
+        }
+      }).join('');
+
+      slotsEl.querySelectorAll('.btn-rune-action[data-action="unsocket"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const s = e.target.getAttribute('data-slot');
+          if (s && rpg) {
+            rpg.unsocketRune(s);
+            window.openRuneforgeModal();
+          }
+        });
+      });
+    }
+
+    // 보유 룬 보관함 렌더링
+    const invEl = document.getElementById('runeInventoryList');
+    if (invEl) {
+      invEl.innerHTML = rpg.runestones.map(r => {
+        return `
+          <div class="rune-inv-card">
+            <div class="rune-slot-info">
+              <div class="rune-slot-icon">${r.icon}</div>
+              <div class="rune-slot-text">
+                <span class="rune-slot-name" style="color: ${r.color}">${r.name}</span>
+                <span class="rune-slot-bonus">${r.bonusText}</span>
+              </div>
+            </div>
+            <div style="display: flex; gap: 4px;">
+              <button class="btn-rune-action" data-rune="${r.id}" data-slot="weapon" title="무기에 장착">⚔️ 무기</button>
+              <button class="btn-rune-action" data-rune="${r.id}" data-slot="shield" title="방패에 장착">🛡️ 방패</button>
+              <button class="btn-rune-action" data-rune="${r.id}" data-slot="armor" title="갑옷에 장착">🦺 갑옷</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      invEl.querySelectorAll('.btn-rune-action').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const rid = e.target.getAttribute('data-rune');
+          const s = e.target.getAttribute('data-slot');
+          if (rid && s && rpg) {
+            rpg.socketRune(s, rid);
+            window.openRuneforgeModal();
+          }
+        });
+      });
+    }
+
+    runeforgeModalEl.classList.remove('hidden');
+    if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+  };
+
+  if (btnCloseRuneforgeModal) {
+    btnCloseRuneforgeModal.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (runeforgeModalEl) runeforgeModalEl.classList.add('hidden');
+    });
+  }
+  if (runeforgeModalEl) {
+    runeforgeModalEl.addEventListener('click', (e) => {
+      if (e.target === runeforgeModalEl) runeforgeModalEl.classList.add('hidden');
+    });
+  }
+  if (btnOpenRuneforge) {
+    btnOpenRuneforge.addEventListener('click', () => {
+      window.openRuneforgeModal();
+    });
+  }
+
+  // ==========================================================================
+  // 🏟️ 발로르 왕국 투기장 컨트롤러
+  // ==========================================================================
+  const colosseumModalEl = document.getElementById('colosseumModal');
+  const btnCloseColosseumModal = document.getElementById('btnCloseColosseumModal');
+  const btnOpenColosseum = document.getElementById('btnOpenColosseum');
+  const btnEnterColosseum = document.getElementById('btnEnterColosseum');
+
+  window.openColosseumModal = function() {
+    if (!colosseumModalEl) return;
+    const rpg = entityMgr.rpgManager;
+    if (!rpg) return;
+
+    const statusCard = document.getElementById('colosseumStatusCard');
+    if (statusCard) {
+      const col = rpg.colosseum || {};
+      const statusTitle = col.active ? `⚔️ 현재 제 ${col.wave}/5 라운드 교전 진행 중!` : (col.cleared ? '🏆 투기장 5라운드 완전 제패! (무패 챔피언)' : '🛡️ 투기장 도전 대기 상태');
+      const waveNames = ['1.야만검투사', '2.화염마도사', '3.무쇠골렘', '4.심연리치', '5.검성발로르'];
+      
+      const waveStepsHtml = waveNames.map((wn, idx) => {
+        const wNum = idx + 1;
+        let cls = '';
+        if (col.active && col.wave === wNum) cls = 'current';
+        else if (col.cleared || (col.active && col.wave > wNum)) cls = 'cleared';
+        return `<div class="colosseum-wave-step ${cls}">${wn}</div>`;
+      }).join('');
+
+      statusCard.innerHTML = `
+        <div style="font-size: 14px; font-weight: 800; color: #fca5a5;">${statusTitle}</div>
+        <div class="colosseum-wave-list">${waveStepsHtml}</div>
+        <div style="font-size: 11px; color: #cbd5e1; line-height: 1.5;">
+          • 장소: 황도 솔라리스 대경기장 광장 (X: 1935, Y: 1205)<br>
+          • 보상: 2000 골드, 최대 생명력 +150, 공격력 +20, 태양왕 룬 & 풀구르 번개 룬 영구 획득!
+        </div>
+      `;
+    }
+
+    colosseumModalEl.classList.remove('hidden');
+    if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+  };
+
+  if (btnCloseColosseumModal) {
+    btnCloseColosseumModal.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (colosseumModalEl) colosseumModalEl.classList.add('hidden');
+    });
+  }
+  if (colosseumModalEl) {
+    colosseumModalEl.addEventListener('click', (e) => {
+      if (e.target === colosseumModalEl) colosseumModalEl.classList.add('hidden');
+    });
+  }
+  if (btnOpenColosseum) {
+    btnOpenColosseum.addEventListener('click', () => {
+      window.openColosseumModal();
+    });
+  }
+  if (btnEnterColosseum) {
+    btnEnterColosseum.addEventListener('click', () => {
+      if (colosseumModalEl) colosseumModalEl.classList.add('hidden');
+      const rpg = entityMgr.rpgManager;
+      if (rpg && rpg.startColosseumTournament) {
+        rpg.startColosseumTournament();
+      }
+    });
+  }
+
+  // ==========================================================================
+  // 🗺️ 판타시아 대륙 전도 & 거점 순간이동 컨트롤러
+  // ==========================================================================
+  const worldMapModalEl = document.getElementById('worldMapModal');
+  const btnCloseWorldMapModal = document.getElementById('btnCloseWorldMapModal');
+  const btnOpenWorldMap = document.getElementById('btnOpenWorldMap');
+
+  window.openWorldMapModal = function() {
+    if (!worldMapModalEl) return;
+    const rpg = entityMgr.rpgManager;
+    const gridEl = document.getElementById('worldMapSettlementsGrid');
+    if (gridEl && world.settlementList) {
+      // 주요 수도, 항구, 대성채, 거점 필터
+      const keySettlements = world.settlementList.filter(s => 
+        s.type === 'capital' || s.type === 'port' || s.type === 'fortress' || s.hasWall
+      ).slice(0, 36);
+
+      gridEl.innerHTML = keySettlements.map(s => {
+        const icon = s.type === 'capital' ? '👑' : (s.type === 'port' ? '⚓' : (s.type === 'fortress' ? '🏰' : '🏘️'));
+        const regionName = s.continent === 'central' ? '중앙 제국' : (s.continent === 'west' ? '서부 실바니아' : (s.continent === 'north' ? '북부 노스펠' : '남부 드라코니아'));
+        return `
+          <div class="map-settlement-card">
+            <div class="map-settlement-info">
+              <span class="map-settlement-icon">${icon}</span>
+              <div class="map-settlement-details">
+                <span class="map-settlement-name">${s.name}</span>
+                <span class="map-settlement-sub">${regionName} (X:${s.x}, Y:${s.y})</span>
+              </div>
+            </div>
+            <button class="btn-teleport-node" data-settlement="${s.id}">🌀 이동</button>
+          </div>
+        `;
+      }).join('');
+
+      gridEl.querySelectorAll('.btn-teleport-node').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const sid = e.target.getAttribute('data-settlement');
+          if (sid && rpg && rpg.teleportTo) {
+            rpg.teleportTo(sid);
+            if (worldMapModalEl) worldMapModalEl.classList.add('hidden');
+          }
+        });
+      });
+    }
+
+    worldMapModalEl.classList.remove('hidden');
+    if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+  };
+
+  if (btnCloseWorldMapModal) {
+    btnCloseWorldMapModal.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (worldMapModalEl) worldMapModalEl.classList.add('hidden');
+    });
+  }
+  if (worldMapModalEl) {
+    worldMapModalEl.addEventListener('click', (e) => {
+      if (e.target === worldMapModalEl) worldMapModalEl.classList.add('hidden');
+    });
+  }
+  if (btnOpenWorldMap) {
+    btnOpenWorldMap.addEventListener('click', () => {
+      window.openWorldMapModal();
+    });
+  }
+
   // 전체화면 및 시네마틱 모드
   const btnToggleFullscreen = document.getElementById('btnToggleFullscreen');
   if (btnToggleFullscreen) {
@@ -1328,8 +1580,29 @@ function startFantasyWorld() {
         setWorldSpeed(worldTime.speed === 0 ? prevNonZeroSpeed : 0);
       }
     } else if (e.code === 'KeyM') {
-      stopFollow();
-      smoothMoveCamera(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0.18);
+      if (typeof window.openWorldMapModal === 'function') {
+        if (worldMapModalEl && !worldMapModalEl.classList.contains('hidden')) {
+          worldMapModalEl.classList.add('hidden');
+        } else {
+          window.openWorldMapModal();
+        }
+      }
+    } else if (e.code === 'KeyZ') {
+      if (typeof window.openRuneforgeModal === 'function') {
+        if (runeforgeModalEl && !runeforgeModalEl.classList.contains('hidden')) {
+          runeforgeModalEl.classList.add('hidden');
+        } else {
+          window.openRuneforgeModal();
+        }
+      }
+    } else if (e.code === 'KeyV') {
+      if (typeof window.openColosseumModal === 'function') {
+        if (colosseumModalEl && !colosseumModalEl.classList.contains('hidden')) {
+          colosseumModalEl.classList.add('hidden');
+        } else {
+          window.openColosseumModal();
+        }
+      }
     } else if (e.code === 'KeyO') {
       if (btnOpenDungeon) btnOpenDungeon.click();
     } else if (e.code === 'Escape') {
@@ -1340,6 +1613,9 @@ function startFantasyWorld() {
       if (dungeonModalEl) dungeonModalEl.classList.add('hidden');
       if (tavernModalEl) tavernModalEl.classList.add('hidden');
       if (awakeningModalEl) awakeningModalEl.classList.add('hidden');
+      if (runeforgeModalEl) runeforgeModalEl.classList.add('hidden');
+      if (colosseumModalEl) colosseumModalEl.classList.add('hidden');
+      if (worldMapModalEl) worldMapModalEl.classList.add('hidden');
       if (buildPaletteEl) buildPaletteEl.classList.add('hidden');
       if (entityMgr.rpgManager) entityMgr.rpgManager.isBuildModeActive = false;
       if (btnToggleBuild) btnToggleBuild.classList.remove('active');
