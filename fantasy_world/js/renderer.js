@@ -561,7 +561,7 @@ class WorldRenderer {
     this.drawAtmosphericParticles(ctx, cw, ch, timeSec, camera, worldTime);
 
     // 13.8. 🎬 다크 판타지 시네마틱 비네트 & 콘트라스트 렌즈 림 (Cinematic Vignette Rim)
-    this.drawCinematicVignette(ctx, cw, ch);
+    this.drawCinematicVignette(ctx, cw, ch, camera);
 
     // 13.9. 🔥 연속 킬스트릭 피버 모드 화면 테두리 화염 (Killstreak Fever Rim)
     this.drawKillstreakFeverRim(ctx, cw, ch, timeSec, this.entityMgr.player);
@@ -5981,8 +5981,8 @@ class WorldRenderer {
     ctx.restore();
   }
 
-  // 🎬 [13.8] 다크 판타지 시네마틱 비네트 & 콘트라스트 렌즈 림 (Cinematic Dark Fantasy Vignette)
-  drawCinematicVignette(ctx, cw, ch) {
+  // 🎬 [13.8] 다크 판타지 시네마틱 비네트 & 바이옴 대기 환경 조색 림 (Cinematic Dark Fantasy Vignette & Biome Color Grading)
+  drawCinematicVignette(ctx, cw, ch, camera = null) {
     ctx.save();
     const radius = Math.hypot(cw, ch) / 2;
     const grad = ctx.createRadialGradient(cw / 2, ch / 2, radius * 0.42, cw / 2, ch / 2, radius);
@@ -5991,6 +5991,49 @@ class WorldRenderer {
     grad.addColorStop(1, 'rgba(2, 6, 18, 0.58)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, cw, ch);
+
+    // 🎨 대륙별 고유 시네마틱 대기 조색 필름 (Atmospheric Biome Color Grading)
+    if (camera) {
+      const cx = camera.x, cy = camera.y;
+      let tintColor = null;
+
+      // 요정 성역: 신비로운 에메랄드 이슬 림
+      if (cx >= 1520 && cx <= 1860 && cy >= 1540 && cy <= 1820) {
+        tintColor = 'rgba(16, 185, 129, 0.085)';
+      }
+      // 고딕 뱀파이어 제국: 서늘한 핏빛 장미/심야의 바이올렛 림
+      else if (cx >= 2680 && cx <= 3020 && cy >= 1840 && cy <= 2180) {
+        tintColor = 'rgba(159, 18, 57, 0.11)';
+      }
+      // 해적 연합 & 크라켄 해역: 청록빛 심해 산호 라군 림
+      else if (cx >= 1220 && cx <= 1560 && cy >= 1260 && cy <= 1560) {
+        tintColor = 'rgba(6, 182, 212, 0.075)';
+      }
+      // 드워프 증기 요새: 이글거리는 용광로 호박색 앰버 림
+      else if (cx >= 100 && cx <= 380 && cy >= 340 && cy <= 680) {
+        tintColor = 'rgba(234, 88, 12, 0.085)';
+      }
+      // 달빛 은룡 천공 신사: 은은한 등나무꽃 영혼 보랏빛 림
+      else if (cx >= 720 && cx <= 1040 && cy >= 560 && cy <= 820) {
+        tintColor = 'rgba(168, 85, 247, 0.085)';
+      }
+      // 프리즘 수정 제국: 영롱한 별빛 에테르 시안 림
+      else if (cx >= 2460 && cx <= 2820 && cy >= 1560 && cy <= 1860) {
+        tintColor = 'rgba(56, 189, 248, 0.08)';
+      }
+      // 모래바다 신기루 제국: 황금빛 사구 태양열 아지랑이 림
+      else if (cx >= 3150 && cx <= 3500 && cy >= 1650 && cy <= 2000) {
+        tintColor = 'rgba(245, 158, 11, 0.085)';
+      }
+
+      if (tintColor) {
+        const bGrad = ctx.createRadialGradient(cw / 2, ch / 2, radius * 0.35, cw / 2, ch / 2, radius);
+        bGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        bGrad.addColorStop(1, tintColor);
+        ctx.fillStyle = bGrad;
+        ctx.fillRect(0, 0, cw, ch);
+      }
+    }
     ctx.restore();
   }
 

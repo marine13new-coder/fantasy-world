@@ -527,6 +527,72 @@
     </div>
   </div>
 
+  <!-- 🏛️ 대륙 거점 영주·주점 비화 & 대화 살롱 모달 (Town Dialogue & Story Modal) -->
+  <div id="settlementDialogModal" class="modal-overlay hidden">
+    <div class="inventory-card town-dialog-card">
+      <div class="inv-header">
+        <h2 id="townDialogTitle">🏛️ 솔라리스 왕도 성채 회랑</h2>
+        <button id="btnCloseTownDialog" class="close-btn">✖</button>
+      </div>
+      <div class="town-dialog-body">
+        <!-- NPC 초상화 & 프로필 영역 -->
+        <div class="npc-profile-row">
+          <div class="npc-portrait-box">
+            <span class="npc-portrait-icon" id="townNpcIcon">👑</span>
+            <div class="npc-role-tag" id="townNpcRole">왕실 근위총사</div>
+          </div>
+          <div class="npc-meta">
+            <div class="npc-name" id="townNpcName">로랑 경</div>
+            <div class="npc-settlement" id="townSettlementTag">솔라리스 왕도 · 중앙 제국 본토</div>
+            <div class="npc-disposition" id="townNpcMood">⚔️ 경계와 관료적 엄격함</div>
+          </div>
+        </div>
+
+        <!-- 몰입형 스토리 대화 상자 (Visual Novel Style) -->
+        <div class="town-dialogue-box">
+          <div class="dialogue-quote" id="townDialogText">
+            "성문 통행세는 면제요. 왕실 근위대의 인장을 지녔군. 하지만 뒷골목의 밀수배들은 조심하시오. 밤마다 은괴를 실은 마차가 강을 건너고 있으니."
+          </div>
+          <div class="dialogue-lore-note" id="townLoreNote">
+            💡 현지 소문: 대성당 지하 납골당에서 기이한 찬송가가 울려 퍼진다는 제보가 잇따르고 있습니다.
+          </div>
+        </div>
+
+        <!-- 4대 상호작용 액션 버튼 바 -->
+        <div class="town-actions-grid">
+          <button class="town-act-btn" id="btnTownRumor">
+            <span class="act-icon">📜</span>
+            <div class="act-info">
+              <span class="act-title">지역 소문 & 비화</span>
+              <span class="act-desc">대륙의 숨겨진 비화와 고대 유적 단서 청취</span>
+            </div>
+          </button>
+          <button class="town-act-btn" id="btnTownRest">
+            <span class="act-icon">🍺</span>
+            <div class="act-info">
+              <span class="act-title">주점 휴식 & 만찬</span>
+              <span class="act-desc">체력 100% 회복 & 사기 진작 버프 (50G)</span>
+            </div>
+          </button>
+          <button class="town-act-btn" id="btnTownTrade">
+            <span class="act-icon">⚖️</span>
+            <div class="act-info">
+              <span class="act-title">특산품 무역 & 매각</span>
+              <span class="act-desc">보유 보석·향신료를 현지 최고가에 환전</span>
+            </div>
+          </button>
+          <button class="town-act-btn" id="btnTownBespokeQuest">
+            <span class="act-icon">⚔️</span>
+            <div class="act-info">
+              <span class="act-title">영주 독점 의뢰 수주</span>
+              <span class="act-desc">현지 치안 토벌 및 정찰 고수익 의뢰</span>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- RPG 캐릭터 장비 & 인벤토리 모달 -->
   <div id="inventoryModal" class="modal-overlay hidden">
     <div class="inventory-card">
@@ -864,14 +930,14 @@
   </div>
 
   <!-- 스크립트 로드 -->
-  <script src="js/audio.js?v=56"></script>
-  <script src="js/world_gen.js?v=56"></script>
-  <script src="js/pixel_buildings.js?v=56"></script>
-  <script src="js/entities.js?v=56"></script>
-  <script src="js/rpg_systems.js?v=56"></script>
-  <script src="js/pixel_items.js?v=56"></script>
-  <script src="js/pixel_sprites.js?v=56"></script>
-  <script src="js/renderer.js?v=56"></script>
-  <script src="js/main.js?v=56"></script>
+  <script src="js/audio.js?v=57"></script>
+  <script src="js/world_gen.js?v=57"></script>
+  <script src="js/pixel_buildings.js?v=57"></script>
+  <script src="js/entities.js?v=57"></script>
+  <script src="js/rpg_systems.js?v=57"></script>
+  <script src="js/pixel_items.js?v=57"></script>
+  <script src="js/pixel_sprites.js?v=57"></script>
+  <script src="js/renderer.js?v=57"></script>
+  <script src="js/main.js?v=57"></script>
 </body>
 </html>

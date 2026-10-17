@@ -466,9 +466,9 @@ function startFantasyWorld() {
 
   function updateSettlementPromptUI() {
     let nearest = null;
-    let minDist = 7.5;
+    let minDist = 12.0;
     for (const s of world.settlements) {
-      if (s.faction === 'kingdom') {
+      if (s.faction !== 'monster') {
         const d = Math.hypot(s.x - player.x, s.y - player.y);
         if (d < minDist) {
           minDist = d;
@@ -479,6 +479,8 @@ function startFantasyWorld() {
     if (nearest) {
       settlementPromptEl.classList.remove('hidden');
       promptSettlementNameEl.textContent = `${nearest.name}`;
+      const descEl = settlementPromptEl.querySelector('.prompt-desc');
+      if (descEl) descEl.textContent = '영주 관저 & 주점 살롱 & 특산품 교역 [F 키]';
     } else {
       settlementPromptEl.classList.add('hidden');
     }
@@ -1337,6 +1339,162 @@ function startFantasyWorld() {
   if (btnOpenWorldMap) {
     btnOpenWorldMap.addEventListener('click', () => {
       window.openWorldMapModal();
+    });
+  }
+
+  // ==========================================================================
+  // 🏛️ 대륙 거점 영주·주점 비화 & 대화 살롱 모달 컨트롤러 (Town Dialogue & Story Controller)
+  // ==========================================================================
+  const settlementDialogModalEl = document.getElementById('settlementDialogModal');
+  const btnCloseTownDialog = document.getElementById('btnCloseTownDialog');
+  let currentDialogSettlement = null;
+
+  window.openTownDialogModal = function(settlement) {
+    if (!settlementDialogModalEl || !settlement) return;
+    currentDialogSettlement = settlement;
+
+    const loreDb = (typeof TOWN_LORE_DATABASE !== 'undefined') ? TOWN_LORE_DATABASE : {};
+    const cKey = settlement.continent || 'central';
+    const lore = loreDb[cKey] || loreDb.central;
+
+    // 모달 타이틀 & 메타데이터
+    const titleEl = document.getElementById('townDialogTitle');
+    const iconEl = document.getElementById('townNpcIcon');
+    const roleEl = document.getElementById('townNpcRole');
+    const nameEl = document.getElementById('townNpcName');
+    const tagEl = document.getElementById('townSettlementTag');
+    const moodEl = document.getElementById('townNpcMood');
+    const quoteEl = document.getElementById('townDialogText');
+    const noteEl = document.getElementById('townLoreNote');
+
+    if (titleEl) titleEl.textContent = `🏛️ [${settlement.name}] 영주 관저 & 주점 살롱`;
+    if (iconEl) iconEl.textContent = lore.icon || '👑';
+    if (roleEl) roleEl.textContent = lore.npcRole || '거점 영주';
+    if (nameEl) nameEl.textContent = lore.npcName || '영주 관헌';
+    if (tagEl) tagEl.textContent = `${settlement.name} · ${settlement.regionName || settlement.continent}`;
+    if (moodEl) moodEl.textContent = lore.disposition || '⚔️ 경계와 긍지';
+    if (quoteEl) quoteEl.textContent = lore.quote;
+    if (noteEl) noteEl.textContent = lore.rumor;
+
+    settlementDialogModalEl.classList.remove('hidden');
+    if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+  };
+
+  if (btnCloseTownDialog) {
+    btnCloseTownDialog.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (settlementDialogModalEl) settlementDialogModalEl.classList.add('hidden');
+    });
+  }
+  if (settlementDialogModalEl) {
+    settlementDialogModalEl.addEventListener('click', (e) => {
+      if (e.target === settlementDialogModalEl) settlementDialogModalEl.classList.add('hidden');
+    });
+  }
+
+  // 1. 소문 듣기 (Rumor)
+  const btnTownRumor = document.getElementById('btnTownRumor');
+  if (btnTownRumor) {
+    btnTownRumor.addEventListener('click', () => {
+      if (!currentDialogSettlement) return;
+      const loreDb = (typeof TOWN_LORE_DATABASE !== 'undefined') ? TOWN_LORE_DATABASE : {};
+      const cKey = currentDialogSettlement.continent || 'central';
+      const lore = loreDb[cKey] || loreDb.central;
+      const quoteEl = document.getElementById('townDialogText');
+      if (quoteEl) {
+        quoteEl.innerHTML = `<span style="color: #fde047;">"쉿, 귀를 기울여 보시오... ${lore.rumor.replace('💡', '')}"</span>`;
+      }
+      entityMgr.addFloatingText(player.x, player.y - 1.2, '📜 비밀 비화 입수!', '#fde047', 1.8);
+      if (typeof audioMgr !== 'undefined') audioMgr.playChime();
+    });
+  }
+
+  // 2. 주점 휴식 & 만찬 (Rest & Feast)
+  const btnTownRest = document.getElementById('btnTownRest');
+  if (btnTownRest) {
+    btnTownRest.addEventListener('click', () => {
+      if (!player) return;
+      if (player.gold < 50) {
+        alert('주점 식사 및 숙박비(50G)가 부족합니다!');
+        return;
+      }
+      player.gold -= 50;
+      player.hp = player.maxHp;
+      player.speed = (player.speed || 2.0) + 0.35;
+      setTimeout(() => { player.speed = Math.max(1.8, player.speed - 0.35); }, 90000);
+
+      const loreDb = (typeof TOWN_LORE_DATABASE !== 'undefined') ? TOWN_LORE_DATABASE : {};
+      const cKey = (currentDialogSettlement && currentDialogSettlement.continent) || 'central';
+      const lore = loreDb[cKey] || loreDb.central;
+
+      const quoteEl = document.getElementById('townDialogText');
+      if (quoteEl) {
+        quoteEl.innerHTML = `<span style="color: #4ade80;">"🍺 ${lore.tavernToast}" (HP 100% 회복 & 90초간 가속 부여!)</span>`;
+      }
+      entityMgr.addEffect(player.x, player.y, 6.0, '#4ade80', 1.2);
+      entityMgr.addFloatingText(player.x, player.y - 1.4, '🍺 주점 만찬 완료! HP 100% 회복', '#4ade80', 2.0);
+      if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+    });
+  }
+
+  // 3. 특산품 무역 & 매각 (Trade)
+  const btnTownTrade = document.getElementById('btnTownTrade');
+  if (btnTownTrade) {
+    btnTownTrade.addEventListener('click', () => {
+      if (!player) return;
+      const invGain = (player.inventory.gems || 0) * 120 + (player.inventory.spices || 0) * 140;
+      player.inventory.gems = 0;
+      player.inventory.spices = 0;
+      const tradeProfit = 350 + invGain;
+      player.gold += tradeProfit;
+      player.fame = (player.fame || 0) + 15;
+      player.atk += 3;
+      player.maxHp += 25;
+      player.hp = player.maxHp;
+
+      const quoteEl = document.getElementById('townDialogText');
+      if (quoteEl) {
+        quoteEl.innerHTML = `<span style="color: #38bdf8;">"장부 결제가 끝났소! 물건 상태가 훌륭하군. 대금 ${tradeProfit}G를 지급하고 무기를 정밀 손질해 두었소." (영구 ATK +3, MaxHP +25)</span>`;
+      }
+      entityMgr.addEffect(player.x, player.y, 5.0, '#38bdf8', 1.0);
+      entityMgr.addFloatingText(player.x, player.y - 1.4, `💰 교역 대금 +${tradeProfit}G 입금!`, '#38bdf8', 2.0);
+      if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+    });
+  }
+
+  // 4. 영주 독점 의뢰 수주 (Bespoke Quest)
+  const btnTownBespokeQuest = document.getElementById('btnTownBespokeQuest');
+  if (btnTownBespokeQuest) {
+    btnTownBespokeQuest.addEventListener('click', () => {
+      if (!currentDialogSettlement || !entityMgr.questSystem) return;
+      const loreDb = (typeof TOWN_LORE_DATABASE !== 'undefined') ? TOWN_LORE_DATABASE : {};
+      const cKey = currentDialogSettlement.continent || 'central';
+      const lore = loreDb[cKey] || loreDb.central;
+
+      // 새 의뢰 직접 주입
+      const q = {
+        id: 'q_' + Date.now(),
+        type: 'bounty',
+        category: '토벌',
+        title: `[${currentDialogSettlement.name}] ${lore.questTitle}`,
+        targetName: currentDialogSettlement.name + ' 치안 수호',
+        targetX: currentDialogSettlement.x + Math.floor(Math.random() * 20 - 10),
+        targetY: currentDialogSettlement.y + Math.floor(Math.random() * 20 - 10),
+        progress: 0,
+        maxProgress: 1,
+        desc: lore.questDesc,
+        goldReward: 3000,
+        fameReward: 65,
+        icon: lore.icon || '⚔️'
+      };
+      entityMgr.questSystem.activeQuest = q;
+
+      const quoteEl = document.getElementById('townDialogText');
+      if (quoteEl) {
+        quoteEl.innerHTML = `<span style="color: #f87171;">"의뢰를 맡아주어 고맙소. 나침반이 목표 지점을 가리키고 있으니 서두르시오!" (보상: 3000G, 명성 +65)</span>`;
+      }
+      entityMgr.addFloatingText(player.x, player.y - 1.4, `⚔️ [${q.title}] 수주 완료!`, '#f87171', 2.0);
+      if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
     });
   }
 

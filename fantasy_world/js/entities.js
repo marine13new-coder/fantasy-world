@@ -3509,9 +3509,9 @@ class EntityManager {
   interactWithNearestSettlement() {
     const p = this.spawnOrGetPlayer();
     let nearestTown = null;
-    let minDist = 18;
+    let minDist = 22;
     for (const s of this.world.settlements) {
-      if (s.faction === 'kingdom') {
+      if (s.faction !== 'monster') {
         const d = Math.hypot(s.x - p.x, s.y - p.y);
         if (d < minDist) {
           minDist = d;
@@ -3520,21 +3520,24 @@ class EntityManager {
       }
     }
     if (nearestTown) {
-      const invGain = (p.inventory.gems || 0) * 80 + (p.inventory.spices || 0) * 90;
-      p.inventory.gems = 0;
-      p.inventory.spices = 0;
-      const tradeProfit = 280 + invGain;
-      p.gold += tradeProfit;
-      p.level++;
-      p.maxHp += 40;
-      p.hp = p.maxHp;
-      p.atk += 6;
-      p.fame = (p.fame || 0) + 10;
-      this.addEffect(p.x, p.y, 6.0, '#4ade80', 1.0);
-      this.addFloatingText(p.x, p.y - 1.5, `🪙 [${nearestTown.name}] 교역 +${tradeProfit}G & 무기 강화 (Lv.${p.level})`, '#4ade80', 2.0);
-      this.log('trade', `🌟 플레이어가 [${nearestTown.name}]에서 특산물 매각 및 무기 강화를 완료했습니다! (Lv.${p.level}, 공격력 ${p.atk})`, p.x, p.y);
+      if (typeof window.openTownDialogModal === 'function') {
+        window.openTownDialogModal(nearestTown);
+      } else {
+        const invGain = (p.inventory.gems || 0) * 80 + (p.inventory.spices || 0) * 90;
+        p.inventory.gems = 0;
+        p.inventory.spices = 0;
+        const tradeProfit = 280 + invGain;
+        p.gold += tradeProfit;
+        p.level++;
+        p.maxHp += 40;
+        p.hp = p.maxHp;
+        p.atk += 6;
+        p.fame = (p.fame || 0) + 10;
+        this.addEffect(p.x, p.y, 6.0, '#4ade80', 1.0);
+        this.addFloatingText(p.x, p.y - 1.5, `🪙 [${nearestTown.name}] 교역 +${tradeProfit}G & 무기 강화 (Lv.${p.level})`, '#4ade80', 2.0);
+      }
     } else {
-      this.addFloatingText(p.x, p.y - 1.4, '⚠️ 인근 왕국 도시나 항구 근처에서 상호작용 가능합니다', '#fca5a5', 1.4);
+      this.addFloatingText(p.x, p.y - 1.4, '⚠️ 인근 거점 도시나 항구 근처에서 상호작용 가능합니다', '#fca5a5', 1.4);
     }
   }
 
