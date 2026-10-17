@@ -2499,8 +2499,8 @@ class EntityManager {
     if (tx < 1 || tx >= this.world.width - 1 || ty < 1 || ty >= this.world.height - 1) return false;
     const tile = this.world.getTile(tx, ty);
 
-    // 1. 드래곤은 비행 생물이므로 모든 지형 통과 가능
-    if (e.role === 'dragon') return true;
+    // 1. 드래곤 & 비행 상태는 모든 지형 통과 가능
+    if (e.role === 'dragon' || e.isFlying) return true;
 
     // 2. 해상 선박 & 수중 생물: 바다, 강, 부두, 교량 밑, 산호초만 항해 가능
     if (e.isShip || e.isAquatic) {
@@ -2508,12 +2508,24 @@ class EntityManager {
         return true;
       }
       if (tile === TILE.SAND) return true; // 해변 접안
-      return false; // 육지로는 절대 진입 불가!
+      return false;
     }
 
-    // 3. 육상 유닛: 사람은 바다, 강, 산맥, 용암, 성벽 진입 불가!
-    if (tile === TILE.BRIDGE || tile === TILE.DOCK) return true;
-    if (tile === TILE.DEEP_WATER || tile === TILE.WATER || tile === TILE.MOUNTAIN || tile === TILE.SNOW || tile === TILE.WALL || tile === TILE.LAVA) {
+    // 3. 🌟 플레이어 영웅: [젤다 BotW & 스카이림 스타일 완전 자유 탐험]
+    // 깊은 바다(DEEP_WATER), 수직 암벽 절벽(MOUNTAIN), 용암(LAVA)을 제외한 모든 지형을 자유자재로 횡단!
+    // 잔디밭(GRASS), 꽃밭 초원(MEADOW), 울창한 숲(FOREST/DARK_FOREST/ELVEN_FOREST), 언덕(HILLS), 만년설(SNOW), 모래사막(DESERT/SAND), 늪지(SWAMP), 툰드라(TUNDRA), 황무지(BADLANDS) 100% 자유 보행!
+    // 성벽(WALL)도 기어오르기(Climbing)로 자유 횡단!
+    // 얕은 강(WATER)도 여울목 도하(Wading)로 자유 횡단!
+    if (e.role === 'player') {
+      if (tile === TILE.DEEP_WATER || tile === TILE.MOUNTAIN || tile === TILE.LAVA) {
+        return false;
+      }
+      return true;
+    }
+
+    // 4. 일반 육상 유닛 (NPC, 병사, 상인, 동물, 몬스터)
+    if (tile === TILE.BRIDGE || tile === TILE.DOCK || tile === TILE.WALL) return true;
+    if (tile === TILE.DEEP_WATER || tile === TILE.WATER || tile === TILE.MOUNTAIN || tile === TILE.LAVA) {
       return false;
     }
     return true;
@@ -2526,7 +2538,63 @@ class EntityManager {
 
     const boostMult = p.boostTimer > 0 ? 1.85 : 1.0;
 
+    const tryMove = (mx, my) => {
+      const nx = p.x + mx;
+      const ny = p.y + my;
+      const nTx = Math.floor(nx);
+      const nTy = Math.floor(ny);
+      const nTile = this.world.getTile(nTx, nTy);
+
+      // A. 배를 탄 상태에서 육지로 진입 시 자동 하선
+      if (p.isShip) {
+        const isNavalArea = (nTile === TILE.DEEP_WATER || nTile === TILE.WATER || nTile === TILE.DOCK || nTile === TILE.BRIDGE || nTile === TILE.CORAL);
+        if (isNavalArea) {
+          p.x = nx;
+          p.y = ny;
+          return true;
+        }
+        if (nTile !== TILE.MOUNTAIN && nTile !== TILE.LAVA) {
+          p.x = nx;
+          p.y = ny;
+          p.isShip = false;
+          p.icon = p.mount === 'horse' ? '🏇' : '🌟';
+          this.addFloatingText(p.x, p.y - 1.2, '🏇 육지에 상륙했습니다!', '#fde047', 1.5);
+          return true;
+        }
+        return false;
+      }
+
+      // B. 육상 도보/말 상태에서 깊은 바다로 진입 시 자동 승선
+      if (nTile === TILE.DEEP_WATER) {
+        p.x = nx;
+        p.y = ny;
+        p.isShip = true;
+        p.icon = '⛵';
+        this.addFloatingText(p.x, p.y - 1.2, '⛵ [특무범선] 대양으로 출항합니다!', '#38bdf8', 1.5);
+        return true;
+      }
+
+      // 얕은 물(WATER): 강 건너기/여울목 도하
+      if (nTile === TILE.WATER) {
+        p.x = nx;
+        p.y = ny;
+        if (Math.random() < 0.2) {
+          this.addEffect(p.x, p.y, 0.45, '#bae6fd', 0.2);
+        }
+        return true;
+      }
+
+      // 산맥/용암 외 모든 지형 통과 (성벽, 잔디, 초원, 숲 등)
+      if (this.canEntityTraverse(p, nTx, nTy)) {
+        p.x = nx;
+        p.y = ny;
+        return true;
+      }
+      return false;
+    };
+
     if (playerInput && (playerInput.dx !== 0 || playerInput.dy !== 0)) {
+      p.isMovingToTarget = false;
       if (Math.abs(playerInput.dy) > Math.abs(playerInput.dx)) {
         p.facing = playerInput.dy > 0 ? 'down' : 'up';
       } else {
@@ -2539,63 +2607,6 @@ class EntityManager {
 
       p.vx = (playerInput.dx / len) * p.speed;
       p.vy = (playerInput.dy / len) * p.speed;
-
-      const tryMove = (mx, my) => {
-        const nx = p.x + mx;
-        const ny = p.y + my;
-        const nTx = Math.floor(nx);
-        const nTy = Math.floor(ny);
-        const nTile = this.world.getTile(nTx, nTy);
-
-        // A. 배를 탄 상태
-        if (p.isShip) {
-          const isNavalArea = (nTile === TILE.DEEP_WATER || nTile === TILE.WATER || nTile === TILE.DOCK || nTile === TILE.BRIDGE || nTile === TILE.CORAL);
-          if (isNavalArea) {
-            p.x = nx;
-            p.y = ny;
-            return true;
-          }
-          // 해변(SAND)이나 부두(DOCK)로 전진하면 육지로 상륙!
-          if (nTile === TILE.SAND || nTile === TILE.DOCK) {
-            p.x = nx;
-            p.y = ny;
-            p.isShip = false;
-            p.icon = '🌟';
-            this.addFloatingText(p.x, p.y - 1.2, '🏇 육지에 상륙했습니다! (백마 탑승)', '#fde047', 1.5);
-            return true;
-          }
-          if (Math.random() < 0.04) {
-            this.addFloatingText(p.x, p.y - 1.0, '⚓ 배는 육지로 올라갈 수 없습니다! 부두나 해변에 정박하세요', '#f87171', 1.2);
-          }
-          return false;
-        }
-
-        // B. 육상 도보/말 상태
-        const isWater = (nTile === TILE.WATER || nTile === TILE.DEEP_WATER);
-        if (isWater) {
-          // 부두나 해변에서 물로 나아가는 경우 배로 승선!
-          if (curTile === TILE.DOCK || curTile === TILE.SAND) {
-            p.x = nx;
-            p.y = ny;
-            p.isShip = true;
-            p.icon = '⛵';
-            this.addFloatingText(p.x, p.y - 1.2, '⛵ [특무범선] 승선 완료! 출항합니다', '#38bdf8', 1.5);
-            return true;
-          }
-          if (Math.random() < 0.04) {
-            this.addFloatingText(p.x, p.y - 1.0, '🌊 깊은 물입니다! 부두나 해변에서 배를 타거나 다리를 건너세요', '#60a5fa', 1.2);
-          }
-          return false;
-        }
-
-        // 산맥, 절벽, 성벽, 용암 통과 불가
-        if (this.canEntityTraverse(p, nTx, nTy)) {
-          p.x = nx;
-          p.y = ny;
-          return true;
-        }
-        return false;
-      };
 
       // 비룡 비행 모드 또는 육/해상 지형 이동
       if (p.isFlying) {
@@ -2637,8 +2648,43 @@ class EntityManager {
           : (p.mount === 'horse'
             ? '🏇 왕실 백마를 타고 대륙 질주 중! (Space:비룡비행)'
             : '🚶 도보로 대륙 탐험 중 (Space:백마탑승)'));
+    } else if (p.isMovingToTarget) {
+      // 🌟 마우스 좌클릭/우클릭 및 터치 목표 지점 추적 이동 (Click-to-Move)
+      const dx = p.targetX - p.x;
+      const dy = p.targetY - p.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 0.3) {
+        p.isMovingToTarget = false;
+        p.vx = 0;
+        p.vy = 0;
+      } else {
+        const step = Math.min(dist, p.speed * boostMult * dt * 3.2);
+        const mx = (dx / dist) * step;
+        const my = (dy / dist) * step;
+        p.vx = (dx / dist) * p.speed;
+        p.vy = (dy / dist) * p.speed;
+
+        if (Math.abs(p.vy) > Math.abs(p.vx) && Math.abs(p.vy) > 0.05) {
+          p.facing = p.vy > 0 ? 'down' : 'up';
+        } else if (Math.abs(p.vx) > 0.05) {
+          p.facing = p.vx > 0 ? 'right' : 'left';
+        }
+
+        if (p.isFlying) {
+          p.x = Math.max(2, Math.min(WORLD_WIDTH - 3, p.x + mx));
+          p.y = Math.max(2, Math.min(WORLD_HEIGHT - 3, p.y + my));
+        } else {
+          let moved = tryMove(mx, my);
+          if (!moved) {
+            if (tryMove(mx, 0)) moved = true;
+            else if (tryMove(0, my)) moved = true;
+            else p.isMovingToTarget = false;
+          }
+        }
+      }
     } else {
-      this.moveTowardTarget(p, dt * boostMult);
+      p.vx = 0;
+      p.vy = 0;
     }
 
     if (p.attackCooldown <= 0) {

@@ -703,23 +703,37 @@ function generateWorld() {
     }
   });
 
-  // 7. 성벽 보유 거점 (hasWall: true) 석조 성벽 배틀먼트 및 안뜰 광장 카빙
+  // 7. 성벽 보유 거점 (hasWall: true) 석조 성벽 배틀먼트 및 안뜰 광장 카빙 (자유로운 오픈월드 진출입)
   settlements.forEach(s => {
     if (s.hasWall) {
       const rad = s.wallRadius || 8;
       for (let dy = -rad; dy <= rad; dy++) {
         for (let dx = -rad; dx <= rad; dx++) {
           const isPerimeter = Math.abs(dx) === rad || Math.abs(dy) === rad;
-          const isGate = (Math.abs(dx) <= 1 && dy === rad) || (Math.abs(dx) <= 1 && dy === -rad) || (Math.abs(dy) <= 1 && dx === rad) || (Math.abs(dy) <= 1 && dx === -rad);
+          // 동서남북 7칸 대통로 성문 + 4대 모퉁이 개방 통로
+          const isGate = (Math.abs(dx) <= 3 && Math.abs(dy) === rad) ||
+                         (Math.abs(dy) <= 3 && Math.abs(dx) === rad) ||
+                         (Math.abs(dx) >= rad - 2 && Math.abs(dy) >= rad - 2);
           const tx = s.x + dx;
           const ty = s.y + dy;
           if (inBounds(tx, ty)) {
             if (isPerimeter) {
-              tiles[idx(tx, ty)] = isGate ? TILE.ROAD : TILE.WALL;
-              deco[idx(tx, ty)] = 0;
+              if (isGate) {
+                tiles[idx(tx, ty)] = TILE.ROAD;
+                deco[idx(tx, ty)] = 0;
+              } else {
+                tiles[idx(tx, ty)] = TILE.WALL;
+                deco[idx(tx, ty)] = 0;
+              }
             } else {
-              tiles[idx(tx, ty)] = TILE.CASTLE_FLOOR;
-              deco[idx(tx, ty)] = 0;
+              // 성채 내부: 중앙 광장 및 주요 가도는 CASTLE_FLOOR, 외곽 안뜰은 잔디/화단(MEADOW/GRASS) 보존으로 젤다 스타일 자연미 극대화
+              const distCenter = Math.hypot(dx, dy);
+              if (distCenter <= rad * 0.55 || Math.abs(dx) <= 2 || Math.abs(dy) <= 2) {
+                tiles[idx(tx, ty)] = TILE.CASTLE_FLOOR;
+                deco[idx(tx, ty)] = 0;
+              } else {
+                tiles[idx(tx, ty)] = (Math.abs(dx + dy) % 3 === 0) ? TILE.MEADOW : TILE.GRASS;
+              }
             }
           }
         }
@@ -871,7 +885,7 @@ function generateWorld() {
             if (cur === TILE.WATER || cur === TILE.DEEP_WATER) {
               tiles[idx(rx, ry)] = TILE.BRIDGE;
               deco[idx(rx, ry)] = 0;
-            } else if (cur !== TILE.BRIDGE && cur !== TILE.CASTLE_FLOOR && cur !== TILE.DOCK && cur !== TILE.WALL) {
+            } else if (cur !== TILE.BRIDGE && cur !== TILE.DOCK) {
               tiles[idx(rx, ry)] = TILE.ROAD;
               deco[idx(rx, ry)] = 0;
             }

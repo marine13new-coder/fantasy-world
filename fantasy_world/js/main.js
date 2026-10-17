@@ -216,8 +216,8 @@ function startFantasyWorld() {
   function updatePlayerControlUI() {
     btnTogglePlayer.classList.toggle('active', isPlayerControlActive);
     heroStatusText.textContent = isPlayerControlActive
-      ? '직접 조작 중 (WASD / 우클릭)'
-      : '자유 관찰 모드 (P 키로 전환)';
+      ? '직접 조작 중 (WASD / 마우스 클릭 이동 / Space 탈것)'
+      : '자유 관찰 모드 (P 키로 영웅 조작 전환)';
   }
 
   btnTogglePlayer.addEventListener('click', () => {
@@ -842,9 +842,15 @@ function startFantasyWorld() {
     // 우클릭으로 플레이어 이동 또는 타겟팅
     const wx = camera.x + (e.clientX - canvas.width / 2) / (TILE_SIZE * camera.zoom);
     const wy = camera.y + (e.clientY - canvas.height / 2) / (TILE_SIZE * camera.zoom);
-    player.targetX = Math.max(2, Math.min(WORLD_WIDTH - 3, wx));
-    player.targetY = Math.max(2, Math.min(WORLD_HEIGHT - 3, wy));
-    entityMgr.addEffect(player.targetX, player.targetY, 1.8, '#facc15', 0.45);
+    if (player) {
+      isPlayerControlActive = true;
+      updatePlayerControlUI();
+      startFollow(player);
+      player.targetX = Math.max(2, Math.min(WORLD_WIDTH - 3, wx));
+      player.targetY = Math.max(2, Math.min(WORLD_HEIGHT - 3, wy));
+      player.isMovingToTarget = true;
+      entityMgr.addEffect(player.targetX, player.targetY, 1.8, '#facc15', 0.45);
+    }
   });
 
   // 모바일 / 태블릿 터치로 플레이어 이동 및 타겟팅
@@ -853,9 +859,15 @@ function startFantasyWorld() {
       const touch = e.touches[0];
       const wx = camera.x + (touch.clientX - canvas.width / 2) / (TILE_SIZE * camera.zoom);
       const wy = camera.y + (touch.clientY - canvas.height / 2) / (TILE_SIZE * camera.zoom);
-      player.targetX = Math.max(2, Math.min(WORLD_WIDTH - 3, wx));
-      player.targetY = Math.max(2, Math.min(WORLD_HEIGHT - 3, wy));
-      entityMgr.addEffect(player.targetX, player.targetY, 1.8, '#facc15', 0.45);
+      if (player) {
+        isPlayerControlActive = true;
+        updatePlayerControlUI();
+        startFollow(player);
+        player.targetX = Math.max(2, Math.min(WORLD_WIDTH - 3, wx));
+        player.targetY = Math.max(2, Math.min(WORLD_HEIGHT - 3, wy));
+        player.isMovingToTarget = true;
+        entityMgr.addEffect(player.targetX, player.targetY, 1.8, '#facc15', 0.45);
+      }
     }
   }, { passive: true });
 
@@ -1071,11 +1083,24 @@ function startFantasyWorld() {
     }
 
     for (const s of world.settlements) {
-      if (Math.hypot(s.x - wx, s.y - wy) <= s.radius) {
+      if (Math.hypot(s.x - wx, s.y - wy) <= 3.2) {
         selectedItem = { type: 'settlement', data: s };
         updateInspectorUI();
         return;
       }
+    }
+
+    // 🌟 [젤다 BotW & 스카이림 스타일 완전 자유 이동 - 클릭 이동]
+    // 들판, 초원, 숲, 도로, 해변 어디를 클릭하든 영웅이 즉각 그 위치로 이동!
+    if (player) {
+      isPlayerControlActive = true;
+      updatePlayerControlUI();
+      startFollow(player);
+      player.targetX = Math.max(2, Math.min(WORLD_WIDTH - 3, wx));
+      player.targetY = Math.max(2, Math.min(WORLD_HEIGHT - 3, wy));
+      player.isMovingToTarget = true;
+      entityMgr.addEffect(player.targetX, player.targetY, 1.8, '#facc15', 0.45);
+      return;
     }
   }
 
