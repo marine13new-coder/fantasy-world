@@ -137,7 +137,7 @@ class QuestSystem {
       };
     } else if (type === 'scout') {
       const scouts = [
-        { name: '천공 용의 고원', loc: sMap.dragon_eyrie || sMap.sky_dragon_eyrie || { x: 38, y: 145 }, desc: '구름 위 떠있는 고대 드래곤 둥지를 비행 탐색하여 룬 제단을 확인하십시오.', icon: '☁️', gold: 1800, fame: 50 },
+        { name: '천공 용의 고원', loc: sMap.dragon_eyrie || { x: 90, y: 270 }, desc: '구름 위 떠있는 고대 드래곤 둥지를 비행 탐색하여 룬 제단을 확인하십시오.', icon: '☁️', gold: 1800, fame: 50 },
         { name: '스핑크스 피라미드', loc: sMap.sphinx_pyramid || { x: 58, y: 245 }, desc: '사막 한가운데 자리잡은 미지의 황금 피라미드 유적을 정찰하십시오.', icon: '🏛️', gold: 1600, fame: 40 },
         { name: '론 비컨 고도 등대', loc: sMap.lone_beacon || { x: 162, y: 145 }, desc: '황금해협 북단 고도에 위치한 전설의 등대 불빛을 확인하십시오.', icon: '🗼', gold: 1900, fame: 50 },
         { name: '요정의 숲 세계수 성소', loc: sMap.fairy_glade || { x: 55, y: 65 }, desc: '엘프 연합 영지 깊숙한 곳의 신비로운 세계수 성소를 순례하십시오.', icon: '🧚', gold: 1500, fame: 35 }
@@ -223,11 +223,101 @@ class QuestSystem {
   }
 }
 
+// ============================================================================
+// 고성능 공간 분할 그리드 (Spatial Partitioning Grid) - O(N^2) 병목 제거 & 60 FPS 보장
+// ============================================================================
+class SpatialGrid {
+  constructor(cellSize = 16) {
+    this.cellSize = cellSize;
+    this.cells = new Map();
+  }
+
+  clear() {
+    this.cells.clear();
+  }
+
+  _key(cx, cy) {
+    return (cx << 16) ^ (cy & 0xffff);
+  }
+
+  insert(entity) {
+    const cx = Math.floor(entity.x / this.cellSize);
+    const cy = Math.floor(entity.y / this.cellSize);
+    const k = this._key(cx, cy);
+    let list = this.cells.get(k);
+    if (!list) {
+      list = [];
+      this.cells.set(k, list);
+    }
+    list.push(entity);
+  }
+
+  query(x, y, radius, filterFn) {
+    const minCx = Math.floor((x - radius) / this.cellSize);
+    const maxCx = Math.floor((x + radius) / this.cellSize);
+    const minCy = Math.floor((y - radius) / this.cellSize);
+    const maxCy = Math.floor((y + radius) / this.cellSize);
+    const results = [];
+    const r2 = radius * radius;
+
+    for (let cy = minCy; cy <= maxCy; cy++) {
+      for (let cx = minCx; cx <= maxCx; cx++) {
+        const list = this.cells.get(this._key(cx, cy));
+        if (list) {
+          for (let i = 0; i < list.length; i++) {
+            const e = list[i];
+            const dx = e.x - x;
+            const dy = e.y - y;
+            if (dx * dx + dy * dy <= r2) {
+              if (!filterFn || filterFn(e)) {
+                results.push(e);
+              }
+            }
+          }
+        }
+      }
+    }
+    return results;
+  }
+
+  findNearest(x, y, radius, filterFn) {
+    const minCx = Math.floor((x - radius) / this.cellSize);
+    const maxCx = Math.floor((x + radius) / this.cellSize);
+    const minCy = Math.floor((y - radius) / this.cellSize);
+    const maxCy = Math.floor((y + radius) / this.cellSize);
+    let nearest = null;
+    let minDist2 = radius * radius;
+
+    for (let cy = minCy; cy <= maxCy; cy++) {
+      for (let cx = minCx; cx <= maxCx; cx++) {
+        const list = this.cells.get(this._key(cx, cy));
+        if (list) {
+          for (let i = 0; i < list.length; i++) {
+            const e = list[i];
+            const dx = e.x - x;
+            const dy = e.y - y;
+            const d2 = dx * dx + dy * dy;
+            if (d2 < minDist2) {
+              if (!filterFn || filterFn(e)) {
+                minDist2 = d2;
+                nearest = e;
+              }
+            }
+          }
+        }
+      }
+    }
+    return nearest;
+  }
+}
+
 class EntityManager {
   constructor(world, onEventLog) {
     this.world = world;
     this.onEventLog = onEventLog || (() => {});
     this.entities = [];
+    this.spatialGrid = new SpatialGrid(16);
+    this.simFrame = 0;
     this.projectiles = [];
     this.floatingTexts = [];
     this.specialEffects = [];
@@ -508,7 +598,7 @@ class EntityManager {
     }
 
     // (D) 인간 왕국 본토 수비병 & 농부 & 어부
-    const humanTowns = ['solaris', 'goldenwheat', 'bluewave', 'valor_fort', 'oakwood', 'windmill_valley', 'st_mare', 'crystal_falls', 'valkyrie_gate'];
+    const humanTowns = ['solaris', 'goldenwheat', 'bluewave', 'valor_fort', 'oakwood', 'windmill_valley', 'st_mare', 'solhaven', 'valkyrie_gate'];
     for (const tid of humanTowns) {
       const town = sMap[tid];
       if (!town) continue;
@@ -576,13 +666,13 @@ class EntityManager {
         race: 'elf',
         role: 'soldier',
         customIcon: '🔮',
-        subClass: '크리스탈폴 아케인 마도사',
+        subClass: '비전 수정동굴 아케인 마도사',
         ranged: true,
         projColor: '#c084fc',
         faction: 'kingdom',
-        homeId: 'crystal_falls',
-        x: sMap.crystal_falls.x + (Math.random() - 0.5) * 6,
-        y: sMap.crystal_falls.y + (Math.random() - 0.5) * 6,
+        homeId: 'crystal_caverns',
+        x: sMap.crystal_caverns.x + (Math.random() - 0.5) * 6,
+        y: sMap.crystal_caverns.y + (Math.random() - 0.5) * 6,
         hp: 160, maxHp: 160, atk: 28, gold: 120
       });
     }
@@ -648,9 +738,9 @@ class EntityManager {
         customIcon: '🎪',
         subClass: '사막 전갈 수호대',
         faction: 'kingdom',
-        homeId: 'bedouin_camp',
-        x: sMap.bedouin_camp.x + (Math.random() - 0.5) * 6,
-        y: sMap.bedouin_camp.y + (Math.random() - 0.5) * 6,
+        homeId: 'dune_bazaar',
+        x: sMap.dune_bazaar.x + (Math.random() - 0.5) * 6,
+        y: sMap.dune_bazaar.y + (Math.random() - 0.5) * 6,
         hp: 180, maxHp: 180, atk: 22, gold: 80
       });
     }
@@ -686,7 +776,7 @@ class EntityManager {
 
     // 4. 육상 무역 마차 (24팀) & 호위 용병
     for (let i = 0; i < 24; i++) {
-      const townIds = ['solaris', 'goldenwheat', 'bluewave', 'ironforge', 'silverleaf', 'valor_fort', 'oakwood', 'windmill_valley', 'st_mare', 'crystal_falls', 'valkyrie_gate'];
+      const townIds = ['solaris', 'goldenwheat', 'bluewave', 'ironforge', 'silverleaf', 'valor_fort', 'oakwood', 'windmill_valley', 'st_mare', 'solhaven', 'valkyrie_gate'];
       const startTownId = townIds[i % townIds.length];
       const startTown = sMap[startTownId];
       const merchant = this.createEntity({
@@ -768,7 +858,7 @@ class EntityManager {
     ];
     for (let i = 0; i < 48; i++) {
       const tpl = advTemplates[i % advTemplates.length];
-      const baseTowns = ['solaris', 'valor_fort', 'elvenheim', 'mirage_oasis', 'ironforge', 'crystal_falls', 'oakwood', 'valkyrie_gate'];
+      const baseTowns = ['solaris', 'valor_fort', 'elvenheim', 'mirage_oasis', 'ironforge', 'solhaven', 'oakwood', 'valkyrie_gate'];
       const baseTownId = baseTowns[i % baseTowns.length];
       const baseTown = sMap[baseTownId];
       this.createEntity({
@@ -936,7 +1026,7 @@ class EntityManager {
     // 5. 🐉 용족 성역 수호병 & 드라고니안 전사단 (Dragonkin Warriors)
     const dragonkinSpawns = [
       { name: '드라고니안 용혈 전사', loc: sMap.dragon_eyrie, sub: '천공 화염 용기병', type: 'fire', color: '#f97316' },
-      { name: '드라고니안 서리 수호병', loc: sMap.celestial_haven, sub: '천공 빙룡 수호자', type: 'frost', color: '#38bdf8' },
+      { name: '드라고니안 서리 수호병', loc: sMap.ice_dragon_altar, sub: '천공 빙룡 수호자', type: 'frost', color: '#38bdf8' },
       { name: '드라고니안 뇌전 주술사', loc: sMap.dragon_ruins, sub: '고대 뇌룡 사제', type: 'thunder', color: '#facc15' },
       { name: '드라고니안 흑암 척후병', loc: sMap.dragon_graveyard, sub: '용골 암영 파수병', type: 'shadow', color: '#c084fc' }
     ];
@@ -1292,24 +1382,22 @@ class EntityManager {
       if (typeof audioMgr !== 'undefined') audioMgr.playMagic();
       this.addEffect(p.x, p.y, 11, '#f97316', 0.85);
       let hitCount = 0;
-      for (const other of this.entities) {
-        if (other.faction === 'monster' && other.hp > 0) {
-          const d = Math.hypot(other.x - p.x, other.y - p.y);
-          if (d <= 12) {
-            const dmg = Math.round(p.atk * 2.4);
-            other.hp -= dmg;
-            other.hitTimer = 0.25;
-            other.combatTarget = p;
-            this.rallyNearbyAllies(other, p, 10.0);
-            hitCount++;
-            this.addFloatingText(other.x, other.y - 1, `⚡-${dmg}`, '#facc15', 1.2);
-            if (other.hp <= 0) {
-              p.kills++;
-              p.gold += other.gold;
-              p.inventory.gems = (p.inventory.gems || 0) + 1;
-              this.gainPlayerExp(45);
-            }
-          }
+      const targets = this.spatialGrid
+        ? this.spatialGrid.query(p.x, p.y, 12, other => other.faction === 'monster' && other.hp > 0)
+        : this.entities.filter(other => other.faction === 'monster' && other.hp > 0 && Math.hypot(other.x - p.x, other.y - p.y) <= 12);
+      for (const other of targets) {
+        const dmg = Math.round(p.atk * 2.4);
+        other.hp -= dmg;
+        other.hitTimer = 0.25;
+        other.combatTarget = p;
+        this.rallyNearbyAllies(other, p, 10.0);
+        hitCount++;
+        this.addFloatingText(other.x, other.y - 1, `⚡-${dmg}`, '#facc15', 1.2);
+        if (other.hp <= 0) {
+          p.kills++;
+          p.gold += other.gold;
+          p.inventory.gems = (p.inventory.gems || 0) + 1;
+          this.gainPlayerExp(45);
         }
       }
       this.addFloatingText(p.x, p.y - 1.5, hitCount > 0 ? `⚡ 천공의 심판! (${hitCount}기 타격)` : '⚡ 천공의 심판!', '#fde047', 1.4);
@@ -1347,18 +1435,11 @@ class EntityManager {
     if (!p) p = this.spawnOrGetPlayer();
     if (p.attackCooldown > 0) return;
 
-    // 타겟이 없으면 전방 또는 반경 4.8타일 내 가장 가까운 적 선별
+    // 타겟이 없으면 전방 또는 반경 4.8타일 내 가장 가까운 적 선별 (SpatialGrid로 O(1) 초고속 조회)
     if (!target) {
-      let minDist = 4.8;
-      for (const other of this.entities) {
-        if (other !== p && other.hp > 0 && this.isHostile(p, other)) {
-          const d = Math.hypot(other.x - p.x, other.y - p.y);
-          if (d < minDist) {
-            minDist = d;
-            target = other;
-          }
-        }
-      }
+      target = this.spatialGrid
+        ? this.spatialGrid.findNearest(p.x, p.y, 4.8, other => other !== p && other.hp > 0 && this.isHostile(p, other))
+        : null;
     }
 
     p.attackCooldown = 0.45;
@@ -1428,17 +1509,9 @@ class EntityManager {
   // 💬 인근 NPC 탐색 및 상호작용 트리거
   interactWithNearestNPC(p) {
     if (!p) p = this.spawnOrGetPlayer();
-    let nearest = null;
-    let minDist = 4.2;
-    for (const other of this.entities) {
-      if (other !== p && other.hp > 0 && other.faction === 'kingdom') {
-        const d = Math.hypot(other.x - p.x, other.y - p.y);
-        if (d < minDist) {
-          minDist = d;
-          nearest = other;
-        }
-      }
-    }
+    const nearest = this.spatialGrid
+      ? this.spatialGrid.findNearest(p.x, p.y, 4.2, other => other !== p && other.hp > 0 && other.faction === 'kingdom')
+      : null;
     if (nearest) {
       this.interactWithNPC(p, nearest);
       return true;
@@ -1814,9 +1887,25 @@ class EntityManager {
     return ent;
   }
 
+  rebuildSpatialGrid() {
+    this.spatialGrid.clear();
+    for (let i = 0; i < this.entities.length; i++) {
+      const ent = this.entities[i];
+      if (ent.hp > 0) this.spatialGrid.insert(ent);
+    }
+  }
+
   update(dt, worldTime, playerInput) {
     const isNight = worldTime.hour >= 21 || worldTime.hour < 5;
     let battleCount = 0;
+
+    // ⚡ 고성능 공간 그리드 재구축 (Spatial Grid Rebuild) - O(N) 1회 실행 (~0.5ms)
+    this.simFrame = (this.simFrame || 0) + 1;
+    this.rebuildSpatialGrid();
+
+    const camX = this.camera ? this.camera.x : (this.player ? this.player.x : 480);
+    const camY = this.camera ? this.camera.y : (this.player ? this.player.y : 300);
+    const lodDist2 = 85 * 85;
 
     // 왕국 의뢰 및 현상금 퀘스트 진행도 갱신
     if (this.questSystem && this.player) {
@@ -1901,6 +1990,15 @@ class EntityManager {
 
       if (!e.combatTarget && e.hp < e.maxHp) {
         e.hp = Math.min(e.maxHp, e.hp + dt * 3.0);
+      }
+
+      // ⚡ 시뮬레이션 LOD (Simulation Level of Detail)
+      // 화면/카메라에서 먼 엔티티(>85타일)는 3프레임에 1번씩만 AI 연산 (플레이어 및 보스는 항상 매프레임 갱신)
+      if (e.role !== 'player' && !e.isBoss) {
+        const d2 = (e.x - camX) * (e.x - camX) + (e.y - camY) * (e.y - camY);
+        if (d2 > lodDist2 && (i + this.simFrame) % 3 !== 0) {
+          continue;
+        }
       }
 
       // 플레이어 조작
@@ -2047,21 +2145,10 @@ class EntityManager {
       }
 
       // 사냥감 탐색 (반경 14타일 이내 비포식자 초식 동물 또는 사냥 대상)
-      let prey = null;
-      let minPreyD = 14.0;
-      for (const other of this.entities) {
-        if (other === e || other.hp <= 0 || other.role !== 'animal' || other.isPredator) continue;
-        if (e.isAquatic !== other.isAquatic) continue;
-        const dx = other.x - e.x;
-        if (Math.abs(dx) > minPreyD) continue;
-        const dy = other.y - e.y;
-        if (Math.abs(dy) > minPreyD) continue;
-        const d = Math.hypot(dx, dy);
-        if (d < minPreyD) {
-          minPreyD = d;
-          prey = other;
-        }
-      }
+      const prey = this.spatialGrid
+        ? this.spatialGrid.findNearest(e.x, e.y, 14.0, other => other !== e && other.hp > 0 && other.role === 'animal' && !other.isPredator && e.isAquatic === other.isAquatic)
+        : null;
+      const minPreyD = prey ? Math.hypot(prey.x - e.x, prey.y - e.y) : 999;
 
       if (prey) {
         e.targetX = prey.x;
@@ -2114,25 +2201,16 @@ class EntityManager {
     }
 
     // B. 초식/평화 동물 (사슴, 토끼, 양, 소, 말, 돌고래 등)
-    // 인근에 포식자/몬스터/위협이 접근하면 필사적으로 무리 지어 도망
-    let threat = null;
-    let minThreatD = 9.0;
-    for (const other of this.entities) {
-      if (other === e || other.hp <= 0) continue;
-      const isThreat = other.isPredator || other.faction === 'monster' || (other.role === 'player' && Math.hypot(other.x - e.x, other.y - e.y) < 3.2);
-      if (!isThreat) continue;
-      if (e.isAquatic !== other.isAquatic && !other.isFlying) continue;
-
-      const dx = other.x - e.x;
-      if (Math.abs(dx) > minThreatD) continue;
-      const dy = other.y - e.y;
-      if (Math.abs(dy) > minThreatD) continue;
-      const d = Math.hypot(dx, dy);
-      if (d < minThreatD) {
-        minThreatD = d;
-        threat = other;
-      }
-    }
+    // 인근에 포식자/몬스터/위협이 접근하면 필사적으로 무리 지어 도망 (SpatialGrid로 O(1) 초고속 감지)
+    const threat = this.spatialGrid
+      ? this.spatialGrid.findNearest(e.x, e.y, 9.0, other => {
+          if (other === e || other.hp <= 0) return false;
+          const isThreat = other.isPredator || other.faction === 'monster' || (other.role === 'player' && Math.hypot(other.x - e.x, other.y - e.y) < 3.2);
+          if (!isThreat) return false;
+          if (e.isAquatic !== other.isAquatic && !other.isFlying) return false;
+          return true;
+        })
+      : null;
 
     if (threat) {
       // 위협 반대 방향으로 질주
@@ -2144,13 +2222,14 @@ class EntityManager {
       this.moveTowardTarget(e, dt * 1.45);
 
       // 주변 같은 무리 동물들에게도 위험 경보 전파!
-      for (const mate of this.entities) {
-        if (mate !== e && mate.role === 'animal' && !mate.isPredator && Math.hypot(mate.x - e.x, mate.y - e.y) < 5.5) {
-          mate.state = 'fleeing';
-          mate.targetX = e.targetX + (Math.random() - 0.5) * 3;
-          mate.targetY = e.targetY + (Math.random() - 0.5) * 3;
-          mate.thought = `⚠️ 무리의 경보에 호응하여 함께 대피 중!`;
-        }
+      const mates = this.spatialGrid
+        ? this.spatialGrid.query(e.x, e.y, 5.5, mate => mate !== e && mate.role === 'animal' && !mate.isPredator)
+        : [];
+      for (const mate of mates) {
+        mate.state = 'fleeing';
+        mate.targetX = e.targetX + (Math.random() - 0.5) * 3;
+        mate.targetY = e.targetY + (Math.random() - 0.5) * 3;
+        mate.thought = `⚠️ 무리의 경보에 호응하여 함께 대피 중!`;
       }
       return;
     }
@@ -2190,22 +2269,11 @@ class EntityManager {
 
   // 🐉 고대 드래곤 AI
   updateDragonAI(e, dt) {
-    // 근처에 인간이나 적이 오면 위엄 넘치는 브레스 공격!
-    let target = null;
-    let minD = 14;
-    for (const other of this.entities) {
-      if (other.faction === 'kingdom' && other.hp > 0) {
-        const dx = other.x - e.x;
-        if (Math.abs(dx) > minD) continue;
-        const dy = other.y - e.y;
-        if (Math.abs(dy) > minD) continue;
-        const d = Math.hypot(dx, dy);
-        if (d < minD) {
-          minD = d;
-          target = other;
-        }
-      }
-    }
+    // 근처에 인간이나 적이 오면 위엄 넘치는 브레스 공격! (SpatialGrid O(1) 초고속 조회)
+    const target = this.spatialGrid
+      ? this.spatialGrid.findNearest(e.x, e.y, 14, other => other.faction === 'kingdom' && other.hp > 0)
+      : null;
+    const minD = target ? Math.hypot(target.x - e.x, target.y - e.y) : 999;
 
     if (target) {
       e.targetX = target.x;
@@ -2393,21 +2461,10 @@ class EntityManager {
     }
 
     if (p.attackCooldown <= 0) {
-      let nearest = null;
-      let minDist = 8.5;
-      for (const other of this.entities) {
-        if (other.faction === 'monster' && other.hp > 0) {
-          const dx = other.x - p.x;
-          if (Math.abs(dx) > minDist) continue;
-          const dy = other.y - p.y;
-          if (Math.abs(dy) > minDist) continue;
-          const d = Math.hypot(dx, dy);
-          if (d < minDist) {
-            minDist = d;
-            nearest = other;
-          }
-        }
-      }
+      const nearest = this.spatialGrid
+        ? this.spatialGrid.findNearest(p.x, p.y, 8.5, other => other.faction === 'monster' && other.hp > 0)
+        : null;
+      const minDist = nearest ? Math.hypot(nearest.x - p.x, nearest.y - p.y) : 999;
       if (nearest) {
         const cdx = nearest.x - p.x;
         const cdy = nearest.y - p.y;
@@ -2515,30 +2572,28 @@ class EntityManager {
     return false;
   }
 
-  // 🚨 시민 위협 시 인근 왕국 군사/경비대/모험가 긴급 구원 요청 (Civic Defense)
+  // 🚨 시민 위협 시 인근 왕국 군사/경비대/모험가 긴급 구원 요청 (Civic Defense - SpatialGrid O(1) 고속 전파)
   alertCivicDefense(victim, attacker, radius = 18.0) {
     if (!victim || !attacker || attacker.hp <= 0) return;
     let responders = 0;
-    for (const other of this.entities) {
-      if (other === victim || other.hp <= 0 || other.faction !== 'kingdom') continue;
-      const isCombatant = (other.role === 'soldier' || other.role === 'royal_guard' || other.role === 'mercenary' || other.role === 'adventurer' || other.role === 'navy');
-      if (!isCombatant) continue;
-      if (victim.isShip !== other.isShip) continue;
-
-      const dx = other.x - victim.x;
-      if (Math.abs(dx) > radius) continue;
-      const dy = other.y - victim.y;
-      if (Math.abs(dy) > radius) continue;
-      const d = Math.hypot(dx, dy);
-      if (d <= radius) {
-        if (!other.combatTarget || Math.hypot(other.combatTarget.x - other.x, other.combatTarget.y - other.y) > d) {
-          other.combatTarget = attacker;
-          other.state = 'combat';
-          other.targetX = attacker.x;
-          other.targetY = attacker.y;
-          other.thought = `🛡️ [${victim.name}] 구출을 위해 긴급 방어 출격!`;
-          responders++;
-        }
+    const candidates = this.spatialGrid
+      ? this.spatialGrid.query(victim.x, victim.y, radius, other => {
+          if (other === victim || other.hp <= 0 || other.faction !== 'kingdom') return false;
+          const isCombatant = (other.role === 'soldier' || other.role === 'royal_guard' || other.role === 'mercenary' || other.role === 'adventurer' || other.role === 'navy');
+          if (!isCombatant) return false;
+          if (victim.isShip !== other.isShip) return false;
+          return true;
+        })
+      : [];
+    for (const other of candidates) {
+      const d = Math.hypot(other.x - victim.x, other.y - victim.y);
+      if (!other.combatTarget || Math.hypot(other.combatTarget.x - other.x, other.combatTarget.y - other.y) > d) {
+        other.combatTarget = attacker;
+        other.state = 'combat';
+        other.targetX = attacker.x;
+        other.targetY = attacker.y;
+        other.thought = `🛡️ [${victim.name}] 구출을 위해 긴급 방어 출격!`;
+        responders++;
       }
     }
     if (responders > 0 && Math.random() < 0.35) {
@@ -2546,23 +2601,23 @@ class EntityManager {
     }
   }
 
-  // 📢 몬스터/경비병의 주변 동료 집단 결집 (Rallying Call)
+  // 📢 몬스터/경비병의 주변 동료 집단 결집 (Rallying Call - SpatialGrid O(1) 지원)
   rallyNearbyAllies(leader, target, radius = 12.0) {
     if (!leader || !target || target.hp <= 0) return;
-    for (const ally of this.entities) {
-      if (ally === leader || ally.hp <= 0 || ally.combatTarget) continue;
-      if (ally.faction === leader.faction && ally.homeId === leader.homeId && ally.isShip === leader.isShip) {
-        const d = Math.hypot(ally.x - leader.x, ally.y - leader.y);
-        if (d <= radius) {
-          ally.combatTarget = target;
-          ally.state = 'combat';
-          ally.targetX = target.x;
-          ally.targetY = target.y;
-          ally.thought = ally.faction === 'monster'
-            ? `👹 [${leader.name}]의 전투 포효에 호응하여 집단 기습!`
-            : `⚔️ 전우 [${leader.name}]를 지원하여 일제 돌격!`;
-        }
-      }
+    const allies = this.spatialGrid
+      ? this.spatialGrid.query(leader.x, leader.y, radius, ally => {
+          if (ally === leader || ally.hp <= 0 || ally.combatTarget) return false;
+          return ally.faction === leader.faction && ally.homeId === leader.homeId && ally.isShip === leader.isShip;
+        })
+      : [];
+    for (const ally of allies) {
+      ally.combatTarget = target;
+      ally.state = 'combat';
+      ally.targetX = target.x;
+      ally.targetY = target.y;
+      ally.thought = ally.faction === 'monster'
+        ? `👹 [${leader.name}]의 전투 포효에 호응하여 집단 기습!`
+        : `⚔️ 전우 [${leader.name}]를 지원하여 일제 돌격!`;
     }
   }
 
@@ -2631,22 +2686,13 @@ class EntityManager {
     }
 
     if (!e.combatTarget && Math.random() < 0.4) {
-      let nearest = null;
-      let minDist = detectRange;
-      for (const other of this.entities) {
-        if (other === e || other.hp <= 0) continue;
-        if (e.isShip !== other.isShip && !e.isFlying && !other.isFlying) continue;
-        if (!this.isHostile(e, other)) continue;
-        const dx = other.x - e.x;
-        if (Math.abs(dx) > minDist) continue;
-        const dy = other.y - e.y;
-        if (Math.abs(dy) > minDist) continue;
-        const d = Math.hypot(dx, dy);
-        if (d < minDist) {
-          minDist = d;
-          nearest = other;
-        }
-      }
+      const nearest = this.spatialGrid
+        ? this.spatialGrid.findNearest(e.x, e.y, detectRange, other => {
+            if (other === e || other.hp <= 0) return false;
+            if (e.isShip !== other.isShip && !e.isFlying && !other.isFlying) return false;
+            return this.isHostile(e, other);
+          })
+        : null;
       if (nearest) e.combatTarget = nearest;
     }
 
@@ -3016,7 +3062,7 @@ class EntityManager {
 
   updateMerchantAI(e, dt, isNight) {
     const sMap = this.world.settlementMap;
-    const mainlandTowns = ['solaris', 'goldenwheat', 'bluewave', 'ironforge', 'silverleaf', 'valor_fort', 'oakwood', 'windmill_valley', 'st_mare', 'crystal_falls', 'valkyrie_gate'];
+    const mainlandTowns = ['solaris', 'goldenwheat', 'bluewave', 'ironforge', 'silverleaf', 'valor_fort', 'oakwood', 'windmill_valley', 'st_mare', 'solhaven', 'valkyrie_gate'];
 
     if (!e.tradeRoute) {
       let curTown = sMap[e.homeId] || sMap.solaris;
@@ -3033,9 +3079,9 @@ class EntityManager {
 
       let bestGood = 'wheat';
       if (curTown.id === 'goldenwheat' || curTown.id === 'windmill_valley') bestGood = 'wheat';
-      else if (curTown.id === 'bluewave' || curTown.id === 'st_mare') bestGood = (curTown.stocks.spices > 8 ? 'spices' : 'fish');
+      else if (curTown.id === 'bluewave' || curTown.id === 'st_mare' || curTown.id === 'solhaven') bestGood = (curTown.stocks.spices > 8 ? 'spices' : 'fish');
       else if (curTown.id === 'ironforge' || curTown.id === 'valkyrie_gate') bestGood = (curTown.stocks.weapons > 15 ? 'weapons' : 'ore');
-      else if (curTown.id === 'silverleaf' || curTown.id === 'crystal_falls') bestGood = 'herbs';
+      else if (curTown.id === 'silverleaf') bestGood = 'herbs';
       else if (curTown.id === 'solaris') bestGood = 'gems';
       else bestGood = 'weapons';
 

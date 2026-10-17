@@ -17,7 +17,7 @@ class WorldRenderer {
     this.ctx.imageSmoothingEnabled = false;
     this.minimapCtx.imageSmoothingEnabled = false;
 
-    this.bakeScale = 6; // 타일당 6픽셀 정밀 베이킹 (640x400 타일 -> 3840 x 2400: 4096px GPU/모바일 텍스처 한계 완전 호환 & 60 FPS 극대화)
+    this.bakeScale = 4; // 타일당 4픽셀 정밀 베이킹 (960x600 타일 -> 3840 x 2400: 4096px GPU/모바일 텍스처 한계 완전 호환 & 60 FPS 극대화)
     this.terrainCanvas = document.createElement('canvas');
     this.terrainCanvas.width = world.width * this.bakeScale;
     this.terrainCanvas.height = world.height * this.bakeScale;
@@ -594,7 +594,15 @@ class WorldRenderer {
     }
 
     // 9. 수제 픽셀아트 엔티티 (영웅, 기사, 마법사, 엘프, 드워프, 범선, 드래곤 등)
-    for (const e of this.entityMgr.entities) {
+    const midX = (minTx + maxTx) / 2;
+    const midY = (minTy + maxTy) / 2;
+    const viewR = Math.hypot(maxTx - minTx, maxTy - minTy) / 2 + 3;
+    const renderEntities = (this.entityMgr.spatialGrid && camera.zoom > 0.18)
+      ? this.entityMgr.spatialGrid.query(midX, midY, viewR)
+      : this.entityMgr.entities;
+
+    for (let i = 0; i < renderEntities.length; i++) {
+      const e = renderEntities[i];
       if (e.x < minTx || e.x > maxTx || e.y < minTy || e.y > maxTy) continue;
       const isFilteredOut = !checkEntityFilter(e, filterCategory);
       const isSelected = selectedItem && selectedItem.type === 'entity' && selectedItem.data && selectedItem.data.id === e.id;

@@ -249,17 +249,10 @@ class RPGSystemsManager {
 
       // 1. 아처 방어 타워: 주변 몬스터 탐색 후 원거리 사격
       if (s.type === 'tower' && s.cooldown <= 0) {
-        let target = null;
-        let minDist = 8.5;
-        for (const e of this.em.entities) {
-          if (e.faction === 'monster' && e.hp > 0) {
-            const d = Math.hypot(e.x - s.x, e.y - s.y);
-            if (d < minDist) {
-              minDist = d;
-              target = e;
-            }
-          }
-        }
+        const target = this.em.spatialGrid
+          ? this.em.spatialGrid.findNearest(s.x, s.y, 8.5, e => e.faction === 'monster' && e.hp > 0)
+          : null;
+        const minDist = target ? Math.hypot(target.x - s.x, target.y - s.y) : 999;
         if (target) {
           s.cooldown = 1.1; // 1.1초 주기
           const dmg = 38 + Math.floor(Math.random() * 15);
@@ -422,17 +415,10 @@ class RPGSystemsManager {
 
       // 플레이어 주변 적 협공
       if (c.attackCooldown <= 0) {
-        let enemy = null;
-        let minDist = 7.5;
-        for (const other of this.em.entities) {
-          if (other.faction === 'monster' && other.hp > 0) {
-            const ed = Math.hypot(other.x - c.x, other.y - c.y);
-            if (ed < minDist) {
-              minDist = ed;
-              enemy = other;
-            }
-          }
-        }
+        const enemy = this.em.spatialGrid
+          ? this.em.spatialGrid.findNearest(c.x, c.y, 7.5, other => other.faction === 'monster' && other.hp > 0)
+          : null;
+        const minDist = enemy ? Math.hypot(enemy.x - c.x, enemy.y - c.y) : 999;
         if (enemy) {
           c.attackCooldown = 0.9;
           const dmg = Math.round(c.atk * (0.8 + Math.random() * 0.4));
@@ -712,26 +698,25 @@ class RPGSystemsManager {
     const dmgMult = this.addCombo(2);
     const baseDmg = Math.round((65 + p.atk * 1.6) * dmgMult);
 
-    for (const other of this.em.entities) {
-      if (other.hp > 0 && (other.faction === 'monster' || other === this.activeBoss)) {
-        const d = Math.hypot(other.x - p.x, other.y - p.y);
-        if (d <= 5.8) {
-          hits++;
-          other.hp -= baseDmg;
-          other.combatTarget = p;
-          this.em.rallyNearbyAllies(other, p, 10.0);
-          this.em.addHitSparks(other.x, other.y, '#38bdf8', 6);
-          // 넉백 효과
-          const ang = Math.atan2(other.y - p.y, other.x - p.x);
-          other.x += Math.cos(ang) * 1.5;
-          other.y += Math.sin(ang) * 1.5;
-          this.em.addFloatingText(other.x, other.y - 1.0, `🌪️-${baseDmg}`, '#38bdf8', 1.1);
-          if (other.hp <= 0) {
-            p.kills = (p.kills || 0) + 1;
-            p.gold += (other.gold || 50);
-            this.addCombo(2);
-          }
-        }
+    const targets = this.em.spatialGrid
+      ? this.em.spatialGrid.query(p.x, p.y, 5.8, other => other.hp > 0 && (other.faction === 'monster' || other === this.activeBoss))
+      : this.em.entities.filter(other => other.hp > 0 && (other.faction === 'monster' || other === this.activeBoss) && Math.hypot(other.x - p.x, other.y - p.y) <= 5.8);
+
+    for (const other of targets) {
+      hits++;
+      other.hp -= baseDmg;
+      other.combatTarget = p;
+      this.em.rallyNearbyAllies(other, p, 10.0);
+      this.em.addHitSparks(other.x, other.y, '#38bdf8', 6);
+      // 넉백 효과
+      const ang = Math.atan2(other.y - p.y, other.x - p.x);
+      other.x += Math.cos(ang) * 1.5;
+      other.y += Math.sin(ang) * 1.5;
+      this.em.addFloatingText(other.x, other.y - 1.0, `🌪️-${baseDmg}`, '#38bdf8', 1.1);
+      if (other.hp <= 0) {
+        p.kills = (p.kills || 0) + 1;
+        p.gold += (other.gold || 50);
+        this.addCombo(2);
       }
     }
     this.em.addFloatingText(p.x, p.y - 1.8, `🌪️ [1번] 질풍의 회오리검! (${hits}기 타격)`, '#38bdf8', 1.8);
@@ -754,24 +739,23 @@ class RPGSystemsManager {
     const dmgMult = this.addCombo(2);
     const baseDmg = Math.round((50 + p.atk * 1.3) * dmgMult);
 
-    for (const other of this.em.entities) {
-      if (other.hp > 0 && (other.faction === 'monster' || other === this.activeBoss)) {
-        const d = Math.hypot(other.x - p.x, other.y - p.y);
-        if (d <= 7.2) {
-          hits++;
-          other.hp -= baseDmg;
-          other.combatTarget = p;
-          this.em.rallyNearbyAllies(other, p, 10.0);
-          other.state = 'frozen';
-          other.stateTimer = 4.0;
-          this.em.addHitSparks(other.x, other.y, '#a5f3fc', 6);
-          this.em.addFloatingText(other.x, other.y - 1.0, `❄️-${baseDmg} [동결 4초]`, '#a5f3fc', 1.4);
-          if (other.hp <= 0) {
-            p.kills = (p.kills || 0) + 1;
-            p.gold += (other.gold || 50);
-            this.addCombo(2);
-          }
-        }
+    const targets = this.em.spatialGrid
+      ? this.em.spatialGrid.query(p.x, p.y, 7.2, other => other.hp > 0 && (other.faction === 'monster' || other === this.activeBoss))
+      : this.em.entities.filter(other => other.hp > 0 && (other.faction === 'monster' || other === this.activeBoss) && Math.hypot(other.x - p.x, other.y - p.y) <= 7.2);
+
+    for (const other of targets) {
+      hits++;
+      other.hp -= baseDmg;
+      other.combatTarget = p;
+      this.em.rallyNearbyAllies(other, p, 10.0);
+      other.state = 'frozen';
+      other.stateTimer = 4.0;
+      this.em.addHitSparks(other.x, other.y, '#a5f3fc', 6);
+      this.em.addFloatingText(other.x, other.y - 1.0, `❄️-${baseDmg} [동결 4초]`, '#a5f3fc', 1.4);
+      if (other.hp <= 0) {
+        p.kills = (p.kills || 0) + 1;
+        p.gold += (other.gold || 50);
+        this.addCombo(2);
       }
     }
     this.em.addFloatingText(p.x, p.y - 1.8, `❄️ [2번] 혹한의 프로스트 노바! (${hits}기 동결)`, '#7dd3fc', 2.0);
@@ -801,22 +785,21 @@ class RPGSystemsManager {
     const dmgMult = this.addCombo(3);
     const baseDmg = Math.round((220 + p.atk * 3.2) * dmgMult);
 
-    for (const other of this.em.entities) {
-      if (other.hp > 0 && (other.faction === 'monster' || other === this.activeBoss)) {
-        const d = Math.hypot(other.x - targetX, other.y - targetY);
-        if (d <= 7.0) {
-          hits++;
-          other.hp -= baseDmg;
-          other.combatTarget = p;
-          this.em.rallyNearbyAllies(other, p, 10.0);
-          this.em.addHitSparks(other.x, other.y, '#f87171', 12);
-          this.em.addFloatingText(other.x, other.y - 1.2, `☄️-${baseDmg} [치명타!]`, '#f87171', 1.6);
-          if (other.hp <= 0) {
-            p.kills = (p.kills || 0) + 1;
-            p.gold += (other.gold || 120);
-            this.addCombo(3);
-          }
-        }
+    const targets = this.em.spatialGrid
+      ? this.em.spatialGrid.query(targetX, targetY, 7.0, other => other.hp > 0 && (other.faction === 'monster' || other === this.activeBoss))
+      : this.em.entities.filter(other => other.hp > 0 && (other.faction === 'monster' || other === this.activeBoss) && Math.hypot(other.x - targetX, other.y - targetY) <= 7.0);
+
+    for (const other of targets) {
+      hits++;
+      other.hp -= baseDmg;
+      other.combatTarget = p;
+      this.em.rallyNearbyAllies(other, p, 10.0);
+      this.em.addHitSparks(other.x, other.y, '#f87171', 12);
+      this.em.addFloatingText(other.x, other.y - 1.2, `☄️-${baseDmg} [치명타!]`, '#f87171', 1.6);
+      if (other.hp <= 0) {
+        p.kills = (p.kills || 0) + 1;
+        p.gold += (other.gold || 120);
+        this.addCombo(3);
       }
     }
     this.em.addFloatingText(p.x, p.y - 2.2, `☄️ [3번] 멸망의 메테오 스트라이크 작렬! (${hits}기 섬멸)`, '#ef4444', 2.4);
@@ -856,21 +839,20 @@ class RPGSystemsManager {
     }
 
     let hits = 0;
-    for (const other of this.em.entities) {
-      if (other.hp > 0 && (other.faction === 'monster' || other === this.activeBoss)) {
-        const d = Math.hypot(other.x - p.x, other.y - p.y);
-        if (d <= 9.0) {
-          hits++;
-          other.hp -= bulletDmg;
-          other.combatTarget = p;
-          this.em.rallyNearbyAllies(other, p, 10.0);
-          this.em.addFloatingText(other.x, other.y - 1.0, `💣-${bulletDmg}`, '#fb923c', 1.2);
-          if (other.hp <= 0) {
-            p.kills = (p.kills || 0) + 1;
-            p.gold += (other.gold || 60);
-            this.addCombo(2);
-          }
-        }
+    const targets = this.em.spatialGrid
+      ? this.em.spatialGrid.query(p.x, p.y, 9.0, other => other.hp > 0 && (other.faction === 'monster' || other === this.activeBoss))
+      : this.em.entities.filter(other => other.hp > 0 && (other.faction === 'monster' || other === this.activeBoss) && Math.hypot(other.x - p.x, other.y - p.y) <= 9.0);
+
+    for (const other of targets) {
+      hits++;
+      other.hp -= bulletDmg;
+      other.combatTarget = p;
+      this.em.rallyNearbyAllies(other, p, 10.0);
+      this.em.addFloatingText(other.x, other.y - 1.0, `💣-${bulletDmg}`, '#fb923c', 1.2);
+      if (other.hp <= 0) {
+        p.kills = (p.kills || 0) + 1;
+        p.gold += (other.gold || 60);
+        this.addCombo(2);
       }
     }
     this.em.addFloatingText(p.x, p.y - 1.8, `💣 [4번] 360도 전방위 일제 함포/포격 사격! (${hits}기 피격)`, '#fb923c', 2.0);
@@ -1072,14 +1054,13 @@ class RPGSystemsManager {
       this.em.addEffect(lx, ly, 6.0, '#facc15', 0.8);
       this.em.addEffect(lx, ly, 3.0, '#ffffff', 0.5);
 
-      // 번개 직격 타격 (몬스터에게 대미지)
-      for (const ent of this.em.entities) {
-        if (ent.hp > 0 && ent.faction === 'monster') {
-          if (Math.hypot(ent.x - lx, ent.y - ly) < 4.5) {
-            ent.hp -= 90;
-            this.em.addFloatingText(ent.x, ent.y - 1.0, `⚡ 천벌-90`, '#facc15', 1.2);
-          }
-        }
+      // 번개 직격 타격 (몬스터에게 대미지 - SpatialGrid O(1) 초고속 조회)
+      const struck = this.em.spatialGrid
+        ? this.em.spatialGrid.query(lx, ly, 4.5, ent => ent.hp > 0 && ent.faction === 'monster')
+        : this.em.entities.filter(ent => ent.hp > 0 && ent.faction === 'monster' && Math.hypot(ent.x - lx, ent.y - ly) < 4.5);
+      for (const ent of struck) {
+        ent.hp -= 90;
+        this.em.addFloatingText(ent.x, ent.y - 1.0, `⚡ 천벌-90`, '#facc15', 1.2);
       }
     }
   }

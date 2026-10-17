@@ -81,6 +81,7 @@ if (civilian && goblin && soldier) {
   soldier.x = 105;
   soldier.y = 100;
   soldier.combatTarget = null;
+  em.rebuildSpatialGrid();
 
   em.alertCivicDefense(civilian, goblin, 18.0);
   console.log(`- Guard combatTarget after civilian SOS: ${soldier.combatTarget ? soldier.combatTarget.name : null}`);

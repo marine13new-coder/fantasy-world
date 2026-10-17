@@ -79,19 +79,19 @@ function startFantasyWorld() {
   let selectedItem = { type: 'entity', data: player };
 
   // 초기 안내 로그
-  entityMgr.log('quest', '👑 640×400 초대형 오픈월드 대륙과 바다 너머 4개 신대륙이 정식 개방되었습니다!', camera.x, camera.y);
-  entityMgr.log('trade', '⛵ 푸른파도 대항구 ↔ 엘븐하임 ↔ 미라주 사막 ↔ 세이렌 산호섬 대양 무역항로가 연결되었습니다.', 320, 200);
-  entityMgr.log('battle', '🐉 서부 천공의 용의 둥지와 대해양 해골초도 해적선단이 대륙 각지를 위협하고 있습니다.', 50, 180);
+  entityMgr.log('quest', '👑 960×600 초대형 판타지 오픈월드 대제국과 4대 대륙·해양 신대륙이 정식 개방되었습니다!', camera.x, camera.y);
+  entityMgr.log('trade', '⛵ 푸른파도 대항구 ↔ 엘븐하임 ↔ 미라주 사막 ↔ 세이렌 산호섬 50대 거점 무역로가 연결되었습니다.', 480, 300);
+  entityMgr.log('battle', '🐉 서부 천공의 용의 둥지와 대해양 해골초도 해적선단이 대륙 각지를 위협하고 있습니다.', 90, 270);
 
   // 3. 거점 리스트 버튼 동적 생성 및 대륙 분류
   function getSettlementContinent(s) {
     if (s.continent) return s.continent;
     const straitIds = ['lone_beacon', 'beacon_island', 'pirate_cove', 'siren_coral', 'siren_reef', 'atlantis_ruins', 'sunken_shipwreck'];
     if (straitIds.includes(s.id)) return 'strait';
-    if (s.x < 170) return 'west';
-    if (s.x > 440) return 'east';
-    if (s.y < 110) return 'north';
-    if (s.y > 290) return 'south';
+    if (s.x < 240) return 'west';
+    if (s.x > 700) return 'east';
+    if (s.y < 160) return 'north';
+    if (s.y > 440) return 'south';
     return 'central';
   }
 
