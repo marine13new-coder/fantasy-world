@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <title>ARCHIVE 1999: THE RESIDUE - Steam Masterpiece Ultimate Edition</title>
+  <title>ARCHIVE 1999: THE RESIDUE - Steam Masterpiece Definitive Edition</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Special+Elite&family=Noto+Serif+KR:wght@400;700;900&display=swap');
@@ -37,7 +37,7 @@
       z-index: 1;
     }
 
-    /* 1999년 VHS 테이프 질감 & 아날로그 CRT 스캔라인 */
+    /* 1999년 VHS 테이프 질감 & CRT 피쉬아이 스캔라인 */
     .vhs-overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -76,6 +76,17 @@
 
     body.safe-mode-active .vignette-lens {
       background: radial-gradient(circle at center, transparent 55%, rgba(0,0,0,0.6) 100%);
+    }
+
+    /* 번개 섬광 오버레이 */
+    #lightningFlash {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(180, 220, 255, 0.95);
+      z-index: 44;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.08s ease-out;
     }
 
     /* 광기(Sanity) 핏줄 잠식 오버레이 */
@@ -445,6 +456,36 @@
       border-radius: 3px;
     }
 
+    /* 복조 모드 바 (DEMODULATION SELECTOR) */
+    .demod-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      background: #060d09;
+      padding: 5px 8px;
+      border-radius: 3px;
+      border: 1px solid #173822;
+    }
+
+    .demod-btn {
+      background: #0a180f;
+      border: 1px solid #1f472d;
+      color: #7abf94;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-family: inherit;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .demod-btn.active {
+      background: var(--phosphor);
+      color: #030805;
+      font-weight: bold;
+      border-color: #fff;
+    }
+
     .knob-dock {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -652,6 +693,7 @@
   <div class="vhs-overlay"></div>
   <div class="vhs-tracking-bar"></div>
   <div class="vignette-lens"></div>
+  <div id="lightningFlash"></div>
   <div id="sanityVeinOverlay"></div>
   <div id="uvOverlay"></div>
   <div id="bloodFlash"></div>
@@ -772,6 +814,15 @@
           </div>
         </div>
 
+        <!-- 복조 모드 바 (DEMODULATION SELECTOR) -->
+        <div class="demod-bar">
+          <span style="font-size:10px; color:#82b596; font-weight:bold; margin-right:4px;">DEMOD:</span>
+          <button class="demod-btn active" id="btnDemodAM" onclick="setDemodMode('AM')">AM 기본</button>
+          <button class="demod-btn" id="btnDemodFM" onclick="setDemodMode('FM')">FM 광대역</button>
+          <button class="demod-btn" id="btnDemodSSB" onclick="setDemodMode('SSB')">SSB 단측파대</button>
+          <button class="demod-btn" id="btnDemodBFO" onclick="setDemodMode('BFO')">BFO 비트</button>
+        </div>
+
         <div style="display:flex; justify-content:space-between; width:100%; font-size:12px;">
           <span>주파수 상태: <strong id="lblSyncState" style="color:#7abf94;">UNLOCKED</strong></span>
           <span>복원 동기율: <strong id="lblSyncPct" style="color:var(--amber);">0%</strong></span>
@@ -815,7 +866,7 @@
           <strong>[EVP 워크스테이션 안내]</strong> 테이프 랙에서 복원할 카트리지를 선택하고, [▶ 재생] 후 주파수 노브(FREQ)를 조절하십시오.
         </div>
         <div class="transcript-entry uv-clue">
-          <strong>[헤테로다인 피드백]</strong> 목표 주파수에 근접할수록 주파수 간섭 휘파람(Whistle) 음이 낮아지며, 정확한 주파수에서 깨끗한 음성이 복원됩니다.
+          <strong>[헤테로다인 피드백]</strong> 특정 테이프는 복조 모드(DEMOD)를 <strong>SSB</strong> 또는 <strong>BFO</strong>로 전환해야만 왜곡된 암호 음성이 해독됩니다.
         </div>
       </div>
     </div>
@@ -827,11 +878,11 @@
       ARCHIVE 1999
     </h1>
     <div style="font-size:12px; letter-spacing:3px; color:var(--phosphor); margin-bottom:16px;">
-      STEAM MASTERPIECE ULTIMATE EDITION
+      STEAM MASTERPIECE DEFINITIVE EDITION
     </div>
     <p style="font-size:15px; color:#8abf9d; max-width:650px; line-height:1.8; margin-bottom:14px;">
-      1999년 12월 31일, 국립 청송 정신의학 연구소 제4병동 지하 404호 격리실.<br>
-      일반 손전등(F)과 UV 자외선 탐조등(G)을 교차 활용하여 불탄 릴 테이프를 복원하십시오.
+      1999년 12월 31일 폭풍우 치는 밤, 국립 청송 정신의학 연구소 제4병동 지하 404호 격리실.<br>
+      일반 손전등(F)과 UV 자외선 탐조등(G), 복조 신호 모드를 활용하여 불탄 릴 테이프를 복원하십시오.
     </p>
 
     <div style="font-size:12px; color:#aaa; margin-bottom:6px;">난이도 및 플레이 모드 선택:</div>
@@ -870,6 +921,7 @@
     let isDrawerOpen = false;
     let hasSedative = true;
     let lightMode = 'flashlight'; // 'flashlight', 'uv', 'off'
+    let currentDemod = 'AM'; // 'AM', 'FM', 'SSB', 'BFO'
 
     function setPlayMode(mode) {
       if (mode === 'safe') {
@@ -894,6 +946,7 @@
         if (ceilingLamp) ceilingLamp.intensity = 1.8;
         if (isBlackoutActive) repairBreaker();
         document.getElementById('sanityVeinOverlay').style.opacity = '0';
+        document.getElementById('lightningFlash').style.opacity = '0';
       } else {
         document.body.classList.remove('safe-mode-active');
         if (ambientGlow) ambientGlow.intensity = 0.7;
@@ -911,6 +964,17 @@
         if (isSafeMode) btn.classList.add('active');
         else btn.classList.remove('active');
       }
+    }
+
+    function setDemodMode(mode) {
+      currentDemod = mode;
+      ['AM', 'FM', 'SSB', 'BFO'].forEach(m => {
+        const b = document.getElementById(`btnDemod${m}`);
+        if (b) b.classList.toggle('active', m === mode);
+      });
+      playBeep(mode === 'SSB' ? 1400 : (mode === 'BFO' ? 1600 : 800));
+      appendLog("시스템", `복조(Demodulation) 모드가 [${mode}]로 전환되었습니다.`);
+      updateFilterSettings();
     }
 
     // VHS 실시간 타임스탬프 시계
@@ -986,14 +1050,14 @@
       ctx.font = 'bold 32px "Share Tech Mono", monospace';
       ctx.fillStyle = '#00ffff';
       ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 15;
-      ctx.fillText('⚡ TAPE 01: 850 Hz (환자 17호 뇌파 동기화)', 80, 120);
-      ctx.fillText('⚡ TAPE 02: 108.4 Hz (기억 소거 펄스)', 80, 200);
+      ctx.fillText('⚡ TAPE 01: 850 Hz [AM] (환자 17호 뇌파)', 80, 120);
+      ctx.fillText('⚡ TAPE 02: 108.4 Hz [SSB] (단측파대 변조)', 80, 200);
 
       ctx.fillStyle = '#ff00ff';
       ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 15;
-      ctx.fillText('⚡ TAPE 03: 1850 Hz (닥터 한의 자아 분열)', 80, 280);
-      ctx.fillText('⚡ TAPE 04: REVERSE 2400 Hz (뒤집힌 구조대 무전)', 80, 360);
-      ctx.fillText('⚡ TAPE 05: 440 Hz (진실의 기준음: 너 자신이 한진우다)', 80, 440);
+      ctx.fillText('⚡ TAPE 03: 1850 Hz [BFO] (비트 주파수 수간호사)', 80, 280);
+      ctx.fillText('⚡ TAPE 04: REVERSE 2400 Hz [FM] (뒤집힌 구조대)', 80, 360);
+      ctx.fillText('⚡ TAPE 05: 440 Hz [AM] (진실의 기준음: 한진우)', 80, 440);
 
       ctx.fillStyle = 'rgba(0, 255, 200, 0.8)';
       for (let i = 0; i < 12; i++) {
@@ -1058,12 +1122,12 @@
     }
 
     /* ========================================================
-       2. THREE.JS 3D 환경 구성 (서랍, 진정제, 볼류메트릭 콘)
+       2. THREE.JS 3D 환경 (번개, 천장 환기창, 거울, 서랍)
        ======================================================== */
     let scene, camera, renderer;
-    let flashlight, flashlightCone, ceilingLamp, ambientGlow, exitSignLamp;
+    let flashlight, flashlightCone, ceilingLamp, ambientGlow, exitSignLamp, thunderLight;
     let deskObj, deskDrawerObj, sedativeBottleObj, monitorObj, doorObj, monsterFigure, ceilingFan;
-    let wheelchairObj, ivStandObj, gurneyObj, phoneObj, breakerBoxObj, cctvCameraObj, noticeBoardObj, clipboardObj, exitSignObj;
+    let wheelchairObj, ivStandObj, gurneyObj, phoneObj, breakerBoxObj, cctvCameraObj, noticeBoardObj, clipboardObj, exitSignObj, crackedMirrorObj;
     let uvClueMesh, dustParticles, waterDropMesh;
     let isPointerLocked = false;
     let inTerminalMode = false;
@@ -1100,6 +1164,12 @@
       exitSignLamp.position.set(0, 3.3, 5.6);
       scene.add(exitSignLamp);
 
+      // 천장 환기창을 뚫고 내리쬐는 번개 방향성 조명 (Thunder Directional Light)
+      thunderLight = new THREE.DirectionalLight(0x99ccff, 0);
+      thunderLight.position.set(-2, 4.5, 2);
+      thunderLight.castShadow = true;
+      scene.add(thunderLight);
+
       flashlight = new THREE.SpotLight(0xfff6dc, 4.0, 16, Math.PI / 5.5, 0.35, 1.2);
       flashlight.castShadow = true;
       scene.add(flashlight);
@@ -1111,6 +1181,7 @@
       renderLoop3D();
       initOscilloscopeCanvas();
       initSpectrogramCanvas();
+      startThunderLoop();
     }
 
     function buildVolumetricLightCone() {
@@ -1174,6 +1245,13 @@
       wallRight.position.set(4.5, 2, 0);
       wallRight.rotation.y = -Math.PI / 2;
       scene.add(wallRight);
+
+      // 오른쪽 벽면 금간 거울 (Cracked Observation Mirror)
+      const mirrorGeo = new THREE.BoxGeometry(0.04, 1.4, 0.9);
+      const mirrorMat = new THREE.MeshStandardMaterial({ color: 0x889988, roughness: 0.1, metalness: 0.9 });
+      crackedMirrorObj = new THREE.Mesh(mirrorGeo, mirrorMat);
+      crackedMirrorObj.position.set(4.45, 1.8, 1.2);
+      scene.add(crackedMirrorObj);
 
       // 벽면 사건 증거 코르크 보드
       const boardGeo = new THREE.BoxGeometry(2.4, 1.2, 0.05);
@@ -1273,22 +1351,18 @@
       const woodMat = new THREE.MeshStandardMaterial({ color: 0x221710, roughness: 0.8 });
       const handleMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8 });
 
-      // 서랍 앞판
       const face = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.22, 0.04), woodMat);
       deskDrawerObj.add(face);
 
-      // 서랍 손잡이
       const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.16, 8), handleMat);
       handle.rotation.z = Math.PI / 2;
       handle.position.set(0, 0, 0.03);
       deskDrawerObj.add(handle);
 
-      // 서랍 내부 박스
       const tray = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.18, 0.6), woodMat);
       tray.position.set(0, -0.01, -0.32);
       deskDrawerObj.add(tray);
 
-      // 진정제 약병 (Sedative Vial)
       sedativeBottleObj = new THREE.Group();
       const bottleMat = new THREE.MeshStandardMaterial({ color: 0xcc8833, roughness: 0.3, transparent: true, opacity: 0.85 });
       const capMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
@@ -1753,6 +1827,7 @@
         title: "CH.1 잡음 속의 숨소리 (Noise in the Dark)",
         targetFreq: 850,
         tolerance: 110,
+        reqDemod: "AM",
         script: [
           { spk: "닥터 한", txt: "환자 17호 김민우. 오늘 밤에도 그 소리가 들립니까?" },
           { spk: "환자 17호", txt: "...벽 뒤에서요. 누군가 쇠꼬챙이로 제 머릿속 기억을 긁어내고 있어요... 살려주세요, 의사 선생님!" },
@@ -1765,6 +1840,7 @@
         title: "CH.2 격리실 404호의 주파수 (108.4 Hz)",
         targetFreq: 108,
         tolerance: 30,
+        reqDemod: "SSB",
         script: [
           { spk: "닥터 한 (기록)", txt: "10월 3일. 108.4Hz 저주파 펄스를 404호에 12시간 연속 방사했다." },
           { spk: "닥터 한 (기록)", txt: "환자는 자신의 이름과 가족을 완전히 망각했다. 하지만 극심한 환각과 자해를 보인다." },
@@ -1776,6 +1852,7 @@
         title: "CH.3 얼굴 없는 목격자 (Sensory Derangement)",
         targetFreq: 1850,
         tolerance: 130,
+        reqDemod: "BFO",
         script: [
           { spk: "수간호사 최은경", txt: "원장님은 괴물이에요... 환자들의 뇌를 영구적으로 파괴하고 있어요." },
           { spk: "침입자 (닥터 한)", txt: "최 간호사, 지금 뭘 녹음하고 있는 거지? 내 연구를 망치게 둘 순 없어." },
@@ -1787,6 +1864,7 @@
         title: "CH.4 뒤집힌 테이프 (Inverted Rescue)",
         targetFreq: 2400,
         tolerance: 200,
+        reqDemod: "FM",
         script: [
           { spk: "119 구조대원", txt: "(치익... 다급한 무전) 지하 2층 도달... 붕괴 잔해 밑 404호 격리실... 생존자 1명 감지!" },
           { spk: "119 구조대원", txt: "착암기로 콘크리트 파쇄 중... 한진우 원장 생존 추정!" },
@@ -1798,6 +1876,7 @@
         title: "CH.5 잔해와 진실 (대반전 & 최종 결말)",
         targetFreq: 440,
         tolerance: 80,
+        reqDemod: "AM",
         script: [
           { spk: "닥터 한의 자아", txt: "강서진... 아니, 한진우. 너는 1999년의 복원가가 아니다." },
           { spk: "닥터 한의 자아", txt: "불과 48시간 전 병원이 불탈 때 너는 이곳에 숨었고, 죄책감으로 기억을 지운 채 망상해왔던 것이다!" }
@@ -1876,6 +1955,20 @@
       osc.start(now); osc.stop(now + 0.09);
     }
 
+    function playThunderSound() {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(45, now);
+      osc.frequency.exponentialRampToValueAtTime(18, now + 1.6);
+      g.gain.setValueAtTime(isSafeMode ? 0.25 : 0.75, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
+      osc.connect(g); g.connect(masterGain);
+      osc.start(now); osc.stop(now + 1.9);
+    }
+
     function playBreakerSound() {
       if (!audioCtx) return;
       const now = audioCtx.currentTime;
@@ -1893,6 +1986,34 @@
     function startHeartbeatTimer() {
       if (heartbeatTimer) clearInterval(heartbeatTimer);
       heartbeatTimer = setInterval(playPulseBeat, (60 / bpm) * 1000);
+    }
+
+    /* 번개 루프 (Thunderstorm Simulation) */
+    function startThunderLoop() {
+      setInterval(() => {
+        if (Math.random() < 0.35 && !inTerminalMode) {
+          triggerThunderEvent();
+        }
+      }, 20000);
+    }
+
+    function triggerThunderEvent() {
+      if (isSafeMode) return;
+      const flash = document.getElementById('lightningFlash');
+      flash.style.opacity = '0.92';
+      if (thunderLight) thunderLight.intensity = 3.5;
+      playThunderSound();
+
+      setTimeout(() => {
+        flash.style.opacity = '0.2';
+        setTimeout(() => {
+          flash.style.opacity = '0.75';
+          setTimeout(() => {
+            flash.style.opacity = '0';
+            if (thunderLight) thunderLight.intensity = 0;
+          }, 120);
+        }, 80);
+      }, 90);
     }
 
     function startTapeEngine() {
@@ -1949,7 +2070,6 @@
       toneOsc.type = 'triangle';
       toneOsc.frequency.setValueAtTime(ch.targetFreq * paramSpeed, audioCtx.currentTime);
 
-      // 테이프 와우 앤 플러터(Wow & Flutter) 아날로그 피치 요동
       wowLfo = audioCtx.createOscillator();
       const lfoGain = audioCtx.createGain();
       wowLfo.frequency.setValueAtTime(1.1, audioCtx.currentTime);
@@ -2005,6 +2125,11 @@
         const dist = Math.abs(paramFreq - ch.targetFreq);
         syncPct = Math.max(0, Math.min(100, Math.round((1 - dist / 1800) * 100)));
 
+        // 복조 모드가 다르면 싱크율 40%로 제한
+        if (ch.reqDemod && currentDemod !== ch.reqDemod) {
+          syncPct = Math.min(syncPct, 38);
+        }
+
         if (curChapter === 4 && (!isReversed || paramSpeed > 1.1 || paramSpeed < 0.6)) {
           syncPct = Math.min(syncPct, 20);
         }
@@ -2012,7 +2137,7 @@
         document.getElementById('lblSyncPct').innerText = syncPct + '%';
 
         const stateText = document.getElementById('lblSyncState');
-        if (dist <= ch.tolerance) {
+        if (dist <= ch.tolerance && (!ch.reqDemod || currentDemod === ch.reqDemod)) {
           stateText.innerText = 'LOCKED (동기화 완료)';
           stateText.style.color = '#33ff77';
           progressStoryScript();
@@ -2028,6 +2153,11 @@
       paramFreq = ch.targetFreq;
       document.getElementById('valFreq').innerText = paramFreq + ' Hz';
       document.getElementById('dialF').style.transform = `rotate(${(paramFreq / 3800) * 270 - 135}deg)`;
+
+      if (ch.reqDemod) {
+        setDemodMode(ch.reqDemod);
+      }
+
       if (curChapter === 4) {
         if (!isReversed) document.getElementById('btnReverse').click();
         paramSpeed = 0.8;
@@ -2299,7 +2429,6 @@
       document.getElementById('lblBPM').innerText = bpm;
       startHeartbeatTimer();
 
-      // 이성 붕괴에 따른 화면 핏줄 잠식 오버레이 제어
       const vein = document.getElementById('sanityVeinOverlay');
       if (vein) {
         if (!isSafeMode && sanity < 70) {
@@ -2383,9 +2512,9 @@
         }
 
         intensity = Math.min(255, intensity);
-        data[idx] = intensity; // R
-        data[idx + 1] = intensity > 120 ? intensity : 0; // G
-        data[idx + 2] = 255 - intensity; // B
+        data[idx] = intensity;
+        data[idx + 1] = intensity > 120 ? intensity : 0;
+        data[idx + 2] = 255 - intensity;
         data[idx + 3] = 255;
       }
       specCtx.putImageData(line, 0, 0);

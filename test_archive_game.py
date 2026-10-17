@@ -33,13 +33,20 @@ def test_game():
         board_exists = evaluate_js("typeof noticeBoardObj !== 'undefined' && noticeBoardObj !== null")
         clip_exists = evaluate_js("typeof clipboardObj !== 'undefined' && clipboardObj !== null")
 
+        mirror_exists = evaluate_js("typeof crackedMirrorObj !== 'undefined' && crackedMirrorObj !== null")
+        breaker_exists = evaluate_js("typeof breakerBoxObj !== 'undefined' && breakerBoxObj !== null")
+        exit_exists = evaluate_js("typeof exitSignObj !== 'undefined' && exitSignObj !== null")
+
         print(f"   - Three.js 씬: {scene_exists}")
         print(f"   - 볼류메트릭 라이트 콘: {cone_exists}")
         print(f"   - 책상 슬라이딩 서랍: {drawer_exists}")
         print(f"   - 신경 안정제 약병: {sedative_exists}")
         print(f"   - 사건 증거 보드: {board_exists}")
         print(f"   - 의무 일지 차트: {clip_exists}")
-        assert scene_exists and cone_exists and drawer_exists and sedative_exists and board_exists and clip_exists
+        print(f"   - 깨진 관찰 거울: {mirror_exists}")
+        print(f"   - 산업용 배전반: {breaker_exists}")
+        print(f"   - 비상구 점멸등: {exit_exists}")
+        assert scene_exists and cone_exists and drawer_exists and sedative_exists and board_exists and clip_exists and mirror_exists and breaker_exists and exit_exists
 
         print("4. 서랍 열기 & 신경 안정제 복용 테스트")
         evaluate_js("toggleDeskDrawer()")
@@ -75,11 +82,18 @@ def test_game():
         evaluate_js("setLightMode('flashlight')")
         cdp.drain(200)
 
-        print("7. 오디오 워크스테이션 열기 & 테이프 와우/플러터 LFO 및 헤테로다인 테스트")
+        print("7. 오디오 워크스테이션 열기 & 복조(Demodulation) 모드 및 헤테로다인 테스트")
         evaluate_js("enterTerminal()")
         cdp.drain(500)
         evaluate_js("document.getElementById('btnPlay').click()")
         cdp.drain(600)
+
+        # 복조 모드 전환 테스트
+        evaluate_js("setDemodMode('SSB')")
+        demod_now = evaluate_js("currentDemod")
+        print(f"   - 라디오 복조 모드 전환 (SSB): {demod_now}")
+        assert demod_now == "SSB"
+        evaluate_js("setDemodMode('AM')")
 
         hetero_exists = evaluate_js("typeof heterodyneOsc !== 'undefined' && heterodyneOsc !== null")
         lfo_exists = evaluate_js("typeof wowLfo !== 'undefined' && wowLfo !== null")
@@ -92,6 +106,11 @@ def test_game():
         sync_text = evaluate_js("document.getElementById('lblSyncState').innerText")
         print(f"   - Ch.1 동기화 상태: {sync_text}")
         assert "LOCKED" in str(sync_text)
+
+        print("7.5. 천둥 및 번개 시뮬레이션 연출 테스트")
+        evaluate_js("triggerLightning()")
+        cdp.drain(300)
+        print("   - 천둥/번개 사운드 및 섬광 트리거 정상 완료")
 
         cdp.screenshot(Path("site/archive-1999-final-test.png"))
         print("   ✅ 최종 플레이테스트 스크린샷 저장 완료: site/archive-1999-final-test.png")
