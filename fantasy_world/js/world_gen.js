@@ -610,6 +610,15 @@ function createSettlementList() {
   add('sakura_samurai_moonlit_dojo', '월하의 사무라이 도장 대성채', 'castle', 'sakura', 3160, 1490, 'crusader', true, 13);
   add('sakura_jade_waterfall_forge', '옥룡 폭포 비전 명검 대장간', 'lair', 'sakura', 3010, 1610, 'dwarf', true, 10);
   add('sakura_kitsune_spirit_shrine', '구미호 신목 영험한 여우 신사', 'town', 'sakura', 2890, 1320, 'beastkin', false, 8);
+  // =========================================================================
+  // 17. THE ANCIENT SANDSEA MIRAGE EMPIRE & DJINN OASIS (환영의 모래바다 신기루 제국 & 지니의 오아시스 성역)
+  // =========================================================================
+  add('mirage_sultan_palace_capital', '신기루 술탄 황궁 수도', 'capital', 'mirage', 3200, 1950, 'human', true, 16);
+  add('djinn_sacred_oasis_font', '지니의 영험한 오아시스 영천', 'temple', 'mirage', 3080, 1890, 'celestial', true, 13);
+  add('sandsea_caravan_bazaar_port', '모래바다 대상 무역 바자르 항만', 'port', 'mirage', 3340, 2010, 'human', false, 9);
+  add('ancient_pharaoh_pyramid_necropolis', '고대 파라오 피라미드 네크로폴리스', 'castle', 'mirage', 3120, 2060, 'undead', true, 14);
+  add('lapis_lazuli_gem_forge', '청금석 비전 보석 대장간', 'lair', 'mirage', 3280, 1860, 'dwarf', true, 10);
+  add('astral_dune_sphinx_monolith', '천체 사구 스핑크스 수호 거석', 'town', 'mirage', 3390, 1920, 'beastkin', false, 8);
 
   return list;
 }
@@ -932,6 +941,18 @@ function generateWorld() {
           continue;
         }
 
+        // 환영의 모래바다 신기루 제국 & 지니의 오아시스 전용 지형 카빙
+        if (s.continent === 'mirage') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.CASTLE_FLOOR : TILE.ROAD; // 사막 궁전 황금 석조 도로 & 모자이크 바닥
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.SAND : TILE.DESERT; // 끝없는 황금 사구 & 따뜻한 사막 지대
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 4 === 0) ? TILE.WATER : TILE.SAND; // 지니의 오아시스 터키석 영천 및 모래톱
+          }
+          continue;
+        }
+
         const curT = tiles[idx(tx, ty)];
         const isWater = (curT === TILE.DEEP_WATER || curT === TILE.WATER);
 
@@ -1042,6 +1063,11 @@ function generateWorld() {
   }
 
   settlements.forEach(s => addCompoundBuildings(s));
+  buildings.forEach(b => {
+    if (!b.continent && settlementMap[b.settlementId]) {
+      b.continent = settlementMap[b.settlementId].continent;
+    }
+  });
 
   // 모든 건물 풋프린트 아래 대지 보장 (물 위 부유 100% 방지)
   buildings.forEach(b => {
@@ -1109,7 +1135,15 @@ function generateWorld() {
     // [동부 신비 & 네크로폴리스 수렁 둑길 (Swamp Boardwalks & Runic Trails)]
     ['obsidian_necropolis', 'whispering_woods'], ['obsidian_necropolis', 'crystal_caverns'],
     ['crystal_caverns', 'mist_haven'], ['mist_haven', 'croc_bayou'],
-    ['crystal_caverns', 'crystal_refinery'], ['dragon_ruins', 'obsidian_necropolis']
+    ['crystal_caverns', 'crystal_refinery'], ['dragon_ruins', 'obsidian_necropolis'],
+
+    // [환영의 모래바다 신기루 제국 & 사구 캐러밴 비단길 (Mirage Silk Road)]
+    ['mirage_sultan_palace_capital', 'djinn_sacred_oasis_font'],
+    ['mirage_sultan_palace_capital', 'sandsea_caravan_bazaar_port'],
+    ['mirage_sultan_palace_capital', 'ancient_pharaoh_pyramid_necropolis'],
+    ['mirage_sultan_palace_capital', 'lapis_lazuli_gem_forge'],
+    ['sandsea_caravan_bazaar_port', 'astral_dune_sphinx_monolith'],
+    ['djinn_sacred_oasis_font', 'ancient_pharaoh_pyramid_necropolis']
   ];
   const roadLinks = rawRoadLinks.filter(([a, b]) => settlementMap[a] && settlementMap[b]);
 

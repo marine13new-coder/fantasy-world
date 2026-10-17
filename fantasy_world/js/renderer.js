@@ -6161,10 +6161,10 @@ class WorldRenderer {
       const sz = Math.round(d.size * (1 + prog * 0.8));
 
       ctx.globalAlpha = alpha;
-      ctx.fillStyle = prog > 0.5 ? '#d97706' : '#fef08a';
+      ctx.fillStyle = d.color || (prog > 0.5 ? '#d97706' : '#fef08a');
       ctx.fillRect(px - sz / 2, py - sz / 2, sz, sz);
-      ctx.fillStyle = '#fde68a';
-      ctx.fillRect(px - sz / 4, py - sz / 4, sz / 2, sz / 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - sz / 4, py - sz / 4, Math.max(1, sz / 2), Math.max(1, sz / 2));
     }
     ctx.restore();
   }
