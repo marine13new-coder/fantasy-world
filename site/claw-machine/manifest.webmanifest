@@ -1,0 +1,10 @@
+{
+  "name": "CLAW MASTER 3000",
+  "short_name": "ClawMaster",
+  "description": "손맛 가득 리얼 아케이드 3D 인형뽑기 게임",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0a16",
+  "theme_color": "#ff2a7a",
+  "orientation": "any"
+}
