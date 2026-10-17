@@ -439,6 +439,174 @@ class RPGSystemsManager {
       title: null
     };
 
+    // 18. 🏛️ 고대 잊혀진 대륙 실록 & 5대 석판 모놀리스 (Ancient Codex & Monoliths)
+    this.monoliths = [
+      {
+        id: 'monolith_solaria',
+        name: '태양왕 솔라리스의 건국 석비',
+        title: '제1장: 태고의 빛과 황금 제국의 개창',
+        icon: '☀️',
+        color: '#f59e0b',
+        x: 1910, y: 1180,
+        lore: '천공에서 떨어진 5개의 태양 파편이 대륙의 심장을 꿰뚫었을 때, 초대 신왕 솔라리우스는 불멸의 룬스톤을 벼려내어 혼돈의 마수들을 봉인하고 영원한 태양의 제국을 세웠다.',
+        blessingText: '영구 최대 체력 +120 & 방어력 +15 영구 각인',
+        unlocked: false,
+        applyBlessing(p) { p.maxHp += 120; p.hp += 120; }
+      },
+      {
+        id: 'monolith_sylvania',
+        name: '실바니아 세계수의 신록 비문',
+        title: '제2장: 대수목의 눈물과 비전의 정령',
+        icon: '🌿',
+        color: '#22c55e',
+        x: 535, y: 665,
+        lore: '대륙 서쪽 끝자락에 뿌리내린 세계수 유그드라는 숲의 모든 생명과 마나를 순환시키는 대지의 심장이다. 숲을 지키는 요정왕은 자연의 질서를 어지럽히는 자에게 가혹한 심판을 내린다.',
+        blessingText: '영구 이동속도 +15% & 쿨다운 10% 영구 단축',
+        unlocked: false,
+        applyBlessing(p) { p.speed = (p.speed || 2.0) + 0.3; }
+      },
+      {
+        id: 'monolith_northfell',
+        name: '노스펠 서리거인의 빙하 룬비',
+        title: '제3장: 만년설의 심연과 서리거인의 맹세',
+        icon: '❄️',
+        color: '#38bdf8',
+        x: 1905, y: 245,
+        lore: '얼어붙은 북방의 설원은 신들의 전쟁 당시 얼음 거인 위미르가 흘린 피가 굳어 형성된 불모의 빙하 지대이다. 극한의 추위를 견뎌낸 자만이 서리의 절대영도를 통제할 수 있다.',
+        blessingText: '공격 시 20% 확률로 적을 2초간 오한(속도 -50%) 동결',
+        unlocked: false,
+        applyBlessing(p) { p.frostAura = true; }
+      },
+      {
+        id: 'monolith_draconia',
+        name: '드라코니아 고룡왕 흑요석 오벨리스크',
+        title: '제4장: 대지옥의 용염과 불멸의 고룡',
+        icon: '🐉',
+        color: '#ef4444',
+        x: 1945, y: 2155,
+        lore: '남방의 용골 화산 지대는 용들의 시조 바하무트가 잠들어 있는 불꽃의 성지다. 용의 피를 이어받은 전사는 어떤 맹렬한 화염 속에서도 타오르는 투기를 잃지 않는다.',
+        blessingText: '영구 기본 공격력 +30 & 화염 저항력 대폭 상승',
+        unlocked: false,
+        applyBlessing(p) { p.atk += 30; }
+      },
+      {
+        id: 'monolith_abyss',
+        name: '심연 탈라사의 해양 조개 석판',
+        title: '제5장: 대서해의 비밀과 가라앉은 아틀란티스',
+        icon: '🐚',
+        color: '#06b6d4',
+        x: 1535, y: 1245,
+        lore: '심해의 어둠 속에는 고대 해양 제국의 거대한 신전이 잠들어 있다. 바다의 여신 탈라사의 목소리를 들을 수 있는 항해사는 거친 폭풍우 속에서도 배를 잃지 아니하리라.',
+        blessingText: '항해 속도 +40% & 해양 낚시 대물 확률 2배 영구 각인',
+        unlocked: false,
+        applyBlessing(p) { p.shipSpeedMult = (p.shipSpeedMult || 1.0) * 1.4; }
+      }
+    ];
+
+    // 19. 📜 대륙 현상금 사냥꾼 길드 & 수배령 (Bounty Hunter Guild)
+    this.bountyHunterRank = '수습 사냥꾼 (Novice)';
+    this.bounties = [
+      {
+        id: 'bounty_necro_dragon',
+        name: '재앙의 네크로 드래곤 칼리스타',
+        title: '고대 북방의 시체룡',
+        rank: 'S-Rank',
+        color: '#a855f7',
+        icon: '💀',
+        rewardGold: 2500,
+        rewardExp: 800,
+        rewardItem: '고대 네크로 용골 목걸이 (ATK +35, HP +150)',
+        x: 1880, y: 220,
+        region: '북부 노스펠 만년설 고원',
+        desc: '서리 성채 북방 고분을 배회하며 망자들의 뼈를 집어삼키는 사룡왕. 광역 암흑 브레스 시전.',
+        active: false,
+        cleared: false,
+        targetEnt: null
+      },
+      {
+        id: 'bounty_orc_warlord',
+        name: '피에 굶주린 오크 대족장 그롬마쉬',
+        title: '붉은 암석의 약탈자',
+        rank: 'A-Rank',
+        color: '#dc2626',
+        icon: '👹',
+        rewardGold: 1600,
+        rewardExp: 500,
+        rewardItem: '족장의 피의 토끼발 (치명타 +15%)',
+        x: 580, y: 720,
+        region: '서부 실바니아 협곡 협로',
+        desc: '상단을 습격하고 왕국 수비대를 학살한 흉포한 오크 대족장. 거대한 양손 전투도끼를 휘두름.',
+        active: false,
+        cleared: false,
+        targetEnt: null
+      },
+      {
+        id: 'bounty_abyss_witch',
+        name: '심연의 맹독 세이렌 마녀 탈라사',
+        title: '산호 환초의 저주',
+        rank: 'A-Rank',
+        color: '#06b6d4',
+        icon: '🧜‍♀️',
+        rewardGold: 1800,
+        rewardExp: 600,
+        rewardItem: '심해 세이렌의 진주환 (초당 재생 +10)',
+        x: 1480, y: 1320,
+        region: '남해 해골초 산호 암초',
+        desc: '선원들을 유혹하여 난파시키고 배를 침몰시키는 심해의 바다 마녀. 맹독 해일을 방출.',
+        active: false,
+        cleared: false,
+        targetEnt: null
+      },
+      {
+        id: 'bounty_shadow_jade',
+        name: '황혼의 그림자 암살단장 제이드',
+        title: '보이지 않는 비수',
+        rank: 'B-Rank',
+        color: '#475569',
+        icon: '🥷',
+        rewardGold: 1200,
+        rewardExp: 400,
+        rewardItem: '그림자 비전 망토 (회피율 +25%)',
+        x: 1860, y: 1120,
+        region: '중앙 제국 북부 암석 지대',
+        desc: '왕실 귀족들을 암살하고 어둠 속에 숨은 암살자 길드의 수장. 그림자 은신과 기습 투척검 사용.',
+        active: false,
+        cleared: false,
+        targetEnt: null
+      }
+    ];
+
+    // 20. 🧪 퀵 포션 벨트 단축 슬롯 (Quick Potion Belt Slots)
+    this.quickBelt = {
+      health: {
+        id: 'potion_hp',
+        name: '고대 생명수 물약',
+        icon: '🧪',
+        key: 'H',
+        cd: 0,
+        maxCd: 12.0,
+        desc: '체력 350 즉시 회복'
+      },
+      swift: {
+        id: 'potion_swift',
+        name: '질풍의 신속 영약',
+        icon: '⚡',
+        key: '5',
+        cd: 0,
+        maxCd: 25.0,
+        desc: '15초간 이동속도 +50% 및 회피율 +25%'
+      },
+      berserk: {
+        id: 'potion_berserk',
+        name: '버서커 분노 비약',
+        icon: '🔥',
+        key: '6',
+        cd: 0,
+        maxCd: 30.0,
+        desc: '15초간 공격력 +35% 및 치명타율 +30%'
+      }
+    };
+
     this.initTreasureChests();
   }
 
@@ -1500,9 +1668,11 @@ class RPGSystemsManager {
     this.updateContinentalEvents(dt);
     this.updateSettlementGarrisonDefense(dt);
     this.updateColosseum(dt);
+    this.updateQuickBelt(dt);
 
     if (this.em.player) {
       this.checkTreasureInteraction(this.em.player);
+      this.checkMonolithInteraction(this.em.player);
 
       // 🌿 영구 특성: 대지의 축복 (Earth Vitality) 2.2초마다 지속 체력 재생
       if (this.hasTrait('earth_vitality')) {
@@ -2483,6 +2653,174 @@ class RPGSystemsManager {
           }
         }
       }
+    }
+  }
+
+  // ==========================================================================
+  // R. 🧪 퀵 포션 벨트 단축 사용 시스템 (Quick Potion Belt)
+  // ==========================================================================
+  useQuickPotion(type) {
+    const p = this.em.player;
+    if (!p || p.hp <= 0) return false;
+    const item = this.quickBelt[type];
+    if (!item) return false;
+
+    if (item.cd > 0) {
+      this.em.addFloatingText(p.x, p.y - 1.2, `⏳ [${item.name}] 쿨다운 중 (${item.cd.toFixed(1)}s)`, '#94a3b8', 1.0);
+      return false;
+    }
+
+    if (type === 'health') {
+      p.hp = Math.min(p.maxHp, p.hp + 350);
+      item.cd = item.maxCd;
+      this.em.addEffect(p.x, p.y, 4.0, '#4ade80', 0.6);
+      this.em.addHitSparks(p.x, p.y, '#86efac', 8);
+      this.em.addFloatingText(p.x, p.y - 1.5, `🧪 +350 HP 회복!`, '#22c55e', 1.5);
+      if (typeof audioMgr !== 'undefined') audioMgr.playPotionDrink();
+      return true;
+    } else if (type === 'swift') {
+      item.cd = item.maxCd;
+      p.speed = (p.speed || 2.0) + 0.8;
+      p.dodgeChance = (p.dodgeChance || 0) + 0.25;
+      this.em.addEffect(p.x, p.y, 4.5, '#38bdf8', 0.8);
+      this.em.addShockwave(p.x, p.y, 3.5, '#0ea5e9', 0.4);
+      this.em.addFloatingText(p.x, p.y - 1.6, `⚡ 질풍의 신속 발동! (+50% 속도)`, '#38bdf8', 2.0);
+      if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+      setTimeout(() => {
+        p.speed = Math.max(1.8, p.speed - 0.8);
+        p.dodgeChance = Math.max(0, (p.dodgeChance || 0) - 0.25);
+      }, 15000);
+      return true;
+    } else if (type === 'berserk') {
+      item.cd = item.maxCd;
+      p.atk += 35;
+      p.critBonus = (p.critBonus || 0) + 0.3;
+      this.em.addEffect(p.x, p.y, 5.0, '#ef4444', 0.8);
+      this.em.addShockwave(p.x, p.y, 4.0, '#f97316', 0.5);
+      this.em.addFloatingText(p.x, p.y - 1.6, `🔥 버서커 광폭화 돌입! (+35 ATK)`, '#ef4444', 2.0);
+      if (typeof audioMgr !== 'undefined') audioMgr.playSlash();
+      setTimeout(() => {
+        p.atk = Math.max(20, p.atk - 35);
+        p.critBonus = Math.max(0, (p.critBonus || 0) - 0.3);
+      }, 15000);
+      return true;
+    }
+    return false;
+  }
+
+  updateQuickBelt(dt) {
+    if (!this.quickBelt) return;
+    for (const k in this.quickBelt) {
+      if (this.quickBelt[k].cd > 0) {
+        this.quickBelt[k].cd = Math.max(0, this.quickBelt[k].cd - dt);
+      }
+    }
+  }
+
+  // ==========================================================================
+  // S. 🏛️ 고대 석판 모놀리스 판독 & 대륙 실록 도감 (Ancient Monolith & Codex)
+  // ==========================================================================
+  inspectMonolith(monolithId) {
+    const p = this.em.player;
+    if (!p) return false;
+    const m = this.monoliths.find(mono => mono.id === monolithId);
+    if (!m) return false;
+
+    if (m.unlocked) {
+      this.em.addFloatingText(p.x, p.y - 1.5, `📖 [${m.name}] 이미 판독된 석비입니다.`, '#94a3b8', 1.2);
+      return false;
+    }
+
+    m.unlocked = true;
+    if (m.applyBlessing) m.applyBlessing(p);
+    this.em.gainPlayerExp(300);
+
+    this.em.addEffect(m.x, m.y, 6.0, m.color, 1.2);
+    this.em.addShockwave(m.x, m.y, 5.0, m.color, 0.8);
+    this.em.addHitSparks(m.x, m.y, '#fef08a', 12);
+    this.em.addFloatingText(p.x, p.y - 2.0, `✨ [${m.name}] 판독 완료! (+300 EXP, 영구 축복)`, m.color, 3.0);
+    this.em.log('quest', `🏛️ [고대 실록] 플레이어가 [${m.name}]을 판독하고 대륙의 잊혀진 역사를 해금했습니다! (${m.blessingText})`);
+
+    if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+    return true;
+  }
+
+  checkMonolithInteraction(player) {
+    if (!player || !this.monoliths) return;
+    for (const m of this.monoliths) {
+      const dist = Math.hypot(player.x - m.x, player.y - m.y);
+      if (dist < 3.2 && !m.unlocked) {
+        player.nearMonolith = m;
+        return;
+      }
+    }
+    player.nearMonolith = null;
+  }
+
+  // ==========================================================================
+  // T. 📜 대륙 현상금 수배소 길드 시스템 (Bounty Hunter Guild)
+  // ==========================================================================
+  acceptBounty(bountyId) {
+    const p = this.em.player;
+    if (!p) return false;
+    const b = this.bounties.find(item => item.id === bountyId);
+    if (!b) return false;
+
+    if (b.cleared) {
+      this.em.addFloatingText(p.x, p.y - 1.2, '🏆 이미 토벌 완료된 현상금 수배자입니다.', '#4ade80', 1.2);
+      return false;
+    }
+
+    b.active = true;
+
+    // 해당 위치에 보스 몬스터 소환
+    const bossType = b.id === 'bounty_necro_dragon' ? 'dragon' : 'orc';
+    const ent = this.em.spawnMonster(bossType, b.x, b.y);
+    if (ent) {
+      ent.name = b.name;
+      ent.maxHp = b.rank === 'S-Rank' ? 3800 : (b.rank === 'A-Rank' ? 2400 : 1500);
+      ent.hp = ent.maxHp;
+      ent.atk = b.rank === 'S-Rank' ? 65 : (b.rank === 'A-Rank' ? 45 : 32);
+      ent.color = b.color;
+      ent.isBountyBoss = true;
+      ent.bountyId = b.id;
+      ent.scale = 1.35;
+      b.targetEnt = ent;
+    }
+
+    this.em.addEffect(p.x, p.y, 5.0, b.color, 0.8);
+    this.em.addFloatingText(p.x, p.y - 1.8, `📜 [${b.name}] 수배령 추적 개시!`, b.color, 2.5);
+    this.em.log('boss', `📜 [현상금 수배령] [${b.name}] (${b.rank})의 추적이 시작되었습니다! (${b.region})`);
+    if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+    return true;
+  }
+
+  checkBountyDefeat(deadEnt) {
+    if (!deadEnt || !deadEnt.isBountyBoss || !deadEnt.bountyId) return;
+    const b = this.bounties.find(item => item.id === deadEnt.bountyId);
+    if (!b || b.cleared) return;
+
+    b.cleared = true;
+    b.active = false;
+
+    const p = this.em.player;
+    if (p) {
+      p.gold = (p.gold || 0) + b.rewardGold;
+      this.em.gainPlayerExp(b.rewardExp);
+
+      // 랭크 승급 확인
+      const clearedCount = this.bounties.filter(item => item.cleared).length;
+      if (clearedCount >= 4) {
+        this.bountyHunterRank = '전설의 대륙 집행관 (Legendary Arbiter)';
+      } else if (clearedCount >= 2) {
+        this.bountyHunterRank = '베테랑 현상금 사냥꾼 (Veteran Hunter)';
+      }
+
+      this.em.addEffect(deadEnt.x, deadEnt.y, 8.0, '#facc15', 1.8);
+      this.em.addShockwave(deadEnt.x, deadEnt.y, 6.0, '#f59e0b', 1.0);
+      this.em.addFloatingText(p.x, p.y - 2.5, `🏆 [수배령 토벌] ${b.name} 처치 완료! (+${b.rewardGold}G)`, '#fbbf24', 3.5);
+      this.em.log('boss', `🏆 [수배령 제패] 플레이어가 대륙의 거악 [${b.name}]을 토벌하고 보상금 ${b.rewardGold}G 및 [${b.rewardItem}]을 획득했습니다! (현재 칭호: ${this.bountyHunterRank})`);
+      if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
     }
   }
 }

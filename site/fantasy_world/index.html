@@ -335,7 +335,17 @@
         <button class="skill-btn potion" id="btnSkillPotion" title="즉시 생명력 회복 물약 (H)">
           <span class="key-badge">H</span>
           <span class="skill-icon">🧪</span>
-          <span class="skill-name">회복물약</span>
+          <span class="skill-name">생명물약</span>
+        </button>
+        <button class="skill-btn potion" id="btnSkillPotionSwift" title="질풍의 신속 영약: 속도+50%, 회피+25% (5)">
+          <span class="key-badge">5</span>
+          <span class="skill-icon">⚡</span>
+          <span class="skill-name">신속영약</span>
+        </button>
+        <button class="skill-btn potion" id="btnSkillPotionBerserk" title="버서커 분노 비약: 공격력+35, 치명타+30% (6)">
+          <span class="key-badge">6</span>
+          <span class="skill-icon">🔥</span>
+          <span class="skill-name">분노비약</span>
         </button>
       </div>
     </div>
@@ -402,6 +412,16 @@
           <span class="key-badge">V</span>
           <span class="skill-icon">🏟️</span>
           <span class="skill-name">투기장</span>
+        </button>
+        <button class="skill-btn util" id="btnOpenBounty" title="대륙 현상금 사냥꾼 길드 & 수배령 (N)">
+          <span class="key-badge">N</span>
+          <span class="skill-icon">📜</span>
+          <span class="skill-name">현상금</span>
+        </button>
+        <button class="skill-btn util" id="btnOpenCodex" title="고대 잊혀진 대륙 실록 도감 (L)">
+          <span class="key-badge">L</span>
+          <span class="skill-icon">📖</span>
+          <span class="skill-name">실록</span>
         </button>
         <button class="skill-btn util" id="btnToggleInventory" title="장비 & 인벤토리 가방 (I)">
           <span class="key-badge">I</span>
@@ -759,6 +779,45 @@
     </div>
   </div>
 
+  <!-- 대륙 현상금 수배소 모달 (Bounty Hunter Guild Modal) -->
+  <div id="bountyModal" class="modal-overlay hidden">
+    <div class="inventory-card bounty-modal-card">
+      <div class="inv-header">
+        <h2>📜 대륙 현상금 사냥꾼 길드 수배령 (Bounty Board)</h2>
+        <button id="btnCloseBountyModal" class="close-btn">✖</button>
+      </div>
+      <div class="bounty-modal-body">
+        <div class="bounty-banner">
+          <span>대륙 각지를 위협하는 악명 높은 괴수와 우두머리를 토벌하십시오! 토벌 성공 시 거액의 현상금과 전설 유물이 지급됩니다. (N키)</span>
+        </div>
+        <div class="bounty-rank-bar" id="bountyRankBar">
+          <!-- JS 동적 렌더링 -->
+        </div>
+        <div class="bounty-cards-grid" id="bountyCardsGrid">
+          <!-- JS 동적 렌더링 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 고대 잊혀진 대륙 실록 도감 모달 (Ancient Codex Modal) -->
+  <div id="codexModal" class="modal-overlay hidden">
+    <div class="inventory-card codex-modal-card">
+      <div class="inv-header">
+        <h2>📖 판타시아 고대 실록 & 5대 석판 도감 (Ancient Chronicles)</h2>
+        <button id="btnCloseCodexModal" class="close-btn">✖</button>
+      </div>
+      <div class="codex-modal-body">
+        <div class="codex-banner">
+          <span>4대 대륙에 흩어진 5개의 태고 석판 모놀리스를 탐색하고 판독하여 잊혀진 역사를 해금하고 영구 축복을 각인하십시오. (L키)</span>
+        </div>
+        <div class="codex-chapters-list" id="codexChaptersList">
+          <!-- JS 동적 렌더링 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 하단 카메라 추적 배너 -->
   <div id="followBanner" class="follow-banner hidden">
     <span id="followBannerText">🎥 추적 중: -</span>
@@ -766,14 +825,14 @@
   </div>
 
   <!-- 스크립트 로드 -->
-  <script src="js/audio.js?v=22"></script>
-  <script src="js/world_gen.js?v=22"></script>
-  <script src="js/pixel_buildings.js?v=22"></script>
-  <script src="js/entities.js?v=22"></script>
-  <script src="js/rpg_systems.js?v=22"></script>
-  <script src="js/pixel_items.js?v=22"></script>
-  <script src="js/pixel_sprites.js?v=22"></script>
-  <script src="js/renderer.js?v=22"></script>
-  <script src="js/main.js?v=22"></script>
+  <script src="js/audio.js?v=23"></script>
+  <script src="js/world_gen.js?v=23"></script>
+  <script src="js/pixel_buildings.js?v=23"></script>
+  <script src="js/entities.js?v=23"></script>
+  <script src="js/rpg_systems.js?v=23"></script>
+  <script src="js/pixel_items.js?v=23"></script>
+  <script src="js/pixel_sprites.js?v=23"></script>
+  <script src="js/renderer.js?v=23"></script>
+  <script src="js/main.js?v=23"></script>
 </body>
 </html>

@@ -185,9 +185,10 @@ class WorldRenderer {
       }
     }
 
-    // 2. 동적 해안선 픽셀 파도 거품 애니메이션
+    // 2. 동적 해안선 픽셀 파도 거품 애니메이션 & 대양 백색 포말 물결
     if (camera.zoom > 0.36) {
       this.drawPixelShorelines(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
+      this.drawOceanFoam(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
     }
 
     // 3. 해상 무역 항로 점선
@@ -448,6 +449,7 @@ class WorldRenderer {
       this.drawTreasureChests(ctx, ts, timeSec, camera.zoom);
       this.drawAncientShrines(ctx, ts, timeSec, camera.zoom);
       this.drawDungeonPortals(ctx, ts, timeSec, camera.zoom);
+      this.drawMonolithSteles(ctx, ts, timeSec, camera.zoom);
       this.drawBuildPreview(ctx, ts, camera);
     }
 
@@ -477,6 +479,9 @@ class WorldRenderer {
 
     // 13. 대기 및 날씨 조명 오버레이
     this.drawAtmosphereOverlay(ctx, cw, ch, worldTime, timeSec, camera);
+
+    // 13.2. 🌌 북극광 오로라 커튼 (Celestial Northern Aurora Borealis)
+    this.drawAuroraBorealis(ctx, cw, ch, timeSec, worldTime, camera);
 
     // 13.5. 🌸 대기 환경 부유 파티클 (꽃잎, 밤 반딧불이, 사막 먼지, 불꽃, 수면 반짝임)
     this.drawAtmosphericParticles(ctx, cw, ch, timeSec, camera, worldTime);
@@ -4264,6 +4269,161 @@ class WorldRenderer {
     ctx.stroke();
 
     ctx.restore();
+  }
+
+  // 🌊 [2.2] 대양 심해 백색 포말 물결 파도 (Deep Ocean Foam Crests)
+  drawOceanFoam(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec) {
+    const { width, height, tiles } = this.world;
+    ctx.save();
+
+    for (let ty = minTy; ty < maxTy; ty += 2) {
+      const row = ty * width;
+      for (let tx = minTx; tx < maxTx; tx += 2) {
+        const t = tiles[row + tx];
+        if (t !== TILE.DEEP_WATER && t !== TILE.WATER) continue;
+
+        // 해양 파도 파동 함수
+        const wave = Math.sin(tx * 0.38 + ty * 0.28 + timeSec * 1.6);
+        if (wave > 0.65) {
+          const intensity = (wave - 0.65) / 0.35;
+          const px = Math.round(tx * ts);
+          const py = Math.round(ty * ts + Math.sin(timeSec * 2.0 + tx) * 2);
+          const foamLen = Math.round(10 * intensity);
+
+          ctx.globalAlpha = 0.35 * intensity;
+          ctx.fillStyle = '#bae6fd';
+          ctx.fillRect(px, py, foamLen, 1.5);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(px + 2, py - 0.5, Math.max(2, foamLen - 4), 1);
+        }
+      }
+    }
+    ctx.restore();
+  }
+
+  // 🌌 [13.2] 북극광 오로라 커튼 (Celestial Northern Aurora Borealis)
+  drawAuroraBorealis(ctx, cw, ch, timeSec, worldTime, camera) {
+    if (!worldTime) return;
+    const h = worldTime.hour + worldTime.minute / 60;
+    const isNight = (h >= 19.5 || h < 4.8);
+    if (!isNight) return;
+
+    const camY = camera ? camera.y : 300;
+    if (camY > 280) return; // 북부 고위도로 갈수록 장엄하게 발현
+
+    const northFactor = Math.max(0, Math.min(1, (280 - camY) / 200));
+    const baseAlpha = 0.42 * northFactor;
+    if (baseAlpha <= 0.02) return;
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+
+    // 3겹의 다층 하모닉 오로라 리본
+    const layers = [
+      { color1: 'rgba(52, 211, 153, ', color2: 'rgba(56, 189, 248, ', speed: 0.35, freq: 0.004, amp: 45, yOffset: 0.12 },
+      { color1: 'rgba(56, 189, 248, ', color2: 'rgba(168, 85, 247, ', speed: -0.28, freq: 0.0055, amp: 38, yOffset: 0.18 },
+      { color1: 'rgba(168, 85, 247, ', color2: 'rgba(236, 72, 153, ', speed: 0.42, freq: 0.0035, amp: 50, yOffset: 0.24 }
+    ];
+
+    layers.forEach((ly, idx) => {
+      const grad = ctx.createLinearGradient(0, 0, 0, ch * 0.5);
+      const alphaVal = baseAlpha * (0.7 + Math.sin(timeSec * 0.8 + idx) * 0.3);
+      grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      grad.addColorStop(0.2, ly.color1 + (alphaVal * 0.7) + ')');
+      grad.addColorStop(0.5, ly.color2 + alphaVal + ')');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+
+      const step = 20;
+      for (let x = 0; x <= cw; x += step) {
+        const wave1 = Math.sin(x * ly.freq + timeSec * ly.speed) * ly.amp;
+        const wave2 = Math.cos(x * ly.freq * 1.8 - timeSec * (ly.speed * 0.7)) * (ly.amp * 0.5);
+        const y = ch * ly.yOffset + wave1 + wave2;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(cw, 0);
+      ctx.closePath();
+      ctx.fill();
+    });
+
+    ctx.restore();
+  }
+
+  // 🏛️ [12.1-B] 5대 고대 석판 모놀리스 (5 Ancient Monolith Steles)
+  drawMonolithSteles(ctx, ts, timeSec, zoom) {
+    if (!this.entityMgr.rpgManager || !this.entityMgr.rpgManager.monoliths) return;
+    const p = this.entityMgr.player;
+
+    for (const m of this.entityMgr.rpgManager.monoliths) {
+      const px = Math.round(m.x * ts);
+      const py = Math.round(m.y * ts);
+
+      ctx.save();
+
+      // 모놀리스 기단부 그림자
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + 4, 18, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 고대 석재 본체 기둥 (3단 오벨리스크)
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(px - 10, py - 36, 20, 38);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(px - 8, py - 34, 16, 34);
+
+      // 상단 피라미디온 꼭지점
+      ctx.fillStyle = '#475569';
+      ctx.beginPath();
+      ctx.moveTo(px - 10, py - 36);
+      ctx.lineTo(px, py - 48);
+      ctx.lineTo(px + 10, py - 36);
+      ctx.closePath();
+      ctx.fill();
+
+      // 룬 각인 발광
+      const pulse = 0.5 + Math.sin(timeSec * 3 + m.x) * 0.45;
+      ctx.fillStyle = m.color;
+      ctx.shadowColor = m.color;
+      ctx.shadowBlur = 10 * pulse;
+      ctx.globalAlpha = m.unlocked ? 0.9 : 0.65 * pulse;
+
+      // 새겨진 고대 룬 문자
+      ctx.fillRect(px - 2, py - 30, 4, 6);
+      ctx.fillRect(px - 4, py - 21, 8, 3);
+      ctx.fillRect(px - 2, py - 15, 4, 5);
+      ctx.fillRect(px - 3, py - 7, 6, 2);
+
+      // 상단 공전 유물 아이콘
+      ctx.font = '16px serif';
+      ctx.textAlign = 'center';
+      const floatY = py - 52 + Math.sin(timeSec * 2.5 + m.y) * 4;
+      ctx.fillText(m.icon, px, floatY);
+
+      // 플레이어 접근 시 인터랙션 프롬프트
+      if (p) {
+        const dist = Math.hypot(p.x - m.x, p.y - m.y);
+        if (dist < 4.0) {
+          ctx.shadowBlur = 0;
+          ctx.globalAlpha = 1.0;
+          ctx.font = 'bold 11px Pretendard, sans-serif';
+          ctx.fillStyle = '#0f172a';
+          const label = m.unlocked ? `📖 [${m.name}] (판독 완료)` : `✨ [E] ${m.name} 판독`;
+          const textW = ctx.measureText(label).width;
+          ctx.fillRect(px - textW / 2 - 6, py - 72, textW + 12, 18);
+          ctx.strokeStyle = m.color;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(px - textW / 2 - 6, py - 72, textW + 12, 18);
+          ctx.fillStyle = m.unlocked ? '#4ade80' : '#fde047';
+          ctx.fillText(label, px, py - 59);
+        }
+      }
+
+      ctx.restore();
+    }
   }
 }
 

@@ -1668,7 +1668,25 @@ class EntityManager {
     }
 
     if (skillKey === 'H' || skillKey === 'potion') {
-      this.useHealthPotion(p);
+      if (this.rpgManager && this.rpgManager.useQuickPotion) {
+        this.rpgManager.useQuickPotion('health');
+      } else {
+        this.useHealthPotion(p);
+      }
+      return;
+    }
+
+    if (skillKey === '5') {
+      if (this.rpgManager && this.rpgManager.useQuickPotion) {
+        this.rpgManager.useQuickPotion('swift');
+      }
+      return;
+    }
+
+    if (skillKey === '6') {
+      if (this.rpgManager && this.rpgManager.useQuickPotion) {
+        this.rpgManager.useQuickPotion('berserk');
+      }
       return;
     }
 
@@ -1696,6 +1714,11 @@ class EntityManager {
       }
       this.addFloatingText(p.x, p.y - 1.5, hitCount > 0 ? `⚡ 천공의 심판! (${hitCount}기 타격)` : '⚡ 천공의 심판!', '#fde047', 1.4);
     } else if (skillKey === 'E') {
+      // 0순위: 고대 석판 모놀리스 판독
+      if (p.nearMonolith && this.rpgManager && this.rpgManager.inspectMonolith) {
+        this.rpgManager.inspectMonolith(p.nearMonolith.id);
+        return;
+      }
       // 인근 NPC와 대화 우선, 다음으로 자원 채집, 없으면 질주 가속
       const talked = this.interactWithNearestNPC(p);
       if (!talked) {
@@ -2057,6 +2080,9 @@ class EntityManager {
         }
         if (this.rpgManager && this.rpgManager.checkColosseumProgress) {
           this.rpgManager.checkColosseumProgress(target);
+        }
+        if (this.rpgManager && this.rpgManager.checkBountyDefeat) {
+          this.rpgManager.checkBountyDefeat(target);
         }
         // 💎 물리 전리품 드롭
         this.spawnLootDrop(target.x, target.y, { itemType: 'gold', name: '골드 주머니', icon: '🪙', gold: target.gold || 50, color: '#facc15' });

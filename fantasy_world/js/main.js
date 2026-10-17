@@ -1189,6 +1189,162 @@ function startFantasyWorld() {
     });
   }
 
+  // 🧪 퀵 포션 벨트 버튼 리스너
+  const btnSkillPotionSwift = document.getElementById('btnSkillPotionSwift');
+  if (btnSkillPotionSwift) {
+    btnSkillPotionSwift.addEventListener('click', () => {
+      entityMgr.triggerPlayerSkill('5');
+    });
+  }
+  const btnSkillPotionBerserk = document.getElementById('btnSkillPotionBerserk');
+  if (btnSkillPotionBerserk) {
+    btnSkillPotionBerserk.addEventListener('click', () => {
+      entityMgr.triggerPlayerSkill('6');
+    });
+  }
+
+  // ==========================================================================
+  // 📜 대륙 현상금 수배소 컨트롤러
+  // ==========================================================================
+  const bountyModalEl = document.getElementById('bountyModal');
+  const btnCloseBountyModal = document.getElementById('btnCloseBountyModal');
+  const btnOpenBounty = document.getElementById('btnOpenBounty');
+
+  window.openBountyModal = function() {
+    if (!bountyModalEl) return;
+    const rpg = entityMgr.rpgManager;
+    if (!rpg || !rpg.bounties) return;
+
+    const rankBarEl = document.getElementById('bountyRankBar');
+    if (rankBarEl) {
+      const clearedCount = rpg.bounties.filter(b => b.cleared).length;
+      rankBarEl.innerHTML = `
+        <span>🎖️ 현재 사냥꾼 등급: <strong style="color: #facc15;">${rpg.bountyHunterRank}</strong></span>
+        <span>토벌 실적: ${clearedCount} / ${rpg.bounties.length} 완료</span>
+      `;
+    }
+
+    const gridEl = document.getElementById('bountyCardsGrid');
+    if (gridEl) {
+      gridEl.innerHTML = rpg.bounties.map(b => {
+        let btnText = '📜 수배령 수락 & 추적';
+        let btnClass = 'btn-bounty-action';
+        if (b.cleared) {
+          btnText = '🏆 토벌 완료 (보상 수령됨)';
+          btnClass = 'btn-bounty-action cleared';
+        } else if (b.active) {
+          btnText = '🎯 추적 중 (위치: ' + b.region + ')';
+          btnClass = 'btn-bounty-action active';
+        }
+
+        return `
+          <div class="bounty-poster-card ${b.cleared ? 'cleared' : ''}" style="border-top: 3px solid ${b.color}">
+            <div class="bounty-poster-header">
+              <span class="bounty-target-rank" style="background: ${b.color}">${b.rank}</span>
+              <span style="font-size: 20px;">${b.icon}</span>
+            </div>
+            <div class="bounty-target-name">${b.name}</div>
+            <div style="font-size: 11px; color: #94a3b8;">출몰지: ${b.region} (X: ${b.x}, Y: ${b.y})</div>
+            <div class="bounty-target-desc">${b.desc}</div>
+            <div class="bounty-reward-box">
+              <span>💰 현상금: <strong>${b.rewardGold} G</strong> (+${b.rewardExp} EXP)</span>
+              <span>🎁 특별 보상: ${b.rewardItem}</span>
+            </div>
+            <button class="${btnClass}" data-bounty="${b.id}" ${b.cleared ? 'disabled' : ''}>${btnText}</button>
+          </div>
+        `;
+      }).join('');
+
+      gridEl.querySelectorAll('.btn-bounty-action:not(.cleared)').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const bid = e.target.getAttribute('data-bounty');
+          if (bid && rpg) {
+            rpg.acceptBounty(bid);
+            window.openBountyModal();
+          }
+        });
+      });
+    }
+
+    bountyModalEl.classList.remove('hidden');
+    if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+  };
+
+  if (btnCloseBountyModal) {
+    btnCloseBountyModal.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (bountyModalEl) bountyModalEl.classList.add('hidden');
+    });
+  }
+  if (bountyModalEl) {
+    bountyModalEl.addEventListener('click', (e) => {
+      if (e.target === bountyModalEl) bountyModalEl.classList.add('hidden');
+    });
+  }
+  if (btnOpenBounty) {
+    btnOpenBounty.addEventListener('click', () => {
+      window.openBountyModal();
+    });
+  }
+
+  // ==========================================================================
+  // 📖 고대 잊혀진 대륙 실록 도감 컨트롤러
+  // ==========================================================================
+  const codexModalEl = document.getElementById('codexModal');
+  const btnCloseCodexModal = document.getElementById('btnCloseCodexModal');
+  const btnOpenCodex = document.getElementById('btnOpenCodex');
+
+  window.openCodexModal = function() {
+    if (!codexModalEl) return;
+    const rpg = entityMgr.rpgManager;
+    if (!rpg || !rpg.monoliths) return;
+
+    const listEl = document.getElementById('codexChaptersList');
+    if (listEl) {
+      listEl.innerHTML = rpg.monoliths.map(m => {
+        const isUnlocked = m.unlocked;
+        return `
+          <div class="codex-chapter-card ${isUnlocked ? 'unlocked' : ''}">
+            <div class="codex-chapter-header">
+              <span class="codex-chapter-title" style="color: ${isUnlocked ? m.color : '#94a3b8'}">
+                ${m.icon} ${m.title} - [${m.name}]
+              </span>
+              <span style="font-size: 11px; font-weight: 700; color: ${isUnlocked ? '#4ade80' : '#64748b'}">
+                ${isUnlocked ? '✓ 판독 완료' : '🔒 미발견 (위치: X:' + m.x + ', Y:' + m.y + ')'}
+              </span>
+            </div>
+            <div class="codex-chapter-lore">
+              ${isUnlocked ? m.lore : '고대 석판이 아직 판독되지 않았습니다. 해당 대륙의 유적지로 향하여 석비를 직접 판독하십시오.'}
+            </div>
+            <div class="codex-blessing-tag">
+              영구 축복 각인: ${m.blessingText} ${isUnlocked ? '(활성화됨)' : '(미해금)'}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    codexModalEl.classList.remove('hidden');
+    if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+  };
+
+  if (btnCloseCodexModal) {
+    btnCloseCodexModal.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (codexModalEl) codexModalEl.classList.add('hidden');
+    });
+  }
+  if (codexModalEl) {
+    codexModalEl.addEventListener('click', (e) => {
+      if (e.target === codexModalEl) codexModalEl.classList.add('hidden');
+    });
+  }
+  if (btnOpenCodex) {
+    btnOpenCodex.addEventListener('click', () => {
+      window.openCodexModal();
+    });
+  }
+
   // 전체화면 및 시네마틱 모드
   const btnToggleFullscreen = document.getElementById('btnToggleFullscreen');
   if (btnToggleFullscreen) {
@@ -1603,6 +1759,26 @@ function startFantasyWorld() {
           window.openColosseumModal();
         }
       }
+    } else if (e.code === 'Digit5') {
+      entityMgr.triggerPlayerSkill('5');
+    } else if (e.code === 'Digit6') {
+      entityMgr.triggerPlayerSkill('6');
+    } else if (e.code === 'KeyN') {
+      if (typeof window.openBountyModal === 'function') {
+        if (bountyModalEl && !bountyModalEl.classList.contains('hidden')) {
+          bountyModalEl.classList.add('hidden');
+        } else {
+          window.openBountyModal();
+        }
+      }
+    } else if (e.code === 'KeyL') {
+      if (typeof window.openCodexModal === 'function') {
+        if (codexModalEl && !codexModalEl.classList.contains('hidden')) {
+          codexModalEl.classList.add('hidden');
+        } else {
+          window.openCodexModal();
+        }
+      }
     } else if (e.code === 'KeyO') {
       if (btnOpenDungeon) btnOpenDungeon.click();
     } else if (e.code === 'Escape') {
@@ -1616,6 +1792,8 @@ function startFantasyWorld() {
       if (runeforgeModalEl) runeforgeModalEl.classList.add('hidden');
       if (colosseumModalEl) colosseumModalEl.classList.add('hidden');
       if (worldMapModalEl) worldMapModalEl.classList.add('hidden');
+      if (bountyModalEl) bountyModalEl.classList.add('hidden');
+      if (codexModalEl) codexModalEl.classList.add('hidden');
       if (buildPaletteEl) buildPaletteEl.classList.add('hidden');
       if (entityMgr.rpgManager) entityMgr.rpgManager.isBuildModeActive = false;
       if (btnToggleBuild) btnToggleBuild.classList.remove('active');
