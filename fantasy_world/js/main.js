@@ -7,13 +7,15 @@ function startFantasyWorld() {
   const minimapCanvas = document.getElementById('minimapCanvas');
   if (!canvas || !minimapCanvas) return;
 
+  let renderer = null;
+
   function resizeCanvas() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
     canvas.width = Math.round(window.innerWidth * dpr);
     canvas.height = Math.round(window.innerHeight * dpr);
     canvas.style.width = window.innerWidth + 'px';
     canvas.style.height = window.innerHeight + 'px';
-    if (typeof renderer !== 'undefined' && renderer) {
+    if (renderer) {
       renderer.dpr = dpr;
     }
     const ctx = canvas.getContext('2d');
@@ -76,7 +78,7 @@ function startFantasyWorld() {
   // 플레이어 캐릭터 생성
   const player = entityMgr.spawnOrGetPlayer();
 
-  const renderer = new WorldRenderer(canvas, minimapCanvas, world, entityMgr);
+  renderer = new WorldRenderer(canvas, minimapCanvas, world, entityMgr);
   window.renderer = renderer;
 
   // 2. 카메라 및 시뮬레이션 상태

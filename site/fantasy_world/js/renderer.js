@@ -207,8 +207,8 @@ class WorldRenderer {
       ctx.drawImage(this.terrainCanvas, sx, sy, sw, sh, dx, dy, dw, dh);
     }
 
-    // 1.5. 강/호수 3D 절벽 암벽, 흙길 자갈/잔디 오버행, 코블스톤 광장 디테일 렌더링
-    if (camera.zoom > 0.28) {
+    // 1.5. 강/호수 3D 절벽 암벽, 흙길 자갈/잔디 오버행, 코블스톤 광장 디테일 렌더링 (LOD 최적화)
+    if (camera.zoom > 0.42) {
       this.drawEnhancedTerrainFeatures(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
       if (worldTime && (worldTime.weather === 'rain' || worldTime.weather === 'storm')) {
         this.drawRainPuddles(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
@@ -216,7 +216,7 @@ class WorldRenderer {
     }
 
     // 2. 동적 해안선 픽셀 파도 거품 애니메이션 & 대양 백색 포말 물결 & 수면 거울 반사 & 다이아몬드 코스틱 굴절광
-    if (camera.zoom > 0.36) {
+    if (camera.zoom > 0.40) {
       this.drawPixelShorelines(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
       this.drawOceanFoam(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
       this.drawWaterCaustics(ctx, minTx, maxTx, minTy, maxTy, ts, timeSec);
