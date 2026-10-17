@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>크로니클 오브 아테리아 (Chronicles of Aetheria) - 오픈월드 판타지 생태계 & 항해 시뮬레이션</title>
-  <link rel="stylesheet" href="css/style.css?v=13" />
+  <link rel="stylesheet" href="css/style.css?v=14" />
 </head>
 <body>
   <!-- 메인 월드 캔버스 -->
@@ -272,8 +272,18 @@
     <!-- 2. 주력 전투 & 기동 스킬 핫바 (Combat Skills) -->
     <div class="dock-section combat-dock">
       <div class="skill-slots main-skills">
-        <button class="skill-btn mount" id="btnToggleMount" title="탈것 변경: 백마 질주 🏇 / 고대 비룡 비행 🐉 / 도보 🚶 (Space / R)">
+        <button class="skill-btn action-atk" id="btnSkillAttack" title="3단 연속 콤보 공격 (J / 좌클릭): 1타 신속베기 -> 2타 어퍼크로스 -> 3타 360도 회전베기 피니셔">
+          <span class="key-badge">J</span>
+          <span class="skill-icon">⚔️</span>
+          <span class="skill-name">3단콤보</span>
+        </button>
+        <button class="skill-btn dodge" id="btnDodgeRoll" title="무적 닷지 롤 / 대시 회피 (Space / Shift)">
           <span class="key-badge">Space</span>
+          <span class="skill-icon">💨</span>
+          <span class="skill-name">회피롤</span>
+        </button>
+        <button class="skill-btn mount" id="btnToggleMount" title="탈것 변경: 백마 질주 🏇 / 고대 비룡 비행 🐉 / 도보 🚶 (R)">
+          <span class="key-badge">R</span>
           <span class="skill-icon" id="mountIcon">🏇</span>
           <span class="skill-name" id="mountName">백마</span>
         </button>

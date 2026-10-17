@@ -878,6 +878,26 @@ body, html {
   transform: translateY(1px);
 }
 
+.skill-btn.action-atk {
+  border-color: rgba(239, 68, 68, 0.65);
+  background: rgba(239, 68, 68, 0.16);
+}
+.skill-btn.action-atk:hover {
+  border-color: #f87171;
+  background: rgba(239, 68, 68, 0.32);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.45);
+}
+
+.skill-btn.dodge {
+  border-color: rgba(56, 189, 248, 0.65);
+  background: rgba(56, 189, 248, 0.16);
+}
+.skill-btn.dodge:hover {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.32);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.45);
+}
+
 .skill-btn.mount {
   border-color: rgba(245, 158, 11, 0.6);
   background: rgba(245, 158, 11, 0.12);

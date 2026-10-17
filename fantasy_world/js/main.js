@@ -246,6 +246,21 @@ function startFantasyWorld() {
   const btnSkillJ = document.getElementById('btnSkillJ');
   if (btnSkillJ) btnSkillJ.addEventListener('click', () => entityMgr.triggerPlayerSkill('J'));
 
+  // 3단 콤보 공격 & 닷지 롤 버튼
+  const btnSkillAttack = document.getElementById('btnSkillAttack');
+  if (btnSkillAttack) {
+    btnSkillAttack.addEventListener('click', () => {
+      entityMgr.playerPerformAttack();
+    });
+  }
+
+  const btnDodgeRoll = document.getElementById('btnDodgeRoll');
+  if (btnDodgeRoll) {
+    btnDodgeRoll.addEventListener('click', () => {
+      entityMgr.playerDodgeRoll();
+    });
+  }
+
   // 탈것 변경 버튼
   const btnToggleMount = document.getElementById('btnToggleMount');
   const mountIconEl = document.getElementById('mountIcon');
@@ -1003,11 +1018,10 @@ function startFantasyWorld() {
       isPlayerControlActive = !isPlayerControlActive;
       if (isPlayerControlActive) startFollow(player);
       updatePlayerControlUI();
-    } else if (e.code === 'Space') {
+    } else if (e.code === 'Space' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
       e.preventDefault();
       if (isPlayerControlActive) {
-        entityMgr.togglePlayerMount();
-        updateMountUI();
+        entityMgr.playerDodgeRoll();
       } else {
         setWorldSpeed(worldTime.speed === 0 ? prevNonZeroSpeed : 0);
       }

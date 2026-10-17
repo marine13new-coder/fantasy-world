@@ -186,6 +186,17 @@ class QuestSystem {
     return q;
   }
 
+  onMonsterSlain(monster) {
+    if (!this.activeQuest) return;
+    const q = this.activeQuest;
+    if (q.type === 'bounty') {
+      q.progress = Math.min(q.maxProgress, q.progress + 0.35);
+      if (q.progress >= q.maxProgress && this.em.player) {
+        this.completeQuest(this.em.player);
+      }
+    }
+  }
+
   update(dt, player) {
     if (!this.activeQuest || !player) return;
     const q = this.activeQuest;
@@ -327,6 +338,8 @@ class EntityManager {
     this.floatingTexts = [];
     this.specialEffects = [];
     this.sparkParticles = [];
+    this.waterRipples = [];
+    this.ghostTrails = [];
     this.activeBattles = 0;
     this.player = null;
     this.pet = null;
@@ -346,6 +359,12 @@ class EntityManager {
 
   log(type, text, x, y) {
     this.onEventLog({ type, text, x, y, time: Date.now() });
+  }
+
+  addWaterRipple(x, y) {
+    if (!this.waterRipples) this.waterRipples = [];
+    if (this.waterRipples.length > 90) this.waterRipples.shift();
+    this.waterRipples.push({ x, y, radius: 2.5, maxRadius: 15, age: 0, duration: 0.85 });
   }
 
   addFloatingText(x, y, text, color = '#ffffff', duration = 1.6) {
@@ -1612,13 +1631,113 @@ class EntityManager {
       }
     } else if (skillKey === 'J' || skillKey === 'attack') {
       this.playerPerformAttack(p);
+    } else if (skillKey === 'SPACE' || skillKey === 'dodge' || skillKey === 'dash') {
+      this.playerDodgeRoll(p);
     }
   }
 
-  // ⚔️ 플레이어 직접 수동 무기 공격 (J키 / F키 / 좌클릭 타겟팅)
+  // 💨 플레이어 회피 롤 / 대시 (Dodge Roll / Dash - 무적 회피 & 잔상 & 먼지 파티클)
+  playerDodgeRoll(p) {
+    if (!p) p = this.spawnOrGetPlayer();
+    if (p.dodgeCooldown > 0 || p.isDashing || p.isShip) return;
+
+    p.dodgeCooldown = 0.95;
+    p.isDashing = true;
+    p.dashTimer = 0.28;
+    p.invulnerableTimer = 0.32;
+    p.invulnerable = true;
+
+    // 대시 방향 결정: 입력 방향 우선, 없으면 바라보는 방향
+    let dx = p.vx !== 0 ? Math.sign(p.vx) : 0;
+    let dy = p.vy !== 0 ? Math.sign(p.vy) : 0;
+    if (dx === 0 && dy === 0) {
+      if (p.facing === 'left') dx = -1;
+      else if (p.facing === 'right') dx = 1;
+      else if (p.facing === 'up') dy = -1;
+      else dy = 1;
+    }
+    const len = Math.hypot(dx, dy) || 1;
+    const dashSpeed = p.speed * 2.8;
+    p.dashVx = (dx / len) * dashSpeed;
+    p.dashVy = (dy / len) * dashSpeed;
+
+    if (typeof audioMgr !== 'undefined') audioMgr.playWhirlwind();
+    this.addEffect(p.x, p.y, 2.8, '#38bdf8', 0.4);
+    this.addHitSparks(p.x, p.y, '#bae6fd', 8);
+    this.addFloatingText(p.x, p.y - 1.2, '💨 닷지 롤 (무적 회피!)', '#38bdf8', 0.9);
+
+    // 잔상 이펙트 등록
+    if (!this.ghostTrails) this.ghostTrails = [];
+    for (let i = 0; i < 4; i++) {
+      this.ghostTrails.push({
+        x: p.x - (dx / len) * (i * 0.4),
+        y: p.y - (dy / len) * (i * 0.4),
+        facing: p.facing,
+        color: '#38bdf8',
+        age: 0,
+        duration: 0.35 + i * 0.08
+      });
+    }
+  }
+
+  // 🌲 필드 지형/자원 노드 수동 채집 (나무 벌목 / 암석 채광)
+  tryHarvestFieldObject(p) {
+    const tx = Math.floor(p.x);
+    const ty = Math.floor(p.y);
+    const tile = this.world.getTile(tx, ty);
+
+    // 인근 2.2타일 내 자원 노드 검사
+    if (this.world.resourceNodes) {
+      for (const node of this.world.resourceNodes) {
+        if (Math.hypot(node.x - p.x, node.y - p.y) <= 2.4 && node.amount > 0) {
+          node.amount--;
+          const isTree = (node.type === 'tree');
+          if (isTree) {
+            p.inventory.wood = (p.inventory.wood || 0) + 1;
+            this.addHitSparks(node.x, node.y, '#84cc16', 7);
+            this.addFloatingText(node.x, node.y - 1.0, '🪵 +1 목재 (벌목)', '#84cc16', 1.2);
+          } else {
+            p.inventory.ore = (p.inventory.ore || 0) + 1;
+            this.addHitSparks(node.x, node.y, '#facc15', 8);
+            this.addFloatingText(node.x, node.y - 1.0, '⛏️ +1 광석 (채광)', '#facc15', 1.2);
+          }
+          this.gainPlayerExp(25);
+          return true;
+        }
+      }
+    }
+
+    // 일반 지형 타일 벌목/채광
+    if (tile === TILE.FOREST || tile === TILE.AUTUMN_WOOD || tile === TILE.MEADOW) {
+      p.inventory.wood = (p.inventory.wood || 0) + 1;
+      this.addHitSparks(p.x, p.y, '#84cc16', 6);
+      this.addFloatingText(p.x, p.y - 1.2, '🪵 +1 목재 (벌목)', '#84cc16', 1.2);
+      this.gainPlayerExp(15);
+      return true;
+    } else if (tile === TILE.MOUNTAIN || tile === TILE.HILLS) {
+      p.inventory.ore = (p.inventory.ore || 0) + 1;
+      this.addHitSparks(p.x, p.y, '#94a3b8', 6);
+      this.addFloatingText(p.x, p.y - 1.2, '⛏️ +1 광석 (채광)', '#94a3b8', 1.2);
+      this.gainPlayerExp(15);
+      return true;
+    }
+    return false;
+  }
+
+  // ⚔️ 3단 연속 콤보 공격 시스템 (1타 신속베기 -> 2타 어퍼크로스 -> 3타 360도 회전베기 피니셔)
   playerPerformAttack(p, target = null) {
     if (!p) p = this.spawnOrGetPlayer();
     if (p.attackCooldown > 0) return;
+
+    const now = Date.now();
+    if (!p.lastAttackTime || (now - p.lastAttackTime > 1150)) {
+      p.comboStep = 1;
+    } else {
+      p.comboStep = (p.comboStep % 3) + 1;
+    }
+    p.lastAttackTime = now;
+    p.isAttacking = true;
+    p.attackAnimTimer = 0.28;
 
     // 타겟이 없으면 전방 또는 반경 4.8타일 내 가장 가까운 적 선별 (SpatialGrid로 O(1) 초고속 조회)
     if (!target) {
@@ -1627,8 +1746,28 @@ class EntityManager {
         : null;
     }
 
-    p.attackCooldown = 0.45;
-    if (typeof audioMgr !== 'undefined') audioMgr.playSword();
+    let comboMultiplier = 1.0;
+    let cdTime = 0.32;
+    let effectColor = '#ffffff';
+    let comboText = '1타 [신속베기]';
+
+    if (p.comboStep === 2) {
+      comboMultiplier = 1.35;
+      cdTime = 0.32;
+      effectColor = '#f97316';
+      comboText = '2타 [어퍼 크로스]';
+      if (typeof audioMgr !== 'undefined') audioMgr.playSword();
+    } else if (p.comboStep === 3) {
+      comboMultiplier = 2.2;
+      cdTime = 0.50;
+      effectColor = '#facc15';
+      comboText = '🔥 3타 피니셔 [360도 회전베기!]';
+      if (typeof audioMgr !== 'undefined') audioMgr.playWhirlwind();
+    } else {
+      if (typeof audioMgr !== 'undefined') audioMgr.playSword();
+    }
+
+    p.attackCooldown = cdTime;
 
     const angle = target
       ? Math.atan2(target.y - p.y, target.x - p.x)
@@ -1636,43 +1775,95 @@ class EntityManager {
 
     const slashX = p.x + Math.cos(angle) * 1.2;
     const slashY = p.y + Math.sin(angle) * 1.2;
-    this.addEffect(slashX, slashY, 2.5, '#fde047', 0.35);
+
+    // 💥 3단계 피니셔: 주변 360도 모든 적 광역 타격 및 넉백
+    if (p.comboStep === 3) {
+      this.addEffect(p.x, p.y, 3.8, '#facc15', 0.45);
+      if (this.camera) this.camera.shake = Math.min(22, (this.camera.shake || 0) + 7.5);
+
+      const aoeTargets = this.spatialGrid
+        ? this.spatialGrid.query(p.x, p.y, 4.2, other => other !== p && other.hp > 0 && this.isHostile(p, other))
+        : this.entities.filter(other => other !== p && other.hp > 0 && this.isHostile(p, other) && Math.hypot(other.x - p.x, other.y - p.y) <= 4.2);
+
+      let hits = 0;
+      for (const ent of aoeTargets) {
+        hits++;
+        let mult = 1.0;
+        if (this.rpgManager) mult = this.rpgManager.addCombo(1);
+        const dmg = Math.round(p.atk * comboMultiplier * mult * (1.1 + Math.random() * 0.3));
+        const isCrit = Math.random() < 0.35;
+        const finalDmg = isCrit ? Math.round(dmg * 1.5) : dmg;
+
+        ent.hp -= finalDmg;
+        ent.hitTimer = 0.28;
+        ent.combatTarget = p;
+        this.rallyNearbyAllies(ent, p, 11.0);
+
+        // 넉백
+        const kAng = Math.atan2(ent.y - p.y, ent.x - p.x);
+        ent.x += Math.cos(kAng) * 1.8;
+        ent.y += Math.sin(kAng) * 1.8;
+
+        this.addHitSparks(ent.x, ent.y, isCrit ? '#facc15' : '#f97316', 10);
+        this.addFloatingText(ent.x, ent.y - 1.0, isCrit ? `💥 CRIT! -${finalDmg}` : `⚔️-${finalDmg}`, isCrit ? '#fde047' : '#f97316', 1.2);
+
+        if (ent.hp <= 0) {
+          p.kills = (p.kills || 0) + 1;
+          p.gold += (ent.gold || 50);
+          p.inventory.gems = (p.inventory.gems || 0) + 1;
+          this.gainPlayerExp(ent.role === 'dragon' ? 180 : 70);
+          if (this.questSystem && this.questSystem.onMonsterSlain) {
+            this.questSystem.onMonsterSlain(ent);
+          }
+          this.addFloatingText(p.x, p.y - 1.4, `+${ent.gold}G 토벌!`, '#4ade80', 1.5);
+        }
+      }
+      this.addFloatingText(p.x, p.y - 1.8, `🔥 [피니셔 작렬!] (${hits}기 타격)`, '#facc15', 1.4);
+      return;
+    }
+
+    // 1타 or 2타 단일/전방 타격
+    this.addEffect(slashX, slashY, 2.4, effectColor, 0.3);
 
     if (target) {
       let comboMult = 1.0;
       if (this.rpgManager) {
         comboMult = this.rpgManager.addCombo(1);
       }
-      const dmg = Math.round(p.atk * comboMult * (1.1 + Math.random() * 0.4));
+      const isCrit = Math.random() < 0.25;
+      const baseDmg = Math.round(p.atk * comboMultiplier * comboMult * (1.0 + Math.random() * 0.3));
+      const dmg = isCrit ? Math.round(baseDmg * 1.5) : baseDmg;
+
       target.hp -= dmg;
       target.hitTimer = 0.25;
 
-      // 💥 타격 스파크 및 카메라 셰이크
-      this.addHitSparks(target.x, target.y, '#fde047', 9);
+      this.addHitSparks(target.x, target.y, isCrit ? '#facc15' : effectColor, 8);
       if (this.camera) {
-        this.camera.shake = Math.min(18, (this.camera.shake || 0) + 4.5);
+        this.camera.shake = Math.min(18, (this.camera.shake || 0) + (isCrit ? 6 : 3.5));
       }
 
-      // 💥 핵심: 플레이어 공격 즉시 몬스터가 플레이어를 인식하고 반격!
       target.combatTarget = p;
       this.rallyNearbyAllies(target, p, 11.0);
 
-      this.addFloatingText(target.x, target.y - 0.9, `💥-${dmg}`, '#fde047', 1.0);
-      this.addEffect(target.x, target.y, 2.0, '#ef4444', 0.3);
+      this.addFloatingText(target.x, target.y - 0.9, isCrit ? `💥 CRIT! -${dmg}` : `-${dmg}`, isCrit ? '#fde047' : effectColor, 1.0);
 
       if (target.hp <= 0) {
-        if (this.camera) {
-          this.camera.shake = Math.min(25, (this.camera.shake || 0) + 8);
-        }
-        p.kills++;
-        p.gold += target.gold;
+        p.kills = (p.kills || 0) + 1;
+        p.gold += (target.gold || 50);
         p.inventory.gems = (p.inventory.gems || 0) + 1;
-        this.gainPlayerExp(target.role === 'dragon' ? 150 : 60);
+        this.gainPlayerExp(target.role === 'dragon' ? 180 : 70);
         if (this.rpgManager) this.rpgManager.addCombo(2);
+        if (this.questSystem && this.questSystem.onMonsterSlain) {
+          this.questSystem.onMonsterSlain(target);
+        }
         this.addFloatingText(p.x, p.y - 1.2, `+${target.gold}G 격파!`, '#4ade80', 1.5);
       }
     } else {
-      this.addFloatingText(slashX, slashY - 0.5, '⚡ 휘두르기!', '#94a3b8', 0.6);
+      // 적이 없으면 필드 채집 시도 (벌목/채광)
+      const gathered = this.tryHarvestFieldObject(p);
+      if (!gathered) {
+        this.addFloatingText(slashX, slashY - 0.5, comboText, '#94a3b8', 0.6);
+      }
     }
   }
 
@@ -2310,6 +2501,25 @@ class EntityManager {
         if (sp.age >= sp.duration) this.sparkParticles.splice(i, 1);
       }
     }
+
+    // 🌊 수면 파문 링 (Water Wading Ripples) 업데이트
+    if (this.waterRipples) {
+      for (let i = this.waterRipples.length - 1; i >= 0; i--) {
+        const wr = this.waterRipples[i];
+        wr.age += dt;
+        wr.radius += dt * 14;
+        if (wr.age >= wr.duration) this.waterRipples.splice(i, 1);
+      }
+    }
+
+    // 💨 대시 잔상 (Dash Ghost Trails) 업데이트
+    if (this.ghostTrails) {
+      for (let i = this.ghostTrails.length - 1; i >= 0; i--) {
+        const gt = this.ghostTrails[i];
+        gt.age += dt;
+        if (gt.age >= gt.duration) this.ghostTrails.splice(i, 1);
+      }
+    }
   }
 
   // 🐾 야생 동물 생태계 AI (포식자 사냥 추적 및 초식 동물 무리 도주 시스템)
@@ -2551,9 +2761,46 @@ class EntityManager {
   }
 
   updatePlayerControl(p, dt, playerInput) {
+    // 쿨다운 및 타이머 갱신
+    if (p.attackCooldown > 0) p.attackCooldown -= dt;
+    if (p.attackAnimTimer > 0) {
+      p.attackAnimTimer -= dt;
+      if (p.attackAnimTimer <= 0) p.isAttacking = false;
+    }
+    if (p.dodgeCooldown > 0) p.dodgeCooldown -= dt;
+    if (p.invulnerableTimer > 0) {
+      p.invulnerableTimer -= dt;
+      if (p.invulnerableTimer <= 0) p.invulnerable = false;
+    }
+    if (p.hitTimer > 0) p.hitTimer -= dt;
+    if (p.boostTimer > 0) p.boostTimer -= dt;
+
+    // 💨 대시 / 닷지 롤 진행 중 (초고속 이동 & 지면 먼지)
+    if (p.isDashing) {
+      p.dashTimer -= dt;
+      p.x += p.dashVx * dt;
+      p.y += p.dashVy * dt;
+      p.x = Math.max(2, Math.min(WORLD_WIDTH - 3, p.x));
+      p.y = Math.max(2, Math.min(WORLD_HEIGHT - 3, p.y));
+      if (Math.random() < 0.55) {
+        this.addHitSparks(p.x, p.y + 0.3, '#cbd5e1', 2);
+      }
+      if (p.dashTimer <= 0) {
+        p.isDashing = false;
+      }
+      return;
+    }
+
     const curTx = Math.floor(p.x);
     const curTy = Math.floor(p.y);
     const curTile = this.world.getTile(curTx, curTy);
+
+    // 🌊 수면/선박 이동 시 파문 생성
+    if ((curTile === TILE.WATER || curTile === TILE.DOCK || p.isShip) && (p.vx !== 0 || p.vy !== 0)) {
+      if (Math.random() < 0.28) {
+        this.addWaterRipple(p.x, p.y);
+      }
+    }
 
     const boostMult = p.boostTimer > 0 ? 1.85 : 1.0;
 

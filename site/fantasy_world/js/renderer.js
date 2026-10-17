@@ -26,6 +26,21 @@ class WorldRenderer {
     this.minimapBaseCanvas.width = Math.round(world.width / 10);
     this.minimapBaseCanvas.height = Math.round(world.height / 10);
 
+    // 🌸 대기 환경 파티클 (꽃잎, 반딧불이, 사막 먼지, 불꽃 스파크, 수면 반짝임)
+    this.ambientParticles = [];
+    for (let i = 0; i < 75; i++) {
+      this.ambientParticles.push({
+        x: Math.random() * 1920,
+        y: Math.random() * 1080,
+        vx: 0.6 + Math.random() * 1.6,
+        vy: 0.2 + Math.random() * 0.7,
+        size: 2 + Math.random() * 2.5,
+        type: i < 30 ? 'petal' : (i < 50 ? 'firefly' : (i < 65 ? 'spark' : 'shimmer')),
+        phase: Math.random() * Math.PI * 2,
+        color: i < 30 ? (Math.random() > 0.4 ? '#f472b6' : '#ffffff') : '#bef264'
+      });
+    }
+
     this.bakeStaticTerrain();
   }
 
@@ -336,21 +351,37 @@ class WorldRenderer {
       }
     }
 
-    // 11. 플로팅 텍스트
-    if (camera.zoom > 0.32) {
-      ctx.font = 'bold 12px Pretendard, sans-serif';
+    // 10.5. 수면 파문 & 대시 잔상 & 오버헤드 16비트 전투 체력바
+    if (camera.zoom > 0.30) {
+      this.drawWaterWadingRipples(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy);
+      this.drawDashGhostTrails(ctx, ts);
+      this.drawEntityCombatHUD(ctx, ts, camera.zoom, minTx, maxTx, minTy, maxTy);
+    }
+
+    // 11. 플로팅 텍스트 (바운시 팝 & 크리티컬 하이라이트)
+    if (camera.zoom > 0.30) {
       ctx.textAlign = 'center';
       for (const ft of this.entityMgr.floatingTexts) {
         if (ft.x < minTx || ft.x > maxTx || ft.y < minTy || ft.y > maxTy) continue;
-        const alpha = Math.max(0, 1 - ft.age / ft.duration);
+        const progress = Math.min(1, ft.age / ft.duration);
+        const alpha = Math.max(0, 1 - progress);
+        const isCrit = ft.text.includes('CRIT') || ft.text.includes('피니셔') || ft.text.includes('LEVEL UP');
+        const popScale = isCrit ? Math.max(1, 1.4 - progress * 0.4) : Math.max(1, 1.2 - progress * 0.2);
+
         ctx.save();
         ctx.globalAlpha = alpha;
+        ctx.font = isCrit ? 'bold 15px Pretendard, sans-serif' : 'bold 12px Pretendard, sans-serif';
         ctx.fillStyle = ft.color;
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
-        ctx.lineWidth = 3;
-        const ty = Math.round((ft.y - (ft.age / ft.duration) * 1.8) * ts);
-        ctx.strokeText(ft.text, Math.round(ft.x * ts), ty);
-        ctx.fillText(ft.text, Math.round(ft.x * ts), ty);
+        ctx.strokeStyle = isCrit ? 'rgba(0, 0, 0, 0.95)' : 'rgba(0, 0, 0, 0.85)';
+        ctx.lineWidth = isCrit ? 4 : 3;
+
+        // 부드럽게 튀어 오르는 포물선 바운스 궤적
+        const rise = Math.sin(progress * Math.PI * 0.5) * 28;
+        const ty = Math.round(ft.y * ts - rise);
+        const tx = Math.round(ft.x * ts);
+
+        ctx.strokeText(ft.text, tx, ty);
+        ctx.fillText(ft.text, tx, ty);
         ctx.restore();
       }
     }
@@ -388,6 +419,9 @@ class WorldRenderer {
 
     // 13. 대기 및 날씨 조명 오버레이
     this.drawAtmosphereOverlay(ctx, cw, ch, worldTime, timeSec, camera);
+
+    // 13.5. 🌸 대기 환경 부유 파티클 (꽃잎, 밤 반딧불이, 사막 먼지, 불꽃, 수면 반짝임)
+    this.drawAtmosphericParticles(ctx, cw, ch, timeSec, camera, worldTime);
 
     // 14. 미니맵 렌더링
     this.renderMinimap(camera, cw, ch, filterCategory);
@@ -3012,6 +3046,142 @@ class WorldRenderer {
     }
 
     ctx.restore();
+  }
+
+  // 🌊 [10.5-A] 수면 보행 & 항해 파문 링 (Water Wading Ripples)
+  drawWaterWadingRipples(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy) {
+    if (!this.entityMgr.waterRipples || this.entityMgr.waterRipples.length === 0) return;
+    for (const r of this.entityMgr.waterRipples) {
+      if (r.x < minTx || r.x > maxTx || r.y < minTy || r.y > maxTy) continue;
+      const progress = r.age / r.duration;
+      const alpha = Math.max(0, 1 - progress) * 0.75;
+      const curRadius = r.radius;
+      const rx = Math.round(r.x * ts);
+      const ry = Math.round(r.y * ts);
+
+      ctx.save();
+      ctx.strokeStyle = `rgba(186, 230, 253, ${alpha})`;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.ellipse(rx, ry + 2, curRadius, curRadius * 0.5, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  // 💨 [10.5-B] 회피 롤 / 대시 잔상 (Dash Ghost Trails)
+  drawDashGhostTrails(ctx, ts) {
+    if (!this.entityMgr.ghostTrails || this.entityMgr.ghostTrails.length === 0) return;
+    for (const gt of this.entityMgr.ghostTrails) {
+      const progress = gt.age / gt.duration;
+      const alpha = Math.max(0, 1 - progress) * 0.55;
+      const gx = Math.round(gt.x * ts);
+      const gy = Math.round(gt.y * ts);
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = gt.color || '#38bdf8';
+      ctx.fillRect(gx - 5, gy - 12, 10, 12);
+      ctx.fillRect(gx - 3, gy - 16, 6, 4);
+      ctx.restore();
+    }
+  }
+
+  // ⚔️ [10.5-C] 16비트 오버헤드 전투 체력바 (Retro Overhead Combat HP Bar)
+  drawEntityCombatHUD(ctx, ts, zoom, minTx, maxTx, minTy, maxTy) {
+    if (zoom < 0.35) return;
+    for (const e of this.entityMgr.entities) {
+      if (e.x < minTx || e.x > maxTx || e.y < minTy || e.y > maxTy) continue;
+      if (e.hp >= e.maxHp && (!e.hitTimer || e.hitTimer <= 0)) continue;
+      if (e.hp <= 0) continue;
+
+      const px = Math.round(e.x * ts);
+      const sc = e.scale || 1.0;
+      const py = Math.round(e.y * ts - 19 * sc);
+      const w = Math.round(22 * Math.max(0.8, Math.min(1.6, sc)));
+      const h = 4;
+      const pct = Math.max(0, Math.min(1, e.hp / e.maxHp));
+
+      // 16비트 픽셀 테두리 & 배경
+      ctx.fillStyle = '#090d16';
+      ctx.fillRect(px - Math.floor(w / 2) - 1, py - 1, w + 2, h + 2);
+
+      // 체력 바 색상 (플레이어/아군: 에메랄드, 몬스터: 루비레드, 보스: 골든오렌지)
+      const isPlayer = (e.role === 'player');
+      const isBoss = (e.isBoss || (this.entityMgr.rpgManager && this.entityMgr.rpgManager.activeBoss === e));
+      const barColor = isBoss ? '#f97316' : (isPlayer ? '#22c55e' : (e.faction === 'monster' ? '#ef4444' : '#38bdf8'));
+
+      ctx.fillStyle = barColor;
+      ctx.fillRect(px - Math.floor(w / 2), py, Math.round(w * pct), h);
+
+      // 상단 하이라이트 림
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.fillRect(px - Math.floor(w / 2), py, Math.round(w * pct), 1);
+    }
+  }
+
+  // 🌸 [13.5] 대기 환경 부유 파티클 (꽃잎, 밤 반딧불이, 사막 먼지, 불꽃, 수면 반짝임)
+  drawAtmosphericParticles(ctx, cw, ch, timeSec, camera, worldTime) {
+    if (!this.ambientParticles) return;
+    const isNight = worldTime ? (worldTime.hour >= 19 || worldTime.hour < 5) : false;
+
+    for (let i = 0; i < this.ambientParticles.length; i++) {
+      const p = this.ambientParticles[i];
+
+      // 파티클 위치 갱신 (화면 래핑)
+      p.x += p.vx;
+      p.y += p.vy + Math.sin(timeSec * 2.2 + p.phase) * 0.45;
+
+      if (p.x > cw + 10) p.x = -10;
+      if (p.x < -10) p.x = cw + 10;
+      if (p.y > ch + 10) p.y = -10;
+      if (p.y < -10) p.y = ch + 10;
+
+      if (p.type === 'petal') {
+        // 🌸 바람에 실려 흩날리는 분홍 벚꽃잎 & 데이지 꽃잎
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.phase + timeSec * 1.5);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = 0.72;
+        ctx.fillRect(-p.size, -p.size / 2, p.size * 2, p.size);
+        ctx.restore();
+      } else if (p.type === 'firefly' && isNight) {
+        // 🌟 밤에 영롱하게 반짝이는 초록/황금 반딧불이 (Sine Wave Glow Pulse)
+        const alpha = Math.max(0, Math.sin(timeSec * 3.5 + p.phase));
+        if (alpha > 0.05) {
+          ctx.save();
+          ctx.fillStyle = `rgba(190, 242, 100, ${alpha * 0.85})`;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * 1.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.95})`;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      } else if (p.type === 'spark') {
+        // 🔥 은은하게 피어오르는 황혼/야외 불꽃 스파크
+        ctx.save();
+        ctx.fillStyle = '#f97316';
+        ctx.globalAlpha = 0.65;
+        ctx.fillRect(p.x, p.y, 2, 2);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(p.x, p.y - 1, 1, 1);
+        ctx.restore();
+      } else if (p.type === 'shimmer') {
+        // ✨ 수면/들판 햇살 다이아몬드 반짝임
+        const shimmerAlpha = Math.max(0, Math.sin(timeSec * 4.0 + p.phase));
+        if (shimmerAlpha > 0.3) {
+          ctx.save();
+          ctx.fillStyle = `rgba(255, 255, 255, ${shimmerAlpha * 0.75})`;
+          ctx.fillRect(p.x, p.y - 2, 1, 5);
+          ctx.fillRect(p.x - 2, p.y, 5, 1);
+          ctx.restore();
+        }
+      }
+    }
   }
 }
 

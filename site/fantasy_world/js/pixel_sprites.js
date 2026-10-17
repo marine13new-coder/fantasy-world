@@ -4041,7 +4041,7 @@
         ctx.restore();
       }
 
-      // 8. [CUTE FANTASY 스타일] 전방 화려한 순백 크레센트 참격호 (Hero & Monster Crescent Slash Arc Trail)
+      // 8. [CUTE FANTASY 스타일] 3단 연속 콤보 참격호 (Combo Slash Arc Trail: 1타 전방, 2타 어퍼크로스, 3타 360도 회전베기 피니셔)
       if (isAttacking) {
         ctx.save();
         const sideSign = isFacingLeft ? -1 : 1;
@@ -4059,32 +4059,80 @@
 
         const arcCenterX = px + (dir === 'left' ? -12 : (dir === 'right' ? 12 : 0)) * sc;
         const arcCenterY = py - 7 * sc - bounce + (dir === 'down' ? 6 : (dir === 'up' ? -6 : 0)) * sc;
-        const startAng = isFacingLeft ? Math.PI * 0.65 : -Math.PI * 0.35;
-        const endAng = isFacingLeft ? Math.PI * 1.35 : Math.PI * 0.35;
 
-        // 1. 외곽 푸른빛 에너지 잔상 (Tapered Outer Glow)
-        ctx.strokeStyle = glowColor;
-        ctx.lineWidth = 4.5 * sc;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.arc(arcCenterX, arcCenterY, 14 * sc, startAng, endAng, isFacingLeft);
-        ctx.stroke();
+        if (e.comboStep === 3) {
+          // 💥 [3단계 피니셔] 360도 전방위 골든 회전참격호 (Giant 360 Spin Cleave Finisher)
+          ctx.strokeStyle = 'rgba(250, 204, 21, 0.85)';
+          ctx.lineWidth = 5.5 * sc;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.arc(px, py - 6 * sc, 17 * sc, 0, Math.PI * 2);
+          ctx.stroke();
 
-        // 2. 내부 순백의 날카로운 참격 코어 (Pure White Sharp Crescent Core - Reference Image Match)
-        ctx.strokeStyle = slashColor;
-        ctx.lineWidth = 2.4 * sc;
-        ctx.beginPath();
-        ctx.arc(arcCenterX, arcCenterY, 14 * sc, startAng + 0.1, endAng - 0.1, isFacingLeft);
-        ctx.stroke();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2.8 * sc;
+          ctx.beginPath();
+          ctx.arc(px, py - 6 * sc, 17 * sc, 0, Math.PI * 2);
+          ctx.stroke();
 
-        // 3. 팁 스파크 & 별빛 궤적 파편 (Trailing Slash Sparks)
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(arcCenterX + sideSign * 12 * sc, arcCenterY - 7 * sc, 3 * sc, 3 * sc);
-        ctx.fillRect(arcCenterX + sideSign * 16 * sc, arcCenterY, 2.5 * sc, 2.5 * sc);
-        ctx.fillRect(arcCenterX + sideSign * 13 * sc, arcCenterY + 6 * sc, 2 * sc, 2 * sc);
-        ctx.fillStyle = glowColor;
-        ctx.fillRect(arcCenterX + sideSign * 10 * sc, arcCenterY - 9 * sc, 2 * sc, 2 * sc);
-        ctx.fillRect(arcCenterX + sideSign * 18 * sc, arcCenterY - 2 * sc, 1.5 * sc, 1.5 * sc);
+          // 8방향 스타버스트 스파크 & 불꽃 파편
+          for (let a = 0; a < 8; a++) {
+            const ang = (Math.PI / 4) * a;
+            ctx.fillStyle = '#fef08a';
+            ctx.fillRect(px + Math.cos(ang) * 19 * sc, py - 6 * sc + Math.sin(ang) * 19 * sc, 3 * sc, 3 * sc);
+            ctx.fillStyle = '#f97316';
+            ctx.fillRect(px + Math.cos(ang + 0.2) * 21 * sc, py - 6 * sc + Math.sin(ang + 0.2) * 21 * sc, 2 * sc, 2 * sc);
+          }
+        } else if (e.comboStep === 2) {
+          // 💥 [2단계 콤보] 대각선 어퍼 크로스 참격호 (Uppercut Cross Slash - Amber Orange Glow)
+          const startAng = isFacingLeft ? -Math.PI * 0.25 : Math.PI * 0.75;
+          const endAng = isFacingLeft ? Math.PI * 0.45 : -Math.PI * 0.05;
+          ctx.strokeStyle = 'rgba(249, 115, 22, 0.85)';
+          ctx.lineWidth = 5.0 * sc;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.arc(arcCenterX, arcCenterY, 15 * sc, startAng, endAng, !isFacingLeft);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2.6 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenterX, arcCenterY, 15 * sc, startAng + 0.1, endAng - 0.1, !isFacingLeft);
+          ctx.stroke();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(arcCenterX + sideSign * 13 * sc, arcCenterY - 8 * sc, 3 * sc, 3 * sc);
+          ctx.fillStyle = '#f97316';
+          ctx.fillRect(arcCenterX + sideSign * 16 * sc, arcCenterY + 2 * sc, 2.5 * sc, 2.5 * sc);
+        } else {
+          // 💥 [1단계 기본] 전방 순백 크레센트 참격호 (Pure White Crescent Core)
+          const startAng = isFacingLeft ? Math.PI * 0.65 : -Math.PI * 0.35;
+          const endAng = isFacingLeft ? Math.PI * 1.35 : Math.PI * 0.35;
+
+          // 1. 외곽 푸른빛 에너지 잔상 (Tapered Outer Glow)
+          ctx.strokeStyle = glowColor;
+          ctx.lineWidth = 4.5 * sc;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.arc(arcCenterX, arcCenterY, 14 * sc, startAng, endAng, isFacingLeft);
+          ctx.stroke();
+
+          // 2. 내부 순백의 날카로운 참격 코어
+          ctx.strokeStyle = slashColor;
+          ctx.lineWidth = 2.4 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenterX, arcCenterY, 14 * sc, startAng + 0.1, endAng - 0.1, isFacingLeft);
+          ctx.stroke();
+
+          // 3. 팁 스파크 & 별빛 궤적 파편
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(arcCenterX + sideSign * 12 * sc, arcCenterY - 7 * sc, 3 * sc, 3 * sc);
+          ctx.fillRect(arcCenterX + sideSign * 16 * sc, arcCenterY, 2.5 * sc, 2.5 * sc);
+          ctx.fillRect(arcCenterX + sideSign * 13 * sc, arcCenterY + 6 * sc, 2 * sc, 2 * sc);
+          ctx.fillStyle = glowColor;
+          ctx.fillRect(arcCenterX + sideSign * 10 * sc, arcCenterY - 9 * sc, 2 * sc, 2 * sc);
+          ctx.fillRect(arcCenterX + sideSign * 18 * sc, arcCenterY - 2 * sc, 1.5 * sc, 1.5 * sc);
+        }
         ctx.restore();
       }
 
