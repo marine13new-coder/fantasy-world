@@ -348,6 +348,7 @@ class EntityManager {
     this.bloodDecals = [];
     this.grassLeaves = [];
     this.deadRemains = [];
+    this.dustPuffs = [];
     this.initFireflies();
     this.activeBattles = 0;
     this.player = null;
@@ -466,6 +467,82 @@ class EntityManager {
         phase: Math.random() * Math.PI * 2
       });
     }
+  }
+
+  // 💨 회피 롤 착지 시 픽셀 모래먼지 파티클 (Dust Puffs)
+  addDustPuff(x, y, count = 4) {
+    if (!this.dustPuffs) this.dustPuffs = [];
+    if (this.dustPuffs.length > 80) this.dustPuffs.splice(0, count);
+    for (let i = 0; i < count; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const spd = 0.5 + Math.random() * 1.2;
+      this.dustPuffs.push({
+        x: x + (Math.random() - 0.5) * 0.4,
+        y: y + (Math.random() - 0.5) * 0.4,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd - 0.4,
+        age: 0,
+        duration: 0.45 + Math.random() * 0.25,
+        size: 2.0 + Math.random() * 2.5
+      });
+    }
+  }
+
+  // 📜 고대 유물 보물지도 생성 (Ancient Treasure Map)
+  generateTreasureMap(p) {
+    if (!p) p = this.spawnOrGetPlayer();
+    if (p.treasureMap) return;
+    const w = (this.world && this.world.width) ? this.world.width : 256;
+    const h = (this.world && this.world.height) ? this.world.height : 256;
+    const targetX = Math.floor(40 + Math.random() * (w - 80));
+    const targetY = Math.floor(40 + Math.random() * (h - 80));
+    p.treasureMap = { x: targetX, y: targetY, title: '📜 잃어버린 황혼의 고대 보물지도', discovered: false };
+    this.addFloatingText(p.x, p.y - 1.8, `📜 [보물지도 획득!] 좌표 (X: ${targetX}, Y: ${targetY})`, '#facc15', 2.8);
+    this.log('event', `📜 [고대 보물지도]가 발견되었습니다! 숨겨진 좌표 [X: ${targetX}, Y: ${targetY}] 부근에서 발굴할 수 있습니다.`, p.x, p.y);
+    if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+  }
+
+  // ⛏️ 보물 발굴 판정
+  checkExcavationTrigger(p) {
+    if (!p) p = this.spawnOrGetPlayer();
+    if (!p.treasureMap) return false;
+    const dist = Math.hypot(p.x - p.treasureMap.x, p.y - p.treasureMap.y);
+    if (dist <= 4.2) {
+      this.excavateTreasure(p);
+      return true;
+    }
+    return false;
+  }
+
+  // 👑 고대 전설 유물 발굴 (Excavation Sequence)
+  excavateTreasure(p) {
+    if (!p || !p.treasureMap) return;
+    const tm = p.treasureMap;
+    p.treasureMap = null;
+
+    if (this.camera) {
+      this.camera.screenFreeze = 0.12;
+      this.camera.shake = 16.0;
+      this.camera.zoomPulse = 1.35;
+    }
+
+    this.addShockwave(tm.x, tm.y, 6.0, '#facc15', 0.65);
+    this.addHitSparks(tm.x, tm.y, '#fde047', 25);
+    this.addEffect(tm.x, tm.y, 5.0, '#ca8a04', 0.8);
+    if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+
+    const bonusGold = 2500;
+    p.gold = (p.gold || 0) + bonusGold;
+    p.atk = (p.atk || 25) + 15;
+    p.maxHp = (p.maxHp || 450) + 120;
+    p.hp = p.maxHp;
+    this.gainPlayerExp(300);
+
+    this.spawnLootDrop(tm.x, tm.y, { itemType: 'gold', name: '고대 황금 유물함', icon: '👑', gold: bonusGold, color: '#facc15' });
+    this.spawnLootDrop(tm.x + 0.4, tm.y, { itemType: 'gem', name: '태고의 비전 수정', icon: '💎', resourceKey: 'gems', resourceCount: 6, color: '#c084fc' });
+
+    this.addFloatingText(p.x, p.y - 2.0, `👑 [전설 유물 발굴 완료!] (+${bonusGold}G, 영구 공격력+15, HP+120)`, '#facc15', 3.0);
+    this.log('event', `👑 플레이어가 [${tm.title}]의 고대 유물을 발굴했습니다! (+${bonusGold}G, 공격력 +15, 최대체력 +120 영구 강화)`, p.x, p.y);
   }
 
   // 💀 영구 지속 전사자 유골 잔해 데칼 (Persistent Skeletal Remains & Carcasses)
@@ -1812,6 +1889,10 @@ class EntityManager {
       if (this.checkExecutionTrigger(p)) {
         return;
       }
+      // 0.5순위: 📜 고대 유물 보물 발굴 (Excavation)
+      if (this.checkExcavationTrigger(p)) {
+        return;
+      }
       // 1순위: 고대 석판 모놀리스 판독
       if (p.nearMonolith && this.rpgManager && this.rpgManager.inspectMonolith) {
         this.rpgManager.inspectMonolith(p.nearMonolith.id);
@@ -1916,6 +1997,7 @@ class EntityManager {
     this.addEffect(p.x, p.y, 2.8, '#38bdf8', 0.4);
     this.addShockwave(p.x, p.y, 2.6, '#38bdf8', 0.32);
     this.addHitSparks(p.x, p.y, '#bae6fd', 8);
+    this.addDustPuff(p.x, p.y, 6);
     this.addFloatingText(p.x, p.y - 1.2, '💨 닷지 롤 (무적 회피!)', '#38bdf8', 0.9);
 
     // 잔상 이펙트 등록
@@ -3290,6 +3372,18 @@ class EntityManager {
         gl.y += gl.vy * dt;
         gl.vy += dt * 2.2;
         if (gl.age >= gl.duration) this.grassLeaves.splice(i, 1);
+      }
+    }
+
+    // 💨 회피 롤 모래먼지 (Dust Puffs) 업데이트
+    if (this.dustPuffs) {
+      for (let i = this.dustPuffs.length - 1; i >= 0; i--) {
+        const dp = this.dustPuffs[i];
+        dp.age += dt;
+        dp.x += dp.vx * dt;
+        dp.y += dp.vy * dt;
+        dp.size += dt * 3.5;
+        if (dp.age >= dp.duration) this.dustPuffs.splice(i, 1);
       }
     }
 

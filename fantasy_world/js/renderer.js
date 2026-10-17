@@ -431,6 +431,8 @@ class WorldRenderer {
       this.drawWaterWadingRipples(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy);
       this.drawGrassDebris(ctx, ts);
       this.drawDeadRemains(ctx, ts, minTx, maxTx, minTy, maxTy);
+      this.drawDustPuffs(ctx, ts);
+      this.drawTreasureExcavationSite(ctx, ts, timeSec);
       this.drawDashGhostTrails(ctx, ts);
       this.drawFireflies(ctx, ts, timeSec, cw, ch);
       this.drawEntityCombatHUD(ctx, ts, camera.zoom, minTx, maxTx, minTy, maxTy);
@@ -2860,6 +2862,12 @@ class WorldRenderer {
         }
       }
 
+      // 7. 고대 보물지도 발굴 현장 황금빛 비콘 광원
+      if (this.entityMgr && this.entityMgr.player && this.entityMgr.player.treasureMap) {
+        const tm = this.entityMgr.player.treasureMap;
+        carveLight(tm.x, tm.y, 120, 0.95);
+      }
+
       lCtx.globalCompositeOperation = 'source-over';
 
       // 어둠 마스크 합성
@@ -2884,6 +2892,9 @@ class WorldRenderer {
       if (this.entityMgr && this.entityMgr.player) {
         const p = this.entityMgr.player;
         drawWarmHalo(p.x, p.y, 75, 'rgba(251, 191, 36, 0.18)');
+        if (p.treasureMap) {
+          drawWarmHalo(p.treasureMap.x, p.treasureMap.y, 85, 'rgba(250, 204, 21, 0.4)');
+        }
       }
       if (this.entityMgr && this.entityMgr.rpgManager && this.entityMgr.rpgManager.ancientShrines) {
         for (const shrine of this.entityMgr.rpgManager.ancientShrines) {
@@ -4865,6 +4876,113 @@ class WorldRenderer {
     const title = ks >= 8 ? '👑 GODLIKE FEVER x' + ks : (ks >= 5 ? '⚡ RAMPAGE x' + ks : '🔥 TRIPLE KILL x' + ks);
     ctx.strokeText(title, cw / 2, 48);
     ctx.fillText(title, cw / 2, 48);
+    ctx.restore();
+  }
+
+  // 💨 [1.4] 닷지 롤 & 착지 모래 먼지 구름 파티클 (Dodge Dust Puffs)
+  drawDustPuffs(ctx, ts) {
+    if (!this.entityMgr || !this.entityMgr.dustPuffs) return;
+    const dusts = this.entityMgr.dustPuffs;
+    if (dusts.length === 0) return;
+
+    ctx.save();
+    for (let i = 0; i < dusts.length; i++) {
+      const d = dusts[i];
+      const prog = d.age / d.duration;
+      const alpha = Math.max(0, (1 - prog) * 0.7);
+      if (alpha <= 0.02) continue;
+
+      const px = Math.round(d.x * ts);
+      const py = Math.round(d.y * ts);
+      const sz = Math.round(d.size * (1 + prog * 0.8));
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = prog > 0.5 ? '#d97706' : '#fef08a';
+      ctx.fillRect(px - sz / 2, py - sz / 2, sz, sz);
+      ctx.fillStyle = '#fde68a';
+      ctx.fillRect(px - sz / 4, py - sz / 4, sz / 2, sz / 2);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // 📜 [9.3] 고대 유물 보물지도 발굴 현장 및 비콘 룬 (Ancient Treasure Map Excavation Site)
+  drawTreasureExcavationSite(ctx, ts, timeSec) {
+    if (!this.entityMgr) return;
+    const player = this.entityMgr.player || (this.entityMgr.entities && this.entityMgr.entities.find(e => e.isPlayer));
+    if (!player || !player.treasureMap) return;
+    const tm = player.treasureMap;
+
+    const px = Math.round(tm.x * ts);
+    const py = Math.round(tm.y * ts);
+    const pulse = 0.5 + Math.sin(timeSec * 3.5) * 0.5;
+
+    ctx.save();
+    // 1. 지면 회전 발굴 룬 서클 및 황금빛 오라
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(timeSec * 0.8);
+    ctx.fillStyle = 'rgba(234, 179, 8, 0.18)';
+    ctx.beginPath();
+    ctx.arc(0, 0, 24 + pulse * 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = `rgba(250, 204, 21, ${0.4 + pulse * 0.4})`;
+    ctx.lineWidth = 2.0;
+    ctx.beginPath();
+    ctx.arc(0, 0, 20 + pulse * 4, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 4방위 고대 룬 표시
+    ctx.fillStyle = '#fef08a';
+    for (let r = 0; r < 4; r++) {
+      const ang = (r * Math.PI) / 2;
+      const rx = Math.cos(ang) * 20;
+      const ry = Math.sin(ang) * 20;
+      ctx.fillRect(rx - 2, ry - 2, 4, 4);
+    }
+    ctx.restore();
+
+    // 2. 발굴 지점 X 마크 룬
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(px - 10, py - 10);
+    ctx.lineTo(px + 10, py + 10);
+    ctx.moveTo(px + 10, py - 10);
+    ctx.lineTo(px - 10, py + 10);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#fef08a';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(px - 10, py - 10);
+    ctx.lineTo(px + 10, py + 10);
+    ctx.moveTo(px + 10, py - 10);
+    ctx.lineTo(px - 10, py + 10);
+    ctx.stroke();
+
+    // 3. 하늘로 뻗는 빛의 기둥 비콘 (Heavenly Beacon Light)
+    const beamGrad = ctx.createLinearGradient(px, py, px, py - 160);
+    beamGrad.addColorStop(0, `rgba(250, 204, 21, ${0.45 + pulse * 0.25})`);
+    beamGrad.addColorStop(1, 'rgba(250, 204, 21, 0)');
+    ctx.fillStyle = beamGrad;
+    ctx.fillRect(px - 8, py - 160, 16, 160);
+
+    // 4. 플레이어가 근처에 있을 때 상호작용 프롬프트 안내
+    const distToPlayer = Math.hypot(player.x - tm.x, player.y - tm.y);
+    if (distToPlayer <= 5.0) {
+      ctx.font = 'bold 12px Pretendard, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#fef08a';
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 3;
+      const text = '⛏️ [E] 고대 전설 유물 발굴하기!';
+      ctx.strokeText(text, px, py - 26 - Math.sin(timeSec * 5) * 3);
+      ctx.fillText(text, px, py - 26 - Math.sin(timeSec * 5) * 3);
+    }
+
     ctx.restore();
   }
 }
