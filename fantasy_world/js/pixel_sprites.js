@@ -4034,11 +4034,21 @@
       const renderY = Math.round(py - renderH + 6 * sc - bounce - airborneOffset + offsetY);
 
       ctx.save();
-      // 덤블링 360° 공중제비 닷지 롤 (Somersault 360° Dodge Roll Animation)
+      // 덤블링 360° 공중제비 닷지 롤 (Somersault 360° Dodge Roll Animation & Chromatic Afterimages)
       if (e.isDashing) {
         const dashDur = e.dashDuration || 0.28;
         const dashProg = Math.max(0, Math.min(1, 1 - (e.dashTimer || 0) / dashDur));
         const rollAngle = (dir === 'left' || (e.vx || 0) < 0 ? -1 : 1) * dashProg * Math.PI * 2;
+
+        // 🌟 [색수차 분산 고스트 잔상] (Chromatic Dispersion Ghost Trails)
+        const ghostLagX = (e.vx || 0) * 1.6 * sc;
+        const ghostLagY = (e.vy || 0) * 1.6 * sc;
+        ctx.globalAlpha = 0.38;
+        ctx.drawImage(cv, renderX - ghostLagX, renderY - ghostLagY, renderW, renderH);
+        ctx.globalAlpha = 0.20;
+        ctx.drawImage(cv, renderX - ghostLagX * 2, renderY - ghostLagY * 2, renderW, renderH);
+        ctx.globalAlpha = 1.0;
+
         ctx.translate(px, py - 8 * sc);
         ctx.rotate(rollAngle);
         ctx.translate(-px, -(py - 8 * sc));
@@ -4505,12 +4515,25 @@
             ctx.translate(px + fwdX, py + fwdY - bounce);
             ctx.drawImage(sCvs, -7 * sc, -7 * sc, 14 * sc, 14 * sc);
 
-            // 🛡️ 마법 방패 펄스 배리어 링
-            ctx.strokeStyle = (e.parryTimer > 0) ? '#38bdf8' : 'rgba(148, 163, 184, 0.65)';
-            ctx.lineWidth = 1.8;
+            // 🛡️ 이지스 황금 육각 룬 배리어 쉴드 (Aegis Hexagonal Barrier Shield)
+            const barrierColor = (e.parryTimer > 0) ? '#facc15' : '#38bdf8';
+            ctx.strokeStyle = barrierColor;
+            ctx.lineWidth = 2.0;
             ctx.beginPath();
-            ctx.arc(0, 0, 10 * sc, 0, Math.PI * 2);
+            const bRad = 12 * sc;
+            for (let hx = 0; hx < 6; hx++) {
+              const hAng = (Math.PI / 3) * hx;
+              const hxPos = Math.cos(hAng) * bRad;
+              const hyPos = Math.sin(hAng) * bRad;
+              if (hx === 0) ctx.moveTo(hxPos, hyPos);
+              else ctx.lineTo(hxPos, hyPos);
+            }
+            ctx.closePath();
             ctx.stroke();
+
+            // 내부 룬 빛무리
+            ctx.fillStyle = (e.parryTimer > 0) ? 'rgba(250, 204, 21, 0.22)' : 'rgba(56, 189, 248, 0.18)';
+            ctx.fill();
           } else {
             const shieldX = px - sideSign * 7 * sc;
             const shieldY = py - 9 * sc - bounce;

@@ -1261,6 +1261,146 @@
     },
 
     // =========================================================================
+    // 11.4. 크로노스 회전 기어 대시계탑 (Chrono Grand Clockwork Citadel)
+    // =========================================================================
+    drawClockworkTower(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // 바닥 스팀펑크 암영
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.55)';
+      ctx.fillRect(px - halfW + 2, py + halfH - 3, bw - 4, 7);
+
+      // 청동 기계 탑신 기단 (Bronze & Iron Gear Tower Body)
+      ctx.fillStyle = '#292524';
+      ctx.fillRect(px - halfW + 3, py - halfH + 8, bw - 6, bh - 10);
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(px - halfW + 5, py - halfH + 10, bw - 10, bh - 14);
+
+      // 회전하는 거대 청동 톱니바퀴 (Interlocking Rotating Bronze Gears)
+      const gearY = py + 2;
+      const gearRadius = Math.min(13, Math.round(bw / 3));
+      const gearAngle = timeSec * 1.5;
+
+      ctx.save();
+      ctx.translate(px, gearY);
+      ctx.rotate(gearAngle);
+
+      ctx.fillStyle = '#b45309';
+      ctx.beginPath();
+      ctx.arc(0, 0, gearRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#1c1917';
+      ctx.beginPath();
+      ctx.arc(0, 0, gearRadius - 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#d97706';
+      for (let g = 0; g < 8; g++) {
+        const ang = (g * Math.PI / 4);
+        ctx.fillRect(Math.cos(ang) * (gearRadius - 2) - 1.5, Math.sin(ang) * (gearRadius - 2) - 1.5, 3, 3);
+      }
+      ctx.restore();
+
+      // 상단 거대 로마숫자 시계판 (Ornate Clock Face with Moving Hands)
+      const clockY = py - halfH + 4;
+      const clockRadius = Math.min(12, Math.round(bw / 3.2));
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.arc(px, clockY, clockRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#451a03';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      const hourAngle = timeSec * 0.5;
+      const minAngle = timeSec * 3.0;
+      ctx.strokeStyle = '#09090b';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(px, clockY);
+      ctx.lineTo(px + Math.cos(hourAngle) * (clockRadius * 0.55), clockY + Math.sin(hourAngle) * (clockRadius * 0.55));
+      ctx.stroke();
+
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(px, clockY);
+      ctx.lineTo(px + Math.cos(minAngle) * (clockRadius * 0.8), clockY + Math.sin(minAngle) * (clockRadius * 0.8));
+      ctx.stroke();
+
+      // 첨탑 지붕 & 황금 추침 (Apex Spire & Golden Pendulum)
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.moveTo(px, clockY - clockRadius - 10);
+      ctx.lineTo(px + 4, clockY - clockRadius);
+      ctx.lineTo(px - 4, clockY - clockRadius);
+      ctx.closePath();
+      ctx.fill();
+
+      // 💨 증기 피스톤 배기 벤트 파티클 (Steam Puff Vents)
+      if (Math.sin(timeSec * 4) > 0.6) {
+        ctx.fillStyle = 'rgba(241, 245, 249, 0.65)';
+        ctx.beginPath();
+        ctx.arc(px + halfW - 2, py - halfH + 12 - Math.sin(timeSec * 8) * 3, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    },
+
+    // =========================================================================
+    // 11.5. 유성우 천문대 신성 돔 (Celestial Starfall Observatory)
+    // =========================================================================
+    drawStarObservatory(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // 바닥 석조 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+      ctx.fillRect(px - halfW + 2, py + halfH - 3, bw - 4, 6);
+
+      // 원형 석조 드럼 기단 (Cylindrical Stone Masonry Drum)
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(px - halfW + 3, py - 4, bw - 6, halfH + 2);
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(px - halfW + 5, py - 2, bw - 10, halfH - 2);
+
+      // 청동 돔 지붕 (Verdigris Copper Hemisphere Dome with Slit)
+      const domeY = py - 4;
+      const domeRadius = Math.round(bw / 2.2);
+
+      ctx.fillStyle = '#0d9488';
+      ctx.beginPath();
+      ctx.arc(px, domeY, domeRadius, Math.PI, 0);
+      ctx.fill();
+
+      // 돔 관측 슬릿 (Observation Slit)
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - 2, domeY - domeRadius, 5, domeRadius);
+
+      // 거대 굴절 천체 망원경 (Giant Brass Refracting Telescope)
+      const teleAngle = -Math.PI * 0.35 + Math.sin(timeSec * 0.8) * 0.15;
+      const teleLen = domeRadius + 12;
+
+      ctx.save();
+      ctx.translate(px, domeY - 2);
+      ctx.rotate(teleAngle);
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(0, -2, teleLen, 5);
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(0, -3, 5, 7);
+      ctx.fillRect(teleLen - 4, -4, 5, 9);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(teleLen, -2, 2, 5);
+      ctx.restore();
+
+      if (isNight) {
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.18)';
+        ctx.beginPath();
+        ctx.arc(px, domeY - domeRadius, 14, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -1459,6 +1599,14 @@
       }
       if (type === 'coral_spire' || type === 'abyssal_spire' || (type === 'magic_spire' && b && b.continent === 'atlantis')) {
         this.drawCoralSpire(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'clockwork_tower' || type === 'chrono_tower' || (type === 'castle' && b && b.continent === 'chrono')) {
+        this.drawClockworkTower(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'star_observatory' || type === 'observatory' || (type === 'temple' && b && b.continent === 'chrono')) {
+        this.drawStarObservatory(ctx, px, py, bw, bh, isNight, timeSec);
         return true;
       }
       if (type === 'temple' || type === 'cathedral') {

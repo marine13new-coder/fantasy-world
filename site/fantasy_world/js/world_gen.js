@@ -581,6 +581,16 @@ function createSettlementList() {
   add('atlantis_mermaid_song_reef', '인어의 노랫소리 비전 환초', 'port', 'atlantis', 1880, 1680, 'beastkin', false, 8);
   add('atlantis_poseidon_trident_citadel', '포세이돈 심해 삼지창 성채', 'lair', 'atlantis', 2240, 1780, 'dragon', true, 11);
 
+  // =========================================================================
+  // 14. THE CELESTIAL STARFALL & CHRONO CLOCKWORK REALM (크로노스 시공간 시계탑 & 유성우 천문대 대륙)
+  // =========================================================================
+  add('chrono_grand_clockwork_citadel', '크로노스 대시계탑 수도', 'capital', 'chrono', 1280, 460, 'dwarf', true, 16);
+  add('chrono_starfall_observatory', '유성우 천문대 신성 돔', 'temple', 'chrono', 1420, 390, 'celestial', true, 14);
+  add('chrono_astronomer_aether_haven', '성운 에테르 비행선 항만', 'port', 'chrono', 1160, 520, 'elf', false, 9);
+  add('chrono_timeworn_hourglass_spire', '영겁의 모래시계 마법 첨탑', 'town', 'chrono', 1340, 590, 'human', false, 8);
+  add('chrono_zodiac_sun_dial_plaza', '황도 12궁 해시계 대성채', 'castle', 'chrono', 1490, 480, 'crusader', true, 13);
+  add('chrono_perpetual_motion_forge', '영구기관 비전 기어 용광로', 'lair', 'chrono', 1210, 360, 'dwarf', true, 11);
+
   return list;
 }
 
@@ -862,6 +872,18 @@ function generateWorld() {
             tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.CORAL : TILE.CRYSTAL_CAVE; // 발광 산호초 & 해저 수정동굴
           } else if (dist <= landRad + 3) {
             tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.WATER : TILE.DEEP_WATER;
+          }
+          continue;
+        }
+
+        // 크로노스 시공간 시계탑 & 유성우 천문대 대륙 전용 지형 카빙
+        if (s.continent === 'chrono') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.CASTLE_FLOOR : TILE.ROAD; // 톱니 기어 패턴 석조 포장 도로
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.CRYSTAL_CAVE : TILE.MEADOW; // 성운 별빛 초원 & 시간 수정동굴
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.ROAD : TILE.FOREST;
           }
           continue;
         }
