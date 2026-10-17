@@ -4043,6 +4043,11 @@
         ctx.translate(0, breathY);
       }
 
+      // 🌟 [영웅 로열 망토 물리학] (Hero Flowing Royal Crimson Cape)
+      if (e.role === 'player' && !e.isShip) {
+        this.drawHeroCape(ctx, px, py, bounce, dir, e, timeSec, sc);
+      }
+
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(cv, renderX, renderY, renderW, renderH);
       ctx.restore();
@@ -4185,6 +4190,71 @@
       }
     }
 
+    // 🌟 [영웅 로열 망토 물리학] (Hero Flowing Royal Crimson Cape Physics)
+    drawHeroCape(ctx, px, py, bounce, dir, e, timeSec, sc) {
+      if (e.mount === 'dragon') return;
+
+      ctx.save();
+      const isMoving = Math.abs(e.vx || 0) > 0.08 || Math.abs(e.vy || 0) > 0.08;
+      const windFlutter = Math.sin(timeSec * 8.5 + px * 0.15) * 2.2 * sc;
+      const dragX = isMoving ? -(e.vx || 0) * 1.8 * sc : 0;
+      const dragY = isMoving ? -(e.vy || 0) * 1.2 * sc : 0;
+
+      // 어깨 연결부 기준점
+      const neckX = px;
+      const neckY = py - 11 * sc - bounce;
+
+      // 망토 끝단 좌우/하단 위치
+      let capeWidthTop = 4 * sc;
+      let capeWidthBot = 7 * sc;
+      let capeLength = 12 * sc;
+
+      let tailX1 = neckX - capeWidthBot + dragX + windFlutter * 0.6;
+      let tailX2 = neckX + capeWidthBot + dragX + windFlutter;
+      let tailY = neckY + capeLength + dragY;
+
+      // 방향에 따른 위치 조절
+      if (dir === 'left') {
+        tailX1 += 5 * sc;
+        tailX2 += 7 * sc;
+      } else if (dir === 'right') {
+        tailX1 -= 7 * sc;
+        tailX2 -= 5 * sc;
+      }
+
+      // 1. 망토 그림자 / 음영 폴드
+      ctx.fillStyle = '#9f1239'; // 딥 크림슨 섀도
+      ctx.beginPath();
+      ctx.moveTo(neckX - capeWidthTop, neckY);
+      ctx.lineTo(tailX1 - 1 * sc, tailY);
+      ctx.lineTo(tailX2 + 1 * sc, tailY);
+      ctx.lineTo(neckX + capeWidthTop, neckY);
+      ctx.closePath();
+      ctx.fill();
+
+      // 2. 망토 메인 원단 (로열 루비 레드)
+      ctx.fillStyle = '#e11d48';
+      ctx.beginPath();
+      ctx.moveTo(neckX - capeWidthTop + 0.5 * sc, neckY);
+      ctx.lineTo(tailX1, tailY - 1 * sc);
+      ctx.lineTo(tailX2, tailY - 1 * sc);
+      ctx.lineTo(neckX + capeWidthTop - 0.5 * sc, neckY);
+      ctx.closePath();
+      ctx.fill();
+
+      // 3. 골든 엠브로이더리 엣지 트림 (Golden Hem Trim)
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(tailX1, tailY - 1.5 * sc, Math.max(2, tailX2 - tailX1), 2 * sc);
+
+      // 4. 어깨 골드 브로치 / 클립
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(neckX - 3.5 * sc, neckY - 1 * sc, 7 * sc, 2 * sc);
+      ctx.fillStyle = '#38bdf8'; // 사파이어 보석 펜던트
+      ctx.fillRect(neckX - 1 * sc, neckY - 0.5 * sc, 2 * sc, 2 * sc);
+
+      ctx.restore();
+    }
+
     // 캐릭터 장비 무기/방패 동적 오버레이
     drawEquippedGear(ctx, e, px, py, bounce, dir, isAttacking, timeSec, sc) {
       if (!window.PixelItems) return;
@@ -4194,9 +4264,14 @@
       let shieldId = null;
 
       if (e.role === 'player') {
-        const rpg = (window.game && window.game.rpg) ? window.game.rpg : null;
-        weaponId = (rpg && rpg.equipment && rpg.equipment.weapon) ? rpg.equipment.weapon.id : 'sword_excalibur';
-        shieldId = (rpg && rpg.equipment && rpg.equipment.shield) ? rpg.equipment.shield.id : 'shield_dragon';
+        if (e.weaponMode === 'ranged') {
+          weaponId = 'bow_elven';
+          shieldId = null;
+        } else {
+          const rpg = (window.game && window.game.rpg) ? window.game.rpg : null;
+          weaponId = (rpg && rpg.equipment && rpg.equipment.weapon) ? rpg.equipment.weapon.id : 'sword_excalibur';
+          shieldId = (rpg && rpg.equipment && rpg.equipment.shield) ? rpg.equipment.shield.id : 'shield_dragon';
+        }
       } else if (e.role === 'soldier' || e.role === 'guard') {
         weaponId = 'sword_steel';
         shieldId = 'shield_iron';
@@ -4235,6 +4310,43 @@
       // 손의 위치 기준점 (Hand anchor)
       const handX = px + sideSign * 8 * sc;
       const handY = py - 10 * sc - bounce;
+
+      // 🏹 활 장착 시 전용 에임 & 활시위 당기기 렌더링
+      if (weaponId.includes('bow')) {
+        ctx.translate(handX, handY);
+        const aimAngle = isLeft ? -0.25 : 0.25;
+        ctx.rotate(aimAngle);
+        ctx.drawImage(wCvs, -8 * sc, -9 * sc, 16 * sc, 16 * sc);
+
+        // 시위(Bowstring) 및 시위에 걸린 빛나는 정밀 화살
+        if (isAttacking || (e.bowDrawTimer !== undefined && e.bowDrawTimer > 0)) {
+          ctx.strokeStyle = '#f8fafc';
+          ctx.lineWidth = 1.0 * sc;
+          ctx.beginPath();
+          ctx.moveTo(-5 * sc, -7 * sc);
+          ctx.lineTo(-10 * sc, 0);
+          ctx.lineTo(-5 * sc, 7 * sc);
+          ctx.stroke();
+
+          // 화살대
+          ctx.strokeStyle = '#fde047';
+          ctx.lineWidth = 1.4 * sc;
+          ctx.beginPath();
+          ctx.moveTo(-10 * sc, 0);
+          ctx.lineTo(8 * sc, 0);
+          ctx.stroke();
+
+          // 화살촉 & 발광 팁
+          ctx.fillStyle = '#38bdf8';
+          ctx.beginPath();
+          ctx.moveTo(8 * sc, -2 * sc);
+          ctx.lineTo(12 * sc, 0);
+          ctx.lineTo(8 * sc, 2 * sc);
+          ctx.fill();
+        }
+        ctx.restore();
+        return;
+      }
 
       if (isAttacking) {
         // 공격 모션: 3단계 가속 키프레임 (1. 준비 후퇴 -> 2. 초고속 하향 스냅 -> 3. 후속 감속 복귀)

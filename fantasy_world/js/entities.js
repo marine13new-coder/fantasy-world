@@ -349,6 +349,8 @@ class EntityManager {
     this.grassLeaves = [];
     this.deadRemains = [];
     this.dustPuffs = [];
+    this.waterWakes = [];
+    this.falcon = { active: false, x: 0, y: 0, altitude: 28, angle: 0, wingCycle: 0, state: 'orbit', target: null, diveCooldown: 0 };
     this.initFireflies();
     this.activeBattles = 0;
     this.player = null;
@@ -560,6 +562,172 @@ class EntityManager {
 
     this.addFloatingText(p.x, p.y - 2.0, `👑 [전설 유물 발굴 완료!] (+${bonusGold}G, 영구 공격력+15, HP+120)`, '#facc15', 3.0);
     this.log('event', `👑 플레이어가 [${tm.title}]의 고대 유물을 발굴했습니다! (+${bonusGold}G, 공격력 +15, 최대체력 +120 영구 강화)`, p.x, p.y);
+  }
+
+  // 🌊 [2.5] 선박 & 수영 픽셀 V자 물보라 항적 (Dynamic Water Wakes)
+  addWaterWake(x, y, angle, scale = 1.0) {
+    if (!this.waterWakes) this.waterWakes = [];
+    if (this.waterWakes.length > 70) this.waterWakes.shift();
+    this.waterWakes.push({
+      x, y, angle, scale,
+      age: 0,
+      duration: 1.2 + scale * 0.3
+    });
+  }
+
+  updateWaterWakes(dt) {
+    if (!this.waterWakes || this.waterWakes.length === 0) return;
+    for (let i = this.waterWakes.length - 1; i >= 0; i--) {
+      const w = this.waterWakes[i];
+      w.age += dt;
+      if (w.age >= w.duration) {
+        this.waterWakes.splice(i, 1);
+      }
+    }
+  }
+
+  // 🏹 [원거리 전투 모드] 엘븐 롱보우 / 근접 성검 실시간 무기 스왑
+  playerToggleWeaponMode(p) {
+    if (!p) p = this.spawnOrGetPlayer();
+    p.weaponMode = (p.weaponMode === 'ranged') ? 'melee' : 'ranged';
+    if (typeof audioMgr !== 'undefined' && audioMgr.playEquip) {
+      audioMgr.playEquip();
+    }
+    if (p.weaponMode === 'ranged') {
+      this.addFloatingText(p.x, p.y - 1.6, '🏹 [원거리 모드: 엘븐 롱보우] 관통 사격 준비! (사거리 18타일)', '#38bdf8', 2.0);
+      this.log('event', '🏹 영웅이 [원거리 무기: 엘븐 롱보우]를 쥐었습니다. 멀리서 저격하면 최대 2.2배 치명타가 발동합니다!', p.x, p.y);
+    } else {
+      this.addFloatingText(p.x, p.y - 1.6, '⚔️ [근접 모드: 엑스칼리버] 삼단 콤보 & 에어본 슬램!', '#facc15', 2.0);
+      this.log('event', '⚔️ 영웅이 [근접 무기: 성검]을 쥐었습니다. 3단 콤보 연격 및 공중 띄우기를 구사할 수 있습니다.', p.x, p.y);
+    }
+    this.addEffect(p.x, p.y, 2.8, p.weaponMode === 'ranged' ? '#38bdf8' : '#facc15', 0.4);
+    if (typeof updateWeaponModeUI === 'function') updateWeaponModeUI();
+  }
+
+  // 🏹 엘븐 롱보우 정밀 관통 화살 발사
+  shootPlayerArrow(p, targetX, targetY) {
+    if (!p) p = this.spawnOrGetPlayer();
+    if (p.bowCooldown > 0) return false;
+    p.bowCooldown = 0.35;
+    p.bowDrawTimer = 0.25;
+
+    let dx = (typeof targetX === 'number') ? (targetX - p.x) : 0;
+    let dy = (typeof targetY === 'number') ? (targetY - p.y) : 0;
+    if (dx === 0 && dy === 0) {
+      if (p.facing === 'left') dx = -1;
+      else if (p.facing === 'right') dx = 1;
+      else if (p.facing === 'up') dy = -1;
+      else dy = 1;
+    }
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = dx / len;
+    const ny = dy / len;
+    const speed = 22.0;
+
+    p.facing = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
+
+    this.projectiles.push({
+      x: p.x + nx * 0.9,
+      y: p.y + ny * 0.9,
+      vx: nx * speed,
+      vy: ny * speed,
+      angle: Math.atan2(ny, nx),
+      color: '#facc15',
+      damage: Math.round((p.atk || 25) * 1.7),
+      pierce: 2,
+      originX: p.x,
+      originY: p.y,
+      life: 0.95,
+      isArrow: true,
+      sender: p
+    });
+
+    if (typeof audioMgr !== 'undefined') audioMgr.playShoot();
+    this.addSlashArc(p.x + nx * 0.9, p.y + ny * 0.9, 1.2, Math.atan2(ny, nx) - 0.4, Math.atan2(ny, nx) + 0.4, '#38bdf8', 0.15);
+    return true;
+  }
+
+  // 🦅 상공 정찰매 사역마 동료 토글 (Spirit Falcon Scouting Companion)
+  toggleFalconCompanion() {
+    const p = this.spawnOrGetPlayer();
+    if (!this.falcon) {
+      this.falcon = { active: false, x: p.x, y: p.y, altitude: 28, angle: 0, wingCycle: 0, state: 'orbit', target: null, diveCooldown: 0 };
+    }
+    this.falcon.active = !this.falcon.active;
+    if (this.falcon.active) {
+      this.falcon.x = p.x;
+      this.falcon.y = p.y - 4;
+      this.falcon.angle = 0;
+      this.falcon.diveCooldown = 2.0;
+      this.addFloatingText(p.x, p.y - 2.2, '🦅 [수호 정찰매: 솔개] 상공 정찰 출격!', '#facc15', 2.4);
+      this.log('quest', '🦅 영웅의 [수호 정찰매: 솔개]가 창공으로 비상했습니다! 주변 14타일 내 몬스터를 탐지하여 급강하 발톱 강습을 가합니다.', p.x, p.y);
+      if (typeof audioMgr !== 'undefined') audioMgr.playFanfare();
+    } else {
+      this.addFloatingText(p.x, p.y - 1.8, '🦅 [정찰매 회귀] 휴식 중', '#94a3b8', 1.5);
+    }
+  }
+
+  updateFalcon(dt) {
+    if (!this.falcon || !this.falcon.active) return;
+    const f = this.falcon;
+    const p = this.player;
+    if (!p) return;
+
+    f.wingCycle += dt * 10;
+    if (f.diveCooldown > 0) f.diveCooldown -= dt;
+
+    if (f.state === 'dive' && f.target && f.target.hp > 0) {
+      // 적을 향해 고속 급강하 타격
+      const dx = f.target.x - f.x;
+      const dy = f.target.y - f.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 1.0) {
+        // 적중!
+        const dmg = Math.round((p.atk || 25) * 1.65);
+        f.target.hp -= dmg;
+        f.target.hitTimer = 0.28;
+        f.target.stunTimer = 1.4; // 1.4초 기절
+        this.addHitSparks(f.target.x, f.target.y, '#facc15', 12);
+        this.addFloatingText(f.target.x, f.target.y - 1.2, `🦅 강습 탈론! -${dmg} (기절)`, '#facc15', 1.2);
+        f.state = 'ascend';
+        f.diveCooldown = 5.0;
+      } else {
+        f.x += (dx / dist) * dt * 26;
+        f.y += (dy / dist) * dt * 26;
+      }
+    } else if (f.state === 'ascend') {
+      // 상공 원형 궤도로 복귀
+      const targetOrbitX = p.x + Math.cos(f.angle) * 6.5;
+      const targetOrbitY = p.y + Math.sin(f.angle) * 4.5;
+      const dx = targetOrbitX - f.x;
+      const dy = targetOrbitY - f.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 1.0) {
+        f.state = 'orbit';
+      } else {
+        f.x += (dx / dist) * dt * 18;
+        f.y += (dy / dist) * dt * 18;
+      }
+    } else {
+      // 플레이어 상공 부드러운 원형 선회 궤적
+      f.angle += dt * 1.6;
+      const orbitX = p.x + Math.cos(f.angle) * 6.5;
+      const orbitY = p.y + Math.sin(f.angle) * 4.5;
+      f.x += (orbitX - f.x) * 0.12;
+      f.y += (orbitY - f.y) * 0.12;
+
+      // 쿨다운 완료 시 인근 적 포착 및 급강하 트리거
+      if (f.diveCooldown <= 0) {
+        const nearestHostile = this.spatialGrid
+          ? this.spatialGrid.findNearest(p.x, p.y, 13.0, other => other !== p && other.faction === 'monster' && other.hp > 0)
+          : this.entities.find(other => other !== p && other.faction === 'monster' && other.hp > 0 && Math.hypot(other.x - p.x, other.y - p.y) <= 13.0);
+        if (nearestHostile) {
+          f.target = nearestHostile;
+          f.state = 'dive';
+          this.addFloatingText(f.x, f.y - 1.5, '🦅 급강하 기습!', '#fde047', 1.0);
+        }
+      }
+    }
   }
 
   // 💀 영구 지속 전사자 유골 잔해 데칼 (Persistent Skeletal Remains & Carcasses)
@@ -1863,13 +2031,23 @@ class EntityManager {
       return;
     }
 
-    if (skillKey === 'Z' || skillKey === 'V' || skillKey === 'parry' || skillKey === 'block') {
+    if (skillKey === 'Z' || skillKey === 'parry' || skillKey === 'block') {
       this.playerPerformParry(p);
       return;
     }
 
-    if (skillKey === 'stance' || skillKey === 'TAB_stance') {
+    if (skillKey === 'stance') {
       this.playerToggleStance(p);
+      return;
+    }
+
+    if (skillKey === 'weaponSwap' || skillKey === 'weapon' || skillKey === 'Tab' || skillKey === 'TAB') {
+      this.playerToggleWeaponMode(p);
+      return;
+    }
+
+    if (skillKey === 'falcon' || skillKey === 'V' || skillKey === 'KeyV') {
+      this.toggleFalconCompanion();
       return;
     }
 
@@ -2639,6 +2817,12 @@ class EntityManager {
     if (!p || !target || target.hp <= 0) return;
     p.combatTarget = target;
     const d = Math.hypot(target.x - p.x, target.y - p.y);
+    if (p.weaponMode === 'ranged') {
+      if (d <= 18.0) {
+        this.shootPlayerArrow(p, target.x, target.y);
+        return;
+      }
+    }
     if (d <= 4.2) {
       this.playerPerformAttack(p, target);
     } else {
@@ -3326,12 +3510,72 @@ class EntityManager {
       }
     }
 
-    // 투사체 업데이트
+    // 투사체 업데이트 및 관통 화살 충돌 판정
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const p = this.projectiles[i];
       p.x += p.vx * dt;
       p.y += p.vy * dt;
       p.life -= dt;
+
+      // 🏹 화살/투사체 충돌 판정
+      if (p.isArrow && p.life > 0) {
+        const hits = this.spatialGrid
+          ? this.spatialGrid.query(p.x, p.y, 0.95, e => e !== p.sender && (e.faction === 'monster' || e.role === 'dragon' || e.isHostile) && e.hp > 0)
+          : this.entities.filter(e => e !== p.sender && (e.faction === 'monster' || e.role === 'dragon') && e.hp > 0 && Math.hypot(e.x - p.x, e.y - p.y) <= 0.95);
+
+        p.hitList = p.hitList || new Set();
+        for (const ent of hits) {
+          if (p.hitList.has(ent)) continue;
+          p.hitList.add(ent);
+
+          // 사거리 6.5타일 이상에서 적중 시 🎯 SNIPER CRIT (2.2배 대미지)
+          const distFromOrigin = Math.hypot(p.x - p.originX, p.y - p.originY);
+          const isSniperCrit = distFromOrigin >= 6.5;
+          const finalDmg = isSniperCrit ? Math.round(p.damage * 2.2) : p.damage;
+
+          ent.hp -= finalDmg;
+          ent.hitTimer = 0.28;
+          ent.combatTarget = p.sender || this.player;
+
+          // 넉백 (화살 진행 방향으로 밀어냄)
+          const kAng = p.angle || Math.atan2(p.vy, p.vx);
+          ent.x += Math.cos(kAng) * (isSniperCrit ? 0.75 : 0.35);
+          ent.y += Math.sin(kAng) * (isSniperCrit ? 0.75 : 0.35);
+
+          // 이펙트 및 플로팅 텍스트
+          if (isSniperCrit) {
+            this.addFloatingText(ent.x, ent.y - 1.2, `🎯 SNIPER CRIT! x2.2 -${finalDmg}`, '#fde047', 1.5);
+            this.addHitSparks(ent.x, ent.y, '#facc15', 16);
+            this.addShockwave(ent.x, ent.y, 2.8, '#facc15', 0.3);
+            if (this.camera) this.camera.shake = Math.min(15, (this.camera.shake || 0) + 4.5);
+          } else {
+            this.addFloatingText(ent.x, ent.y - 0.9, `🏹 -${finalDmg}`, '#38bdf8', 1.0);
+            this.addHitSparks(ent.x, ent.y, '#38bdf8', 8);
+          }
+          this.addBloodDecal(ent.x, ent.y, '#dc2626', 1.8, ent.hp <= 0 ? 5 : 2);
+
+          // 사망 처리
+          if (ent.hp <= 0 && p.sender && p.sender.role === 'player') {
+            const player = p.sender;
+            player.kills = (player.kills || 0) + 1;
+            this.addDeadRemains(ent.x, ent.y, ent.monsterType || ent.role, ent.scale);
+            player.killstreak = (player.killstreak || 0) + 1;
+            player.killstreakTimer = 5.5;
+            this.gainPlayerExp(ent.role === 'dragon' ? 180 : 70);
+            if (this.questSystem && this.questSystem.onMonsterSlain) {
+              this.questSystem.onMonsterSlain(ent);
+            }
+            this.spawnLootDrop(ent.x, ent.y, { itemType: 'gold', name: '골드 주머니', icon: '🪙', gold: ent.gold || 50, color: '#facc15' });
+          }
+
+          p.pierce = (p.pierce || 1) - 1;
+          if (p.pierce <= 0) {
+            p.life = 0;
+            break;
+          }
+        }
+      }
+
       if (p.life <= 0) this.projectiles.splice(i, 1);
     }
 
@@ -3564,6 +3808,12 @@ class EntityManager {
         }
       }
     }
+
+    // 🌊 선박 및 수영 V자 물보라 항적 업데이트
+    this.updateWaterWakes(dt);
+
+    // 🦅 상공 정찰매 사역마 AI 업데이트
+    this.updateFalcon(dt);
   }
 
   // 🐾 야생 동물 생태계 AI (포식자 사냥 추적 및 초식 동물 무리 도주 시스템)
@@ -3833,6 +4083,8 @@ class EntityManager {
       p.killstreakTimer -= dt;
       if (p.killstreakTimer <= 0) p.killstreak = 0;
     }
+    if (p.bowCooldown > 0) p.bowCooldown -= dt;
+    if (p.bowDrawTimer > 0) p.bowDrawTimer -= dt;
 
     // 💨 대시 / 닷지 롤 진행 중 (초고속 이동 & 지면 먼지)
     if (p.isDashing) {
@@ -3854,10 +4106,15 @@ class EntityManager {
     const curTy = Math.floor(p.y);
     const curTile = this.world.getTile(curTx, curTy);
 
-    // 🌊 수면/선박 이동 시 파문 생성
+    // 🌊 수면/선박 이동 시 파문 및 V자 물보라 항적 생성
     if ((curTile === TILE.WATER || curTile === TILE.DOCK || p.isShip) && (p.vx !== 0 || p.vy !== 0)) {
       if (Math.random() < 0.28) {
         this.addWaterRipple(p.x, p.y);
+      }
+      p.waterWakeDist = (p.waterWakeDist || 0) + Math.hypot(p.vx, p.vy) * dt;
+      if (p.waterWakeDist >= 0.5) {
+        p.waterWakeDist = 0;
+        this.addWaterWake(p.x, p.y, Math.atan2(p.vy, p.vx), p.isShip ? 1.6 : 0.85);
       }
     }
 

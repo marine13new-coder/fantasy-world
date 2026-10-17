@@ -323,6 +323,35 @@ function startFantasyWorld() {
     });
   }
 
+  // 🏹 실시간 무기 교체 (Tab)
+  const btnToggleWeaponMode = document.getElementById('btnToggleWeaponMode');
+  const weaponModeIconEl = document.getElementById('weaponModeIcon');
+  const weaponModeNameEl = document.getElementById('weaponModeName');
+
+  function updateWeaponModeUI() {
+    if (!weaponModeIconEl || !weaponModeNameEl) return;
+    const isRanged = player && player.weaponMode === 'ranged';
+    weaponModeIconEl.textContent = isRanged ? '🏹' : '⚔️';
+    weaponModeNameEl.textContent = isRanged ? '엘븐보우' : '근접성검';
+    if (btnToggleWeaponMode) btnToggleWeaponMode.style.borderColor = isRanged ? '#38bdf8' : '#facc15';
+  }
+  window.updateWeaponModeUI = updateWeaponModeUI;
+
+  if (btnToggleWeaponMode) {
+    btnToggleWeaponMode.addEventListener('click', () => {
+      entityMgr.playerToggleWeaponMode();
+      updateWeaponModeUI();
+    });
+  }
+
+  // 🦅 수호 정찰매 솔개 출격 (V)
+  const btnToggleFalcon = document.getElementById('btnToggleFalcon');
+  if (btnToggleFalcon) {
+    btnToggleFalcon.addEventListener('click', () => {
+      entityMgr.toggleFalconCompanion();
+    });
+  }
+
   // 각성 초필살기 (신벌의 천벌)
   const btnUltimateSkill = document.getElementById('btnUltimateSkill');
   if (btnUltimateSkill) {
@@ -1767,14 +1796,15 @@ function startFantasyWorld() {
       entityMgr.triggerPlayerSkill('E');
     } else if (e.code === 'KeyF') {
       entityMgr.triggerPlayerSkill('F');
-    } else if (e.code === 'KeyZ' || e.code === 'KeyV') {
+    } else if (e.code === 'KeyZ') {
       entityMgr.triggerPlayerSkill('parry');
+    } else if (e.code === 'KeyV') {
+      entityMgr.triggerPlayerSkill('falcon');
     } else if (e.code === 'KeyX') {
       entityMgr.triggerPlayerSkill('ultimate');
     } else if (e.code === 'Tab') {
       e.preventDefault();
-      entityMgr.triggerPlayerSkill('stance');
-      updateCombatStanceUI();
+      entityMgr.triggerPlayerSkill('weaponSwap');
     } else if (e.code === 'KeyG') {
       if (entityMgr.rpgManager && entityMgr.rpgManager.awakening) {
         entityMgr.triggerPlayerSkill('G');

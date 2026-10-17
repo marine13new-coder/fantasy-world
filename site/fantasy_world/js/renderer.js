@@ -417,12 +417,16 @@ class WorldRenderer {
     // 9.5. ⚡ 인챈트 무기 원소 오라 & 회전 위스프 (Enchanted Weapon Aura)
     this.drawEnchantedWeaponAura(ctx, ts, timeSec);
 
-    // 10. 투사체 (대포알, 화살, 마법탄)
+    // 10. 투사체 (관통 화살, 대포알, 마법탄)
     for (const p of this.entityMgr.projectiles) {
-      ctx.fillStyle = p.color;
-      ctx.fillRect(Math.round(p.x * ts - 3), Math.round(p.y * ts - 11), 6, 6);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(Math.round(p.x * ts - 1), Math.round(p.y * ts - 9), 2, 2);
+      if (p.isArrow) {
+        this.drawPixelArrow(ctx, p, ts);
+      } else {
+        ctx.fillStyle = p.color;
+        ctx.fillRect(Math.round(p.x * ts - 3), Math.round(p.y * ts - 11), 6, 6);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(Math.round(p.x * ts - 1), Math.round(p.y * ts - 9), 2, 2);
+      }
     }
 
     // 10.5. 픽셀 히트 스파크 & 레벨업 스타버스트 파티클 (Batched)
@@ -446,11 +450,13 @@ class WorldRenderer {
       this.drawFootprints(ctx, ts, minTx, maxTx, minTy, maxTy);
       this.drawDroppedLoot(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy);
       this.drawWaterWadingRipples(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy);
+      this.drawWaterWakes(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy);
       this.drawGrassDebris(ctx, ts);
       this.drawDeadRemains(ctx, ts, minTx, maxTx, minTy, maxTy);
       this.drawDustPuffs(ctx, ts);
       this.drawTreasureExcavationSite(ctx, ts, timeSec);
       this.drawDashGhostTrails(ctx, ts);
+      this.drawFalconFamiliar(ctx, ts, timeSec);
       this.drawFireflies(ctx, ts, timeSec, cw, ch);
       this.drawEntityCombatHUD(ctx, ts, camera.zoom, minTx, maxTx, minTy, maxTy);
     }
@@ -3988,6 +3994,174 @@ class WorldRenderer {
       ctx.stroke();
       ctx.restore();
     }
+  }
+
+  // 🏹 [10.1] 정밀 픽셀 화살 렌더링 (Elven Piercing Arrow with Wind Trail)
+  drawPixelArrow(ctx, p, ts) {
+    const px = Math.round(p.x * ts);
+    const py = Math.round(p.y * ts);
+    const ang = p.angle !== undefined ? p.angle : Math.atan2(p.vy, p.vx);
+
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(ang);
+
+    // 1. 바람 꼬리 궤적 리본 (Wind Trail Ribbon)
+    const trailLen = 18;
+    const grad = ctx.createLinearGradient(-trailLen, 0, 0, 0);
+    grad.addColorStop(0, 'rgba(56, 189, 248, 0)');
+    grad.addColorStop(1, 'rgba(56, 189, 248, 0.65)');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.moveTo(-trailLen, 0);
+    ctx.lineTo(0, 0);
+    ctx.stroke();
+
+    // 2. 화살대 (Elven Wood Shaft)
+    ctx.strokeStyle = '#d97706';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(-10, 0);
+    ctx.lineTo(6, 0);
+    ctx.stroke();
+
+    // 3. 깃털 화살깃 (Feather Fletching)
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.moveTo(-10, 0);
+    ctx.lineTo(-13, -3.5);
+    ctx.lineTo(-8, 0);
+    ctx.lineTo(-13, 3.5);
+    ctx.closePath();
+    ctx.fill();
+
+    // 4. 엘븐 크리스탈 화살촉 (Glowing Crystal Arrowhead)
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.moveTo(6, -2.5);
+    ctx.lineTo(11, 0);
+    ctx.lineTo(6, 2.5);
+    ctx.closePath();
+    ctx.fill();
+
+    // 5. 발광 팁
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(8, -1, 3, 2);
+
+    ctx.restore();
+  }
+
+  // 🌊 [10.5-A3] 선박 & 수영 픽셀 V자 물보라 항적 (Dynamic V-Shaped Foaming Water Wakes)
+  drawWaterWakes(ctx, ts, timeSec, minTx, maxTx, minTy, maxTy) {
+    if (!this.entityMgr.waterWakes || this.entityMgr.waterWakes.length === 0) return;
+    for (const w of this.entityMgr.waterWakes) {
+      if (w.x < minTx || w.x > maxTx || w.y < minTy || w.y > maxTy) continue;
+      const progress = w.age / w.duration;
+      const alpha = Math.max(0, 1 - progress);
+      const wx = Math.round(w.x * ts);
+      const wy = Math.round(w.y * ts);
+      const spread = (progress * 18 + 4) * (w.scale || 1.0);
+      const wakeLen = (progress * 24 + 8) * (w.scale || 1.0);
+
+      ctx.save();
+      ctx.translate(wx, wy);
+      ctx.rotate(w.angle || 0);
+
+      // V자 좌우 거품 선
+      ctx.strokeStyle = `rgba(224, 242, 254, ${alpha * 0.75})`;
+      ctx.lineWidth = Math.max(1, (2.4 * (1 - progress * 0.5) * (w.scale || 1.0)));
+      ctx.beginPath();
+      // 좌측 V라인
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-wakeLen, -spread);
+      // 우측 V라인
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-wakeLen, spread);
+      ctx.stroke();
+
+      // 중간 포밍 물보라 파편
+      if (progress < 0.6) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.85})`;
+        ctx.fillRect(-wakeLen * 0.4, -spread * 0.5, 2, 2);
+        ctx.fillRect(-wakeLen * 0.4, spread * 0.5, 2, 2);
+        ctx.fillRect(-wakeLen * 0.7, 0, 2, 2);
+      }
+      ctx.restore();
+    }
+  }
+
+  // 🦅 [10.6] 상공 정찰매 사역마 동료 (Spirit Falcon Scouting Companion)
+  drawFalconFamiliar(ctx, ts, timeSec) {
+    const f = this.entityMgr.falcon;
+    if (!f || !f.active) return;
+
+    const fx = Math.round(f.x * ts);
+    const fy = Math.round((f.y - 0.7) * ts);
+    const altY = 24;
+
+    // 1. 지면 정찰매 투영 그림자
+    ctx.save();
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.28)';
+    ctx.beginPath();
+    ctx.ellipse(fx, fy, 8, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. 상공 비행체 드로잉
+    ctx.translate(fx, fy - altY);
+
+    let flightAngle = f.angle || 0;
+    if (f.state === 'dive' && f.target) {
+      flightAngle = Math.atan2(f.target.y - f.y, f.target.x - f.x);
+    }
+    ctx.rotate(flightAngle);
+
+    // 날개짓 애니메이션
+    const wingFlap = Math.sin(f.wingCycle || 0) * 5;
+
+    // 솔개 몸통 (Golden Falcon Body)
+    ctx.fillStyle = '#b45309';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 7, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 황금 깃털 날개
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath();
+    ctx.moveTo(0, -2);
+    ctx.lineTo(2, -8 + wingFlap);
+    ctx.lineTo(-4, -6 + wingFlap);
+    ctx.lineTo(-2, -2);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(0, 2);
+    ctx.lineTo(2, 8 - wingFlap);
+    ctx.lineTo(-4, 6 - wingFlap);
+    ctx.lineTo(-2, 2);
+    ctx.closePath();
+    ctx.fill();
+
+    // 솔개 부리 & 눈
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(6, -1, 3, 2);
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(4, -1, 1, 1);
+
+    // 급강하 시 황금빛 기류 잔상
+    if (f.state === 'dive') {
+      ctx.strokeStyle = 'rgba(250, 204, 21, 0.75)';
+      ctx.lineWidth = 2.0;
+      ctx.beginPath();
+      ctx.moveTo(-16, -2);
+      ctx.lineTo(0, -2);
+      ctx.moveTo(-16, 2);
+      ctx.lineTo(0, 2);
+      ctx.stroke();
+    }
+
+    ctx.restore();
   }
 
   // 👣 [10.5-A2] 동적 지형 발자국 및 선박 항적 (Dynamic Footprints & Foaming Wakes)
