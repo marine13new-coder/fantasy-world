@@ -2760,6 +2760,7 @@ class EntityManager {
       this.camera.screenFreeze = 0.12;
       this.camera.shake = 18.0;
       this.camera.zoomPulse = 1.35;
+      this.camera.cinematicBarsTimer = 0.85;
     }
 
     // 3. 거대 X자 크림슨 참격검기 & 피보라 파티클
@@ -2885,6 +2886,7 @@ class EntityManager {
       this.camera.shake = 18;
       this.camera.screenFreeze = 0.08;
       this.camera.zoomPulse = 1.25;
+      this.camera.cinematicBarsTimer = 0.65;
     }
     if (window.renderer) {
       window.renderer.screenFlashTimer = 0.08;
@@ -3132,6 +3134,7 @@ class EntityManager {
           this.camera.screenFreeze = 0.12;
           this.camera.shake = 18;
           this.camera.zoomPulse = 1.35;
+          this.camera.cinematicBarsTimer = 0.65;
         }
         if (typeof window !== 'undefined' && window.renderer) {
           window.renderer.screenFlashTimer = 0.08;
@@ -4374,6 +4377,7 @@ class EntityManager {
                 this.camera.screenFreeze = 0.07;
                 this.camera.zoomPulse = 1.3;
                 this.camera.shake = 14;
+                this.camera.cinematicBarsTimer = 0.55;
               }
               if (window.renderer) {
                 window.renderer.screenFlashTimer = 0.09;

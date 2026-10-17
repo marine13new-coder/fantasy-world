@@ -4409,6 +4409,30 @@
         ctx.fillRect(arcCenter + sideSign * 18 * sc, py - 6 * sc - bounce, 2 * sc, 2 * sc);
         ctx.fillStyle = slashColor;
         ctx.fillRect(arcCenter + sideSign * 11 * sc, py - 18 * sc - bounce, 2 * sc, 2 * sc);
+
+        if (e.role === 'player' && e.comboStep === 3) {
+          // 🔥 360도 대회전 전신 광폭 참격 리본 (360 Cyclone Great Cleave Ribbon)
+          ctx.strokeStyle = '#facc15';
+          ctx.lineWidth = 4.5 * sc;
+          ctx.beginPath();
+          ctx.arc(px, py - 10 * sc - bounce, 22 * sc, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2.2 * sc;
+          ctx.beginPath();
+          ctx.arc(px, py - 10 * sc - bounce, 20 * sc, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        if (e.justDodgeEmpowered) {
+          // ⚡ 저스트 회피 불릿타임 집중 상태 발광 오라
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 2.0 * sc;
+          ctx.beginPath();
+          ctx.arc(px, py - 10 * sc - bounce, 18 * sc + Math.sin(timeSec * 20) * 3, 0, Math.PI * 2);
+          ctx.stroke();
+        }
         ctx.restore();
       } else {
         // 대기 / 이동 모션: 자연스럽게 손에 쥐거나 옆구리에 찬 모습

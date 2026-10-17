@@ -551,6 +551,16 @@ function createSettlementList() {
   add('atlantis_pearl_reef_harbor', '진주 조개초 심해 항만', 'port', 'atlantis', 840, 2060, 'merfolk', false, 9);
   add('atlantis_poseidon_trident_altar', '포세이돈 삼지창 고대 제단', 'temple', 'atlantis', 780, 2210, 'merfolk', true, 11);
 
+  // =========================================================================
+  // 11. THE PRIMORDIAL VOID ABYSS & FLOATING STAR SHARDS (태고의 공허 심연 & 성운 파쇄 군도)
+  // =========================================================================
+  add('void_singularity_nexus', '특이점 넥서스 코어 대성채', 'capital', 'void', 3620, 1850, 'celestial', true, 16);
+  add('void_chronos_spire', '시공 왜곡의 뫼비우스 첨탑', 'castle', 'void', 3740, 1720, 'celestial', true, 14);
+  add('void_astral_dredge_dock', '공허 부유선 계류 항만', 'port', 'void', 3520, 1940, 'celestial', false, 9);
+  add('void_shadow_cloister', '성운 암흑 은둔 수도원', 'town', 'void', 3680, 2020, 'undead', false, 8);
+  add('void_singing_meteor_crater', '노래하는 운석 충돌구', 'lair', 'void', 3550, 1760, 'monster', true, 11);
+  add('void_supernova_forge', '초신성 에테르 모루 제단', 'temple', 'void', 3600, 1650, 'celestial', true, 12);
+
   return list;
 }
 
@@ -796,6 +806,18 @@ function generateWorld() {
             tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.CORAL : TILE.SAND;
           } else if (dist <= landRad + 3) {
             tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.CORAL : TILE.SHALLOW_WATER;
+          }
+          continue;
+        }
+
+        // 태고의 공허 심연 & 성운 파쇄 군도 전용 지형 카빙
+        if (s.continent === 'void') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 5) ? TILE.CASTLE_FLOOR : TILE.OBSIDIAN;
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.CRYSTAL_CAVE : TILE.OBSIDIAN;
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.CORAL : TILE.DEEP_WATER;
           }
           continue;
         }

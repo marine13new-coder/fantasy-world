@@ -1242,10 +1242,10 @@ function startFantasyWorld() {
     const rpg = entityMgr.rpgManager;
     const gridEl = document.getElementById('worldMapSettlementsGrid');
     if (gridEl && world.settlementList) {
-      // 주요 수도, 항구, 대성채, 천공 군도, 심연 성채, 해저 아틀란티스, 명계 제국, 성운 비전 고원 필터
+      // 주요 수도, 항구, 대성채, 천공 군도, 심연 성채, 해저 아틀란티스, 명계 제국, 성운 비전 고원, 공허 심연 필터
       const keySettlements = world.settlementList.filter(s => 
-        s.type === 'capital' || s.type === 'port' || s.type === 'fortress' || s.hasWall || s.continent === 'sky' || s.continent === 'south_abyss' || s.continent === 'abyss_ocean' || s.continent === 'underworld' || s.continent === 'astral' || s.continent === 'atlantis'
-      ).slice(0, 108);
+        s.type === 'capital' || s.type === 'port' || s.type === 'fortress' || s.hasWall || s.continent === 'sky' || s.continent === 'south_abyss' || s.continent === 'abyss_ocean' || s.continent === 'underworld' || s.continent === 'astral' || s.continent === 'atlantis' || s.continent === 'void'
+      ).slice(0, 120);
 
       gridEl.innerHTML = keySettlements.map(s => {
         let icon = '🏘️';
@@ -1254,6 +1254,7 @@ function startFantasyWorld() {
         else if (s.continent === 'abyss_ocean' || s.continent === 'atlantis') icon = '🔱';
         else if (s.continent === 'underworld') icon = '💀';
         else if (s.continent === 'astral') icon = '🔮';
+        else if (s.continent === 'void') icon = '🌀';
         else if (s.type === 'capital') icon = '👑';
         else if (s.type === 'port') icon = '⚓';
         else if (s.type === 'fortress') icon = '🏰';
@@ -1264,6 +1265,7 @@ function startFantasyWorld() {
         else if (s.continent === 'abyss_ocean' || s.continent === 'atlantis') regionName = '🔱 심해 아틀란티스 신전 & 산호 해구';
         else if (s.continent === 'underworld') regionName = '💀 태고의 칼데라 & 명계 제국';
         else if (s.continent === 'astral') regionName = '🔮 성운 비전 고원 & 차원 균열';
+        else if (s.continent === 'void') regionName = '🌀 태고의 공허 심연 & 성운 파쇄 군도';
         else if (s.continent === 'west') regionName = '서부 실바니아';
         else if (s.continent === 'north') regionName = '북부 노스펠';
         else if (s.continent === 'south') regionName = '남부 드라코니아';
@@ -2317,6 +2319,9 @@ function startFantasyWorld() {
     }
     if (camera.zoomPulse > 0) {
       camera.zoomPulse = Math.max(0, camera.zoomPulse - rawDt * 4.0);
+    }
+    if (camera.cinematicBarsTimer > 0) {
+      camera.cinematicBarsTimer = Math.max(0, camera.cinematicBarsTimer - rawDt);
     }
 
     renderer.render(camera, worldTime, filterCategory, selectedItem, now / 1000);

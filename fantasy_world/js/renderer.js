@@ -40,6 +40,7 @@ class WorldRenderer {
       else if (i < 70) { pType = 'snow'; pColor = '#f8fafc'; }
       else if (i < 85) { pType = 'ash'; pColor = Math.random() > 0.5 ? '#f97316' : '#ef4444'; }
       else if (i < 100) { pType = 'spore'; pColor = '#c084fc'; }
+      else if (i < 112) { pType = 'void_shard'; pColor = '#a855f7'; }
       else { pType = 'shimmer'; pColor = '#ffffff'; }
 
       this.ambientParticles.push({
@@ -560,6 +561,9 @@ class WorldRenderer {
 
     // 13.9. 🔥 연속 킬스트릭 피버 모드 화면 테두리 화염 (Killstreak Fever Rim)
     this.drawKillstreakFeverRim(ctx, cw, ch, timeSec, this.entityMgr.player);
+
+    // 13.10. 🎬 시네마틱 킬/카운터/보스 격파 레터박스 연출 (Cinematic Action Letterbox Bars)
+    this.drawCinematicLetterbox(ctx, cw, ch, camera);
 
     // 14. 미니맵 렌더링
     this.renderMinimap(camera, cw, ch, filterCategory);
@@ -4966,6 +4970,17 @@ class WorldRenderer {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(p.x - 0.5, p.y - 0.5, 1, 1);
         ctx.restore();
+      } else if (p.type === 'void_shard') {
+        // 🌀 공허 심연 & 성운 군도의 신비로운 부유 성간 파편 (Cosmic Void Shards)
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.phase + timeSec * 1.8);
+        const vAlpha = 0.4 + Math.sin(timeSec * 4.0 + p.phase) * 0.35;
+        ctx.fillStyle = `rgba(168, 85, 247, ${vAlpha})`;
+        ctx.fillRect(-2, -2, 4, 4);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(-1, -1, 2, 2);
+        ctx.restore();
       }
     }
   }
@@ -6005,6 +6020,30 @@ class WorldRenderer {
     const title = ks >= 8 ? '👑 GODLIKE FEVER x' + ks : (ks >= 5 ? '⚡ RAMPAGE x' + ks : '🔥 TRIPLE KILL x' + ks);
     ctx.strokeText(title, cw / 2, 48);
     ctx.fillText(title, cw / 2, 48);
+    ctx.restore();
+  }
+
+  // 🎬 [13.10] 시네마틱 킬/카운터/보스 격파 레터박스 연출 (Cinematic Action Letterbox Bars)
+  drawCinematicLetterbox(ctx, cw, ch, camera) {
+    if (!camera || !camera.cinematicBarsTimer || camera.cinematicBarsTimer <= 0) return;
+    const progress = Math.min(1.0, camera.cinematicBarsTimer * 3.5);
+    const barHeight = Math.round(ch * 0.11 * progress);
+
+    ctx.save();
+    ctx.fillStyle = '#050508';
+    // 상단 레터박스
+    ctx.fillRect(0, 0, cw, barHeight);
+    // 하단 레터박스
+    ctx.fillRect(0, ch - barHeight, cw, barHeight);
+
+    // 상/하단 은은한 앰비언트 글로우 라인
+    ctx.strokeStyle = 'rgba(250, 204, 21, 0.45)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, barHeight); ctx.lineTo(cw, barHeight);
+    ctx.moveTo(0, ch - barHeight); ctx.lineTo(cw, ch - barHeight);
+    ctx.stroke();
+
     ctx.restore();
   }
 
