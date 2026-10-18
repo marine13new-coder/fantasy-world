@@ -1085,6 +1085,14 @@
     </div>
   </div>
 
+  <!-- IR 적외선 나이트비전 오버레이 [N] -->
+  <div id="nightVisionOverlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:16;display:none;background:radial-gradient(circle at center, rgba(30,255,80,0.18) 0%, rgba(0,20,5,0.75) 90%);mix-blend-mode:screen;">
+    <div style="position:absolute;top:30px;right:40px;color:#33ff77;font-family:'Share Tech Mono',monospace;font-size:16px;text-shadow:0 0 8px #33ff77;">[IR NIGHT-VISION : ON]</div>
+  </div>
+
+  <!-- 1998년 참사 화염 플래시백 오버레이 -->
+  <div id="firestormOverlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:17;opacity:0;transition:opacity 1.5s;background:radial-gradient(circle at center, rgba(255,80,20,0.3) 0%, rgba(60,10,0,0.85) 100%);mix-blend-mode:color-dodge;"></div>
+
   <!-- 카메라 렌즈 빗방울 오버레이 -->
   <div id="rainLensDrops" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:15;opacity:0;transition:opacity 0.4s;background:radial-gradient(circle at 30% 40%, rgba(255,255,255,0.08) 2px, transparent 8px), radial-gradient(circle at 70% 60%, rgba(255,255,255,0.06) 3px, transparent 10px), radial-gradient(circle at 50% 20%, rgba(255,255,255,0.09) 2px, transparent 6px);"></div>
 
@@ -1567,6 +1575,37 @@
         gain.connect(this.masterGain);
         osc.start();
         osc.stop(this.ctx.currentTime + 0.7);
+      }
+
+      playNightVisionToggle() {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(2200, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.1);
+        osc.connect(gain); gain.connect(this.masterGain);
+        osc.start(); osc.stop(this.ctx.currentTime + 0.11);
+      }
+
+      startFireStormAudio() {
+        if (!this.ctx) return null;
+        const bufferSize = this.ctx.sampleRate * 2;
+        const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) { output[i] = (Math.random() * 2 - 1) * 0.4; }
+        const fireNoise = this.ctx.createBufferSource();
+        fireNoise.buffer = noiseBuffer;
+        fireNoise.loop = true;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass'; filter.frequency.setValueAtTime(450, this.ctx.currentTime);
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+        fireNoise.connect(filter); filter.connect(gain); gain.connect(this.masterGain);
+        fireNoise.start();
+        return { fireNoise, gain };
       }
 
       playRadioTuningTone(freq) {
@@ -2071,6 +2110,7 @@
       safeTour: false,
       camcorderOn: false,
       lighterOn: false,
+      nightVisionOn: false,
       mouseSensitivity: 1.0,
 
       inventory: [],
@@ -2241,6 +2281,9 @@
     camera.add(viewmodelGroup);
     scene.add(camera);
 
+    const nvLight = new THREE.PointLight(0x33ff88, 0, 16, 1.1);
+    camera.add(nvLight);
+
     const lighterLight = new THREE.PointLight(0xff7722, 0, 8.5, 1.4);
     camera.add(lighterLight);
 
@@ -2361,6 +2404,7 @@
       colliders.push(southWall);
 
       buildSecurityOffice();
+      buildUvSecretMessages();
       buildBloodTrailsAndDecals();
       buildRadioIn404();
       buildFloorStencilsAndPoliceTape();
@@ -2706,6 +2750,8 @@
       { id: 'achieve_cctv', title: '아파트의 감시자', desc: '경비실 4채널 CCTV 모니터를 관제했습니다.', icon: '📺' },
       { id: 'achieve_inspect_3d', title: '사물의 기억', desc: '3D 정밀 회전 조사를 통해 단서를 조사했습니다.', icon: '🔍' },
       { id: 'achieve_radio_tune', title: '주파수 101.7', desc: '참사일 101.7 MHz 주파수를 맞춰 119 긴급 녹음을 수신했습니다.', icon: '📻' },
+      { id: 'achieve_night_vision', title: '어둠을 꿰뚫는 눈', desc: 'IR 나이트비전 모드를 켜고 벽면의 숨겨진 혈흔 문자를 발견했습니다.', icon: '👁️' },
+      { id: 'achieve_fire_memory', title: '업화의 환영', desc: '1998년 10월 17일 화재 참사의 생생한 플래시백을 마주했습니다.', icon: '🔥' },
       { id: 'achieve_end_c', title: '기적의 눈물', desc: '진엔딩 C: 새벽의 개문과 25년 만의 각성을 달성했습니다.', icon: '☀️' }
     ];
 
@@ -2903,6 +2949,81 @@
 
     let radio404Mesh = null;
     let radioLocked1017 = false;
+
+    let uvSecretMeshes = [];
+    let firestormAudioNode = null;
+
+    function buildUvSecretMessages() {
+      // 나이트비전(UV) 활성화 시에만 드러나는 복도 벽면 비밀 혈흔 문자들
+      const uvTexts = [
+        { z: -27, text: '최진우가 비상계단 문을 밖에서 잠갔다' },
+        { z: -37, text: '수진아... 아빠가 잘못했어...' }
+      ];
+
+      uvTexts.forEach(item => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512; canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, 512, 128);
+        ctx.fillStyle = '#00ff88';
+        ctx.font = 'bold 24px "Nanum Myeongjo", serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(item.text, 256, 70);
+
+        const tex = new THREE.CanvasTexture(canvas);
+        const geo = new THREE.PlaneGeometry(2.4, 0.6);
+        const mat = new THREE.MeshBasicMaterial({
+          map: tex,
+          transparent: true,
+          opacity: 0,
+          blending: THREE.AdditiveBlending
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(-1.49, 1.6, item.z);
+        mesh.rotation.y = Math.PI / 2;
+        scene.add(mesh);
+        uvSecretMeshes.push(mesh);
+      });
+    }
+
+    function toggleNightVision() {
+      GAME_DATA.nightVisionOn = !GAME_DATA.nightVisionOn;
+      const overlay = document.getElementById('nightVisionOverlay');
+      overlay.style.display = GAME_DATA.nightVisionOn ? 'block' : 'none';
+      nvLight.intensity = GAME_DATA.nightVisionOn ? 2.5 : 0;
+      audio.playNightVisionToggle();
+
+      uvSecretMeshes.forEach(mesh => {
+        mesh.material.opacity = GAME_DATA.nightVisionOn ? 0.95 : 0;
+      });
+
+      if (GAME_DATA.nightVisionOn) {
+        unlockAchievement('achieve_night_vision', '어둠을 꿰뚫는 눈', 'IR 나이트비전 모드를 켜고 벽면의 숨겨진 혈흔 문자를 발견했습니다.', '👁️');
+        showSubtitle("[적외선 나이트비전 모드 활성화 (단축키: N) - 벽면의 형광 혈흔 문자가 드러났다]", 3000);
+      } else {
+        showSubtitle("[나이트비전 모드를 해제했습니다]", 1500);
+      }
+    }
+
+    function triggerFirestormMemory() {
+      const fireOverlay = document.getElementById('firestormOverlay');
+      fireOverlay.style.opacity = '1';
+      firestormAudioNode = audio.startFireStormAudio();
+      audio.playSirenDrone();
+      unlockAchievement('achieve_fire_memory', '업화의 환영', '1998년 10월 17일 화재 참사의 생생한 플래시백을 마주했습니다.', '🔥');
+
+      showSubtitle("귓가에 맹렬한 화염 소리와 주민들의 비명이 들린다: '문 열어! 비상계단 문이 왜 잠겨 있어?!'", 5500);
+      audio.speakWhisper("문 열어! 비상계단 문이 왜 잠겨 있어?!");
+
+      setTimeout(() => {
+        fireOverlay.style.opacity = '0';
+        if (firestormAudioNode && firestormAudioNode.fireNoise) {
+          try { firestormAudioNode.fireNoise.stop(); } catch(e){}
+        }
+        showSubtitle("[타오르던 화염의 기억이 사그라들며 차가운 빗소리와 잿더미만 남았다]", 4000);
+      }, 7000);
+    }
 
     function buildBloodTrailsAndDecals() {
       // 404호에서 비상계단으로 이어지는 피 묻은 발자국 데칼
@@ -3205,6 +3326,7 @@
       if (e.code === 'KeyV') toggleCamcorderFilter();
       if (e.code === 'KeyL') toggleLighter();
       if (e.code === 'KeyP') toggleAchievementShowcase();
+      if (e.code === 'KeyN') toggleNightVision();
       if (e.code === 'Tab') { e.preventDefault(); toggleInventory(); }
       if (e.code === 'Escape') togglePause();
       if (e.code === 'Space' && GAME_DATA.isHiding) {
@@ -3752,6 +3874,7 @@
         actTagDisplay.innerText = "ACT 4 : 타오르는 기억 (Ashes of Guilt)";
         setObjective("5층 502호(내 집)로 올라가 숨겨진 진짜 서류와 딸의 흔적을 찾으시오.");
         showSubtitle("최진우: '내 집이야... 502호... 내가 왜 여길 잊고 있었던 거지...?'", 4000);
+        triggerFirestormMemory();
       } else if (actNum === 5) {
         actTagDisplay.innerText = "ACT 5 : 새벽의 심판과 진실 (The Final Dawn)";
         setObjective("옥상 비상계단으로 가서 25년간 잠겨 있던 문을 열고 속죄를 완수하시오.");

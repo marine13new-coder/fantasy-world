@@ -4900,6 +4900,45 @@
           }
         }
 
+        // ☀️ 신성 불사조 솔 인빅투스 황금 대검 참격 & 태양 폭풍 광휘 (Sol Invictus Phoenix Greatsword & Solar Flare Flurry)
+        if (weaponId.includes('sol_invictus') || weaponId.includes('phoenix') || weaponId.includes('basilica') || weaponId.includes('eagle_claymore') || weaponId.includes('byzantine')) {
+          // 태양 코로나 황금-주홍 2중 초승달 참격호 (Solar Corona Dual Crescent Arc)
+          ctx.strokeStyle = '#ea580c';
+          ctx.lineWidth = 4.6 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 25 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#fde047';
+          ctx.lineWidth = 2.2 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 23 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          // 튀어나가는 5개의 불사조 화염 깃털 스파크 (Flaming Phoenix Feathers)
+          const solTime = (e.animTime || 0) * 18;
+          for (let fp = 0; fp < 5; fp++) {
+            const fpAng = startAng + (fp / 4) * (endAng - startAng);
+            const fpDist = (23 + Math.sin(solTime + fp * 2.2) * 7) * sc;
+            const fpx = arcCenter + Math.cos(fpAng) * fpDist;
+            const fpy = py - 10 * sc - bounce + Math.sin(fpAng) * fpDist;
+
+            // 불사조 깃털 형상
+            ctx.fillStyle = fp % 2 === 0 ? '#f97316' : '#e11d48';
+            ctx.beginPath();
+            ctx.ellipse(fpx, fpy, 3.5 * sc, 1.6 * sc, fpAng + Math.PI / 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 깃털 심선 황금빛 하이라이트
+            ctx.fillStyle = '#fef08a';
+            ctx.fillRect(fpx - 0.8 * sc, fpy - 0.8 * sc, 1.6 * sc, 1.6 * sc);
+
+            // 타오르는 태양 불꽃 불티 (Solar Flame Ember)
+            ctx.fillStyle = 'rgba(250, 204, 21, 0.9)';
+            ctx.fillRect(fpx + sideSign * 3 * sc, fpy - 3 * sc, 2.5 * sc, 2.5 * sc);
+          }
+        }
+
         // 반짝이는 참격 스파크 및 엠버
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(arcCenter + sideSign * 14 * sc, py - 14 * sc - bounce, 3 * sc, 3 * sc);
