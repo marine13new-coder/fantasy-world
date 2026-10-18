@@ -55,7 +55,8 @@ const LEGENDARY_ITEMS = [
   { id: 'starforge_aether_astrolabe', slot: 'weapon', name: '성좌의 티탄 에테르 아스트롤라베', icon: '🌌', atk: 68, hp: 160, desc: '별들의 궤적을 벼려낸 티탄의 천구의 마검. 공격 시 2중 성운 폭풍과 황도 12궁 별빛 파편이 방출됩니다.' },
   { id: 'jotun_thunder_warhammer', slot: 'weapon', name: '요툰하임 거인왕의 천둥 파쇄 망치', icon: '🔨', atk: 72, hp: 180, desc: '태고 거인족의 화강암과 번개로 주조한 거대 파쇄 망치. 타격 시 지진파 충격과 연쇄 벼락이 방출됩니다.' },
   { id: 'shangrila_flying_sword_tai_ji', slot: 'weapon', name: '상그릴라 신선 옥룡 태극 비천검', icon: '🪷', atk: 70, hp: 150, desc: '천년 백련의 정기와 태고 옥룡의 기운이 깃든 신선의 어검. 비취빛 참격과 함께 회전하는 도력 태극진이 펼쳐집니다.' },
-  { id: 'babylon_khopesh_of_gilgamesh', slot: 'weapon', name: '바빌론 길가메시의 황금 청금석 코페쉬', icon: '🦁', atk: 74, hp: 160, desc: '우루크의 위대한 영웅왕 길가메시가 휘두르던 고대 청동과 청금석의 반월도. 타격 시 쐐기문자 점토판 룬과 왕의 권능이 폭발합니다.' }
+  { id: 'babylon_khopesh_of_gilgamesh', slot: 'weapon', name: '바빌론 길가메시의 황금 청금석 코페쉬', icon: '🦁', atk: 74, hp: 160, desc: '우루크의 위대한 영웅왕 길가메시가 휘두르던 고대 청동과 청금석의 반월도. 타격 시 쐐기문자 점토판 룬과 왕의 권능이 폭발합니다.' },
+  { id: 'sol_invictus_phoenix_claymore', slot: 'weapon', name: '솔 인빅투스 불사조 황금 대검', icon: '☀️', atk: 76, hp: 170, desc: '신성 제국의 태양 불사조 깃털과 천공의 오리하르콘을 제련한 황금 대검. 공격 시 맹렬한 태양 불길과 불사조 깃털 폭풍이 작렬합니다.' }
 ];
 
 const DUNGEONS = [
@@ -242,6 +243,29 @@ const DUNGEONS = [
     },
     goldReward: 9500,
     fameReward: 190
+  },
+  {
+    id: 'dungeon_sol_invictus',
+    name: '솔 인빅투스 성스러운 태양의 카타콤 & 불사조 제단',
+    icon: '☀️',
+    levelReq: 15,
+    x: 3760, y: 780,
+    color: '#f59e0b',
+    desc: '대바실리카 지하 깊은 곳에 봉인된 태양신 아폴리온의 타락한 불씨. 접근하는 모든 침입자를 순수한 태양열로 소각하려 합니다.',
+    bossName: '타락한 태양신의 화신 아폴리온 (Fallen Solar Avatar Apollyon)',
+    bossHp: 5400,
+    bossAtk: 78,
+    relicReward: {
+      id: 'relic_phoenix_solar_crest',
+      slot: 'relic',
+      name: '신성 불사조 태양 성휘',
+      icon: '🔥',
+      atk: 62,
+      hp: 260,
+      desc: '공격 시 35% 확률로 태양 폭풍 광륜이 폭발하여 160의 추가 화염 피해를 입히고 3초간 아군 전체의 이동속도를 30% 증가시킵니다.'
+    },
+    goldReward: 10200,
+    fameReward: 200
   }
 ];
 
@@ -3198,6 +3222,17 @@ const TOWN_LORE_DATABASE = {
     tavernToast: '진하게 빚은 대추야자 맥주(Date Beer)와 구운 석류 양고기를 삼켰습니다! 혈관에 고대 메소포타미아 영웅왕의 끓는 피가 솟구치며 타격 공격력이 폭발합니다.',
     questTitle: '갈대밭 늪지 모래전갈 괴수 소탕령',
     questDesc: '유프라테스 하구 갈대밭 관개 수로를 마비시키는 거대 맹독 모래전갈 둥지를 격퇴하고 수문 열쇠를 탈환하시오.'
+  },
+  sol_invictus: {
+    npcName: '총대주교 콘스탄티누스 & 태양 성기사단장 헬레나 (Patriarch Constantinus & Helena)',
+    npcRole: '솔 인빅투스 황금 바실리카 총대주교 & 불사조 근위기사단 최고사령관',
+    icon: '☀️',
+    disposition: '🏛️ 제국의 영원불멸과 태양신의 광휘를 수호하는 고결하고 엄숙한 위엄',
+    quote: '"지상의 모든 황제들의 황금 관은 결국 무덤의 흙먼지로 바스라질지언정, 저 바실리카 돔에 새겨진 태양신의 유리 모자이크는 천 년 동안 빛을 잃지 않는다네. 그대의 가슴속에도 꺼지지 않는 신념의 불씨가 타오르고 있는가?"',
+    rumor: '💡 개선문 원로원 서기관의 전언: "황금뿔 군항 깊숙한 제국 보물고에는 초대 황제가 불사조의 심장을 받아 벼려낸 태양 대검이 봉인되어 있소. 정오의 태양이 바실리카 돔을 수직으로 비출 때만 그 봉인의 룬이 모습을 드러내지."',
+    tavernToast: '황금 포도주와 구운 무화과 꿀 케이크(Solar Ambrosia)를 들었습니다! 온몸의 상처가 타오르는 신성한 기운으로 정화되며 생명력과 방어력이 쇄신됩니다.',
+    questTitle: '태양 성역 타락 에테르 정화령',
+    questDesc: '판테온 외곽 회랑에 스며든 공허 오염 괴수들을 퇴치하고 불사조 성화대의 꺼져가는 불씨를 되살리시오.'
   },
   jotunheim: {
     npcName: '거인왕 이미르의 후예 군나르 & 천둥 주술사 토라 (Gunnar & Thora)',

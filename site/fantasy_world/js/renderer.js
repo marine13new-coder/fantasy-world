@@ -6049,6 +6049,10 @@ class WorldRenderer {
       else if (cx >= 2800 && cx <= 3200 && cy >= 2100 && cy <= 2380) {
         tintColor = 'rgba(37, 99, 235, 0.085)';
       }
+      // 신성 불사조 솔 인빅투스 황금 바실리카 & 쌍두독수리 팔라티노 제국: 눈부신 태양 황금빛 & 주홍 림
+      else if (cx >= 3520 && cx <= 3820 && cy >= 560 && cy <= 880) {
+        tintColor = 'rgba(245, 158, 11, 0.095)';
+      }
 
       if (tintColor) {
         const bGrad = ctx.createRadialGradient(cw / 2, ch / 2, radius * 0.35, cw / 2, ch / 2, radius);
