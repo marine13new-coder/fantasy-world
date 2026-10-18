@@ -3025,6 +3025,10 @@ class EntityManager {
       if (typeof audioMgr !== 'undefined') audioMgr.playSword();
       p.x += Math.cos(angle) * 0.22;
       p.y += Math.sin(angle) * 0.22;
+      if (this.camera) {
+        this.camera.shake = Math.min(6, (this.camera.shake || 0) + 2.5);
+        this.camera.zoomPulse = 0.02;
+      }
     } else if (p.comboStep === 2) {
       comboMultiplier = 1.45;
       cdTime = 0.30;
@@ -3033,6 +3037,10 @@ class EntityManager {
       if (typeof audioMgr !== 'undefined') audioMgr.playSword();
       p.x += Math.cos(angle) * 0.35;
       p.y += Math.sin(angle) * 0.35;
+      if (this.camera) {
+        this.camera.shake = Math.min(10, (this.camera.shake || 0) + 5.0);
+        this.camera.zoomPulse = 0.04;
+      }
       if (target) {
         target.y -= 0.35; // 에어본 띄우기
         this.addHitSparks(target.x, target.y, '#818cf8', 10);
@@ -3044,6 +3052,10 @@ class EntityManager {
       comboText = '🌪️ 3타 [360도 대회전 회오리!]';
       if (typeof audioMgr !== 'undefined') audioMgr.playWhirlwind();
       this.addDustPuff(p.x, p.y, 8);
+      if (this.camera) {
+        this.camera.shake = Math.min(15, (this.camera.shake || 0) + 8.0);
+        this.camera.zoomPulse = 0.06;
+      }
     } else if (p.comboStep === 4) {
       comboMultiplier = 3.2;
       cdTime = 0.52;
@@ -3058,8 +3070,13 @@ class EntityManager {
       this.addDustPuff(p.x, p.y, 14);
       this.addGroundFissure(p.x, p.y, angle - 0.45, 3.8, '#ef4444');
       this.addGroundFissure(p.x, p.y, angle + 0.45, 3.8, '#f59e0b');
+      if (window.renderer) {
+        window.renderer.screenFlashTimer = 0.10;
+        window.renderer.screenFlashColor = '#fef08a';
+      }
       if (this.camera) {
-        this.camera.shake = Math.min(22, (this.camera.shake || 0) + 14);
+        this.camera.shake = Math.min(26, (this.camera.shake || 0) + 16);
+        this.camera.zoomPulse = 0.10;
         this.camera.screenFreeze = 0.09;
         this.camera.cinematicBarsTimer = 0.45;
       }
