@@ -45,6 +45,8 @@ def test_game():
 
         polaroid_exists = evaluate_js("typeof polaroidObj !== 'undefined' && polaroidObj !== null")
         monitor_screen_exists = evaluate_js("typeof monitorScreenMesh !== 'undefined' && monitorScreenMesh !== null")
+        desk_lamp_exists = evaluate_js("typeof deskLampLight !== 'undefined' && deskLampLight !== null")
+        reels_exist = evaluate_js("typeof tapeReelL !== 'undefined' && tapeReelL !== null")
 
         print(f"   - Three.js 씬: {scene_exists}")
         print(f"   - 볼류메트릭 라이트 콘: {cone_exists}")
@@ -52,6 +54,8 @@ def test_game():
         print(f"   - 신경 안정제 약병: {sedative_exists}")
         print(f"   - 3D 폴라로이드 사진: {polaroid_exists}")
         print(f"   - 3D 실시간 CRT 모니터 스크린: {monitor_screen_exists}")
+        print(f"   - 데스크 앤티크 스팟라이트 조명: {desk_lamp_exists}")
+        print(f"   - 3D 릴-투-릴 테이프 물리 회전 스풀: {reels_exist}")
         print(f"   - 사건 증거 보드: {board_exists}")
         print(f"   - 의무 일지 차트: {clip_exists}")
         print(f"   - 깨진 관찰 거울: {mirror_exists}")
@@ -63,7 +67,17 @@ def test_game():
         print(f"   - 벽면 아날로그 괘종시계: {clock_exists}")
         print(f"   - 시계 붉은 초침 메쉬: {sec_hand_exists}")
         print(f"   - 스팀 업적 배너 요소: {achieve_banner_exists}")
-        assert scene_exists and cone_exists and drawer_exists and sedative_exists and polaroid_exists and monitor_screen_exists and board_exists and clip_exists and mirror_exists and breaker_exists and exit_exists and window_exists and puddle_exists and sil_exists and clock_exists and sec_hand_exists and achieve_banner_exists
+        assert scene_exists and cone_exists and drawer_exists and sedative_exists and polaroid_exists and monitor_screen_exists and desk_lamp_exists and reels_exist and board_exists and clip_exists and mirror_exists and breaker_exists and exit_exists and window_exists and puddle_exists and sil_exists and clock_exists and sec_hand_exists and achieve_banner_exists
+
+        cdp.drain(500)
+        cdp.screenshot(Path("site/archive-1999-3d-room.png"))
+        print("   📸 3D 인게임 룸 실사 그래픽 스크린샷 저장 완료: site/archive-1999-3d-room.png")
+
+        evaluate_js("playerPos.set(0, 1.5, -2.2); camera.position.copy(playerPos); camera.lookAt(0, 1.2, -4.2)")
+        cdp.drain(400)
+        cdp.screenshot(Path("site/archive-1999-desk-closeup.png"))
+        print("   📸 3D 감식 데스크 근접 실사 스크린샷 저장 완료: site/archive-1999-desk-closeup.png")
+        evaluate_js("playerPos.set(0, 1.6, 2.8); camera.position.copy(playerPos); camera.lookAt(0, 1.4, -4.2)")
 
         print("4. 서랍 열기 & 신경 안정제 복용 테스트")
         evaluate_js("toggleDeskDrawer()")

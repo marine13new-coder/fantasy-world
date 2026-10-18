@@ -1357,23 +1357,102 @@
        ======================================================== */
     function createTileTexture() {
       const c = document.createElement('canvas');
-      c.width = 512; c.height = 512;
+      c.width = 1024; c.height = 1024;
       const ctx = c.getContext('2d');
-      ctx.fillStyle = '#111814'; ctx.fillRect(0, 0, 512, 512);
+      ctx.fillStyle = '#101713';
+      ctx.fillRect(0, 0, 1024, 1024);
 
-      ctx.strokeStyle = '#070a08'; ctx.lineWidth = 4;
-      for (let x = 0; x < 512; x += 64) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 512); ctx.stroke();
-      }
-      for (let y = 0; y < 512; y += 64) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
+      const tileSize = 64;
+      for (let x = 0; x < 1024; x += tileSize) {
+        for (let y = 0; y < 1024; y += tileSize) {
+          const rnd = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+          const factor = (rnd - Math.floor(rnd));
+          const r = Math.floor(14 + factor * 9);
+          const g = Math.floor(22 + factor * 12);
+          const b = Math.floor(18 + factor * 9);
+          ctx.fillStyle = `rgb(${r},${g},${b})`;
+          ctx.fillRect(x + 2, y + 2, tileSize - 4, tileSize - 4);
+
+          ctx.fillStyle = 'rgba(5, 10, 7, 0.45)';
+          ctx.fillRect(x + 2, y + tileSize - 4, tileSize - 4, 2);
+          ctx.fillRect(x + tileSize - 4, y + 2, 2, tileSize - 4);
+        }
       }
 
-      for (let i = 0; i < 45; i++) {
-        ctx.fillStyle = Math.random() < 0.3 ? 'rgba(75, 10, 15, 0.45)' : 'rgba(10, 25, 15, 0.35)';
+      ctx.strokeStyle = '#050a07';
+      ctx.lineWidth = 3;
+      for (let x = 0; x <= 1024; x += tileSize) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 1024); ctx.stroke();
+      }
+      for (let y = 0; y <= 1024; y += tileSize) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1024, y); ctx.stroke();
+      }
+
+      for (let i = 0; i < 90; i++) {
+        const cx = Math.random() * 1024, cy = Math.random() * 1024, rad = Math.random() * 55 + 15;
+        const grad = ctx.createRadialGradient(cx, cy, 2, cx, cy, rad);
+        if (Math.random() < 0.25) {
+          grad.addColorStop(0, 'rgba(85, 12, 18, 0.45)');
+          grad.addColorStop(1, 'rgba(85, 12, 18, 0)');
+        } else {
+          grad.addColorStop(0, 'rgba(5, 14, 8, 0.55)');
+          grad.addColorStop(1, 'rgba(5, 14, 8, 0)');
+        }
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI * 2); ctx.fill();
+      }
+
+      ctx.strokeStyle = 'rgba(3, 8, 5, 0.65)';
+      ctx.lineWidth = 4;
+      for (let i = 0; i < 14; i++) {
+        const sx = Math.random() * 900, sy = Math.random() * 900;
         ctx.beginPath();
-        ctx.arc(Math.random() * 512, Math.random() * 512, Math.random() * 40 + 10, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.moveTo(sx, sy);
+        ctx.bezierCurveTo(sx + 30, sy + 40, sx + 60, sy + 20, sx + 90, sy + 50);
+        ctx.stroke();
+      }
+
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(4, 5);
+      return tex;
+    }
+
+    function createTileBumpMap() {
+      const c = document.createElement('canvas');
+      c.width = 1024; c.height = 1024;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#808080';
+      ctx.fillRect(0, 0, 1024, 1024);
+
+      const tileSize = 64;
+      for (let x = 0; x < 1024; x += tileSize) {
+        for (let y = 0; y < 1024; y += tileSize) {
+          ctx.fillStyle = '#a5a5a5';
+          ctx.fillRect(x + 2, y + 2, tileSize - 4, tileSize - 4);
+        }
+      }
+      ctx.strokeStyle = '#101010';
+      ctx.lineWidth = 4;
+      for (let x = 0; x <= 1024; x += tileSize) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 1024); ctx.stroke();
+      }
+      for (let y = 0; y <= 1024; y += tileSize) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1024, y); ctx.stroke();
+      }
+
+      ctx.strokeStyle = '#050505';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 20; i++) {
+        let cx = Math.random() * 1024, cy = Math.random() * 1024;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        for (let j = 0; j < 5; j++) {
+          cx += (Math.random() - 0.5) * 40;
+          cy += (Math.random() - 0.5) * 40;
+          ctx.lineTo(cx, cy);
+        }
+        ctx.stroke();
       }
 
       const tex = new THREE.CanvasTexture(c);
@@ -1384,25 +1463,251 @@
 
     function createWallTexture() {
       const c = document.createElement('canvas');
-      c.width = 1024; c.height = 512;
+      c.width = 2048; c.height = 1024;
       const ctx = c.getContext('2d');
-      ctx.fillStyle = '#17221c'; ctx.fillRect(0, 0, 1024, 512);
 
-      for (let i = 0; i < 160; i++) {
-        ctx.fillStyle = 'rgba(8, 14, 10, ' + (Math.random() * 0.4) + ')';
-        ctx.fillRect(Math.random() * 1024, Math.random() * 512, Math.random() * 80, Math.random() * 80);
+      const topGrad = ctx.createLinearGradient(0, 0, 0, 512);
+      topGrad.addColorStop(0, '#1c2821');
+      topGrad.addColorStop(1, '#24332b');
+      ctx.fillStyle = topGrad;
+      ctx.fillRect(0, 0, 2048, 512);
+
+      const botGrad = ctx.createLinearGradient(0, 512, 0, 1024);
+      botGrad.addColorStop(0, '#131e18');
+      botGrad.addColorStop(1, '#0e1611');
+      ctx.fillStyle = botGrad;
+      ctx.fillRect(0, 512, 2048, 512);
+
+      ctx.fillStyle = '#0a100c';
+      ctx.fillRect(0, 508, 2048, 8);
+      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      ctx.fillRect(0, 506, 2048, 2);
+
+      for (let i = 0; i < 50; i++) {
+        const sx = Math.random() * 2048;
+        const w = Math.random() * 18 + 4;
+        const h = Math.random() * 650 + 200;
+        const leakGrad = ctx.createLinearGradient(sx, 0, sx, h);
+        leakGrad.addColorStop(0, 'rgba(5, 12, 8, 0.7)');
+        leakGrad.addColorStop(1, 'rgba(5, 12, 8, 0)');
+        ctx.fillStyle = leakGrad;
+        ctx.fillRect(sx, 0, w, h);
       }
 
-      ctx.font = 'bold 36px "Special Elite", monospace';
-      ctx.fillStyle = 'rgba(180, 20, 25, 0.78)';
-      ctx.fillText('[ CAGED 1979 ]', 120, 180);
-      ctx.fillText('108.4 Hz', 480, 260);
-      ctx.fillText('너도 여기서 못 나가', 220, 380);
+      for (let i = 0; i < 220; i++) {
+        ctx.fillStyle = 'rgba(6, 11, 8, ' + (Math.random() * 0.45) + ')';
+        ctx.fillRect(Math.random() * 2048, Math.random() * 1024, Math.random() * 90 + 10, Math.random() * 90 + 10);
+      }
 
-      ctx.strokeStyle = 'rgba(150, 20, 30, 0.6)';
+      ctx.fillStyle = 'rgba(150, 20, 28, 0.75)';
+      ctx.beginPath();
+      ctx.ellipse(340, 480, 28, 35, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      for (let f = 0; f < 5; f++) {
+        ctx.beginPath();
+        ctx.ellipse(320 + f * 11, 440 - Math.abs(f - 2) * 5, 6, 16, 0.15 * (f - 2), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(318 + f * 11, 450, 4, 30 + Math.random() * 40);
+      }
+
+      ctx.font = 'bold 52px "Special Elite", monospace';
+      ctx.fillStyle = 'rgba(175, 22, 28, 0.85)';
+      ctx.fillText('[ CAGED 1979 ]', 220, 280);
+
+      ctx.font = 'bold 44px "Share Tech Mono", monospace';
+      ctx.fillStyle = 'rgba(210, 160, 40, 0.85)';
+      ctx.fillText('⚡ 108.4 Hz - 인격 치환 프로젝트', 860, 320);
+
+      ctx.font = 'bold 36px "Special Elite", monospace';
+      ctx.fillStyle = 'rgba(160, 18, 22, 0.8)';
+      ctx.fillText('너도 여기서 못 나가... 살려줘...', 440, 720);
+
+      ctx.strokeStyle = 'rgba(170, 25, 30, 0.75)';
+      ctx.lineWidth = 4;
+      for (let g = 0; g < 4; g++) {
+        const gx = 1550 + g * 85;
+        for (let t = 0; t < 4; t++) {
+          ctx.beginPath();
+          ctx.moveTo(gx + t * 15, 420);
+          ctx.lineTo(gx + t * 15 + (Math.random() - 0.5) * 4, 480);
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.moveTo(gx - 5, 470);
+        ctx.lineTo(gx + 55, 430);
+        ctx.stroke();
+      }
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    function createWallBumpMap() {
+      const c = document.createElement('canvas');
+      c.width = 1024; c.height = 512;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#808080';
+      ctx.fillRect(0, 0, 1024, 512);
+
+      const imgData = ctx.getImageData(0, 0, 1024, 512);
+      const data = imgData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        const n = (Math.random() - 0.5) * 30;
+        const v = Math.min(255, Math.max(0, 128 + n));
+        data[i] = v; data[i+1] = v; data[i+2] = v;
+      }
+      ctx.putImageData(imgData, 0, 0);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 252, 1024, 8);
+      ctx.fillStyle = '#202020';
+      ctx.fillRect(0, 260, 1024, 4);
+
+      ctx.strokeStyle = '#111111';
       ctx.lineWidth = 3;
-      for (let i = 0; i < 6; i++) {
-        ctx.beginPath(); ctx.moveTo(750 + i * 15, 120); ctx.lineTo(730 + i * 15, 300); ctx.stroke();
+      for (let i = 0; i < 30; i++) {
+        let x = Math.random() * 1024, y = Math.random() * 512;
+        ctx.beginPath(); ctx.moveTo(x, y);
+        for (let j = 0; j < 6; j++) {
+          x += (Math.random() - 0.5) * 50;
+          y += (Math.random() - 0.5) * 50;
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    function createDeskWoodTexture() {
+      const c = document.createElement('canvas');
+      c.width = 1024; c.height = 512;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#1c140d';
+      ctx.fillRect(0, 0, 1024, 512);
+
+      ctx.fillStyle = '#140e09';
+      for (let y = 0; y < 512; y += 4) {
+        ctx.fillRect(0, y, 1024, 2);
+      }
+
+      for (let i = 0; i < 1500; i++) {
+        ctx.fillStyle = Math.random() < 0.5 ? 'rgba(35, 25, 18, 0.4)' : 'rgba(8, 5, 3, 0.5)';
+        ctx.fillRect(Math.random() * 1024, Math.random() * 512, Math.random() * 80 + 20, 1.5);
+      }
+
+      ctx.strokeStyle = 'rgba(8, 4, 2, 0.75)';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(680, 260, 36, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(12, 6, 3, 0.35)';
+      ctx.beginPath();
+      ctx.arc(680, 260, 36, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#050201';
+      ctx.beginPath(); ctx.arc(420, 190, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(40, 20, 10, 0.8)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(50, 38, 28, 0.8)';
+      ctx.lineWidth = 1.5;
+      for (let i = 0; i < 15; i++) {
+        const x = Math.random() * 1024, y = Math.random() * 512;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 30 + Math.random() * 50, y + (Math.random() - 0.5) * 20); ctx.stroke();
+      }
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    function createDeskWoodBumpMap() {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 256;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#808080';
+      ctx.fillRect(0, 0, 512, 256);
+
+      for (let y = 0; y < 256; y += 4) {
+        ctx.fillStyle = '#707070';
+        ctx.fillRect(0, y, 512, 2);
+      }
+      ctx.strokeStyle = '#202020';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 10; i++) {
+        const x = Math.random() * 512, y = Math.random() * 256;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 40, y + (Math.random() - 0.5) * 10); ctx.stroke();
+      }
+      return new THREE.CanvasTexture(c);
+    }
+
+    function createMetalBrushedTexture() {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 512;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#222925';
+      ctx.fillRect(0, 0, 512, 512);
+
+      for (let y = 0; y < 512; y += 2) {
+        ctx.fillStyle = Math.random() < 0.5 ? 'rgba(50, 60, 55, 0.35)' : 'rgba(15, 20, 18, 0.35)';
+        ctx.fillRect(0, y, 512, 1);
+      }
+
+      ctx.strokeStyle = 'rgba(5, 8, 7, 0.8)';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(3, 3, 506, 506);
+
+      ctx.fillStyle = '#111513';
+      const corners = [[16, 16], [496, 16], [16, 496], [496, 496]];
+      for (let pt of corners) {
+        ctx.beginPath(); ctx.arc(pt[0], pt[1], 8, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#44554b';
+        ctx.fillRect(pt[0] - 6, pt[1] - 1, 12, 2);
+        ctx.fillStyle = '#111513';
+      }
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    function createMirrorTexture() {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 1024;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#5c7368';
+      ctx.fillRect(0, 0, 512, 1024);
+
+      for (let i = 0; i < 40; i++) {
+        ctx.fillStyle = 'rgba(12, 18, 15, 0.6)';
+        ctx.fillRect(0, Math.random() * 1024, Math.random() * 45 + 10, Math.random() * 80);
+        ctx.fillRect(512 - (Math.random() * 45 + 10), Math.random() * 1024, 50, Math.random() * 80);
+      }
+
+      ctx.strokeStyle = 'rgba(230, 245, 240, 0.85)';
+      ctx.lineWidth = 2.5;
+      const cx = 256, cy = 420;
+      for (let i = 0; i < 16; i++) {
+        const angle = (i / 16) * Math.PI * 2 + (Math.random() - 0.5) * 0.2;
+        let px = cx, py = cy;
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        for (let step = 0; step < 7; step++) {
+          px += Math.cos(angle) * (25 + Math.random() * 25);
+          py += Math.sin(angle) * (25 + Math.random() * 25);
+          ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+      }
+      for (let r = 25; r < 240; r += 32) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r + (Math.random() - 0.5) * 15, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = 'rgba(145, 18, 24, 0.75)';
+      ctx.beginPath(); ctx.ellipse(256, 560, 35, 45, -0.1, 0, Math.PI * 2); ctx.fill();
+      for (let f = 0; f < 5; f++) {
+        ctx.beginPath(); ctx.ellipse(230 + f * 14, 505 - Math.abs(f - 2) * 6, 7, 22, 0.1 * (f - 2), 0, Math.PI * 2); ctx.fill();
+        ctx.fillRect(228 + f * 14, 515, 5, 50 + Math.random() * 60);
       }
 
       return new THREE.CanvasTexture(c);
@@ -1438,51 +1743,149 @@
 
     function createNoticeBoardTexture() {
       const c = document.createElement('canvas');
-      c.width = 512; c.height = 256;
+      c.width = 1024; c.height = 512;
       const ctx = c.getContext('2d');
-      ctx.fillStyle = '#3a2717'; ctx.fillRect(0, 0, 512, 256);
 
-      ctx.fillStyle = '#f0ede6'; ctx.fillRect(40, 30, 90, 110);
-      ctx.fillStyle = '#111'; ctx.fillRect(48, 38, 74, 74);
-      ctx.strokeStyle = '#c01a24'; ctx.lineWidth = 4;
-      ctx.beginPath(); ctx.moveTo(48, 38); ctx.lineTo(122, 112); ctx.moveTo(122, 38); ctx.lineTo(48, 112); ctx.stroke();
+      ctx.fillStyle = '#3a2717';
+      ctx.fillRect(0, 0, 1024, 512);
+      for (let i = 0; i < 4000; i++) {
+        ctx.fillStyle = Math.random() < 0.5 ? 'rgba(35, 22, 12, 0.5)' : 'rgba(75, 52, 32, 0.4)';
+        ctx.fillRect(Math.random() * 1024, Math.random() * 512, 3, 3);
+      }
 
-      ctx.fillStyle = '#e8d8b8'; ctx.fillRect(160, 25, 200, 140);
-      ctx.fillStyle = '#222'; ctx.font = 'bold 13px "Special Elite", monospace';
-      ctx.fillText('1979 청송연구소 화재 참사', 170, 50);
-      ctx.font = '10px monospace';
-      ctx.fillText('지하 격리병동 방화 추정...', 170, 75);
-      ctx.fillText('한진우 원장 행방 묘연...', 170, 95);
-      ctx.fillText('[경찰 수사 잠정 중단]', 170, 120);
+      ctx.strokeStyle = '#1f130a';
+      ctx.lineWidth = 16;
+      ctx.strokeRect(8, 8, 1008, 496);
 
-      ctx.fillStyle = '#ff2233';
-      ctx.beginPath(); ctx.arc(260, 20, 6, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(85, 25, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#e8dcc4';
+      ctx.fillRect(60, 45, 280, 200);
+      ctx.fillStyle = '#111';
+      ctx.font = 'bold 18px "Special Elite", monospace';
+      ctx.fillText('1979 송백병원 화재 참사', 75, 80);
+      ctx.font = '12px monospace';
+      ctx.fillText('지하 404호 격리병동 전소...', 75, 110);
+      ctx.fillText('환자 17명 사망, 원장 잠적', 75, 130);
+      ctx.fillText('불법 뇌파 교체 음향 실험 의혹', 75, 150);
+      ctx.fillText('사건 파일 번호: 79-A-108', 75, 175);
+      ctx.strokeStyle = 'rgba(230, 30, 40, 0.6)';
+      ctx.lineWidth = 8;
+      ctx.beginPath(); ctx.moveTo(75, 146); ctx.lineTo(310, 146); ctx.stroke();
 
-      ctx.strokeStyle = '#ff2233'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(85, 25); ctx.lineTo(260, 20); ctx.stroke();
+      ctx.fillStyle = '#ece8df';
+      ctx.fillRect(400, 60, 170, 210);
+      ctx.fillStyle = '#18241e';
+      ctx.fillRect(415, 75, 140, 140);
+      ctx.fillStyle = '#3d4e44';
+      ctx.beginPath(); ctx.arc(485, 135, 35, 0, Math.PI * 2); ctx.fill();
+      ctx.fillRect(455, 170, 60, 45);
+      ctx.strokeStyle = '#cc1824';
+      ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.moveTo(420, 80); ctx.lineTo(550, 210); ctx.moveTo(550, 80); ctx.lineTo(420, 210); ctx.stroke();
+      ctx.fillStyle = '#222';
+      ctx.font = 'bold 13px monospace';
+      ctx.fillText('SUBJECT #17 [사망]', 425, 245);
+
+      ctx.fillStyle = '#f5efe0';
+      ctx.fillRect(630, 50, 320, 220);
+      ctx.fillStyle = '#1a1a1a';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText('EEG SPECTRUM: 108.4 Hz RESONANCE', 645, 80);
+      ctx.strokeStyle = '#2b7a4b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let x = 650; x < 920; x += 3) {
+        const y = 140 + Math.sin((x - 650) * 0.12) * 35;
+        if (x === 650) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.fillStyle = '#991122';
+      ctx.font = 'bold 13px monospace';
+      ctx.fillText('[경고: 특정 음파 노출 시 자아 소멸]', 650, 210);
+
+      ctx.fillStyle = '#fffa88';
+      ctx.fillRect(120, 290, 240, 160);
+      ctx.fillStyle = '#111';
+      ctx.font = 'bold 15px "Special Elite", monospace';
+      ctx.fillText('한진우 원장의 마지막 음성:', 135, 320);
+      ctx.font = '13px "Special Elite", monospace';
+      ctx.fillText('"108.4Hz는 망각이 아니다.', 135, 350);
+      ctx.fillText(' 그것은 다른 영혼의 주파수다."', 135, 375);
+      ctx.fillStyle = '#aa1122';
+      ctx.fillText('-> 비상 배전반 조작 금지', 135, 415);
+
+      const pins = [[200, 50], [485, 65], [790, 55], [240, 295], [880, 260]];
+      for (let p of pins) {
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.beginPath(); ctx.arc(p[0] + 3, p[1] + 5, 8, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ee1122';
+        ctx.beginPath(); ctx.arc(p[0], p[1], 8, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ff6677';
+        ctx.beginPath(); ctx.arc(p[0] - 2, p[1] - 2, 3, 0, Math.PI * 2); ctx.fill();
+      }
+
+      ctx.strokeStyle = '#ee1122';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(200, 50); ctx.lineTo(485, 65);
+      ctx.lineTo(790, 55); ctx.lineTo(240, 295);
+      ctx.stroke();
 
       return new THREE.CanvasTexture(c);
     }
 
     function createDoorTexture() {
       const c = document.createElement('canvas');
-      c.width = 256; c.height = 512;
+      c.width = 512; c.height = 1024;
       const ctx = c.getContext('2d');
-      ctx.fillStyle = '#221517'; ctx.fillRect(0, 0, 256, 512);
+      ctx.fillStyle = '#18241d';
+      ctx.fillRect(0, 0, 512, 1024);
 
-      ctx.strokeStyle = '#12090b'; ctx.lineWidth = 8;
-      ctx.strokeRect(10, 10, 236, 492);
+      ctx.fillStyle = '#131d17';
+      ctx.fillRect(20, 20, 472, 984);
 
-      ctx.fillStyle = '#020302'; ctx.fillRect(50, 60, 156, 120);
-      ctx.strokeStyle = '#3a443e'; ctx.lineWidth = 6;
-      for (let x = 70; x < 200; x += 25) {
-        ctx.beginPath(); ctx.moveTo(x, 60); ctx.lineTo(x, 180); ctx.stroke();
+      for (let y of [180, 500, 820]) {
+        ctx.fillStyle = '#0f1712';
+        ctx.fillRect(24, y, 464, 40);
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        ctx.fillRect(24, y, 464, 2);
+        for (let x = 50; x < 480; x += 55) {
+          ctx.fillStyle = '#2a3a30';
+          ctx.beginPath(); ctx.arc(x, y + 20, 6, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#080d0a';
+          ctx.beginPath(); ctx.arc(x + 1, y + 21, 5, 0, Math.PI * 2); ctx.fill();
+        }
       }
 
-      for (let i = 0; i < 40; i++) {
-        ctx.fillStyle = 'rgba(120, 40, 20, 0.35)';
-        ctx.fillRect(Math.random() * 256, Math.random() * 512, Math.random() * 40, Math.random() * 40);
+      ctx.fillStyle = '#050705';
+      ctx.fillRect(130, 80, 252, 220);
+      ctx.strokeStyle = '#27382d';
+      ctx.lineWidth = 8;
+      ctx.strokeRect(130, 80, 252, 220);
+
+      ctx.strokeStyle = 'rgba(160, 190, 175, 0.45)';
+      ctx.lineWidth = 2;
+      for (let x = -200; x < 600; x += 22) {
+        ctx.beginPath(); ctx.moveTo(x, 80); ctx.lineTo(x + 220, 300); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x, 300); ctx.lineTo(x + 220, 80); ctx.stroke();
+      }
+
+      const glassGlow = ctx.createLinearGradient(130, 80, 382, 300);
+      glassGlow.addColorStop(0, 'rgba(120, 200, 160, 0.15)');
+      glassGlow.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
+      glassGlow.addColorStop(1, 'rgba(180, 50, 50, 0.25)');
+      ctx.fillStyle = glassGlow;
+      ctx.fillRect(130, 80, 252, 220);
+
+      ctx.font = 'bold 28px "Share Tech Mono", monospace';
+      ctx.fillStyle = '#ff2233';
+      ctx.fillText('ISOLATION 404', 160, 370);
+      ctx.font = 'bold 16px monospace';
+      ctx.fillStyle = '#cca030';
+      ctx.fillText('MAXIMUM SECURITY QUARANTINE', 135, 400);
+
+      for (let i = 0; i < 90; i++) {
+        ctx.fillStyle = Math.random() < 0.4 ? 'rgba(100, 20, 25, 0.4)' : 'rgba(50, 30, 15, 0.35)';
+        ctx.fillRect(Math.random() * 512, Math.random() * 1024, Math.random() * 60 + 10, Math.random() * 60 + 10);
       }
 
       return new THREE.CanvasTexture(c);
@@ -1492,13 +1895,14 @@
        2. THREE.JS 3D 환경 (번개, 창문, 괘종시계, 서랍, 거울)
        ======================================================== */
     let scene, camera, renderer;
-    let flashlight, flashlightCone, ceilingLamp, ambientGlow, exitSignLamp, thunderLight;
+    let flashlight, flashlightCone, ceilingLamp, ambientGlow, exitSignLamp, thunderLight, deskLampLight;
     let deskObj, deskDrawerObj, sedativeBottleObj, monitorObj, monitorScreenMesh, doorObj, monsterFigure, ceilingFan;
     let wheelchairObj, ivStandObj, gurneyObj, phoneObj, breakerBoxObj, cctvCameraObj, noticeBoardObj, clipboardObj, exitSignObj, crackedMirrorObj, polaroidObj;
     let asylumWindowObj, rainStreakCanvas, rainStreakCtx, rainStreakTexture, rainDrops = [];
     let bloodPuddleObj, shadowSilhouetteObj, wallClockObj, clockSecondHand;
     let monitorCanvas, monitorCtx, monitorTexture;
     let uvClueMesh, dustParticles, waterDropMesh;
+    let tapeReelL, tapeReelR;
     let isPointerLocked = false;
     let inTerminalMode = false;
     let inDocInspectMode = false;
@@ -1562,6 +1966,13 @@
       thunderLight.castShadow = true;
       scene.add(thunderLight);
 
+      // 작업 데스크 전용 앤티크 스탠드 웜 조명 (Desk Workstation Spotlight)
+      deskLampLight = new THREE.SpotLight(0xffddaa, isSafeMode ? 3.0 : 2.5, 8, Math.PI / 3.8, 0.45, 1.2);
+      deskLampLight.position.set(-0.9, 1.9, -4.0);
+      deskLampLight.target.position.set(0, 1.0, -4.2);
+      scene.add(deskLampLight);
+      scene.add(deskLampLight.target);
+
       flashlight = new THREE.SpotLight(0xfff6dc, 4.0, 16, Math.PI / 5.5, 0.35, 1.2);
       flashlight.castShadow = true;
       scene.add(flashlight);
@@ -1595,59 +2006,81 @@
 
     function buildAsylumWard() {
       const tileTex = createTileTexture();
+      const tileBumpTex = createTileBumpMap();
       const wallTex = createWallTexture();
+      const wallBumpTex = createWallBumpMap();
       const uvTex = createUVClueTexture();
       const boardTex = createNoticeBoardTexture();
       const doorTex = createDoorTexture();
 
-      // 바닥
+      // 바닥 (PBR 타일 + 범프맵 + 슬릭 리플렉션)
       const floorGeo = new THREE.PlaneGeometry(9, 12);
-      const floorMat = new THREE.MeshStandardMaterial({ map: tileTex, roughness: 0.6, metalness: 0.2 });
+      const floorMat = new THREE.MeshStandardMaterial({
+        map: tileTex,
+        bumpMap: tileBumpTex,
+        bumpScale: 0.06,
+        roughness: 0.52,
+        metalness: 0.22
+      });
       const floor = new THREE.Mesh(floorGeo, floorMat);
       floor.rotation.x = -Math.PI / 2;
       floor.receiveShadow = true;
       scene.add(floor);
 
-      // 천장
-      const ceilMat = new THREE.MeshStandardMaterial({ color: 0x0f1612, roughness: 0.9 });
+      // 천장 (거친 노출 콘크리트)
+      const ceilMat = new THREE.MeshStandardMaterial({ color: 0x0c120e, roughness: 0.95 });
       const ceiling = new THREE.Mesh(floorGeo, ceilMat);
       ceiling.position.y = 4.0;
       ceiling.rotation.x = Math.PI / 2;
       scene.add(ceiling);
 
-      // 벽면 4면
+      // 벽면 4면 (PBR 웨인스코트 + 균열 범프맵)
+      const wallMat = new THREE.MeshStandardMaterial({
+        map: wallTex,
+        bumpMap: wallBumpTex,
+        bumpScale: 0.08,
+        roughness: 0.8
+      });
+
       const wallFrontGeo = new THREE.PlaneGeometry(9, 4);
-      const wallFrontMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.85 });
-      const wallFront = new THREE.Mesh(wallFrontGeo, wallFrontMat);
+      const wallFront = new THREE.Mesh(wallFrontGeo, wallMat);
       wallFront.position.set(0, 2, -6);
       scene.add(wallFront);
 
-      const wallBack = new THREE.Mesh(wallFrontGeo, wallFrontMat);
+      const wallBack = new THREE.Mesh(wallFrontGeo, wallMat);
       wallBack.position.set(0, 2, 6);
       wallBack.rotation.y = Math.PI;
       scene.add(wallBack);
 
       const wallSideGeo = new THREE.PlaneGeometry(12, 4);
-      const wallLeft = new THREE.Mesh(wallSideGeo, wallFrontMat);
+      const wallLeft = new THREE.Mesh(wallSideGeo, wallMat);
       wallLeft.position.set(-4.5, 2, 0);
       wallLeft.rotation.y = Math.PI / 2;
       scene.add(wallLeft);
 
-      const wallRight = new THREE.Mesh(wallSideGeo, wallFrontMat);
+      const wallRight = new THREE.Mesh(wallSideGeo, wallMat);
       wallRight.position.set(4.5, 2, 0);
       wallRight.rotation.y = -Math.PI / 2;
       scene.add(wallRight);
 
-      // 오른쪽 벽면 금간 거울 (Cracked Observation Mirror)
-      const mirrorGeo = new THREE.BoxGeometry(0.04, 1.4, 0.9);
-      const mirrorMat = new THREE.MeshStandardMaterial({ color: 0x889988, roughness: 0.1, metalness: 0.9 });
-      crackedMirrorObj = new THREE.Mesh(mirrorGeo, mirrorMat);
-      crackedMirrorObj.position.set(4.45, 1.8, 1.2);
-      scene.add(crackedMirrorObj);
+      // 1. 입체 건축 디테일: 바닥 걸레받이 몰딩 (Perimeter Baseboards)
+      buildRoomBaseboards();
 
-      // 벽면 사건 증거 코르크 보드
+      // 2. 입체 건축 디테일: 벽체 중간 분할 체어레일 몰딩 (Chair-Rail Moldings)
+      buildChairRailMoldings();
+
+      // 3. 입체 건축 디테일: 천장 아연도금 HVAC 환기 공조 덕트 & 흡입 그릴
+      buildHVACDucts();
+
+      // 4. 천장 펜던트 형광등 등기구 듀얼 튜브
+      buildFluorescentFixture();
+
+      // 오른쪽 벽면 깨진 관찰 거울 (Cracked Observation Mirror)
+      buildCrackedMirror();
+
+      // 벽면 사건 증거 코르크 보드 (Notice Board)
       const boardGeo = new THREE.BoxGeometry(2.4, 1.2, 0.05);
-      const boardMat = new THREE.MeshStandardMaterial({ map: boardTex, roughness: 0.9 });
+      const boardMat = new THREE.MeshStandardMaterial({ map: boardTex, roughness: 0.85 });
       noticeBoardObj = new THREE.Mesh(boardGeo, boardMat);
       noticeBoardObj.position.set(0, 2.35, -5.92);
       scene.add(noticeBoardObj);
@@ -1664,66 +2097,16 @@
       uvClueMesh.rotation.y = Math.PI / 2;
       scene.add(uvClueMesh);
 
-      // 천장 배관 파이프
+      // 천장 배관 파이프 & 엘보우
       buildCeilingPipes();
 
       // 회전 실링 팬
-      const fanHub = new THREE.CylinderGeometry(0.2, 0.2, 0.1, 8);
-      const fanMat = new THREE.MeshStandardMaterial({ color: 0x16221a });
-      ceilingFan = new THREE.Mesh(fanHub, fanMat);
-      ceilingFan.position.set(0, 3.9, 0);
-      for (let i = 0; i < 4; i++) {
-        const bladeGeo = new THREE.BoxGeometry(0.2, 0.02, 1.2);
-        const blade = new THREE.Mesh(bladeGeo, fanMat);
-        blade.position.z = 0.6;
-        blade.rotation.y = (i * Math.PI) / 2;
-        ceilingFan.add(blade);
-      }
-      scene.add(ceilingFan);
+      buildCeilingFanProp();
 
-      // 작업 데스크
-      const deskGeo = new THREE.BoxGeometry(3.2, 0.9, 1.4);
-      const deskMat = new THREE.MeshStandardMaterial({ color: 0x131a15, roughness: 0.85 });
-      deskObj = new THREE.Mesh(deskGeo, deskMat);
-      deskObj.position.set(0, 0.45, -4.2);
-      deskObj.castShadow = true;
-      deskObj.receiveShadow = true;
-      scene.add(deskObj);
+      // 핵심 수사 워크스테이션 (감식 데스크, CRT 모니터, 릴-투-릴 테이프 머신, 스탠드 조명, 소품)
+      buildDeskWorkstation();
 
-      // 슬라이딩 서랍 (Desk Drawer)
-      buildDeskDrawer();
-
-      // CRT 모니터 & 릴 테이프 머신
-      const monGeo = new THREE.BoxGeometry(1.2, 0.85, 0.8);
-      const monMat = new THREE.MeshStandardMaterial({ color: 0x18261e, roughness: 0.65 });
-      monitorObj = new THREE.Mesh(monGeo, monMat);
-      monitorObj.position.set(0, 1.35, -4.2);
-      monitorObj.castShadow = true;
-      scene.add(monitorObj);
-
-      // CRT 모니터 실시간 동적 인광 스크린 (Real-Time 3D In-Game CRT Display)
-      monitorCanvas = document.createElement('canvas');
-      monitorCanvas.width = 256;
-      monitorCanvas.height = 180;
-      monitorCtx = monitorCanvas.getContext('2d');
-      monitorTexture = new THREE.CanvasTexture(monitorCanvas);
-
-      const screenGeo = new THREE.PlaneGeometry(0.85, 0.6);
-      const screenMat = new THREE.MeshBasicMaterial({ map: monitorTexture });
-      monitorScreenMesh = new THREE.Mesh(screenGeo, screenMat);
-      monitorScreenMesh.position.set(0, 1.35, -3.79);
-      scene.add(monitorScreenMesh);
-
-      // 데스크 위 3D 수사 증거 폴라로이드 사진
-      buildDeskPolaroid();
-
-      // 데스크 위 의무 기록 차트
-      buildClinicalClipboard();
-
-      // 데스크 위 로터리 전화기
-      buildDeskTelephone();
-
-      // 왼쪽 벽면 누전 차단기(Breaker Box)
+      // 왼쪽 벽면 산업용 누전 차단기(Breaker Box)
       buildBreakerBox();
 
       // 모퉁이 천장 회전형 CCTV 감시 카메라
@@ -1732,7 +2115,7 @@
       // 등 뒤 철문 & 상단 비상구 조명
       buildDoorAndExitSign(doorTex);
 
-      // 병원 소품 (휠체어, 링거대, 수술용 들것)
+      // 고정밀 병원 소품 (스포크 휠체어, 링거 수액대, 가위형 수술용 들것)
       buildWheelchairProp();
       buildIVStandProp();
       buildGurneyProp();
@@ -1756,6 +2139,380 @@
 
       // 기괴한 3D 그림자 괴물
       buildMonsterEntity();
+    }
+
+    /* 바닥 걸레받이 몰딩 (Perimeter Baseboards) */
+    function buildRoomBaseboards() {
+      const baseMat = new THREE.MeshStandardMaterial({ color: 0x0d1410, roughness: 0.8 });
+      // 앞/뒤
+      const bbF = new THREE.Mesh(new THREE.BoxGeometry(9.0, 0.14, 0.04), baseMat);
+      bbF.position.set(0, 0.07, -5.98);
+      scene.add(bbF);
+      const bbB = new THREE.Mesh(new THREE.BoxGeometry(9.0, 0.14, 0.04), baseMat);
+      bbB.position.set(0, 0.07, 5.98);
+      scene.add(bbB);
+      // 좌/우
+      const bbL = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.14, 12.0), baseMat);
+      bbL.position.set(-4.48, 0.07, 0);
+      scene.add(bbL);
+      const bbR = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.14, 12.0), baseMat);
+      bbR.position.set(4.48, 0.07, 0);
+      scene.add(bbR);
+    }
+
+    /* 벽면 체어레일 분할 몰딩 (Chair-Rail Moldings) */
+    function buildChairRailMoldings() {
+      const railMat = new THREE.MeshStandardMaterial({ color: 0x141b16, roughness: 0.85 });
+      const crF = new THREE.Mesh(new THREE.BoxGeometry(9.0, 0.06, 0.03), railMat);
+      crF.position.set(0, 2.0, -5.98);
+      scene.add(crF);
+      const crB = new THREE.Mesh(new THREE.BoxGeometry(9.0, 0.06, 0.03), railMat);
+      crB.position.set(0, 2.0, 5.98);
+      scene.add(crB);
+      const crL = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.06, 12.0), railMat);
+      crL.position.set(-4.48, 2.0, 0);
+      scene.add(crL);
+      const crR = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.06, 12.0), railMat);
+      crR.position.set(4.48, 2.0, 0);
+      scene.add(crR);
+    }
+
+    /* 천장 공조 HVAC 덕트 (HVAC Ventilation Ducts) */
+    function buildHVACDucts() {
+      const ductMat = new THREE.MeshStandardMaterial({ color: 0x222b26, metalness: 0.8, roughness: 0.35 });
+      const duct = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.34, 12.0), ductMat);
+      duct.position.set(-2.8, 3.82, 0);
+      scene.add(duct);
+
+      // 덕트 고정 행거 4개
+      const hangerMat = new THREE.MeshStandardMaterial({ color: 0x111613, metalness: 0.9 });
+      for (let z of [-4.5, -1.5, 1.5, 4.5]) {
+        const h1 = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.35, 6), hangerMat);
+        h1.position.set(-3.12, 3.82, z);
+        scene.add(h1);
+        const h2 = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.35, 6), hangerMat);
+        h2.position.set(-2.48, 3.82, z);
+        scene.add(h2);
+      }
+
+      // 덕트 끝 벽면 흡입 그릴
+      const grill = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.38, 0.02), hangerMat);
+      grill.position.set(-2.8, 3.82, -5.98);
+      scene.add(grill);
+    }
+
+    /* 천장 형광등 등기구 듀얼 튜브 */
+    function buildFluorescentFixture() {
+      const fixMat = new THREE.MeshStandardMaterial({ color: 0x1a241e, metalness: 0.7 });
+      const tubeMat = new THREE.MeshBasicMaterial({ color: 0xddeedd });
+
+      // 하우징 후드
+      const hood = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.08, 0.4), fixMat);
+      hood.position.set(0, 3.75, 0);
+      scene.add(hood);
+
+      // 형광등 유리 튜브 2열
+      for (let z of [-0.08, 0.08]) {
+        const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 1.45, 8), tubeMat);
+        tube.rotation.z = Math.PI / 2;
+        tube.position.set(0, 3.71, z);
+        scene.add(tube);
+      }
+    }
+
+    /* 오른쪽 벽면 깨진 거울 (Cracked Mirror) */
+    function buildCrackedMirror() {
+      const mirrorTex = createMirrorTexture();
+      const frameMat = new THREE.MeshStandardMaterial({ color: 0x161e19, roughness: 0.7 });
+      const mirrorMat = new THREE.MeshStandardMaterial({
+        map: mirrorTex,
+        roughness: 0.08,
+        metalness: 0.92
+      });
+
+      // 거울 프레임
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.5, 1.0), frameMat);
+      frame.position.set(4.47, 1.8, 1.2);
+      scene.add(frame);
+
+      // 거울 반사면
+      crackedMirrorObj = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.4, 0.9), mirrorMat);
+      crackedMirrorObj.position.set(4.45, 1.8, 1.2);
+      scene.add(crackedMirrorObj);
+    }
+
+    /* 회전 실링 팬 */
+    function buildCeilingFanProp() {
+      const fanHub = new THREE.CylinderGeometry(0.2, 0.2, 0.1, 10);
+      const fanMat = new THREE.MeshStandardMaterial({ color: 0x16221a, metalness: 0.6 });
+      ceilingFan = new THREE.Mesh(fanHub, fanMat);
+      ceilingFan.position.set(0, 3.9, 0);
+      for (let i = 0; i < 4; i++) {
+        const bladeGeo = new THREE.BoxGeometry(0.2, 0.02, 1.2);
+        const blade = new THREE.Mesh(bladeGeo, fanMat);
+        blade.position.z = 0.6;
+        blade.rotation.y = (i * Math.PI) / 2;
+        ceilingFan.add(blade);
+      }
+      scene.add(ceilingFan);
+    }
+
+    /* ========================================================
+       핵심 감식 워크스테이션 (Heavy Institutional Workstation)
+       ======================================================== */
+    function buildDeskWorkstation() {
+      deskObj = new THREE.Group();
+
+      const woodTex = createDeskWoodTexture();
+      const woodBump = createDeskWoodBumpMap();
+      const deskTopMat = new THREE.MeshStandardMaterial({
+        map: woodTex,
+        bumpMap: woodBump,
+        bumpScale: 0.05,
+        roughness: 0.62,
+        metalness: 0.15
+      });
+      const steelMat = new THREE.MeshStandardMaterial({ color: 0x222c26, metalness: 0.8, roughness: 0.4 });
+      const brassMat = new THREE.MeshStandardMaterial({ color: 0xb59e55, metalness: 0.85, roughness: 0.35 });
+
+      // 상판 (0.08m 두께, 모서리 챔퍼 몰딩)
+      const topMesh = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.08, 1.4), deskTopMat);
+      topMesh.position.y = 0.86;
+      topMesh.castShadow = true;
+      topMesh.receiveShadow = true;
+      deskObj.add(topMesh);
+
+      // 4대 견고한 스틸 다리 및 베이스 글라이더
+      for (let x of [-1.5, 1.5]) {
+        for (let z of [-0.6, 0.6]) {
+          const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.82, 8), steelMat);
+          leg.position.set(x, 0.41, z);
+          leg.castShadow = true;
+          deskObj.add(leg);
+
+          const glide = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.03, 8), brassMat);
+          glide.position.set(x, 0.015, z);
+          deskObj.add(glide);
+        }
+      }
+
+      // 후면 스틸 가림판 (Modesty Panel)
+      const modesty = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.5, 0.03), steelMat);
+      modesty.position.set(0, 0.55, -0.62);
+      deskObj.add(modesty);
+
+      // 좌측 서랍 타워 본체
+      const leftPed = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.76, 1.25), deskTopMat);
+      leftPed.position.set(-1.18, 0.42, 0);
+      deskObj.add(leftPed);
+
+      // 앤티크 뱅커/스탠드 조명 (Anglepoise Lamp Mesh)
+      const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.04, 16), brassMat);
+      lampBase.position.set(-1.25, 0.92, -0.2);
+      deskObj.add(lampBase);
+
+      const lampArm1 = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.55, 8), brassMat);
+      lampArm1.position.set(-1.25, 1.2, -0.2);
+      lampArm1.rotation.z = -0.25;
+      deskObj.add(lampArm1);
+
+      const lampArm2 = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.45, 8), brassMat);
+      lampArm2.position.set(-1.12, 1.6, -0.2);
+      lampArm2.rotation.z = 0.4;
+      deskObj.add(lampArm2);
+
+      const shadeMat = new THREE.MeshStandardMaterial({ color: 0x123620, roughness: 0.35, metalness: 0.5 });
+      const shade = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.22, 16, 1, true), shadeMat);
+      shade.position.set(-0.95, 1.82, -0.2);
+      shade.rotation.z = Math.PI - 0.45;
+      deskObj.add(shade);
+
+      // 전구 발광 메쉬
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfff0aa }));
+      bulb.position.set(-0.95, 1.78, -0.2);
+      deskObj.add(bulb);
+
+      // 카세트 테이프 3개 묶음 소품
+      for (let t = 0; t < 3; t++) {
+        const tapeCaseMat = new THREE.MeshStandardMaterial({
+          color: t === 0 ? 0x882233 : (t === 1 ? 0x225577 : 0x336633),
+          roughness: 0.4
+        });
+        const cTape = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.025, 0.11), tapeCaseMat);
+        cTape.position.set(0.95, 0.91 + t * 0.026, 0.25);
+        cTape.rotation.y = 0.15 * t;
+        deskObj.add(cTape);
+      }
+
+      // 비밀 수사 서류철 (Manila Folder)
+      const folderMat = new THREE.MeshStandardMaterial({ color: 0xd6c292, roughness: 0.85 });
+      const folder = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.01, 0.48), folderMat);
+      folder.position.set(-0.45, 0.906, 0.25);
+      folder.rotation.y = 0.12;
+      deskObj.add(folder);
+
+      // 커피 머그컵
+      const mugMat = new THREE.MeshStandardMaterial({ color: 0xeeece5, roughness: 0.5 });
+      const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.04, 0.09, 12), mugMat);
+      mug.position.set(1.35, 0.95, -0.2);
+      deskObj.add(mug);
+
+      // 릴-투-릴 데크 베이스 유닛 & 3D 물리 회전 스풀
+      buildReelToReelDeck(deskObj);
+
+      deskObj.position.set(0, 0, -4.2);
+      scene.add(deskObj);
+
+      // 슬라이딩 서랍 (Desk Drawer)
+      buildDeskDrawer();
+
+      // CRT 모니터 본체 케이싱 (Monitor Chassis)
+      buildMonitorChassis();
+
+      // CRT 모니터 실시간 동적 인광 스크린 (Real-Time 3D In-Game CRT Display)
+      monitorCanvas = document.createElement('canvas');
+      monitorCanvas.width = 256;
+      monitorCanvas.height = 180;
+      monitorCtx = monitorCanvas.getContext('2d');
+      monitorTexture = new THREE.CanvasTexture(monitorCanvas);
+
+      const screenGeo = new THREE.PlaneGeometry(0.85, 0.6);
+      const screenMat = new THREE.MeshBasicMaterial({ map: monitorTexture });
+      monitorScreenMesh = new THREE.Mesh(screenGeo, screenMat);
+      monitorScreenMesh.position.set(0, 1.35, -3.79);
+      scene.add(monitorScreenMesh);
+
+      // 데스크 위 3D 수사 증거 폴라로이드 사진
+      buildDeskPolaroid();
+
+      // 데스크 위 의무 기록 차트
+      buildClinicalClipboard();
+
+      // 데스크 위 로터리 전화기
+      buildDeskTelephone();
+    }
+
+    /* 릴-투-릴 오디오 데크 & 3D 스풀 물리 */
+    function buildReelToReelDeck(parentGroup) {
+      const metalFaceTex = createMetalBrushedTexture();
+      const faceMat = new THREE.MeshStandardMaterial({ map: metalFaceTex, roughness: 0.45, metalness: 0.8 });
+      const chassisMat = new THREE.MeshStandardMaterial({ color: 0x151c17, roughness: 0.8 });
+      const spoolMat = new THREE.MeshStandardMaterial({ color: 0x99a89e, metalness: 0.9, roughness: 0.25 });
+      const tapeBrownMat = new THREE.MeshStandardMaterial({ color: 0x4a2a1b, roughness: 0.7 });
+      const vuGlowMat = new THREE.MeshBasicMaterial({ color: 0xffb833 });
+
+      // 오디오 랙마운트 섀시
+      const deckChassis = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.38, 0.55), chassisMat);
+      deckChassis.position.set(0, 1.05, 0.1);
+      parentGroup.add(deckChassis);
+
+      // 전면 브러시드 알루미늄 페이스플레이트
+      const facePlate = new THREE.Mesh(new THREE.BoxGeometry(1.38, 0.36, 0.02), faceMat);
+      facePlate.position.set(0, 1.05, 0.38);
+      parentGroup.add(facePlate);
+
+      // 듀얼 아날로그 VU 미터 창 (Amber Backlit Windows)
+      for (let s of [-0.22, 0.22]) {
+        const vuFrame = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.12, 0.01), chassisMat);
+        vuFrame.position.set(s, 1.14, 0.395);
+        parentGroup.add(vuFrame);
+
+        const vuGlow = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.1), vuGlowMat);
+        vuGlow.position.set(s, 1.14, 0.402);
+        parentGroup.add(vuGlow);
+
+        const vuNeedle = new THREE.Mesh(new THREE.BoxGeometry(0.005, 0.08, 0.005), new THREE.MeshBasicMaterial({ color: 0x111111 }));
+        vuNeedle.position.set(s, 1.12, 0.405);
+        vuNeedle.rotation.z = -0.3;
+        parentGroup.add(vuNeedle);
+      }
+
+      // 기계식 컨트롤 노브 & 토글 버튼
+      for (let k = -2; k <= 2; k++) {
+        const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.03, 12), spoolMat);
+        knob.rotation.x = Math.PI / 2;
+        knob.position.set(k * 0.16, 0.96, 0.395);
+        parentGroup.add(knob);
+      }
+
+      // 3D 물리 7인치 테이프 릴 스풀 2개 (좌/우)
+      tapeReelL = new THREE.Group();
+      tapeReelR = new THREE.Group();
+
+      const buildSpool = (grp) => {
+        const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.025, 12), spoolMat);
+        hub.rotation.x = Math.PI / 2;
+        grp.add(hub);
+        const tapeRoll = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.02, 16), tapeBrownMat);
+        tapeRoll.rotation.x = Math.PI / 2;
+        grp.add(tapeRoll);
+        for (let flange of [-0.012, 0.012]) {
+          const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.003, 16), spoolMat);
+          disc.rotation.x = Math.PI / 2;
+          disc.position.z = flange;
+          grp.add(disc);
+        }
+      };
+
+      buildSpool(tapeReelL);
+      buildSpool(tapeReelR);
+
+      tapeReelL.position.set(-0.48, 1.35, 0.1);
+      tapeReelR.position.set(0.48, 1.35, 0.1);
+      parentGroup.add(tapeReelL);
+      parentGroup.add(tapeReelR);
+    }
+
+    /* CRT 모니터 본체 케이싱 */
+    function buildMonitorChassis() {
+      monitorObj = new THREE.Group();
+      const bezelMat = new THREE.MeshStandardMaterial({ color: 0x1f2a24, roughness: 0.65 });
+      const rearMat = new THREE.MeshStandardMaterial({ color: 0x141d18, roughness: 0.85 });
+      const ledMat = new THREE.MeshBasicMaterial({ color: 0x33ff66 });
+
+      // CRT 모니터 전면 베젤 프레임 (4:3 화면 창 개구부)
+      const bezel = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.92, 0.12), bezelMat);
+      bezel.castShadow = true;
+      monitorObj.add(bezel);
+
+      // CRT 후면 테이퍼형(깔때기 모양) 케이싱
+      const rearHousing = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.72, 0.68), rearMat);
+      rearHousing.position.set(0, 0, -0.38);
+      rearHousing.castShadow = true;
+      monitorObj.add(rearHousing);
+
+      // 상단 방열 벤틸레이션 슬릿
+      for (let s = -3; s <= 3; s++) {
+        const slit = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.015, 0.03), new THREE.MeshBasicMaterial({ color: 0x070b09 }));
+        slit.position.set(0, 0.37, -0.35 + s * 0.06);
+        monitorObj.add(slit);
+      }
+
+      // 전면 전원 로커 스위치 & 초록색 전원 LED
+      const pwrLed = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 8), ledMat);
+      pwrLed.position.set(0.48, -0.38, 0.065);
+      monitorObj.add(pwrLed);
+
+      const pwrSwitch = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.02, 0.02), new THREE.MeshStandardMaterial({ color: 0x111111 }));
+      pwrSwitch.position.set(0.53, -0.38, 0.065);
+      monitorObj.add(pwrSwitch);
+
+      // 밝기/대비 아날로그 노브 2개
+      for (let d of [-0.48, -0.42]) {
+        const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.015, 8), new THREE.MeshStandardMaterial({ color: 0x33443a }));
+        knob.rotation.x = Math.PI / 2;
+        knob.position.set(d, -0.38, 0.065);
+        monitorObj.add(knob);
+      }
+
+      // 후면 굵은 BNC/전원 케이블 (검은 고무 호스)
+      const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.85, 8), new THREE.MeshStandardMaterial({ color: 0x050706 }));
+      cable.position.set(0.25, -0.35, -0.65);
+      cable.rotation.x = 0.35;
+      monitorObj.add(cable);
+
+      monitorObj.position.set(0, 1.35, -4.2);
+      scene.add(monitorObj);
     }
 
     /* 데스크 위 3D 수사 증거 폴라로이드 사진 (Polaroid Evidence Photo) */
@@ -1783,17 +2540,14 @@
     function update3DMonitorScreen() {
       if (!monitorCtx) return;
 
-      // 짙은 CRT 인광 녹색 배경
       monitorCtx.fillStyle = '#020904';
       monitorCtx.fillRect(0, 0, 256, 180);
 
-      // 스캔라인
       monitorCtx.fillStyle = 'rgba(10, 35, 18, 0.4)';
       for (let y = 0; y < 180; y += 4) {
         monitorCtx.fillRect(0, y, 256, 2);
       }
 
-      // 텍스트 OSD
       monitorCtx.font = 'bold 12px monospace';
       monitorCtx.fillStyle = '#33ff77';
       monitorCtx.fillText('ARCHIVE-1999 OS v2.4', 12, 22);
@@ -1804,7 +2558,6 @@
       monitorCtx.fillText(`FREQ: ${paramFreq}Hz | DEMOD: ${currentDemod}`, 12, 58);
       monitorCtx.fillText(`SYNC LOCK: ${syncPct}%`, 12, 74);
 
-      // 실시간 오실로스코프 파형
       monitorCtx.strokeStyle = '#33ff77';
       monitorCtx.lineWidth = 1.5;
       monitorCtx.beginPath();
@@ -1817,7 +2570,6 @@
       }
       monitorCtx.stroke();
 
-      // 하단 심전도 뇌파 펄스 라인
       monitorCtx.strokeStyle = '#ffaa11';
       monitorCtx.lineWidth = 1.0;
       monitorCtx.beginPath();
@@ -1989,20 +2741,58 @@
 
     function buildDeskTelephone() {
       phoneObj = new THREE.Group();
-      const phoneMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.6 });
+      const phoneMat = new THREE.MeshStandardMaterial({ color: 0x111613, roughness: 0.55 });
+      const dialMat = new THREE.MeshStandardMaterial({ color: 0xccd5ce, metalness: 0.8, roughness: 0.3 });
       const redMat = new THREE.MeshStandardMaterial({ color: 0xaa2222 });
 
-      const base = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.08, 0.3), phoneMat);
+      // 슬랜트 본체 베이스
+      const base = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.08, 0.32), phoneMat);
       base.position.y = 0.04;
+      base.rotation.x = 0.08;
       phoneObj.add(base);
 
-      const dialRing = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.02, 16), new THREE.MeshStandardMaterial({ color: 0xcccccc }));
-      dialRing.position.set(0, 0.09, 0.04);
+      // 크롬 로터리 다이얼 링 & 구멍
+      const dialRing = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.02, 16), dialMat);
+      dialRing.position.set(0, 0.095, 0.04);
       phoneObj.add(dialRing);
 
-      const handset = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.06, 0.08), phoneMat);
-      handset.position.set(0, 0.14, -0.06);
+      for (let h = 0; h < 10; h++) {
+        const rad = (h * Math.PI * 2) / 10;
+        const hole = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 6), new THREE.MeshBasicMaterial({ color: 0x050806 }));
+        hole.position.set(Math.sin(rad) * 0.065, 0.105, 0.04 + Math.cos(rad) * 0.065);
+        phoneObj.add(hole);
+      }
+
+      // 수화기 거치대 프롱 2개
+      for (let p of [-0.08, 0.08]) {
+        const prong = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.04, 0.04), dialMat);
+        prong.position.set(p, 0.12, -0.08);
+        phoneObj.add(prong);
+      }
+
+      // 수화기 (Handset)
+      const handset = new THREE.Group();
+      const handleBar = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.26, 8), phoneMat);
+      handleBar.rotation.z = Math.PI / 2;
+      handset.add(handleBar);
+      for (let cupX of [-0.15, 0.15]) {
+        const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.035, 0.06, 12), phoneMat);
+        cup.position.set(cupX, -0.02, 0);
+        handset.add(cup);
+      }
+      handset.position.set(0, 0.15, -0.08);
       phoneObj.add(handset);
+
+      // 나선형 꼬임 전화선 (Coiled Spring Cord)
+      const cordCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(0, 0.05, -0.15),
+        new THREE.Vector3(0.08, 0.02, -0.2),
+        new THREE.Vector3(0.02, 0.01, -0.25),
+        new THREE.Vector3(0.12, 0.08, -0.12)
+      ]);
+      const cordGeo = new THREE.TubeGeometry(cordCurve, 16, 0.008, 6, false);
+      const cordMesh = new THREE.Mesh(cordGeo, phoneMat);
+      phoneObj.add(cordMesh);
 
       const indicator = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), redMat);
       indicator.position.set(0.1, 0.1, -0.1);
@@ -2034,107 +2824,285 @@
       scene.add(dustParticles);
     }
 
+    /* 초정밀 병원 휠체어 (High-Detail Hospital Wheelchair) */
     function buildWheelchairProp() {
       wheelchairObj = new THREE.Group();
-      const frameMat = new THREE.MeshStandardMaterial({ color: 0x223328, metalness: 0.7 });
-      const seatMat = new THREE.MeshStandardMaterial({ color: 0x1a1215 });
+      const chromeMat = new THREE.MeshStandardMaterial({ color: 0x4a5850, metalness: 0.85, roughness: 0.3 });
+      const rubberMat = new THREE.MeshStandardMaterial({ color: 0x111613, roughness: 0.9 });
+      const leatherMat = new THREE.MeshStandardMaterial({ color: 0x1c1716, roughness: 0.75 });
 
-      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.8), seatMat);
-      seat.position.y = 0.6;
+      // 좌석 쿠션
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.08, 0.76), leatherMat);
+      seat.position.y = 0.58;
       wheelchairObj.add(seat);
 
-      const back = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.1), seatMat);
-      back.position.set(0, 1.0, 0.35);
+      // 등받이 패드
+      const back = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.75, 0.08), leatherMat);
+      back.position.set(0, 1.02, 0.35);
       wheelchairObj.add(back);
 
-      const wheelGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.06, 16);
-      const w1 = new THREE.Mesh(wheelGeo, frameMat);
-      w1.rotation.z = Math.PI / 2;
-      w1.position.set(-0.45, 0.45, 0);
-      wheelchairObj.add(w1);
+      // X자 접이식 크로스 프레임
+      for (let sign of [-1, 1]) {
+        const xBar = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.7, 8), chromeMat);
+        xBar.rotation.z = sign * 0.55;
+        xBar.position.set(0, 0.32, sign * 0.15);
+        wheelchairObj.add(xBar);
+      }
 
-      const w2 = new THREE.Mesh(wheelGeo, frameMat);
-      w2.rotation.z = Math.PI / 2;
-      w2.position.set(0.45, 0.45, 0);
-      wheelchairObj.add(w2);
+      // 좌우 메인 바퀴 (24인치 스포크 휠 + 외곽 핸드림)
+      for (let side of [-0.44, 0.44]) {
+        const wheelGroup = new THREE.Group();
+        const tire = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.025, 8, 24), rubberMat);
+        wheelGroup.add(tire);
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.015, 8, 24), chromeMat);
+        rim.position.z = side > 0 ? 0.03 : -0.03;
+        wheelGroup.add(rim);
+        const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.06, 12), chromeMat);
+        hub.rotation.x = Math.PI / 2;
+        wheelGroup.add(hub);
+        for (let s = 0; s < 8; s++) {
+          const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.82, 4), chromeMat);
+          spoke.rotation.z = (s * Math.PI) / 8;
+          wheelGroup.add(spoke);
+        }
+        wheelGroup.position.set(side, 0.44, 0.05);
+        wheelchairObj.add(wheelGroup);
+      }
+
+      // 전면 스위블 캐스터 작은 바퀴 2개
+      for (let side of [-0.34, 0.34]) {
+        const casterGroup = new THREE.Group();
+        const fork = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.18, 8), chromeMat);
+        fork.position.y = 0.09;
+        casterGroup.add(fork);
+        const smallTire = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.035, 12), rubberMat);
+        smallTire.rotation.z = Math.PI / 2;
+        casterGroup.add(smallTire);
+        casterGroup.position.set(side, 0.09, -0.42);
+        wheelchairObj.add(casterGroup);
+      }
+
+      // 좌우 팔걸이 & 발받침대 & 후면 손잡이
+      for (let side of [-0.41, 0.41]) {
+        const armRest = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.05, 0.5), leatherMat);
+        armRest.position.set(side, 0.82, 0.05);
+        wheelchairObj.add(armRest);
+
+        const footRest = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.02, 0.22), chromeMat);
+        footRest.position.set(side, 0.12, -0.5);
+        footRest.rotation.x = 0.2;
+        wheelchairObj.add(footRest);
+
+        const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.16, 8), rubberMat);
+        handle.rotation.x = Math.PI / 2;
+        handle.position.set(side, 1.25, 0.44);
+        wheelchairObj.add(handle);
+      }
 
       wheelchairObj.position.set(2.8, 0, -2.5);
       wheelchairObj.rotation.y = -0.5;
       scene.add(wheelchairObj);
     }
 
+    /* 초정밀 링거 수액/수혈대 (High-Detail IV Drip Stand) */
     function buildIVStandProp() {
       ivStandObj = new THREE.Group();
-      const metalMat = new THREE.MeshStandardMaterial({ color: 0x556655, metalness: 0.8 });
-      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 2.2, 8), metalMat);
-      pole.position.y = 1.1;
+      const chromeMat = new THREE.MeshStandardMaterial({ color: 0x5a6a60, metalness: 0.9, roughness: 0.25 });
+      const fluidMat = new THREE.MeshStandardMaterial({ color: 0x991118, roughness: 0.1, transparent: true, opacity: 0.88 });
+      const tubeMat = new THREE.MeshStandardMaterial({ color: 0xddffff, roughness: 0.1, transparent: true, opacity: 0.55 });
+
+      // 5발 방사형 롤링 베이스 (5-star base)
+      const baseHub = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.05, 10), chromeMat);
+      baseHub.position.y = 0.06;
+      ivStandObj.add(baseHub);
+      for (let a = 0; a < 5; a++) {
+        const rad = (a * Math.PI * 2) / 5;
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.03, 0.34), chromeMat);
+        leg.position.set(Math.sin(rad) * 0.17, 0.05, Math.cos(rad) * 0.17);
+        leg.rotation.y = rad;
+        ivStandObj.add(leg);
+
+        const wheel = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), chromeMat);
+        wheel.position.set(Math.sin(rad) * 0.32, 0.025, Math.cos(rad) * 0.32);
+        ivStandObj.add(wheel);
+      }
+
+      // 텔레스코픽 크롬 기둥
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.022, 2.2, 10), chromeMat);
+      pole.position.y = 1.15;
       ivStandObj.add(pole);
 
-      const base1 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.04, 0.06), metalMat);
-      base1.position.y = 0.02;
-      ivStandObj.add(base1);
-      const base2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.04, 0.6), metalMat);
-      base2.position.y = 0.02;
-      ivStandObj.add(base2);
+      // 높이 조절 잠금 노브
+      const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.06, 10), chromeMat);
+      collar.position.y = 1.45;
+      ivStandObj.add(collar);
 
-      const bag = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.25, 0.08), new THREE.MeshStandardMaterial({ color: 0x881122 }));
-      bag.position.set(0.1, 2.0, 0);
-      ivStandObj.add(bag);
+      // 상단 듀얼 램혼 걸이 (Ram-horn hooks)
+      for (let s of [-1, 1]) {
+        const hook = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.012, 6, 12, Math.PI), chromeMat);
+        hook.position.set(s * 0.09, 2.22, 0);
+        hook.rotation.z = s * (Math.PI / 2);
+        ivStandObj.add(hook);
+      }
+
+      // 링거 수액/수혈 팩 & 드립 챔버
+      const ivBag = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.28, 0.06), fluidMat);
+      ivBag.position.set(0.1, 2.05, 0);
+      ivStandObj.add(ivBag);
+
+      const chamber = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.08, 8), tubeMat);
+      chamber.position.set(0.1, 1.87, 0);
+      ivStandObj.add(chamber);
+
+      // 매달려 늘어진 수액 튜브
+      const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.85, 6), tubeMat);
+      tube.position.set(0.12, 1.4, 0.04);
+      tube.rotation.z = 0.08;
+      ivStandObj.add(tube);
 
       ivStandObj.position.set(-2.8, 0, -2.2);
       scene.add(ivStandObj);
     }
 
+    /* 초정밀 수술용 이동식 들것 (High-Detail Hospital Gurney) */
     function buildGurneyProp() {
       gurneyObj = new THREE.Group();
-      const metalMat = new THREE.MeshStandardMaterial({ color: 0x2f3a34, metalness: 0.7 });
-      const sheetMat = new THREE.MeshStandardMaterial({ color: 0x222a25, roughness: 0.9 });
+      const chromeMat = new THREE.MeshStandardMaterial({ color: 0x48564e, metalness: 0.85, roughness: 0.3 });
+      const vinylMat = new THREE.MeshStandardMaterial({ color: 0x1d2420, roughness: 0.65 });
+      const strapMat = new THREE.MeshStandardMaterial({ color: 0x442a18, roughness: 0.85 });
 
-      const bed = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.1, 2.4), metalMat);
-      bed.position.y = 0.75;
-      gurneyObj.add(bed);
+      // 하부 가위형(X자) 폴딩 승강 프레임
+      for (let side of [-0.48, 0.48]) {
+        const x1 = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.6, 8), chromeMat);
+        x1.rotation.x = 0.52;
+        x1.position.set(side, 0.42, 0);
+        gurneyObj.add(x1);
 
-      for (let x of [-0.5, 0.5]) {
-        for (let z of [-1.0, 1.0]) {
-          const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.7, 8), metalMat);
-          leg.position.set(x, 0.35, z);
-          gurneyObj.add(leg);
+        const x2 = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.6, 8), chromeMat);
+        x2.rotation.x = -0.52;
+        x2.position.set(side, 0.42, 0);
+        gurneyObj.add(x2);
+      }
+
+      // 하부 와이어 보관 랙 (메탈 선반)
+      const rack = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.04, 1.8), chromeMat);
+      rack.position.set(0, 0.18, 0);
+      gurneyObj.add(rack);
+
+      // 상부 침대 프레임
+      const bedFrame = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.08, 2.35), chromeMat);
+      bedFrame.position.y = 0.78;
+      gurneyObj.add(bedFrame);
+
+      // 병원 매트리스 (도톰한 비닐 가죽 매트리스)
+      const mattress = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.22, 2.25), vinylMat);
+      mattress.position.y = 0.92;
+      gurneyObj.add(mattress);
+
+      // 매트리스 상단 베개 경사부
+      const pillow = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.12, 0.55), vinylMat);
+      pillow.position.set(0, 1.05, -0.8);
+      pillow.rotation.x = -0.18;
+      gurneyObj.add(pillow);
+
+      // 환자 결박용 가죽 스트랩 2줄 (Restraint Straps)
+      for (let z of [-0.2, 0.4]) {
+        const strap = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.03, 0.1), strapMat);
+        strap.position.set(0, 1.04, z);
+        gurneyObj.add(strap);
+      }
+
+      // 좌우 접이식 안전 사이드 레일 (Safety Guard Rails)
+      for (let side of [-0.56, 0.56]) {
+        const railTop = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 1.4, 8), chromeMat);
+        railTop.rotation.x = Math.PI / 2;
+        railTop.position.set(side, 1.15, 0.1);
+        gurneyObj.add(railTop);
+        for (let rz of [-0.45, 0, 0.45]) {
+          const vertBar = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.35, 8), chromeMat);
+          vertBar.position.set(side, 0.98, rz + 0.1);
+          gurneyObj.add(vertBar);
         }
       }
 
-      const contour = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.35, 1.8), sheetMat);
-      contour.position.set(0, 0.95, 0);
-      gurneyObj.add(contour);
+      // 4대 대형 의료용 캐스터 바퀴
+      for (let x of [-0.46, 0.46]) {
+        for (let z of [-0.95, 0.95]) {
+          const wheelGroup = new THREE.Group();
+          const fork = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.16, 8), chromeMat);
+          fork.position.y = 0.08;
+          wheelGroup.add(fork);
+          const cWheel = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.04, 12), chromeMat);
+          cWheel.rotation.z = Math.PI / 2;
+          wheelGroup.add(cWheel);
+          wheelGroup.position.set(x, 0.08, z);
+          gurneyObj.add(wheelGroup);
+        }
+      }
 
       gurneyObj.position.set(-3.2, 0, 1.8);
       gurneyObj.rotation.y = 0.2;
       scene.add(gurneyObj);
     }
 
+    /* 기괴한 3D 그림자 괴물 엔티티 (Emaciated Humanoid Apparition) */
     function buildMonsterEntity() {
       monsterFigure = new THREE.Group();
-      const monMat = new THREE.MeshBasicMaterial({ color: 0x050505 });
-
-      const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.4, 2.2, 8), monMat);
-      torso.position.y = 1.1;
-      monsterFigure.add(torso);
-
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), monMat);
-      head.position.y = 2.3;
-      monsterFigure.add(head);
-
+      const entityMat = new THREE.MeshBasicMaterial({ color: 0x030504 });
       const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0022 });
-      const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.04, 4, 4), eyeMat);
-      eyeL.position.set(-0.1, 2.35, -0.26);
+      const ribMat = new THREE.MeshBasicMaterial({ color: 0x080c09 });
+
+      // 기괴하게 꺾인 마른 흉곽 및 척추
+      const spine = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 2.3, 8), entityMat);
+      spine.position.y = 1.35;
+      spine.rotation.z = 0.08;
+      monsterFigure.add(spine);
+
+      // 앙상한 갈비뼈 실루엣 5쌍
+      for (let r = 0; r < 5; r++) {
+        const rib = new THREE.Mesh(new THREE.TorusGeometry(0.24 - r * 0.02, 0.018, 4, 12, Math.PI), ribMat);
+        rib.rotation.x = Math.PI / 2;
+        rib.rotation.y = Math.PI;
+        rib.position.set(0, 1.65 - r * 0.12, 0);
+        monsterFigure.add(rib);
+      }
+
+      // 비정상적으로 길고 뒤틀린 팔과 바늘 손가락
+      for (let sign of [-1, 1]) {
+        const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.02, 1.6, 6), entityMat);
+        arm.position.set(sign * 0.38, 1.15, sign * 0.05);
+        arm.rotation.z = sign * 0.22;
+        arm.rotation.x = 0.15;
+        monsterFigure.add(arm);
+
+        for (let f = 0; f < 3; f++) {
+          const claw = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.002, 0.35, 4), entityMat);
+          claw.position.set(sign * 0.42 + (f - 1) * 0.03, 0.28, 0.1);
+          claw.rotation.x = 0.3;
+          monsterFigure.add(claw);
+        }
+      }
+
+      // 기괴하게 꺾인 머리와 섬뜩한 붉은 안광
+      const skull = new THREE.Mesh(new THREE.SphereGeometry(0.26, 10, 10), entityMat);
+      skull.position.set(0.05, 2.52, -0.05);
+      skull.rotation.z = 0.35;
+      skull.rotation.y = -0.2;
+      monsterFigure.add(skull);
+
+      const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 6), eyeMat);
+      eyeL.position.set(-0.04, 2.55, -0.26);
       monsterFigure.add(eyeL);
-      const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.04, 4, 4), eyeMat);
-      eyeR.position.set(0.1, 2.35, -0.26);
+
+      const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 6), eyeMat);
+      eyeR.position.set(0.14, 2.58, -0.24);
       monsterFigure.add(eyeR);
 
-      const armL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.4, 0.1), monMat);
-      armL.position.set(-0.38, 1.1, -0.15);
-      armL.rotation.z = 0.2;
-      monsterFigure.add(armL);
+      // 어깨에서 흘러내리는 너덜너덜한 수의 자락
+      const shroudMat = new THREE.MeshStandardMaterial({ color: 0x09120c, roughness: 0.95 });
+      const shroud = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.9, 8, 1, true), shroudMat);
+      shroud.position.set(0, 1.25, 0);
+      monsterFigure.add(shroud);
 
       monsterFigure.position.set(0, 0, 5.5);
       monsterFigure.visible = false;
@@ -2446,6 +3414,10 @@
         const spR = document.getElementById('spoolR');
         if (spL) spL.style.transform = `rotate(${deg}deg)`;
         if (spR) spR.style.transform = `rotate(${deg * 1.05}deg)`;
+
+        // 3D 공간 속 실제 릴-투-릴 데크 스풀 물리 회전
+        if (tapeReelL) tapeReelL.rotation.z = -tapeSpoolAngle;
+        if (tapeReelR) tapeReelR.rotation.z = -tapeSpoolAngle * 1.04;
       }
 
       if (ceilingFan) ceilingFan.rotation.y += 0.02;
@@ -2475,13 +3447,17 @@
       ceilingLamp.position.x = Math.sin(lampSwing) * 0.2;
       if (isBlackoutActive) {
         ceilingLamp.intensity = 0;
+        if (deskLampLight) deskLampLight.intensity = 0;
         if (exitSignLamp) exitSignLamp.intensity = Math.sin(Date.now() * 0.01) * 0.5 + 0.5;
       } else if (!isSafeMode) {
+        if (deskLampLight) deskLampLight.intensity = 2.5;
         if (Math.random() < 0.025) {
           ceilingLamp.intensity = Math.random() * 0.3;
         } else {
           ceilingLamp.intensity = 0.9 + Math.sin(lampSwing * 2) * 0.25;
         }
+      } else {
+        if (deskLampLight) deskLampLight.intensity = 3.0;
       }
 
       if (isPointerLocked && !inTerminalMode && !inDocInspectMode) {
@@ -2559,7 +3535,10 @@
         tip.style.display = 'block';
 
         let rootHit = hits[0].object;
-        while (rootHit.parent && rootHit.parent !== scene && rootHit !== deskDrawerObj && rootHit !== sedativeBottleObj && rootHit !== polaroidObj) {
+        while (rootHit.parent && rootHit.parent !== scene &&
+               rootHit !== deskObj && rootHit !== monitorObj && rootHit !== doorObj &&
+               rootHit !== deskDrawerObj && rootHit !== sedativeBottleObj && rootHit !== polaroidObj &&
+               rootHit !== noticeBoardObj && rootHit !== clipboardObj && rootHit !== breakerBoxObj && rootHit !== phoneObj) {
           rootHit = rootHit.parent;
         }
 
@@ -3856,7 +4835,10 @@
           const hits = ray.intersectObjects(targets, true);
           if (hits.length > 0 && hits[0].distance < 3.8) {
             let rootHit = hits[0].object;
-            while (rootHit.parent && rootHit.parent !== scene && rootHit !== deskDrawerObj && rootHit !== sedativeBottleObj && rootHit !== polaroidObj) {
+            while (rootHit.parent && rootHit.parent !== scene &&
+                   rootHit !== deskObj && rootHit !== monitorObj && rootHit !== doorObj &&
+                   rootHit !== deskDrawerObj && rootHit !== sedativeBottleObj && rootHit !== polaroidObj &&
+                   rootHit !== noticeBoardObj && rootHit !== clipboardObj && rootHit !== breakerBoxObj && rootHit !== phoneObj) {
               rootHit = rootHit.parent;
             }
 
