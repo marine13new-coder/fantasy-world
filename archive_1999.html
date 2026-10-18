@@ -1747,94 +1747,301 @@
       return new THREE.CanvasTexture(c);
     }
 
+    /* 녹슨 아연도금 메탈 텍스처 (Corroded Galvanized Metal Texture) */
+    function createRustMetalTexture() {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 512;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#26302a';
+      ctx.fillRect(0, 0, 512, 512);
+
+      for (let i = 0; i < 4000; i++) {
+        ctx.fillStyle = Math.random() < 0.5 ? 'rgba(15, 20, 18, 0.6)' : 'rgba(50, 65, 55, 0.4)';
+        ctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
+      }
+
+      for (let r = 0; r < 25; r++) {
+        const rx = Math.random() * 512;
+        const ry = Math.random() * 512;
+        const grad = ctx.createRadialGradient(rx, ry, 5, rx, ry, Math.random() * 45 + 15);
+        grad.addColorStop(0, 'rgba(140, 60, 25, 0.75)');
+        grad.addColorStop(0.5, 'rgba(95, 40, 18, 0.45)');
+        grad.addColorStop(1, 'rgba(38, 48, 42, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(rx, ry, 50, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      return tex;
+    }
+
+    /* 휠체어 등받이 스텐실 텍스처 (SBH WARD 404 Institutional Stencil) */
+    function createWheelchairStencilTexture() {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 512;
+      const ctx = c.getContext('2d');
+
+      ctx.fillStyle = '#181514';
+      ctx.fillRect(0, 0, 512, 512);
+
+      for (let i = 0; i < 3000; i++) {
+        ctx.fillStyle = Math.random() < 0.5 ? 'rgba(10, 8, 7, 0.6)' : 'rgba(35, 30, 28, 0.4)';
+        ctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
+      }
+
+      ctx.fillStyle = 'rgba(215, 225, 218, 0.72)';
+      ctx.font = 'bold 36px "Share Tech Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('SONG-BAEK HOSP.', 256, 210);
+      ctx.font = 'bold 52px "Share Tech Mono", monospace';
+      ctx.fillText('WARD 404', 256, 275);
+      ctx.font = 'bold 24px monospace';
+      ctx.fillText('[ISOLATION PSYCH-UNIT]', 256, 330);
+
+      for (let s = 0; s < 180; s++) {
+        ctx.fillStyle = '#181514';
+        ctx.fillRect(Math.random() * 400 + 56, Math.random() * 160 + 180, Math.random() * 8 + 2, Math.random() * 4 + 1);
+      }
+
+      return new THREE.CanvasTexture(c);
+    }
+
     function createNoticeBoardTexture() {
       const c = document.createElement('canvas');
       c.width = 1024; c.height = 512;
       const ctx = c.getContext('2d');
 
-      ctx.fillStyle = '#3a2717';
+      // 1. 고밀도 코르크 베이스보드 (Cork Grain Texture)
+      ctx.fillStyle = '#3e2b1b';
       ctx.fillRect(0, 0, 1024, 512);
-      for (let i = 0; i < 4000; i++) {
-        ctx.fillStyle = Math.random() < 0.5 ? 'rgba(35, 22, 12, 0.5)' : 'rgba(75, 52, 32, 0.4)';
-        ctx.fillRect(Math.random() * 1024, Math.random() * 512, 3, 3);
+      for (let i = 0; i < 6000; i++) {
+        ctx.fillStyle = Math.random() < 0.5 ? 'rgba(28, 17, 9, 0.65)' : 'rgba(88, 62, 38, 0.5)';
+        ctx.fillRect(Math.random() * 1024, Math.random() * 512, 2.5, 2.5);
       }
 
-      ctx.strokeStyle = '#1f130a';
-      ctx.lineWidth = 16;
-      ctx.strokeRect(8, 8, 1008, 496);
+      // 2. 어두운 원목 테두리 프레임
+      ctx.strokeStyle = '#1b120a';
+      ctx.lineWidth = 18;
+      ctx.strokeRect(9, 9, 1006, 494);
+      ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(18, 18, 988, 476);
 
-      ctx.fillStyle = '#e8dcc4';
-      ctx.fillRect(60, 45, 280, 200);
+      // 3. [문서 1] 1979 송백병원 화재 참사 1면 신문 스크랩 (좌측 상단)
+      ctx.save();
+      ctx.translate(45, 38);
+      ctx.rotate(-0.03);
+      // 신문지 그림자
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(5, 5, 290, 225);
+      // 신문지 본체
+      ctx.fillStyle = '#ded3be';
+      ctx.fillRect(0, 0, 290, 225);
+      // 신문 타이틀 헤더
       ctx.fillStyle = '#111';
-      ctx.font = 'bold 18px "Special Elite", monospace';
-      ctx.fillText('1979 송백병원 화재 참사', 75, 80);
-      ctx.font = '12px monospace';
-      ctx.fillText('지하 404호 격리병동 전소...', 75, 110);
-      ctx.fillText('환자 17명 사망, 원장 잠적', 75, 130);
-      ctx.fillText('불법 뇌파 교체 음향 실험 의혹', 75, 150);
-      ctx.fillText('사건 파일 번호: 79-A-108', 75, 175);
-      ctx.strokeStyle = 'rgba(230, 30, 40, 0.6)';
-      ctx.lineWidth = 8;
-      ctx.beginPath(); ctx.moveTo(75, 146); ctx.lineTo(310, 146); ctx.stroke();
-
-      ctx.fillStyle = '#ece8df';
-      ctx.fillRect(400, 60, 170, 210);
-      ctx.fillStyle = '#18241e';
-      ctx.fillRect(415, 75, 140, 140);
-      ctx.fillStyle = '#3d4e44';
-      ctx.beginPath(); ctx.arc(485, 135, 35, 0, Math.PI * 2); ctx.fill();
-      ctx.fillRect(455, 170, 60, 45);
-      ctx.strokeStyle = '#cc1824';
-      ctx.lineWidth = 5;
-      ctx.beginPath(); ctx.moveTo(420, 80); ctx.lineTo(550, 210); ctx.moveTo(550, 80); ctx.lineTo(420, 210); ctx.stroke();
-      ctx.fillStyle = '#222';
-      ctx.font = 'bold 13px monospace';
-      ctx.fillText('SUBJECT #17 [사망]', 425, 245);
-
-      ctx.fillStyle = '#f5efe0';
-      ctx.fillRect(630, 50, 320, 220);
-      ctx.fillStyle = '#1a1a1a';
-      ctx.font = 'bold 14px monospace';
-      ctx.fillText('EEG SPECTRUM: 108.4 Hz RESONANCE', 645, 80);
-      ctx.strokeStyle = '#2b7a4b';
+      ctx.font = 'bold 20px "Special Elite", serif';
+      ctx.fillText('대한일보 1979.08.14', 14, 28);
+      ctx.strokeStyle = '#111';
       ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(14, 34); ctx.lineTo(276, 34); ctx.stroke();
+      // 헤드라인
+      ctx.font = 'bold 15px sans-serif';
+      ctx.fillText('송백정신병원 의문의 전소', 14, 54);
+      ctx.font = '11px sans-serif';
+      ctx.fillText('지하 404호 격리병동서 발화...', 14, 72);
+      ctx.fillText('환자 17명 사망, 원장 한진우 잠적', 14, 88);
+      ctx.fillText('불법 음향 뇌파 실험 기록 증거 인멸 정황', 14, 104);
+      // 신문 사진 영역 (불탄 병동 흑백 사진)
+      ctx.fillStyle = '#222';
+      ctx.fillRect(14, 116, 110, 85);
+      ctx.fillStyle = '#444';
+      ctx.fillRect(20, 122, 98, 73);
+      ctx.fillStyle = '#888';
+      ctx.font = '9px monospace';
+      ctx.fillText('[화재 현장 404호]', 22, 190);
+      // 신문 기사 본문 칼럼 줄
+      ctx.fillStyle = '#333';
+      for (let y = 120; y < 205; y += 7) {
+        ctx.fillRect(134, y, 142, 3);
+      }
+      // 주황색 형광펜 하이라이트 밑줄
+      ctx.fillStyle = 'rgba(255, 140, 0, 0.45)';
+      ctx.fillRect(12, 92, 265, 14);
+      // 투명 스카치테이프 고정 (상단 중앙)
+      ctx.fillStyle = 'rgba(255, 255, 230, 0.55)';
+      ctx.fillRect(115, -8, 60, 20);
+      ctx.restore();
+
+      // 4. [문서 2] 희생자 폴라로이드 사진 (중앙)
+      ctx.save();
+      ctx.translate(390, 48);
+      ctx.rotate(0.04);
+      // 사진 그림자
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.fillRect(5, 5, 185, 225);
+      // 폴라로이드 종이
+      ctx.fillStyle = '#f4f0e6';
+      ctx.fillRect(0, 0, 185, 225);
+      // 사진 필름 면
+      ctx.fillStyle = '#111814';
+      ctx.fillRect(14, 14, 157, 157);
+      // 흑백 희생자 실루엣
+      ctx.fillStyle = '#2a3b32';
+      ctx.beginPath(); ctx.arc(92, 75, 38, 0, Math.PI * 2); ctx.fill();
+      ctx.fillRect(60, 110, 65, 55);
+      // 눈 부위 검은 먹칠 테이프
+      ctx.fillStyle = '#050706';
+      ctx.fillRect(70, 68, 45, 12);
+      // 붉은색 X자 마킹
+      ctx.strokeStyle = '#d61b28';
+      ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(22, 22); ctx.lineTo(163, 163); ctx.moveTo(163, 22); ctx.lineTo(22, 163); ctx.stroke();
+      // 폴라로이드 하단 손글씨
+      ctx.fillStyle = '#111';
+      ctx.font = 'bold 13px "Special Elite", monospace';
+      ctx.fillText('SUBJECT #17: 김민우', 16, 192);
+      ctx.font = '11px monospace';
+      ctx.fillStyle = '#c41824';
+      ctx.fillText('[사망 확인 / 뇌파 잔류]', 16, 210);
+      ctx.restore();
+
+      // 5. [문서 3] EEG 뇌파 스펙트럼 분석 차트 (우측 상단)
+      ctx.save();
+      ctx.translate(625, 40);
+      ctx.rotate(-0.02);
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(5, 5, 345, 230);
+      ctx.fillStyle = '#fbf8ee';
+      ctx.fillRect(0, 0, 345, 230);
+      // 차트 헤더
+      ctx.fillStyle = '#18241e';
+      ctx.font = 'bold 13px monospace';
+      ctx.fillText('CONFIDENTIAL CLINICAL EEG GRAPH', 14, 24);
+      ctx.font = '11px monospace';
+      ctx.fillText('TARGET FREQ: 108.4 Hz RESONANCE SPIKE', 14, 40);
+      // 모눈종이 그리드
+      ctx.strokeStyle = 'rgba(80, 140, 100, 0.25)';
+      ctx.lineWidth = 1;
+      for (let gx = 14; gx < 330; gx += 16) {
+        ctx.beginPath(); ctx.moveTo(gx, 50); ctx.lineTo(gx, 180); ctx.stroke();
+      }
+      for (let gy = 50; gy < 185; gy += 16) {
+        ctx.beginPath(); ctx.moveTo(14, gy); ctx.lineTo(330, gy); ctx.stroke();
+      }
+      // 녹색 뇌파 파형 그래프
+      ctx.strokeStyle = '#1b7a42';
+      ctx.lineWidth = 2.2;
       ctx.beginPath();
-      for (let x = 650; x < 920; x += 3) {
-        const y = 140 + Math.sin((x - 650) * 0.12) * 35;
-        if (x === 650) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      for (let x = 14; x < 330; x += 3) {
+        const dist = Math.abs(x - 172);
+        const spike = dist < 25 ? (25 - dist) * 2.8 : 0;
+        const wave = Math.sin(x * 0.14) * 16 - spike;
+        const y = 115 + wave;
+        if (x === 14) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       }
       ctx.stroke();
-      ctx.fillStyle = '#991122';
-      ctx.font = 'bold 13px monospace';
-      ctx.fillText('[경고: 특정 음파 노출 시 자아 소멸]', 650, 210);
+      // 108.4Hz 스파이크 지점 적색 동그라미
+      ctx.strokeStyle = '#cc1824';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(172, 85, 24, 0, Math.PI * 2); ctx.stroke();
+      ctx.font = 'bold 11px monospace';
+      ctx.fillStyle = '#cc1824';
+      ctx.fillText('▲ 공명 임계점 (자아 붕괴)', 135, 126);
+      // 빨간 고무 스탬프: CLASSIFIED
+      ctx.save();
+      ctx.translate(220, 185);
+      ctx.rotate(-0.15);
+      ctx.strokeStyle = 'rgba(180, 20, 30, 0.75)';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(-6, -16, 115, 28);
+      ctx.fillStyle = 'rgba(180, 20, 30, 0.75)';
+      ctx.font = 'bold 14px "Special Elite", sans-serif';
+      ctx.fillText('TOP SECRET', 0, 4);
+      ctx.restore();
+      ctx.restore();
 
-      ctx.fillStyle = '#fffa88';
-      ctx.fillRect(120, 290, 240, 160);
+      // 6. [문서 4] 노란색 포스트잇 경고 메모 (좌측 하단)
+      ctx.save();
+      ctx.translate(100, 290);
+      ctx.rotate(0.06);
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillRect(4, 4, 250, 175);
+      ctx.fillStyle = '#fff478';
+      ctx.fillRect(0, 0, 250, 175);
       ctx.fillStyle = '#111';
-      ctx.font = 'bold 15px "Special Elite", monospace';
-      ctx.fillText('한진우 원장의 마지막 음성:', 135, 320);
-      ctx.font = '13px "Special Elite", monospace';
-      ctx.fillText('"108.4Hz는 망각이 아니다.', 135, 350);
-      ctx.fillText(' 그것은 다른 영혼의 주파수다."', 135, 375);
-      ctx.fillStyle = '#aa1122';
-      ctx.fillText('-> 비상 배전반 조작 금지', 135, 415);
+      ctx.font = 'bold 14px "Special Elite", monospace';
+      ctx.fillText('한진우 원장의 마지막 유언:', 14, 30);
+      ctx.font = '12px "Special Elite", monospace';
+      ctx.fillText('"108.4Hz는 망각이 아니다.', 14, 58);
+      ctx.fillText(' 그것은 다른 영혼의 주파수다."', 14, 78);
+      ctx.fillStyle = '#c41824';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.fillText('※ 절대로 테이프를 역재생 마라', 14, 115);
+      ctx.font = '11px sans-serif';
+      ctx.fillStyle = '#222';
+      ctx.fillText('-> 비상 배전반 누전 차단 확인 요망', 14, 142);
+      ctx.restore();
 
-      const pins = [[200, 50], [485, 65], [790, 55], [240, 295], [880, 260]];
-      for (let p of pins) {
-        ctx.fillStyle = 'rgba(0,0,0,0.4)';
-        ctx.beginPath(); ctx.arc(p[0] + 3, p[1] + 5, 8, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#ee1122';
+      // 7. [문서 5] 수사관 자필 사건 다이어그램 (우측 하단)
+      ctx.save();
+      ctx.translate(650, 295);
+      ctx.rotate(-0.03);
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillRect(4, 4, 290, 160);
+      ctx.fillStyle = '#ede5d4';
+      ctx.fillRect(0, 0, 290, 160);
+      ctx.fillStyle = '#18241e';
+      ctx.font = 'bold 13px "Special Elite", monospace';
+      ctx.fillText('PROJECT RESIDUE: 잔류 음향', 14, 28);
+      ctx.font = '11px monospace';
+      ctx.fillText('[원장 한진우] ──?──> [404호 녹음실]', 14, 60);
+      ctx.fillText('      │                    │', 14, 80);
+      ctx.fillText('      ▼                    ▼', 14, 100);
+      ctx.fillText('[불법 인체실험] <──> [환자 17호 사망]', 14, 120);
+      ctx.fillStyle = '#cc1824';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillText('너도 여기서 나갈 수 없다', 14, 145);
+      ctx.restore();
+
+      // 8. 붉은색 수사 연결 실 (The Red Investigation String Network)
+      const pinCoords = [
+        [190, 60],   // 신문 스크랩
+        [480, 75],   // 희생자 사진
+        [800, 65],   // EEG 차트
+        [220, 310],  // 포스트잇
+        [795, 320]   // 사건 다이어그램
+      ];
+
+      ctx.strokeStyle = '#e62233';
+      ctx.lineWidth = 3;
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+      ctx.shadowBlur = 6;
+      ctx.beginPath();
+      ctx.moveTo(pinCoords[0][0], pinCoords[0][1]);
+      ctx.lineTo(pinCoords[1][0], pinCoords[1][1]);
+      ctx.lineTo(pinCoords[2][0], pinCoords[2][1]);
+      ctx.lineTo(pinCoords[4][0], pinCoords[4][1]);
+      ctx.lineTo(pinCoords[1][0], pinCoords[1][1]);
+      ctx.lineTo(pinCoords[3][0], pinCoords[3][1]);
+      ctx.stroke();
+      ctx.shadowBlur = 0; // 초기화
+
+      // 9. 입체 압정 핀 (Push-pins)
+      for (let p of pinCoords) {
+        // 그림자
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.beginPath(); ctx.arc(p[0] + 4, p[1] + 6, 9, 0, Math.PI * 2); ctx.fill();
+        // 핀 바디
+        ctx.fillStyle = '#d91824';
         ctx.beginPath(); ctx.arc(p[0], p[1], 8, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#ff6677';
+        // 핀 하이라이트
+        ctx.fillStyle = '#ff7788';
         ctx.beginPath(); ctx.arc(p[0] - 2, p[1] - 2, 3, 0, Math.PI * 2); ctx.fill();
       }
-
-      ctx.strokeStyle = '#ee1122';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(200, 50); ctx.lineTo(485, 65);
-      ctx.lineTo(790, 55); ctx.lineTo(240, 295);
-      ctx.stroke();
 
       return new THREE.CanvasTexture(c);
     }
@@ -2098,10 +2305,44 @@
       // 오른쪽 벽면 깨진 관찰 거울 (Cracked Observation Mirror)
       buildCrackedMirror();
 
-      // 벽면 사건 증거 코르크 보드 (Notice Board)
-      const boardGeo = new THREE.BoxGeometry(2.4, 1.2, 0.05);
+      // 벽면 사건 증거 코르크 보드 (The Master Investigation Corkboard)
+      noticeBoardObj = new THREE.Group();
+      const boardGeo = new THREE.BoxGeometry(2.4, 1.2, 0.04);
       const boardMat = new THREE.MeshStandardMaterial({ map: boardTex, roughness: 0.85 });
-      noticeBoardObj = new THREE.Mesh(boardGeo, boardMat);
+      const boardFace = new THREE.Mesh(boardGeo, boardMat);
+      noticeBoardObj.add(boardFace);
+
+      // 원목 외곽 프레임 4면
+      const frameMat = new THREE.MeshStandardMaterial({ color: 0x1f140c, roughness: 0.7, metalness: 0.1 });
+      const frameTop = new THREE.Mesh(new THREE.BoxGeometry(2.46, 0.05, 0.06), frameMat);
+      frameTop.position.set(0, 0.61, 0.01);
+      noticeBoardObj.add(frameTop);
+      const frameBottom = new THREE.Mesh(new THREE.BoxGeometry(2.46, 0.05, 0.06), frameMat);
+      frameBottom.position.set(0, -0.61, 0.01);
+      noticeBoardObj.add(frameBottom);
+      const frameLeft = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.26, 0.06), frameMat);
+      frameLeft.position.set(-1.21, 0, 0.01);
+      noticeBoardObj.add(frameLeft);
+      const frameRight = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.26, 0.06), frameMat);
+      frameRight.position.set(1.21, 0, 0.01);
+      noticeBoardObj.add(frameRight);
+
+      // 실제 돌출된 3D 컬러 압정 핀 (3D Push Pins)
+      const pinMat = new THREE.MeshStandardMaterial({ color: 0xd91824, metalness: 0.6, roughness: 0.3 });
+      const pinCoords3D = [
+        [-0.75, 0.44],  // 신문 스크랩
+        [-0.08, 0.41],  // 희생자 사진
+        [0.67, 0.43],   // EEG 차트
+        [-0.68, -0.19], // 포스트잇
+        [0.66, -0.21]   // 사건 다이어그램
+      ];
+      for (let pc of pinCoords3D) {
+        const pinHead = new THREE.Mesh(new THREE.ConeGeometry(0.016, 0.035, 10), pinMat);
+        pinHead.rotation.x = Math.PI / 2;
+        pinHead.position.set(pc[0], pc[1], 0.038);
+        noticeBoardObj.add(pinHead);
+      }
+
       noticeBoardObj.position.set(0, 2.35, -5.92);
       scene.add(noticeBoardObj);
 
@@ -2144,8 +2385,14 @@
       // 바닥 접촉 그림자 (Contact Shadows / Grounding Ambient Occlusion)
       buildContactShadows();
 
+      // 바닥 폐허 디브리 (구겨진 서류 뭉치, 캔, 깨진 파편)
+      buildFloorDebris();
+
       // 3D 비 내리는 철창 창문 (Rain-Streaked Asylum Window)
       buildAsylumWindow();
+
+      // 창문 볼류메트릭 갓레이 (Window Volumetric God Rays)
+      buildWindowGodRays();
 
       // 벽면 아날로그 괘종시계 (Wall Clock)
       buildWallClock();
@@ -2201,9 +2448,15 @@
       scene.add(crR);
     }
 
-    /* 천장 공조 HVAC 덕트 (HVAC Ventilation Ducts) */
+    /* 천장 공조 HVAC 덕트 (HVAC Ventilation Ducts with Rust & Grime) */
     function buildHVACDucts() {
-      const ductMat = new THREE.MeshStandardMaterial({ color: 0x222b26, metalness: 0.8, roughness: 0.35 });
+      const rustTex = createRustMetalTexture();
+      rustTex.repeat.set(1, 6);
+      const ductMat = new THREE.MeshStandardMaterial({
+        map: rustTex,
+        metalness: 0.75,
+        roughness: 0.42
+      });
       const duct = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.34, 12.0), ductMat);
       duct.position.set(-2.8, 3.82, 0);
       scene.add(duct);
@@ -2500,6 +2753,15 @@
       topMesh.receiveShadow = true;
       deskObj.add(topMesh);
 
+      // 상판 4모서리 빈티지 황동 코너 브래킷 (Antique Brass Corner Protectors)
+      for (let cx of [-1.58, 1.58]) {
+        for (let cz of [-0.68, 0.68]) {
+          const cornerBracket = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.086, 0.12), brassMat);
+          cornerBracket.position.set(cx, 0.86, cz);
+          deskObj.add(cornerBracket);
+        }
+      }
+
       // 4대 견고한 스틸 다리 및 베이스 글라이더
       for (let x of [-1.5, 1.5]) {
         for (let z of [-0.6, 0.6]) {
@@ -2636,6 +2898,9 @@
 
       // 데스크 위 로터리 전화기
       buildDeskTelephone();
+
+      // 데스크 위 유리 재떨이, 타는 담배, 펜 꽂이, 리갈 패드
+      buildDeskUltraProps(deskObj);
     }
 
     /* 릴-투-릴 오디오 데크 & 3D 스풀 물리 (Studio Master Reel-to-Reel Recorder) */
@@ -2787,6 +3052,18 @@
         monitorObj.add(knob);
       }
 
+      // 전면 하단 금색 브랜드 배지 (TRINITRON CDP-1998)
+      const badgeMat = new THREE.MeshStandardMaterial({ color: 0xc8a850, metalness: 0.9, roughness: 0.25 });
+      const badge = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.03, 0.006), badgeMat);
+      badge.position.set(0, -0.38, 0.065);
+      monitorObj.add(badge);
+
+      // 디가우스(DEGAUSS) 자기소거 버튼
+      const degaussBtn = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.015, 8), new THREE.MeshStandardMaterial({ color: 0x33443a }));
+      degaussBtn.rotation.x = Math.PI / 2;
+      degaussBtn.position.set(-0.35, -0.38, 0.065);
+      monitorObj.add(degaussBtn);
+
       // 후면 굵은 BNC/전원 케이블 (검은 고무 호스)
       const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.85, 8), new THREE.MeshStandardMaterial({ color: 0x050706 }));
       cable.position.set(0.25, -0.35, -0.65);
@@ -2795,6 +3072,167 @@
 
       monitorObj.position.set(0, 1.35, -4.2);
       scene.add(monitorObj);
+    }
+
+    /* 데스크 위 극사실주의 소품군 (Glass Ashtray, Smoldering Cigarette, Pen Cup, Legal Pad) */
+    function buildDeskUltraProps(parentGroup) {
+      // 1. 빈티지 두꺼운 유리 재떨이 (Heavy Cut Glass Ashtray)
+      const glassMat = new THREE.MeshStandardMaterial({
+        color: 0x88bbaa,
+        roughness: 0.1,
+        metalness: 0.15,
+        transparent: true,
+        opacity: 0.65
+      });
+      const ashtrayGroup = new THREE.Group();
+      const trayOuter = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.035, 16), glassMat);
+      ashtrayGroup.add(trayOuter);
+
+      // 재떨이 내부 바닥 담뱃재 (Ash Bed)
+      const ashMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.95 });
+      const ashBed = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.005, 12), ashMat);
+      ashBed.position.y = 0.012;
+      ashtrayGroup.add(ashBed);
+
+      // 꺾여 꺼진 담배꽁초 2개
+      const buttPaperMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.8 });
+      const buttFilterMat = new THREE.MeshStandardMaterial({ color: 0xcc8844, roughness: 0.8 });
+      for (let b = 0; b < 2; b++) {
+        const butt = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.035, 6), buttPaperMat);
+        butt.rotation.z = Math.PI / 2;
+        butt.rotation.y = b * 1.2;
+        butt.position.set((b - 0.5) * 0.03, 0.016, (b - 0.5) * 0.02);
+        ashtrayGroup.add(butt);
+      }
+
+      // 불씨가 살아있는 담배 (Smoldering Cigarette on rim)
+      const litCig = new THREE.Group();
+      const cigPaper = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.065, 6), buttPaperMat);
+      cigPaper.rotation.z = Math.PI / 2;
+      litCig.add(cigPaper);
+
+      const cigFilter = new THREE.Mesh(new THREE.CylinderGeometry(0.0041, 0.0041, 0.02, 6), buttFilterMat);
+      cigFilter.rotation.z = Math.PI / 2;
+      cigFilter.position.x = 0.035;
+      litCig.add(cigFilter);
+
+      // 붉게 타오르는 불씨 (Glowing Ember Tip)
+      const ember = new THREE.Mesh(new THREE.SphereGeometry(0.0042, 6, 6), new THREE.MeshBasicMaterial({ color: 0xff3311 }));
+      ember.position.x = -0.035;
+      litCig.add(ember);
+
+      // 불씨 위 미세 연기 텍스처 (Wispy Smoke Sprite Mesh)
+      const smokeMat = new THREE.MeshBasicMaterial({
+        color: 0xbbccaa,
+        transparent: true,
+        opacity: 0.28,
+        depthWrite: false
+      });
+      const smokeTrail = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.002, 0.14, 8, 1, true), smokeMat);
+      smokeTrail.position.set(-0.035, 0.07, 0);
+      litCig.add(smokeTrail);
+
+      litCig.rotation.z = 0.18;
+      litCig.position.set(0.02, 0.025, 0);
+      ashtrayGroup.add(litCig);
+
+      ashtrayGroup.position.set(-0.72, 0.918, 0.35);
+      parentGroup.add(ashtrayGroup);
+
+      // 2. 스틸 와이어 펜 꽂이 통 (Pen Cup) & 필기도구
+      const penCupMat = new THREE.MeshStandardMaterial({ color: 0x1f2622, metalness: 0.8, roughness: 0.4 });
+      const penCup = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.04, 0.10, 12, 1, true), penCupMat);
+      penCup.position.set(-1.18, 0.95, 0.22);
+      parentGroup.add(penCup);
+
+      const penCupBase = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.008, 12), penCupMat);
+      penCupBase.position.set(-1.18, 0.904, 0.22);
+      parentGroup.add(penCupBase);
+
+      const penColors = [0x2255aa, 0xcc2233, 0xeedd44, 0x111111];
+      for (let p = 0; p < 4; p++) {
+        const pen = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.004, 0.004, 0.14, 6),
+          new THREE.MeshStandardMaterial({ color: penColors[p], roughness: 0.3 })
+        );
+        pen.rotation.z = (p - 1.5) * 0.15;
+        pen.rotation.x = ((p % 2) - 0.5) * 0.12;
+        pen.position.set(-1.18 + (p - 1.5) * 0.015, 0.98, 0.22 + ((p % 2) - 0.5) * 0.015);
+        parentGroup.add(pen);
+      }
+
+      // 3. 노란색 리갈 메모 패드 (Yellow Legal Notepad)
+      const padMat = new THREE.MeshStandardMaterial({ color: 0xf4ea7b, roughness: 0.9 });
+      const bindingMat = new THREE.MeshStandardMaterial({ color: 0x5a3418, roughness: 0.8 });
+      const legalPad = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.008, 0.34), padMat);
+      legalPad.position.set(-0.35, 0.908, 0.28);
+      legalPad.rotation.y = -0.15;
+      parentGroup.add(legalPad);
+
+      const binding = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.01, 0.035), bindingMat);
+      binding.position.set(-0.35, 0.912, 0.13);
+      binding.rotation.y = -0.15;
+      parentGroup.add(binding);
+    }
+
+    /* 바닥 폐허 디브리 (구겨진 종이 뭉치, 찌그러진 캔, 깨진 파편) */
+    function buildFloorDebris() {
+      // 1. 구겨진 종이 뭉치 3개
+      const paperMat = new THREE.MeshStandardMaterial({ color: 0xd8d3c5, roughness: 0.95 });
+      const paperPositions = [
+        [-1.4, 0.04, -3.4],
+        [1.8, 0.04, -3.8],
+        [-3.6, 0.04, 0.5]
+      ];
+      for (let pos of paperPositions) {
+        const ball = new THREE.Mesh(new THREE.DodecahedronGeometry(0.045, 1), paperMat);
+        ball.position.set(pos[0], pos[1], pos[2]);
+        ball.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+        ball.scale.set(1.0, 0.7, 0.9);
+        scene.add(ball);
+      }
+
+      // 2. 찌그러진 알루미늄 소다 캔
+      const canMat = new THREE.MeshStandardMaterial({ color: 0xb52228, metalness: 0.85, roughness: 0.35 });
+      const can = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.11, 8), canMat);
+      can.rotation.z = Math.PI / 2;
+      can.rotation.y = 0.45;
+      can.position.set(-2.4, 0.032, -3.8);
+      scene.add(can);
+
+      // 3. 깨진 앰플 유리 조각들
+      const glassShardMat = new THREE.MeshStandardMaterial({
+        color: 0xcc8833,
+        roughness: 0.1,
+        metalness: 0.2,
+        transparent: true,
+        opacity: 0.75
+      });
+      for (let s = 0; s < 4; s++) {
+        const shard = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.004, 0.025), glassShardMat);
+        shard.position.set(0.85 + (s - 2) * 0.05, 0.005, -3.2 + (s % 2) * 0.04);
+        shard.rotation.y = s * 0.7;
+        scene.add(shard);
+      }
+    }
+
+    /* 창문 볼류메트릭 갓레이 (Window Volumetric God Rays) */
+    function buildWindowGodRays() {
+      const rayGeo = new THREE.CylinderGeometry(0.4, 1.9, 4.8, 16, 1, true);
+      rayGeo.translate(0, -2.4, 0);
+      const rayMat = new THREE.MeshBasicMaterial({
+        color: 0x77bbdd,
+        transparent: true,
+        opacity: 0.055,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide
+      });
+      const godRay = new THREE.Mesh(rayGeo, rayMat);
+      godRay.position.set(-4.42, 2.3, 0);
+      godRay.rotation.z = -Math.PI / 3.2;
+      godRay.rotation.y = 0.2;
+      scene.add(godRay);
     }
 
     /* 데스크 위 3D 수사 증거 폴라로이드 사진 (Polaroid Evidence Photo) */
@@ -2919,7 +3357,13 @@
     }
 
     function buildCeilingPipes() {
-      const pipeMat = new THREE.MeshStandardMaterial({ color: 0x27302a, metalness: 0.8, roughness: 0.4 });
+      const rustTex = createRustMetalTexture();
+      rustTex.repeat.set(1, 4);
+      const pipeMat = new THREE.MeshStandardMaterial({
+        map: rustTex,
+        metalness: 0.8,
+        roughness: 0.4
+      });
       const pipeGeo1 = new THREE.CylinderGeometry(0.08, 0.08, 12, 10);
       const p1 = new THREE.Mesh(pipeGeo1, pipeMat);
       p1.rotation.x = Math.PI / 2;
@@ -3133,79 +3577,168 @@
       scene.add(dustParticles);
     }
 
-    /* 초정밀 병원 휠체어 (High-Detail Hospital Wheelchair) */
+    /* 초정밀 병원 휠체어 (High-Detail Realistic Institutional Wheelchair) */
     function buildWheelchairProp() {
       wheelchairObj = new THREE.Group();
-      const chromeMat = new THREE.MeshStandardMaterial({ color: 0x4a5850, metalness: 0.85, roughness: 0.3 });
-      const rubberMat = new THREE.MeshStandardMaterial({ color: 0x111613, roughness: 0.9 });
-      const leatherMat = new THREE.MeshStandardMaterial({ color: 0x1c1716, roughness: 0.75 });
+      const chromeMat = new THREE.MeshStandardMaterial({ color: 0x5a6a60, metalness: 0.9, roughness: 0.25 });
+      const rubberMat = new THREE.MeshStandardMaterial({ color: 0x111613, roughness: 0.88 });
+      const leatherMat = new THREE.MeshStandardMaterial({ color: 0x181514, roughness: 0.65 });
+      const darkSteelMat = new THREE.MeshStandardMaterial({ color: 0x222a25, metalness: 0.8, roughness: 0.4 });
 
-      // 좌석 쿠션
-      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.08, 0.76), leatherMat);
-      seat.position.y = 0.58;
+      // 병동 스텐실 텍스처 등받이 (SONG-BAEK HOSP. WARD 404)
+      const stencilTex = createWheelchairStencilTexture();
+      const backrestMat = new THREE.MeshStandardMaterial({ map: stencilTex, roughness: 0.65 });
+
+      // 1. 좌우 수직 등받이 크롬 기둥 파이프 2개
+      for (let side of [-0.36, 0.36]) {
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.96, 10), chromeMat);
+        post.position.set(side, 0.92, 0.35);
+        wheelchairObj.add(post);
+
+        // 상단 90도 곡면 손잡이 연장 튜브
+        const handleBend = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.14, 8), chromeMat);
+        handleBend.rotation.x = Math.PI / 2;
+        handleBend.position.set(side, 1.38, 0.41);
+        wheelchairObj.add(handleBend);
+
+        // 인체공학적 리브 홈 고무 그립 (Fluted Rubber Grip)
+        const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.021, 0.021, 0.12, 12), rubberMat);
+        grip.rotation.x = Math.PI / 2;
+        grip.position.set(side, 1.38, 0.44);
+        wheelchairObj.add(grip);
+      }
+
+      // 2. 가죽 슬링 등받이 시트 & 상/하단 웰팅 롤
+      const backrest = new THREE.Mesh(new THREE.BoxGeometry(0.70, 0.62, 0.02), backrestMat);
+      backrest.position.set(0, 1.05, 0.35);
+      backrest.castShadow = true;
+      wheelchairObj.add(backrest);
+
+      for (let y of [0.75, 1.35]) {
+        const welting = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.71, 8), leatherMat);
+        welting.rotation.z = Math.PI / 2;
+        welting.position.set(0, y, 0.35);
+        wheelchairObj.add(welting);
+      }
+
+      // 등받이 후면 의무차트/서류 보관 포켓 파우치
+      const pouch = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.35, 0.025), leatherMat);
+      pouch.position.set(0, 0.96, 0.37);
+      wheelchairObj.add(pouch);
+
+      // 3. 인체공학적 가죽 좌석 시트 & 전면 롤 엣지
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.70, 0.05, 0.65), leatherMat);
+      seat.position.set(0, 0.58, 0.03);
+      seat.castShadow = true;
       wheelchairObj.add(seat);
 
-      // 등받이 패드
-      const back = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.75, 0.08), leatherMat);
-      back.position.set(0, 1.02, 0.35);
-      wheelchairObj.add(back);
+      const seatRoll = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.70, 10), leatherMat);
+      seatRoll.rotation.z = Math.PI / 2;
+      seatRoll.position.set(0, 0.58, -0.29);
+      wheelchairObj.add(seatRoll);
 
-      // X자 접이식 크로스 프레임
+      // 좌석 하단 좌우 지지 크롬 파이프 2개
+      for (let side of [-0.35, 0.35]) {
+        const seatRail = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.72, 8), chromeMat);
+        seatRail.rotation.x = Math.PI / 2;
+        seatRail.position.set(side, 0.55, 0.02);
+        wheelchairObj.add(seatRail);
+      }
+
+      // 4. X자 접이식 크로스 프레임 (Cross Brace)
       for (let sign of [-1, 1]) {
-        const xBar = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.7, 8), chromeMat);
-        xBar.rotation.z = sign * 0.55;
-        xBar.position.set(0, 0.32, sign * 0.15);
+        const xBar = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.76, 8), chromeMat);
+        xBar.rotation.z = sign * 0.52;
+        xBar.position.set(0, 0.34, sign * 0.12);
         wheelchairObj.add(xBar);
       }
 
-      // 좌우 메인 바퀴 (24인치 스포크 휠 + 외곽 핸드림)
-      for (let side of [-0.44, 0.44]) {
-        const wheelGroup = new THREE.Group();
-        const tire = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.025, 8, 24), rubberMat);
-        wheelGroup.add(tire);
-        const rim = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.015, 8, 24), chromeMat);
-        rim.position.z = side > 0 ? 0.03 : -0.03;
-        wheelGroup.add(rim);
-        const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.06, 12), chromeMat);
-        hub.rotation.x = Math.PI / 2;
-        wheelGroup.add(hub);
-        for (let s = 0; s < 8; s++) {
-          const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.82, 4), chromeMat);
-          spoke.rotation.z = (s * Math.PI) / 8;
-          wheelGroup.add(spoke);
-        }
-        wheelGroup.position.set(side, 0.44, 0.05);
-        wheelchairObj.add(wheelGroup);
+      // 5. 좌우 사이드 클로딩 가드 (Clothing Guards / Side Panels)
+      for (let side of [-0.375, 0.375]) {
+        const sidePanel = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.22, 0.56), chromeMat);
+        sidePanel.position.set(side, 0.66, 0.05);
+        wheelchairObj.add(sidePanel);
       }
 
-      // 전면 스위블 캐스터 작은 바퀴 2개
+      // 6. 좌우 메인 바퀴 (24인치 타이어 + 림 + 스포크 + 외곽 핸드림 Handrim)
+      for (let side of [-0.44, 0.44]) {
+        const wheelGroup = new THREE.Group();
+
+        // 고무 타이어
+        const tire = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.024, 8, 28), rubberMat);
+        wheelGroup.add(tire);
+
+        // 크롬 메인 림
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(0.39, 0.014, 8, 28), chromeMat);
+        wheelGroup.add(rim);
+
+        // 중심 허브
+        const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.07, 12), chromeMat);
+        hub.rotation.x = Math.PI / 2;
+        wheelGroup.add(hub);
+
+        // 12가닥 스포크 휠 (Fine Wire Spokes)
+        for (let s = 0; s < 12; s++) {
+          const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.86, 4), chromeMat);
+          spoke.rotation.z = (s * Math.PI) / 12;
+          wheelGroup.add(spoke);
+        }
+
+        // 환자 구동용 외곽 핸드림 (Push Handrim)
+        const handrim = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.012, 8, 28), chromeMat);
+        handrim.position.z = side > 0 ? 0.05 : -0.05;
+        wheelGroup.add(handrim);
+
+        // 핸드림 고정 탭 4개
+        for (let t = 0; t < 4; t++) {
+          const tab = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.05, 0.008), darkSteelMat);
+          tab.rotation.z = (t * Math.PI) / 2;
+          tab.position.z = side > 0 ? 0.025 : -0.025;
+          wheelGroup.add(tab);
+        }
+
+        wheelGroup.position.set(side, 0.44, 0.05);
+        wheelchairObj.add(wheelGroup);
+
+        // 바퀴 수동 주차 브레이크 레버
+        const brake = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.12, 0.03), darkSteelMat);
+        brake.position.set(side, 0.48, -0.25);
+        brake.rotation.x = 0.35;
+        wheelchairObj.add(brake);
+      }
+
+      // 7. 전면 스위블 캐스터 작은 바퀴 2개
       for (let side of [-0.34, 0.34]) {
         const casterGroup = new THREE.Group();
-        const fork = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.18, 8), chromeMat);
+        const fork = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.18, 8), chromeMat);
         fork.position.y = 0.09;
         casterGroup.add(fork);
+
         const smallTire = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.035, 12), rubberMat);
         smallTire.rotation.z = Math.PI / 2;
         casterGroup.add(smallTire);
-        casterGroup.position.set(side, 0.09, -0.42);
+
+        casterGroup.position.set(side, 0.09, -0.44);
         wheelchairObj.add(casterGroup);
       }
 
-      // 좌우 팔걸이 & 발받침대 & 후면 손잡이
-      for (let side of [-0.41, 0.41]) {
-        const armRest = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.05, 0.5), leatherMat);
-        armRest.position.set(side, 0.82, 0.05);
+      // 8. 좌우 팔걸이 & 발받침대
+      for (let side of [-0.38, 0.38]) {
+        const armRest = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.04, 0.46), leatherMat);
+        armRest.position.set(side, 0.81, 0.05);
+        armRest.castShadow = true;
         wheelchairObj.add(armRest);
 
-        const footRest = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.02, 0.22), chromeMat);
-        footRest.position.set(side, 0.12, -0.5);
-        footRest.rotation.x = 0.2;
-        wheelchairObj.add(footRest);
+        // 발받침대 경첩 및 알루미늄 플레이트
+        const footStem = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.45, 8), chromeMat);
+        footStem.position.set(side, 0.32, -0.38);
+        footStem.rotation.x = 0.35;
+        wheelchairObj.add(footStem);
 
-        const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.16, 8), rubberMat);
-        handle.rotation.x = Math.PI / 2;
-        handle.position.set(side, 1.25, 0.44);
-        wheelchairObj.add(handle);
+        const footRest = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.018, 0.20), chromeMat);
+        footRest.position.set(side, 0.11, -0.52);
+        footRest.rotation.x = 0.15;
+        wheelchairObj.add(footRest);
       }
 
       wheelchairObj.position.set(2.8, 0, -2.5);
