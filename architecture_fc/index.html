@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architects FC: Master Builders United | 건축가 FC</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20%220%22%20100%20100%22><text y=%22.9em%22 font-size=%2290%22>🏛️</text></svg>">
+</head>
+<body>
+    <!-- Main Header -->
+    <header>
+        <div class="header-container">
+            <div class="logo-box">
+                <div class="logo-icon">🏛️</div>
+                <div class="logo-text">
+                    <h1>ARCHITECTS FC</h1>
+                    <p>FIFA Online Architecture Universe</p>
+                </div>
+            </div>
+
+            <!-- FC Online Header Status Widgets -->
+            <div class="fifa-club-widgets">
+                <div class="fifa-widget-item salary-cap" title="스쿼드 급여 제한 (최대 250)">
+                    <span class="lbl">급여</span>
+                    <strong id="squadSalaryNum">238</strong> / 250
+                    <div class="salary-mini-bar">
+                        <div id="salaryBarFill" class="salary-mini-fill" style="width: 95%;"></div>
+                    </div>
+                </div>
+                <div class="fifa-widget-item bp-value" title="보유 구단 가치">
+                    <span>💰</span> <span id="clubBpValue" class="val">4조 8,500억 BP</span>
+                </div>
+                <div class="fifa-widget-item fc-points" title="보유 FC">
+                    <span>💎</span> <span id="clubFcPoints" class="val">125,000 FC</span>
+                </div>
+            </div>
+
+            <nav class="nav-tabs">
+                <button class="nav-tab-btn active" data-tab="tab-match">
+                    <span>⚽</span> 경기 매치
+                </button>
+                <button class="nav-tab-btn" data-tab="tab-squad">
+                    <span>📋</span> 스쿼드 라커룸
+                </button>
+                <button class="nav-tab-btn" data-tab="tab-codex">
+                    <span>🎴</span> 선수 도감 (525)
+                </button>
+                <button class="nav-tab-btn" data-tab="tab-enhance">
+                    <span>✨</span> 선수 강화
+                </button>
+                <button class="nav-tab-btn" data-tab="tab-pack">
+                    <span>🎁</span> 에이전트 / 팩
+                </button>
+                <button class="nav-tab-btn" data-tab="tab-guide">
+                    <span>👔</span> 구단 / 감독실
+                </button>
+            </nav>
+
+            <div class="header-actions">
+                <button id="soundToggleBtn" class="sound-toggle-btn" title="효과음 켜기/끄기">🔊</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- TAB 1: DERBY MATCH VIEW -->
+        <section id="tab-match" class="tab-panel active">
+            <!-- Scoreboard Card -->
+            <div class="scoreboard-card">
+                <div class="scoreboard-top">
+                    <!-- Home Team -->
+                    <div class="team-scoreboard home">
+                        <div class="manager-avatar-badge" style="background: linear-gradient(135deg, #1e3c72, #2a5298);">
+                            🏛️
+                        </div>
+                        <div class="team-meta">
+                            <h3 id="homeTeamName">르 코르뷔지에 FC</h3>
+                            <p id="homeManagerTitle">모더니즘의 아버지, 기능주의 총사령관</p>
+                        </div>
+                    </div>
+
+                    <!-- Score Center -->
+                    <div class="score-center">
+                        <div id="matchMinutePill" class="match-minute-pill">00' KICK OFF</div>
+                        <div class="score-numbers">
+                            <span id="homeScoreBadge">0</span> - <span id="awayScoreBadge">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Away Team -->
+                    <div class="team-scoreboard away">
+                        <div class="manager-avatar-badge" style="background: linear-gradient(135deg, #d38312, #a83279);">
+                            ✨
+                        </div>
+                        <div class="team-meta">
+                            <h3 id="awayTeamName">자하 하디드 FC</h3>
+                            <p id="awayManagerTitle">곡선의 여왕, 해체주의 속도혁명가</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Possession Bar -->
+                <div class="possession-bar-wrap">
+                    <div id="possessionBarHome" class="possession-bar-home" style="width: 50%;"></div>
+                    <div id="possessionBarAway" class="possession-bar-away" style="width: 50%;"></div>
+                </div>
+                <div class="possession-label">
+                    <span id="homePossessionLabel">점유율 50%</span>
+                    <span>BALL POSSESSION</span>
+                    <span id="awayPossessionLabel">점유율 50%</span>
+                </div>
+            </div>
+
+            <!-- Match Main Layout -->
+            <div class="match-layout">
+                <!-- Left: Pitch Canvas Card -->
+                <div class="pitch-container-card">
+                    <!-- Skill Cut-in Banner -->
+                    <div id="skillCutinBanner" class="skill-cutin-banner">
+                        <div class="skill-icon-wrap">⚡</div>
+                        <div class="skill-text-wrap">
+                            <h5 id="skillPlayerName">빌라 사보아 - 근대 5원칙의 조율</h5>
+                            <p id="skillEffectDesc">필로티로 상대 압박을 흘려보내고 수평창 패스를 찔러넣음!</p>
+                        </div>
+                    </div>
+
+                    <!-- 2D Canvas Pitch -->
+                    <div class="pitch-wrapper" style="position: relative;">
+                        <canvas id="pitchCanvas"></canvas>
+
+                        <!-- Goal Walkout Celebration Popup -->
+                        <div id="goalCelebrationPopup" class="goal-celebration-popup">
+                            <div class="goal-photo-wrap">
+                                <img id="goalPhotoImg" class="goal-photo-img" src="" alt="득점자">
+                            </div>
+                            <div class="goal-info-wrap">
+                                <div style="font-size: 11px; color: var(--accent-gold); font-weight: 900; letter-spacing: 1px;">GOAL SCORER! ⚽</div>
+                                <h3 id="goalPlayerName">사그라다 파밀리아</h3>
+                                <p id="goalMinuteText">전반 24분 득점 (OVR 95)</p>
+                                <p id="goalSkillTag" style="font-size: 11px; color: var(--primary-cyan);">✨ [고유기: 172m 공중 폭격 타워 헤더]</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Match Controls Bar -->
+                    <div class="match-controls-bar">
+                        <div class="speed-btn-group">
+                            <button class="speed-btn active" data-speed="1">1x 보통</button>
+                            <button class="speed-btn" data-speed="2">2x 빠름</button>
+                            <button class="speed-btn" data-speed="5">5x 초고속</button>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <label style="font-size: 12px; color: var(--text-muted); font-weight: 700;">상대 감독:</label>
+                            <select id="opponentSelect" class="formation-select" style="font-size: 12px; padding: 6px 10px;">
+                                <!-- filled dynamically -->
+                            </select>
+                        </div>
+
+                        <div class="match-action-btns">
+                            <button id="startMatchBtn" class="btn-primary">
+                                <span>⚽</span> 경기 시작 (Kick Off)
+                            </button>
+                            <button id="skipMatchBtn" class="btn-secondary">
+                                <span>⏩</span> 즉시 결과
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Live Commentary Feed -->
+                <div class="commentary-card">
+                    <div class="commentary-header">
+                        <h4>
+                            <span class="live-indicator"></span>
+                            실시간 건축 중계 피드
+                        </h4>
+                        <span style="font-size: 11px; color: var(--text-muted);">LIVE COMMENTARY</span>
+                    </div>
+                    <div id="commentaryList" class="commentary-list">
+                        <div class="comment-item">
+                            <span class="comment-min-badge">0'</span>
+                            [준비 완료] 경기 시작 버튼을 누르면 세계적인 거장들의 건축 축구 더비가 개막합니다!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: SQUAD LOCKER ROOM -->
+        <section id="tab-squad" class="tab-panel">
+            <div class="squad-layout">
+                <!-- 1. Manager Selector Card -->
+                <div class="manager-selector-card">
+                    <div class="section-title">
+                        <span>👔</span> 감독 선택 (Architects)
+                    </div>
+                    <div id="managerListContainer" class="manager-list" style="max-height: 480px; overflow-y: auto; padding-right: 4px;">
+                        <!-- Filled by JS (21 Managers) -->
+                    </div>
+
+                    <div id="managerDetailBox" class="manager-detail-box">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <!-- 2. Pitch Board (Starting XI) -->
+                <div class="squad-pitch-board">
+                    <div class="formation-header">
+                        <div class="section-title" style="margin-bottom: 0;">
+                            <span>🏟️</span> 선발 라인업 (Starting XI)
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <select id="formationSelect" class="formation-select">
+                                <option value="4-3-3">4-3-3 (공격적 날개 전술)</option>
+                                <option value="4-2-3-1">4-2-3-1 (현대적 밸런스)</option>
+                                <option value="3-5-2">3-5-2 (중원 장악형)</option>
+                                <option value="4-4-2">4-4-2 (정통 클래식)</option>
+                                <option value="5-3-2">5-3-2 (콘크리트 카테나치오)</option>
+                            </select>
+                            <button id="autoBestXIBtn" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" title="최고 능력치 선수로 자동 선발">
+                                ⚡ 자동 베스트 11
+                            </button>
+                            <button id="resetSquadBtn" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" title="감독 기본 스쿼드로 초기화">
+                                🔄 기본 스쿼드
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- FIFA Team Color Synergy Banner -->
+                    <div id="squadTeamColorBanner" class="squad-teamcolor-banner">
+                        <div><strong style="color: #ffd700;">🎨 팀 컬러 (Team Color):</strong> <span id="teamColorActiveText">로딩 중...</span></div>
+                        <div id="teamColorTagsWrap" class="teamcolor-tags-wrap"></div>
+                    </div>
+
+                    <!-- Tactical Pitch -->
+                    <div id="tacticalPitchField" class="tactical-pitch-field">
+                        <!-- Formation rows filled by JS -->
+                    </div>
+                </div>
+
+                <!-- 3. Roster & Team Power Card -->
+                <div class="squad-roster-card">
+                    <div class="section-title">
+                        <span>📊</span> 팀 전력 지표
+                    </div>
+                    <div class="team-power-gauge-grid">
+                        <div class="power-gauge-item">
+                            <div class="power-gauge-title">공격력 (ATT) <span>⚡</span></div>
+                            <div id="attPowerVal" class="power-gauge-val">88</div>
+                        </div>
+                        <div class="power-gauge-item">
+                            <div class="power-gauge-title">중원 지배 (MID) <span>🏛️</span></div>
+                            <div id="midPowerVal" class="power-gauge-val">91</div>
+                        </div>
+                        <div class="power-gauge-item">
+                            <div class="power-gauge-title">수비력 (DEF) <span>🧱</span></div>
+                            <div id="defPowerVal" class="power-gauge-val">90</div>
+                        </div>
+                        <div class="power-gauge-item">
+                            <div class="power-gauge-title">종합 전력 (OVR) <span>⭐</span></div>
+                            <div id="ovrPowerVal" class="power-gauge-val" style="color: var(--fc-gold);">90</div>
+                        </div>
+                        <div class="power-gauge-item">
+                            <div class="power-gauge-title">스쿼드 평균 연령 <span>⏳</span></div>
+                            <div id="avgAgeVal" class="power-gauge-val" style="color: var(--fc-volt);">0세</div>
+                        </div>
+                        <div class="power-gauge-item">
+                            <div class="power-gauge-title">스쿼드 총 급여 <span>📊</span></div>
+                            <div id="totalSalaryVal" class="power-gauge-val" style="color: #4da6ff;">238/250</div>
+                        </div>
+                    </div>
+
+                    <div class="bench-reserve-header">
+                        <div class="section-title" style="margin-bottom: 0;">
+                            <span>🪑</span> 교체 후보 (Bench)
+                        </div>
+                        <span style="font-size: 11px; color: var(--text-muted);">클릭하여 상세 정보 확인</span>
+                    </div>
+
+                    <div id="benchListContainer" class="bench-list">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: ARCHITECTURAL CODEX (525 BUILDINGS) -->
+        <section id="tab-codex" class="tab-panel">
+            <!-- Filter Bar -->
+            <div class="codex-filter-bar">
+                <input type="text" id="codexSearchInput" class="codex-search-input" placeholder="🔍 건물명, 도시, 국가, 감독 검색...">
+
+                <!-- Manager filter (Dynamically generated in JS) -->
+                <div id="codexManagerFilterGroup" class="filter-btn-group" style="max-height: 90px; overflow-y: auto; padding-right: 4px;">
+                    <!-- Filled by JS -->
+                </div>
+
+                <!-- Position filter -->
+                <div class="filter-btn-group">
+                    <button class="filter-pill active" data-pos="all">전체 포지션</button>
+                    <button class="filter-pill" data-pos="FW">⚡ FW</button>
+                    <button class="filter-pill" data-pos="MF">🏛️ MF</button>
+                    <button class="filter-pill" data-pos="DF">🧱 DF</button>
+                    <button class="filter-pill" data-pos="GK">🧤 GK</button>
+                </div>
+
+                <div id="codexCountBadge" style="font-size: 13px; font-weight: 800; color: var(--primary-cyan);">
+                    525개 건축물
+                </div>
+            </div>
+
+            <!-- Cards Grid -->
+            <div id="codexGrid" class="codex-grid">
+                <!-- 525 FUT Cards filled by JS -->
+            </div>
+        </section>
+
+        <!-- TAB 4: CARD ENHANCEMENT LAB -->
+        <section id="tab-enhance" class="tab-panel">
+            <div class="enhancement-lab-layout">
+                <!-- Left: Enhancement Pedestal -->
+                <div class="enhance-stage-panel">
+                    <div class="section-title">
+                        <span>✨</span> 건축물 카드 강화 제단
+                    </div>
+                    <div id="enhanceCardPedestal" class="enhance-card-pedestal">
+                        <div class="pedestal-circle"></div>
+                        <div id="enhanceTargetSlot" style="position: relative; z-index: 5;">
+                            <!-- Active selected card rendered here -->
+                        </div>
+                    </div>
+
+                    <div class="enhance-status-box">
+                        <div class="enhance-status-row">
+                            <span style="color: var(--text-muted);">현재 강화 등급</span>
+                            <strong id="enhanceCurrentGrade" style="color: var(--accent-gold);">+1 (기본 동카)</strong>
+                        </div>
+                        <div class="enhance-status-row">
+                            <span style="color: var(--text-muted);">목표 강화 등급</span>
+                            <strong id="enhanceTargetGrade" style="color: var(--primary-cyan);">+2 (전체 스탯 +2)</strong>
+                        </div>
+                        <div class="enhance-status-row">
+                            <span style="color: var(--text-muted);">강화 성공 확률</span>
+                            <strong id="enhanceProbText" style="color: #00ffaa;">85%</strong>
+                        </div>
+                        <div class="enhance-rate-bar-wrap">
+                            <div id="enhanceRateFill" class="enhance-rate-fill" style="width: 85%;"></div>
+                        </div>
+                        <div class="enhance-status-row" style="margin-top: 10px; margin-bottom: 0;">
+                            <span style="color: var(--text-muted);">소모 비용</span>
+                            <strong id="enhanceCostText" style="color: var(--accent-gold);">500,000,000 BP</strong>
+                        </div>
+                    </div>
+
+                    <button id="doEnhanceBtn" class="enhance-action-btn">
+                        ⚡ 강화 시도하기 (ENHANCE)
+                    </button>
+                    <div id="enhanceResultMsg" style="margin-top: 10px; font-weight: 800; font-size: 13px; text-align: center; min-height: 20px;"></div>
+                </div>
+
+                <!-- Right: Squad / Roster Selector for Enhancement -->
+                <div class="manager-selector-card" style="display: flex; flex-direction: column;">
+                    <div class="section-title">
+                        <span>🏛️</span> 강화할 건축물 카드 선택 (선발 & 교체명단)
+                    </div>
+                    <div id="enhanceRosterGrid" class="codex-grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; max-height: 650px; overflow-y: auto; padding-right: 6px;">
+                        <!-- Mini cards populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: PACK OPENING (WALKOUT) -->
+        <section id="tab-pack" class="tab-panel">
+            <div class="guide-card" style="text-align: center; margin-bottom: 24px;">
+                <h3 style="font-size: 24px; color: var(--fc-volt);">🎁 ARCHITECTS FC 공식 클래스 선수팩 개봉관</h3>
+                <p style="color: var(--text-muted); font-size: 14px;">피파온라인의 전율 그대로! 거장 감독들의 랜드마크를 워크아웃 연출과 함께 개봉하고 스쿼드를 강화하세요.</p>
+            </div>
+
+            <div class="walkout-pack-grid">
+                <!-- Pack 1: ICON Pack -->
+                <div class="pack-box-card" data-pack="icon">
+                    <div class="pack-icon-glow">🏆</div>
+                    <div class="pack-tier-badge icon">ICON CLASS</div>
+                    <h3 class="pack-title">[ICON] 거장 21인 마스터 팩</h3>
+                    <p class="pack-desc">세계적인 거장 21인의 OVR 93+ 전설적 랜드마크 100% 확정 지급!</p>
+                    <div class="pack-btn-group">
+                        <button class="pack-open-btn btn-single" data-pack="icon" data-count="1">
+                            ✨ 1장 개봉 (Walkout)
+                        </button>
+                        <button class="pack-open-btn btn-multi" data-pack="icon" data-count="10">
+                            🌟 10장 연속 개봉
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pack 2: TOTY Pack -->
+                <div class="pack-box-card" data-pack="toty" style="border-color: #00f0ff;">
+                    <div class="pack-icon-glow">⭐</div>
+                    <div class="pack-tier-badge toty">TOTY CLASS</div>
+                    <h3 class="pack-title">[TOTY] 월드 베스트 랜드마크 팩</h3>
+                    <p class="pack-desc">세계 최고의 조형미와 구조력을 자랑하는 현대건축 OVR 91+ 랜드마크 팩</p>
+                    <div class="pack-btn-group">
+                        <button class="pack-open-btn btn-single" data-pack="toty" data-count="1">
+                            ✨ 1장 개봉 (Walkout)
+                        </button>
+                        <button class="pack-open-btn btn-multi" data-pack="toty" data-count="10">
+                            🌟 10장 연속 개봉
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pack 3: HERITAGE Pack -->
+                <div class="pack-box-card" data-pack="heritage" style="border-color: #ff3366;">
+                    <div class="pack-icon-glow">🏛️</div>
+                    <div class="pack-tier-badge heritage">HERITAGE CLASS</div>
+                    <h3 class="pack-title">[HERITAGE] 근현대 황금세대 팩</h3>
+                    <p class="pack-desc">모더니즘 초기부터 현대 해체주의까지 시대를 관통하는 명작 OVR 88+ 팩</p>
+                    <div class="pack-btn-group">
+                        <button class="pack-open-btn btn-single" data-pack="heritage" data-count="1">
+                            ✨ 1장 개봉 (Walkout)
+                        </button>
+                        <button class="pack-open-btn btn-multi" data-pack="heritage" data-count="10">
+                            🌟 10장 연속 개봉
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pack 4: ALL-STAR 10-Pack -->
+                <div class="pack-box-card" data-pack="allstar" style="border-color: #ffd700;">
+                    <div class="pack-icon-glow">💎</div>
+                    <div class="pack-tier-badge allstar">ALL-STAR SPECIAL</div>
+                    <h3 class="pack-title">[ALL-STAR] 525개 건축물 스페셜 팩</h3>
+                    <p class="pack-desc">전체 525개 건축물 중 무작위 10명을 대량 영입하는 초대형 카드팩</p>
+                    <div class="pack-btn-group">
+                        <button class="pack-open-btn btn-single" data-pack="allstar" data-count="1">
+                            ✨ 1장 개봉
+                        </button>
+                        <button class="pack-open-btn btn-multi" data-pack="allstar" data-count="10" style="background: linear-gradient(135deg, #ffd700, #ff8800); color: #0a0d14;">
+                            🌟 10장 연속 개봉
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pack 5: Daily Free Pack -->
+                <div class="pack-box-card" data-pack="free" style="border-color: #00ff88;">
+                    <div class="pack-icon-glow">🎁</div>
+                    <div class="pack-tier-badge free">FREE PACK</div>
+                    <h3 class="pack-title">[행운] 일일 무료 건축가 지원 팩</h3>
+                    <p class="pack-desc">구단 운영 지원을 위해 매일 무료로 제공되는 행운의 선수팩 (무제한 테스트)</p>
+                    <div class="pack-btn-group">
+                        <button class="pack-open-btn btn-single" data-pack="free" data-count="1" style="background: linear-gradient(135deg, #00ff88, #00aa66); color: #0a0d14;">
+                            🎁 무료 1장 개봉
+                        </button>
+                        <button class="pack-open-btn btn-multi" data-pack="free" data-count="10" style="background: #1e2638; color: #00ff88; border: 1px solid #00ff88;">
+                            🎁 무료 10장 개봉
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 6: GUIDE & RULES -->
+        <section id="tab-guide" class="tab-panel">
+            <div class="guide-card">
+                <h3>⚽ ARCHITECTS FC 경기 규칙 및 전술 안내</h3>
+                <p>
+                    <strong>Architects FC</strong>는 인류 근현대사에서 가장 위대한 <strong>21인의 세계적 거장 건축가</strong>가 축구 감독이 되고, 그들이 설계한 <strong>525개 이상의 실제 건축물</strong>(감독당 25개 이상)이 선수가 되어 그라운드를 누비는 전략 축구 시뮬레이션 게임입니다.
+                </p>
+
+                <h4 style="color: var(--accent-gold); margin: 20px 0 10px;">📊 6대 건축 능력치</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px;">
+                    <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px;">
+                        <strong style="color: #00f0ff;">구조력 (STR - Structure)</strong>: 건물의 구조적 내구성과 피지컬, 몸싸움, 제공권 방어.
+                    </div>
+                    <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px;">
+                        <strong style="color: #00f0ff;">조형미 (TEC - Technique)</strong>: 비정형 디자인과 디테일, 정밀한 볼 컨트롤 및 드리블 능력.
+                    </div>
+                    <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px;">
+                        <strong style="color: #00f0ff;">기동력 (SPD - Fluidity)</strong>: 유선형 형태와 동선 유연성, 침투 속도와 주력(Pace).
+                    </div>
+                    <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px;">
+                        <strong style="color: #00f0ff;">기능성 (PAS - Connectivity)</strong>: 공간의 연결성과 동선 효율성, 정밀한 킬패스와 빌드업.
+                    </div>
+                    <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px;">
+                        <strong style="color: #00f0ff;">파워 (POW - Power)</strong>: 건축물의 거대한 스케일과 질량감, 파괴적인 슈팅 파워.
+                    </div>
+                    <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px;">
+                        <strong style="color: #00f0ff;">역사성 (MNT - Heritage)</strong>: 랜드마크의 위상과 숭고미, 위기 상황에서의 멘탈과 리더십.
+                    </div>
+                </div>
+
+                <h4 style="color: var(--accent-gold); margin: 20px 0 10px;">👔 21인의 명장 감독 전술 특성</h4>
+                <div id="managerGuideGrid" class="manager-guide-grid">
+                    <!-- 21 Architects Guide Cards filled by JS -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL 1: BUILDING DETAIL & RADAR CHART -->
+    <div id="buildingDetailModal" class="modal-overlay">
+        <div class="modal-card">
+            <button id="modalCloseBtn" class="modal-close-btn">✕</button>
+
+            <div class="modal-header-section">
+                <div class="modal-ovr-circle">
+                    <span id="modalOvrVal">95</span>
+                    <span id="modalPosVal">FW</span>
+                </div>
+                <div>
+                    <h3 id="modalBuildingName" style="font-family: var(--font-heading); font-size: 22px;">빌라 사보아</h3>
+                    <p id="modalBuildingSub" style="font-size: 12px; color: var(--text-muted);">Villa Savoye · 푸아시, 프랑스 (1929)</p>
+                    <div style="margin-top: 6px;">
+                        <span id="modalRoleBadge" class="pos-tag mf" style="font-size: 11px; padding: 3px 8px;">마에스트로 딥라잉 플레이메이커</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hexagon Radar Canvas -->
+            <div class="radar-canvas-wrap">
+                <canvas id="radarCanvas" width="220" height="220"></canvas>
+            </div>
+
+            <!-- Country & Heritage Traits Box -->
+            <div class="modal-country-traits-box">
+                <div class="country-trait-item">
+                    <div class="country-trait-label">👔 감독 출신국가</div>
+                    <div id="modalArchitectCountry" class="country-trait-val">🇨🇭🇫🇷 스위스 / 프랑스</div>
+                </div>
+                <div class="country-trait-item building-side">
+                    <div class="country-trait-label">📍 건축물 위치국가</div>
+                    <div id="modalBuildingCountry" class="country-trait-val">🇫🇷 프랑스 (푸아시)</div>
+                </div>
+                <div id="modalCountrySynergy" class="country-synergy-banner">
+                    🌐 본국 홈그라운드 마스터피스 (조직력 +3)
+                </div>
+            </div>
+
+            <!-- Skill Box -->
+            <div class="modal-skill-box">
+                <h5 id="modalSkillName">✨ 고유 스킬: 근대 5원칙의 조율</h5>
+                <p id="modalSkillDesc">필로티로 상대 압박을 흘려보내고 수평창 패스를 찔러넣음 (발동확률 35%)</p>
+            </div>
+
+            <!-- Story Description -->
+            <div class="modal-desc-box">
+                <p id="modalDescText">
+                    기둥(필로티) 위로 떠오른 완벽한 백색 직육면체. 중원을 부유하며 360도 수평창 시야로 경기를 지휘합니다.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: MATCH RESULT MODAL -->
+    <div id="matchResultModal" class="modal-overlay">
+        <div class="modal-card" style="text-align: center; max-width: 520px;">
+            <button id="resultCloseBtn" class="modal-close-btn">✕</button>
+
+            <h4 style="color: var(--primary-cyan); letter-spacing: 2px; font-size: 13px; text-transform: uppercase;">
+                MATCH RESULT
+            </h4>
+            <div style="display: flex; justify-content: space-around; align-items: center; margin-top: 10px;">
+                <span id="resultHomeTeam" style="font-weight: 800; font-size: 16px;">르 코르뷔지에 FC</span>
+                <span style="font-size: 12px; color: var(--text-muted);">VS</span>
+                <span id="resultAwayTeam" style="font-weight: 800; font-size: 16px;">자하 하디드 FC</span>
+            </div>
+
+            <div id="resultFinalScore" class="result-score-large">2 : 1</div>
+
+            <!-- MOM (Building of the Match) -->
+            <div class="mom-box">
+                <h4>🏅 BUILDING OF THE MATCH (MOM)</h4>
+                <h3 id="momName">사그라다 파밀리아 (평점 9.8)</h3>
+                <p id="momDesc" style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                    바르셀로나 · 172m 공중 폭격으로 승리를 결정짓는 쐐기골을 기록했습니다.
+                </p>
+            </div>
+
+            <!-- Summary Stats -->
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 14px; margin-bottom: 20px; font-size: 13px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                    <span>볼 점유율</span>
+                    <strong id="statPossession" style="color: var(--primary-cyan);">54% - 46%</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                    <span>전체 슈팅</span>
+                    <strong id="statShots">8 - 6</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                    <span>유효 슈팅</span>
+                    <strong id="statShotsOnTarget">5 - 3</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>골키퍼 선방</span>
+                    <strong id="statSaves">2 - 3</strong>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="rematchBtn" class="btn-primary" style="padding: 10px 24px;">
+                    🔄 다시 대결하기 (Rematch)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: PLAYER SWAP & SQUAD BUILDER -->
+    <div id="playerSwapModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 680px;">
+            <button id="swapModalCloseBtn" class="modal-close-btn">✕</button>
+            <h4 style="font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <span>🔄</span> 선수 교체 & 스쿼드 편성 <span id="swapTargetSlotName" class="pos-tag mf">CM</span>
+            </h4>
+
+            <div class="swap-modal-layout">
+                <!-- Target Player currently on pitch -->
+                <div id="swapTargetPlayerBox" class="swap-target-box">
+                    <!-- rendered by JS -->
+                </div>
+
+                <!-- Filter & Scope Controls -->
+                <div class="swap-filter-controls">
+                    <div class="swap-scope-pills">
+                        <button id="scopeBenchBtn" class="swap-scope-btn active" data-scope="bench">소속 감독 후보</button>
+                        <button id="scopeAllBtn" class="swap-scope-btn" data-scope="all">전체 525개 건축물 (올스타 자유 영입)</button>
+                    </div>
+                    <input type="text" id="swapSearchInput" class="codex-search-input" style="width: 180px; padding: 4px 10px;" placeholder="건물명/도시 검색...">
+                </div>
+
+                <!-- Position Filters & Sort -->
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <div id="swapPosFilters" class="filter-btn-group">
+                        <button class="filter-pill active" data-pos="all">전체</button>
+                        <button class="filter-pill" data-pos="FW">⚡ FW</button>
+                        <button class="filter-pill" data-pos="MF">🏛️ MF</button>
+                        <button class="filter-pill" data-pos="DF">🧱 DF</button>
+                        <button class="filter-pill" data-pos="GK">🧤 GK</button>
+                    </div>
+                    <select id="swapSortSelect" class="formation-select" style="font-size: 11px; padding: 4px 8px;">
+                        <option value="ovr_desc">OVR 높은순</option>
+                        <option value="age_desc">나이 많은순 (역사적 명작)</option>
+                        <option value="age_asc">나이 적은순 (최신 신축)</option>
+                        <option value="salary_asc">급여 낮은순</option>
+                    </select>
+                </div>
+
+                <!-- Candidates List -->
+                <div id="swapCandidatesList" class="swap-candidates-list">
+                    <!-- populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- WALKOUT STAGE CINEMATIC OVERLAY -->
+    <div id="walkoutStageOverlay" class="walkout-stage-overlay">
+        <button id="walkoutSkipBtn" class="walkout-top-skip-btn" title="연출 건너뛰고 카드 즉시 확인">⏩ 건너뛰기 (SKIP)</button>
+        <div class="stage-spotlight-left"></div>
+        <div class="stage-spotlight-right"></div>
+
+        <!-- Stage 1: Country Reveal -->
+        <div id="walkoutStepCountry" class="walkout-step">
+            <div class="walkout-stage-label">ARCHITECT NATIONALITY</div>
+            <div id="walkoutCountryFlag" class="walkout-flag-icon">🇪🇸</div>
+            <h2 id="walkoutCountryName" style="color: #fff; font-size: 28px; margin-top: 10px;">스페인</h2>
+        </div>
+
+        <!-- Stage 2: Position Reveal -->
+        <div id="walkoutStepPosition" class="walkout-step">
+            <div class="walkout-stage-label">TACTICAL POSITION</div>
+            <div id="walkoutPositionText" class="walkout-pos-text">DF</div>
+            <p id="walkoutPositionSub" style="color: var(--fc-volt); font-size: 16px; font-weight: 700;">센터백 / 스위퍼</p>
+        </div>
+
+        <!-- Stage 3: Architect Reveal -->
+        <div id="walkoutStepArchitect" class="walkout-step">
+            <div class="walkout-stage-label">MASTER ARCHITECT</div>
+            <img id="walkoutArchPhoto" class="walkout-arch-photo" src="" alt="감독">
+            <div id="walkoutArchName" class="walkout-arch-name">안토니 가우디</div>
+            <p id="walkoutArchSub" style="color: var(--fc-gold); font-size: 13px;">바르셀로나의 성자, 곡선과 유기적 조형의 대가</p>
+        </div>
+
+        <!-- Stage 4: Gold Card Explosion Reveal -->
+        <div id="walkoutStepCard" class="walkout-step">
+            <div class="walkout-card-reveal-box" id="walkoutCardContainer">
+                <!-- Generated card placed here -->
+            </div>
+            <div class="walkout-action-btns">
+                <button id="walkoutEquipBtn" class="walkout-equip-btn">
+                    ⚡ 선발 스쿼드 즉시 교체
+                </button>
+                <button id="walkoutConfirmBtn" class="walkout-close-btn">
+                    🪑 라커룸에 보관 (CLAIM)
+                </button>
+                <button id="walkoutReopenBtn" class="walkout-reopen-btn">
+                    🔄 한 번 더 개봉
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: 10-CONSECUTIVE PACK OPENING MODAL (FC ONLINE MULTI-PACK) -->
+    <div id="multiPackModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 960px; width: 95%;">
+            <button id="multiPackCloseBtn" class="modal-close-btn">✕</button>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-line); padding-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h3 style="font-size: 20px; font-family: var(--font-heading); color: #fff; display: flex; align-items: center; gap: 8px;">
+                        <span>🎁</span> <span id="multiPackTitle">[10연속 선수팩 개봉 결과]</span>
+                    </h3>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                        총 10장의 세계적인 건축물 카드를 획득했습니다! 카드를 클릭하거나 전체 공개하세요.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button id="multiPackRevealAllBtn" class="btn-primary" style="padding: 8px 18px; font-size: 13px;">
+                        ✨ 전체 공개 (REVEAL ALL)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Summary Bar -->
+            <div class="multi-pack-summary-bar">
+                <div>최고 OVR: <strong id="multiPackHighestOvr" style="color: var(--fc-gold);">96</strong></div>
+                <div>총 획득 구단 가치: <strong id="multiPackTotalValue" style="color: var(--fc-volt);">0 BP</strong></div>
+            </div>
+
+            <!-- 10 Card Grid -->
+            <div id="multiPackGrid" class="multi-pack-grid">
+                <!-- 10 mystery card cards populated by JS -->
+            </div>
+
+            <div style="display: flex; justify-content: center; margin-top: 20px; gap: 12px;">
+                <button id="multiPackClaimAllBtn" class="btn-primary" style="padding: 12px 36px; font-size: 15px;">
+                    🪑 10장 모두 라커룸에 등록
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="data.js"></script>
+    <script src="audio.js"></script>
+    <script src="pitch.js"></script>
+    <script src="engine.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

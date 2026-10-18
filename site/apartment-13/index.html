@@ -1104,9 +1104,8 @@
         <span id="cctvCamName">CAM-01 : 1F SECURITY OFFICE</span>
         <span style="color:#ff3333;font-weight:bold;">● LIVE REC</span>
       </div>
-      <div id="cctvScreenContent" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:340px;z-index:2;text-align:center;font-family:'Nanum Myeongjo',serif;padding:30px;font-size:15px;line-height:1.9;">
-        [1층 경비실 앞 복도 화면]<br>어두컴컴한 형광등 불빛 아래 배전반과 적막한 복도가 비치고 있다.
-      </div>
+      <canvas id="cctvCanvas" width="320" height="180" style="width:100%;height:330px;z-index:1;image-rendering:pixelated;background:#000;filter:grayscale(1) sepia(1) hue-rotate(70deg) saturate(2.5) brightness(2.1) contrast(1.15);"></canvas>
+      <div id="cctvScreenContent" style="z-index:2;text-align:center;font-size:12px;height:20px;"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;z-index:2;">
         <div style="display:flex;gap:8px;">
           <button class="key-btn" style="width:48px;height:38px;font-size:13px;" onclick="switchCctvCam(1)">1</button>
@@ -1173,7 +1172,7 @@
   <div id="peepholeModal">
     <div class="peephole-lens">
       <div class="peephole-view" id="peepholeContent">
-        <div class="peephole-text" id="peepholeText">어둠 속에서 무언가 움직인다...</div>
+        <canvas id="peepCanvas" width="256" height="256" style="position:absolute;top:0;left:0;width:100%;height:100%;filter:contrast(1.1) brightness(1.7);"></canvas><div style="position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle,transparent 42%,rgba(0,0,0,.9) 100%);pointer-events:none;"></div><div class="peephole-text" id="peepholeText" style="position:absolute;bottom:40px;left:0;right:0;font-size:12px;line-height:1.5;padding:0 50px;"></div>
       </div>
     </div>
     <button class="peephole-close" onclick="closePeepholeModal()">눈 떼기 (나가기)</button>
@@ -1307,6 +1306,7 @@
 
     <div class="btn-group">
       <button class="primary-btn" id="startBtn" onclick="startGame()">순찰 시작 (게임 개시)</button>
+      <button class="secondary-btn" onclick="startAutoPilot()" style="border-color:#33ff88;color:#33ff88;">🤖 AI 자동 관람 모드 (직접 안 움직여도 엔딩까지)</button>
       <button class="secondary-btn" id="loadBtn" onclick="loadSavedGame()">이어하기 (로드)</button>
     </div>
 
@@ -4707,6 +4707,7 @@
     function openCctvModal() {
       safeExitPointerLock();
       document.getElementById('cctvModal').style.display = 'flex';
+      cctvActive = true;
       audio.playCctvSwitchBeep();
       switchCctvCam(1);
       unlockAchievement('achieve_cctv', '아파트의 감시자', '경비실 4채널 CCTV 모니터를 관제했습니다.', '📺');
@@ -4714,6 +4715,7 @@
 
     function closeCctvModal() {
       document.getElementById('cctvModal').style.display = 'none';
+      cctvActive = false; restoreCctvStalker();
       document.getElementById('radioModal').style.display = 'none';
       document.getElementById('achievementShowcaseModal').style.display = 'none';
       if (!GAME_DATA.isHiding) safeRequestPointerLock();
@@ -4722,22 +4724,8 @@
     function switchCctvCam(camNum) {
       currentCctvCam = camNum;
       audio.playCctvSwitchBeep();
-      const title = document.getElementById('cctvCamName');
-      const content = document.getElementById('cctvScreenContent');
-      if (camNum === 1) {
-        title.innerText = 'CAM-01 : 1F SECURITY OFFICE';
-        content.innerHTML = '[1층 경비실 및 중앙 배전반]<br>형광등이 간헐적으로 깜빡이며 적막한 경비실 복도가 비친다.';
-      } else if (camNum === 2) {
-        title.innerText = 'CAM-02 : 2F CORRIDOR (HYDRANT)';
-        content.innerHTML = '[2층 복도 소화전함 구역]<br>난간 바깥으로 세찬 빗줄기가 들이치고 있다. 바닥에 빗물이 흥건하다.';
-      } else if (camNum === 3) {
-        title.innerText = 'CAM-03 : 3F CORRIDOR (ROOM 304)';
-        content.innerHTML = '[3층 복도 304호 앞]<br>304호 문이 몇 센티미터 열린 채 문틈 너머 어둠 속에서 무언가 움직이고 있다...';
-      } else if (camNum === 4) {
-        title.innerText = 'CAM-04 : 4F RESTRICTED (ROOM 404)';
-        content.innerHTML = '<span style="color:#ff4444;">[4층 봉쇄 구역 404호 앞 - 심한 노이즈]</span><br><br><strong>화면에 심한 노이즈와 함께, 검은 코트의 거대한 형체가 카메라 렌즈를 똑바로 노려보고 있다!</strong>';
-        if (!GAME_DATA.safeTour) audio.playScareStab();
-      }
+      applyCctvCam(camNum);
+      if (camNum === 4 && !GAME_DATA.safeTour) audio.playScareStab();
     }
 
     function initInspect3D() {
@@ -5468,9 +5456,12 @@
       lastFrameTime = now;
       frameCounter++;
 
+      peepWatchdog();
       const modalOpen = isAnyModalOpen();
 
       if (!GAME_DATA.gameStarted || modalOpen) {
+        if (cctvActive) renderCctv(now);
+        if (peepActive) renderPeep(now);
         postMaterial.uniforms.uTime.value = now * 0.001;
         postMaterial.uniforms.uSanity.value = GAME_DATA.sanity / 100;
         postMaterial.uniforms.tDiffuse.value = postTarget.texture;
@@ -5491,7 +5482,7 @@
       if (keys['KeyZ']) targetRoll = -0.14;
       camera.rotation.z += (targetRoll - camera.rotation.z) * 8 * delta;
 
-      if (!GAME_DATA.isHiding) {
+      if (!GAME_DATA.isHiding && !GAME_DATA.autoPilot) {
         handleMovement(delta, now);
       }
 
@@ -6020,28 +6011,6 @@
       }
     }
 
-    function openPeepholeModal(roomNum) {
-      safeExitPointerLock();
-      const modal = document.getElementById('peepholeModal');
-      const text = document.getElementById('peepholeText');
-      modal.style.display = 'flex';
-      unlockAchievement('achieve_peephole', '외시경 너머의 시선', '문틈 외시경으로 어둠 속을 들여다보았습니다.', '👁️');
-
-      if (roomNum === '202') {
-        text.innerHTML = '<span style="color:#64748b;">[202호 외시경 시점]</span><br><br>어두컴컴한 거실 바닥에 빗물이 흥건하다.<br>저 멀리 안방 문이 끼이익... 닫히는 실루엣이 보인다...';
-      } else if (roomNum === '304') {
-        text.innerHTML = '<span style="color:#ef4444;">[304호 외시경 시점]</span><br><br><strong>피눈물을 흘리는 노인의 눈동자가 외시경 렌즈에 바짝 붙어 나를 응시하고 있다!</strong><br><em>"너 502호 최진우잖아... 도망쳐!"</em>';
-        if (!GAME_DATA.safeTour) audio.playScareStab();
-      } else if (roomNum === '404') {
-        text.innerHTML = '<span style="color:#ffaa33;">[404호 외시경 시점]</span><br><br>붉은 제단과 촛불 수십 개, 그리고 공중에 매달린 아기 요람.<br>라디오에서 지지직거리는 참사 뉴스 속보가 흘러나온다.';
-      }
-    }
-
-    function closePeepholeModal() {
-      document.getElementById('peepholeModal').style.display = 'none';
-      if (!GAME_DATA.isHiding) safeRequestPointerLock();
-    }
-
     function toggleMapModal() {
       const modal = document.getElementById('mapModal');
       if (modal.style.display === 'flex') {
@@ -6488,6 +6457,356 @@
       checkRaycastInteraction();
       showSubtitle("최진우: '하룻밤 300만 원... 먼저 눈앞의 경비실 책상에서 [순찰 수칙서]와 [소화전 열쇠]를 챙기자.'", 5000);
     }
+
+/* =========================================================
+   10. 실시간 CCTV / 플레이형 외시경 / AI 자동 플레이
+   ========================================================= */
+const miniFill = new THREE.AmbientLight(0xaabbcc, 0);
+scene.add(miniFill);
+const miniTargets = {};
+function blitCamera(cam, canvasEl, w, h, fill) {
+  const k = w + 'x' + h;
+  if (!miniTargets[k]) miniTargets[k] = { rt: new THREE.WebGLRenderTarget(w, h), buf: new Uint8Array(w * h * 4) };
+  const m = miniTargets[k];
+  const ctx = canvasEl.getContext('2d');
+  miniFill.intensity = fill;
+  renderer.setRenderTarget(m.rt);
+  renderer.render(scene, cam);
+  renderer.setRenderTarget(null);
+  miniFill.intensity = 0;
+  renderer.readRenderTargetPixels(m.rt, 0, 0, w, h, m.buf);
+  const img = ctx.createImageData(w, h);
+  const d = img.data;
+  for (let y = 0; y < h; y++) {
+    const sRow = (h - 1 - y) * w * 4, tRow = y * w * 4;
+    for (let i = 0; i < w * 4; i++) d[tRow + i] = m.buf[sRow + i];
+  }
+  ctx.putImageData(img, 0, 0);
+  return ctx;
+}
+
+/* ---------- 실시간 CCTV ---------- */
+const CCTV_CAMS = {
+  1: { name: 'CAM-01 : 1F SECURITY OFFICE', pos: [-1.8, 2.6, 9.8], look: [-3.5, 0.8, 7.5], cap: '1층 경비실 / 중앙 배전반' },
+  2: { name: 'CAM-02 : 2F CORRIDOR (HYDRANT)', pos: [1.2, 2.5, -6.0], look: [-1.4, 1.2, -10.2], cap: '2층 복도 소화전함' },
+  3: { name: 'CAM-03 : 3F CORRIDOR (ROOM 304)', pos: [1.2, 2.5, -18.0], look: [-1.9, 1.2, -22.0], cap: '3층 복도 304호 앞' },
+  4: { name: 'CAM-04 : 4F RESTRICTED (ROOM 404)', pos: [1.2, 2.5, -26.0], look: [-1.9, 1.2, -30.0], cap: '4층 봉쇄구역 404호 앞' }
+};
+const cctvCam = new THREE.PerspectiveCamera(70, 16 / 9, 0.1, 60);
+let cctvActive = false, cctvLast = 0, cctvSavedStalker = null;
+function restoreCctvStalker() {
+  if (cctvSavedStalker && stalkerEnemy && stalkerEnemy.obj) {
+    stalkerEnemy.obj.visible = cctvSavedStalker.v;
+    stalkerEnemy.obj.position.copy(cctvSavedStalker.p);
+    stalkerEnemy.obj.rotation.y = cctvSavedStalker.r;
+  }
+  cctvSavedStalker = null;
+}
+function applyCctvCam(n) {
+  const c = CCTV_CAMS[n];
+  if (!c) return;
+  cctvCam.position.set(...c.pos);
+  cctvCam.lookAt(...c.look);
+  document.getElementById('cctvCamName').innerText = c.name;
+  document.getElementById('cctvScreenContent').innerText = '[' + c.cap + ']';
+  restoreCctvStalker();
+  if (n === 4 && stalkerEnemy && stalkerEnemy.obj) {
+    const o = stalkerEnemy.obj;
+    cctvSavedStalker = { v: o.visible, p: o.position.clone(), r: o.rotation.y };
+    o.position.set(-0.4, 0, -28.4);
+    o.rotation.y = Math.atan2(c.pos[0] - o.position.x, c.pos[2] - o.position.z);
+    o.visible = true;
+  }
+}
+function renderCctv(now) {
+  if (now - cctvLast < 80) return;
+  cctvLast = now;
+  const c = document.getElementById('cctvCanvas');
+  if (!c) return;
+  const ctx = blitCamera(cctvCam, c, 320, 180, 0.9);
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  for (let i = 0; i < 220; i++) ctx.fillRect(Math.random() * 320, Math.random() * 180, 1, 1);
+  if (currentCctvCam === 4 || Math.random() < 0.06) {
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fillRect(0, Math.random() * 180, 320, 2 + Math.random() * 3);
+  }
+  const ts = document.getElementById('cctvTimestamp');
+  if (ts) {
+    const t = new Date(912000000000 + now * 1000);
+    ts.innerText = '1998-11-13 ' + t.toISOString().slice(11, 19);
+  }
+}
+
+/* ---------- 플레이형 외시경 (Peephole) ---------- */
+const PEEP_DOORS = { '202': -14, '304': -22, '404': -30 };
+const PEEP_OFF = { '202': -60, '304': -80, '404': -100 };
+const peepCam = new THREE.PerspectiveCamera(105, 1, 0.05, 30);
+const peepGroups = {};
+let peepActive = false, peepFlying = false, peepSaved = null, peepRoom = null, peepLast = 0;
+
+function pBox(g, w, h, d, color, x, y, z, extra) {
+  const mat = new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.85 }, extra || {}));
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(x, y, z);
+  g.add(m);
+  return m;
+}
+function buildPeepRoom(num) {
+  const g = new THREE.Group();
+  g.position.set(PEEP_OFF[num], 0, 0);
+  const wall = num === '404' ? 0x3a1a18 : 0x3a3f44;
+  pBox(g, 4, 0.1, 5, 0x1a1816, 0, -0.05, 0);
+  pBox(g, 4, 0.1, 5, 0x222222, 0, 2.65, 0);
+  pBox(g, 4, 2.6, 0.1, wall, 0, 1.3, -2.5);
+  pBox(g, 0.1, 2.6, 5, wall, -2, 1.3, 0);
+  pBox(g, 0.1, 2.6, 5, wall, 2, 1.3, 0);
+  pBox(g, 4, 2.6, 0.1, wall, 0, 1.3, 2.55);
+  const anim = [];
+  const light = (c, i, x, y, z, dist) => { const l = new THREE.PointLight(c, i, dist || 9, 1.6); l.position.set(x, y, z); g.add(l); return l; };
+  if (num === '202') {
+    const pud = new THREE.Mesh(new THREE.CircleGeometry(1.3, 24), new THREE.MeshStandardMaterial({ color: 0x223344, metalness: 0.9, roughness: 0.1 }));
+    pud.rotation.x = -Math.PI / 2; pud.position.set(-0.3, 0.02, 0.2); g.add(pud);
+    pBox(g, 1.6, 0.6, 0.7, 0x2a2420, -1.2, 0.3, -1.6);
+    const pivot = new THREE.Group(); pivot.position.set(1.2, 0, -2.42); g.add(pivot);
+    const door = pBox(pivot, 0.9, 2.1, 0.06, 0x4a3a2a, -0.45, 1.05, 0);
+    const fig = new THREE.Group();
+    const bm = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 1 });
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.28, 1.3, 10), bm); body.position.y = 0.9; fig.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.17, 10, 10), bm); head.position.y = 1.7; fig.add(head);
+    fig.position.set(-0.8, 0, -1.9); g.add(fig);
+    const l = light(0x5577bb, 1.4, 0, 2.2, 0.5);
+    anim.push(t => {
+      pivot.rotation.y = -1.3 * (0.5 + 0.5 * Math.sin(t * 0.6));
+      fig.visible = Math.sin(t * 0.9) > 0.2;
+      l.intensity = 1.1 + Math.random() * 0.5 * (Math.random() < 0.1 ? 1 : 0.2);
+    });
+  } else if (num === '304') {
+    pBox(g, 1.3, 1.4, 0.1, 0x7a5a4a, 0, 1.55, 1.85);
+    pBox(g, 1.4, 0.3, 0.12, 0xaaaaaa, 0, 2.3, 1.84);
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.13, 20, 16), new THREE.MeshStandardMaterial({ color: 0xe8dcd0, roughness: 0.3 }));
+    eye.position.set(0, 1.55, 1.9); g.add(eye);
+    const iris = new THREE.Mesh(new THREE.SphereGeometry(0.06, 16, 12), new THREE.MeshStandardMaterial({ color: 0x331a0a }));
+    iris.position.set(0, 1.55, 2.0); g.add(iris);
+    const pup = new THREE.Mesh(new THREE.SphereGeometry(0.028, 12, 10), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+    pup.position.set(0, 1.55, 2.04); g.add(pup);
+    const redM = new THREE.MeshStandardMaterial({ color: 0x990000, emissive: 0x440000 });
+    [0.03, -0.05].forEach(x => { const tear = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.012, 0.55, 6), redM); tear.position.set(x, 1.25, 2.0); g.add(tear); });
+    const lid = pBox(g, 0.36, 0.12, 0.1, 0x8a6a5a, 0, 1.7, 2.0);
+    pBox(g, 0.36, 0.12, 0.1, 0x8a6a5a, 0, 1.4, 2.0);
+    light(0xffaa66, 1.0, 0, 1.6, 1.2, 4);
+    anim.push(t => {
+      const b = (t % 3.2) > 3.0 ? 0.12 : 0;
+      lid.position.y = 1.72 - b * 1.2;
+      const j = Math.sin(t * 2.3) * 0.012;
+      iris.position.x = j; pup.position.x = j;
+    });
+  } else {
+    pBox(g, 1.6, 0.8, 0.5, 0x2a0a0a, 0, 0.4, -1.8);
+    pBox(g, 1.7, 0.02, 0.6, 0x880000, 0, 0.81, -1.8);
+    for (let i = 0; i < 14; i++) {
+      const cx = -0.7 + (i % 7) * 0.23, cz = -1.8 + (i < 7 ? -0.1 : 0.12);
+      const c = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.14, 8), new THREE.MeshStandardMaterial({ color: 0xddddcc }));
+      c.position.set(cx, 0.9, cz); g.add(c);
+      const f = new THREE.Mesh(new THREE.SphereGeometry(0.02, 6, 6), new THREE.MeshBasicMaterial({ color: 0xffaa33 }));
+      f.position.set(cx, 1.0, cz); g.add(f);
+    }
+    const cradle = new THREE.Group(); cradle.position.set(0.9, 2.4, -0.6); g.add(cradle);
+    const ropeM = new THREE.MeshStandardMaterial({ color: 0x665544 });
+    [-0.2, 0.2].forEach(x => { const r = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.8, 5), ropeM); r.position.set(x, -0.4, 0); cradle.add(r); });
+    pBox(cradle, 0.6, 0.2, 0.35, 0x553322, 0, -0.9, 0);
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.04, 20), new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8 }));
+    wheel.rotation.z = Math.PI / 2; wheel.position.set(-1.9, 1.3, 0.6); g.add(wheel);
+    pBox(g, 0.5, 0.3, 0.3, 0x333333, -1.2, 0.15, 1.0);
+    light(0xff8833, 1.6, 0, 1.4, -1.2, 7);
+    const rl = light(0xff1100, 0.8, 0, 2.3, 0.5, 7);
+    anim.push(t => {
+      cradle.rotation.z = Math.sin(t * 1.1) * 0.25;
+      wheel.rotation.x = t * 8;
+      rl.intensity = 0.6 + 0.3 * Math.sin(t * 3);
+    });
+  }
+  g.userData.anim = anim;
+  g.visible = false;
+  scene.add(g);
+  peepGroups[num] = g;
+  return g;
+}
+function peepWrap(a) { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; }
+function openPeepholeModal(roomNum) {
+  if (peepActive || peepFlying) return;
+  const z = PEEP_DOORS[roomNum];
+  if (z === undefined) return;
+  peepFlying = true;
+  peepRoom = roomNum;
+  peepSaved = { p: camera.position.clone(), yaw: yaw, pitch: pitch, fov: camera.fov };
+  const tp = { x: -1.72, y: 1.55, z: z };
+  const dyaw = peepWrap(Math.PI / 2 - yaw);
+  const t0 = performance.now();
+  const tick = setInterval(() => {
+    let k = Math.min((performance.now() - t0) / 800, 1);
+    const e = k * k * (3 - 2 * k);
+    camera.position.set(peepSaved.p.x + (tp.x - peepSaved.p.x) * e, peepSaved.p.y + (tp.y - peepSaved.p.y) * e, peepSaved.p.z + (tp.z - peepSaved.p.z) * e);
+    yaw = peepSaved.yaw + dyaw * e;
+    pitch = peepSaved.pitch * (1 - e);
+    camera.fov = peepSaved.fov + (36 - peepSaved.fov) * e;
+    camera.updateProjectionMatrix();
+    if (k >= 1) { clearInterval(tick); peepFlying = false; startPeepView(roomNum); }
+  }, 25);
+}
+function startPeepView(roomNum) {
+  safeExitPointerLock();
+  if (!peepGroups[roomNum]) buildPeepRoom(roomNum);
+  peepGroups[roomNum].visible = true;
+  peepActive = true;
+  const text = document.getElementById('peepholeText');
+  document.getElementById('peepholeModal').style.display = 'flex';
+  unlockAchievement('achieve_peephole', '외시경 너머의 시선', '문틈 외시경으로 어둠 속을 들여다보았습니다.', '👁️');
+  if (roomNum === '202') {
+    text.innerHTML = '<span style="color:#64748b;">[202호]</span> 거실 바닥에 빗물이 흥건하다. 안방 문이 끼이익... 닫히고, 무언가 서 있다.';
+  } else if (roomNum === '304') {
+    text.innerHTML = '<span style="color:#ef4444;">[304호]</span> <strong>피눈물 흘리는 노인의 눈이 렌즈에 바짝 붙어 나를 보고 있다!</strong>';
+    if (!GAME_DATA.safeTour) audio.playScareStab();
+  } else {
+    text.innerHTML = '<span style="color:#ffaa33;">[404호]</span> 촛불 제단, 공중에 매달려 흔들리는 요람, 라디오 뉴스 속보...';
+  }
+}
+function finishPeep() {
+  if (!peepActive) return;
+  peepActive = false;
+  if (peepGroups[peepRoom]) peepGroups[peepRoom].visible = false;
+  if (peepSaved) {
+    camera.position.copy(peepSaved.p);
+    yaw = peepSaved.yaw; pitch = peepSaved.pitch;
+    camera.fov = peepSaved.fov;
+    camera.updateProjectionMatrix();
+  }
+}
+function closePeepholeModal() {
+  document.getElementById('peepholeModal').style.display = 'none';
+  const was = peepActive;
+  finishPeep();
+  if (was && !GAME_DATA.isHiding) safeRequestPointerLock();
+}
+function peepWatchdog() {
+  if (peepActive && document.getElementById('peepholeModal').style.display === 'none') finishPeep();
+}
+function renderPeep(now) {
+  if (now - peepLast < 50) return;
+  peepLast = now;
+  const g = peepGroups[peepRoom];
+  const c = document.getElementById('peepCanvas');
+  if (!g || !c) return;
+  const t = now * 0.001;
+  g.userData.anim.forEach(f => f(t));
+  const ox = PEEP_OFF[peepRoom];
+  peepCam.fov = peepRoom === '304' ? 85 : 105;
+  peepCam.updateProjectionMatrix();
+  if (peepRoom === '304') { peepCam.position.set(ox, 1.55, 2.45); peepCam.lookAt(ox, 1.55, 1.9); }
+  else { peepCam.position.set(ox, 1.55, 2.4); peepCam.lookAt(ox, 1.3, -1); }
+  blitCamera(peepCam, c, 256, 256, 0.55);
+}
+
+/* ---------- AI 자동 플레이 (Auto-Pilot) ---------- */
+let apTimer = null, apIdx = 0, apPhase = 'move', apPath = null, apWaitUntil = 0, apBanner = null, apStartedAt = 0;
+function apInteract(sub) {
+  const it = interactables.find(i => i.action && i.action.toString().includes(sub));
+  if (it) it.action();
+}
+function apCleanup() {
+  try { closePeepholeModal(); } catch (e) {}
+  ['closeDocModal', 'closeKeypadModal', 'closeFuseboxModal'].forEach(n => { try { window[n] && window[n](); } catch (e) {} });
+  if (typeof closeDocModal === 'function') { try { closeDocModal(); } catch (e) {} }
+}
+const AP_STEPS = [
+  { to: [], act: () => inspectRulebook(), wait: 4500 },
+  { to: [], act: () => apInteract('pickupHydrantKey'), wait: 2000 },
+  { to: [[0, 8.8], [0, -10.2]], face: Math.PI / 2, act: () => handleHydrantInspection(), wait: 8500 },
+  { to: [[0, 12.2]], face: Math.PI / 2, act: () => { openFuseboxModal(); setTimeout(repairFuse, 1800); }, wait: 7000 },
+  { to: [[0, -22]], face: Math.PI / 2, act: () => handleDoorInteraction('304'), wait: 8000 },
+  { to: [[0, -30]], face: Math.PI / 2, act: () => {
+      handleDoorInteraction('404');
+      ['1', '0', '1', '7'].forEach((d, i) => setTimeout(() => pressKey(d), 900 + i * 700));
+      setTimeout(() => submitKeypad(), 3900);
+    }, wait: 6000 },
+  { to: [], act: () => handleDoorInteraction('404'), wait: 6500 },
+  { to: [[0, -38]], face: Math.PI / 2, act: () => handleDoorInteraction('502'), wait: 7500 },
+  { to: [[0, -44.4]], face: 0, final: true, act: () => {
+      showSubtitle('최진우: \'이제... 이 문을 열어야 해.\'', 2500);
+      setTimeout(() => showEnding('C'), 2500);
+    }, wait: 3000 }
+];
+function apTick() {
+  if (!GAME_DATA.autoPilot) return;
+  if (peepFlying) return;
+  const now = performance.now();
+  const st = AP_STEPS[apIdx];
+  if (!st) { stopAutoPilot(); return; }
+  const dt = 0.04;
+  if (apPhase === 'wait') {
+    if (now >= apWaitUntil) {
+      if (st.final) { stopAutoPilot(true); return; }
+      apCleanup();
+      apIdx++; apPhase = 'move'; apPath = null;
+    }
+    return;
+  }
+  if (apPhase === 'move') {
+    if (!apPath) apPath = st.to.map(p => p.slice());
+    if (!apPath.length) { apPhase = 'turn'; return; }
+    const tx = apPath[0][0], tz = apPath[0][1];
+    const dx = tx - camera.position.x, dz = tz - camera.position.z;
+    const dist = Math.hypot(dx, dz);
+    if (dist < 0.08) { apPath.shift(); return; }
+    const step = Math.min(dist, 2.3 * dt);
+    camera.position.x += dx / dist * step;
+    camera.position.z += dz / dist * step;
+    camera.position.y = 1.6 + Math.sin(now * 0.009) * 0.025;
+    const hy = Math.atan2(-dx, -dz);
+    yaw += peepWrap(hy - yaw) * 0.12;
+    pitch += (0 - pitch) * 0.1;
+    return;
+  }
+  if (apPhase === 'turn') {
+    const target = st.face === undefined ? yaw : st.face;
+    const diff = peepWrap(target - yaw);
+    pitch += (0 - pitch) * 0.1;
+    if (Math.abs(diff) < 0.03) { apPhase = 'act'; return; }
+    yaw += diff * 0.12;
+    return;
+  }
+  if (apPhase === 'act') {
+    try { st.act && st.act(); } catch (e) { console.error('AI step error', e); }
+    apPhase = 'wait';
+    apWaitUntil = now + (st.wait || 1000);
+  }
+}
+function stopAutoPilot(finished) {
+  GAME_DATA.autoPilot = false;
+  if (apTimer) { clearInterval(apTimer); apTimer = null; }
+  if (apBanner) { apBanner.remove(); apBanner = null; }
+  if (!finished) { try { safeRequestPointerLock(); } catch (e) {} }
+}
+function startAutoPilot() {
+  const cb = document.getElementById('safeTourCheckbox');
+  if (cb) cb.checked = true;
+  startGame();
+  GAME_DATA.autoPilot = true;
+  apIdx = 0; apPhase = 'move'; apPath = null;
+  apStartedAt = performance.now();
+  apBanner = document.createElement('div');
+  apBanner.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:300;background:rgba(0,40,20,.85);border:1px solid #33ff88;color:#33ff88;padding:8px 16px;border-radius:6px;font:13px sans-serif;display:flex;gap:12px;align-items:center;';
+  apBanner.innerHTML = '🤖 AI 자동 탐색 중... <button style="background:#033;color:#fff;border:1px solid #33ff88;padding:4px 10px;cursor:pointer;">⏹ 직접 조작</button>';
+  apBanner.querySelector('button').onclick = () => stopAutoPilot();
+  document.body.appendChild(apBanner);
+  if (apTimer) clearInterval(apTimer);
+  apTimer = setInterval(apTick, 40);
+}
+window.addEventListener('keydown', e => {
+  if (GAME_DATA.autoPilot && ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Escape'].includes(e.code)) stopAutoPilot();
+});
+canvas.addEventListener('mousedown', () => {
+  if (GAME_DATA.autoPilot && performance.now() - apStartedAt > 800) stopAutoPilot();
+});
 
     requestAnimationFrame(updateGameLoop);
   </script>
