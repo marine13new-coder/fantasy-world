@@ -1493,10 +1493,11 @@
        ======================================================== */
     let scene, camera, renderer;
     let flashlight, flashlightCone, ceilingLamp, ambientGlow, exitSignLamp, thunderLight;
-    let deskObj, deskDrawerObj, sedativeBottleObj, monitorObj, doorObj, monsterFigure, ceilingFan;
-    let wheelchairObj, ivStandObj, gurneyObj, phoneObj, breakerBoxObj, cctvCameraObj, noticeBoardObj, clipboardObj, exitSignObj, crackedMirrorObj;
+    let deskObj, deskDrawerObj, sedativeBottleObj, monitorObj, monitorScreenMesh, doorObj, monsterFigure, ceilingFan;
+    let wheelchairObj, ivStandObj, gurneyObj, phoneObj, breakerBoxObj, cctvCameraObj, noticeBoardObj, clipboardObj, exitSignObj, crackedMirrorObj, polaroidObj;
     let asylumWindowObj, rainStreakCanvas, rainStreakCtx, rainStreakTexture, rainDrops = [];
     let bloodPuddleObj, shadowSilhouetteObj, wallClockObj, clockSecondHand;
+    let monitorCanvas, monitorCtx, monitorTexture;
     let uvClueMesh, dustParticles, waterDropMesh;
     let isPointerLocked = false;
     let inTerminalMode = false;
@@ -1700,11 +1701,21 @@
       monitorObj.castShadow = true;
       scene.add(monitorObj);
 
+      // CRT 모니터 실시간 동적 인광 스크린 (Real-Time 3D In-Game CRT Display)
+      monitorCanvas = document.createElement('canvas');
+      monitorCanvas.width = 256;
+      monitorCanvas.height = 180;
+      monitorCtx = monitorCanvas.getContext('2d');
+      monitorTexture = new THREE.CanvasTexture(monitorCanvas);
+
       const screenGeo = new THREE.PlaneGeometry(0.85, 0.6);
-      const screenMat = new THREE.MeshBasicMaterial({ color: 0x33ff77 });
-      const screen = new THREE.Mesh(screenGeo, screenMat);
-      screen.position.set(0, 1.35, -3.79);
-      scene.add(screen);
+      const screenMat = new THREE.MeshBasicMaterial({ map: monitorTexture });
+      monitorScreenMesh = new THREE.Mesh(screenGeo, screenMat);
+      monitorScreenMesh.position.set(0, 1.35, -3.79);
+      scene.add(monitorScreenMesh);
+
+      // 데스크 위 3D 수사 증거 폴라로이드 사진
+      buildDeskPolaroid();
 
       // 데스크 위 의무 기록 차트
       buildClinicalClipboard();
@@ -1745,6 +1756,80 @@
 
       // 기괴한 3D 그림자 괴물
       buildMonsterEntity();
+    }
+
+    /* 데스크 위 3D 수사 증거 폴라로이드 사진 (Polaroid Evidence Photo) */
+    function buildDeskPolaroid() {
+      polaroidObj = new THREE.Group();
+
+      // 폴라로이드 종이 프레임
+      const frameMat = new THREE.MeshStandardMaterial({ color: 0xeeece5, roughness: 0.9 });
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.006, 0.28), frameMat);
+      polaroidObj.add(frame);
+
+      // 사진 필름 면
+      const photoMat = new THREE.MeshStandardMaterial({ color: 0x1a241e, roughness: 0.4 });
+      const photo = new THREE.Mesh(new THREE.PlaneGeometry(0.20, 0.20), photoMat);
+      photo.rotation.x = -Math.PI / 2;
+      photo.position.set(0, 0.004, -0.02);
+      polaroidObj.add(photo);
+
+      polaroidObj.position.set(-0.75, 0.91, -3.9);
+      polaroidObj.rotation.y = 0.35;
+      scene.add(polaroidObj);
+    }
+
+    /* CRT 모니터 실시간 3D 인게임 디스플레이 갱신 */
+    function update3DMonitorScreen() {
+      if (!monitorCtx) return;
+
+      // 짙은 CRT 인광 녹색 배경
+      monitorCtx.fillStyle = '#020904';
+      monitorCtx.fillRect(0, 0, 256, 180);
+
+      // 스캔라인
+      monitorCtx.fillStyle = 'rgba(10, 35, 18, 0.4)';
+      for (let y = 0; y < 180; y += 4) {
+        monitorCtx.fillRect(0, y, 256, 2);
+      }
+
+      // 텍스트 OSD
+      monitorCtx.font = 'bold 12px monospace';
+      monitorCtx.fillStyle = '#33ff77';
+      monitorCtx.fillText('ARCHIVE-1999 OS v2.4', 12, 22);
+
+      monitorCtx.font = '11px monospace';
+      monitorCtx.fillStyle = '#82b596';
+      monitorCtx.fillText(`TAPE 0${curChapter}: ${chapterDB[curChapter].title.substring(0, 15)}...`, 12, 42);
+      monitorCtx.fillText(`FREQ: ${paramFreq}Hz | DEMOD: ${currentDemod}`, 12, 58);
+      monitorCtx.fillText(`SYNC LOCK: ${syncPct}%`, 12, 74);
+
+      // 실시간 오실로스코프 파형
+      monitorCtx.strokeStyle = '#33ff77';
+      monitorCtx.lineWidth = 1.5;
+      monitorCtx.beginPath();
+      const t = Date.now() * 0.005;
+      for (let x = 0; x < 256; x += 4) {
+        const wave = Math.sin(x * 0.08 + t * 4) * (isPlaying ? 18 : 3) * (syncPct > 50 ? 1.2 : 0.6);
+        const y = 115 + wave;
+        if (x === 0) monitorCtx.moveTo(x, y);
+        else monitorCtx.lineTo(x, y);
+      }
+      monitorCtx.stroke();
+
+      // 하단 심전도 뇌파 펄스 라인
+      monitorCtx.strokeStyle = '#ffaa11';
+      monitorCtx.lineWidth = 1.0;
+      monitorCtx.beginPath();
+      for (let x = 0; x < 256; x += 6) {
+        const pulse = (Math.sin(x * 0.2 + t * 8) > 0.85) ? 14 : 0;
+        const y = 155 - pulse;
+        if (x === 0) monitorCtx.moveTo(x, y);
+        else monitorCtx.lineTo(x, y);
+      }
+      monitorCtx.stroke();
+
+      if (monitorTexture) monitorTexture.needsUpdate = true;
     }
 
     function buildDeskDrawer() {
@@ -2340,6 +2425,9 @@
       // 빗물 창문 텍스처 갱신
       updateRainWindowCanvas();
 
+      // CRT 모니터 실시간 3D 인게임 디스플레이 갱신
+      update3DMonitorScreen();
+
       // 벽시계 초침 회전 및 째깍 앰비언스
       const nowSec = Date.now() / 1000;
       if (clockSecondHand) {
@@ -2462,6 +2550,7 @@
       if (clipboardObj) targets.push(clipboardObj);
       if (deskDrawerObj) targets.push(deskDrawerObj);
       if (sedativeBottleObj && hasSedative) targets.push(sedativeBottleObj);
+      if (polaroidObj) targets.push(polaroidObj);
 
       const hits = ray.intersectObjects(targets, true);
 
@@ -2470,12 +2559,14 @@
         tip.style.display = 'block';
 
         let rootHit = hits[0].object;
-        while (rootHit.parent && rootHit.parent !== scene && rootHit !== deskDrawerObj && rootHit !== sedativeBottleObj) {
+        while (rootHit.parent && rootHit.parent !== scene && rootHit !== deskDrawerObj && rootHit !== sedativeBottleObj && rootHit !== polaroidObj) {
           rootHit = rootHit.parent;
         }
 
         if (rootHit === sedativeBottleObj && hasSedative) {
           tip.innerText = "[ E ] 신경 안정제 복용 (이성 +30%)";
+        } else if (rootHit === polaroidObj) {
+          tip.innerText = "[ E ] 송백병원 참사 전경 폴라로이드 사진 조사";
         } else if (rootHit === deskDrawerObj) {
           tip.innerText = isDrawerOpen ? "[ E ] 책상 서랍 닫기" : "[ E ] 책상 서랍 열기";
         } else if (rootHit === noticeBoardObj) {
@@ -3192,6 +3283,22 @@
           <p><em>"원장은 수면 박탈 및 극단적인 특정 헤르츠(108.4Hz) 음향 노출을 통해 환자의 기억과 인격을 교체하는 극비 프로젝트를 진행해왔음."</em></p>
           <p style="color:#ffaa11; margin-top:12px;"><strong>[벽면 메모]</strong> 최은경 간호사의 음성 증언 테이프(TAPE 03)는 1850Hz에 숨겨져 있다.</p>
         `;
+      } else if (type === 'polaroid') {
+        title.innerText = "📷 송백병원 화재 전경 폴라로이드 사진 (POLAROID 1979)";
+        body.innerHTML = `
+          <div style="display:flex; gap:16px; align-items:center;">
+            <div style="background:#0c1710; border:2px solid #82b596; padding:12px; border-radius:4px; text-align:center; min-width:130px;">
+              <span style="font-size:38px;">🏛️</span><br>
+              <span style="font-size:11px; color:#8abfa1;">[1979.08 촬영]</span>
+            </div>
+            <div>
+              <p><strong>[사진 앞면]</strong> 송백신경정신병원 지하 404호 격리병동 완공 기념 사진.</p>
+              <p style="color:#ffaa11; margin-top:8px;"><strong>[사진 뒷면 닥터 한의 친필 메모]</strong><br>
+              <em>"404호의 펄스 주파수는 결코 외부로 유출되어서는 안 된다.<br>
+              내가 시작한 기억 소거 실험은... 이미 환자들의 뇌를 넘어 내 뇌까지 잠식하기 시작했다."</em></p>
+            </div>
+          </div>
+        `;
       } else {
         title.innerText = "📋 환자 17호 및 닥터 한 비밀 임상 일지";
         body.innerHTML = `
@@ -3744,16 +3851,19 @@
           if (clipboardObj) targets.push(clipboardObj);
           if (deskDrawerObj) targets.push(deskDrawerObj);
           if (sedativeBottleObj && hasSedative) targets.push(sedativeBottleObj);
+          if (polaroidObj) targets.push(polaroidObj);
 
           const hits = ray.intersectObjects(targets, true);
           if (hits.length > 0 && hits[0].distance < 3.8) {
             let rootHit = hits[0].object;
-            while (rootHit.parent && rootHit.parent !== scene && rootHit !== deskDrawerObj && rootHit !== sedativeBottleObj) {
+            while (rootHit.parent && rootHit.parent !== scene && rootHit !== deskDrawerObj && rootHit !== sedativeBottleObj && rootHit !== polaroidObj) {
               rootHit = rootHit.parent;
             }
 
             if (rootHit === sedativeBottleObj && hasSedative) {
               consumeSedative();
+            } else if (rootHit === polaroidObj) {
+              openDocModal('polaroid');
             } else if (rootHit === deskDrawerObj) {
               toggleDeskDrawer();
             } else if (rootHit === noticeBoardObj) {
