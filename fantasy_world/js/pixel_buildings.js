@@ -1084,22 +1084,80 @@
         drawPost(px - 6);
         drawPost(px + 6);
       } else if (propType === 'chicken_coop') {
-        // [CUTE FANTASY 닭장 울타리 / 급수대 / 짚단 둥지]
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
-        ctx.fillRect(px - 8, py + 4, 16, 3);
-        // 급수통 (Water Trough)
-        ctx.fillStyle = '#475569';
-        ctx.fillRect(px - 6, py - 3, 7, 5);
-        ctx.fillStyle = '#38bdf8'; // 물
-        ctx.fillRect(px - 5, py - 2, 5, 3);
-        // 짚단 둥지 (Straw Nest)
-        ctx.fillStyle = '#ca8a04';
-        ctx.fillRect(px + 2, py - 3, 6, 5);
-        ctx.fillStyle = '#fef08a';
-        ctx.fillRect(px + 3, py - 2, 4, 3);
-        // 흰 알
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(px + 4, py - 1, 2, 2);
+        // [CUTE FANTASY 4면 목조 울타리 닭장 & 짚단 둥지 & 급수통 & 쪼아먹는 암탉/수탉]
+        // 1. 닭장 내부 따뜻한 황토 흙바닥 & 지푸라기 패치
+        ctx.fillStyle = '#a86b3c';
+        ctx.fillRect(px - 13, py - 8, 26, 16);
+        ctx.fillStyle = '#c88a55';
+        ctx.fillRect(px - 11, py - 6, 22, 12);
+        ctx.fillStyle = '#eab308'; // 흩뿌려진 지푸라기
+        ctx.fillRect(px - 8, py + 1, 5, 2);
+        ctx.fillRect(px + 2, py + 3, 6, 1);
+
+        // 2. 후면(북쪽) 목조 울타리 레일 & 기둥
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(px - 14, py - 11, 28, 5);
+        ctx.fillStyle = '#b45309';
+        ctx.fillRect(px - 13, py - 10, 26, 2);
+        ctx.fillRect(px - 13, py - 7, 26, 1);
+        for (let fx = -13; fx <= 13; fx += 13) {
+          ctx.fillStyle = '#451a03';
+          ctx.fillRect(px + fx - 2, py - 13, 4, 8);
+          ctx.fillStyle = '#d97706';
+          ctx.fillRect(px + fx - 1, py - 12, 2, 6);
+        }
+
+        // 3. 좌측 물통 (Wooden Water Trough with Blue Water)
+        ctx.fillStyle = '#271206';
+        ctx.fillRect(px - 11, py - 5, 9, 6);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(px - 10, py - 4, 7, 4);
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(px - 9, py - 3, 5, 2);
+        ctx.fillStyle = '#bae6fd';
+        ctx.fillRect(px - 8, py - 3, 3, 1);
+
+        // 4. 우측 짚단 둥지 & 달걀 2알 (Golden Straw Nest & Eggs)
+        ctx.fillStyle = '#854d0e';
+        ctx.fillRect(px + 3, py - 6, 9, 6);
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(px + 4, py - 5, 7, 4);
+        ctx.fillStyle = '#ffffff'; // 달걀
+        ctx.fillRect(px + 5, py - 4, 2, 3);
+        ctx.fillRect(px + 8, py - 4, 2, 3);
+
+        // 5. 살아 움직이는 귀여운 하얀 암탉 & 갈색 병아리 (Pecking White Hen & Brown Rooster)
+        const peck = Math.round(Math.sin(timeSec * 6 + px) * 1);
+        // 하얀 암탉
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(px - 3, py + 2, 5, 1); // 그림자
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(px - 3, py - 2 + peck, 5, 4); // 몸통
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(px - 2, py - 4 + peck, 2, 2); // 붉은 벼슬
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(px - 4, py - 1 + peck, 1, 1); // 노란 부리
+        // 노란 병아리
+        ctx.fillStyle = '#fde047';
+        ctx.fillRect(px + 4, py + 1, 3, 3);
+        ctx.fillStyle = '#f97316';
+        ctx.fillRect(px + 3, py + 2, 1, 1);
+
+        // 6. 좌우 측면 & 전면(남쪽) 목조 울타리 (전면 개방 게이트 포함)
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(px - 14, py - 8, 3, 16);
+        ctx.fillRect(px + 11, py - 8, 3, 16);
+        ctx.fillStyle = '#b45309';
+        ctx.fillRect(px - 13, py - 7, 1, 14);
+        ctx.fillRect(px + 12, py - 7, 1, 14);
+
+        // 전면 울타리 가로대
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(px - 14, py + 6, 11, 4);
+        ctx.fillRect(px + 3, py + 6, 11, 4);
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(px - 13, py + 7, 9, 2);
+        ctx.fillRect(px + 4, py + 7, 9, 2);
       } else if (propType === 'signpost') {
         // [CUTE FANTASY 나무 이정표 푯말]
         ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';

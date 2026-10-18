@@ -15,12 +15,19 @@ class RetroAudioSystem {
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return;
-      this.ctx = new AudioCtx();
+      const ctx = new AudioCtx();
+      if (typeof ctx.createGain !== 'function' || typeof ctx.createOscillator !== 'function') {
+        return;
+      }
+      this.ctx = ctx;
       this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+      this.masterGain.gain.setValueAtTime(0.18, this.ctx.currentTime || 0);
       this.masterGain.connect(this.ctx.destination);
       this.initialized = true;
     } catch (e) {
+      this.ctx = null;
+      this.masterGain = null;
+      this.initialized = false;
       console.warn('Web Audio initialization failed:', e);
     }
   }
@@ -28,15 +35,16 @@ class RetroAudioSystem {
   ensureReady() {
     if (this.muted) return false;
     if (!this.initialized) this.init();
-    if (this.ctx && this.ctx.state === 'suspended') {
+    if (!this.initialized || !this.ctx || !this.masterGain) return false;
+    if (this.ctx.state === 'suspended' && typeof this.ctx.resume === 'function') {
       this.ctx.resume();
     }
-    return !!this.ctx;
+    return true;
   }
 
   resume() {
     if (!this.initialized) this.init();
-    if (this.ctx && this.ctx.state === 'suspended') {
+    if (this.ctx && this.ctx.state === 'suspended' && typeof this.ctx.resume === 'function') {
       this.ctx.resume();
     }
   }

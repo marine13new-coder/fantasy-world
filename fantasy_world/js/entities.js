@@ -3981,13 +3981,16 @@ class EntityManager {
           this.addFloatingText(e.x, e.y - 2.2, `🔥 [광폭화/ENRAGED!] 공격력 +35%, 폭주!`, '#ef4444', 3.0);
           this.addShockwave(e.x, e.y, 6.0, '#ef4444', 0.8);
           this.addHitSparks(e.x, e.y, '#f97316', 16);
-          if (this.camera) {
-            this.camera.shake = 16;
-            this.camera.screenFreeze = 0.08;
-          }
-          if (window.renderer) {
-            window.renderer.screenFlashTimer = 0.12;
-            window.renderer.screenFlashColor = '#ef4444';
+          const nearPlayer = this.player && Math.hypot(e.x - this.player.x, e.y - this.player.y) < 35;
+          if (nearPlayer) {
+            if (this.camera) {
+              this.camera.shake = 16;
+              this.camera.screenFreeze = 0.08;
+            }
+            if (window.renderer) {
+              window.renderer.screenFlashTimer = 0.12;
+              window.renderer.screenFlashColor = '#ef4444';
+            }
           }
         }
         if (e.isEnraged && Math.random() < 0.22) {
@@ -4008,12 +4011,17 @@ class EntityManager {
         e.hp = Math.min(e.maxHp, e.hp + dt * 3.0);
       }
 
-      // ⚡ 시뮬레이션 LOD (Simulation Level of Detail)
-      // 화면/카메라에서 먼 엔티티(>85타일)는 3프레임에 1번씩만 AI 연산 (플레이어 및 보스는 항상 매프레임 갱신)
+      // ⚡ 3단계 시뮬레이션 LOD (3-Tier Simulation Level of Detail)
+      // 근거리(<=55타일): 매 프레임 / 중거리(<=150타일): 4프레임당 1회 / 원거리(>150타일): 16프레임당 1회 연산
+      let stepDt = dt;
       if (e.role !== 'player' && !e.isBoss) {
         const d2 = (e.x - camX) * (e.x - camX) + (e.y - camY) * (e.y - camY);
-        if (d2 > lodDist2 && (i + this.simFrame) % 3 !== 0) {
-          continue;
+        if (d2 > 22500) { // > 150 tiles
+          if (((i + this.simFrame) & 15) !== 0) continue;
+          stepDt = Math.min(0.25, dt * 16);
+        } else if (d2 > 3025) { // > 55 tiles
+          if (((i + this.simFrame) & 3) !== 0) continue;
+          stepDt = Math.min(0.10, dt * 4);
         }
       }
 
@@ -4025,20 +4033,20 @@ class EntityManager {
 
       // 🐾 야생 동물 AI
       if (e.role === 'animal') {
-        this.updateAnimalAI(e, dt);
-        this.moveTowardTarget(e, dt);
+        this.updateAnimalAI(e, stepDt);
+        this.moveTowardTarget(e, stepDt);
         continue;
       }
 
       // 🐉 고대 드래곤 AI
       if (e.role === 'dragon') {
-        this.updateDragonAI(e, dt);
-        this.moveTowardTarget(e, dt);
+        this.updateDragonAI(e, stepDt);
+        this.moveTowardTarget(e, stepDt);
         continue;
       }
 
       // 전투 감지
-      const engaged = this.checkAndRunCombat(e, dt);
+      const engaged = this.checkAndRunCombat(e, stepDt);
       if (engaged) {
         battleCount++;
         continue;
@@ -4047,39 +4055,39 @@ class EntityManager {
       // 직업별 AI
       switch (e.role) {
         case 'king':
-          this.updateKingAI(e, dt, isNight);
+          this.updateKingAI(e, stepDt, isNight);
           break;
         case 'royal_guard':
         case 'soldier':
-          this.updateSoldierAI(e, dt, isNight);
+          this.updateSoldierAI(e, stepDt, isNight);
           break;
         case 'navy':
-          this.updateNavyAI(e, dt);
+          this.updateNavyAI(e, stepDt);
           break;
         case 'farmer':
-          this.updateFarmerAI(e, dt, isNight);
+          this.updateFarmerAI(e, stepDt, isNight);
           break;
         case 'fisherman':
-          this.updateFishermanAI(e, dt, isNight);
+          this.updateFishermanAI(e, stepDt, isNight);
           break;
         case 'miner':
-          this.updateMinerAI(e, dt, isNight);
+          this.updateMinerAI(e, stepDt, isNight);
           break;
         case 'blacksmith':
-          this.updateBlacksmithAI(e, dt, isNight);
+          this.updateBlacksmithAI(e, stepDt, isNight);
           break;
         case 'merchant':
-          this.updateMerchantAI(e, dt, isNight);
+          this.updateMerchantAI(e, stepDt, isNight);
           break;
         case 'sea_merchant':
-          this.updateSeaMerchantAI(e, dt);
+          this.updateSeaMerchantAI(e, stepDt);
           break;
         case 'mercenary':
         case 'adventurer':
-          this.updateAdventurerAI(e, dt, isNight);
+          this.updateAdventurerAI(e, stepDt, isNight);
           break;
         case 'monster':
-          this.updateMonsterAI(e, dt, isNight);
+          this.updateMonsterAI(e, stepDt, isNight);
           break;
       }
 
@@ -4089,7 +4097,7 @@ class EntityManager {
         if (e.airborneTimer <= 0) e.airborneHeight = 0;
       }
 
-      this.moveTowardTarget(e, dt);
+      this.moveTowardTarget(e, stepDt);
     }
 
     this.activeBattles = Math.ceil(battleCount / 2);
@@ -4476,11 +4484,14 @@ class EntityManager {
           // 기폭! (Detonation)
           this.addEffect(hz.x, hz.y, hz.radius * 1.2, hz.color, 0.7);
           this.addHitSparks(hz.x, hz.y, hz.color, 14);
-          if (typeof audioMgr !== 'undefined') audioMgr.playMeteor();
-          if (this.camera) this.camera.shake = Math.min(22, (this.camera.shake || 0) + 9);
+          const distToPlayer = p ? Math.hypot(p.x - hz.x, p.y - hz.y) : 999;
+          if (distToPlayer < 28) {
+            if (typeof audioMgr !== 'undefined') audioMgr.playMeteor();
+            if (this.camera) this.camera.shake = Math.min(22, (this.camera.shake || 0) + 9);
+          }
 
           // 범위 내 플레이어 및 아군 피해 (닷지 롤 무적 상태면 회피!)
-          if (p && Math.hypot(p.x - hz.x, p.y - hz.y) <= hz.radius) {
+          if (p && distToPlayer <= hz.radius) {
             if (p.invulnerable || p.isDashing) {
               this.triggerWitchTime(1.0, 0.22);
               p.awakeningGauge = Math.min(100, (p.awakeningGauge || 0) + 30);
@@ -4609,7 +4620,7 @@ class EntityManager {
             prey.hitTimer = 0.25;
             this.addFloatingText(prey.x, prey.y - 0.7, `-🐾${dmg}`, '#ef4444', 0.8);
             this.addHitSparks(prey.x, prey.y, '#ef4444', 6);
-            if (typeof audioMgr !== 'undefined') {
+            if (typeof audioMgr !== 'undefined' && this.player && Math.hypot(e.x - this.player.x, e.y - this.player.y) < 22) {
               if (e.animalType === 'croc' || (e.name && e.name.includes('악어'))) audioMgr.playCrocSnap();
               else if (e.animalType === 'wolf' || (e.name && e.name.includes('늑대'))) audioMgr.playWolfHowl();
               else audioMgr.playSword();
@@ -5022,8 +5033,8 @@ class EntityManager {
             p.footstepTimer = 0;
             if (typeof audioMgr !== 'undefined') {
               const surface = p.isShip ? 'water' :
-                (curTile === TILE.SNOW || curTile === TILE.ICE ? 'snow' :
-                (curTile === TILE.SAND || curTile === TILE.DESERT_DUNES ? 'sand' : 'grass'));
+                (curTile === TILE.SNOW || curTile === TILE.TUNDRA ? 'snow' :
+                (curTile === TILE.SAND || curTile === TILE.DESERT ? 'sand' : 'grass'));
               audioMgr.playFootstep(surface);
             }
           }
