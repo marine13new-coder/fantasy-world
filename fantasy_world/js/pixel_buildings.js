@@ -4449,6 +4449,190 @@
     },
 
     // =========================================================================
+    // 30. 태고 거인왕의 천둥 요툰하임 대성채 (Jötunheim Thunder Giant Citadel)
+    // =========================================================================
+    drawJotunheimThunderCitadel(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 지면 거석 그림자 (Cyclopean Megalith Cast Shadow)
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.64)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 2, halfW + 10, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // B. 3단 거석 화강암 성벽 기단 (Stepped Granite Bastion)
+      const bastW = Math.round(bw * 0.86);
+      const bastHW = Math.round(bastW / 2);
+      const bastH = Math.round(bh * 0.68);
+      const bastY = py + halfH - bastH;
+
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(px - bastHW, bastY, bastW, bastH);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(px - bastHW + 2, bastY + 2, bastW - 4, bastH - 4);
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(px - bastHW + 5, bastY + 6, bastW - 10, bastH - 12);
+
+      // 거석 총안 (Heavy Stone Crenellations)
+      ctx.fillStyle = '#64748b';
+      for (let bx = px - bastHW; bx < px + bastHW - 6; bx += 12) {
+        ctx.fillRect(bx, bastY - 4, 8, 4);
+      }
+
+      // C. 성채 중앙에서 솟아오른 태고 거인 석상 토르소 & 투구 (Stone Giant Torso & Horned Helm)
+      const giantY = bastY - 14;
+      const breathe = Math.sin(timeSec * 2.0);
+
+      // 거인 흉갑 & 어깨 견갑 (Stone Pauldrons)
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(px - 14, giantY + 4, 28, 12);
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(px - 16, giantY + 2, 7, 10);
+      ctx.fillRect(px + 9, giantY + 2, 7, 10);
+
+      // 거인 두상 & 턱수염 (Giant Head & Braided Beard)
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(px - 6, giantY - 8 + breathe, 12, 12);
+      // 땋은 돌수염 (Braided Stone Beard)
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(px - 3, giantY + 4 + breathe, 6, 8);
+
+      // 뿔 투구 (Horned Helm)
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(px - 7, giantY - 10 + breathe, 14, 4);
+      // 거대한 좌우 만곡 뿔 (Curved Megalith Horns)
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(px - 6, giantY - 9 + breathe);
+      ctx.quadraticCurveTo(px - 14, giantY - 18 + breathe, px - 18, giantY - 10 + breathe);
+      ctx.moveTo(px + 6, giantY - 9 + breathe);
+      ctx.quadraticCurveTo(px + 14, giantY - 18 + breathe, px + 18, giantY - 10 + breathe);
+      ctx.stroke();
+
+      // 황금빛/천둥빛 안광 (Thunder Eyes)
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(px - 4, giantY - 5 + breathe, 2.5, 2);
+      ctx.fillRect(px + 1.5, giantY - 5 + breathe, 2.5, 2);
+
+      // D. 거인이 쥐고 있는 거대 천둥 파쇄 망치 (Colossal Thunder Hammer)
+      const hammerX = px + bastHW - 4;
+      const hammerY = bastY - 12;
+
+      // 자루 (Handle)
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(hammerX - 1.5, hammerY, 3, 22);
+
+      // 망치 머리 (Heavy Granite Hammer Head)
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(hammerX - 6, hammerY - 8, 12, 8);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(hammerX - 5, hammerY - 5, 10, 2); // 룬 밴드
+
+      // 망치 머리에서 파직거리는 번개 스파크 (Crackling Lightning Spark)
+      if (Math.sin(timeSec * 8) > 0.3) {
+        ctx.strokeStyle = '#fef08a';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(hammerX - 6, hammerY - 8);
+        ctx.lineTo(hammerX - 10, hammerY - 14);
+        ctx.lineTo(hammerX - 4, hammerY - 12);
+        ctx.lineTo(hammerX - 8, hammerY - 18);
+        ctx.stroke();
+      }
+
+      // E. 좌우 거석 화로 (Twin Megalith Hearth Cauldrons)
+      const h1x = px - bastHW + 6;
+      const h2x = px + bastHW - 6;
+      const hy = py + halfH - 6;
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(h1x - 3, hy, 6, 6);
+      ctx.fillRect(h2x - 3, hy, 6, 6);
+
+      const fPulse = 3.5 + Math.sin(timeSec * 7) * 1.5;
+      ctx.fillStyle = '#ea580c';
+      ctx.beginPath();
+      ctx.arc(h1x, hy - 2, fPulse, 0, Math.PI * 2);
+      ctx.arc(h2x, hy - 2, fPulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(h1x - 1, hy - 4, 2, 2);
+      ctx.fillRect(h2x - 1, hy - 4, 2, 2);
+
+      // 성문 (Cyclopean Archway)
+      const gateW = Math.round(bw * 0.22);
+      const gateH = Math.round(bh * 0.34);
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(px - gateW / 2, py + halfH - gateH, gateW, gateH);
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(px - gateW / 2 + 2, py + halfH - gateH + 2, gateW - 4, gateH - 2);
+    },
+
+    // =========================================================================
+    // 31. 룬 거신 사이클롭스 신성 거석 성소 (Rune Colossus Cyclopean Sanctum)
+    // =========================================================================
+    drawRuneColossusSanctum(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 지면 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.58)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 2, halfW + 6, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // B. 3개의 스톤헨지식 거석 트릴리톤 기둥 (Stonehenge Trilithon Monoliths)
+      const pW = 6;
+      const pH = Math.round(bh * 0.65);
+      const lintelY = py + halfH - pH;
+
+      // 좌측 수직 기둥
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(px - halfW + 4, lintelY, pW, pH);
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(px - halfW + 5, lintelY + 2, 2, pH - 4);
+
+      // 우측 수직 기둥
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(px + halfW - 10, lintelY, pW, pH);
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(px + halfW - 9, lintelY + 2, 2, pH - 4);
+
+      // 상단 가로 린텔 석판 (Horizontal Lintel Capstone)
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(px - halfW + 2, lintelY - 6, bw - 4, 8);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(px - halfW + 4, lintelY - 6, bw - 8, 2);
+
+      // C. 거석에 새겨진 고대 노르드 룬 각인 (Glowing Ancient Norse Runes)
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(px - halfW + 6, lintelY + 8, 2, 5);
+      ctx.fillRect(px - halfW + 6, lintelY + 18, 2, 5);
+      ctx.fillRect(px + halfW - 8, lintelY + 8, 2, 5);
+      ctx.fillRect(px + halfW - 8, lintelY + 18, 2, 5);
+
+      // D. 거석 문 내부에서 부유 회전하는 천둥 구체 (Levitating Thunder Orb)
+      const orbY = py + halfH - pH * 0.55;
+      const orbPulse = 5 + Math.sin(timeSec * 5) * 1.5;
+
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.4)';
+      ctx.beginPath();
+      ctx.arc(px, orbY, orbPulse + 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.arc(px, orbY, orbPulse, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(px, orbY, orbPulse * 0.45, 0, Math.PI * 2);
+      ctx.fill();
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -4626,6 +4810,16 @@
       }
       if (type === 'zodiac_astrolabe' || (type === 'castle' && b && b.continent === 'starforge') || (type === 'fortress' && b && b.continent === 'starforge') || (type === 'temple' && b && b.continent === 'starforge') || (type === 'lair' && b && b.continent === 'starforge')) {
         this.drawZodiacAstrolabeObservatory(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+
+      // ⛰️ 태고 거인족 요툰하임 대성채 & 룬 거신 성소 (Jötunheim Thunder Giant Citadel & Rune Sanctum)
+      if (type === 'thunder_giant_citadel' || (type === 'capital' && b && b.continent === 'jotunheim') || (type === 'palace' && b && b.continent === 'jotunheim')) {
+        this.drawJotunheimThunderCitadel(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'rune_colossus' || (type === 'castle' && b && b.continent === 'jotunheim') || (type === 'fortress' && b && b.continent === 'jotunheim') || (type === 'temple' && b && b.continent === 'jotunheim') || (type === 'lair' && b && b.continent === 'jotunheim')) {
+        this.drawRuneColossusSanctum(ctx, px, py, bw, bh, isNight, timeSec);
         return true;
       }
 

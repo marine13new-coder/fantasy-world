@@ -720,6 +720,16 @@ function createSettlementList() {
   add('stellar_prism_monolith_shrine', '성간 프리즘 거석단 천체 신전', 'temple', 'starforge', 3720, 520, 'celestial', true, 13);
   add('meteor_iron_artificer_village', '운석철 비전 공학자 길드 마을', 'town', 'starforge', 3620, 320, 'human', false, 9);
 
+  // =========================================================================
+  // 28. THE PRIMEVAL GIANT HIGHLANDS OF JÖTUNHEIM (태고 거인족 요툰하임 고원 성채 & 천둥 거신 옥좌)
+  // =========================================================================
+  add('jotunheim_thunder_giant_citadel', '태고 거인왕의 천둥 요툰하임 대성채', 'capital', 'jotunheim', 220, 140, 'titan', true, 18);
+  add('rune_colossus_cyclopean_sanctum', '룬 거신 사이클롭스 신성 거석 성소', 'castle', 'jotunheim', 320, 200, 'titan', true, 16);
+  add('cloud_frost_giant_crag_haven', '구름 서리 거인 암벽 요새', 'lair', 'jotunheim', 120, 80, 'titan', true, 12);
+  add('mammoth_horn_sky_fjord_port', '매머드 뿔 천공 피오르드 협만 항구', 'port', 'jotunheim', 100, 260, 'human', false, 10);
+  add('ancient_dolmen_monolith_shrine', '고대 거석 돌멘 신탁 제단', 'temple', 'jotunheim', 280, 80, 'celestial', true, 13);
+  add('ironwood_barbarian_clan_village', '철목 부족 바바리안 원시 부락', 'town', 'jotunheim', 240, 280, 'human', false, 9);
+
   return list;
 }
 
@@ -1173,6 +1183,18 @@ function generateWorld() {
           continue;
         }
 
+        // 태고 거인족 요툰하임 고원 성채 & 천둥 거신 옥좌 전용 지형 카빙
+        if (s.continent === 'jotunheim') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.CASTLE_FLOOR : TILE.ROAD; // 태고의 거석 석판 포장 성채 기단
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.HILLS : TILE.MOUNTAIN; // 험준한 화강암 거인 협곡 암벽 및 고원
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.WATER : TILE.SNOW; // 깊은 피오르드 협만 바다 및 만년설 능선
+          }
+          continue;
+        }
+
         const curT = tiles[idx(tx, ty)];
         const isWater = (curT === TILE.DEEP_WATER || curT === TILE.WATER);
 
@@ -1445,7 +1467,16 @@ function generateWorld() {
     ['zodiac_armillary_astrolabe_observatory', 'stellar_prism_monolith_shrine'],
     ['supernova_plasma_crucible_haven', 'aether_starfall_cataract_harbor'],
     ['aether_starfall_cataract_harbor', 'meteor_iron_artificer_village'],
-    ['supernova_plasma_crucible_haven', 'astral_void_gate']
+    ['supernova_plasma_crucible_haven', 'astral_void_gate'],
+
+    // [태고 거인족 요툰하임 고원 가도 (Primeval Jötunheim Megalith Highway)]
+    ['jotunheim_thunder_giant_citadel', 'rune_colossus_cyclopean_sanctum'],
+    ['jotunheim_thunder_giant_citadel', 'cloud_frost_giant_crag_haven'],
+    ['jotunheim_thunder_giant_citadel', 'ancient_dolmen_monolith_shrine'],
+    ['rune_colossus_cyclopean_sanctum', 'ironwood_barbarian_clan_village'],
+    ['mammoth_horn_sky_fjord_port', 'ironwood_barbarian_clan_village'],
+    ['mammoth_horn_sky_fjord_port', 'jotunheim_thunder_giant_citadel'],
+    ['ironwood_barbarian_clan_village', 'steamforge_dwarven_high_throne']
   ];
   const roadLinks = rawRoadLinks.filter(([a, b]) => settlementMap[a] && settlementMap[b]);
 

@@ -52,7 +52,8 @@ const LEGENDARY_ITEMS = [
   { id: 'ocean_heart', slot: 'relic', name: '대양의 심장 심해진주', icon: '💎', atk: 20, hp: 80, desc: '바다의 여신 탈라사의 축복. 항해 속도와 무역 이윤이 증가합니다.' },
   { id: 'dragon_crown', slot: 'helmet', name: '정복자의 황금 용관', icon: '👑', atk: 30, hp: 120, desc: '천공의 비룡을 제압한 대영웅의 관. 명성치 획득량이 증폭됩니다.' },
   { id: 'frostmourne_glacial_blade', slot: 'weapon', name: '서리고룡의 영구빙하 마검', icon: '❄️', atk: 62, hp: 140, desc: '혹한의 만년빙하에서 벼려낸 서리고룡의 마검. 타격 시 서리 파편이 폭발하며 적을 동결시킵니다.' },
-  { id: 'starforge_aether_astrolabe', slot: 'weapon', name: '성좌의 티탄 에테르 아스트롤라베', icon: '🌌', atk: 68, hp: 160, desc: '별들의 궤적을 벼려낸 티탄의 천구의 마검. 공격 시 2중 성운 폭풍과 황도 12궁 별빛 파편이 방출됩니다.' }
+  { id: 'starforge_aether_astrolabe', slot: 'weapon', name: '성좌의 티탄 에테르 아스트롤라베', icon: '🌌', atk: 68, hp: 160, desc: '별들의 궤적을 벼려낸 티탄의 천구의 마검. 공격 시 2중 성운 폭풍과 황도 12궁 별빛 파편이 방출됩니다.' },
+  { id: 'jotun_thunder_warhammer', slot: 'weapon', name: '요툰하임 거인왕의 천둥 파쇄 망치', icon: '🔨', atk: 72, hp: 180, desc: '태고 거인족의 화강암과 번개로 주조한 거대 파쇄 망치. 타격 시 지진파 충격과 연쇄 벼락이 방출됩니다.' }
 ];
 
 const DUNGEONS = [
@@ -170,6 +171,29 @@ const DUNGEONS = [
     },
     goldReward: 9000,
     fameReward: 180
+  },
+  {
+    id: 'dungeon_jotunheim',
+    name: '태고 요툰하임 천둥 거신의 묘실',
+    icon: '⛰️',
+    levelReq: 15,
+    x: 220, y: 140,
+    color: '#f59e0b',
+    desc: '천 길 화강암 암벽 깊은 곳에 봉인된 태고 거인왕 이미르의 환영. 발걸음마다 대지가 갈라지며 뇌우 폭풍이 몰아칩니다.',
+    bossName: '천둥의 거인왕 이미르의 환영 (Avatar of Ymir)',
+    bossHp: 5600,
+    bossAtk: 80,
+    relicReward: {
+      id: 'relic_jotun_thunder_heart',
+      slot: 'relic',
+      name: '태고 거인왕의 천둥 심장',
+      icon: '⚡',
+      atk: 64,
+      hp: 280,
+      desc: '공격 시 35% 확률로 전방 부채꼴 반경에 160의 지진파 및 기절 파동을 방출합니다.'
+    },
+    goldReward: 10000,
+    fameReward: 200
   }
 ];
 
@@ -3104,6 +3128,17 @@ const TOWN_LORE_DATABASE = {
     tavernToast: '성간 에테르 증류주와 은하수 별빛 젤리(Nebula Starlight Jelly)를 삼켰습니다! 두 눈에 우주의 성운이 비치며 마력과 공격속도가 한계치를 돌파합니다.',
     questTitle: '뒤틀린 혜성 충돌 파편 봉인 작전',
     questDesc: '초신성 도가니 외곽으로 낙하한 공허 오염 운석 파편을 회수하고 성운 폭주를 억제하시오.'
+  },
+  jotunheim: {
+    npcName: '거인왕 이미르의 후예 군나르 & 천둥 주술사 토라 (Gunnar & Thora)',
+    npcRole: '태고 요툰하임 거인족 최고 전사 & 룬 바위 주술사',
+    icon: '⛰️',
+    disposition: '🗿 산맥과 천둥에 뿌리내린 태고 거인의 거칠고 묵직한 긍지',
+    quote: '"인간들이 숲을 태우고 탑을 쌓기 전부터 이 화강암 봉우리는 서리에 젖어 있었다. 네 연약한 무릎으로 이 천 길 낭떠러지를 기어오르느라 수고했다만, 바위를 베지 못하는 칼날은 거인들의 연회장에선 이쑤시개로도 쓰지 못하니 돌아가라."',
+    rumor: '💡 거석 비문의 룬어: "요툰하임 협곡의 세 번째 천둥 봉우리 밑바닥에 태고 거인의 심장이 화석이 되어 박혀 있다. 폭풍우 치는 밤에 망치를 내려치면 대지가 세 번 진동하며 번개 거신이 깨어날지니."',
+    tavernToast: '구운 들소 뒷다리 고기와 산악 꿀흑맥주(Giant Stout)를 마셨습니다! 뼈마디에 바위 같은 강인함과 무거운 타격력이 깃듭니다.',
+    questTitle: '태고 협곡 폭주 번개 골렘 분쇄 작전',
+    questDesc: '산악 낭떠러지 거석단 주위에서 번개를 흡수해 난동을 부리는 고대 룬 골렘을 파괴하고 심장 룬석을 회수하시오.'
   },
   gothic: {
     npcName: '밤의 대주교 발렌타인 (Archbishop Valentine)',

@@ -4785,6 +4785,40 @@
           }
         }
 
+        // ⛰️ 태고 거인족 요툰하임 천둥 파쇄 망치 & 지진파 번개 폭풍 (Jötunheim Thunder Warhammer & Earthshatter)
+        if (weaponId.includes('giant') || weaponId.includes('jotun') || weaponId.includes('hammer') || weaponId.includes('colossus') || weaponId.includes('titan') || weaponId.includes('earth')) {
+          // 중후한 호박색-황금 대지 파쇄 호
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 4.8 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 25 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          // 튀어나가는 4갈래 지그재그 번개 갈래 (Forked Electric Thunder Bolts)
+          const thTime = (e.animTime || 0) * 20;
+          ctx.strokeStyle = '#fef08a';
+          ctx.lineWidth = 1.8 * sc;
+          for (let b = 0; b < 4; b++) {
+            const bAng = startAng + (b / 3) * (endAng - startAng);
+            const bx1 = arcCenter + Math.cos(bAng) * 16 * sc;
+            const by1 = py - 10 * sc - bounce + Math.sin(bAng) * 16 * sc;
+            const bx2 = arcCenter + Math.cos(bAng) * 26 * sc + (Math.sin(thTime + b) * 4) * sc;
+            const by2 = py - 10 * sc - bounce + Math.sin(bAng) * 26 * sc + (Math.cos(thTime + b) * 4) * sc;
+            const bx3 = arcCenter + Math.cos(bAng) * 32 * sc;
+            const by3 = py - 10 * sc - bounce + Math.sin(bAng) * 32 * sc;
+
+            ctx.beginPath();
+            ctx.moveTo(bx1, by1);
+            ctx.lineTo(bx2, by2);
+            ctx.lineTo(bx3, by3);
+            ctx.stroke();
+
+            // 튀는 화강암 파편 (Granite Rock Shard)
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(bx3 - 1.5 * sc, by3 - 1.5 * sc, 3 * sc, 3 * sc);
+          }
+        }
+
         // 반짝이는 참격 스파크 및 엠버
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(arcCenter + sideSign * 14 * sc, py - 14 * sc - bounce, 3 * sc, 3 * sc);

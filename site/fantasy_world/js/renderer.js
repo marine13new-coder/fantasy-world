@@ -6037,6 +6037,10 @@ class WorldRenderer {
       else if (cx >= 3500 && cx <= 3840 && cy >= 120 && cy <= 600) {
         tintColor = 'rgba(99, 102, 241, 0.10)';
       }
+      // 태고 거인족 요툰하임 고원 성채: 중후한 산악 폭풍 호박색 & 암벽 림
+      else if (cx >= 40 && cx <= 380 && cy >= 40 && cy <= 340) {
+        tintColor = 'rgba(217, 119, 6, 0.085)';
+      }
 
       if (tintColor) {
         const bGrad = ctx.createRadialGradient(cw / 2, ch / 2, radius * 0.35, cw / 2, ch / 2, radius);
