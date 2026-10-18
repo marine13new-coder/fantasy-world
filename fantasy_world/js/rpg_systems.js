@@ -53,7 +53,8 @@ const LEGENDARY_ITEMS = [
   { id: 'dragon_crown', slot: 'helmet', name: '정복자의 황금 용관', icon: '👑', atk: 30, hp: 120, desc: '천공의 비룡을 제압한 대영웅의 관. 명성치 획득량이 증폭됩니다.' },
   { id: 'frostmourne_glacial_blade', slot: 'weapon', name: '서리고룡의 영구빙하 마검', icon: '❄️', atk: 62, hp: 140, desc: '혹한의 만년빙하에서 벼려낸 서리고룡의 마검. 타격 시 서리 파편이 폭발하며 적을 동결시킵니다.' },
   { id: 'starforge_aether_astrolabe', slot: 'weapon', name: '성좌의 티탄 에테르 아스트롤라베', icon: '🌌', atk: 68, hp: 160, desc: '별들의 궤적을 벼려낸 티탄의 천구의 마검. 공격 시 2중 성운 폭풍과 황도 12궁 별빛 파편이 방출됩니다.' },
-  { id: 'jotun_thunder_warhammer', slot: 'weapon', name: '요툰하임 거인왕의 천둥 파쇄 망치', icon: '🔨', atk: 72, hp: 180, desc: '태고 거인족의 화강암과 번개로 주조한 거대 파쇄 망치. 타격 시 지진파 충격과 연쇄 벼락이 방출됩니다.' }
+  { id: 'jotun_thunder_warhammer', slot: 'weapon', name: '요툰하임 거인왕의 천둥 파쇄 망치', icon: '🔨', atk: 72, hp: 180, desc: '태고 거인족의 화강암과 번개로 주조한 거대 파쇄 망치. 타격 시 지진파 충격과 연쇄 벼락이 방출됩니다.' },
+  { id: 'shangrila_flying_sword_tai_ji', slot: 'weapon', name: '상그릴라 신선 옥룡 태극 비천검', icon: '🪷', atk: 70, hp: 150, desc: '천년 백련의 정기와 태고 옥룡의 기운이 깃든 신선의 어검. 비취빛 참격과 함께 회전하는 도력 태극진이 펼쳐집니다.' }
 ];
 
 const DUNGEONS = [
@@ -194,6 +195,29 @@ const DUNGEONS = [
     },
     goldReward: 10000,
     fameReward: 200
+  },
+  {
+    id: 'dungeon_shangrila',
+    name: '천년 백련 비경 옥룡 진인의 은신처',
+    icon: '🪷',
+    levelReq: 13,
+    x: 3140, y: 660,
+    color: '#10b981',
+    desc: '구름 속에 감추어진 8각 백옥 태극 제단. 천 년간 도를 닦은 옥룡 진인이 태극 음양의 비기를 펼쳐 침입자를 시험합니다.',
+    bossName: '태고 백련 옥룡 진인 (Celestial Jade Dragon Immortal)',
+    bossHp: 4800,
+    bossAtk: 72,
+    relicReward: {
+      id: 'relic_shangrila_jade_lotus',
+      slot: 'relic',
+      name: '천년 옥련 음양 정수',
+      icon: '🪷',
+      atk: 56,
+      hp: 240,
+      desc: '공격 시 30% 확률로 전방에 비취빛 옥룡 검기가 승천하며 130의 추가 도력 피해를 입히고 체력을 40 회복합니다.'
+    },
+    goldReward: 8800,
+    fameReward: 170
   }
 ];
 
@@ -3128,6 +3152,17 @@ const TOWN_LORE_DATABASE = {
     tavernToast: '성간 에테르 증류주와 은하수 별빛 젤리(Nebula Starlight Jelly)를 삼켰습니다! 두 눈에 우주의 성운이 비치며 마력과 공격속도가 한계치를 돌파합니다.',
     questTitle: '뒤틀린 혜성 충돌 파편 봉인 작전',
     questDesc: '초신성 도가니 외곽으로 낙하한 공허 오염 운석 파편을 회수하고 성운 폭주를 억제하시오.'
+  },
+  shangrila: {
+    npcName: '신선 백운도사 & 옥룡 검선 화영 (Daoist Baiyun & Sword Immortal Huaying)',
+    npcRole: '상그릴라 구층 비취 옥탑 장로 & 백련 어검 문파 사부',
+    icon: '🪷',
+    disposition: '🍵 속세의 번뇌를 씻어낸 담담하고 초연한 도가적 풍류',
+    quote: '"구름 아래 저잣거리에서 칼을 부딪쳐 얻는 영광이란, 아침 이슬이 마르는 찰나에 불과하거늘. 차 한 잔에 마음을 가라앉히고 오시게나. 흐르는 강물처럼 검을 쥐는 법을 깨닫지 못한다면, 그 쇠붙이는 결국 그대의 영혼마저 갉아먹을 뿐이니."',
+    rumor: '💡 구름 죽림의 비전(秘傳): "천년 연못 한가운데 뜬 태극 바위에 백련 잎이 아홉 장 겹쳐 떨어질 때, 호수 밑바닥에서 잠자던 비취 옥룡이 수면 위로 솟아오른다더군. 어검술의 극의에 도달한 자만이 그 용의 수염을 낚아챌 수 있지."',
+    tavernToast: '천도복숭아 영천 계류의 백련 옥로주(White Lotus Jade Dew)를 비웠습니다! 온몸의 경락이 뚫리며 티끌 하나 없는 청량한 도력이 단전에 차오릅니다.',
+    questTitle: '구름 안개 묵염 마기 정화 작전',
+    questDesc: '비경 하류 연화지에 번져오는 탁한 요마의 묵염을 태극 도력으로 정화하고 정화된 백련 씨앗을 회수하시오.'
   },
   jotunheim: {
     npcName: '거인왕 이미르의 후예 군나르 & 천둥 주술사 토라 (Gunnar & Thora)',

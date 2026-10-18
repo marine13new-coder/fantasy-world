@@ -1273,6 +1273,7 @@ function startFantasyWorld() {
         else if (s.continent === 'frost_necropolis') icon = '❄️';
         else if (s.continent === 'starforge') icon = '🌌';
         else if (s.continent === 'jotunheim') icon = '⛰️';
+        else if (s.continent === 'shangrila') icon = '🪷';
         else if (s.type === 'capital') icon = '👑';
         else if (s.type === 'port') icon = '⚓';
         else if (s.type === 'fortress') icon = '🏰';
@@ -1300,6 +1301,7 @@ function startFantasyWorld() {
         else if (s.continent === 'frost_necropolis') regionName = '❄️ 혹한의 서리고룡 빙하 요새 & 영구동토 네크로폴리스';
         else if (s.continent === 'starforge') regionName = '🌌 성좌의 천체 티탄 스타포지 & 황도 12궁 혼천의';
         else if (s.continent === 'jotunheim') regionName = '⛰️ 태고 거인족 요툰하임 대성채 & 룬 거신 성소';
+        else if (s.continent === 'shangrila') regionName = '🪷 상그릴라 신선 비경 & 천년 백련 옥룡 성채';
         else if (s.continent === 'west') regionName = '서부 실바니아';
         else if (s.continent === 'north') regionName = '북부 노스펠';
         else if (s.continent === 'south') regionName = '남부 드라코니아';

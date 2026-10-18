@@ -6041,6 +6041,10 @@ class WorldRenderer {
       else if (cx >= 40 && cx <= 380 && cy >= 40 && cy <= 340) {
         tintColor = 'rgba(217, 119, 6, 0.085)';
       }
+      // 상그릴라 신선 비경 & 천년 백련 옥룡 성채: 맑고 영롱한 비취 에메랄드 & 연꽃 분홍 림
+      else if (cx >= 2860 && cx <= 3220 && cy >= 440 && cy <= 780) {
+        tintColor = 'rgba(16, 185, 129, 0.085)';
+      }
 
       if (tintColor) {
         const bGrad = ctx.createRadialGradient(cw / 2, ch / 2, radius * 0.35, cw / 2, ch / 2, radius);

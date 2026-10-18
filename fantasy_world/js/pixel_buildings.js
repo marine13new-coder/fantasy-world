@@ -4633,6 +4633,185 @@
     },
 
     // =========================================================================
+    // 32. 상그릴라 구층 비취 옥탑 수도 (Shangri-La Nine-Tier Jade Dragon Pagoda)
+    // =========================================================================
+    drawShangrilaJadePagoda(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 지면 비취빛 그림자
+      ctx.fillStyle = 'rgba(6, 78, 59, 0.45)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 2, halfW + 8, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // B. 4단 동양식 비취 목조 기단 및 처마 층 (Tiered Jade Eaves)
+      const tiers = [
+        { w: bw, h: 8, y: py + halfH - 8, c: '#064e3b', eave: '#10b981' },
+        { w: Math.round(bw * 0.78), h: 8, y: py + halfH - 18, c: '#047857', eave: '#34d399' },
+        { w: Math.round(bw * 0.58), h: 7, y: py + halfH - 27, c: '#059669', eave: '#6ee7b7' },
+        { w: Math.round(bw * 0.40), h: 7, y: py + halfH - 36, c: '#10b981', eave: '#a7f3d0' }
+      ];
+
+      for (const t of tiers) {
+        const twH = Math.round(t.w / 2);
+        // 몸체
+        ctx.fillStyle = t.c;
+        ctx.fillRect(px - twH + 2, t.y, t.w - 4, t.h);
+
+        // 반전된 곡선 날개 처마 (Curved Upturned Flying Eaves)
+        ctx.fillStyle = t.eave;
+        ctx.beginPath();
+        ctx.moveTo(px - twH - 4, t.y + 1);
+        ctx.lineTo(px - twH, t.y - 2);
+        ctx.lineTo(px + twH, t.y - 2);
+        ctx.lineTo(px + twH + 4, t.y + 1);
+        ctx.lineTo(px + twH - 1, t.y + 2);
+        ctx.lineTo(px - twH + 1, t.y + 2);
+        ctx.closePath();
+        ctx.fill();
+
+        // 풍경 (Golden Wind-Bells dangling from corners)
+        const sway = Math.sin(timeSec * 3 + t.y) * 1.5;
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(px - twH - 4 + sway, t.y + 2, 2, 3);
+        ctx.fillRect(px + twH + 2 + sway, t.y + 2, 2, 3);
+      }
+
+      // C. 탑을 휘감아 승천하는 비취 옥룡 (Coiling Ascending Jade Dragon)
+      const dragonSway = Math.sin(timeSec * 2.5) * 3;
+      ctx.strokeStyle = '#059669';
+      ctx.lineWidth = 4.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(px - halfW + 2, py + halfH - 4);
+      ctx.quadraticCurveTo(px + halfW * 0.5 + dragonSway, py + halfH - 22, px, py + halfH - 38);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#6ee7b7';
+      ctx.lineWidth = 2.0;
+      ctx.stroke();
+
+      // 옥룡 두상 (Dragon Head at Top)
+      const topY = py + halfH - 42;
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(px - 4 + dragonSway, topY, 8, 6);
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(px - 2 + dragonSway, topY + 1, 2, 2); // 용의 금안
+      ctx.fillRect(px + 1 + dragonSway, topY + 1, 2, 2);
+
+      // 용의 뿔 & 수염 (Dragon Horns & Whiskers)
+      ctx.strokeStyle = '#fef08a';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(px - 3 + dragonSway, topY);
+      ctx.lineTo(px - 7 + dragonSway, topY - 5);
+      ctx.moveTo(px + 3 + dragonSway, topY);
+      ctx.lineTo(px + 7 + dragonSway, topY - 5);
+      ctx.stroke();
+
+      // 탑 꼭대기 황금 보륜 상륜부 (Golden Finial Spire)
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(px - 1, topY - 8, 2, 8);
+      ctx.beginPath();
+      ctx.arc(px, topY - 9, 3, 0, Math.PI * 2);
+      ctx.fill();
+    },
+
+    // =========================================================================
+    // 33. 천년 백련 태극 음양 성소 (Thousand Lotus Yin-Yang Sanctum)
+    // =========================================================================
+    drawThousandLotusSanctum(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // A. 바닥 성스러운 연못 수면 그림자 (Sacred Lotus Pond Water)
+      ctx.fillStyle = 'rgba(6, 182, 212, 0.35)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 2, halfW + 8, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 분홍빛 백련 꽃잎 4개 (Sacred Pink Lotus Blossoms around edge)
+      for (let l = 0; l < 4; l++) {
+        const lAng = (l * Math.PI / 2) + 0.4;
+        const lx = px + Math.cos(lAng) * (halfW + 4);
+        const ly = py + halfH - 2 + Math.sin(lAng) * 5;
+        ctx.fillStyle = '#f472b6';
+        ctx.beginPath();
+        ctx.arc(lx, ly, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(lx - 0.8, ly - 0.8, 1.6, 1.6);
+      }
+
+      // B. 부유하는 8각 백옥 태극 제단 (Octagonal White Jade Taiji Dais)
+      const daisW = Math.round(bw * 0.75);
+      const daisHW = Math.round(daisW / 2);
+      const daisH = Math.round(bh * 0.55);
+      const daisY = py + halfH - daisH;
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(px - daisHW, daisY, daisW, daisH);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(px - daisHW + 2, daisY + 2, daisW - 4, daisH - 4);
+
+      // C. 회전하는 중앙 음양 태극 문양 (Rotating Yin-Yang Taiji Emblem)
+      const taijiR = Math.min(10, Math.round(daisHW * 0.5));
+      const taijiY = daisY + daisH * 0.42;
+      const taijiAngle = timeSec * 1.5;
+
+      ctx.save();
+      ctx.translate(px, taijiY);
+      ctx.rotate(taijiAngle);
+
+      // 양 (White Half)
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(0, 0, taijiR, 0, Math.PI);
+      ctx.fill();
+
+      // 음 (Black Half)
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(0, 0, taijiR, Math.PI, Math.PI * 2);
+      ctx.fill();
+
+      // 음양 내부 상호 보완 원
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(taijiR / 2, 0, taijiR / 2, 0, Math.PI);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(-taijiR / 2, 0, taijiR / 2, Math.PI, Math.PI * 2);
+      ctx.fill();
+
+      // 눈
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(taijiR / 2, 0, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(-taijiR / 2, 0, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+
+      // D. 공중에 떠 있는 2장의 황금 도교 부적 (Floating Taoist Talismans)
+      for (let t = 0; t < 2; t++) {
+        const tAng = (timeSec * 2.2) + (t * Math.PI);
+        const tx = px + Math.cos(tAng) * (daisHW + 6);
+        const ty = daisY + 6 + Math.sin(tAng) * 4;
+
+        ctx.fillStyle = '#fde047';
+        ctx.fillRect(tx - 2, ty - 4, 4, 8);
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(tx - 1, ty - 2, 2, 4); // 붉은 경면주사 룬
+      }
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -4782,6 +4961,15 @@
       ctx.beginPath();
       ctx.ellipse(px + 6, py + bh / 2 + 4, bw * 0.42, 4, 0.08, 0, Math.PI * 2);
       ctx.fill();
+      // 🪷 상그릴라 신선 비경 & 천년 백련 옥룡 성채 (Shangri-La Jade Dragon Pagoda & Thousand Lotus Sanctum)
+      if (type === 'jade_pagoda' || (type === 'capital' && b && b.continent === 'shangrila') || (type === 'palace' && b && b.continent === 'shangrila')) {
+        this.drawShangrilaJadePagoda(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'thousand_lotus' || (type === 'castle' && b && b.continent === 'shangrila') || (type === 'fortress' && b && b.continent === 'shangrila') || (type === 'temple' && b && b.continent === 'shangrila') || (type === 'lair' && b && b.continent === 'shangrila')) {
+        this.drawThousandLotusSanctum(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
 
       // ☀️ 태양신의 황금 제국 엘도라도 & 깃털 뱀신 성채 (El Dorado Sun Pyramid & Quetzalcoatl Citadel)
       if (type === 'sun_pyramid' || (type === 'capital' && b && b.continent === 'el_dorado') || (type === 'palace' && b && b.continent === 'el_dorado')) {

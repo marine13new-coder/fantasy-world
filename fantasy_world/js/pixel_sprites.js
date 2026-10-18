@@ -4464,6 +4464,7 @@
         else if (weaponId.includes('spirit') || weaponId.includes('fox') || weaponId.includes('moon') || weaponId.includes('kitsune') || weaponId.includes('katana') || weaponId.includes('shrine')) { slashColor = '#f8fafc'; glowColor = 'rgba(168, 85, 247, 0.85)'; }
         else if (weaponId.includes('fairy') || weaponId.includes('flora') || weaponId.includes('leaf') || weaponId.includes('spore') || weaponId.includes('sylph') || weaponId.includes('nectar') || weaponId.includes('pixie')) { slashColor = '#10b981'; glowColor = 'rgba(74, 222, 128, 0.85)'; }
         else if (weaponId.includes('dorado') || weaponId.includes('sun') || weaponId.includes('solar') || weaponId.includes('serpent') || weaponId.includes('quetzal') || weaponId.includes('macuahuitl') || weaponId.includes('aztec') || weaponId.includes('inca')) { slashColor = '#facc15'; glowColor = 'rgba(234, 179, 8, 0.9)'; }
+        else if (weaponId.includes('shangrila') || weaponId.includes('jade') || weaponId.includes('lotus') || weaponId.includes('tao') || weaponId.includes('flying_sword')) { slashColor = '#34d399'; glowColor = 'rgba(16, 185, 129, 0.9)'; }
 
         const arcCenter = px + sideSign * 4 * sc;
         const startAng = isLeft ? Math.PI * 0.7 : Math.PI * 0.3;
@@ -4816,6 +4817,46 @@
             // 튀는 화강암 파편 (Granite Rock Shard)
             ctx.fillStyle = '#475569';
             ctx.fillRect(bx3 - 1.5 * sc, by3 - 1.5 * sc, 3 * sc, 3 * sc);
+          }
+        }
+
+        // 🪷 상그릴라 신선 비경 어검 비천 참격 & 천년 백련 옥룡 도력 폭풍 (Shangri-La Flying Sword & Jade Dragon Qi Flurry)
+        if (weaponId.includes('shangrila') || weaponId.includes('jade') || weaponId.includes('lotus') || weaponId.includes('tao') || weaponId.includes('flying_sword')) {
+          // 비취 에메랄드 신선 초승달 섬광 호
+          ctx.strokeStyle = '#34d399';
+          ctx.lineWidth = 4.2 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 24 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          // 백색 도력 기운 내부 심선
+          ctx.strokeStyle = '#f8fafc';
+          ctx.lineWidth = 1.8 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 22 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          // 흩날리는 5장의 분홍빛 신선 백련 꽃잎 & 도력 비취 스파크 (Lotus Petals & Jade Qi Motes)
+          const taoTime = (e.animTime || 0) * 16;
+          for (let lp = 0; lp < 5; lp++) {
+            const lpAng = startAng + (lp / 4) * (endAng - startAng);
+            const lpDist = (21 + Math.sin(taoTime + lp * 1.8) * 6) * sc;
+            const lpx = arcCenter + Math.cos(lpAng) * lpDist;
+            const lpy = py - 10 * sc - bounce + Math.sin(lpAng) * lpDist;
+
+            // 분홍 백련 꽃잎
+            ctx.fillStyle = lp % 2 === 0 ? '#f472b6' : '#fb7185';
+            ctx.beginPath();
+            ctx.ellipse(lpx, lpy, 3.2 * sc, 1.8 * sc, lpAng + Math.PI / 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 꽃잎 중심 백옥 이슬
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(lpx - 0.7 * sc, lpy - 0.7 * sc, 1.4 * sc, 1.4 * sc);
+
+            // 신선 도력의 에메랄드 비취 스파크 (Jade Qi Spark)
+            ctx.fillStyle = 'rgba(52, 211, 153, 0.85)';
+            ctx.fillRect(lpx + sideSign * 3 * sc, lpy - 2 * sc, 2 * sc, 2 * sc);
           }
         }
 

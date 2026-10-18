@@ -730,6 +730,16 @@ function createSettlementList() {
   add('ancient_dolmen_monolith_shrine', '고대 거석 돌멘 신탁 제단', 'temple', 'jotunheim', 280, 80, 'celestial', true, 13);
   add('ironwood_barbarian_clan_village', '철목 부족 바바리안 원시 부락', 'town', 'jotunheim', 240, 280, 'human', false, 9);
 
+  // =========================================================================
+  // 29. THE CELESTIAL SHANGRI-LA & THOUSAND LOTUS JADE DRAGON (상그릴라 신선 비경 & 천년 백련 옥룡 성채)
+  // =========================================================================
+  add('shangrila_nine_tier_jade_pagoda', '상그릴라 구층 비취 옥탑 수도', 'capital', 'shangrila', 3040, 560, 'elf', true, 18);
+  add('thousand_lotus_yin_yang_sanctum', '천년 백련 태극 음양 성소', 'castle', 'shangrila', 3140, 660, 'celestial', true, 16);
+  add('cloud_bamboo_hermit_retreat', '구름 죽림 신선 은둔 도원', 'lair', 'shangrila', 2920, 500, 'human', false, 11);
+  add('celestial_peach_spring_harbor', '천도복숭아 영천 계류 나루터', 'port', 'shangrila', 2960, 680, 'human', false, 10);
+  add('flying_sword_alchemist_pavilion', '어검 비천 연단술 정자 신전', 'temple', 'shangrila', 3180, 500, 'celestial', true, 12);
+  add('misty_tea_terrace_mountain_village', '운무 백련 다원 계단식 차밭 마을', 'town', 'shangrila', 3080, 740, 'human', false, 9);
+
   return list;
 }
 
@@ -1195,6 +1205,18 @@ function generateWorld() {
           continue;
         }
 
+        // 상그릴라 신선 비경 & 천년 백련 옥룡 성채 전용 지형 카빙
+        if (s.continent === 'shangrila') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.CASTLE_FLOOR : TILE.ROAD; // 백옥 판석 제단 및 비취 회랑 보도
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.ELVEN_FOREST : TILE.MEADOW; // 울창한 청죽림 대나무숲 & 천년 도화원
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.OASIS_WATER : TILE.SAND; // 연꽃 옹달샘 호수 & 하얀 비단 백사장
+          }
+          continue;
+        }
+
         const curT = tiles[idx(tx, ty)];
         const isWater = (curT === TILE.DEEP_WATER || curT === TILE.WATER);
 
@@ -1476,7 +1498,16 @@ function generateWorld() {
     ['rune_colossus_cyclopean_sanctum', 'ironwood_barbarian_clan_village'],
     ['mammoth_horn_sky_fjord_port', 'ironwood_barbarian_clan_village'],
     ['mammoth_horn_sky_fjord_port', 'jotunheim_thunder_giant_citadel'],
-    ['ironwood_barbarian_clan_village', 'steamforge_dwarven_high_throne']
+    ['ironwood_barbarian_clan_village', 'steamforge_dwarven_high_throne'],
+
+    // [상그릴라 신선 비경 가도 (Shangri-La Celestial Jade Highway)]
+    ['shangrila_nine_tier_jade_pagoda', 'thousand_lotus_yin_yang_sanctum'],
+    ['shangrila_nine_tier_jade_pagoda', 'cloud_bamboo_hermit_retreat'],
+    ['shangrila_nine_tier_jade_pagoda', 'flying_sword_alchemist_pavilion'],
+    ['thousand_lotus_yin_yang_sanctum', 'misty_tea_terrace_mountain_village'],
+    ['celestial_peach_spring_harbor', 'cloud_bamboo_hermit_retreat'],
+    ['celestial_peach_spring_harbor', 'misty_tea_terrace_mountain_village'],
+    ['cloud_bamboo_hermit_retreat', 'yggdrasil_fairy_haven']
   ];
   const roadLinks = rawRoadLinks.filter(([a, b]) => settlementMap[a] && settlementMap[b]);
 
