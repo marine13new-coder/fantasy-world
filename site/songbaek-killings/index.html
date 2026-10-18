@@ -1494,7 +1494,15 @@
         <div id="inspect-detail">
             <h3 id="inspect-title">아이템 이름</h3>
             <p id="inspect-desc">아이템 설명</p>
-            <div style="font-size:11px; color:#777; margin-top:8px;">[마우스 드래그] 360도 회전 및 조사 | [ESC] 검사 종료</div>
+            <div style="margin-top: 14px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <button class="ui-btn uv-btn" id="btn-inspect-uv" onclick="game.toggleInspectUV()">
+                    <span>🔦 자외선(UV) 검사 [U]</span>
+                </button>
+                <button class="ui-btn" onclick="game.closeAllModals()">
+                    <span>✕ 검사 종료 [ESC]</span>
+                </button>
+            </div>
+            <div style="font-size:12px; color:#94a3b8; margin-top:10px;">[마우스 좌클릭 드래그] 360도 자유 회전 | [마우스 휠] 확대/축소 | [U] UV 혈흔 투시</div>
         </div>
     </div>
 
@@ -2900,7 +2908,22 @@
             setupThree() {
                 const container = document.getElementById('viewport-container');
                 this.scene = new THREE.Scene();
-                this.scene.fog = new THREE.FogExp2(0x030406, 0.048);
+                this.scene.fog = new THREE.FogExp2(0x030406, 0.045);
+
+                // 상용 게임급 PBR 환경 반사 맵 (Procedural Environment Reflections)
+                const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
+                pmremGenerator.compileEquirectangularShader();
+                const envScene = new THREE.Scene();
+                const hemiLight = new THREE.HemisphereLight(0xffeedd, 0x111622, 1.2);
+                envScene.add(hemiLight);
+                const dirLight = new THREE.DirectionalLight(0xd4ab5d, 2.0);
+                dirLight.position.set(2, 4, 2);
+                envScene.add(dirLight);
+                const blueLight = new THREE.DirectionalLight(0x38bdf8, 0.8);
+                blueLight.position.set(-2, -2, -2);
+                envScene.add(blueLight);
+                const envTex = pmremGenerator.fromScene(envScene).texture;
+                this.scene.environment = envTex;
 
                 this.camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 80);
                 this.camera.position.set(0, 1.65, 4.2);
@@ -3174,16 +3197,64 @@
                 floor.receiveShadow = true;
                 this.roomMesh.add(floor);
 
-                // 3. 건축학적 디테일: 걸레받이 몰딩 (Baseboard Moldings)
-                const moldingMat = new THREE.MeshStandardMaterial({ color: 0x1e140d, roughness: 0.6 });
-                const baseN = new THREE.Mesh(new THREE.BoxGeometry(18, 0.35, 0.12), moldingMat);
-                baseN.position.set(0, 0.08, -8.9); baseN.receiveShadow = true; this.roomMesh.add(baseN);
-                const baseS = new THREE.Mesh(new THREE.BoxGeometry(18, 0.35, 0.12), moldingMat);
-                baseS.position.set(0, 0.08, 8.9); baseS.receiveShadow = true; this.roomMesh.add(baseS);
-                const baseW = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.35, 18), moldingMat);
-                baseW.position.set(-8.9, 0.08, 0); baseW.receiveShadow = true; this.roomMesh.add(baseW);
-                const baseE = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.35, 18), moldingMat);
-                baseE.position.set(8.9, 0.08, 0); baseE.receiveShadow = true; this.roomMesh.add(baseE);
+                // 3. 건축학적 디테일: 웨인스코팅 하단 목재 패널 & 체어 레일 몰딩 (Wainscoting Panels & Chair Rails)
+                const wainscotMat = new THREE.MeshStandardMaterial({
+                    color: (zoneId === 'church' || zoneId === 'cabin') ? 0x221c16 : 0x1a120b,
+                    roughness: 0.55,
+                    bumpMap: TextureStudio.getWoodBumpMap(),
+                    bumpScale: 0.025
+                });
+                const moldingMat = new THREE.MeshStandardMaterial({ color: 0x181008, roughness: 0.5 });
+
+                // 하단 1.2m 웨인스코팅 벽체 알판 (Wainscot Base Wall)
+                const wainN = new THREE.Mesh(new THREE.BoxGeometry(18, 1.2, 0.08), wainscotMat);
+                wainN.position.set(0, 0.6, -8.9); wainN.receiveShadow = true; this.roomMesh.add(wainN);
+                const wainS = new THREE.Mesh(new THREE.BoxGeometry(18, 1.2, 0.08), wainscotMat);
+                wainS.position.set(0, 0.6, 8.9); wainS.receiveShadow = true; this.roomMesh.add(wainS);
+                const wainW = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.2, 18), wainscotMat);
+                wainW.position.set(-8.9, 0.6, 0); wainW.receiveShadow = true; this.roomMesh.add(wainW);
+                const wainE = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.2, 18), wainscotMat);
+                wainE.position.set(8.9, 0.6, 0); wainE.receiveShadow = true; this.roomMesh.add(wainE);
+
+                // 체어 레일 돌출 몰딩 (Chair Rail Molding at y = 1.22)
+                const railN = new THREE.Mesh(new THREE.BoxGeometry(18, 0.09, 0.14), moldingMat);
+                railN.position.set(0, 1.22, -8.88); this.roomMesh.add(railN);
+                const railS = new THREE.Mesh(new THREE.BoxGeometry(18, 0.09, 0.14), moldingMat);
+                railS.position.set(0, 1.22, 8.88); this.roomMesh.add(railS);
+                const railW = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.09, 18), moldingMat);
+                railW.position.set(-8.88, 1.22, 0); this.roomMesh.add(railW);
+                const railE = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.09, 18), moldingMat);
+                railE.position.set(8.88, 1.22, 0); this.roomMesh.add(railE);
+
+                // 걸레받이 (Baseboards)
+                const baseN = new THREE.Mesh(new THREE.BoxGeometry(18, 0.35, 0.14), moldingMat);
+                baseN.position.set(0, 0.08, -8.88); baseN.receiveShadow = true; this.roomMesh.add(baseN);
+                const baseS = new THREE.Mesh(new THREE.BoxGeometry(18, 0.35, 0.14), moldingMat);
+                baseS.position.set(0, 0.08, 8.88); baseS.receiveShadow = true; this.roomMesh.add(baseS);
+                const baseW = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.35, 18), moldingMat);
+                baseW.position.set(-8.88, 0.08, 0); baseW.receiveShadow = true; this.roomMesh.add(baseW);
+                const baseE = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.35, 18), moldingMat);
+                baseE.position.set(8.88, 0.08, 0); baseE.receiveShadow = true; this.roomMesh.add(baseE);
+
+                // 4방 코너 필라스터 기둥 (Corner Architectural Pilasters)
+                [[-8.85, -8.85], [8.85, -8.85], [-8.85, 8.85], [8.85, 8.85]].forEach(([cx, cz]) => {
+                    const pilaster = new THREE.Mesh(new THREE.BoxGeometry(0.45, 7.5, 0.45), moldingMat);
+                    pilaster.position.set(cx, 3.6, cz); pilaster.receiveShadow = true;
+                    this.roomMesh.add(pilaster);
+                });
+
+                // 남측 출입구 웅장한 빅토리안 양개 마호가니 문 (Grand Victorian Double Entrance Doors)
+                const doorFrame = new THREE.Mesh(new THREE.BoxGeometry(3.2, 4.4, 0.22), moldingMat);
+                doorFrame.position.set(0, 2.1, 8.82); this.roomMesh.add(doorFrame);
+                const doorPediment = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.35, 0.3), moldingMat);
+                doorPediment.position.set(0, 4.45, 8.82); this.roomMesh.add(doorPediment);
+                [-0.72, 0.72].forEach((dx, idx) => {
+                    const leaf = new THREE.Mesh(new THREE.BoxGeometry(1.35, 4.0, 0.12), wainscotMat);
+                    leaf.position.set(dx, 2.0, 8.8); leaf.receiveShadow = true; this.roomMesh.add(leaf);
+                    // 황동 문손잡이
+                    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.3), new THREE.MeshStandardMaterial({ color: 0xd4ab5d, metalness: 0.95 }));
+                    handle.position.set(dx + (idx === 0 ? 0.5 : -0.5), 1.8, 8.7); this.roomMesh.add(handle);
+                });
 
                 // 천장 크라운 몰딩 & 서까래 보 (Crown Moldings & Beams)
                 const beamMat = new THREE.MeshStandardMaterial({ color: 0x24180e, roughness: 0.7 });
@@ -3985,6 +4056,7 @@
                     if (e.code === 'KeyC') this.takePolaroid();
                     if (e.code === 'KeyF') this.toggleFlashlight();
                     if (e.code === 'KeyL') this.toggleUVLight();
+                    if (e.code === 'KeyU' && this.activeModal === 'inspect') this.toggleInspectUV();
                     if (e.code === 'Escape') {
                         if (this.activeModal) {
                             this.closeAllModals();
@@ -4226,8 +4298,8 @@
                 this.inspectRenderer.setSize(480, 480);
                 stage.appendChild(this.inspectRenderer.domElement);
 
-                const l1 = new THREE.DirectionalLight(0xfffaed, 2.0); l1.position.set(2, 3, 4); this.inspectScene.add(l1);
-                const l2 = new THREE.AmbientLight(0xffffff, 0.6); this.inspectScene.add(l2);
+                this.inspectL1 = new THREE.DirectionalLight(0xfffaed, 2.4); this.inspectL1.position.set(2, 3, 4); this.inspectScene.add(this.inspectL1);
+                this.inspectL2 = new THREE.AmbientLight(0xffffff, 0.55); this.inspectScene.add(this.inspectL2);
 
                 stage.addEventListener('mousedown', (e) => {
                     this.isDraggingInspect = true;
@@ -4243,6 +4315,12 @@
                         this.lastMousePos = { x: e.clientX, y: e.clientY };
                         this.inspectRenderer.render(this.inspectScene, this.inspectCamera);
                     }
+                });
+
+                stage.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    this.inspectCamera.position.z = Math.max(1.4, Math.min(4.5, this.inspectCamera.position.z + e.deltaY * 0.002));
+                    this.inspectRenderer.render(this.inspectScene, this.inspectCamera);
                 });
             }
 
