@@ -82,60 +82,118 @@
       const halfW = Math.round(bw / 2);
       const halfH = Math.round(bh / 2);
 
-      // 발밑 픽셀 그림자
+      // 발밑 픽셀 밀착 접지 그림자
       ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
-      ctx.fillRect(px - halfW + 2, py + halfH - 2, bw - 2, 6);
+      ctx.fillRect(px - halfW + 1, py + halfH - 2, bw - 2, 6);
 
-      // A. 석조 기초 및 아치문 (Stone Foundation Basement)
+      // A. 자연석 마름돌 하부 기단 (Fieldstone Masonry Plinth Foundation)
       const baseH = Math.max(10, Math.round(bh * 0.35));
       const baseY = py + halfH - baseH;
+
       ctx.fillStyle = B_PALETTE.stone_dark;
       ctx.fillRect(px - halfW, baseY, bw, baseH);
-      ctx.fillStyle = B_PALETTE.stone_mid;
-      ctx.fillRect(px - halfW + 2, baseY + 2, bw - 4, baseH - 3);
 
-      // 석조 벽돌 줄눈 디테일 (Mortar joints)
-      ctx.fillStyle = B_PALETTE.stone_deep;
-      for (let ly = baseY + 4; ly < py + halfH; ly += 5) {
-        ctx.fillRect(px - halfW + 2, ly, bw - 4, 1);
-        for (let lx = px - halfW + 6 + (ly % 2 ? 4 : 0); lx < px + halfW - 4; lx += 9) {
-          ctx.fillRect(lx, ly - 4, 1, 4);
+      // 자연석 개별 석재 블록 디테일 (8~10개 개별 자연석과 하이라이트 베벨)
+      const stoneRowH = 5;
+      for (let sRow = 0; sRow < Math.floor(baseH / stoneRowH); sRow++) {
+        const sy = baseY + sRow * stoneRowH;
+        const offset = (sRow % 2) * 5;
+        for (let sx = px - halfW + 1 + offset; sx < px + halfW - 2; sx += 9) {
+          const sw = Math.min(8, px + halfW - 1 - sx);
+          if (sw > 2) {
+            ctx.fillStyle = B_PALETTE.stone_mid;
+            ctx.fillRect(sx, sy + 1, sw, stoneRowH - 1);
+            // 상단/좌측 하이라이트
+            ctx.fillStyle = B_PALETTE.stone_light;
+            ctx.fillRect(sx, sy + 1, sw, 1);
+            ctx.fillRect(sx, sy + 1, 1, stoneRowH - 1);
+            // 우하단 깊은 음영
+            ctx.fillStyle = B_PALETTE.stone_deep;
+            ctx.fillRect(sx + sw - 1, sy + 1, 1, stoneRowH - 1);
+            ctx.fillRect(sx, sy + stoneRowH - 1, sw, 1);
+          }
         }
       }
 
-      // 아치형 나무 문 (Arched Wooden Door)
+      // 기단 하단 벨벳 이끼 (Basal Velvet Moss)
+      ctx.fillStyle = '#2f5014';
+      ctx.fillRect(px - halfW, py + halfH - 2, 4, 2);
+      ctx.fillRect(px + halfW - 6, py + halfH - 3, 5, 3);
+      ctx.fillStyle = '#65a30d';
+      ctx.fillRect(px - halfW + 1, py + halfH - 2, 2, 1);
+      ctx.fillRect(px + halfW - 5, py + halfH - 3, 3, 1);
+
+      // 아치형 원목 널판지 현관문 (Arched Wooden Plank Door)
       const doorW = 8;
-      const doorH = baseH - 2;
+      const doorH = baseH - 1;
       const doorX = px - Math.round(doorW / 2) + (style % 2 === 0 ? -4 : 4);
       const doorY = py + halfH - doorH;
+
       ctx.fillStyle = B_PALETTE.stone_deep;
       ctx.fillRect(doorX - 1, doorY - 1, doorW + 2, doorH + 1);
       ctx.fillStyle = B_PALETTE.timber_dark;
       ctx.fillRect(doorX, doorY, doorW, doorH);
       ctx.fillStyle = B_PALETTE.wood_board;
       ctx.fillRect(doorX + 1, doorY + 1, doorW - 2, doorH - 1);
-      ctx.fillStyle = B_PALETTE.gold_trim;
-      ctx.fillRect(doorX + 2, doorY + Math.round(doorH / 2), 2, 2); // 황동 손잡이
 
-      // B. 1층/2층 회반죽 석고 벽 (Plaster Upper Storey)
+      // 문 널판지 결 & 철제 힌지 스트랩
+      ctx.fillStyle = B_PALETTE.timber_dark;
+      ctx.fillRect(doorX + Math.round(doorW / 2), doorY + 1, 1, doorH - 1);
+      ctx.fillStyle = B_PALETTE.iron_dark;
+      ctx.fillRect(doorX, doorY + 3, doorW - 2, 1);
+      ctx.fillRect(doorX, doorY + doorH - 4, doorW - 2, 1);
+      ctx.fillStyle = B_PALETTE.gold_trim;
+      ctx.fillRect(doorX + doorW - 3, doorY + Math.round(doorH / 2), 2, 2); // 황동 손잡이
+
+      // 입구 장작더미 (Firewood Stack Beside Foundation)
+      const woodX = (style % 2 === 0) ? (px + halfW - 9) : (px - halfW + 2);
+      ctx.fillStyle = '#27190d';
+      ctx.fillRect(woodX, py + halfH - 6, 7, 5);
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(woodX + 1, py + halfH - 5, 2, 4);
+      ctx.fillRect(woodX + 4, py + halfH - 5, 2, 4);
+      ctx.fillStyle = '#fde68a';
+      ctx.fillRect(woodX + 1, py + halfH - 4, 1, 1);
+      ctx.fillRect(woodX + 4, py + halfH - 4, 1, 1);
+
+      // 입구 걸이형 황동 등불 (Hanging Brass Lantern with Warm Glow)
+      const lanternX = doorX + (style % 2 === 0 ? doorW + 2 : -4);
+      const lanternY = doorY + 2;
+      ctx.fillStyle = '#78350f'; // 벽걸이 철봉
+      ctx.fillRect(lanternX, lanternY - 2, 2, 2);
+      ctx.fillStyle = B_PALETTE.gold_trim;
+      ctx.fillRect(lanternX - 1, lanternY, 4, 5);
+      ctx.fillStyle = isNight ? '#fef08a' : '#fef9c3';
+      ctx.fillRect(lanternX, lanternY + 1, 2, 3);
+      if (isNight) {
+        ctx.fillStyle = 'rgba(254, 240, 138, 0.25)';
+        ctx.fillRect(lanternX - 3, lanternY - 2, 8, 9);
+      }
+
+      // B. 1층/2층 회반죽 석고 벽 & 팀버 목재 프레임 (Timber-Framed Stucco Upper Storey)
       const wallH = bh - baseH - 14;
       const wallY = baseY - wallH;
+
       ctx.fillStyle = B_PALETTE.plaster_shadow;
       ctx.fillRect(px - halfW + 1, wallY, bw - 2, wallH);
       ctx.fillStyle = B_PALETTE.plaster_main;
       ctx.fillRect(px - halfW + 2, wallY + 1, bw - 4, wallH - 2);
 
-      // 팀버 목재 프레임 (Timber Posts & X-Bracing)
+      // 수직 기둥 및 수평 보 (Timber Studs & Beams)
       ctx.fillStyle = B_PALETTE.timber_dark;
-      // 좌우 모서리 기둥 & 상하 보
-      ctx.fillRect(px - halfW + 1, wallY, 3, wallH);
-      ctx.fillRect(px + halfW - 4, wallY, 3, wallH);
-      ctx.fillRect(px - halfW + 1, wallY, bw - 2, 3);
-      ctx.fillRect(px - halfW + 1, baseY - 2, bw - 2, 3);
-      // 중앙 수직 기둥
-      ctx.fillRect(px - 1, wallY, 3, wallH);
+      ctx.fillRect(px - halfW + 1, wallY, 3, wallH); // 좌측 모서리 기둥
+      ctx.fillRect(px + halfW - 4, wallY, 3, wallH); // 우측 모서리 기둥
+      ctx.fillRect(px - halfW + 1, wallY, bw - 2, 3); // 상인방 보
+      ctx.fillRect(px - halfW + 1, baseY - 2, bw - 2, 3); // 하인방 보
+      ctx.fillRect(px - 1, wallY, 3, wallH); // 중앙 수직 기둥
 
-      // 대각선 X자 가새 (Diagonal Braces)
+      // 목재 결 하이라이트 (Wood Grain Streaks)
+      ctx.fillStyle = B_PALETTE.timber_main;
+      ctx.fillRect(px - halfW + 2, wallY + 1, 1, wallH - 2);
+      ctx.fillRect(px + halfW - 3, wallY + 1, 1, wallH - 2);
+      ctx.fillRect(px, wallY + 1, 1, wallH - 2);
+
+      // 대각선 X자 가새 (Diagonal Braces with Timber Dowel Pegs)
       ctx.fillStyle = B_PALETTE.timber_main;
       for (let d = 0; d < 6; d++) {
         ctx.fillRect(px - halfW + 4 + d * 2, wallY + 3 + d * 2, 2, 2);
@@ -145,158 +203,267 @@
           ctx.fillRect(px + 13 - d * 2, wallY + 3 + d * 2, 2, 2);
         }
       }
+      // 목재 장부맞춤 못 (Mortise Dowel Pegs)
+      ctx.fillStyle = '#27190d';
+      ctx.fillRect(px - halfW + 2, wallY + 1, 1, 1);
+      ctx.fillRect(px + halfW - 3, wallY + 1, 1, 1);
+      ctx.fillRect(px, wallY + 1, 1, 1);
 
-      // 격자 창문 (Multi-pane Windows)
+      // 처마 밑 짙은 드리움 그림자 (Eaves Cast Shadow on Wall)
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.40)';
+      ctx.fillRect(px - halfW + 1, wallY + 2, bw - 2, 3);
+
+      // 창문 & 덧문 & 창가 화분 꽃장식 (Multi-Pane Window, Shutters & Geranium Flowerbox)
       const winW = 6;
       const winH = 7;
-      const winY = wallY + 4;
-      const drawWindow = (wx) => {
+      const winY = wallY + 5;
+      const drawWindowWithFlowerBox = (wx) => {
+        // 좌우 목재 덧문 (Wooden Shutters)
+        ctx.fillStyle = B_PALETTE.timber_dark;
+        ctx.fillRect(wx - 4, winY, 3, winH);
+        ctx.fillRect(wx + winW + 1, winY, 3, winH);
+        ctx.fillStyle = B_PALETTE.wood_board;
+        ctx.fillRect(wx - 3, winY + 1, 1, winH - 2);
+        ctx.fillRect(wx + winW + 2, winY + 1, 1, winH - 2);
+        // 덧문 철제 힌지
+        ctx.fillStyle = B_PALETTE.iron_dark;
+        ctx.fillRect(wx - 4, winY + 1, 3, 1);
+        ctx.fillRect(wx - 4, winY + winH - 2, 3, 1);
+        ctx.fillRect(wx + winW + 1, winY + 1, 3, 1);
+        ctx.fillRect(wx + winW + 1, winY + winH - 2, 3, 1);
+
+        // 창틀 & 유리
         ctx.fillStyle = B_PALETTE.window_frame;
         ctx.fillRect(wx - 1, winY - 1, winW + 2, winH + 2);
         ctx.fillStyle = isNight ? B_PALETTE.window_night : B_PALETTE.window_day;
         ctx.fillRect(wx, winY, winW, winH);
-        // 창틀 십자가
+        // 창틀 십자살
         ctx.fillStyle = B_PALETTE.window_frame;
         ctx.fillRect(wx + Math.round(winW / 2) - 1, winY, 1, winH);
         ctx.fillRect(wx, winY + Math.round(winH / 2) - 1, winW, 1);
-        // 야간 창문 은은한 온기 빛 번짐
-        if (isNight) {
+        // 주간 하늘 반사광
+        if (!isNight) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(wx + 1, winY + 1, 2, 1);
+        } else {
           ctx.fillStyle = 'rgba(254, 240, 138, 0.25)';
-          ctx.fillRect(wx - 3, winY - 3, winW + 6, winH + 6);
+          ctx.fillRect(wx - 2, winY - 2, winW + 4, winH + 4);
         }
-      };
-      drawWindow(px - halfW + 7);
-      if (bw > 24) drawWindow(px + halfW - 13);
 
-      // C. 슬레이트 기와 박공 지붕 (Gabled Slate Roof)
+        // 창가 나무 화분 상자 (Window Planter Box)
+        ctx.fillStyle = B_PALETTE.timber_dark;
+        ctx.fillRect(wx - 1, winY + winH, winW + 2, 3);
+        ctx.fillStyle = B_PALETTE.wood_board;
+        ctx.fillRect(wx, winY + winH + 1, winW, 1);
+        // 풍성한 초록 잎사귀
+        ctx.fillStyle = '#15803d';
+        ctx.fillRect(wx - 1, winY + winH - 1, winW + 2, 2);
+        // 화사한 붉은 제라늄 꽃 (Red Geranium Petals)
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(wx, winY + winH - 2, 2, 2);
+        ctx.fillRect(wx + 4, winY + winH - 2, 2, 2);
+        ctx.fillStyle = '#fde047';
+        ctx.fillRect(wx + 1, winY + winH - 1, 1, 1);
+        ctx.fillRect(wx + 5, winY + winH - 1, 1, 1);
+      };
+
+      drawWindowWithFlowerBox(px - halfW + 7);
+      if (bw > 24) drawWindowWithFlowerBox(px + halfW - 13);
+
+      // C. 계단식 비늘형 슬레이트/테라코타 기와 박공 지붕 (Authentic Stepped Scalloped Shingle Roof)
       const roofPeakY = wallY - 18;
       const roofCol = style === 1 ? B_PALETTE.roof_red_main : (style === 2 ? B_PALETTE.roof_green_main : B_PALETTE.roof_slate_main);
       const roofDark = style === 1 ? B_PALETTE.roof_red_dark : (style === 2 ? B_PALETTE.roof_green_dark : B_PALETTE.roof_slate_dark);
       const roofLight = style === 1 ? B_PALETTE.roof_red_light : (style === 2 ? B_PALETTE.roof_green_light : B_PALETTE.roof_slate_light);
 
-      ctx.fillStyle = roofDark;
-      ctx.beginPath();
-      ctx.moveTo(px - halfW - 4, wallY + 2);
-      ctx.lineTo(px, roofPeakY);
-      ctx.lineTo(px + halfW + 4, wallY + 2);
-      ctx.closePath();
-      ctx.fill();
+      // 1. 단별 계단식 기와 층 렌더링 (Row-by-Row Shingle Courses)
+      const shingleRowH = 3;
+      const totalRoofRows = Math.floor((wallY + 2 - roofPeakY) / shingleRowH);
 
-      ctx.fillStyle = roofCol;
-      ctx.beginPath();
-      ctx.moveTo(px - halfW - 2, wallY);
-      ctx.lineTo(px, roofPeakY + 2);
-      ctx.lineTo(px + halfW + 2, wallY);
-      ctx.closePath();
-      ctx.fill();
+      for (let r = 0; r <= totalRoofRows; r++) {
+        const curY = (wallY + 2) - r * shingleRowH;
+        const progress = Math.max(0, 1 - (r / totalRoofRows)); // 1.0 (처마) -> 0.0 (용마루)
+        const rowSpan = Math.round(progress * (halfW + 4));
 
-      // 기와 결 라인 (Shingle row highlights)
-      ctx.fillStyle = roofLight;
-      for (let sY = wallY - 3; sY > roofPeakY + 4; sY -= 4) {
-        const span = Math.round((sY - roofPeakY) / (wallY - roofPeakY) * halfW);
-        ctx.fillRect(px - span + 2, sY, span * 2 - 4, 1);
+        if (rowSpan > 0) {
+          // 기와 아랫면 그림자
+          ctx.fillStyle = roofDark;
+          ctx.fillRect(px - rowSpan, curY, rowSpan * 2, shingleRowH);
+
+          // 기와 본체
+          ctx.fillStyle = roofCol;
+          ctx.fillRect(px - rowSpan + 1, curY, (rowSpan - 1) * 2, shingleRowH - 1);
+
+          // 상단 하이라이트 림
+          ctx.fillStyle = roofLight;
+          ctx.fillRect(px - rowSpan + 1, curY, (rowSpan - 1) * 2, 1);
+
+          // 엇갈린 세로 기와 이음매 줄눈 (Staggered Vertical Shingle Divider Slits)
+          ctx.fillStyle = roofDark;
+          const slitOffset = (r % 2) * 3;
+          for (let sx = px - rowSpan + 3 + slitOffset; sx < px + rowSpan - 2; sx += 5) {
+            ctx.fillRect(sx, curY, 1, shingleRowH);
+          }
+        }
       }
 
-      // 지붕 박공 처마널 (Fascia eaves trim)
+      // 용마루 수키와 캡 (Roof Ridge Cap Tiles)
+      ctx.fillStyle = roofLight;
+      ctx.fillRect(px - 3, roofPeakY - 1, 6, 2);
+      ctx.fillStyle = roofDark;
+      ctx.fillRect(px - 4, roofPeakY + 1, 8, 1);
+
+      // 박공 처마널 장식 (Fascia Vergeboard Eaves Trim)
       ctx.fillStyle = B_PALETTE.timber_dark;
       ctx.fillRect(px - halfW - 4, wallY + 1, bw + 8, 3);
       ctx.fillStyle = B_PALETTE.timber_main;
       ctx.fillRect(px - halfW - 3, wallY + 2, bw + 6, 1);
 
-      // D. 벽돌 굴뚝 및 모락모락 피어오르는 연기 (Smoking Brick Chimney)
+      // D. 거친 석조 굴뚝 및 모락모락 피어오르는 픽셀 연기 (Smoking Fieldstone Chimney & Pixel Smoke Puffs)
       const chimX = px + halfW - 8;
       const chimY = roofPeakY + 4;
-      ctx.fillStyle = B_PALETTE.stone_dark;
-      ctx.fillRect(chimX - 1, chimY - 8, 6, 10);
-      ctx.fillStyle = B_PALETTE.stone_mid;
-      ctx.fillRect(chimX, chimY - 7, 4, 8);
-      ctx.fillStyle = B_PALETTE.stone_bright;
-      ctx.fillRect(chimX - 1, chimY - 9, 6, 2); // 굴뚝 갓
 
-      // 연기 애니메이션
+      ctx.fillStyle = B_PALETTE.stone_dark;
+      ctx.fillRect(chimX - 1, chimY - 8, 7, 10);
+      ctx.fillStyle = B_PALETTE.stone_mid;
+      ctx.fillRect(chimX, chimY - 7, 5, 8);
+      // 굴뚝 돌 블록 디테일
+      ctx.fillStyle = B_PALETTE.stone_light;
+      ctx.fillRect(chimX + 1, chimY - 6, 2, 2);
+      ctx.fillRect(chimX + 2, chimY - 3, 2, 2);
+      // 굴뚝 갓 (Chimney Cap Slab)
+      ctx.fillStyle = B_PALETTE.stone_bright;
+      ctx.fillRect(chimX - 2, chimY - 9, 9, 2);
+
+      // 순수 픽셀아트 연기 애니메이션 (Stepped Pixel Smoke Puffs - No Vector Arc)
       for (let p = 0; p < 4; p++) {
-        const prog = (timeSec * 1.5 + p * 0.25) % 1.0;
-        const driftX = chimX + 2 + Math.sin(timeSec * 3 + p) * (prog * 6);
-        const driftY = chimY - 10 - prog * 18;
-        const sz = 2 + Math.round(prog * 4);
-        ctx.fillStyle = B_PALETTE.smoke_cloud;
-        ctx.beginPath();
-        ctx.arc(driftX, driftY, sz, 0, Math.PI * 2);
-        ctx.fill();
+        const prog = (timeSec * 1.4 + p * 0.25) % 1.0;
+        const driftX = Math.round(chimX + 2 + Math.sin(timeSec * 2.8 + p * 1.5) * (prog * 8));
+        const driftY = Math.round(chimY - 11 - prog * 20);
+        const pSize = 2 + Math.floor(prog * 3); // 2, 3, 4 정수 픽셀
+
+        const alpha = Math.max(0.1, 0.45 * (1 - prog));
+        ctx.fillStyle = `rgba(226, 232, 240, ${alpha.toFixed(2)})`;
+
+        // 십자형 계단식 픽셀 퍼프 (Stepped Cruciform Pixel Puff)
+        ctx.fillRect(driftX - pSize, driftY - Math.floor(pSize / 2), pSize * 2, pSize);
+        ctx.fillRect(driftX - Math.floor(pSize / 2), driftY - pSize, pSize, pSize * 2);
       }
     },
 
     // =========================================================================
-    // 2. 스트라이프 시장 가판대 (Striped Market Stall)
+    // 2. 스트라이프 시장 가판대 (Striped Market Stall - Curved Fabric Awning & 3D Crates)
     // =========================================================================
     drawMarketStall(ctx, px, py, bw, bh, stallType = 0, timeSec = 0) {
       const halfW = Math.round(bw / 2);
       const halfH = Math.round(bh / 2);
 
-      // 그림자
+      // 접지 그림자
       ctx.fillStyle = 'rgba(15, 23, 42, 0.40)';
       ctx.fillRect(px - halfW + 1, py + halfH - 2, bw - 2, 5);
 
-      // 나무 카운터 탁자
+      // 나무 카운터 탁자 (Rustic Wood Counter Table)
       const tableY = py + 2;
       ctx.fillStyle = B_PALETTE.timber_dark;
       ctx.fillRect(px - halfW + 2, tableY, bw - 4, 9);
       ctx.fillStyle = B_PALETTE.wood_board;
       ctx.fillRect(px - halfW + 3, tableY + 1, bw - 6, 7);
+      ctx.fillStyle = B_PALETTE.timber_main;
+      ctx.fillRect(px - halfW + 3, tableY + 1, bw - 6, 1); // 탁자 상판 하이라이트
 
-      // 4개 나무 기둥 (Poles)
+      // 4개 나무 기둥 (Corner Timber Poles)
       ctx.fillStyle = B_PALETTE.timber_dark;
       ctx.fillRect(px - halfW + 2, py - halfH, 2, halfH + 4);
       ctx.fillRect(px + halfW - 4, py - halfH, 2, halfH + 4);
+      ctx.fillStyle = B_PALETTE.timber_main;
+      ctx.fillRect(px - halfW + 2, py - halfH, 1, halfH + 4);
+      ctx.fillRect(px + halfW - 4, py - halfH, 1, halfH + 4);
 
-      // 전시 물품 (진열 상자, 물고기/과일/빵)
-      if (stallType === 0) { // 과일/야채 상자 (레드/옐로)
+      // 전시 물품 (진열 상자, 물고기/과일/빵/무기 3D 디테일)
+      if (stallType === 0) {
+        // 🍎 신선한 과일/야채 상자 (사과, 당근, 양배추)
+        ctx.fillStyle = '#78350f'; // 나무 상자
+        ctx.fillRect(px - halfW + 4, tableY - 1, 6, 4);
+        ctx.fillRect(px - halfW + 12, tableY - 1, 6, 4);
+        // 빨간 사과들
         ctx.fillStyle = '#ef4444';
-        ctx.fillRect(px - halfW + 5, tableY - 2, 4, 3);
-        ctx.fillStyle = '#84cc16';
-        ctx.fillRect(px - halfW + 10, tableY - 2, 4, 3);
-        ctx.fillStyle = '#eab308';
-        ctx.fillRect(px - halfW + 15, tableY - 2, 4, 3);
-      } else if (stallType === 1) { // 생선 바구니 (블루/실버)
-        ctx.fillStyle = '#38bdf8';
-        ctx.fillRect(px - halfW + 5, tableY - 2, 5, 3);
-        ctx.fillStyle = '#cbd5e1';
-        ctx.fillRect(px - halfW + 11, tableY - 2, 5, 3);
-      } else { // 무기/방어구 가판
+        ctx.fillRect(px - halfW + 5, tableY - 3, 4, 3);
+        ctx.fillStyle = '#fde047';
+        ctx.fillRect(px - halfW + 6, tableY - 3, 1, 1);
+        // 주황 당근 & 초록 잎
+        ctx.fillStyle = '#f97316';
+        ctx.fillRect(px - halfW + 13, tableY - 2, 4, 2);
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(px - halfW + 14, tableY - 4, 2, 2);
+      } else if (stallType === 1) {
+        // 🐟 신선한 얼음 생선 바구니 (은빛 연어 & 다이아몬드 얼음 조각)
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(px - halfW + 4, tableY - 2, 7, 4);
+        ctx.fillStyle = '#e0f2fe'; // 쇄빙 얼음
+        ctx.fillRect(px - halfW + 5, tableY - 1, 5, 2);
+        // 은빛 생선
         ctx.fillStyle = '#94a3b8';
-        ctx.fillRect(px - halfW + 5, tableY - 3, 2, 5); // 단검
-        ctx.fillRect(px - halfW + 9, tableY - 3, 5, 4); // 투구
+        ctx.fillRect(px - halfW + 6, tableY - 3, 5, 2);
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(px - halfW + 7, tableY - 3, 2, 1);
+      } else {
+        // ⚔️ 대장간 가판 (강철 숏소드, 투구, 황금 주머니)
+        ctx.fillStyle = '#64748b'; // 검날
+        ctx.fillRect(px - halfW + 5, tableY - 4, 2, 6);
+        ctx.fillStyle = '#facc15'; // 황금 코등이
+        ctx.fillRect(px - halfW + 4, tableY - 2, 4, 1);
+        // 강철 투구
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(px - halfW + 11, tableY - 3, 5, 4);
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(px - halfW + 12, tableY - 3, 2, 1);
+        // 황금 주머니
         ctx.fillStyle = '#ca8a04';
-        ctx.fillRect(px - halfW + 16, tableY - 2, 4, 3); // 금화 주머니
+        ctx.fillRect(px - halfW + 18, tableY - 2, 4, 3);
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(px - halfW + 19, tableY - 3, 2, 1);
       }
 
-      // 스트라이프 천막 캐노피 (Striped Awning Canopy)
+      // 기둥에 걸린 마늘/소시지 줄 (Hanging Sausage & Garlic Braids)
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(px - halfW + 5, py - halfH + 8, 2, 4);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px + halfW - 7, py - halfH + 8, 2, 3);
+
+      // 스트라이프 차양 천막 (Curved Striped Fabric Awning)
       const primaryColor = stallType === 0 ? B_PALETTE.awning_red : (stallType === 1 ? B_PALETTE.awning_blue : B_PALETTE.awning_green);
       const secondaryColor = stallType === 2 ? B_PALETTE.awning_yellow : B_PALETTE.awning_white;
 
       const canopyY = py - halfH - 4;
       const canopyH = 12;
 
-      // 처마 각도
+      // 굴곡진 천막 본체
       ctx.fillStyle = primaryColor;
       ctx.fillRect(px - halfW - 2, canopyY, bw + 4, canopyH);
 
-      // 교차 스트라이프 띠
+      // 스트라이프 교차 띠
       ctx.fillStyle = secondaryColor;
       const stripeW = 4;
       for (let st = px - halfW - 2; st < px + halfW + 2; st += stripeW * 2) {
         ctx.fillRect(st, canopyY, stripeW, canopyH);
       }
 
-      // 캐노피 끝 물결 무늬 (Scalloped Valence Fringe)
+      // 천막 상단 능선 하이라이트
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.fillRect(px - halfW - 2, canopyY, bw + 4, 2);
+
+      // 바람에 살랑이는 물결 레이스 자락 (Scalloped Valence Fringe with Wind Ripple)
+      const valenceWav = Math.round(Math.sin(timeSec * 3.5 + px) * 0.8);
       for (let sc = px - halfW - 2; sc <= px + halfW; sc += 4) {
         ctx.fillStyle = ((sc / 4) % 2 === 0) ? primaryColor : secondaryColor;
-        ctx.fillRect(sc, canopyY + canopyH, 4, 2);
+        ctx.fillRect(sc, canopyY + canopyH + valenceWav, 4, 3);
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(sc, canopyY + canopyH + 3 + valenceWav, 4, 1); // 하단 짙은 림
       }
     },
 
     // =========================================================================
-    // 3. 황궁 및 대성채 (Palace & Castle Citadel Keep)
+    // 3. 황궁 및 대성채 (Palace & Castle Citadel Keep - Machicolations & Stepped Turret Cones)
     // =========================================================================
     drawCastleKeep(ctx, px, py, bw, bh, faction = 'kingdom', isNight = false, timeSec = 0) {
       const halfW = Math.round(bw / 2);
@@ -306,33 +473,47 @@
       ctx.fillStyle = 'rgba(15, 23, 42, 0.55)';
       ctx.fillRect(px - halfW - 2, py + halfH - 2, bw + 4, 8);
 
-      // 1. 하단 견고한 석조 성곽 (Lower Rampart Citadel)
+      // 1. 하단 견고한 석조 성곽 (Lower Rampart Ashlar Blocks)
       ctx.fillStyle = B_PALETTE.stone_dark;
       ctx.fillRect(px - halfW, py - halfH + 8, bw, bh - 6);
       ctx.fillStyle = B_PALETTE.stone_mid;
       ctx.fillRect(px - halfW + 3, py - halfH + 10, bw - 6, bh - 10);
 
-      // 돌 블록 디테일 격자
+      // 마름돌 블록 디테일 격자 & 하이라이트 (Ashlar Stone Blocks with Bevels)
       ctx.fillStyle = B_PALETTE.stone_deep;
       for (let y = py - halfH + 14; y < py + halfH - 4; y += 6) {
         ctx.fillRect(px - halfW + 3, y, bw - 6, 1);
         for (let x = px - halfW + 7 + ((y % 12) ? 6 : 0); x < px + halfW - 4; x += 12) {
           ctx.fillRect(x, y - 5, 1, 5);
+          // 돌 상단 모서리 하이라이트
+          ctx.fillStyle = B_PALETTE.stone_light;
+          ctx.fillRect(x + 1, y - 5, 5, 1);
+          ctx.fillStyle = B_PALETTE.stone_deep;
         }
+      }
+
+      // 살인창 까치발 브래킷 (Machicolation Corbel Brackets)
+      ctx.fillStyle = B_PALETTE.stone_dark;
+      for (let bx = px - halfW + 2; bx <= px + halfW - 4; bx += 5) {
+        ctx.fillRect(bx, py - halfH + 8, 3, 3);
+        ctx.fillStyle = B_PALETTE.stone_light;
+        ctx.fillRect(bx, py - halfH + 8, 3, 1);
+        ctx.fillStyle = B_PALETTE.stone_dark;
       }
 
       // 2. 성벽 배틀먼트 요철 흉벽 (Crenellations & Merlons)
       const merlonW = 6;
       const merlonH = 5;
-      ctx.fillStyle = B_PALETTE.stone_dark;
       for (let mx = px - halfW + 2; mx <= px + halfW - merlonW - 2; mx += merlonW + 4) {
+        ctx.fillStyle = B_PALETTE.stone_dark;
         ctx.fillRect(mx - 1, py - halfH + 3, merlonW + 2, merlonH + 1);
         ctx.fillStyle = B_PALETTE.stone_bright;
         ctx.fillRect(mx, py - halfH + 4, merlonW, merlonH - 1);
-        ctx.fillStyle = B_PALETTE.stone_dark;
+        ctx.fillStyle = B_PALETTE.stone_light;
+        ctx.fillRect(mx, py - halfH + 4, merlonW, 1);
       }
 
-      // 3. 좌우 원형 코너 망루 (Corner Turrets)
+      // 3. 좌우 원형 코너 망루 (Corner Turrets with Stepped Conical Slate Roofs)
       const turretW = 10;
       const turretH = bh + 4;
       const drawTurret = (tx) => {
@@ -348,27 +529,37 @@
         ctx.fillRect(tx + Math.round(turretW / 2) - 1, py - 4, 2, 7);
         ctx.fillRect(tx + Math.round(turretW / 2) - 1, py + 8, 2, 7);
 
-        // 원뿔형 블루/골드 첨탑 지붕 (Conical Turret Roof)
-        ctx.fillStyle = faction === 'monster' ? '#7f1d1d' : B_PALETTE.roof_slate_dark;
-        ctx.beginPath();
-        ctx.moveTo(tx - 2, py - halfH - 2);
-        ctx.lineTo(tx + Math.round(turretW / 2), py - halfH - 18);
-        ctx.lineTo(tx + turretW + 2, py - halfH - 2);
-        ctx.closePath();
-        ctx.fill();
+        // 순수 픽셀아트 계단식 원뿔 첨탑 지붕 (Stepped Conical Slate Turret Roof - No Vector Arc/Triangle)
+        const tRoofH = 16;
+        const tPeakY = py - halfH - 2 - tRoofH;
+        const tCenterX = tx + Math.round(turretW / 2);
+        const tRoofCol = faction === 'monster' ? '#b91c1c' : B_PALETTE.roof_slate_main;
+        const tRoofDark = faction === 'monster' ? '#7f1d1d' : B_PALETTE.roof_slate_dark;
+        const tRoofLight = faction === 'monster' ? '#f87171' : B_PALETTE.roof_slate_light;
 
-        ctx.fillStyle = faction === 'monster' ? '#b91c1c' : B_PALETTE.roof_slate_light;
-        ctx.beginPath();
-        ctx.moveTo(tx, py - halfH - 3);
-        ctx.lineTo(tx + Math.round(turretW / 2), py - halfH - 16);
-        ctx.lineTo(tx + turretW, py - halfH - 3);
-        ctx.closePath();
-        ctx.fill();
+        for (let r = 0; r <= tRoofH; r++) {
+          const curY = py - halfH - 2 - r;
+          const progress = 1 - (r / tRoofH); // 1.0 (바닥) -> 0.0 (꼭대기)
+          const rSpan = Math.round(progress * (turretW / 2 + 3));
+
+          if (rSpan > 0) {
+            ctx.fillStyle = tRoofDark;
+            ctx.fillRect(tCenterX - rSpan, curY, rSpan * 2, 1);
+            ctx.fillStyle = tRoofCol;
+            ctx.fillRect(tCenterX - rSpan + 1, curY, rSpan * 2 - 2, 1);
+            // 좌측 조광 하이라이트
+            ctx.fillStyle = tRoofLight;
+            ctx.fillRect(tCenterX - rSpan + 1, curY, Math.max(1, Math.round(rSpan * 0.7)), 1);
+          }
+        }
 
         // 황금 첨탑 핀 (Golden Finial)
         ctx.fillStyle = B_PALETTE.gold_trim;
-        ctx.fillRect(tx + Math.round(turretW / 2) - 1, py - halfH - 21, 2, 4);
+        ctx.fillRect(tCenterX - 1, tPeakY - 4, 2, 5);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(tCenterX - 1, tPeakY - 4, 1, 1);
       };
+
       drawTurret(px - halfW - 2);
       drawTurret(px + halfW - turretW + 2);
 
@@ -377,6 +568,7 @@
       const gateH = 16;
       const gateX = px - Math.round(gateW / 2);
       const gateY = py + halfH - gateH;
+
       ctx.fillStyle = B_PALETTE.stone_deep;
       ctx.fillRect(gateX - 2, gateY - 2, gateW + 4, gateH + 2);
       // 아치석
@@ -469,38 +661,71 @@
       const halfW = Math.round(bw / 2);
       const halfH = Math.round(bh / 2);
 
-      // 둥근 테이퍼 석조 타워 (Round Stone Mill Tower)
-      ctx.fillStyle = B_PALETTE.stone_dark;
-      ctx.beginPath();
-      ctx.moveTo(px - halfW + 3, py + halfH);
-      ctx.lineTo(px - halfW + 7, py - halfH + 6);
-      ctx.lineTo(px + halfW - 7, py - halfH + 6);
-      ctx.lineTo(px + halfW - 3, py + halfH);
-      ctx.closePath();
-      ctx.fill();
+      // 접지 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.40)';
+      ctx.fillRect(px - halfW, py + halfH - 2, bw, 6);
 
-      ctx.fillStyle = B_PALETTE.stone_light;
-      ctx.beginPath();
-      ctx.moveTo(px - halfW + 5, py + halfH - 2);
-      ctx.lineTo(px - halfW + 8, py - halfH + 8);
-      ctx.lineTo(px + halfW - 8, py - halfH + 8);
-      ctx.lineTo(px + halfW - 5, py + halfH - 2);
-      ctx.closePath();
-      ctx.fill();
+      // 1. 계단식 테이퍼 석조 타워 (Stepped Tapered Ashlar Mill Tower - No Vector Triangles)
+      const towerH = bh - 4;
+      const towerTopY = py - halfH + 6;
+      for (let y = 0; y < towerH; y++) {
+        const curY = py + halfH - y;
+        const progress = y / towerH; // 0.0 (바닥) -> 1.0 (상단)
+        const curSpan = Math.round((halfW - 3) - progress * 4);
 
-      // 지붕 캡 (Dome Roof)
-      ctx.fillStyle = B_PALETTE.roof_slate_main;
-      ctx.beginPath();
-      ctx.arc(px, py - halfH + 7, halfW - 5, Math.PI, 0);
-      ctx.fill();
+        // 석조 타워 짙은 외곽선
+        ctx.fillStyle = B_PALETTE.stone_dark;
+        ctx.fillRect(px - curSpan - 1, curY, (curSpan + 1) * 2, 1);
+        // 석조 본체
+        ctx.fillStyle = B_PALETTE.stone_mid;
+        ctx.fillRect(px - curSpan, curY, curSpan * 2, 1);
+        // 좌측 조광 하이라이트
+        ctx.fillStyle = B_PALETTE.stone_light;
+        ctx.fillRect(px - curSpan, curY, Math.max(1, Math.round(curSpan * 0.6)), 1);
 
-      // 중앙 회전축 (Center Hub)
+        // 돌 블록 줄눈
+        if (y % 5 === 0) {
+          ctx.fillStyle = B_PALETTE.stone_deep;
+          ctx.fillRect(px - curSpan, curY, curSpan * 2, 1);
+        }
+      }
+
+      // 하부 작은 나무 문
+      ctx.fillStyle = B_PALETTE.timber_dark;
+      ctx.fillRect(px - 3, py + halfH - 8, 6, 8);
+      ctx.fillStyle = B_PALETTE.wood_board;
+      ctx.fillRect(px - 2, py + halfH - 7, 4, 7);
+
+      // 2. 계단식 반구형 돔 지붕 캡 (Stepped Dome Roof Cap - No Vector Arc)
+      const capH = 8;
+      const capBaseSpan = halfW - 6;
+
+      for (let r = 0; r <= capH; r++) {
+        const curY = towerTopY - r;
+        const progress = Math.max(0, 1 - (r / capH));
+        const rSpan = Math.round(Math.sqrt(progress) * (capBaseSpan + 2));
+
+        if (rSpan > 0) {
+          ctx.fillStyle = B_PALETTE.roof_slate_dark;
+          ctx.fillRect(px - rSpan, curY, rSpan * 2, 1);
+          ctx.fillStyle = B_PALETTE.roof_slate_main;
+          ctx.fillRect(px - rSpan + 1, curY, (rSpan - 1) * 2, 1);
+          ctx.fillStyle = B_PALETTE.roof_slate_light;
+          ctx.fillRect(px - rSpan + 1, curY, Math.max(1, Math.round(rSpan * 0.7)), 1);
+        }
+      }
+
+      // 3. 중앙 회전축 허브 (Center Rotor Hub)
       const hubX = px;
-      const hubY = py - halfH + 7;
+      const hubY = towerTopY;
       ctx.fillStyle = B_PALETTE.timber_dark;
       ctx.fillRect(hubX - 3, hubY - 3, 6, 6);
+      ctx.fillStyle = B_PALETTE.iron_metal;
+      ctx.fillRect(hubX - 2, hubY - 2, 4, 4);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(hubX - 1, hubY - 1, 2, 2);
 
-      // 4개 회전하는 돛 날개 (4 Rotating Lattice Blades)
+      // 4. 4개 회전하는 격자형 돛 날개 (4 Rotating Lattice Sails with Canvas Panels)
       const angle = timeSec * 1.6;
       ctx.save();
       ctx.translate(hubX, hubY);
@@ -509,9 +734,14 @@
       const bladeLen = Math.round(bw * 0.85);
       for (let i = 0; i < 4; i++) {
         ctx.rotate(Math.PI / 2);
-        // 목재 뼈대
+        // 목재 주 뼈대
         ctx.fillStyle = B_PALETTE.timber_dark;
         ctx.fillRect(-1, 0, 2, bladeLen);
+        // 격자 가로살
+        ctx.fillStyle = B_PALETTE.timber_main;
+        for (let g = 4; g < bladeLen - 2; g += 5) {
+          ctx.fillRect(1, g, 5, 1);
+        }
         // 흰색 천 캔버스
         ctx.fillStyle = B_PALETTE.awning_white;
         ctx.fillRect(1, 4, 5, bladeLen - 6);
@@ -528,58 +758,106 @@
       const halfW = Math.round(bw / 2);
       const halfH = Math.round(bh / 2);
 
-      // 석조 본당 (Cathedral Nave)
+      // 접지 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.50)';
+      ctx.fillRect(px - halfW - 2, py + halfH - 2, bw + 4, 7);
+
+      // 석조 본당 (Cathedral Nave Ashlar Stone)
       ctx.fillStyle = B_PALETTE.stone_dark;
       ctx.fillRect(px - halfW, py - halfH + 6, bw, bh - 6);
       ctx.fillStyle = B_PALETTE.stone_mid;
       ctx.fillRect(px - halfW + 2, py - halfH + 8, bw - 4, bh - 8);
 
-      // 좌우 쌍둥이 첨탑 (Twin Bell Towers)
+      // 본당 외벽 버트레스 기둥 (Flying Buttress Piers)
+      ctx.fillStyle = B_PALETTE.stone_dark;
+      ctx.fillRect(px - halfW + 4, py - halfH + 8, 3, bh - 8);
+      ctx.fillRect(px + halfW - 7, py - halfH + 8, 3, bh - 8);
+      ctx.fillStyle = B_PALETTE.stone_light;
+      ctx.fillRect(px - halfW + 4, py - halfH + 8, 1, bh - 8);
+      ctx.fillRect(px + halfW - 7, py - halfH + 8, 1, bh - 8);
+
+      // 좌우 쌍둥이 첨탑 (Twin Gothic Spires - Stepped Slates)
       const towerW = 8;
-      const drawTower = (tx) => {
+      const drawGothicTower = (tx) => {
         ctx.fillStyle = B_PALETTE.stone_dark;
         ctx.fillRect(tx - 1, py - halfH - 12, towerW + 2, bh + 12);
-        ctx.fillStyle = B_PALETTE.stone_light;
+        ctx.fillStyle = B_PALETTE.stone_mid;
         ctx.fillRect(tx, py - halfH - 10, towerW, bh + 10);
-        // 뾰족 삼각 지붕
-        ctx.fillStyle = B_PALETTE.roof_slate_main;
-        ctx.beginPath();
-        ctx.moveTo(tx - 2, py - halfH - 12);
-        ctx.lineTo(tx + Math.round(towerW / 2), py - halfH - 26);
-        ctx.lineTo(tx + towerW + 2, py - halfH - 12);
-        ctx.closePath();
-        ctx.fill();
-        // 십자가 핀
+        ctx.fillStyle = B_PALETTE.stone_light;
+        ctx.fillRect(tx + 1, py - halfH - 10, 2, bh + 10);
+
+        // 순수 픽셀아트 계단식 고딕 첨탑 지붕 (Stepped Gothic Spire Roof)
+        const spRoofH = 16;
+        const spPeakY = py - halfH - 12 - spRoofH;
+        const spCenterX = tx + Math.round(towerW / 2);
+
+        for (let r = 0; r <= spRoofH; r++) {
+          const curY = py - halfH - 12 - r;
+          const progress = 1 - (r / spRoofH);
+          const rSpan = Math.round(progress * (towerW / 2 + 2));
+
+          if (rSpan > 0) {
+            ctx.fillStyle = B_PALETTE.roof_slate_dark;
+            ctx.fillRect(spCenterX - rSpan, curY, rSpan * 2, 1);
+            ctx.fillStyle = B_PALETTE.roof_slate_main;
+            ctx.fillRect(spCenterX - rSpan + 1, curY, rSpan * 2 - 2, 1);
+            ctx.fillStyle = B_PALETTE.roof_slate_light;
+            ctx.fillRect(spCenterX - rSpan + 1, curY, Math.max(1, Math.round(rSpan * 0.7)), 1);
+          }
+        }
+
+        // 황금 십자가 피니얼 (Golden Cross Finial)
         ctx.fillStyle = B_PALETTE.gold_trim;
-        ctx.fillRect(tx + Math.round(towerW / 2) - 1, py - halfH - 30, 2, 5);
-        ctx.fillRect(tx + Math.round(towerW / 2) - 2, py - halfH - 28, 4, 1);
+        ctx.fillRect(spCenterX - 1, spPeakY - 5, 2, 6);
+        ctx.fillRect(spCenterX - 3, spPeakY - 3, 6, 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(spCenterX - 1, spPeakY - 5, 1, 1);
       };
-      drawTower(px - halfW - 2);
-      drawTower(px + halfW - towerW + 2);
 
-      // 스테인드글라스 대형 장미창 (Stained Glass Rose Window)
+      drawGothicTower(px - halfW - 2);
+      drawGothicTower(px + halfW - towerW + 2);
+
+      // 대형 장미창 (Stepped Octagonal Radiant Rose Window - No Vector Arc)
       const roseY = py - halfH + 16;
+      // 외곽 석조 몰딩 링 (Stepped Octagonal Stone Ring)
       ctx.fillStyle = B_PALETTE.stone_deep;
-      ctx.beginPath();
-      ctx.arc(px, roseY, 8, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.fillRect(px - 7, roseY - 5, 14, 10);
+      ctx.fillRect(px - 5, roseY - 7, 10, 14);
 
-      // 보석빛 스테인드글라스 컬러 (Ruby, Sapphire, Emerald, Gold)
-      const rosePulse = Math.sin(timeSec * 3) * 0.15;
-      ctx.fillStyle = isNight ? '#38bdf8' : '#e0f2fe';
-      ctx.beginPath();
-      ctx.arc(px, roseY, 6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#dc2626';
-      ctx.fillRect(px - 2, roseY - 2, 4, 4);
-      ctx.fillStyle = '#facc15';
+      // 보석빛 스테인드글라스 컬러 (Jewel-toned Stained Glass Panels)
+      ctx.fillStyle = isNight ? '#0284c7' : '#38bdf8';
+      ctx.fillRect(px - 5, roseY - 4, 10, 8);
+      ctx.fillRect(px - 4, roseY - 5, 8, 10);
+
+      // 십자 루비 & 사파이어 & 에메랄드 보석창
+      ctx.fillStyle = '#dc2626'; // 루비 십자
+      ctx.fillRect(px - 2, roseY - 4, 4, 8);
+      ctx.fillRect(px - 4, roseY - 2, 8, 4);
+      ctx.fillStyle = '#facc15'; // 황금 화심
       ctx.fillRect(px - 1, roseY - 1, 2, 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px, roseY, 1, 1);
+
+      if (isNight) {
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.35)';
+        ctx.fillRect(px - 8, roseY - 8, 16, 16);
+      }
 
       // 중앙 고딕 아치 문
+      const gDoorW = 10;
+      const gDoorH = 14;
+      const gDoorX = px - Math.round(gDoorW / 2);
+      const gDoorY = py + halfH - gDoorH;
+
       ctx.fillStyle = B_PALETTE.stone_deep;
-      ctx.fillRect(px - 5, py + halfH - 14, 10, 14);
+      ctx.fillRect(gDoorX - 1, gDoorY - 2, gDoorW + 2, gDoorH + 2);
       ctx.fillStyle = B_PALETTE.timber_dark;
-      ctx.fillRect(px - 4, py + halfH - 13, 8, 13);
+      ctx.fillRect(gDoorX, gDoorY, gDoorW, gDoorH);
+      ctx.fillStyle = B_PALETTE.wood_board;
+      ctx.fillRect(gDoorX + 1, gDoorY + 1, gDoorW - 2, gDoorH - 1);
+      ctx.fillStyle = B_PALETTE.gold_trim;
+      ctx.fillRect(gDoorX + 2, gDoorY + Math.round(gDoorH / 2), 2, 2);
+      ctx.fillRect(gDoorX + gDoorW - 4, gDoorY + Math.round(gDoorH / 2), 2, 2);
     },
 
     // =========================================================================
@@ -589,31 +867,42 @@
       const halfW = Math.round(bw / 2);
       const halfH = Math.round(bh / 2);
 
-      // 흙바닥 & 가죽 천막 (Mammoth Tusk & Hide Pavilion)
-      ctx.fillStyle = '#1c1917';
-      ctx.beginPath();
-      ctx.moveTo(px - halfW, py + halfH);
-      ctx.lineTo(px, py - halfH);
-      ctx.lineTo(px + halfW, py + halfH);
-      ctx.closePath();
-      ctx.fill();
+      // 접지 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.50)';
+      ctx.fillRect(px - halfW, py + halfH - 2, bw, 6);
 
-      ctx.fillStyle = '#44403c';
-      ctx.beginPath();
-      ctx.moveTo(px - halfW + 2, py + halfH - 2);
-      ctx.lineTo(px, py - halfH + 3);
-      ctx.lineTo(px + halfW - 2, py + halfH - 2);
-      ctx.closePath();
-      ctx.fill();
+      // 순수 픽셀아트 가죽 원뿔 막사 (Stepped Mammoth Hide Pavilion - No Vector Triangle)
+      const tentH = bh;
 
-      // 거대 상아 뼈대 (Mammoth Tusks)
+      for (let r = 0; r <= tentH; r++) {
+        const curY = py + halfH - r;
+        const progress = 1 - (r / tentH);
+        const rSpan = Math.round(progress * halfW);
+
+        if (rSpan > 0) {
+          ctx.fillStyle = '#1c1917';
+          ctx.fillRect(px - rSpan, curY, rSpan * 2, 1);
+          ctx.fillStyle = '#44403c';
+          ctx.fillRect(px - rSpan + 1, curY, (rSpan - 1) * 2, 1);
+          // 좌측 가죽 하이라이트
+          ctx.fillStyle = '#78716c';
+          ctx.fillRect(px - rSpan + 1, curY, Math.max(1, Math.round(rSpan * 0.6)), 1);
+        }
+      }
+
+      // 거대 상아 뼈대 (Mammoth Bone Tusks on sides)
       ctx.fillStyle = '#f5f5f4';
       ctx.fillRect(px - halfW - 2, py + 2, 3, halfH);
       ctx.fillRect(px + halfW - 1, py + 2, 3, halfH);
+      ctx.fillStyle = '#d6d3d1';
+      ctx.fillRect(px - halfW - 1, py + 3, 1, halfH - 2);
+      ctx.fillRect(px + halfW, py + 3, 1, halfH - 2);
 
       // 천막 입구 구멍
       ctx.fillStyle = '#0c0a09';
       ctx.fillRect(px - 4, py + halfH - 10, 8, 10);
+      ctx.fillStyle = '#7f1d1d';
+      ctx.fillRect(px - 3, py + halfH - 9, 6, 2);
 
       // 부족 깃발 & 해골 장식
       ctx.fillStyle = '#991b1b';
@@ -625,16 +914,13 @@
     // =========================================================================
     // 9. 마을 디테일 소품 (Props: Well, Lamp, Barrels, Crates, Wheelbarrow)
     // =========================================================================
-    // =========================================================================
-    // 9. 마을 디테일 소품 (Cute Fantasy Reference Props)
-    // =========================================================================
     drawProp(ctx, px, py, propType = 'well', isNight = false, timeSec = 0) {
       if (propType === 'well' || propType === 'stone_well') {
-        // [CUTE FANTASY 식수 우물] 원형 석조 원통 + 목조 기둥 + 박공 지붕 + 도르래 양동이
+        // [CUTE FANTASY 식수 우물] 원형 석조 원통 + 목조 기둥 + 계단식 박공 지붕 + 도르래 양동이
         ctx.fillStyle = 'rgba(15, 23, 42, 0.40)';
         ctx.fillRect(px - 7, py + 5, 14, 4);
 
-        // 석조 원통
+        // 석조 원통 (Ashlar Stone Well)
         ctx.fillStyle = '#1e293b';
         ctx.fillRect(px - 7, py - 3, 14, 9);
         ctx.fillStyle = '#475569';
@@ -657,21 +943,19 @@
         ctx.fillStyle = '#92400e';
         ctx.fillRect(px - 2, py - 6, 3, 3);
 
-        // 목조 박공 지붕 (Cute Wooden Gabled Canopy)
-        ctx.fillStyle = '#5c3012';
-        ctx.beginPath();
-        ctx.moveTo(px - 9, py - 11);
-        ctx.lineTo(px, py - 18);
-        ctx.lineTo(px + 9, py - 11);
-        ctx.closePath();
-        ctx.fill();
-        ctx.fillStyle = '#b45309';
-        ctx.beginPath();
-        ctx.moveTo(px - 7, py - 12);
-        ctx.lineTo(px, py - 17);
-        ctx.lineTo(px + 7, py - 12);
-        ctx.closePath();
-        ctx.fill();
+        // 순수 픽셀아트 계단식 목조 박공 지붕 (Stepped Wooden Shingle Well Canopy - No Vector Triangles)
+        const wPeakY = py - 18;
+        const wBaseY = py - 11;
+        for (let y = wBaseY; y >= wPeakY; y -= 2) {
+          const progress = (y - wPeakY) / (wBaseY - wPeakY);
+          const rSpan = Math.round(progress * 9);
+          ctx.fillStyle = '#451a03';
+          ctx.fillRect(px - rSpan, y, rSpan * 2, 2);
+          ctx.fillStyle = '#b45309';
+          ctx.fillRect(px - rSpan + 1, y, (rSpan - 1) * 2, 1);
+        }
+        ctx.fillStyle = '#d59560';
+        ctx.fillRect(px - 2, wPeakY - 1, 4, 2);
       } else if (propType === 'hay_bale') {
         // [CUTE FANTASY 황금 건초 더미 (붉은 리본 결속)]
         // 피라미드 스택 건초더미 (아래 2개, 위 1개)
@@ -872,34 +1156,53 @@
 
       // 발밑 픽셀 그림자
       ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
-      ctx.fillRect(px - halfW + 2, py + halfH - 2, bw - 2, 7);
+      ctx.fillRect(px - halfW + 1, py + halfH - 2, bw - 2, 7);
 
-      // 1. 통나무 벽체 (Horizontal Interlocking Logs)
+      // 1. 통나무 벽체 (Horizontal Interlocking Saddle-Notch Logs)
       const wallH = Math.round(bh * 0.6);
       const wallY = py + halfH - wallH;
 
-      ctx.fillStyle = '#6d3b16'; // 통나무 줄눈/외곽선
+      ctx.fillStyle = '#451a03'; // 통나무 줄눈/외곽선
       ctx.fillRect(px - halfW, wallY, bw, wallH);
 
-      // 가로 통나무 층 (3~4개 가로 통나무 겹침)
+      // 가로 통나무 층 (3~4개 가로 통나무 겹침과 우물정자 귀틀 모서리 돌출)
       const logH = 5;
       for (let ly = wallY; ly < py + halfH; ly += logH) {
-        ctx.fillStyle = '#6d3b16';
+        ctx.fillStyle = '#451a03';
         ctx.fillRect(px - halfW, ly, bw, 1);
         ctx.fillStyle = '#b37340'; // 따뜻한 통나무 본체
         ctx.fillRect(px - halfW + 1, ly + 1, bw - 2, logH - 2);
         ctx.fillStyle = '#d59560'; // 상단 하이라이트
         ctx.fillRect(px - halfW + 2, ly + 1, bw - 4, 1);
-        // 좌우 돌출된 둥근 통나무 결 (Protruding corner logs)
-        ctx.fillStyle = '#7c441c';
-        ctx.fillRect(px - halfW - 1, ly + 1, 2, logH - 2);
-        ctx.fillRect(px + halfW - 1, ly + 1, 2, logH - 2);
+
+        // 좌우 돌출된 둥근 사개맞춤 귀틀 통나무 결 (Interlocking Saddle-Notch Corner Ends)
+        // 좌측 통나무 끝단 단면 (성장 나이테)
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(px - halfW - 3, ly, 4, logH);
+        ctx.fillStyle = '#b37340';
+        ctx.fillRect(px - halfW - 2, ly + 1, 3, logH - 2);
+        ctx.fillStyle = '#fde68a'; // 나이테 중심
+        ctx.fillRect(px - halfW - 2, ly + 2, 1, 1);
+
+        // 우측 통나무 끝단 단면 (성장 나이테)
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(px + halfW - 1, ly, 4, logH);
+        ctx.fillStyle = '#b37340';
+        ctx.fillRect(px + halfW - 1, ly + 1, 3, logH - 2);
+        ctx.fillStyle = '#fde68a';
+        ctx.fillRect(px + halfW + 1, ly + 2, 1, 1);
       }
 
-      // 2. 발광 청록 창문 (Glowing Cyan Window - Reference Image Match)
+      // 통나무 사이 하단 벨벳 이끼
+      ctx.fillStyle = '#2f5014';
+      ctx.fillRect(px - halfW + 2, py + halfH - 2, 5, 2);
+      ctx.fillStyle = '#65a30d';
+      ctx.fillRect(px - halfW + 3, py + halfH - 2, 3, 1);
+
+      // 2. 발광 청록 창문 & 창가 화분 (Glowing Cyan Window & Flower Box)
       const winW = 7;
       const winH = 8;
-      const winX = px + halfW - 14;
+      const winX = px + halfW - 15;
       const winY = wallY + 4;
       ctx.fillStyle = '#451a03'; // 창틀
       ctx.fillRect(winX - 1, winY - 1, winW + 2, winH + 2);
@@ -913,7 +1216,16 @@
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(winX + 1, winY + 1, 2, 2);
 
-      // 3. 나무 아치형 현관문 (Wooden Plank Door)
+      // 창가 나무 화분 (Flower Box)
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(winX - 1, winY + winH, winW + 2, 2);
+      ctx.fillStyle = '#15803d'; // 잎사귀
+      ctx.fillRect(winX, winY + winH - 1, winW, 2);
+      ctx.fillStyle = '#ef4444'; // 붉은 꽃
+      ctx.fillRect(winX + 1, winY + winH - 2, 2, 1);
+      ctx.fillRect(winX + 4, winY + winH - 2, 2, 1);
+
+      // 3. 나무 아치형 현관문 (Heavy Wooden Plank Door)
       const doorW = 8;
       const doorH = wallH - 3;
       const doorX = px - halfW + 6;
@@ -924,39 +1236,78 @@
       ctx.fillRect(doorX, doorY, doorW, doorH);
       ctx.fillStyle = '#965528';
       ctx.fillRect(doorX + 1, doorY + 1, doorW - 2, doorH - 1);
+      // 철제 힌지 & 황동 손잡이
+      ctx.fillStyle = '#1c1917';
+      ctx.fillRect(doorX, doorY + 3, doorW - 2, 1);
+      ctx.fillRect(doorX, doorY + doorH - 4, doorW - 2, 1);
       ctx.fillStyle = '#facc15';
-      ctx.fillRect(doorX + doorW - 3, doorY + Math.round(doorH / 2), 2, 2); // 손잡이
+      ctx.fillRect(doorX + doorW - 3, doorY + Math.round(doorH / 2), 2, 2);
 
-      // 4. 스텝형 목조 박공 지붕 (Stepped Wooden Plank Gabled Roof)
-      const roofPeakY = wallY - 14;
-      ctx.fillStyle = '#4a260f'; // 지붕 외곽선
-      ctx.beginPath();
-      ctx.moveTo(px - halfW - 4, wallY + 2);
-      ctx.lineTo(px, roofPeakY - 2);
-      ctx.lineTo(px + halfW + 4, wallY + 2);
-      ctx.closePath();
-      ctx.fill();
+      // 4. 계단식 목재 너와 박공 지붕 (Stepped Wooden Shake Shingle Roof - No Vector Arc/Triangle)
+      const roofPeakY = wallY - 16;
+      const shakeRowH = 3;
+      const totalShakeRows = Math.floor((wallY + 2 - roofPeakY) / shakeRowH);
 
-      // 지붕 널판지 채우기
-      ctx.fillStyle = '#874b20';
-      ctx.beginPath();
-      ctx.moveTo(px - halfW - 2, wallY);
-      ctx.lineTo(px, roofPeakY);
-      ctx.lineTo(px + halfW + 2, wallY);
-      ctx.closePath();
-      ctx.fill();
+      for (let r = 0; r <= totalShakeRows; r++) {
+        const curY = (wallY + 2) - r * shakeRowH;
+        const progress = Math.max(0, 1 - (r / totalShakeRows));
+        const rSpan = Math.round(progress * (halfW + 4));
 
-      // 지붕 결 라인 & 하이라이트
-      ctx.fillStyle = '#5c3012';
-      ctx.fillRect(px - halfW, wallY - 4, bw, 1);
-      ctx.fillRect(px - halfW + 4, wallY - 8, bw - 8, 1);
-      ctx.fillStyle = '#a8612f';
-      ctx.fillRect(px - halfW + 2, wallY - 3, bw - 4, 1);
-      ctx.fillRect(px - halfW + 6, wallY - 7, bw - 12, 1);
+        if (rSpan > 0) {
+          // 너와 밑 그림자
+          ctx.fillStyle = '#4a260f';
+          ctx.fillRect(px - rSpan, curY, rSpan * 2, shakeRowH);
+          // 너와 본체
+          ctx.fillStyle = '#874b20';
+          ctx.fillRect(px - rSpan + 1, curY, (rSpan - 1) * 2, shakeRowH - 1);
+          // 너와 상단 하이라이트 결
+          ctx.fillStyle = '#d59560';
+          ctx.fillRect(px - rSpan + 1, curY, (rSpan - 1) * 2, 1);
+
+          // 엇갈린 세로 너와 틈새 (Jagged Shake Slits)
+          ctx.fillStyle = '#4a260f';
+          const slitOffset = (r % 2) * 4;
+          for (let sx = px - rSpan + 3 + slitOffset; sx < px + rSpan - 2; sx += 6) {
+            ctx.fillRect(sx, curY, 1, shakeRowH);
+          }
+        }
+      }
+
+      // 처마 밑 짙은 드리움 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+      ctx.fillRect(px - halfW - 2, wallY + 2, bw + 4, 3);
+
+      // 용마루 마감목 (Ridge Beam Cap)
+      ctx.fillStyle = '#d59560';
+      ctx.fillRect(px - 3, roofPeakY - 1, 6, 2);
+      ctx.fillStyle = '#4a260f';
+      ctx.fillRect(px - 4, roofPeakY + 1, 8, 1);
+
+      // 5. 돌 굴뚝 및 픽셀 연기 (Fieldstone Chimney & Pixel Smoke)
+      const chimX = px - halfW + 4;
+      const chimY = roofPeakY + 5;
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(chimX - 1, chimY - 7, 5, 8);
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(chimX, chimY - 6, 3, 6);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(chimX - 1, chimY - 8, 5, 2);
+
+      // 픽셀 연기 애니메이션
+      for (let p = 0; p < 3; p++) {
+        const prog = (timeSec * 1.5 + p * 0.33) % 1.0;
+        const driftX = Math.round(chimX + 1 + Math.sin(timeSec * 3 + p) * (prog * 6));
+        const driftY = Math.round(chimY - 9 - prog * 16);
+        const sz = 2 + Math.floor(prog * 2);
+        const alpha = Math.max(0.1, 0.40 * (1 - prog));
+        ctx.fillStyle = `rgba(226, 232, 240, ${alpha.toFixed(2)})`;
+        ctx.fillRect(driftX - sz, driftY - 1, sz * 2, sz);
+        ctx.fillRect(driftX - 1, driftY - sz, sz, sz * 2);
+      }
     },
 
     // =========================================================================
-    // 10. 자치 시청 & 시계탑 (Town Hall & Clock Tower)
+    // 10. 자치 시청 & 시계탑 (Town Hall & Clock Tower - Stepped Pixel Clock & Spire)
     // =========================================================================
     drawTownHall(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
       const halfW = Math.round(bw / 2);
@@ -972,54 +1323,87 @@
       ctx.fillStyle = B_PALETTE.stone_mid;
       ctx.fillRect(px - halfW + 2, py - halfH + 10, bw - 4, bh - 11);
 
-      // 벽돌 줄눈 디테일
+      // 벽돌 줄눈 & 마름돌 블록 (Ashlar Mortar Joints & Highlights)
       ctx.fillStyle = B_PALETTE.stone_deep;
       for (let ly = py - halfH + 14; ly < py + halfH - 6; ly += 6) {
         ctx.fillRect(px - halfW + 2, ly, bw - 4, 1);
+        for (let lx = px - halfW + 6 + (ly % 12 ? 6 : 0); lx < px + halfW - 4; lx += 12) {
+          ctx.fillRect(lx, ly - 5, 1, 5);
+          ctx.fillStyle = B_PALETTE.stone_light;
+          ctx.fillRect(lx + 1, ly - 5, 5, 1);
+          ctx.fillStyle = B_PALETTE.stone_deep;
+        }
       }
 
-      // 중앙 뾰족 시계탑 (Central Clocktower & Bell Gable)
-      const towerW = 12;
-      const towerH = 22;
+      // 중앙 뾰족 시계탑 (Central Clocktower)
+      const towerW = 14;
+      const towerH = 24;
       const towerX = px - Math.round(towerW / 2);
       const towerY = py - halfH - towerH + 8;
 
       ctx.fillStyle = B_PALETTE.stone_dark;
       ctx.fillRect(towerX - 1, towerY, towerW + 2, towerH);
-      ctx.fillStyle = B_PALETTE.stone_light;
+      ctx.fillStyle = B_PALETTE.stone_mid;
       ctx.fillRect(towerX, towerY + 1, towerW, towerH - 1);
+      ctx.fillStyle = B_PALETTE.stone_light;
+      ctx.fillRect(towerX + 1, towerY + 1, 2, towerH - 1);
 
-      // 원형 황금 시계 (Golden Clock Face)
-      ctx.fillStyle = B_PALETTE.stone_deep;
-      ctx.beginPath();
-      ctx.arc(px, towerY + 8, 5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = isNight ? B_PALETTE.gold_trim : '#fef08a';
-      ctx.beginPath();
-      ctx.arc(px, towerY + 8, 4, 0, Math.PI * 2);
-      ctx.fill();
-      // 시계 바늘
-      ctx.fillStyle = B_PALETTE.stone_deep;
-      ctx.fillRect(px, towerY + 5, 1, 4);
-      ctx.fillRect(px - 1, towerY + 8, 3, 1);
-
-      // 시계탑 원뿔 슬레이트 지붕 (Conical Turret Roof)
-      ctx.fillStyle = B_PALETTE.roof_slate_main;
-      ctx.beginPath();
-      ctx.moveTo(towerX - 3, towerY);
-      ctx.lineTo(px, towerY - 14);
-      ctx.lineTo(towerX + towerW + 3, towerY);
-      ctx.closePath();
-      ctx.fill();
-      // 황금 피니얼
+      // 순수 픽셀아트 계단식 황금 시계 (Stepped Golden Clock Face - No Vector Arc)
+      const clockY = towerY + 8;
+      // 1. 외곽 금빛 테두리 링 (Stepped Octagonal Rim)
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(px - 5, clockY - 3, 10, 6);
+      ctx.fillRect(px - 3, clockY - 5, 6, 10);
       ctx.fillStyle = B_PALETTE.gold_trim;
-      ctx.fillRect(px - 1, towerY - 18, 2, 5);
+      ctx.fillRect(px - 4, clockY - 3, 8, 6);
+      ctx.fillRect(px - 3, clockY - 4, 6, 8);
+
+      // 2. 내부 문자판 (Clock Face Dial)
+      ctx.fillStyle = isNight ? '#fef08a' : '#fef9c3';
+      ctx.fillRect(px - 3, clockY - 2, 6, 4);
+      ctx.fillRect(px - 2, clockY - 3, 4, 6);
+
+      // 3. 시계 바늘 (Moving Clock Hands)
+      ctx.fillStyle = '#1c1917';
+      const cSec = timeSec * 0.2;
+      const handX = Math.round(Math.sin(cSec) * 2);
+      const handY = Math.round(-Math.cos(cSec) * 2);
+      ctx.fillRect(px, clockY - 2, 1, 3); // 시침
+      ctx.fillRect(px + handX, clockY + handY, 1, 1); // 분침 끝
+      ctx.fillRect(px, clockY, 1, 1); // 중심 축
+
+      // 시계탑 계단식 원뿔 슬레이트 첨탑 지붕 (Stepped Conical Slate Turret Roof - No Vector Arc/Triangle)
+      const sRoofH = 14;
+      const sPeakY = towerY - sRoofH;
+      for (let r = 0; r <= sRoofH; r++) {
+        const curY = towerY - r;
+        const progress = 1 - (r / sRoofH);
+        const rSpan = Math.round(progress * (towerW / 2 + 2));
+
+        if (rSpan > 0) {
+          ctx.fillStyle = B_PALETTE.roof_slate_dark;
+          ctx.fillRect(px - rSpan, curY, rSpan * 2, 1);
+          ctx.fillStyle = B_PALETTE.roof_slate_main;
+          ctx.fillRect(px - rSpan + 1, curY, rSpan * 2 - 2, 1);
+          ctx.fillStyle = B_PALETTE.roof_slate_light;
+          ctx.fillRect(px - rSpan + 1, curY, Math.max(1, Math.round(rSpan * 0.7)), 1);
+        }
+      }
+
+      // 황금 피니얼 & 풍향계 (Golden Finial & Weathervane)
+      ctx.fillStyle = B_PALETTE.gold_trim;
+      ctx.fillRect(px - 1, sPeakY - 4, 2, 5);
+      ctx.fillRect(px - 3, sPeakY - 3, 6, 1);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 1, sPeakY - 4, 1, 1);
 
       // 본당 지붕 박공 처마
       ctx.fillStyle = B_PALETTE.roof_slate_dark;
       ctx.fillRect(px - halfW - 2, py - halfH + 6, bw + 4, 4);
+      ctx.fillStyle = B_PALETTE.roof_slate_light;
+      ctx.fillRect(px - halfW - 1, py - halfH + 6, bw + 2, 1);
 
-      // 본당 아치형 창문들 (Arched Hall Windows)
+      // 본당 아치형 창문들 (Arched Hall Windows with Shutters)
       const winW = 6, winH = 8;
       const drawWin = (wx, wy) => {
         ctx.fillStyle = B_PALETTE.stone_deep;
@@ -1056,7 +1440,7 @@
       ctx.fillStyle = B_PALETTE.stone_bright;
       ctx.fillRect(doorX - 4, py + halfH - 2, doorW + 8, 2);
       ctx.fillRect(doorX - 6, py + halfH, doorW + 12, 2);
-
+      ctx.fillStyle = B_PALETTE.stone_mid;
       // 현관 양옆 벽걸이 등불
       this.drawProp(ctx, doorX - 4, doorY + 4, 'lamp', isNight, timeSec);
       this.drawProp(ctx, doorX + doorW + 4, doorY + 4, 'lamp', isNight, timeSec);

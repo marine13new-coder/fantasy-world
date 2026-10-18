@@ -722,21 +722,107 @@ class WorldRenderer {
           }
         }
 
-        // C. 정착지 중앙 광장 성채 석판 바닥 (Cobblestone Plaza)
-        if (t === TILE.CASTLE_FLOOR) {
-          ctx.fillStyle = '#475569'; // 줄눈
-          ctx.fillRect(px + 15, py, 2, ts);
-          ctx.fillRect(px, py + 15, ts, 2);
+        // C. 정착지 중앙 광장 성채 석판 바닥 (Authentic 16-Bit Handcrafted Cobblestone Plaza)
+        if (t === TILE.CASTLE_FLOOR || t === TILE.COBBLESTONE) {
+          // 어두운 몰타르 홈 (Mortar Joint Grooves)
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(px, py, ts, ts);
 
-          ctx.fillStyle = '#94a3b8'; // 석판 볼륨
-          ctx.fillRect(px + 2, py + 2, 12, 1);
-          ctx.fillRect(px + 2, py + 2, 1, 12);
-          ctx.fillRect(px + 18, py + 2, 12, 1);
-          ctx.fillRect(px + 18, py + 2, 1, 12);
-          ctx.fillRect(px + 2, py + 18, 12, 1);
-          ctx.fillRect(px + 2, py + 18, 1, 12);
-          ctx.fillRect(px + 18, py + 18, 12, 1);
-          ctx.fillRect(px + 18, py + 18, 1, 12);
+          // 4x2 엇갈린 자연석 조약돌 포장 블록 (8 Staggered Rounded Flagstone Pavers)
+          const pavers = [
+            { x: 1, y: 1, w: 14, h: 6, col: '#475569', hi: '#94a3b8' },
+            { x: 17, y: 1, w: 14, h: 6, col: '#334155', hi: '#64748b' },
+            { x: 1, y: 9, w: 8, h: 6, col: '#334155', hi: '#64748b' },
+            { x: 11, y: 9, w: 12, h: 6, col: '#475569', hi: '#94a3b8' },
+            { x: 25, y: 9, w: 6, h: 6, col: '#3b4252', hi: '#64748b' },
+            { x: 1, y: 17, w: 13, h: 6, col: '#475569', hi: '#94a3b8' },
+            { x: 16, y: 17, w: 15, h: 6, col: '#334155', hi: '#64748b' },
+            { x: 1, y: 25, w: 15, h: 6, col: '#334155', hi: '#64748b' },
+            { x: 18, y: 25, w: 13, h: 6, col: '#475569', hi: '#94a3b8' }
+          ];
+
+          for (const p of pavers) {
+            // 본체 석판
+            ctx.fillStyle = p.col;
+            ctx.fillRect(px + p.x, py + p.y, p.w, p.h);
+            // 상단/좌측 하이라이트 베벨 (Sunlit Bevel Edge)
+            ctx.fillStyle = p.hi;
+            ctx.fillRect(px + p.x, py + p.y, p.w, 1);
+            ctx.fillRect(px + p.x, py + p.y, 1, p.h);
+            // 우하단 그림자 베벨 (Shadow Bevel)
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(px + p.x + p.w - 1, py + p.y, 1, p.h);
+            ctx.fillRect(px + p.x, py + p.y + p.h - 1, p.w, 1);
+          }
+
+          // 돌 틈새로 피어난 작은 푸른 잔디/이끼 싹 (Moss Tufts in Mortar Joints)
+          if ((h % 3) === 0) {
+            const mx = px + ((h >> 2) % 22) + 4;
+            const my = py + ((h >> 5) % 22) + 4;
+            ctx.fillStyle = '#15803d';
+            ctx.fillRect(mx, my, 2, 2);
+            ctx.fillStyle = '#4ade80';
+            ctx.fillRect(mx, my, 1, 1);
+          }
+        }
+
+        // C-2. 바람이 빚은 사막/해변 물결 모래 언덕 (Wind-Blown Sand Dune Ripples & Quartz Grains)
+        if (t === TILE.SAND || t === TILE.DESERT) {
+          // 굽이치는 모래 언덕 능선 (Dune Ripple Striations)
+          ctx.fillStyle = '#d97706';
+          ctx.fillRect(px + 2, py + 7, 12, 1);
+          ctx.fillRect(px + 16, py + 8, 14, 1);
+          ctx.fillRect(px + 6, py + 19, 15, 1);
+          ctx.fillRect(px + 23, py + 20, 8, 1);
+          // 능선 하이라이트
+          ctx.fillStyle = (t === TILE.DESERT) ? '#fde68a' : '#fef08a';
+          ctx.fillRect(px + 2, py + 6, 12, 1);
+          ctx.fillRect(px + 16, py + 7, 14, 1);
+          ctx.fillRect(px + 6, py + 18, 15, 1);
+          ctx.fillRect(px + 23, py + 19, 8, 1);
+
+          // 반짝이는 석영 모래 알갱이 (Glistening Quartz Sparkles)
+          if ((h % 5) === 0) {
+            const sx = px + ((h >> 3) % 24) + 4;
+            const sy = py + ((h >> 6) % 24) + 4;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(sx, sy, 1, 1);
+          }
+          // 사막 메마른 자갈 (Desert Pebble)
+          if ((h % 11) === 0) {
+            const rx = px + ((h >> 2) % 20) + 6;
+            const ry = py + ((h >> 4) % 20) + 6;
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(rx, ry + 1, 3, 2);
+            ctx.fillStyle = '#b45309';
+            ctx.fillRect(rx, ry, 3, 1);
+            ctx.fillStyle = '#fde68a';
+            ctx.fillRect(rx + 1, ry, 1, 1);
+          }
+        }
+
+        // C-3. 순백의 설원 설경 & 서리 바람결 (Wind-Blown Snow Crust Ridges & Frost Glints)
+        if (t === TILE.SNOW) {
+          // 설원 바람결 능선 (Blue-Toned Snow Shadows)
+          ctx.fillStyle = '#cbd5e1';
+          ctx.fillRect(px + 3, py + 9, 13, 1);
+          ctx.fillRect(px + 18, py + 10, 11, 1);
+          ctx.fillRect(px + 8, py + 22, 16, 1);
+          // 햇살 눈 능선 (Bright White Crest)
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(px + 3, py + 8, 13, 1);
+          ctx.fillRect(px + 18, py + 9, 11, 1);
+          ctx.fillRect(px + 8, py + 21, 16, 1);
+
+          // 눈보라 얼음 결정 반짝임 (Ice Crystal Glint)
+          if ((h % 4) === 0) {
+            const ix = px + ((h >> 2) % 24) + 4;
+            const iy = py + ((h >> 5) % 24) + 4;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(ix, iy, 1, 1);
+            ctx.fillStyle = '#e0f2fe';
+            ctx.fillRect(ix - 1, iy, 1, 1);
+          }
         }
 
         // D. [CUTE FANTASY 스타일] 울창한 에메랄드 잔디 & 4잎 핑크 야생화 & 버터컵 꽃밭
@@ -1126,448 +1212,800 @@ class WorldRenderer {
       ctx.fillRect(px + ts / 2 - 5, py + ts - 2, 10, 2);
     }
 
-    // 2. 오브젝트별 정밀 픽셀아트 스프라이트
+    // 2. 오브젝트별 정밀 픽셀아트 스프라이트 (Authentic 16/32-Bit Handcrafted Pixel Art)
+    // 픽셀 아트 전용 스테핑 유틸리티: 부드러운 벡터 원/삼각형이 아닌 유기적 픽셀 클러스터 렌더러
+    const drawSteppedPixelLobe = (lx, ly, rx, ry, cDark, cShadow, cMid, cLight, cRim, swayX = 0) => {
+      const fx = Math.round(lx + swayX);
+      const fy = Math.round(ly);
+      // 1. 깊은 외곽선 & 바닥 실루엣 (Dark Contour & Ambient Base)
+      ctx.fillStyle = cDark;
+      for (let dy = -ry; dy <= ry; dy++) {
+        const spanW = Math.round(rx * Math.sqrt(Math.max(0, 1 - (dy * dy) / (ry * ry))));
+        if (spanW > 0) {
+          const jitter = ((Math.abs(dy * 5 + fx * 3)) % 3 === 0) ? 1 : 0;
+          ctx.fillRect(fx - spanW - jitter, fy + dy, (spanW + jitter) * 2, 1);
+        }
+      }
+      // 2. 잎사귀 그림자 체적 (Underside Shadow Mass)
+      ctx.fillStyle = cShadow;
+      for (let dy = -ry + 1; dy <= ry - 1; dy++) {
+        const spanW = Math.round((rx - 1) * Math.sqrt(Math.max(0, 1 - (dy * dy) / (ry * ry))));
+        if (spanW > 1) {
+          ctx.fillRect(fx - spanW, fy + dy, spanW * 2, 1);
+        }
+      }
+      // 3. 햇살을 받는 본체 잎사귀 (Midtone Sunlit Leaves - Shifted Top-Left)
+      ctx.fillStyle = cMid;
+      for (let dy = -ry + 1; dy <= ry - 2; dy++) {
+        const spanW = Math.round((rx - 2) * Math.sqrt(Math.max(0, 1 - ((dy + 1) * (dy + 1)) / (ry * ry))));
+        if (spanW > 1) {
+          ctx.fillRect(fx - spanW - 1, fy + dy, spanW * 2 - 1, 1);
+        }
+      }
+      // 4. 상단 햇살 하이라이트 림 (Top/Left Sun Crest Highlight)
+      ctx.fillStyle = cLight;
+      for (let dy = -ry + 2; dy <= 0; dy++) {
+        const spanW = Math.round((rx - 3) * Math.sqrt(Math.max(0, 1 - ((dy + 2) * (dy + 2)) / (ry * ry))));
+        if (spanW > 1) {
+          ctx.fillRect(fx - spanW - 1, fy + dy, Math.max(2, spanW + 1), 1);
+        }
+      }
+      // 5. 스페큘러 잎사귀 반사광 (Specular Sun-Glint Pixel Tips)
+      if (cRim) {
+        ctx.fillStyle = cRim;
+        ctx.fillRect(fx - Math.round(rx * 0.4), fy - ry + 2, 2, 1);
+        ctx.fillRect(fx - Math.round(rx * 0.2), fy - ry + 1, 2, 1);
+        ctx.fillRect(fx - Math.round(rx * 0.6), fy - Math.round(ry * 0.3), 2, 1);
+      }
+    };
+
     switch (d) {
-          case 1: {
-            // 🌳 [대형 고대 참나무] (Grand Oak - Images 1, 3, 4)
-            const cx = px + ts / 2;
-            const cy = py + ts - 4;
-            const sway = Math.round(Math.sin(timeSec * 2.0 + tx * 0.5) * 1.5);
+      case 1: {
+        // 🌳 [대형 고대 참나무] (Ancient Grand Oak - Authentic 5-Lobe Billowing Pixel Canopy & Gnarled Roots)
+        const cx = px + ts / 2;
+        const cy = py + ts - 3;
+        const windBase = Math.sin(timeSec * 2.0 + tx * 0.5);
+        const sway = Math.round(windBase * 1.5);
 
-            // 뿌리 & 줄기
-            ctx.fillStyle = '#27190d';
-            ctx.fillRect(cx - 7, cy - 2, 14, 4);
-            ctx.fillStyle = '#451a03';
-            ctx.fillRect(cx - 5, cy - 14, 10, 14);
-            ctx.fillStyle = '#78350f';
-            ctx.fillRect(cx - 3, cy - 12, 3, 10);
-            ctx.fillRect(cx + 2, cy - 10, 2, 8);
-            ctx.fillStyle = '#4d7c0f';
-            ctx.fillRect(cx - 5, cy - 4, 3, 3);
+        // A. 뒤틀린 고목 뿌리 (Gnarled Root Flares & Basal Moss)
+        ctx.fillStyle = '#1c0f06';
+        ctx.fillRect(cx - 9, cy - 1, 18, 3);
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(cx - 10, cy, 5, 2);
+        ctx.fillRect(cx + 6, cy, 5, 2);
+        ctx.fillStyle = '#2f5014'; // 이끼 낀 뿌리
+        ctx.fillRect(cx - 8, cy - 1, 4, 2);
+        ctx.fillRect(cx + 5, cy - 1, 3, 2);
 
-            // 잎사귀 볼륨 (3구 구형 클러스터)
-            const leafY = cy - 22;
-            const drawLeafCluster = (lx, ly, rad) => {
-              ctx.fillStyle = '#14532d';
-              ctx.beginPath();
-              ctx.arc(lx + sway, ly, rad, 0, Math.PI * 2);
-              ctx.fill();
+        // B. 중후한 참나무 줄기 (Furrowed Hardwood Trunk with Grain Lines)
+        ctx.fillStyle = '#291307';
+        ctx.fillRect(cx - 5, cy - 15, 10, 15);
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(cx - 4, cy - 14, 8, 14);
+        ctx.fillStyle = '#78350f'; // 양지 목재 결
+        ctx.fillRect(cx - 3, cy - 13, 2, 12);
+        ctx.fillRect(cx + 1, cy - 11, 2, 9);
+        ctx.fillStyle = '#a16207'; // 하이라이트
+        ctx.fillRect(cx - 2, cy - 12, 1, 8);
 
-              ctx.fillStyle = '#16a34a';
-              ctx.beginPath();
-              ctx.arc(lx + sway, ly - 2, rad - 2, 0, Math.PI * 2);
-              ctx.fill();
+        // C. 위로 뻗어나가는 거대한 가지들 (Branch Boughs Peeking into Canopy)
+        ctx.fillStyle = '#291307';
+        // 좌측 큰 가지
+        ctx.fillRect(cx - 9, cy - 18, 5, 4);
+        ctx.fillRect(cx - 6, cy - 16, 3, 3);
+        // 우측 큰 가지
+        ctx.fillRect(cx + 5, cy - 17, 5, 4);
+        ctx.fillRect(cx + 3, cy - 15, 3, 3);
 
-              ctx.fillStyle = '#22c55e';
-              ctx.beginPath();
-              ctx.arc(lx + sway - 1, ly - 4, rad - 4, 0, Math.PI * 2);
-              ctx.fill();
+        // D. 5구 유기적 계단식 잎사귀 클러스터 (5-Lobe Stepped Pixel Foliage)
+        const leafY = cy - 21;
+        // 1. 하단 좌측 엽상 (Bottom-Left Lobe)
+        drawSteppedPixelLobe(cx - 10, leafY + 4, 9, 7, '#052e16', '#14532d', '#16a34a', '#4ade80', '#86efac', Math.round(sway * 0.6));
+        // 2. 하단 우측 엽상 (Bottom-Right Lobe)
+        drawSteppedPixelLobe(cx + 10, leafY + 3, 9, 7, '#052e16', '#14532d', '#16a34a', '#4ade80', '#86efac', Math.round(sway * 0.7));
+        // 3. 중앙 주 수관 (Center Main Canopy)
+        drawSteppedPixelLobe(cx, leafY - 4, 13, 10, '#052e16', '#14532d', '#16a34a', '#4ade80', '#86efac', Math.round(sway * 0.85));
+        // 4. 상단 좌측 관모 (Top-Left Crown)
+        drawSteppedPixelLobe(cx - 6, leafY - 11, 8, 7, '#052e16', '#14532d', '#22c55e', '#86efac', '#bbf7d0', sway);
+        // 5. 상단 우측 관모 (Top-Right Crown)
+        drawSteppedPixelLobe(cx + 5, leafY - 10, 8, 6, '#052e16', '#14532d', '#22c55e', '#86efac', '#bbf7d0', sway);
 
-              ctx.fillStyle = '#86efac';
-              ctx.beginPath();
-              ctx.arc(lx + sway - 2, ly - 6, Math.max(2, rad - 6), 0, Math.PI * 2);
-              ctx.fill();
-            };
+        // E. 잎새 사이로 비치는 깊은 음영 나뭇가지 틈새 (Canopy Shadow Holes & Depth)
+        ctx.fillStyle = '#052e16';
+        ctx.fillRect(cx - 2, leafY + 3, 4, 4);
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(cx - 1, leafY + 4, 2, 3);
 
-            drawLeafCluster(cx - 9, leafY + 3, 11);
-            drawLeafCluster(cx + 9, leafY + 3, 11);
-            drawLeafCluster(cx, leafY - 6, 13);
+        // F. 바람에 흩날리는 참나무 잎사귀 파티클 (Drifting Autumnal Green Leaf)
+        const driftProg = (timeSec * 0.8 + tx * 0.4) % 1.0;
+        const dLeafX = Math.round(cx + 8 + Math.sin(timeSec * 3 + tx) * 6 + driftProg * 8);
+        const dLeafY = Math.round(leafY - 2 + driftProg * 18);
+        ctx.fillStyle = '#4ade80';
+        ctx.fillRect(dLeafX, dLeafY, 2, 1);
+        break;
+      }
 
-            ctx.fillStyle = '#451a03';
-            ctx.fillRect(cx - 2, leafY + 4, 4, 6);
-            break;
+      case 2: {
+        // 🌲 [고산 침엽수 / 전나무] (Alpine Conifer - 4-Tier Sawtooth Jagged Needle Skirts & Pine Cones)
+        const cx = px + ts / 2;
+        const cy = py + ts - 3;
+        const windBase = Math.sin(timeSec * 2.2 + tx * 0.7);
+        const sway = Math.round(windBase * 1.5);
+
+        // A. 침엽수 짙은 나무 기둥 및 밑동
+        ctx.fillStyle = '#1c0f06';
+        ctx.fillRect(cx - 3, cy - 8, 6, 8);
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(cx - 2, cy - 7, 4, 7);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(cx - 1, cy - 6, 1, 6);
+
+        // B. 계단식 톱니 침엽수 스커트 렌더러 (Tiered Sawtooth Pine Skirt)
+        const drawSawtoothSkirt = (skirtY, halfW, skirtH, skirtSway, tierIdx) => {
+          const sx = cx + skirtSway;
+          // 1. 깊은 바저부 그림자 림
+          ctx.fillStyle = '#022c22';
+          for (let r = 0; r < skirtH; r++) {
+            const rowW = Math.round(2 + (r / skirtH) * halfW);
+            ctx.fillRect(sx - rowW - 1, skirtY - skirtH + r, (rowW + 1) * 2, 1);
+          }
+          // 톱니바퀴형 지그재그 하단 솔잎 끝단 (Downward Jagged Needle Teeth)
+          for (let n = -halfW; n <= halfW; n += 3) {
+            ctx.fillRect(sx + n, skirtY, 2, 2);
           }
 
-          case 2: {
-            // 🌲 [고산 침엽수] (Pine / Conifer - Images 2, 5)
-            const cx = px + ts / 2;
-            const cy = py + ts - 3;
-            const sway = Math.round(Math.sin(timeSec * 2.2 + tx * 0.7) * 1.5);
-            ctx.fillStyle = '#27190d';
-            ctx.fillRect(cx - 3, cy - 8, 6, 8);
-
-            const drawPineSkirt = (sy, w, h, skirtSway = 0) => {
-              const topX = cx + skirtSway;
-              ctx.fillStyle = '#064e3b';
-              ctx.beginPath();
-              ctx.moveTo(topX, sy - h);
-              ctx.lineTo(cx - w, sy);
-              ctx.lineTo(cx + w, sy);
-              ctx.closePath();
-              ctx.fill();
-
-              ctx.fillStyle = '#059669';
-              ctx.beginPath();
-              ctx.moveTo(topX, sy - h);
-              ctx.lineTo(cx - w + 3, sy - 1);
-              ctx.lineTo(cx + w - 3, sy - 1);
-              ctx.closePath();
-              ctx.fill();
-
-              ctx.fillStyle = '#34d399';
-              ctx.fillRect(topX - 1, sy - h, 2, 2);
-              ctx.fillRect(cx - w + 2, sy - 2, 2, 2);
-              ctx.fillRect(cx + w - 4, sy - 2, 2, 2);
-            };
-
-            drawPineSkirt(cy - 6, 14, 10, 0);
-            drawPineSkirt(cy - 13, 11, 9, Math.round(sway * 0.6));
-            drawPineSkirt(cy - 20, 8, 8, sway);
-            break;
+          // 2. 짙은 에메랄드 본체 (Pine Green Body)
+          ctx.fillStyle = '#064e3b';
+          for (let r = 1; r < skirtH; r++) {
+            const rowW = Math.round(1 + (r / skirtH) * (halfW - 1));
+            ctx.fillRect(sx - rowW, skirtY - skirtH + r, rowW * 2, 1);
           }
 
-          case 3: {
-            // 🌸 [야생화 무리] (Wildflower Patches - Wind Sway & Proximity Bending)
-            let bendX = 0;
-            if (this.entityMgr && this.entityMgr.player) {
-              const p = this.entityMgr.player;
-              const pDist = Math.hypot((tx + 0.5) - p.x, (ty + 0.5) - p.y);
-              if (pDist < 1.25) {
-                bendX = Math.round((p.vx !== 0 ? Math.sign(p.vx) : ((tx + 0.5) - p.x)) * 2.5);
-              }
+          // 3. 햇빛을 머금은 싱싱한 솔잎 층 (Sunlit Emerald Midtone)
+          ctx.fillStyle = '#059669';
+          for (let r = 1; r < skirtH - 2; r++) {
+            const rowW = Math.round((r / skirtH) * (halfW - 3));
+            if (rowW > 0) {
+              ctx.fillRect(sx - rowW - 1, skirtY - skirtH + r, rowW * 2 - 1, 1);
             }
-
-            const flowers = [
-              { ox: 6, oy: 8, col: '#facc15', cCol: '#ffffff' },
-              { ox: 14, oy: 5, col: '#ffffff', cCol: '#facc15' },
-              { ox: 22, oy: 9, col: '#f472b6', cCol: '#fef08a' },
-              { ox: 9, oy: 18, col: '#f43f5e', cCol: '#ffffff' },
-              { ox: 18, oy: 19, col: '#facc15', cCol: '#ffffff' },
-              { ox: 25, oy: 16, col: '#ffffff', cCol: '#facc15' }
-            ];
-            for (const f of flowers) {
-              const windSway = Math.sin(timeSec * 3.2 + tx * 0.7 + f.ox * 0.3);
-              const fSway = Math.round(windSway * 1.2) + bendX;
-              ctx.fillStyle = '#16a34a';
-              ctx.fillRect(px + f.ox, py + f.oy + 2, 1, 3);
-              ctx.fillStyle = f.col;
-              ctx.fillRect(px + f.ox - 1 + fSway, py + f.oy - 1, 3, 3);
-              ctx.fillStyle = f.cCol;
-              ctx.fillRect(px + f.ox + fSway, py + f.oy, 1, 1);
-            }
-            break;
           }
 
-          case 4: {
-            // 🪨 [자연 화강암 바위] (Granite Boulder - Images 1, 3, 4)
-            const bx = px + 4;
-            const by = py + 7;
-            ctx.fillStyle = '#1e293b';
-            ctx.fillRect(bx, by + 2, 24, 16);
-            ctx.fillRect(bx + 2, by, 20, 20);
-
-            ctx.fillStyle = '#334155';
-            ctx.fillRect(bx + 2, by + 4, 20, 14);
-
-            ctx.fillStyle = '#64748b';
-            ctx.fillRect(bx + 4, by + 2, 14, 12);
-
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillRect(bx + 6, by + 2, 10, 6);
-
-            ctx.fillStyle = '#f1f5f9';
-            ctx.fillRect(bx + 7, by + 2, 5, 2);
-
-            ctx.fillStyle = '#65a30d';
-            ctx.fillRect(bx + 4, by + 12, 6, 3);
-
-            // 우천 시 바위 상단 젖은 표면 스페큘러 광택
-            if (this.lastWorldTime && (this.lastWorldTime.weather === 'rain' || this.lastWorldTime.weather === 'storm')) {
-              ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-              ctx.fillRect(bx + 6, by + 1, 12, 1.5);
-            }
-            ctx.fillStyle = '#65a30d';
-            ctx.fillRect(bx + 14, by + 13, 5, 2);
-            break;
+          // 4. 솔잎 끝단 서리/햇살 하이라이트 (Frosted Needle Tip Highlights)
+          ctx.fillStyle = '#34d399';
+          for (let n = -halfW + 1; n < halfW; n += 4) {
+            ctx.fillRect(sx + n, skirtY - 1, 2, 1);
           }
+          ctx.fillStyle = '#a7f3d0';
+          ctx.fillRect(sx - 1, skirtY - skirtH + 1, 2, 1); // 상단 능선
 
-          case 5: {
-            // 🌴 [야자수 / 선인장]
-            const cx = px + ts / 2;
-            const cy = py + ts - 2;
-            ctx.fillStyle = '#78350f';
-            ctx.fillRect(cx - 2, cy - 20, 4, 20);
-            ctx.fillStyle = '#a16207';
-            ctx.fillRect(cx - 2, cy - 16, 4, 2);
-            ctx.fillRect(cx - 2, cy - 8, 4, 2);
-
-            ctx.fillStyle = '#15803d';
-            ctx.fillRect(cx - 14, cy - 22, 12, 4);
-            ctx.fillRect(cx + 2, cy - 22, 12, 4);
-            ctx.fillRect(cx - 10, cy - 26, 20, 4);
-            ctx.fillStyle = '#4ade80';
-            ctx.fillRect(cx - 8, cy - 24, 16, 2);
-            break;
-          }
-
-          case 6: {
-            // 🌸 [요정 벚꽃 신목] (Sacred Elven Cherry)
-            const cx = px + ts / 2;
-            const cy = py + ts - 4;
+          // 솔방울 디테일 (Hanging Pine Cones on lower skirts)
+          if (tierIdx === 0) {
             ctx.fillStyle = '#451a03';
-            ctx.fillRect(cx - 4, cy - 14, 8, 14);
-
-            ctx.fillStyle = '#db2777';
-            ctx.beginPath();
-            ctx.arc(cx, cy - 20, 13, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#f472b6';
-            ctx.beginPath();
-            ctx.arc(cx - 1, cy - 22, 10, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#fbcfe8';
-            ctx.beginPath();
-            ctx.arc(cx - 2, cy - 24, 6, 0, Math.PI * 2);
-            ctx.fill();
-
-            const petalX = cx + Math.sin(timeSec * 3 + tx) * 8;
-            const petalY = cy - 10 + (timeSec * 15 + ty * 3) % 18;
-            ctx.fillStyle = '#fbcfe8';
-            ctx.fillRect(petalX, petalY, 2, 2);
-            break;
-          }
-
-          case 7: {
-            // 🍁 [단풍나무] (Autumn Maple)
-            const cx = px + ts / 2;
-            const cy = py + ts - 4;
-            ctx.fillStyle = '#451a03';
-            ctx.fillRect(cx - 4, cy - 14, 8, 14);
-
-            ctx.fillStyle = '#991b1b';
-            ctx.beginPath();
-            ctx.arc(cx, cy - 20, 13, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#ea580c';
-            ctx.beginPath();
-            ctx.arc(cx - 1, cy - 22, 10, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#facc15';
-            ctx.beginPath();
-            ctx.arc(cx - 2, cy - 24, 6, 0, Math.PI * 2);
-            ctx.fill();
-            break;
-          }
-
-          case 8: {
-            // 💎 [비전 마력 수정 첨탑] (Arcane Crystal Spire)
-            const cx = px + ts / 2;
-            const cy = py + ts - 3;
-            ctx.fillStyle = '#3b0764';
-            ctx.fillRect(cx - 5, cy - 18, 10, 18);
-            ctx.fillStyle = '#7e22ce';
-            ctx.fillRect(cx - 3, cy - 16, 6, 16);
-            ctx.fillStyle = '#c084fc';
-            ctx.fillRect(cx - 1, cy - 14, 3, 14);
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(cx, cy - 12, 1, 8);
-            break;
-          }
-
-          case 9: {
-            // 🪵 [이끼 낀 나이테 그루터기] (Tree Stump - Images 1, 3, 5)
-            const cx = px + ts / 2;
-            const cy = py + ts / 2 + 2;
-
-            ctx.fillStyle = '#27190d';
-            ctx.fillRect(cx - 9, cy + 4, 18, 5);
-            ctx.fillStyle = '#451a03';
-            ctx.fillRect(cx - 7, cy - 2, 14, 8);
-
+            ctx.fillRect(sx - halfW + 4, skirtY, 2, 3);
+            ctx.fillRect(sx + halfW - 6, skirtY, 2, 3);
             ctx.fillStyle = '#78350f';
-            ctx.beginPath();
-            ctx.ellipse(cx, cy - 2, 7, 4, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = '#b45309';
-            ctx.beginPath();
-            ctx.ellipse(cx, cy - 2, 5, 3, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = '#fef3c7';
-            ctx.beginPath();
-            ctx.ellipse(cx, cy - 2, 2, 1.5, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = '#27190d';
-            ctx.fillRect(cx, cy - 3, 3, 1);
-            ctx.fillStyle = '#65a30d';
-            ctx.fillRect(cx - 6, cy + 2, 3, 3);
-            ctx.fillRect(cx + 4, cy + 3, 2, 2);
-            break;
-          }
-
-          case 10: {
-            // 🪵 [쓰러진 고목 / 통나무] (Fallen Timber Log - Images 3, 5)
-            const lx = px + 4;
-            const ly = py + 12;
-
-            ctx.fillStyle = '#27190d';
-            ctx.fillRect(lx, ly, 24, 9);
+            ctx.fillRect(sx - halfW + 4, skirtY + 1, 1, 2);
+            ctx.fillRect(sx + halfW - 6, skirtY + 1, 1, 2);
+          } else if (tierIdx === 1) {
             ctx.fillStyle = '#451a03';
-            ctx.fillRect(lx + 1, ly + 1, 22, 7);
+            ctx.fillRect(sx + 3, skirtY, 2, 3);
             ctx.fillStyle = '#78350f';
-            ctx.fillRect(lx + 3, ly + 2, 18, 3);
-
-            ctx.fillStyle = '#b45309';
-            ctx.beginPath();
-            ctx.ellipse(lx + 2, ly + 4, 2.5, 3.5, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#1e1b4b';
-            ctx.fillRect(lx + 1, ly + 3, 2, 2);
-
-            ctx.fillStyle = '#65a30d';
-            ctx.fillRect(lx + 8, ly - 1, 5, 2);
-            ctx.fillStyle = '#ea580c';
-            ctx.fillRect(lx + 15, ly - 2, 4, 2);
-            break;
+            ctx.fillRect(sx + 3, skirtY + 1, 1, 2);
           }
+        };
 
-          case 11: {
-            // 🪜 [목조 울타리] (Wooden Fence - Images 1, 2)
-            const cx = px + ts / 2;
-            const cy = py + ts / 2;
+        // 4단 중첩 침엽수 스커트 (아래 -> 위)
+        drawSawtoothSkirt(cy - 6, 14, 9, 0, 0);
+        drawSawtoothSkirt(cy - 13, 11, 8, Math.round(sway * 0.4), 1);
+        drawSawtoothSkirt(cy - 19, 8, 7, Math.round(sway * 0.7), 2);
+        drawSawtoothSkirt(cy - 25, 5, 7, sway, 3);
 
-            ctx.fillStyle = '#451a03';
-            ctx.fillRect(px, cy - 3, ts, 3);
-            ctx.fillRect(px, cy + 3, ts, 3);
-            ctx.fillStyle = '#78350f';
-            ctx.fillRect(px, cy - 2, ts, 1);
-            ctx.fillRect(px, cy + 4, ts, 1);
+        // 최상단 뾰족 침엽 끝단 핀 (Crown Needle Pinnacle)
+        ctx.fillStyle = '#34d399';
+        ctx.fillRect(cx + sway, cy - 27, 1, 2);
+        break;
+      }
 
-            ctx.fillStyle = '#27190d';
-            ctx.fillRect(cx - 4, cy - 8, 8, 16);
-            ctx.fillStyle = '#78350f';
-            ctx.fillRect(cx - 3, cy - 7, 6, 14);
-            ctx.fillStyle = '#b45309';
-            ctx.fillRect(cx - 2, cy - 6, 2, 12);
-            break;
-          }
-
-          case 12: {
-            // 🔥 [자연 모닥불 & 화로] (Campfire with embers - Images 1, 2)
-            const cx = px + ts / 2;
-            const cy = py + ts / 2 + 2;
-
-            const stones = [
-              { ox: -8, oy: 0 }, { ox: -6, oy: -5 }, { ox: 0, oy: -7 },
-              { ox: 6, oy: -5 }, { ox: 8, oy: 0 }, { ox: 6, oy: 5 },
-              { ox: 0, oy: 7 }, { ox: -6, oy: 5 }
-            ];
-            for (const s of stones) {
-              ctx.fillStyle = '#334155';
-              ctx.fillRect(cx + s.ox - 2, cy + s.oy - 2, 4, 4);
-              ctx.fillStyle = '#94a3b8';
-              ctx.fillRect(cx + s.ox - 1, cy + s.oy - 1, 2, 2);
-            }
-
-            ctx.fillStyle = '#1c1917';
-            ctx.fillRect(cx - 4, cy - 3, 8, 6);
-            ctx.fillStyle = '#ea580c';
-            ctx.fillRect(cx - 3, cy - 2, 6, 4);
-
-            const flicker = Math.sin(timeSec * 8 + tx) * 2;
-            ctx.fillStyle = '#ef4444';
-            ctx.beginPath();
-            ctx.moveTo(cx - 4, cy + 1);
-            ctx.lineTo(cx, cy - 8 + flicker);
-            ctx.lineTo(cx + 4, cy + 1);
-            ctx.closePath();
-            ctx.fill();
-
-            ctx.fillStyle = '#fde047';
-            ctx.beginPath();
-            ctx.moveTo(cx - 2, cy);
-            ctx.lineTo(cx, cy - 5 + flicker);
-            ctx.lineTo(cx + 2, cy);
-            ctx.closePath();
-            ctx.fill();
-
-            const sparkY = cy - 9 - ((timeSec * 20 + tx) % 12);
-            ctx.fillStyle = '#fef08a';
-            ctx.fillRect(cx + flicker, sparkY, 1.5, 1.5);
-            break;
-          }
-
-          case 13: {
-            // 🏛️ [고대 룬 유적 기둥] (Ancient Rune Pillars - Images 1, 2)
-            const cx = px + ts / 2;
-            const cy = py + ts - 4;
-
-            ctx.fillStyle = '#1e293b';
-            ctx.fillRect(cx - 8, cy - 2, 16, 5);
-            ctx.fillStyle = '#475569';
-            ctx.fillRect(cx - 7, cy - 1, 14, 3);
-
-            ctx.fillStyle = '#334155';
-            ctx.fillRect(cx - 5, cy - 22, 10, 20);
-            ctx.fillStyle = '#64748b';
-            ctx.fillRect(cx - 4, cy - 21, 8, 19);
-
-            const pulse = 0.5 + Math.sin(timeSec * 3 + tx) * 0.4;
-            ctx.fillStyle = `rgba(56, 189, 248, ${pulse})`;
-            ctx.fillRect(cx - 2, cy - 18, 4, 2);
-            ctx.fillRect(cx - 1, cy - 14, 2, 4);
-            ctx.fillRect(cx - 2, cy - 8, 4, 2);
-
-            ctx.fillStyle = '#1e293b';
-            ctx.fillRect(cx - 5, cy - 22, 3, 2);
-            break;
-          }
-
-          case 14: {
-            // 🪷 [수련 & 연꽃] (Water Lilies - Images 3, 5)
-            const cx = px + ts / 2;
-            const cy = py + ts / 2;
-            const bob = Math.sin(timeSec * 2.5 + tx) * 1.5;
-
-            ctx.fillStyle = '#15803d';
-            ctx.beginPath();
-            ctx.arc(cx, cy + bob, 7, 0.3, Math.PI * 1.8);
-            ctx.lineTo(cx, cy + bob);
-            ctx.closePath();
-            ctx.fill();
-
-            ctx.fillStyle = '#22c55e';
-            ctx.beginPath();
-            ctx.arc(cx - 1, cy - 1 + bob, 5, 0.3, Math.PI * 1.8);
-            ctx.lineTo(cx - 1, cy - 1 + bob);
-            ctx.closePath();
-            ctx.fill();
-
-            ctx.fillStyle = '#f472b6';
-            ctx.fillRect(cx - 2, cy - 4 + bob, 4, 4);
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(cx - 1, cy - 3 + bob, 2, 2);
-            ctx.fillStyle = '#facc15';
-            ctx.fillRect(cx, cy - 2 + bob, 1, 1);
-            break;
-          }
-
-          case 15: {
-            // 🍄 [숲속 야생 버섯 군락] (Forest Mushrooms - Images 1, 4)
-            const mush = [
-              { ox: 8, oy: 14, r: 4, col: '#ef4444' },
-              { ox: 16, oy: 10, r: 3, col: '#b45309' },
-              { ox: 22, oy: 16, r: 3, col: '#ef4444' }
-            ];
-            for (const m of mush) {
-              ctx.fillStyle = '#f1f5f9';
-              ctx.fillRect(px + m.ox - 1, py + m.oy, 2, 5);
-              ctx.fillStyle = m.col;
-              ctx.beginPath();
-              ctx.arc(px + m.ox, py + m.oy, m.r, Math.PI, 0);
-              ctx.closePath();
-              ctx.fill();
-              if (m.col === '#ef4444') {
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(px + m.ox - 1, py + m.oy - 2, 1, 1);
-                ctx.fillRect(px + m.ox + 1, py + m.oy - 1, 1, 1);
-              }
-            }
-            break;
+      case 3: {
+        // 🌸 [야생화 & 약초 무리] (Wildflower & Herb Patches - Staggered Petals & Proximity Bending)
+        let bendX = 0;
+        if (this.entityMgr && this.entityMgr.player) {
+          const p = this.entityMgr.player;
+          const pDist = Math.hypot((tx + 0.5) - p.x, (ty + 0.5) - p.y);
+          if (pDist < 1.25) {
+            bendX = Math.round((p.vx !== 0 ? Math.sign(p.vx) : ((tx + 0.5) - p.x)) * 2.5);
           }
         }
+
+        const flowers = [
+          { ox: 5, oy: 7, col: '#facc15', cCol: '#fef08a', stemH: 4, type: 'buttercup' },
+          { ox: 13, oy: 4, col: '#ffffff', cCol: '#fde047', stemH: 5, type: 'daisy' },
+          { ox: 21, oy: 8, col: '#f472b6', cCol: '#be185d', stemH: 4, type: 'rose' },
+          { ox: 8, oy: 18, col: '#f43f5e', cCol: '#ffffff', stemH: 4, type: 'tulip' },
+          { ox: 17, oy: 19, col: '#a855f7', cCol: '#f3e8ff', stemH: 5, type: 'bell' },
+          { ox: 24, oy: 15, col: '#ffffff', cCol: '#facc15', stemH: 4, type: 'daisy' }
+        ];
+
+        for (const f of flowers) {
+          const windSway = Math.sin(timeSec * 3.2 + tx * 0.7 + f.ox * 0.3);
+          const fSway = Math.round(windSway * 1.2) + bendX;
+          const fx = px + f.ox;
+          const fy = py + f.oy;
+
+          // 줄기 (Stem with shadow)
+          ctx.fillStyle = '#14532d';
+          ctx.fillRect(fx + 1, fy + 2, 1, f.stemH);
+          ctx.fillStyle = '#22c55e';
+          ctx.fillRect(fx, fy + 2, 1, f.stemH);
+          // 잎새 (Tiny leaf)
+          ctx.fillStyle = '#4ade80';
+          ctx.fillRect(fx - 1, fy + 4, 1, 1);
+
+          // 십자형 정교한 픽셀 꽃잎 (Cruciform 5-Pixel Blossom)
+          ctx.fillStyle = f.col;
+          ctx.fillRect(fx - 1 + fSway, fy - 1, 3, 3);
+          ctx.fillRect(fx + fSway, fy - 2, 1, 5);
+          ctx.fillRect(fx - 2 + fSway, fy, 5, 1);
+          // 꽃술 화심 (Pistil Core)
+          ctx.fillStyle = f.cCol;
+          ctx.fillRect(fx + fSway, fy, 1, 1);
+        }
+        break;
+      }
+
+      case 4: {
+        // 🪨 [자연 화강암 바위] (Faceted Granite Boulder - Multi-Plane Chiseled Shading & Moss Blanket)
+        const bx = px + 4;
+        const by = py + 6;
+
+        // 1. 발밑 밀착 접지 그림자
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(bx + 1, by + 18, 22, 4);
+
+        // 2. 바위 외곽 암청색 실루엣 (Faceted Base Silhouette)
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(bx + 1, by + 3, 22, 16);
+        ctx.fillRect(bx + 3, by + 1, 18, 19);
+
+        // 3. 우하단 깊은 음영 면 (Shadow Facet)
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(bx + 3, by + 3, 18, 16);
+
+        // 4. 좌측면 중간톤 면 (Midtone Facet)
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(bx + 3, by + 3, 10, 14);
+        ctx.fillRect(bx + 4, by + 2, 14, 8);
+
+        // 5. 상단 햇살 평면 (Sunlit Top Plateau Facet)
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(bx + 5, by + 2, 12, 6);
+        ctx.fillRect(bx + 7, by + 1, 8, 3);
+
+        // 6. 스페큘러 림 하이라이트 (Chiseled Rim Highlights)
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(bx + 6, by + 1, 9, 1);
+        ctx.fillRect(bx + 4, by + 3, 1, 6);
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(bx + 8, by + 2, 4, 1);
+
+        // 7. 암석 수직 파쇄 크랙 (Chiseled Cleavage Fracture Crack)
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(bx + 11, by + 4, 1, 8);
+        ctx.fillRect(bx + 12, by + 7, 2, 1);
+        ctx.fillRect(bx + 13, by + 8, 1, 6);
+
+        // 8. 바위 표면 벨벳 이끼 쿠션 (Velvet Moss Blanket)
+        ctx.fillStyle = '#1e3a1f'; // 이끼 베이스
+        ctx.fillRect(bx + 3, by + 11, 7, 5);
+        ctx.fillRect(bx + 14, by + 12, 6, 4);
+        ctx.fillStyle = '#3f6212';
+        ctx.fillRect(bx + 4, by + 12, 5, 3);
+        ctx.fillRect(bx + 15, by + 13, 4, 2);
+        ctx.fillStyle = '#65a30d';
+        ctx.fillRect(bx + 5, by + 12, 3, 1);
+        ctx.fillRect(bx + 16, by + 13, 2, 1);
+
+        // 우천 시 바위 상단 젖은 표면 스페큘러 광택
+        if (this.lastWorldTime && (this.lastWorldTime.weather === 'rain' || this.lastWorldTime.weather === 'storm')) {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+          ctx.fillRect(bx + 6, by + 1, 10, 1);
+        }
+        break;
+      }
+
+      case 5: {
+        // 🌴 [열대 야자수 / 오아시스 대추야자] (Tropical Palm - Segmented Fiber Trunk & Cascading Fronds)
+        const cx = px + ts / 2;
+        const cy = py + ts - 2;
+        const windBase = Math.sin(timeSec * 2.5 + tx);
+        const sway = Math.round(windBase * 1.8);
+
+        // A. 굽이치는 굴곡 섬유질 줄기 (Segmented Ring Trunk with Curvature)
+        const trunkSegs = [
+          { dx: 0, dy: 0, w: 5, h: 4 },
+          { dx: 1, dy: -4, w: 4, h: 5 },
+          { dx: 2, dy: -9, w: 4, h: 5 },
+          { dx: 2, dy: -14, w: 4, h: 5 },
+          { dx: 1, dy: -19, w: 4, h: 5 },
+          { dx: 0, dy: -24, w: 4, h: 5 }
+        ];
+        for (const seg of trunkSegs) {
+          ctx.fillStyle = '#451a03';
+          ctx.fillRect(cx + seg.dx - Math.round(seg.w / 2), cy + seg.dy, seg.w, seg.h);
+          ctx.fillStyle = '#78350f';
+          ctx.fillRect(cx + seg.dx - Math.round(seg.w / 2) + 1, cy + seg.dy + 1, seg.w - 1, seg.h - 2);
+          ctx.fillStyle = '#b45309';
+          ctx.fillRect(cx + seg.dx - Math.round(seg.w / 2) + 1, cy + seg.dy, seg.w - 2, 1); // 링 돌기
+        }
+
+        const crownX = cx + sway;
+        const crownY = cy - 25;
+
+        // B. 갈색 코코넛 열매 무리 (Coconuts Cluster)
+        ctx.fillStyle = '#27190d';
+        ctx.fillRect(crownX - 3, crownY + 1, 3, 3);
+        ctx.fillRect(crownX + 1, crownY + 2, 3, 3);
+        ctx.fillRect(crownX - 1, crownY + 3, 3, 3);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(crownX - 2, crownY + 1, 1, 1);
+        ctx.fillRect(crownX + 2, crownY + 2, 1, 1);
+
+        // C. 늘어지는 5개 깃털형 야자수 잎 (Drooping Feathery Palm Fronds)
+        const drawPalmFrond = (ox, oy, targetX, targetY, isLeft) => {
+          ctx.fillStyle = '#064e3b';
+          ctx.fillRect(ox, oy, 2, 2);
+          const midX = Math.round((ox + targetX) / 2);
+          const midY = Math.round(Math.min(oy, targetY) - 2);
+          // 아치형 중심 줄기
+          ctx.fillStyle = '#15803d';
+          ctx.fillRect(midX, midY, 2, 2);
+          ctx.fillRect(targetX, targetY, 2, 2);
+
+          // 늘어지는 깃털 소엽들 (Downward cascading leaflets)
+          ctx.fillStyle = '#16a34a';
+          ctx.fillRect(ox + (isLeft ? -2 : 2), oy + 1, 2, 3);
+          ctx.fillRect(midX + (isLeft ? -3 : 3), midY + 1, 3, 4);
+          ctx.fillRect(targetX + (isLeft ? -2 : 2), targetY + 1, 2, 3);
+
+          ctx.fillStyle = '#4ade80'; // 잎 상단 하이라이트
+          ctx.fillRect(midX, midY - 1, 2, 1);
+          ctx.fillRect(ox, oy - 1, 2, 1);
+        };
+
+        drawPalmFrond(crownX - 1, crownY, crownX - 14, crownY + 5, true);
+        drawPalmFrond(crownX + 1, crownY, crownX + 14, crownY + 5, false);
+        drawPalmFrond(crownX - 2, crownY - 1, crownX - 11, crownY - 4, true);
+        drawPalmFrond(crownX + 2, crownY - 1, crownX + 11, crownY - 4, false);
+        drawPalmFrond(crownX, crownY - 2, crownX, crownY - 8, false);
+        break;
+      }
+
+      case 6: {
+        // 🌸 [요정 벚꽃 신목] (Sacred Elven Cherry - Billowing Sakura Petal Clouds & Drifting Petals)
+        const cx = px + ts / 2;
+        const cy = py + ts - 3;
+        const windBase = Math.sin(timeSec * 2.2 + tx * 0.6);
+        const sway = Math.round(windBase * 1.6);
+
+        // A. 뒤틀린 영목 기둥 & 은빛 이끼 (Twisted Sacred Trunk)
+        ctx.fillStyle = '#1e0a12';
+        ctx.fillRect(cx - 5, cy - 14, 10, 14);
+        ctx.fillStyle = '#3b180d';
+        ctx.fillRect(cx - 4, cy - 13, 8, 13);
+        ctx.fillStyle = '#602512';
+        ctx.fillRect(cx - 3, cy - 12, 2, 11);
+        ctx.fillStyle = '#94a3b8'; // 신성한 은빛 지의류 이끼
+        ctx.fillRect(cx + 1, cy - 9, 2, 4);
+
+        // B. 5구 계단식 분홍 벚꽃 구름 클러스터 (5-Lobe Stepped Sakura Clouds)
+        const leafY = cy - 20;
+        const cDark = '#500724';
+        const cShadow = '#831843';
+        const cMid = '#be185d';
+        const cLight = '#f472b6';
+        const cRim = '#fce7f3';
+
+        drawSteppedPixelLobe(cx - 9, leafY + 3, 9, 7, cDark, cShadow, cMid, cLight, cRim, Math.round(sway * 0.6));
+        drawSteppedPixelLobe(cx + 9, leafY + 3, 9, 7, cDark, cShadow, cMid, cLight, cRim, Math.round(sway * 0.7));
+        drawSteppedPixelLobe(cx, leafY - 4, 12, 9, cDark, cShadow, cMid, cLight, cRim, Math.round(sway * 0.85));
+        drawSteppedPixelLobe(cx - 5, leafY - 10, 8, 6, cDark, cShadow, cMid, cLight, cRim, sway);
+        drawSteppedPixelLobe(cx + 5, leafY - 9, 8, 6, cDark, cShadow, cMid, cLight, cRim, sway);
+
+        // C. 바람에 흩날리는 3개 벚꽃잎 애니메이션 (Drifting Sakura Petals)
+        for (let p = 0; p < 3; p++) {
+          const pProg = (timeSec * 0.9 + p * 0.33 + tx * 0.2) % 1.0;
+          const pxDrift = Math.round(cx + 6 + Math.sin(timeSec * 3 + p * 2) * 8 + pProg * 12);
+          const pyDrift = Math.round(leafY - 6 + pProg * 22);
+          ctx.fillStyle = p % 2 === 0 ? '#fbcfe8' : '#ffffff';
+          ctx.fillRect(pxDrift, pyDrift, 2, 1);
+          ctx.fillRect(pxDrift + 1, pyDrift + 1, 1, 1);
+        }
+        break;
+      }
+
+      case 7: {
+        // 🍁 [황금빛 단풍나무] (Autumn Golden Maple - Fiery Amber Foliage & Rustling Leaves)
+        const cx = px + ts / 2;
+        const cy = py + ts - 3;
+        const windBase = Math.sin(timeSec * 2.0 + tx * 0.6);
+        const sway = Math.round(windBase * 1.5);
+
+        // A. 짙은 밤나무색 기둥
+        ctx.fillStyle = '#271004';
+        ctx.fillRect(cx - 5, cy - 14, 10, 14);
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(cx - 4, cy - 13, 8, 13);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(cx - 3, cy - 12, 2, 11);
+
+        // B. 5구 계단식 불꽃 단풍 수관 (5-Lobe Fiery Autumn Foliage)
+        const leafY = cy - 20;
+        const mDark = '#451a03';
+        const mShadow = '#7c2d12';
+        const mMid = '#c2410c';
+        const mLight = '#ea580c';
+        const mRim = '#facc15';
+
+        drawSteppedPixelLobe(cx - 9, leafY + 3, 9, 7, mDark, mShadow, mMid, mLight, mRim, Math.round(sway * 0.6));
+        drawSteppedPixelLobe(cx + 9, leafY + 3, 9, 7, mDark, mShadow, mMid, mLight, mRim, Math.round(sway * 0.7));
+        drawSteppedPixelLobe(cx, leafY - 4, 12, 9, mDark, mShadow, mMid, mLight, mRim, Math.round(sway * 0.85));
+        drawSteppedPixelLobe(cx - 5, leafY - 10, 8, 6, mDark, mShadow, mMid, mLight, mRim, sway);
+        drawSteppedPixelLobe(cx + 5, leafY - 9, 8, 6, mDark, mShadow, mMid, mLight, mRim, sway);
+
+        // C. 떨어지는 붉은 단풍잎 (Drifting Maple Leaf)
+        const mProg = (timeSec * 0.85 + tx * 0.5) % 1.0;
+        const mxDrift = Math.round(cx + 7 + Math.sin(timeSec * 3.5 + tx) * 8 + mProg * 10);
+        const myDrift = Math.round(leafY - 4 + mProg * 20);
+        ctx.fillStyle = '#ea580c';
+        ctx.fillRect(mxDrift, myDrift, 2, 2);
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(mxDrift + 1, myDrift, 1, 1);
+        break;
+      }
+
+      case 8: {
+        // 💎 [비전 마력 수정 첨탑] (Arcane Crystal Spire - Prismatic Facets & Magic Core Glow)
+        const cx = px + ts / 2;
+        const cy = py + ts - 3;
+        const pulse = 0.6 + Math.sin(timeSec * 3.5 + tx) * 0.4;
+
+        // A. 마력 결계 바닥 룬 원환 (Runic Base Stones)
+        ctx.fillStyle = '#2e1065';
+        ctx.fillRect(cx - 7, cy - 2, 14, 4);
+        ctx.fillStyle = '#581c87';
+        ctx.fillRect(cx - 6, cy - 1, 12, 2);
+
+        // B. 다면체 비전 수정 본체 (Faceted Crystal Spire)
+        // 1. 깊은 보랏빛 외곽선
+        ctx.fillStyle = '#2e1065';
+        ctx.fillRect(cx - 5, cy - 19, 10, 18);
+        ctx.fillRect(cx - 4, cy - 22, 8, 3);
+        ctx.fillRect(cx - 2, cy - 25, 4, 3);
+        ctx.fillRect(cx - 1, cy - 27, 2, 2);
+
+        // 2. 어두운 우측 그림자 면
+        ctx.fillStyle = '#581c87';
+        ctx.fillRect(cx - 4, cy - 18, 8, 17);
+        ctx.fillRect(cx - 3, cy - 21, 6, 3);
+        ctx.fillRect(cx - 1, cy - 24, 2, 3);
+
+        // 3. 눈부신 좌측 조광 면 (Bright Left Facet)
+        ctx.fillStyle = '#a855f7';
+        ctx.fillRect(cx - 4, cy - 18, 4, 16);
+        ctx.fillRect(cx - 3, cy - 21, 3, 3);
+        ctx.fillRect(cx - 1, cy - 24, 1, 3);
+
+        // 4. 프리즘 중심 코어 하이라이트
+        ctx.fillStyle = '#c084fc';
+        ctx.fillRect(cx - 2, cy - 16, 2, 13);
+        ctx.fillRect(cx - 1, cy - 19, 1, 3);
+
+        // 5. 다이아몬드 능선 핀 스펙큘러 (Diamond Edge Highlight)
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(cx - 1, cy - 26, 2, 3);
+        ctx.fillRect(cx - 2, cy - 14, 1, 6);
+
+        // C. 공중 부유 마력 스파크 (Floating Magic Sparks)
+        const sparkProg = (timeSec * 1.8 + tx) % 1.0;
+        const spY = Math.round(cy - 12 - sparkProg * 14);
+        const spX = Math.round(cx + Math.sin(timeSec * 4 + sparkProg * 6) * 6);
+        ctx.fillStyle = `rgba(216, 180, 254, ${pulse})`;
+        ctx.fillRect(spX, spY, 2, 2);
+        break;
+      }
+
+      case 9: {
+        // 🪵 [이끼 낀 나이테 그루터기] (Mossy Tree Stump - Concentric Rings & Shelf Fungi)
+        const cx = px + ts / 2;
+        const cy = py + ts / 2 + 2;
+
+        // A. 발밑 그림자 및 뿌리 발
+        ctx.fillStyle = '#1c0f06';
+        ctx.fillRect(cx - 9, cy + 4, 18, 4);
+        ctx.fillStyle = '#3f6212'; // 이끼 뿌리
+        ctx.fillRect(cx - 10, cy + 4, 4, 3);
+        ctx.fillRect(cx + 6, cy + 4, 4, 3);
+
+        // B. 나무 껍질 몸통
+        ctx.fillStyle = '#27190d';
+        ctx.fillRect(cx - 7, cy - 2, 14, 8);
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(cx - 6, cy - 1, 12, 7);
+
+        // C. 계단식 타원 나이테 단면 (Stepped Oval Annual Growth Rings)
+        // 1. 수피 테두리 (Bark Edge)
+        ctx.fillStyle = '#27190d';
+        ctx.fillRect(cx - 7, cy - 4, 14, 1);
+        ctx.fillRect(cx - 8, cy - 3, 16, 3);
+        ctx.fillRect(cx - 7, cy, 14, 1);
+
+        // 2. 변재 나이테 1 (Sapwood Ring 1)
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(cx - 6, cy - 3, 12, 3);
+
+        // 3. 심재 나이테 2 (Heartwood Ring 2)
+        ctx.fillStyle = '#b45309';
+        ctx.fillRect(cx - 4, cy - 3, 8, 3);
+
+        // 4. 중심 수심 (Pith Center Core)
+        ctx.fillStyle = '#fde68a';
+        ctx.fillRect(cx - 2, cy - 2, 4, 1);
+
+        // 5. 건조 수축 방사 크랙 (Heartwood Shrinkage Crack)
+        ctx.fillStyle = '#1c0f06';
+        ctx.fillRect(cx + 1, cy - 3, 1, 3);
+        ctx.fillRect(cx + 2, cy - 1, 2, 1);
+
+        // D. 그루터기 옆면에 자라난 주황색 영지버섯 (Bracket Shelf Fungi)
+        ctx.fillStyle = '#ea580c';
+        ctx.fillRect(cx - 8, cy + 1, 3, 2);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(cx - 8, cy + 1, 3, 1);
+        break;
+      }
+
+      case 10: {
+        // 🪵 [쓰러진 고목 / 통나무] (Fallen Timber Log - Bark Texture & Sprouting Mushrooms)
+        const lx = px + 4;
+        const ly = py + 12;
+
+        // 접지 그림자
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(lx - 1, ly + 8, 26, 3);
+
+        // 수피 외곽 실루엣
+        ctx.fillStyle = '#1c0f06';
+        ctx.fillRect(lx, ly, 24, 9);
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(lx + 1, ly + 1, 22, 7);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(lx + 3, ly + 2, 18, 3);
+
+        // 좌측 절단면 나이테 (End Cut Growth Rings)
+        ctx.fillStyle = '#27190d';
+        ctx.fillRect(lx - 1, ly + 1, 3, 7);
+        ctx.fillStyle = '#b45309';
+        ctx.fillRect(lx, ly + 2, 2, 5);
+        ctx.fillStyle = '#fde68a';
+        ctx.fillRect(lx, ly + 4, 1, 2);
+
+        // 통나무 위 벨벳 이끼 & 작은 버섯
+        ctx.fillStyle = '#3f6212';
+        ctx.fillRect(lx + 6, ly - 1, 6, 2);
+        ctx.fillStyle = '#65a30d';
+        ctx.fillRect(lx + 7, ly - 1, 4, 1);
+
+        // 빨간 버섯 2개
+        ctx.fillStyle = '#f1f5f9';
+        ctx.fillRect(lx + 16, ly - 1, 1, 2);
+        ctx.fillRect(lx + 19, ly - 2, 1, 3);
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(lx + 15, ly - 3, 3, 2);
+        ctx.fillRect(lx + 18, ly - 4, 3, 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(lx + 16, ly - 3, 1, 1);
+        break;
+      }
+
+      case 11: {
+        // 🪜 [목조 울타리] (Handcrafted Wooden Fence - Timber Posts & Crossrails)
+        const cx = px + ts / 2;
+        const cy = py + ts / 2;
+
+        // 가로 들보 (Horizontal Rails)
+        ctx.fillStyle = '#27190d';
+        ctx.fillRect(px, cy - 4, ts, 4);
+        ctx.fillRect(px, cy + 3, ts, 4);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(px, cy - 3, ts, 2);
+        ctx.fillRect(px, cy + 4, ts, 2);
+        ctx.fillStyle = '#b45309';
+        ctx.fillRect(px, cy - 3, ts, 1);
+        ctx.fillRect(px, cy + 4, ts, 1);
+
+        // 수직 기둥 (Vertical Timber Post with Beveled Top)
+        ctx.fillStyle = '#1c0f06';
+        ctx.fillRect(cx - 4, cy - 9, 8, 18);
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(cx - 3, cy - 8, 6, 16);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(cx - 2, cy - 7, 3, 14);
+        ctx.fillStyle = '#b45309';
+        ctx.fillRect(cx - 1, cy - 7, 1, 12);
+
+        // 상단 피라미드형 깎임각 (Pyramidal Post Cap)
+        ctx.fillStyle = '#b45309';
+        ctx.fillRect(cx - 2, cy - 9, 4, 1);
+        ctx.fillRect(cx - 1, cy - 10, 2, 1);
+        break;
+      }
+
+      case 12: {
+        // 🔥 [자연 모닥불 & 화로] (Campfire - Chiseled River Stones, Charred Embers & Dancing Flames)
+        const cx = px + ts / 2;
+        const cy = py + ts / 2 + 2;
+
+        // 8개 조약돌 방화벽 원환 (Chiseled Riverstone Ring)
+        const stones = [
+          { ox: -8, oy: 0 }, { ox: -6, oy: -5 }, { ox: 0, oy: -7 },
+          { ox: 6, oy: -5 }, { ox: 8, oy: 0 }, { ox: 6, oy: 5 },
+          { ox: 0, oy: 7 }, { ox: -6, oy: 5 }
+        ];
+        for (const s of stones) {
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(cx + s.ox - 2, cy + s.oy - 2, 4, 4);
+          ctx.fillStyle = '#475569';
+          ctx.fillRect(cx + s.ox - 1, cy + s.oy - 1, 3, 3);
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillRect(cx + s.ox - 1, cy + s.oy - 1, 2, 1);
+        }
+
+        // 숯불 & 장작 (Charred Firewood & Hot Embers)
+        ctx.fillStyle = '#1c1917';
+        ctx.fillRect(cx - 4, cy - 3, 8, 6);
+        ctx.fillStyle = '#7f1d1d';
+        ctx.fillRect(cx - 3, cy - 2, 6, 4);
+
+        // 역동적인 계단식 불꽃 애니메이션 (Stepped Dancing Flame Tongue)
+        const flicker = Math.round(Math.sin(timeSec * 8 + tx) * 1.5);
+        // 바깥 붉은 화염
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(cx - 3, cy - 2, 6, 3);
+        ctx.fillRect(cx - 2 + flicker, cy - 5, 4, 4);
+        ctx.fillRect(cx - 1 + flicker, cy - 8, 2, 4);
+
+        // 중간 밝은 주황 불꽃
+        ctx.fillStyle = '#f97316';
+        ctx.fillRect(cx - 2, cy - 1, 4, 2);
+        ctx.fillRect(cx - 1 + flicker, cy - 4, 3, 3);
+        ctx.fillRect(cx + flicker, cy - 7, 1, 3);
+
+        // 핵심 황금 백열광 (White-Hot Inner Core)
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(cx - 1, cy - 1, 2, 2);
+        ctx.fillRect(cx + flicker, cy - 3, 1, 2);
+
+        // 피어오르는 불티 스파크 (Rising Embers)
+        const sparkY = Math.round(cy - 9 - ((timeSec * 22 + tx * 3) % 14));
+        const sparkX = Math.round(cx + Math.sin(timeSec * 5 + tx) * 3);
+        ctx.fillStyle = '#fde047';
+        ctx.fillRect(sparkX, sparkY, 1, 1);
+        break;
+      }
+
+      case 13: {
+        // 🏛️ [고대 룬 유적 기둥] (Ancient Rune Column - Fluted Stone & Glowing Glyphs)
+        const cx = px + ts / 2;
+        const cy = py + ts - 4;
+
+        // 주초 (Column Base Pedestal)
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(cx - 9, cy - 2, 18, 5);
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(cx - 8, cy - 1, 16, 3);
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(cx - 7, cy - 1, 14, 1);
+
+        // 주신 (Fluted Pillar Shaft)
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(cx - 6, cy - 22, 12, 20);
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(cx - 5, cy - 21, 10, 19);
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(cx - 4, cy - 21, 4, 19);
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(cx - 3, cy - 21, 2, 19);
+
+        // 파손된 주두 상단 (Broken Capital with Cracks)
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(cx - 6, cy - 23, 12, 2);
+        ctx.fillRect(cx + 2, cy - 23, 4, 2); // 우측 깨진 단면
+
+        // 발광하는 비전 룬 문자 (Glowing Ancient Rune Inscriptions)
+        const pulse = 0.5 + Math.sin(timeSec * 3 + tx) * 0.45;
+        ctx.fillStyle = `rgba(56, 189, 248, ${pulse})`;
+        ctx.fillRect(cx - 2, cy - 18, 4, 2);
+        ctx.fillRect(cx - 1, cy - 14, 2, 4);
+        ctx.fillRect(cx - 2, cy - 8, 4, 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${pulse * 0.8})`;
+        ctx.fillRect(cx - 1, cy - 13, 1, 2);
+        break;
+      }
+
+      case 14: {
+        // 🪷 [수련 & 연꽃] (Water Lilies - Stepped Pad Notch & Lotus Flower)
+        const cx = px + ts / 2;
+        const cy = py + ts / 2;
+        const bob = Math.round(Math.sin(timeSec * 2.5 + tx) * 1.2);
+
+        // 1. 수면 수련 잎사귀 (Stepped Pixel Lily Pad with Wedge Notch)
+        ctx.fillStyle = '#052e16';
+        ctx.fillRect(cx - 7, cy - 4 + bob, 14, 9);
+        ctx.fillRect(cx - 5, cy - 6 + bob, 10, 13);
+        // 잎사귀 본체
+        ctx.fillStyle = '#15803d';
+        ctx.fillRect(cx - 6, cy - 4 + bob, 12, 8);
+        ctx.fillRect(cx - 4, cy - 5 + bob, 8, 10);
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(cx - 4, cy - 3 + bob, 6, 5);
+
+        // 쐐기형 홈 (Radial Cut Notch)
+        ctx.fillStyle = '#061320'; // 수면 색상 투과
+        ctx.fillRect(cx, cy + bob, 6, 2);
+        ctx.fillRect(cx + 2, cy - 1 + bob, 4, 1);
+
+        // 2. 화사한 분홍 연꽃 (Blooming Pink Lotus)
+        const lx = cx - 2;
+        const ly = cy - 4 + bob;
+        ctx.fillStyle = '#be185d';
+        ctx.fillRect(lx - 2, ly - 1, 6, 4);
+        ctx.fillRect(lx - 1, ly - 2, 4, 6);
+        ctx.fillStyle = '#f472b6';
+        ctx.fillRect(lx - 1, ly - 1, 4, 4);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(lx, ly - 1, 2, 2);
+        ctx.fillStyle = '#fde047'; // 황금 꽃술
+        ctx.fillRect(lx, ly, 2, 1);
+        break;
+      }
+
+      case 15: {
+        // 🍄 [숲속 야생 광대버섯 군락] (Forest Toadstools - Spotted Caps & Gills)
+        const mush = [
+          { ox: 7, oy: 13, w: 7, h: 5, col: '#dc2626' },
+          { ox: 15, oy: 9, w: 6, h: 4, col: '#b45309' },
+          { ox: 22, oy: 15, w: 6, h: 4, col: '#dc2626' }
+        ];
+        for (const m of mush) {
+          const mx = px + m.ox;
+          const my = py + m.oy;
+
+          // 버섯 자루 (Stem with annulus ring)
+          ctx.fillStyle = '#cbd5e1';
+          ctx.fillRect(mx + Math.round(m.w / 2) - 1, my + m.h - 1, 2, 6);
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillRect(mx + Math.round(m.w / 2) - 1, my + m.h, 1, 5);
+
+          // 갓 밑 주름 (Gills)
+          ctx.fillStyle = '#64748b';
+          ctx.fillRect(mx, my + m.h - 1, m.w, 1);
+
+          // 갓 돔 (Stepped Mushroom Cap)
+          ctx.fillStyle = m.col;
+          ctx.fillRect(mx, my + 1, m.w, m.h - 1);
+          ctx.fillRect(mx + 1, my, m.w - 2, 2);
+
+          // 광대버섯 흰색 반점 (White Warts)
+          if (m.col === '#dc2626') {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(mx + 1, my + 1, 1, 1);
+            ctx.fillRect(mx + m.w - 3, my + 2, 1, 1);
+            ctx.fillRect(mx + Math.round(m.w / 2), my, 1, 1);
+          }
+        }
+        break;
+      }
+    }
       }
 
   // 픽셀 해안선 파도 거품 애니메이션 & 수면 태양광 펄/윤슬 (Water Caustics & Shoreline Wave Foam)
