@@ -4990,6 +4990,237 @@
     },
 
     // =========================================================================
+    // 36. 솔 인빅투스 황금 돔 대바실리카 수도 (Sol Invictus Golden Basilica)
+    // =========================================================================
+    drawSolInvictusBasilica(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // 바닥 그림자 (Base Drop Shadow)
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.42)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 2, halfW + 6, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // A. 기단 백대리석 플린스 (White Marble Podium)
+      const podiumW = bw;
+      const podiumH = Math.round(bh * 0.45);
+      const podiumY = py + halfH - podiumH;
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(px - halfW, podiumY, podiumW, podiumH);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(px - halfW + 2, podiumY + 2, podiumW - 4, podiumH - 4);
+
+      // 하단 3단 대리석 계단 (Marble Steps)
+      for (let s = 0; s < 3; s++) {
+        ctx.fillStyle = (s % 2 === 0) ? '#cbd5e1' : '#f1f5f9';
+        ctx.fillRect(px - halfW + 4 + s * 2, py + halfH - 6 + s * 2, podiumW - 8 - s * 4, 2);
+      }
+
+      // 전면 6개 백대리석 코린트식 열주 (6 Fluted Columns with Corinthian Capitals)
+      const colSpacing = Math.round((podiumW - 12) / 5);
+      for (let c = 0; c < 6; c++) {
+        const cx = px - halfW + 6 + c * colSpacing;
+        // 주두 황금 장식
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(cx - 2, podiumY + 2, 5, 2);
+        // 원주 기둥
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(cx - 1, podiumY + 4, 3, podiumH - 10);
+        // 음영
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(cx + 1, podiumY + 4, 1, podiumH - 10);
+        // 주초 받침
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(cx - 2, podiumY + podiumH - 7, 5, 2);
+      }
+
+      // B. 삼각 페디먼트 박공벽 & 황금 쌍두독수리 부조 (Triangular Pediment & Double-Headed Eagle Frieze)
+      const pedY = podiumY - 6;
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.moveTo(px - halfW + 4, podiumY + 2);
+      ctx.lineTo(px, pedY);
+      ctx.lineTo(px + halfW - 4, podiumY + 2);
+      ctx.closePath();
+      ctx.fill();
+
+      // 박공 테두리 황금 몰딩
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // 황금 쌍두독수리 제국 문장 (Double-Headed Golden Eagle Emblem)
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(px - 3, pedY + 3, 6, 3); // 날개
+      ctx.fillRect(px - 1, pedY + 2, 2, 4); // 몸통
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(px - 2, pedY + 2, 1, 1); // 좌측 루비 눈
+      ctx.fillRect(px + 1, pedY + 2, 1, 1); // 우측 루비 눈
+
+      // C. 원형 드럼 기단 & 아치형 스테인드글라스 창 (Octagonal Drum with Arched Amber Windows)
+      const drumW = Math.round(bw * 0.54);
+      const drumHW = Math.round(drumW / 2);
+      const drumH = Math.round(bh * 0.28);
+      const drumY = pedY - drumH;
+
+      ctx.fillStyle = '#f1f5f9';
+      ctx.fillRect(px - drumHW, drumY, drumW, drumH);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(px - drumHW + 2, drumY + 2, drumW - 4, drumH - 4);
+
+      // 아치형 스테인드글라스 창 3개 (빛나는 호박색 창)
+      for (let w = 0; w < 3; w++) {
+        const wx = px - 8 + w * 8;
+        ctx.fillStyle = '#fde047';
+        ctx.fillRect(wx - 2, drumY + 3, 4, 6);
+        ctx.fillStyle = '#ca8a04';
+        ctx.fillRect(wx - 2, drumY + 3, 4, 1);
+      }
+
+      // D. 거대한 비잔틴 황금 돔 (Monumental Gilded Byzantine Dome)
+      const domeR = Math.round(drumHW * 0.95);
+      const domeY = drumY;
+
+      // 돔 본체 그라데이션
+      const domeGrad = ctx.createRadialGradient(px - domeR * 0.3, domeY - domeR * 0.3, 2, px, domeY, domeR);
+      domeGrad.addColorStop(0, '#fef08a');
+      domeGrad.addColorStop(0.5, '#facc15');
+      domeGrad.addColorStop(1, '#ca8a04');
+
+      ctx.fillStyle = domeGrad;
+      ctx.beginPath();
+      ctx.arc(px, domeY, domeR, Math.PI, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      // 돔 리브 골드 라인 (Dome Rib Gilded Arcs)
+      ctx.strokeStyle = '#b45309';
+      ctx.lineWidth = 1;
+      for (let a = -2; a <= 2; a++) {
+        const ra = a * (Math.PI / 6);
+        ctx.beginPath();
+        ctx.moveTo(px, domeY - domeR);
+        ctx.quadraticCurveTo(px + Math.sin(ra) * domeR * 0.6, domeY - domeR * 0.5, px + Math.sin(ra) * domeR, domeY);
+        ctx.stroke();
+      }
+
+      // E. 최상단 솔 인빅투스 황금 태양 십자가 랜턴 (Sol Invictus Sunburst Cross Lantern)
+      const lanternY = domeY - domeR;
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(px - 1.5, lanternY - 7, 3, 7);
+      ctx.fillRect(px - 4, lanternY - 5, 8, 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 1, lanternY - 6, 2, 2); // 중심 다이아몬드 섬광
+
+      // 은은한 성스러운 태양빛 광륜 펄스 (Holy Solar Aura Pulse)
+      const auraPulse = (Math.sin(timeSec * 4) + 1) * 0.5;
+      ctx.fillStyle = `rgba(253, 224, 71, ${0.25 + auraPulse * 0.25})`;
+      ctx.beginPath();
+      ctx.arc(px, lanternY - 4, 7 + auraPulse * 3, 0, Math.PI * 2);
+      ctx.fill();
+    },
+
+    // =========================================================================
+    // 37. 불사조 화염 에테르 대성채 (Phoenix Flame Aether Citadel)
+    // =========================================================================
+    drawPhoenixFlameCitadel(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // 바닥 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 2, halfW + 5, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 좌우 원형 화강암 바스티온 요새 탑 (Twin Bastion Towers)
+      const towerW = Math.round(bw * 0.32);
+      const towerH = Math.round(bh * 0.85);
+      const towerY = py + halfH - towerH;
+
+      [-1, 1].forEach(side => {
+        const tx = (side === -1) ? (px - halfW) : (px + halfW - towerW);
+
+        // 탑 석조 본체
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(tx, towerY, towerW, towerH);
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(tx + 2, towerY + 2, towerW - 4, towerH - 4);
+
+        // 총안 흉벽 (Crenellations)
+        ctx.fillStyle = '#cbd5e1';
+        for (let m = 0; m < 3; m++) {
+          const mx = tx + m * Math.round(towerW / 3);
+          ctx.fillRect(mx + 1, towerY - 3, Math.round(towerW / 3) - 2, 3);
+        }
+
+        // 탑 꼭대기 거대한 불사조 성화대 화로 (Phoenix Beacon Pyre)
+        const pyreX = tx + Math.round(towerW / 2);
+        const pyreY = towerY - 4;
+        ctx.fillStyle = '#ca8a04';
+        ctx.fillRect(pyreX - 3, pyreY - 2, 6, 2);
+
+        // 춤추는 불사조 성화 불길 (Dancing Phoenix Fire)
+        const flameH = 5 + Math.sin(timeSec * 8 + side) * 2;
+        ctx.fillStyle = '#f97316';
+        ctx.fillRect(pyreX - 2, pyreY - flameH, 4, flameH);
+        ctx.fillStyle = '#fde047';
+        ctx.fillRect(pyreX - 1, pyreY - flameH + 1, 2, flameH - 1);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(pyreX - 0.5, pyreY - flameH + 2, 1, 1.5);
+      });
+
+      // 중앙 주 성채 및 황금 불사조 부조 (Central Keep & Golden Phoenix Relief)
+      const midW = bw - towerW * 2 + 6;
+      const midX = px - Math.round(midW / 2);
+      const midH = Math.round(bh * 0.68);
+      const midY = py + halfH - midH;
+
+      ctx.fillStyle = '#f1f5f9';
+      ctx.fillRect(midX, midY, midW, midH);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(midX + 2, midY + 2, midW - 4, midH - 4);
+
+      // 황금 독수리/불사조 부조 (Golden Phoenix Relief on Front)
+      const phx = px;
+      const phy = midY + Math.round(midH * 0.42);
+      ctx.fillStyle = '#facc15';
+      // 날개
+      ctx.beginPath();
+      ctx.moveTo(phx, phy + 2);
+      ctx.lineTo(phx - 7, phy - 4);
+      ctx.lineTo(phx - 5, phy + 4);
+      ctx.lineTo(phx, phy + 1);
+      ctx.lineTo(phx + 5, phy + 4);
+      ctx.lineTo(phx + 7, phy - 4);
+      ctx.closePath();
+      ctx.fill();
+      // 몸통
+      ctx.fillStyle = '#ea580c';
+      ctx.fillRect(phx - 1, phy - 5, 2, 7);
+
+      // 아치형 성문 (Arched Gate)
+      const gateW = Math.round(midW * 0.52);
+      const gateH = Math.round(midH * 0.46);
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(px, py + halfH - gateH, gateW / 2, Math.PI, 0);
+      ctx.lineTo(px + gateW / 2, py + halfH);
+      ctx.lineTo(px - gateW / 2, py + halfH);
+      ctx.closePath();
+      ctx.fill();
+
+      // 황금 징 격자 철창 (Golden Portcullis Grille)
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(px - gateW / 2 + 2, py + halfH - gateH, gateW - 4, 1.5);
+      for (let g = 0; g < 4; g++) {
+        const gx = px - gateW / 2 + 3 + g * ((gateW - 6) / 3);
+        ctx.fillRect(gx, py + halfH - gateH, 1.5, gateH);
+      }
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -5139,6 +5370,16 @@
       ctx.beginPath();
       ctx.ellipse(px + 6, py + bh / 2 + 4, bw * 0.42, 4, 0.08, 0, Math.PI * 2);
       ctx.fill();
+      // ☀️ 신성 불사조 솔 인빅투스 황금 바실리카 & 쌍두독수리 팔라티노 제국 (Sol Invictus Golden Basilica & Phoenix Citadel)
+      if (type === 'sol_invictus_basilica' || (type === 'capital' && b && b.continent === 'sol_invictus') || (type === 'palace' && b && b.continent === 'sol_invictus')) {
+        this.drawSolInvictusBasilica(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'phoenix_citadel' || (type === 'castle' && b && b.continent === 'sol_invictus') || (type === 'fortress' && b && b.continent === 'sol_invictus') || (type === 'temple' && b && b.continent === 'sol_invictus') || (type === 'lair' && b && b.continent === 'sol_invictus')) {
+        this.drawPhoenixFlameCitadel(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+
       // 🦁 태고 바빌론 에테메난키 지구라트 & 공중정원 라마수 제국 (Babylon Ziggurat & Ishtar Lamassu Gate)
       if (type === 'babylon_ziggurat' || (type === 'capital' && b && b.continent === 'babylon') || (type === 'palace' && b && b.continent === 'babylon')) {
         this.drawBabylonZiggurat(ctx, px, py, bw, bh, isNight, timeSec);

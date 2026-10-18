@@ -913,6 +913,63 @@
       border-color: var(--phosphor);
       box-shadow: 0 0 8px rgba(51, 255, 119, 0.2);
     }
+
+    /* 우클릭 캠코더 줌인 뷰파인더 */
+    #camcorderZoomFrame {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      border: 3px solid rgba(51, 255, 119, 0.45);
+      box-shadow: inset 0 0 110px rgba(0, 0, 0, 0.9);
+      z-index: 44;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.22s ease-out;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 30px;
+    }
+    #camcorderZoomFrame.zoomed {
+      opacity: 1;
+    }
+
+    /* 광기 색수차 펄스 오버레이 */
+    #chromaticPulseOverlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: 43;
+      pointer-events: none;
+      opacity: 0;
+      mix-blend-mode: color-dodge;
+      background: radial-gradient(circle, rgba(255,0,0,0.2) 0%, rgba(0,255,255,0.2) 100%);
+      transition: opacity 0.3s;
+    }
+
+    /* 아날로그 주파수 눈금 스케일 바 */
+    .tuning-scale-bar {
+      width: 100%;
+      height: 22px;
+      background: #040906;
+      border: 1px solid #163822;
+      border-radius: 3px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+    .tuning-scale-ticks {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: repeating-linear-gradient(90deg, #1f472d, #1f472d 1px, transparent 1px, transparent 10px);
+      opacity: 0.8;
+    }
+    .tuning-needle {
+      position: absolute;
+      top: 0; left: 30%;
+      width: 2px; height: 100%;
+      background: #ff3344;
+      box-shadow: 0 0 8px #ff2233;
+      transition: left 0.04s ease-out;
+    }
   </style>
 </head>
 <body>
@@ -922,9 +979,22 @@
   <div class="vignette-lens"></div>
   <div id="lightningFlash"></div>
   <div id="sanityVeinOverlay"></div>
+  <div id="chromaticPulseOverlay"></div>
   <div id="uvOverlay"></div>
   <div id="bloodFlash"></div>
   <div id="reticle"></div>
+
+  <!-- 우클릭 캠코더 줌 뷰파인더 -->
+  <div id="camcorderZoomFrame">
+    <div style="display:flex; justify-content:space-between; color:var(--phosphor); font-size:12px; letter-spacing:2px;">
+      <span>[OPTICAL ZOOM 2.4X]</span>
+      <span>WIDE / TELE CONVERTER</span>
+    </div>
+    <div style="display:flex; justify-content:space-between; color:var(--phosphor); font-size:12px; letter-spacing:2px;">
+      <span>F1.8 MACRO AUTO</span>
+      <span>BATTERY: 84% [||||-]</span>
+    </div>
+  </div>
 
   <!-- 스팀 스타일 업적 달성 배너 오버레이 -->
   <div id="steamAchievementBanner">
@@ -1085,6 +1155,17 @@
           <div class="cassette-spool" id="spoolL"></div>
           <div style="position:absolute; top:50%; left:25%; right:25%; height:2px; background:#226633; box-shadow:0 0 6px var(--phosphor);"></div>
           <div class="cassette-spool" id="spoolR"></div>
+        </div>
+
+        <!-- 아날로그 주파수 눈금 스케일 바 & 바늘 -->
+        <div style="display:flex; justify-content:space-between; font-size:10px; color:#82b596; margin-bottom:2px;">
+          <span>0 Hz (DC)</span>
+          <span style="color:#ffaa11;">ANALOG TUNING SCALE</span>
+          <span>3800 Hz (HF)</span>
+        </div>
+        <div class="tuning-scale-bar">
+          <div class="tuning-scale-ticks"></div>
+          <div class="tuning-needle" id="tuningNeedleIndicator"></div>
         </div>
 
         <!-- 듀얼 오실로스코프 및 스펙트로그램 폭포수 -->
@@ -1422,6 +1503,8 @@
     let inDocInspectMode = false;
     let inJournalMode = false;
     let inSettingsMode = false;
+    let isCamcorderZoomed = false;
+    let camcorderTargetFov = 74;
     let mouseSensitivity = 0.0022;
     let crtIntensityLevel = 2; // 0: None, 1: Low, 2: Normal, 3: Heavy
     let secretGlyphIntensity = 0; // 스펙트로그램에 떠오르는 기괴한 눈/해골 글리프
@@ -2237,6 +2320,23 @@
     function renderLoop3D() {
       requestAnimationFrame(renderLoop3D);
 
+      // 우클릭 캠코더 줌인 보간
+      if (camera) {
+        camera.fov += (camcorderTargetFov - camera.fov) * 0.18;
+        camera.updateProjectionMatrix();
+      }
+
+      // 이성 붕괴 시 색수차 펄스 오버레이
+      const chromLayer = document.getElementById('chromaticPulseOverlay');
+      if (chromLayer) {
+        if (!isSafeMode && sanity < 55) {
+          const pulse = (Math.sin(Date.now() * 0.008) + 1) * 0.5;
+          chromLayer.style.opacity = (((55 - sanity) / 55) * 0.7 * pulse).toFixed(2);
+        } else {
+          chromLayer.style.opacity = '0';
+        }
+      }
+
       // 빗물 창문 텍스처 갱신
       updateRainWindowCanvas();
 
@@ -2800,6 +2900,27 @@
       filterNode.frequency.setTargetAtTime(paramFreq, audioCtx.currentTime, 0.05);
       filterNode.Q.setTargetAtTime(paramRes, audioCtx.currentTime, 0.05);
       updateHeterodyneWhistle();
+
+      const needle = document.getElementById('tuningNeedleIndicator');
+      if (needle) {
+        needle.style.left = `${(paramFreq / 3800) * 100}%`;
+      }
+    }
+
+    function playRatchetClick() {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(2400, now);
+      osc.frequency.exponentialRampToValueAtTime(700, now + 0.008);
+      g.gain.setValueAtTime(0.035, now);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.01);
+      osc.connect(g);
+      g.connect(masterGain);
+      osc.start(now);
+      osc.stop(now + 0.012);
     }
 
     let tuningCheckTimer = null;
@@ -3418,10 +3539,12 @@
       const k = activeDial.dataset.k;
 
       if (k === 'freq') {
+        const oldF = paramFreq;
         paramFreq = Math.max(80, Math.min(3800, Math.round(dragOriginVal + deltaY * 8)));
         document.getElementById('valFreq').innerText = paramFreq + ' Hz';
         activeDial.style.transform = `rotate(${(paramFreq / 3800) * 270 - 135}deg)`;
         updateFilterSettings();
+        if (Math.abs(paramFreq - oldF) > 20) playRatchetClick();
       } else if (k === 'noise') {
         paramNoise = Math.max(0, Math.min(100, Math.round(dragOriginVal + deltaY * 0.5)));
         document.getElementById('valNoise').innerText = paramNoise + ' %';
@@ -3438,7 +3561,33 @@
       }
     });
 
-    window.addEventListener('mouseup', () => { activeDial = null; });
+    window.addEventListener('mouseup', (e) => {
+      activeDial = null;
+      if (e.button === 2) {
+        // 우클릭 줌 해제
+        isCamcorderZoomed = false;
+        camcorderTargetFov = 74;
+        const zf = document.getElementById('camcorderZoomFrame');
+        if (zf) zf.classList.remove('zoomed');
+      }
+    });
+
+    window.addEventListener('mousedown', (e) => {
+      if (e.button === 2) {
+        // 우클릭 캠코더 줌인
+        if (!inTerminalMode && !inDocInspectMode && !inJournalMode && !inSettingsMode) {
+          isCamcorderZoomed = true;
+          camcorderTargetFov = 38;
+          const zf = document.getElementById('camcorderZoomFrame');
+          if (zf) zf.classList.add('zoomed');
+          playBeep(1200);
+        }
+      }
+    });
+
+    window.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+    });
 
     /* ========================================================
        6. 쫄보를 위한 자동 스토리 관전 모드 (Auto Cinema)
@@ -3658,16 +3807,56 @@
 
     function showFinalEnding() {
       document.exitPointerLock();
-      document.getElementById('finalModal').style.display = 'flex';
-      document.getElementById('finalModalBody').innerHTML = `
-        <p><strong>[충격적 진실의 밝혀짐]</strong></p>
-        <p>당신은 1999년의 무고한 음향 복원가 '강서진'이 아닙니다.<br>
-        당신은 바로 1979년부터 환자들을 잔혹하게 학대하고 뇌파를 조작해 기억을 지우던 <strong>'닥터 한(한진우 원장)' 본인</strong>입니다.</p>
-        <p>불과 이틀 전, 환자들의 방화와 폭동 속에서 당신은 이 지하 404호에 스스로를 가두었고,<br>
-        자신의 죄를 감당하지 못해 해리성 기억상실을 일으키며 가상의 1999년을 망상하고 있었습니다.</p>
-        <p>벽 너머에서 들리던 유령의 긁는 소리는... 당신을 구출하기 위해 콘크리트 벽을 부수던 <strong>119 구조대의 착암기 소리</strong>였습니다.</p>
-        <div style="margin-top:16px; color:#33ff77; font-weight:bold;">
-          [진엔딩 달성: 3시간 풀 스토리라인과 스팀 상용화급 5개 카트리지 복원을 완료하셨습니다.]
+      unlockAchievement('truth1999');
+      const modal = document.getElementById('finalModal');
+      const body = document.getElementById('finalModalBody');
+      modal.style.display = 'flex';
+
+      let endingBadge = "";
+      let endingTitle = "";
+      let endingDetail = "";
+
+      if (sanity >= 65 || isSafeMode) {
+        // 엔딩 A: 진엔딩 [1979년의 참회 (The Confession)]
+        endingBadge = `<span style="color:#33ff77; border:1px solid #33ff77; padding:2px 8px; border-radius:3px;">🌟 TRUE ENDING A : 참회와 구출</span>`;
+        endingTitle = "1979년의 참회 (The Confession)";
+        endingDetail = `
+          <p>당신은 자신의 이름이 '한진우 원장'이며, 20년간 환자들의 뇌파를 파괴해온 가해자임을 온전히 인정했습니다.<br>
+          콘크리트 벽이 무너져 내리고 눈부신 플래시 불빛과 함께 119 구조대원이 당신을 향해 손을 뻗습니다.<br>
+          "원장님! 붕괴 잔해 밑 404호에서 48시간 만에 생존자를 찾았습니다! 어서 나오십시오!"<br>
+          당신은 눈물을 흘리며 수갑을 차듯 구조대의 손을 잡았습니다. 20년간의 기만과 망상의 악몽이 드디어 끝났습니다.</p>
+        `;
+      } else if (sanity < 40) {
+        // 엔딩 B: 배드엔딩 [영원한 404호의 망령 (Caged Forever)]
+        endingBadge = `<span style="color:#ff2233; border:1px solid #ff2233; padding:2px 8px; border-radius:3px;">🩸 BAD ENDING B : 영원한 격리실</span>`;
+        endingTitle = "영원한 404호의 망령 (Caged Forever)";
+        endingDetail = `
+          <p>극심한 공포와 죄책감으로 당신의 뇌는 완전히 붕괴되었습니다.<br>
+          당신은 벽을 부수고 들어오려는 구조대의 목소리를 환자들의 복수 유령으로 착각하고,<br>
+          스스로 404호 철문의 쇠사슬을 감아쥐고 깊은 어둠 속으로 숨어들었습니다.<br>
+          구조대가 마침내 격리실 문을 열었을 때... 그곳엔 낡은 릴 테이프 재생기만이 홀로 잡음을 뿜어내고 있었습니다.</p>
+        `;
+      } else {
+        // 엔딩 C: 미스터리 엔딩 [시간의 뫼비우스 루프 (The Amnesia Loop)]
+        endingBadge = `<span style="color:#ffaa11; border:1px solid #ffaa11; padding:2px 8px; border-radius:3px;">🚪 MYSTERY ENDING C : 시간의 뫼비우스 루프</span>`;
+        endingTitle = "기억의 루프 (The Amnesia Loop)";
+        endingDetail = `
+          <p>당신은 가까스로 비상구 철문을 열고 지상으로 뛰쳐나갔습니다.<br>
+          하지만 차가운 비를 맞으며 뒤를 돌아본 순간, 지상의 병원 건물은 온데간데없고 다시 칠흑 같은 어둠이 당신을 집어삼킵니다.<br>
+          눈을 깜빡이자... 당신은 다시 1999년 12월 31일 밤의 작업 데스크 앞에 앉아 있습니다.<br>
+          책상 위 릴 테이프 머신에서 카트리지 #1의 잡음이 다시 치이익- 소리를 내며 돌아가기 시작합니다.</p>
+        `;
+      }
+
+      body.innerHTML = `
+        <div style="margin-bottom:12px;">${endingBadge}</div>
+        <h2 style="color:#fff; margin-bottom:14px; font-size:20px;">${endingTitle}</h2>
+        ${endingDetail}
+        <div style="margin-top:20px; padding:12px; background:#07100b; border:1px solid #1a3d27; border-radius:4px; font-size:12.5px; color:#8abfa1;">
+          <strong>[스팀 상용화 멀티 엔딩 완료]</strong><br>
+          - 최종 이성 수치: <strong>${sanity}%</strong> | 심박수: <strong>${bpm} BPM</strong><br>
+          - 획득 도전 과제: <strong>${unlockedAchievements.size} / 8</strong> 달성<br>
+          다시 플레이하여 다른 이성 상태에서 숨겨진 다른 결말을 확인해보십시오!
         </div>
       `;
     }

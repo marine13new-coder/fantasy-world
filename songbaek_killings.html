@@ -1,0 +1,3645 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>송백리 살인사건 : 묻혀버린 진실 1997 (The Songbaek Killings 1997)</title>
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@300;400;500;700;900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Special+Elite&display=swap');
+
+        :root {
+            --bg-void: #030406;
+            --panel-bg: rgba(10, 14, 20, 0.96);
+            --border-dim: #222c38;
+            --border-glow: #5d738c;
+            --accent-gold: #d4ab5d;
+            --accent-amber: #eab742;
+            --accent-blood: #8a1515;
+            --accent-blood-bright: #e53935;
+            --accent-uv: #8a2be2;
+            --accent-uv-glow: #bc13fe;
+            --text-main: #d3dbe3;
+            --text-dim: #798797;
+            --paper-bg: #e6dcbe;
+            --paper-text: #1f1812;
+            --steam-bg: rgba(20, 26, 36, 0.98);
+            --steam-border: #44566c;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            margin: 0;
+            padding: 0;
+            -webkit-user-drag: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-void);
+            font-family: 'Noto Sans KR', sans-serif;
+            color: var(--text-main);
+        }
+
+        #viewport-container {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1;
+        }
+
+        /* 1997 VHS 캠코더 타임코드 OSD */
+        #vhs-osd {
+            position: absolute;
+            top: 25px; left: 35px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.82);
+            letter-spacing: 2px;
+            z-index: 10;
+            pointer-events: none;
+            text-shadow: 0 0 4px rgba(0,255,0,0.5), 0 2px 4px #000;
+        }
+        .vhs-rec {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #ff3333;
+            font-weight: bold;
+        }
+        .vhs-dot {
+            width: 8px; height: 8px;
+            background: #ff3333;
+            border-radius: 50%;
+            animation: vhsBlink 1s steps(2, start) infinite;
+        }
+        @keyframes vhsBlink {
+            to { visibility: hidden; }
+        }
+
+        /* 비 내리는 유리창 & 빗방울 캔버스 */
+        #rain-window-canvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 4;
+            opacity: 0.35;
+            mix-blend-mode: screen;
+        }
+
+        /* 시네마틱 비네팅 & 아날로그 필름 그레인 */
+        #vignette {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 5;
+            background: radial-gradient(circle at center, transparent 35%, rgba(1, 2, 4, 0.92) 96%);
+            mix-blend-mode: multiply;
+        }
+
+        #film-noise {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 6;
+            opacity: 0.07;
+            background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)"/></svg>');
+        }
+
+        /* UV 라이트(블랙라이트) 오버레이 */
+        #uv-filter {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 7;
+            background: radial-gradient(circle at center, rgba(138, 43, 226, 0.25) 0%, rgba(20, 2, 40, 0.6) 100%);
+            mix-blend-mode: color-dodge;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        #uv-filter.active {
+            opacity: 1;
+        }
+
+        /* 천둥 번개 섬광 */
+        #thunder-flash {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 8;
+            transition: opacity 0.08s ease-out;
+        }
+
+        /* 카메라 셔터 찰칵 효과 */
+        #camera-shutter {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 250;
+            transition: opacity 0.12s ease-in-out;
+        }
+
+        /* 1인칭 손 & 손전등 뷰모델 */
+        #fps-viewmodel {
+            position: absolute;
+            bottom: -20px;
+            right: 8%;
+            width: 320px;
+            height: 320px;
+            pointer-events: none;
+            z-index: 12;
+            transition: transform 0.15s ease-out;
+        }
+
+        /* 크로스헤어 */
+        #crosshair {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 8px; height: 8px;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 20;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.55);
+            box-shadow: 0 0 4px rgba(0,0,0,0.8);
+            transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #crosshair.hovered {
+            transform: translate(-50%, -50%) scale(2.8);
+            background: var(--accent-amber);
+            box-shadow: 0 0 14px var(--accent-amber), 0 0 2px #fff;
+        }
+
+        /* 상호작용 프롬프트 HUD */
+        #interact-prompt {
+            position: absolute;
+            top: 55%; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(8, 12, 18, 0.94);
+            border-left: 3px solid var(--accent-gold);
+            padding: 8px 20px;
+            border-radius: 3px;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.18s;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 6px 25px rgba(0,0,0,0.9);
+        }
+        #interact-prompt.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(4px);
+        }
+        .key-tag {
+            background: var(--accent-gold);
+            color: #0d1014;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 2px;
+            font-size: 11px;
+            font-family: 'Courier Prime', monospace;
+        }
+
+        /* 상단 상태 바 */
+        #top-bar {
+            position: absolute;
+            top: 22px; left: 35px; right: 35px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 15;
+            pointer-events: none;
+        }
+        .top-left-info {
+            margin-top: 25px;
+        }
+        .case-code {
+            font-family: 'Courier Prime', monospace;
+            font-size: 11px;
+            color: var(--accent-gold);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+        .zone-title {
+            font-family: 'Nanum Myeongjo', serif;
+            font-size: 26px;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.95);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .zone-desc {
+            font-size: 12px;
+            color: var(--text-dim);
+            max-width: 520px;
+            margin-top: 5px;
+            line-height: 1.5;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            pointer-events: auto;
+        }
+        .ui-btn {
+            background: rgba(12, 16, 22, 0.92);
+            border: 1px solid var(--border-dim);
+            color: var(--text-main);
+            padding: 9px 16px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(8px);
+        }
+        .ui-btn:hover {
+            border-color: var(--accent-gold);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(212, 171, 93, 0.3);
+            transform: translateY(-2px);
+        }
+        .ui-btn.red-btn {
+            border-color: var(--accent-blood);
+            background: rgba(138, 21, 21, 0.25);
+        }
+        .ui-btn.red-btn:hover {
+            border-color: var(--accent-blood-bright);
+            box-shadow: 0 0 18px rgba(229, 57, 53, 0.45);
+        }
+        .ui-btn.uv-btn.active {
+            border-color: var(--accent-uv-glow);
+            background: rgba(138, 43, 226, 0.35);
+            box-shadow: 0 0 16px rgba(188, 19, 254, 0.55);
+            color: #fff;
+        }
+        .badge-pill {
+            background: var(--accent-blood);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 8px;
+        }
+
+        /* 좌하단 지도 / 빠른 이동 메뉴 */
+        #town-map-nav {
+            position: absolute;
+            left: 35px; bottom: 35px;
+            width: 320px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-dim);
+            border-radius: 6px;
+            padding: 15px;
+            z-index: 15;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.9);
+        }
+        .map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--border-dim);
+            padding-bottom: 8px;
+        }
+        .map-header span:first-child {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent-gold);
+            letter-spacing: 1px;
+        }
+        .location-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .loc-row {
+            padding: 8px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid transparent;
+            transition: all 0.15s;
+        }
+        .loc-row:hover:not(.locked) {
+            background: rgba(212, 171, 93, 0.12);
+            border-color: var(--accent-gold);
+            color: #fff;
+        }
+        .loc-row.active {
+            background: rgba(212, 171, 93, 0.24);
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+            font-weight: 700;
+        }
+        .loc-row.locked {
+            opacity: 0.45;
+            cursor: not-allowed;
+            color: #657283;
+        }
+
+        /* 우하단 컨트롤 가이드 */
+        #control-box {
+            position: absolute;
+            right: 35px; bottom: 35px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-dim);
+            border-radius: 6px;
+            padding: 14px 20px;
+            font-size: 11px;
+            color: var(--text-dim);
+            z-index: 15;
+            pointer-events: none;
+            backdrop-filter: blur(8px);
+            line-height: 1.75;
+        }
+        #control-box kbd {
+            background: #1c2430;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier Prime', monospace;
+            font-weight: bold;
+            font-size: 10px;
+            border: 1px solid #324052;
+        }
+
+        /* 스팀 도전 과제 달성 팝업 오버레이 */
+        #steam-achievement {
+            position: absolute;
+            bottom: 35px;
+            right: 35px;
+            width: 325px;
+            background: var(--steam-bg);
+            border: 1px solid var(--steam-border);
+            border-radius: 4px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            z-index: 500;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.95);
+            transform: translateY(120px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+        }
+        #steam-achievement.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .achieve-icon-box {
+            width: 44px; height: 44px;
+            background: #10141c;
+            border: 1px solid var(--accent-gold);
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+        .achieve-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .achieve-top-tag {
+            font-size: 10px;
+            color: var(--accent-gold);
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .achieve-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+        }
+        .achieve-desc {
+            font-size: 11px;
+            color: #8da0b5;
+        }
+
+        /* 실시간 토스트 알림 팝업 */
+        #toast-alert {
+            position: absolute;
+            top: 95px; left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: rgba(10, 14, 20, 0.95);
+            border-left: 4px solid var(--accent-gold);
+            padding: 12px 26px;
+            border-radius: 4px;
+            font-size: 13.5px;
+            color: #fff;
+            z-index: 40;
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 8px 35px rgba(0,0,0,0.92);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        #toast-alert.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ==================== 모달 레이어들 ==================== */
+        .modal-wrap {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(2, 3, 5, 0.9);
+            backdrop-filter: blur(12px);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.22s ease-out;
+        }
+        .modal-wrap.open {
+            display: flex;
+            opacity: 1;
+        }
+
+        /* 1. 공문서 & 편지지 뷰어 */
+        .archive-paper {
+            width: 840px;
+            max-width: 92vw;
+            max-height: 88vh;
+            background: var(--paper-bg);
+            color: var(--paper-text);
+            border-radius: 4px;
+            box-shadow: 0 15px 60px rgba(0,0,0,0.98), inset 0 0 70px rgba(0,0,0,0.14);
+            padding: 45px 60px;
+            position: relative;
+            overflow-y: auto;
+            border: 1px solid #bfb18b;
+            font-family: 'Nanum Myeongjo', serif;
+            line-height: 1.9;
+        }
+        .paper-red-stamp {
+            position: absolute;
+            top: 30px; right: 85px;
+            border: 2px solid #8a1515;
+            color: #8a1515;
+            font-weight: 800;
+            padding: 4px 14px;
+            font-size: 14px;
+            letter-spacing: 3px;
+            transform: rotate(-7deg);
+            opacity: 0.85;
+            pointer-events: none;
+        }
+        .paper-head {
+            border-bottom: 2px solid #4a3a2a;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .paper-title-text {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1a140e;
+        }
+        .paper-date-str {
+            font-family: 'Courier Prime', monospace;
+            font-size: 14px;
+            color: #55473a;
+        }
+        .paper-article {
+            font-size: 15.5px;
+            white-space: pre-line;
+            margin-bottom: 30px;
+            color: #272018;
+        }
+        .paper-foot {
+            font-size: 12px;
+            color: #6c5c4d;
+            border-top: 1px dashed #b5a382;
+            padding-top: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .x-close {
+            position: absolute;
+            top: 20px; right: 25px;
+            background: rgba(0,0,0,0.1);
+            border: none;
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .x-close:hover {
+            background: var(--accent-blood);
+            color: #fff;
+        }
+
+        /* 2. 인터랙티브 수사 코르크보드 (Pinboard) */
+        .cork-stage {
+            width: 1260px;
+            max-width: 96vw;
+            height: 88vh;
+            background: #241a11 url('data:image/svg+xml;utf8,<svg width="40" height="40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" fill="%2320160d"/><circle cx="20" cy="20" r="1.5" fill="%23352716"/></svg>');
+            border: 14px solid #42301f;
+            border-radius: 8px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.98);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        .cork-bar {
+            background: rgba(14, 11, 7, 0.96);
+            padding: 14px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #523e2b;
+        }
+        .cork-bar h2 {
+            font-family: 'Nanum Myeongjo', serif;
+            font-size: 19px;
+            color: var(--accent-gold);
+            letter-spacing: 2px;
+        }
+        .cork-scroll-zone {
+            flex: 1;
+            position: relative;
+            overflow: auto;
+            padding: 30px;
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            align-content: flex-start;
+        }
+        .suspect-card {
+            width: 245px;
+            background: #faf8f2;
+            color: #222;
+            padding: 15px;
+            border-radius: 2px;
+            box-shadow: 4px 8px 22px rgba(0,0,0,0.7);
+            position: relative;
+            transform: rotate(-1.2deg);
+            transition: all 0.2s;
+            cursor: pointer;
+            border-top: 4px solid #8a1515;
+        }
+        .suspect-card:nth-child(even) {
+            transform: rotate(1.6deg);
+        }
+        .suspect-card:hover {
+            transform: scale(1.05) rotate(0deg);
+            z-index: 50;
+            box-shadow: 0 14px 35px rgba(0,0,0,0.9);
+        }
+        .suspect-card.connected {
+            box-shadow: 0 0 15px rgba(229, 57, 53, 0.8);
+            border-color: #ff3333;
+        }
+        .red-pin-head {
+            position: absolute;
+            top: -10px; left: 50%;
+            transform: translateX(-50%);
+            width: 17px; height: 17px;
+            background: radial-gradient(circle at 35% 35%, #ff3b3b, #600);
+            border-radius: 50%;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.6);
+        }
+        .card-photo-box {
+            width: 100%;
+            height: 155px;
+            background: #14181f;
+            border-radius: 2px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #000;
+        }
+        .card-photo-box svg {
+            width: 100%; height: 100%;
+        }
+        .suspect-name {
+            font-family: 'Nanum Myeongjo', serif;
+            font-weight: 800;
+            font-size: 16px;
+            color: #111;
+            margin-bottom: 3px;
+        }
+        .suspect-title {
+            font-size: 11px;
+            color: #777;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-family: 'Courier Prime', monospace;
+        }
+        .suspect-notes {
+            font-size: 12px;
+            line-height: 1.6;
+            color: #333;
+            background: #eee8d8;
+            padding: 10px;
+            border-radius: 2px;
+            border-left: 3px solid #8a1515;
+        }
+
+        /* 3. 금고 다이얼 */
+        .rotary-safe {
+            width: 480px;
+            background: #131820;
+            border: 2px solid var(--accent-gold);
+            border-radius: 8px;
+            padding: 35px;
+            box-shadow: 0 25px 70px rgba(0,0,0,0.98);
+            text-align: center;
+        }
+        .rotary-header h3 {
+            font-family: 'Nanum Myeongjo', serif;
+            font-size: 21px;
+            color: var(--accent-gold);
+            margin-bottom: 6px;
+        }
+        .rotary-header p {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 25px;
+        }
+        .rotary-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .rotary-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .rotary-arrow-btn {
+            background: #232c3a;
+            border: 1px solid var(--border-dim);
+            color: #fff;
+            width: 50px; height: 38px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.15s;
+        }
+        .rotary-arrow-btn:hover {
+            background: var(--accent-gold);
+            color: #0d1014;
+        }
+        .rotary-wheel {
+            font-family: 'Special Elite', 'Courier Prime', monospace;
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--accent-amber);
+            background: #080b0e;
+            width: 58px; height: 68px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #364457;
+            border-radius: 4px;
+            box-shadow: inset 0 0 12px rgba(0,0,0,0.85);
+        }
+        .safe-lever-btn {
+            background: var(--accent-gold);
+            color: #0d1014;
+            border: none;
+            padding: 14px 30px;
+            font-size: 15px;
+            font-weight: 800;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+            letter-spacing: 1px;
+        }
+        .safe-lever-btn:hover {
+            background: #e2ba66;
+            box-shadow: 0 0 20px rgba(212, 171, 93, 0.4);
+        }
+
+        /* 4. 카세트 테이프 & 라디오 플레이어 */
+        #tape-player-box {
+            width: 460px;
+            background: #151a23;
+            border: 2px solid #4c5d73;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 20px 65px rgba(0,0,0,0.95);
+            text-align: center;
+        }
+        .tape-reel-frame {
+            width: 100%;
+            height: 125px;
+            background: #090c10;
+            border: 2px solid #2e3846;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 10px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .reel-wheel {
+            width: 62px; height: 62px;
+            border: 4px dashed #788a9c;
+            border-radius: 50%;
+            animation: spinReel 2s linear infinite;
+            animation-play-state: paused;
+        }
+        .reel-wheel.spinning {
+            animation-play-state: running;
+        }
+        @keyframes spinReel {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .tape-label {
+            position: absolute;
+            bottom: 8px;
+            background: #eee2c4;
+            color: #222;
+            padding: 2px 14px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 11px;
+            font-weight: bold;
+            border: 1px solid #777;
+        }
+        .tape-transcript {
+            font-family: 'Nanum Myeongjo', serif;
+            font-size: 14.5px;
+            line-height: 1.85;
+            color: #b9c7d7;
+            text-align: left;
+            background: rgba(0,0,0,0.35);
+            padding: 18px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 3px solid var(--accent-gold);
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        .tape-ctrl-btn {
+            background: #232c38;
+            border: 1px solid var(--border-dim);
+            color: #fff;
+            padding: 11px 26px;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tape-ctrl-btn:hover {
+            background: var(--accent-gold);
+            color: #000;
+        }
+
+        /* 5. 최종 추리 보고서 */
+        .deduction-dossier {
+            width: 960px;
+            max-width: 95vw;
+            max-height: 90vh;
+            background: #10141a;
+            border: 2px solid var(--accent-blood);
+            border-radius: 8px;
+            padding: 40px 50px;
+            overflow-y: auto;
+            color: var(--text-main);
+            box-shadow: 0 25px 75px rgba(0,0,0,0.98);
+        }
+        .dossier-head {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border-dim);
+            padding-bottom: 20px;
+        }
+        .dossier-head h1 {
+            font-family: 'Nanum Myeongjo', serif;
+            font-size: 26px;
+            color: var(--accent-blood-bright);
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+        .query-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-dim);
+            border-radius: 6px;
+            padding: 22px;
+            margin-bottom: 22px;
+        }
+        .query-card label {
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--accent-gold);
+            display: block;
+            margin-bottom: 14px;
+        }
+        .query-opts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .query-btn {
+            background: #18202a;
+            border: 1px solid #334050;
+            padding: 12px 16px;
+            color: #b5c2d3;
+            font-size: 13px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.15s;
+            line-height: 1.4;
+        }
+        .query-btn:hover {
+            border-color: var(--accent-gold);
+            color: #fff;
+        }
+        .query-btn.picked {
+            background: #731515;
+            border-color: var(--accent-blood-bright);
+            color: #fff;
+            font-weight: 700;
+            box-shadow: 0 0 12px rgba(229, 57, 53, 0.4);
+        }
+
+        /* 6. 3D 아이템 검사기 (Inspect Mode) */
+        #inspect-modal {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.88);
+            z-index: 150;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(8px);
+        }
+        #inspect-stage {
+            width: 480px; height: 480px;
+            border-radius: 8px;
+            background: radial-gradient(circle, #1a222c 0%, #080b0f 70%);
+            box-shadow: 0 10px 45px rgba(0,0,0,0.95);
+            border: 1px solid var(--border-dim);
+        }
+        #inspect-detail {
+            margin-top: 20px;
+            text-align: center;
+            max-width: 520px;
+        }
+        #inspect-detail h3 {
+            font-size: 21px;
+            font-weight: 800;
+            color: var(--accent-gold);
+            margin-bottom: 6px;
+        }
+        #inspect-detail p {
+            font-size: 13px;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        /* 7. 엔딩 스크린 */
+        #ending-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #030406;
+            z-index: 300;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            opacity: 0;
+            transition: opacity 2s ease-in;
+        }
+        #ending-screen.open {
+            display: flex;
+            opacity: 1;
+        }
+        .ending-panel {
+            max-width: 840px;
+            background: rgba(14, 18, 24, 0.98);
+            border: 1px solid var(--accent-gold);
+            padding: 50px;
+            border-radius: 8px;
+            box-shadow: 0 15px 70px rgba(0,0,0,0.98);
+            text-align: center;
+        }
+        .ending-rank-tag {
+            font-family: 'Nanum Myeongjo', serif;
+            font-size: 42px;
+            font-weight: 800;
+            color: var(--accent-gold);
+            margin-bottom: 12px;
+        }
+        .ending-title-banner {
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 25px;
+        }
+        .ending-epilogue {
+            font-family: 'Nanum Myeongjo', serif;
+            font-size: 15.5px;
+            line-height: 2.15;
+            color: #c5d0dc;
+            text-align: left;
+            white-space: pre-line;
+            margin-bottom: 35px;
+            background: rgba(0,0,0,0.45);
+            padding: 28px;
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-gold);
+        }
+
+        /* 8. 인트로 모달 */
+        #intro-modal {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #030406;
+            z-index: 400;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .intro-slate {
+            max-width: 740px;
+            background: #0d1117;
+            border: 1px solid #2d3846;
+            padding: 48px 56px;
+            border-radius: 8px;
+            box-shadow: 0 15px 70px rgba(0,0,0,0.98);
+            text-align: center;
+        }
+        .intro-title-main {
+            font-family: 'Nanum Myeongjo', serif;
+            font-size: 34px;
+            font-weight: 800;
+            color: var(--accent-gold);
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+        .intro-subtitle {
+            font-family: 'Courier Prime', monospace;
+            font-size: 13px;
+            color: var(--text-dim);
+            letter-spacing: 4px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+        .intro-dossier-text {
+            font-family: 'Nanum Myeongjo', serif;
+            font-size: 15px;
+            line-height: 2;
+            color: #b8c6d6;
+            text-align: left;
+            margin-bottom: 35px;
+            background: rgba(0,0,0,0.35);
+            padding: 24px;
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-blood);
+        }
+
+        /* 9. 1997 송백리 실측 건축도면 (Blueprint Map Modal) */
+        .blueprint-stage {
+            width: 1100px;
+            max-width: 95vw;
+            height: 84vh;
+            background: #091322 url('data:image/svg+xml;utf8,<svg width="40" height="40" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="%23173154" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="%23091322"/><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+            border: 4px solid #38bdf8;
+            border-radius: 6px;
+            box-shadow: 0 20px 80px rgba(0,0,0,0.95), inset 0 0 60px rgba(2,132,199,0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+        .bp-header {
+            background: #0f1f38;
+            border-bottom: 2px solid #38bdf8;
+            padding: 14px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .bp-header h2 {
+            font-family: 'Courier Prime', monospace;
+            font-size: 18px;
+            color: #38bdf8;
+            letter-spacing: 2px;
+            font-weight: 800;
+        }
+        .bp-canvas-zone {
+            flex: 1;
+            position: relative;
+            padding: 25px;
+            overflow: auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-gap: 20px;
+            align-content: start;
+        }
+        .bp-room-card {
+            background: rgba(14, 30, 56, 0.85);
+            border: 2px dashed #38bdf8;
+            border-radius: 4px;
+            padding: 16px;
+            color: #bae6fd;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .bp-room-card:hover {
+            background: rgba(2, 132, 199, 0.25);
+            border-style: solid;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.35);
+        }
+        .bp-room-card.current {
+            border: 2px solid #facc15;
+            background: rgba(234, 179, 8, 0.15);
+            box-shadow: 0 0 20px rgba(250, 204, 21, 0.4);
+        }
+        .bp-room-card.locked {
+            border-color: #64748b;
+            color: #64748b;
+            background: rgba(15, 23, 42, 0.8);
+        }
+        .bp-room-title {
+            font-family: 'Courier Prime', monospace;
+            font-size: 16px;
+            font-weight: 900;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .bp-room-desc {
+            font-size: 12px;
+            line-height: 1.5;
+            color: #94a3b8;
+        }
+        .bp-stamp {
+            position: absolute;
+            bottom: 15px;
+            right: 25px;
+            border: 2px solid rgba(220, 38, 38, 0.7);
+            color: rgba(220, 38, 38, 0.85);
+            font-family: 'Courier Prime', monospace;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 800;
+            transform: rotate(-10deg);
+            pointer-events: none;
+            letter-spacing: 1px;
+        }
+
+        /* 10. 형사 현장 수사 수첩 (Notebook Modal with 3 Tabs) */
+        .notebook-stage {
+            width: 1040px;
+            max-width: 95vw;
+            height: 85vh;
+            background: #171c24;
+            border: 3px solid #6b5536;
+            border-radius: 8px;
+            box-shadow: 0 25px 90px rgba(0,0,0,0.98);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .nb-nav-tabs {
+            display: flex;
+            background: #0f131a;
+            border-bottom: 2px solid #332719;
+        }
+        .nb-tab-btn {
+            background: transparent;
+            border: none;
+            color: #8c9ba8;
+            padding: 14px 26px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-right: 1px solid #221c15;
+            font-family: 'Pretendard', sans-serif;
+        }
+        .nb-tab-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .nb-tab-btn.active {
+            color: #eab308;
+            background: #171c24;
+            border-bottom: 2px solid #eab308;
+        }
+        .nb-tab-body {
+            flex: 1;
+            padding: 28px;
+            overflow-y: auto;
+            color: #d1d5db;
+        }
+        .timeline-matrix {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-top: 15px;
+        }
+        .timeline-matrix th, .timeline-matrix td {
+            border: 1px solid #374151;
+            padding: 10px 14px;
+            text-align: left;
+        }
+        .timeline-matrix th {
+            background: #111827;
+            color: #facc15;
+            font-weight: 800;
+        }
+        .timeline-matrix tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* 11. 스팀 게임 내 오버레이 & 일시정지 (Steam In-Game Overlay) */
+        .steam-overlay-panel {
+            width: 980px;
+            max-width: 96vw;
+            max-height: 88vh;
+            background: rgba(23, 29, 37, 0.98);
+            border: 1px solid #44566c;
+            border-radius: 8px;
+            padding: 30px 40px;
+            box-shadow: 0 30px 90px rgba(0,0,0,0.99);
+            color: #eef2f8;
+            overflow-y: auto;
+        }
+        .steam-top-banner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #364457;
+            padding-bottom: 18px;
+            margin-bottom: 24px;
+        }
+        .steam-top-banner h2 {
+            font-size: 22px;
+            font-weight: 800;
+            color: #66c0f4;
+            letter-spacing: 1px;
+        }
+        .steam-playtime {
+            font-family: 'Courier Prime', monospace;
+            font-size: 14px;
+            color: #9ab4cc;
+            background: rgba(0,0,0,0.4);
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid #324354;
+        }
+        .steam-achieve-summary {
+            background: #141c26;
+            border: 1px solid #2e3d4f;
+            border-radius: 6px;
+            padding: 18px;
+            margin-bottom: 25px;
+        }
+        .steam-achieve-bar-outer {
+            width: 100%;
+            height: 10px;
+            background: #0d1218;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .steam-achieve-bar-inner {
+            height: 100%;
+            background: linear-gradient(90deg, #1976d2, #66c0f4);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+        .steam-achieve-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .steam-card {
+            background: #182230;
+            border: 1px solid #2b394a;
+            border-radius: 6px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            opacity: 0.45;
+            transition: all 0.2s;
+        }
+        .steam-card.unlocked {
+            opacity: 1;
+            border-color: #66c0f4;
+            background: #1b2838;
+        }
+        .steam-card-icon {
+            font-size: 26px;
+            width: 44px; height: 44px;
+            background: #11161d;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .steam-settings-box {
+            background: #141c26;
+            border: 1px solid #2e3d4f;
+            border-radius: 6px;
+            padding: 20px;
+            margin-top: 25px;
+        }
+        .steam-slider-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .steam-slider-row label {
+            font-size: 14px;
+            color: #c7d5e0;
+        }
+        .steam-slider-row input[type="range"] {
+            width: 200px;
+            accent-color: #66c0f4;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Three.js 3D 렌더 뷰포트 -->
+    <div id="viewport-container"></div>
+
+    <!-- 1997 VHS 캠코더 OSD 타임코드 -->
+    <div id="vhs-osd">
+        <span class="vhs-rec"><span class="vhs-dot"></span>REC</span>
+        <span>1997-09-14 23:30:15 SP</span>
+    </div>
+
+    <!-- 1인칭 손 & 손전등 뷰모델 (First-Person ViewModel) -->
+    <div id="fps-viewmodel">
+        <svg viewBox="0 0 200 200" style="width:100%; height:100%; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.9));">
+            <path d="M120 220 L150 140 L180 150 L190 220 Z" fill="#1c2430" />
+            <ellipse cx="145" cy="135" rx="14" ry="12" fill="#3a3028" />
+            <rect x="110" y="90" width="30" height="75" rx="4" transform="rotate(-25 125 125)" fill="#2a2e36" stroke="#4a5568" stroke-width="2" />
+            <polygon points="90,75 125,60 140,88 105,103" fill="#1a1d24" stroke="#cfa85c" stroke-width="1.5" />
+            <ellipse cx="108" cy="78" rx="12" ry="7" transform="rotate(-25 108 78)" id="flashlight-bulb-svg" fill="#fffaed" filter="drop-shadow(0 0 8px #fffaed)" />
+        </svg>
+    </div>
+
+    <!-- 비 내리는 창문 & 시네마틱 오버레이 -->
+    <canvas id="rain-window-canvas"></canvas>
+    <div id="vignette"></div>
+    <div id="film-noise"></div>
+    <div id="uv-filter"></div>
+    <div id="thunder-flash"></div>
+    <div id="camera-shutter"></div>
+
+    <!-- 스팀 도전 과제 달성 팝업 오버레이 -->
+    <div id="steam-achievement">
+        <div class="achieve-icon-box" id="achieve-icon">🏆</div>
+        <div class="achieve-info">
+            <div class="achieve-top-tag">Steam Achievement Unlocked</div>
+            <div class="achieve-name" id="achieve-title">도전 과제 달성</div>
+            <div class="achieve-desc" id="achieve-desc">달성 조건 설명</div>
+        </div>
+    </div>
+
+    <!-- 크로스헤어 & 상호작용 안내 -->
+    <div id="crosshair"></div>
+    <div id="interact-prompt">
+        <span class="key-tag">E / 클릭</span>
+        <span id="prompt-txt">조사하기</span>
+    </div>
+
+    <!-- 상단 수사 상태 바 -->
+    <div id="top-bar">
+        <div class="top-left-info">
+            <div class="case-code">CASE FILE #1997-0914 : 송백리 미제 살인사건</div>
+            <div class="zone-title" id="bar-zone-title">송백리 저택 본관 (1층 거실)</div>
+            <div class="zone-desc" id="bar-zone-desc">비극이 시작된 거대 제약회사 회장의 별장. 짙은 침묵과 먼지만이 가득하다.</div>
+        </div>
+        <div class="action-buttons">
+            <button class="ui-btn" onclick="game.openMapModal()">
+                <span>🗺️ 부지 실측도 [M]</span>
+            </button>
+            <button class="ui-btn uv-btn" id="btn-uv-toggle" onclick="game.toggleUVLight()">
+                <span>자외선(UV) 모드 [L]</span>
+            </button>
+            <button class="ui-btn" onclick="game.takePolaroid()">
+                <span>📷 폴라로이드 [C]</span>
+            </button>
+            <button class="ui-btn" onclick="game.openNotebookModal()">
+                <span>수사 수첩 [J]</span>
+                <span class="badge-pill" id="badge-clues">0</span>
+            </button>
+            <button class="ui-btn" onclick="game.openPinboard()">
+                <span>사건 핀보드 [B]</span>
+            </button>
+            <button class="ui-btn red-btn" onclick="game.openDeductionReport()">
+                <span style="color: #ff6b6b; font-weight:700;">최종 추리 보고서 [R]</span>
+            </button>
+            <button class="ui-btn" style="border-color:#44566c; color:#9ab4cc;" onclick="game.openSteamOverlay()">
+                <span>⚙️ STEAM [ESC]</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 좌하단 지도 / 빠른 이동 메뉴 -->
+    <div id="town-map-nav">
+        <div class="map-header">
+            <span>송백리 수색 구역</span>
+            <span id="nav-count" style="color: #888; font-size: 11px;">1 / 7 구역</span>
+        </div>
+        <div class="location-menu" id="nav-list"></div>
+    </div>
+
+    <!-- 우하단 조작 키 안내 -->
+    <div id="control-box">
+        <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 / 마우스 둘러보기</div>
+        <div><kbd>마우스 우클릭</kbd> 손전등 집중 조명 (Zoom) | <kbd>E / 클릭</kbd> 조사</div>
+        <div><kbd>F</kbd> 손전등 | <kbd>L</kbd> UV 라이트 | <kbd>C</kbd> 폴라로이드</div>
+        <div><kbd>M</kbd> 건축도면 지도 | <kbd>J</kbd> 수사수첩 | <kbd>B</kbd> 핀보드 | <kbd>V</kbd> VHS OSD 토글</div>
+        <div><kbd>R</kbd> 최종추리보고서 | <kbd>Shift+Tab</kbd> / <kbd>ESC</kbd> Steam 메뉴</div>
+    </div>
+
+    <!-- 토스트 알림 팝업 -->
+    <div id="toast-alert">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-gold)" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <span id="toast-txt">알림</span>
+    </div>
+
+    <!-- ==================== 모달 레이어들 ==================== -->
+
+    <!-- 1. 문서 뷰어 모달 -->
+    <div class="modal-wrap" id="modal-paper">
+        <div class="archive-paper">
+            <button class="x-close" onclick="game.closeAllModals()">✕</button>
+            <div class="paper-red-stamp">극 비 문 서</div>
+            <div class="paper-head">
+                <div class="paper-title-text" id="paper-head-title">문서명</div>
+                <div class="paper-date-str" id="paper-head-date">1997.09.14</div>
+            </div>
+            <div class="paper-article" id="paper-head-body">내용</div>
+            <div class="paper-foot">
+                <span id="paper-head-src">출처: 현장 증거품</span>
+                <span>[ESC] 닫기</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 수사 코르크보드 모달 (인터랙티브 붉은 실 연결 지원) -->
+    <div class="modal-wrap" id="modal-cork">
+        <div class="cork-stage">
+            <div class="cork-bar">
+                <h2>송백리 연쇄 비극 사건 수사 보드 (CASE BOARD #1997)</h2>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:12px; color:var(--accent-gold);">※ 카드 2개를 차례로 클릭하여 '붉은 실(Red Thread)'로 연결하십시오.</span>
+                    <button class="x-close" style="position:static; color:#fff; background:#433020;" onclick="game.closeAllModals()">✕</button>
+                </div>
+            </div>
+            <div class="cork-scroll-zone" id="cork-cards-host"></div>
+        </div>
+    </div>
+
+    <!-- 3. 금고 다이얼 모달 -->
+    <div class="modal-wrap" id="modal-safe">
+        <div class="rotary-safe">
+            <button class="x-close" onclick="game.closeAllModals()">✕</button>
+            <div class="rotary-header">
+                <h3 id="safe-head-title">2층 서재 벽금고</h3>
+                <p id="safe-head-hint">4자리 비밀번호를 맞추고 레버를 당기십시오.</p>
+            </div>
+            <div class="rotary-row" id="safe-wheels-row"></div>
+            <button class="safe-lever-btn" onclick="game.submitSafeCode()">잠금 해제 레버 당기기</button>
+        </div>
+    </div>
+
+    <!-- 4. 카세트 테이프 & 라디오 플레이어 모달 -->
+    <div class="modal-wrap" id="modal-tape">
+        <div id="tape-player-box">
+            <button class="x-close" onclick="game.closeAllModals()">✕</button>
+            <div class="tape-reel-frame">
+                <div class="reel-wheel" id="reel-left"></div>
+                <div class="reel-wheel" id="reel-right"></div>
+                <div class="tape-label" id="tape-title-label">TAPE #01</div>
+            </div>
+            <div class="tape-transcript" id="tape-text-transcript">
+                녹취 내용이 여기에 표시됩니다.
+            </div>
+            <button class="tape-ctrl-btn" id="btn-tape-play" onclick="game.playCurrentTapeAudio()">
+                ▶ 음성 녹취 재생
+            </button>
+        </div>
+    </div>
+
+    <!-- 5. 최종 추리 보고서 모달 -->
+    <div class="modal-wrap" id="modal-dossier">
+        <div class="deduction-dossier">
+            <button class="x-close" onclick="game.closeAllModals()">✕</button>
+            <div class="dossier-head">
+                <h1>송백리 살인사건 최종 수사 보고서</h1>
+                <p style="color:#8a97a8; font-size:13px;">현장에서 확보한 40여 종의 단서와 일기, 부검 기록을 바탕으로 20년 전 묻혀버린 진실을 확정하십시오.</p>
+            </div>
+            <div id="dossier-queries-host"></div>
+            <button class="safe-lever-btn" style="background:var(--accent-blood); color:#fff; font-size:16px; margin-top:15px;" onclick="game.submitFinalDeduction()">
+                보고서 최종 확정 및 결론 제출
+            </button>
+        </div>
+    </div>
+
+    <!-- 6. 3D 아이템 검사기 (Inspect Mode) -->
+    <div id="inspect-modal">
+        <div id="inspect-stage"></div>
+        <div id="inspect-detail">
+            <h3 id="inspect-title">아이템 이름</h3>
+            <p id="inspect-desc">아이템 설명</p>
+            <div style="font-size:11px; color:#777; margin-top:8px;">[마우스 드래그] 360도 회전 및 조사 | [ESC] 검사 종료</div>
+        </div>
+    </div>
+
+    <!-- 9. 1997 송백리 실측 건축도면 모달 -->
+    <div class="modal-wrap" id="modal-map">
+        <div class="blueprint-stage">
+            <button class="x-close" style="position:absolute; top:12px; right:15px; color:#38bdf8; background:rgba(0,0,0,0.4);" onclick="game.closeAllModals()">✕</button>
+            <div class="bp-header">
+                <h2>📐 1988 송백리 별장지 실측 건축도면 (ESTATE BLUEPRINT)</h2>
+                <span style="font-size:12px; color:#94a3b8; font-family:'Courier Prime',monospace;">SCALE 1:250 / 영월군청 허가 제88-12호</span>
+            </div>
+            <div class="bp-canvas-zone" id="bp-rooms-host">
+                <!-- Dynamically populated from CASE_DB.zones -->
+            </div>
+            <div class="bp-stamp">춘천지검 원주지청 압수필증</div>
+        </div>
+    </div>
+
+    <!-- 10. 형사 현장 수사 수첩 모달 (3 Tabs) -->
+    <div class="modal-wrap" id="modal-notebook">
+        <div class="notebook-stage">
+            <div class="nb-nav-tabs">
+                <button class="nb-tab-btn active" id="nb-tab-btn-0" onclick="game.switchNotebookTab(0)">📋 수사 진행 현황</button>
+                <button class="nb-tab-btn" id="nb-tab-btn-1" onclick="game.switchNotebookTab(1)">⏱️ 1997.09.14 알리바이 타임라인</button>
+                <button class="nb-tab-btn" id="nb-tab-btn-2" onclick="game.switchNotebookTab(2)">👥 용의자 6인 전과 및 심문 조서</button>
+                <button class="x-close" style="margin-left:auto; margin-top:8px; margin-right:12px; position:static; color:#fff; background:#374151;" onclick="game.closeAllModals()">✕</button>
+            </div>
+            <div class="nb-tab-body" id="nb-tab-content">
+                <!-- Dynamically populated based on active tab -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 11. 스팀 게임 내 오버레이 & 일시정지 모달 -->
+    <div class="modal-wrap" id="modal-steam-overlay">
+        <div class="steam-overlay-panel">
+            <button class="x-close" onclick="game.closeAllModals()">✕</button>
+            <div class="steam-top-banner">
+                <div>
+                    <h2>STEAM IN-GAME OVERLAY</h2>
+                    <div style="font-size:13px; color:#8f98a0; margin-top:3px;">The Songbaek Killings 1997 : Buried Truth</div>
+                </div>
+                <div class="steam-playtime" id="steam-live-timer">PLAYTIME: 00:00:00</div>
+            </div>
+
+            <div class="steam-achieve-summary">
+                <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:700;">
+                    <span>🏆 도전 과제 진척도 (Achievements)</span>
+                    <span id="steam-achieve-ratio" style="color:#66c0f4;">0 / 15 달성</span>
+                </div>
+                <div class="steam-achieve-bar-outer">
+                    <div class="steam-achieve-bar-inner" id="steam-achieve-progress"></div>
+                </div>
+                <div class="steam-achieve-grid" id="steam-achieve-list"></div>
+            </div>
+
+            <div class="steam-settings-box">
+                <h3 style="font-size:15px; color:#66c0f4; margin-bottom:14px;">⚙️ 게임플레이 및 그래픽/오디오 환경 설정</h3>
+                <div class="steam-slider-row">
+                    <label>1997 VHS 캠코더 스캔라인 필터 (CRT Retro - 단축키 V)</label>
+                    <input type="checkbox" id="setting-vhs" checked onchange="game.toggleVHSFilter(this.checked)" style="width:20px; height:20px; accent-color:#66c0f4;">
+                </div>
+                <div class="steam-slider-row">
+                    <label>손전등 조명 강도 (Flashlight Intensity)</label>
+                    <input type="range" min="0.5" max="1.8" step="0.1" value="1.0" oninput="game.setFlashlightIntensity(this.value)">
+                </div>
+                <div class="steam-slider-row">
+                    <label>마우스 시야 회전 감도 (Mouse Sensitivity)</label>
+                    <input type="range" min="0.5" max="2.5" step="0.1" value="1.0" oninput="game.setMouseSensitivity(this.value)">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. 엔딩 스크린 -->
+    <div id="ending-screen">
+        <div class="ending-panel">
+            <div class="ending-rank-tag" id="rank-tag">RANK S</div>
+            <div class="ending-title-banner" id="rank-title">묻혀버린 진실의 부활</div>
+            <div class="ending-epilogue" id="rank-story">엔딩 내용</div>
+            <button class="safe-lever-btn" style="width:auto; padding:12px 40px;" onclick="location.reload()">처음부터 다시 수사하기</button>
+        </div>
+    </div>
+
+    <!-- 8. 인트로 모달 -->
+    <div id="intro-modal">
+        <div class="intro-slate">
+            <h1 class="intro-title-main">송백리 살인사건</h1>
+            <div class="intro-subtitle">The Songbaek Killings 1997 : Buried Truth</div>
+            <div class="intro-dossier-text">
+                <strong>1997년 9월 14일 밤</strong>, 거대 제약회사 회장의 외동딸 '강서연'이 별장 온실에서 잔혹하게 살해당했다.<br><br>
+                유력 용의자였던 관리인의 자살 위장, 잇따른 IMF 부도와 산사태 경보로 송백리는 영구 폐쇄되었고 사건은 20년간 묻혔다.<br><br>
+                2017년 10월, 프리랜서 저널리스트 <strong>'윤도현'</strong>(당신)에게 녹슨 황동 열쇠 하나와 서늘한 편지가 도착한다.<br>
+                <em>"그들은 모두 거짓말을 했습니다. 서재의 시계 뒤를 보십시오. 진실을 세상에 밝혀주십시오."</em><br><br>
+                손전등과 자외선(UV) 라이트를 켜고, 폐허 속 숨겨진 혈흔과 녹취 테이프를 추적하여 20년 전의 충격적인 진실을 파헤치십시오.
+            </div>
+            <button class="safe-lever-btn" style="width:auto; padding:15px 50px; font-size:16px;" onclick="game.startStory()">
+                송백리 출입문 개방 (수사 시작)
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== 게임 메인 스크립트 ==================== -->
+    <script>
+        /* ============================================================
+           1. 사운드트랙 & 절차적 앰비언스 오디오 엔진 (Web Audio API)
+           천둥, 빗줄기, 카세트 테이프 잡음, UV 윙윙거림, 괘종시계 초침
+           ============================================================ */
+        class UltraAudioEngine {
+            constructor() {
+                this.ctx = null;
+                this.isRainActive = false;
+                this.uvHumOsc = null;
+                this.uvHumGain = null;
+                this.pianoInterval = null;
+                this.clockInterval = null;
+            }
+
+            init() {
+                if (this.ctx) return;
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioCtx();
+                this.startRainAndWind();
+                this.startClockTicking();
+                this.startSadPiano();
+            }
+
+            startRainAndWind() {
+                if (!this.ctx || this.isRainActive) return;
+                this.isRainActive = true;
+                const bufSize = this.ctx.sampleRate * 2;
+                const noiseBuf = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
+                const out = noiseBuf.getChannelData(0);
+                let last = 0.0;
+                for (let i = 0; i < bufSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    out[i] = (last + (0.022 * white)) / 1.022;
+                    last = out[i];
+                    out[i] *= 0.15;
+                }
+                const noiseNode = this.ctx.createBufferSource();
+                noiseNode.buffer = noiseBuf;
+                noiseNode.loop = true;
+
+                const lpf = this.ctx.createBiquadFilter();
+                lpf.type = 'lowpass';
+                lpf.frequency.value = 480;
+
+                const gain = this.ctx.createGain();
+                gain.gain.value = 0.38;
+
+                noiseNode.connect(lpf);
+                lpf.connect(gain);
+                gain.connect(this.ctx.destination);
+                noiseNode.start();
+            }
+
+            startClockTicking() {
+                if (!this.ctx) return;
+                const tick = () => {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(1350, now);
+                    osc.frequency.exponentialRampToValueAtTime(320, now + 0.024);
+                    gain.gain.setValueAtTime(0.045, now);
+                    gain.gain.linearRampToValueAtTime(0.0001, now + 0.024);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.024);
+                };
+                this.clockInterval = setInterval(tick, 1000);
+            }
+
+            startSadPiano() {
+                const notes = [146.83, 174.61, 220.00, 261.63, 293.66, 349.23, 440.00];
+                const playNext = () => {
+                    if (!this.ctx) return;
+                    const f = notes[Math.floor(Math.random() * notes.length)];
+                    this.playPianoChord(f, 3.8);
+                    this.pianoInterval = setTimeout(playNext, 3200 + Math.random() * 4200);
+                };
+                setTimeout(playNext, 1800);
+            }
+
+            playPianoChord(freq, dur = 3) {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, now);
+
+                gain.gain.setValueAtTime(0.0001, now);
+                gain.gain.linearRampToValueAtTime(0.095, now + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + dur);
+            }
+
+            setUVHum(enable) {
+                if (!this.ctx) return;
+                if (enable) {
+                    if (!this.uvHumOsc) {
+                        this.uvHumOsc = this.ctx.createOscillator();
+                        this.uvHumGain = this.ctx.createGain();
+                        this.uvHumOsc.type = 'sine';
+                        this.uvHumOsc.frequency.setValueAtTime(120, this.ctx.currentTime);
+                        this.uvHumGain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                        this.uvHumOsc.connect(this.uvHumGain);
+                        this.uvHumGain.connect(this.ctx.destination);
+                        this.uvHumOsc.start();
+                    }
+                } else {
+                    if (this.uvHumOsc) {
+                        this.uvHumGain.gain.linearRampToValueAtTime(0.0001, this.ctx.currentTime + 0.1);
+                        setTimeout(() => {
+                            if (this.uvHumOsc) {
+                                this.uvHumOsc.stop();
+                                this.uvHumOsc.disconnect();
+                                this.uvHumOsc = null;
+                            }
+                        }, 120);
+                    }
+                }
+            }
+
+            playThunderSound() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(70, now);
+                osc.frequency.linearRampToValueAtTime(32, now + 2.0);
+
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.8);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 2.8);
+            }
+
+            playFootstep() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(120, now);
+                osc.frequency.exponentialRampToValueAtTime(38, now + 0.08);
+                gain.gain.setValueAtTime(0.065, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.08);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            }
+
+            playShutterSound() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(750, now);
+                osc.frequency.linearRampToValueAtTime(180, now + 0.06);
+                gain.gain.setValueAtTime(0.24, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.06);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.06);
+
+                setTimeout(() => {
+                    const motorOsc = this.ctx.createOscillator();
+                    const motorGain = this.ctx.createGain();
+                    motorOsc.type = 'sawtooth';
+                    motorOsc.frequency.setValueAtTime(130, this.ctx.currentTime);
+                    motorGain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                    motorGain.gain.linearRampToValueAtTime(0.0001, this.ctx.currentTime + 0.45);
+                    motorOsc.connect(motorGain);
+                    motorGain.connect(this.ctx.destination);
+                    motorOsc.start(this.ctx.currentTime);
+                    motorOsc.stop(this.ctx.currentTime + 0.45);
+                }, 70);
+            }
+
+            playPaperTurn() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(80, now + 0.12);
+                gain.gain.setValueAtTime(0.14, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.12);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.12);
+            }
+
+            playUnlock() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                for (let i = 0; i < 3; i++) {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(1050 + i * 360, now + i * 0.05);
+                    gain.gain.setValueAtTime(0.15, now + i * 0.05);
+                    gain.gain.linearRampToValueAtTime(0.001, now + i * 0.05 + 0.06);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.05);
+                    osc.stop(now + i * 0.05 + 0.06);
+                }
+            }
+
+            playTapeAudioNoise(duration = 6.0) {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(320, now);
+                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + duration);
+            }
+
+            playAchievementSound() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + i * 0.08);
+                    gain.gain.setValueAtTime(0.001, now + i * 0.08);
+                    gain.gain.linearRampToValueAtTime(0.1, now + i * 0.08 + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.08 + 0.4);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.08);
+                    osc.stop(now + i * 0.08 + 0.4);
+                });
+            }
+
+            playDeductionConnectSound() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [440, 554.37, 659.25, 880].forEach((f, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(f, now + i * 0.07);
+                    gain.gain.setValueAtTime(0.001, now + i * 0.07);
+                    gain.gain.linearRampToValueAtTime(0.08, now + i * 0.07 + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.07 + 0.35);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.07);
+                    osc.stop(now + i * 0.07 + 0.35);
+                });
+            }
+
+            playClueStinger() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [220, 261.63, 311.13, 415.30].forEach(f => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(f, now);
+                    gain.gain.setValueAtTime(0.001, now);
+                    gain.gain.linearRampToValueAtTime(0.08, now + 0.15);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.2);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 2.2);
+                });
+            }
+        }
+
+        /* ============================================================
+           2. 절차적 텍스처 팩토리 (Canvas High-Res Textures)
+           ============================================================ */
+        class TextureStudio {
+            static getWoodPlanks() {
+                const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+                const ctx = c.getContext('2d');
+                ctx.fillStyle = '#221913'; ctx.fillRect(0, 0, 512, 512);
+
+                for (let y = 0; y < 512; y += 64) {
+                    ctx.strokeStyle = '#120c08'; ctx.lineWidth = 3;
+                    ctx.strokeRect(0, y, 512, 64);
+                    for (let i = 0; i < 45; i++) {
+                        ctx.fillStyle = (Math.random() > 0.5) ? 'rgba(0,0,0,0.16)' : 'rgba(255,255,255,0.04)';
+                        ctx.fillRect(Math.random() * 512, y + Math.random() * 60, Math.random() * 90 + 20, 2);
+                    }
+                }
+                const tex = new THREE.CanvasTexture(c);
+                tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+                tex.repeat.set(4, 4);
+                return tex;
+            }
+
+            static getDamagedWallpaper(baseColor = '#2b231d') {
+                const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+                const ctx = c.getContext('2d');
+                ctx.fillStyle = baseColor; ctx.fillRect(0, 0, 512, 512);
+
+                for (let i = 0; i < 70; i++) {
+                    const x = Math.random() * 512, y = Math.random() * 512, r = Math.random() * 60 + 10;
+                    const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+                    grad.addColorStop(0, 'rgba(10, 10, 10, 0.48)');
+                    grad.addColorStop(1, 'transparent');
+                    ctx.fillStyle = grad;
+                    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+                }
+                const tex = new THREE.CanvasTexture(c);
+                tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+                tex.repeat.set(2, 2);
+                return tex;
+            }
+
+            static getBloodyCanvas() {
+                const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+                const ctx = c.getContext('2d');
+                ctx.fillStyle = '#dcd4c0'; ctx.fillRect(0, 0, 512, 512);
+                ctx.fillStyle = '#425345'; ctx.fillRect(0, 220, 512, 292);
+                ctx.fillStyle = '#65788d'; ctx.fillRect(0, 0, 512, 220);
+
+                ctx.fillStyle = '#680a0a';
+                for (let i = 0; i < 140; i++) {
+                    const x = 220 + (Math.random() - 0.5) * 240;
+                    const y = 290 + (Math.random() - 0.5) * 220;
+                    const r = Math.random() * 14 + 2;
+                    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+                }
+                return new THREE.CanvasTexture(c);
+            }
+        }
+
+        /* ============================================================
+           3. 수사 데이터베이스 및 유기적 인과 단서 맵 (Realism Case Data)
+           ============================================================ */
+        const CASE_DB = {
+            zones: [
+                {
+                    id: "mansion_1f",
+                    name: "송백리 저택 본관 (1층 거실)",
+                    desc: "비극이 시작된 거대 제약회사 회장의 별장. 짙은 침묵과 먼지만이 가득하다.",
+                    locked: false,
+                    wallColor: "#25282e"
+                },
+                {
+                    id: "mansion_2f",
+                    name: "저택 본관 2층 (서재 및 침실)",
+                    desc: "강태식 회장의 거대한 서재와 피해자 강서연의 잠겨있던 침실.",
+                    locked: false,
+                    wallColor: "#302520"
+                },
+                {
+                    id: "greenhouse",
+                    name: "온실 및 화실 (살인 현장)",
+                    desc: "1997년 9월 14일 밤, 서연의 시신이 발견된 유리 온실. 마른 장미와 깨진 유리.",
+                    locked: true,
+                    reqItem: "key_greenhouse",
+                    wallColor: "#1b2c22"
+                },
+                {
+                    id: "cabin",
+                    name: "관리인 오두막",
+                    desc: "자살로 처리된 별장 관리인 정성태가 기거하던 산기슭 통나무집.",
+                    locked: true,
+                    reqItem: "key_cabin",
+                    wallColor: "#2e2219"
+                },
+                {
+                    id: "post_office",
+                    name: "마을 우체국 & 잡화점",
+                    desc: "모든 주민의 사서함과 우편물, 그리고 은밀한 사진들이 숨겨진 곳.",
+                    locked: true,
+                    reqItem: "key_post_office",
+                    wallColor: "#282631"
+                },
+                {
+                    id: "church",
+                    name: "송백 성당 & 사제관",
+                    desc: "한우진 신부가 미사를 집전하던 석조 성당. 서연의 마지막 고해성사가 머문 곳.",
+                    locked: true,
+                    reqItem: "key_church",
+                    wallColor: "#292026"
+                },
+                {
+                    id: "clinic",
+                    name: "폐쇄된 마을 보건소",
+                    desc: "송백제약 연구소 겸 보건소. 지하실에 극비 진료 기록과 비밀 벙커 입구가 있다.",
+                    locked: true,
+                    reqItem: "key_clinic",
+                    wallColor: "#1a262c"
+                }
+            ],
+
+            characters: [
+                {
+                    id: "gang_seoyeon",
+                    name: "강서연 (당시 24세)",
+                    role: "피해자 / 회장 고명딸, 서양화가",
+                    svgPortrait: `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#1b2028"/><circle cx="50" cy="40" r="18" fill="#e5d8c8"/><path d="M30 42 C30 20, 70 20, 70 42 C68 28, 32 28, 30 42 Z" fill="#2c221a"/><ellipse cx="44" cy="38" rx="2" ry="3" fill="#111"/><ellipse cx="56" cy="38" rx="2" ry="3" fill="#111"/><path d="M48 46 Q50 48 52 46" stroke="#8a4444" stroke-width="1.5" fill="none"/><path d="M25 85 C25 60, 75 60, 75 85 Z" fill="#d9cdb8"/></svg>`,
+                    dossier: "1997.09.14 온실에서 둔기 타격으로 참혹하게 살해됨. 집안의 불법 임상시험에 회의를 느끼고 한우진 신부와 야반도주하려 가방을 싸둠."
+                },
+                {
+                    id: "cha_minhyuk",
+                    name: "차민혁 (당시 28세)",
+                    role: "용의자 1 / 송백제약 기획실장, 약혼자",
+                    svgPortrait: `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#181c24"/><circle cx="50" cy="40" r="17" fill="#d5c8b8"/><path d="M32 30 C35 18, 65 18, 68 30 Z" fill="#15171a"/><line x1="42" y1="36" x2="48" y2="36" stroke="#222" stroke-width="2"/><line x1="52" y1="36" x2="58" y2="36" stroke="#222" stroke-width="2"/><path d="M22 85 C22 58, 78 58, 78 85 Z" fill="#1c2533"/><polygon points="50,68 46,85 54,85" fill="#8b1e1e"/></svg>`,
+                    dossier: "서연과의 정략결혼으로 경영권 획득을 노림. 횡령과 임상시험 은폐를 서연에게 들켜 파혼 위기에 몰림. 당일 톨게이트 영수증 알리바이 조작 의혹."
+                },
+                {
+                    id: "lim_yeeun",
+                    name: "임예은 (당시 24세)",
+                    role: "용의자 2 / 전담 간호사 & 소꿉친구",
+                    svgPortrait: `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#1c222b"/><circle cx="50" cy="41" r="17" fill="#eddccb"/><path d="M32 40 C32 18, 68 18, 68 40 Z" fill="#111"/><ellipse cx="44" cy="39" rx="2" ry="2" fill="#000"/><ellipse cx="56" cy="39" rx="2" ry="2" fill="#000"/><path d="M47 48 Q50 49 53 48" stroke="#a33" stroke-width="1.2" fill="none"/><path d="M26 85 C26 62, 74 62, 74 85 Z" fill="#f4ede1"/><rect x="42" y="22" width="16" height="10" fill="#fff"/><line x1="50" y1="24" x2="50" y2="30" stroke="#8b1e1e" stroke-width="2"/><line x1="47" y1="27" x2="53" y2="27" stroke="#8b1e1e" stroke-width="2"/></svg>`,
+                    dossier: "서연의 곁을 지키던 절친이자 간호사. 사건 직후 시신을 최초 발견하고 오열 후 실종됨. 실은 강태식 회장의 숨겨진 혼외자(서연의 배다른 자매)."
+                },
+                {
+                    id: "jung_sungtae",
+                    name: "정성태 (당시 52세)",
+                    role: "용의자 3 / 별장 관리인 (사망)",
+                    svgPortrait: `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#191d24"/><circle cx="50" cy="42" r="18" fill="#c4aa94"/><path d="M32 35 C35 20, 65 20, 68 35 Z" fill="#444"/><line x1="42" y1="40" x2="48" y2="40" stroke="#333" stroke-width="1.5"/><line x1="52" y1="40" x2="58" y2="40" stroke="#333" stroke-width="1.5"/><path d="M40 50 Q50 47 60 50" stroke="#333" stroke-width="2" fill="none"/><path d="M24 85 C24 64, 76 64, 76 85 Z" fill="#3b3229"/></svg>`,
+                    dossier: "사건 3일 뒤 산속 창고에서 목을 맨 시체로 발견됨. 현장에 남겨진 유서의 필적이 누군가에 의해 위조된 타살 입막음 의혹."
+                },
+                {
+                    id: "han_woojin",
+                    name: "한우진 (당시 39세)",
+                    role: "용의자 4 / 송백 성당 신부",
+                    svgPortrait: `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#181c22"/><circle cx="50" cy="40" r="17" fill="#d8cbb8"/><path d="M33 32 C35 22, 65 22, 67 32 Z" fill="#1e1814"/><ellipse cx="44" cy="38" rx="2" ry="2" fill="#222"/><ellipse cx="56" cy="38" rx="2" ry="2" fill="#222"/><path d="M22 85 C22 60, 78 60, 78 85 Z" fill="#15171c"/><rect x="46" y="60" width="8" height="6" fill="#fff"/></svg>`,
+                    dossier: "서연의 마지막 고해성사를 들음. 성직자의 금기를 깨고 서연과 사랑을 나눴으며, 서연이 품고 있던 태아의 생부. 사건 후 20년간 은둔."
+                },
+                {
+                    id: "bae_sangho",
+                    name: "배상호 (당시 48세)",
+                    role: "용의자 5 / 보건소장 & 부검의",
+                    svgPortrait: `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#171b22"/><circle cx="50" cy="41" r="18" fill="#d2c4b0"/><path d="M33 32 C35 22, 65 22, 67 32 Z" fill="#2a2e33"/><circle cx="43" cy="38" r="4.5" fill="none" stroke="#d4ab5d" stroke-width="1.2"/><circle cx="57" cy="38" r="4.5" fill="none" stroke="#d4ab5d" stroke-width="1.2"/><line x1="47.5" y1="38" x2="52.5" y2="38" stroke="#d4ab5d" stroke-width="1.2"/><path d="M22 85 C22 62, 78 62, 78 85 Z" fill="#eef2f5"/></svg>`,
+                    dossier: "송백제약 주식을 받는 대가로 서연의 임신 9주차 사실과 온실에서 회수한 대리석상 흉기를 부검서에서 완전히 삭제 은폐함."
+                },
+                {
+                    id: "oh_dalsu",
+                    name: "오달수 (당시 35세)",
+                    role: "용의자 6 / 우체부 & 잡화점",
+                    svgPortrait: `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#161a22"/><circle cx="50" cy="43" r="18" fill="#cbb49e"/><path d="M28 32 C30 18, 70 18, 72 32 Z" fill="#1d3047"/><rect x="25" y="30" width="50" height="4" fill="#0d1824"/><ellipse cx="43" cy="42" rx="2" ry="2" fill="#111"/><ellipse cx="57" cy="42" rx="2" ry="2" fill="#111"/><path d="M24 85 C24 64, 76 64, 76 85 Z" fill="#233a57"/></svg>`,
+                    dossier: "주민들의 우편물을 훔쳐보고 협박해 돈을 뜯어내던 상습 관음증 환자. 당일 밤 온실 밖에서 살해 현장을 목격하고 사진을 촬영함."
+                }
+            ],
+
+            interactables: [
+                {
+                    id: "obj_grandfather_clock",
+                    name: "앤틱 괘종시계",
+                    zoneId: "mansion_1f",
+                    pos: [-4.5, 0, -3.5],
+                    type: "pickup",
+                    item: "key_cabin",
+                    itemName: "관리인 오두막 열쇠",
+                    achieveId: "achieve_clock",
+                    inspectDesc: "흔들리는 시계추 뒷면 홈에 테이프로 붙어있던 황동 열쇠. '관리인 정성태'라고 긁혀 있다.",
+                    msg: "괘종시계 뒷면에서 '관리인 오두막 열쇠'를 발견했다!"
+                },
+                {
+                    id: "obj_mansion_newspaper",
+                    name: "거실 탁자 위 신문철",
+                    zoneId: "mansion_1f",
+                    pos: [2.5, 0, -2],
+                    type: "document",
+                    doc: {
+                        title: "1997년 9월 18일 자 강원일보 사회면",
+                        date: "1997.09.18",
+                        source: "저택 1층 응접실 소파 테이블",
+                        text: "【영월】 송백제약 강태식 회장의 외동딸 서연 씨(24)가 지난 14일 밤 별장 온실에서 머리에 피를 흘린 채 숨진 채 발견되어 충격을 주고 있다.\n\n경찰은 유력 용의자로 지목된 관리인 정 모씨(52)가 인근 야산 창고에서 '내가 몹쓸 짓을 했다'는 유서를 남기고 목을 매 숨진 채 발견됨에 따라 사건을 '피의자 공소권 없음'으로 종결할 방침이다.\n\n한편 지역 주민들은 송백제약이 인근 저수지 붕괴 위험을 이유로 토지를 헐값에 매입해 주민들을 서둘러 퇴거시키고 있는 데 대해 의혹을 제기하고 있다."
+                    }
+                },
+                {
+                    id: "obj_stairs_up",
+                    name: "2층으로 향하는 원목 계단",
+                    zoneId: "mansion_1f",
+                    pos: [0, 0, -6.5],
+                    type: "transition",
+                    targetZone: "mansion_2f"
+                },
+
+                {
+                    id: "obj_safe_desk",
+                    name: "서재 2층 매립형 벽금고",
+                    zoneId: "mansion_2f",
+                    pos: [-3.5, 0, -4.5],
+                    type: "safe",
+                    correctCode: "2304",
+                    unlocked: false,
+                    hint: "서연의 침실 화장대 성경책 추도문('어머니를 기리며, 시편 23편 4절...')",
+                    uvHint: "UV 반응: 다이얼 주변에 'PSALM 23:4'라고 희미한 형광 잉크가 적혀있다!",
+                    achieveId: "achieve_safe",
+                    docReward: {
+                        id: "doc_safe_contract",
+                        title: "송백제약 주식 양도 및 침묵 각서",
+                        date: "1997.08.20",
+                        source: "서재 벽금고 내부",
+                        text: "【합의각서】\n\n기획실장 차민혁에게 송백제약 보통주 150,000주를 무상 양도함.\n단, 차민혁은 다음 조항을 성실히 이행해야 한다:\n1. 강서연과의 혼인을 1997년 10월 30일까지 완료할 것.\n2. 보건소 지하 임상 연구소 'SB-9709' 약물 부작용 사망자 3명에 대한 검찰 진정서를 영구 회수 폐기할 것.\n\n(서류 여백에 서연의 격렬한 손글씨 메모):\n'민혁 씨, 당신이 나와 결혼하려는 진짜 이유가 이 더러운 피 묻은 주식 때문이었나요? 오늘 밤 성당 신부님과 함께 당신들의 모든 장부를 들고 떠날 겁니다.'"
+                    },
+                    itemReward: "key_greenhouse",
+                    itemRewardName: "온실 열쇠"
+                },
+                {
+                    id: "obj_seoyeon_bible",
+                    name: "서연의 침실 화장대와 성경책",
+                    zoneId: "mansion_2f",
+                    pos: [4, 0, -2.5],
+                    type: "document",
+                    doc: {
+                        title: "서연의 손때 묻은 성경책과 추모 쪽지",
+                        date: "1997년 여름",
+                        source: "서연의 침실 화장대 거울 앞",
+                        text: "가죽 성경책의 낡은 책갈피가 꽂혀 있는 페이지:\n\n【시편 23편 4절】\n'내가 사망의 음침한 골짜기로 다닐지라도 해를 두려워하지 않을 것은 주께서 나와 함께 하심이라...'\n\n책갈피로 쓰인 말린 국화꽃 뒷면에 적힌 서연의 필적:\n'일찍 돌아가신 어머니를 기리며 늘 이 구절(23:4)을 내 마음에 새깁니다. 가장 소중한 것을 잠가둘 때도 어머니의 이 말씀이 나를 지켜줍니다.'"
+                    }
+                },
+                {
+                    id: "obj_stairs_down",
+                    name: "1층으로 내려가는 계단",
+                    zoneId: "mansion_2f",
+                    pos: [0, 0, 5.5],
+                    type: "transition",
+                    targetZone: "mansion_1f"
+                },
+
+                {
+                    id: "obj_greenhouse_canvas",
+                    name: "핏자국이 튄 캔버스와 이젤",
+                    zoneId: "greenhouse",
+                    pos: [0, 0, -3],
+                    type: "document",
+                    achieveId: "achieve_greenhouse",
+                    uvHint: "UV 반응: 캔버스 주변 바닥에 형광 발자국이 선명하게 숲 쪽으로 찍혀있다!",
+                    doc: {
+                        title: "미완성 유화 뒷면의 비밀 메모 (살해 현장 유류품)",
+                        date: "1997.09.14 밤",
+                        source: "온실 이젤 캔버스 프레임 틈새",
+                        text: "【영월경찰서 증 제3호 - 핏자국이 튄 캔버스 뒷면 접힌 종이】\n\n'우진 신부님, 성당 짐은 다 챙기셨나요?\n예은이가 요즘 제 침실을 몰래 뒤지는 걸 봤어요. 서랍을 열어보고 제 옷을 만지는 그 눈빛이 소름 끼치도록 차가워요. 아버지가 예은이가 제 배다른 자매라고 털어놓았을 때, 온몸에 피가 식는 줄 알았습니다...\n신부님, 오늘 밤 11시 30분, 온실 뒷길 쪽문에서 기다릴게요. 우리 뱃속의 아가와 함께 이 위선으로 가득 찬 마을을 영원히 벗어나요.'"
+                    }
+                },
+                {
+                    id: "obj_greenhouse_box",
+                    name: "유리 온실 구석의 흙 묻은 공구함",
+                    zoneId: "greenhouse",
+                    pos: [4.2, 0, 1.5],
+                    type: "pickup",
+                    item: "key_post_office",
+                    itemName: "마을 우체국 사서함 열쇠 꾸러미",
+                    inspectDesc: "우체국 마크와 함께 '#104'라는 숫자가 각인된 열쇠.",
+                    msg: "흙더미 속에서 '우체국 사서함 열쇠(#104)'를 발견했다!"
+                },
+
+                {
+                    id: "obj_cabin_diary",
+                    name: "관리인 정성태의 낡은 수첩",
+                    zoneId: "cabin",
+                    pos: [-2.5, 0, -2.5],
+                    type: "document",
+                    achieveId: "achieve_cabin",
+                    doc: {
+                        title: "정성태의 마루 밑 비망록 (진짜 유서 대조본)",
+                        date: "1997.09.14 심야",
+                        source: "오두막 마룻바닥 아래 비밀 틈새",
+                        text: "【정성태 몽당연필 육필 메모 - 마루 밑 틈새 은닉본】\n\n'바람이 찢어지게 불고 번개가 친다. 11시 반이 넘었는데 온실 불이 켜져 있어 가보았다.\n유리창 너머로 서연 아가씨가 누군가와 격렬하게 멱살잡이를 하고 있었다.\n아가씨를 내리친 여자는... 세상에, 임예은 간호사였다!\n예은이가 피 묻은 하얀 원피스를 입고 묵직한 대리석 천사상을 쥔 채 비명을 지르며 뒷숲으로 내달렸다.\n아가씨를 흔들었지만 이미 머리에서 피가 쏟아져 숨이 멎었다.\n지서에 신고하려고 뛰어나오는데 오두막 문 뒤에서 누군가 쇠몽둥이로 내 뒤통수를 후려갈겼다...'\n\n(※ 국과수 필적 대조: 경찰이 발표한 '내가 죽였다'는 유서와는 필적과 지질이 판이하다. 정성태는 목격 후 입막음 살해당했다!)"
+                    }
+                },
+                {
+                    id: "obj_cabin_cross_key",
+                    name: "정성태의 걸상 위 열쇠고리",
+                    zoneId: "cabin",
+                    pos: [3.2, 0, -1],
+                    type: "pickup",
+                    item: "key_church",
+                    itemName: "송백 성당 뒷문 열쇠",
+                    inspectDesc: "십자가 문양이 음각된 오래된 쇠 열쇠.",
+                    msg: "정성태가 보관하던 '송백 성당 뒷문 열쇠'를 입수했다!"
+                },
+
+                {
+                    id: "obj_post_pobox104",
+                    name: "사서함 #104 (오달수의 비밀 금고함)",
+                    zoneId: "post_office",
+                    pos: [-3.5, 0, -3],
+                    type: "document",
+                    achieveId: "achieve_pobox",
+                    doc: {
+                        title: "오달수의 은닉 협박 사진 및 미발송 협박장 원본",
+                        date: "1997.09.15",
+                        source: "우체국 벽면 사서함 #104 내부",
+                        text: "【사서함 속 인화된 35mm 흑백 폴라로이드 사진 2매】\n· [사진 1] 1997.09.14 23:35: 깨진 온실 유리창 밖에서 플래시 없이 촬영된 사진. 피 묻은 대리석 천사 조각상을 손에 쥔 임예은 간호사가 서연의 시신 위에 서서 번갯불 아래 광기 어린 눈으로 찍혀있다.\n· [사진 2] 23:50: 뒤늦게 현장에 도착해 시신을 보고 사색이 되어 뒷걸음질 치는 차민혁 기획실장의 모습.\n\n【오달수가 적어둔 미발송 협박 쪽지】\n'차민혁 실장, 그리고 임예은 간호사. 살인과 사체유기 방조 원판 네거티브 필름을 내가 쥐고 있다. 서울 아파트 전세금 1억 5천만 원을 이번 주 금요일까지 송백 저수지 배수탑에 갖다 둬라. 장난치면 원판 필름을 서울 대검찰청 특별수사부에 직송한다.'"
+                    }
+                },
+                {
+                    id: "obj_post_tape",
+                    name: "우체국 탁자 위 카세트 플레이어",
+                    zoneId: "post_office",
+                    pos: [3.2, 0, 1.5],
+                    type: "tape",
+                    tapeTitle: "도청 테이프 #01 : 차민혁의 한밤중 통화",
+                    achieveId: "achieve_tape",
+                    spokenText: "야, 배상호 원장! 나 차민혁이야. 똑바로 들어. 서연이 그 계집애가 다 알았어! 보건소 지하 SB-9709 임상 사망자 차트... 내일 당장 서울 춘천지검에 넘기겠다고 날뛰고 있다고! 너랑 나랑 감방에서 평생 썩기 싫으면 지금 당장 손을 써야 해. 알았어?! 서연이 입을 영원히 틀어막든, 보건소 차트를 싹 불태우든 당장 결판을 내라고!",
+                    tapeText: "【1997년 9월 14일 밤 22:15 영월우체국 공중전화 도청 음성】\n\n(거친 숨소리와 수화기 잡음, 창밖을 때리는 폭우 소리)\n'야, 배상호 원장! 나 차민혁이야. 똑바로 들어. 서연이 그 계집애가 다 알았어!\n보건소 지하 SB-9709 임상 사망자 차트... 내일 당장 서울 춘천지검에 넘기겠다고 날뛰고 있다고!\n너랑 나랑 감방에서 평생 썩기 싫으면 지금 당장 손을 써야 해. 알았어?!\n서연이 입을 영원히 틀어막든, 보건소 차트를 싹 불태우든 당장 결판을 내라고!'"
+                },
+                {
+                    id: "obj_post_clinic_master",
+                    name: "잡화점 금고 서랍",
+                    zoneId: "post_office",
+                    pos: [-1.5, 0, 3.2],
+                    type: "pickup",
+                    item: "key_clinic",
+                    itemName: "보건소 마스터키",
+                    inspectDesc: "적십자 마크가 인쇄된 보건소 철제 열쇠.",
+                    msg: "오달수가 우편물 가방에서 빼돌렸던 '보건소 마스터키'를 회수했다!"
+                },
+
+                {
+                    id: "obj_church_altar",
+                    name: "성당 제단 아래 석조 비밀 고해함",
+                    zoneId: "church",
+                    pos: [0, 0, -5.2],
+                    type: "safe",
+                    correctCode: "0518",
+                    unlocked: false,
+                    hint: "사제관 책상 위 일지 ('그녀가 세례를 받던 5월 18일 성령 강림 축일...')",
+                    uvHint: "UV 반응: 제단 석판에 'MAY 18 (0518)'이라고 형광 촛농으로 새겨져 있다!",
+                    achieveId: "achieve_church",
+                    docReward: {
+                        id: "doc_father_last_letter",
+                        title: "한우진 신부의 20년간의 참회록 & 친자 고백서",
+                        date: "2017년 가을 (최근)",
+                        source: "송백 성당 제단 비밀 고해함",
+                        text: "주 예수 그리스도님, 저를 영원한 연옥의 불길에 던져주소서.\n20년 전 그 폭풍우 치던 밤, 저는 사제의 서약을 저버리고 서연이와 함께 떠나려 했습니다. 그녀의 뱃속에 자라던 새 생명은 제 아이였습니다.\n하지만 온실 뒷길에서 기다리던 제게 들려온 것은 차가운 비명과 새벽의 사이렌 소리뿐이었습니다.\n\n그리고... 도현아.\n서연이가 스물세 살이던 1996년 서울에서 남몰래 낳아 가톨릭 입양 기관을 통해 보낸 첫 아이...\n그 아이의 손목에 서연이가 채워준 은팔찌의 각인이 바로 'S.Y to D.H'였다.\n도현아, 너는 우연히 이 마을에 온 것이 아니다. 어머니의 원혼이 20년 만에 네 발걸음을 이곳으로 이끈 것이다.\n보건소 지하 깊숙한 배수관 밸브를 열어라.\n회장과 배상호가 묻어버린 어머니의 머리를 깬 진짜 흉기 '피 묻은 대리석 천사상'이 그곳에 잠들어 있다.\n어머니의 진실을 세상에 밝히고, 이 죄 많은 사제에게 마지막 참회의 기회를 다오."
+                    }
+                },
+                {
+                    id: "obj_church_diary",
+                    name: "사제관 책상 위 묵상록",
+                    zoneId: "church",
+                    pos: [4, 0, 0],
+                    type: "document",
+                    doc: {
+                        title: "한우진 신부의 1997년 묵상 일지",
+                        date: "1997년 5월 18일",
+                        source: "사제관 참나무 책상",
+                        text: "'5월 18일(0518).\n서연이가 무릎을 꿇고 눈물을 흘리며 세례를 받았다. 그녀의 맑은 영혼을 보며 나는 성직자로서가 아닌 한 남자로서 그녀를 지키겠다고 신 앞에 서약했다.\n비밀 고해함의 암호를 그녀가 새로 태어난 이 축일(0518)로 새겨두었다. 우리 둘만의 성스러운 언약이다.'"
+                    }
+                },
+
+                {
+                    id: "obj_clinic_autopsy",
+                    name: "보건소 지하 비밀 캐비닛",
+                    zoneId: "clinic",
+                    pos: [-3.8, 0, -2.5],
+                    type: "safe",
+                    correctCode: "9709",
+                    unlocked: false,
+                    hint: "연구소 벽면의 신약 임상시험 승인 포스터 ('프로젝트 SB-9709')",
+                    uvHint: "UV 반응: 캐비닛 철판에 붉은 형광 글씨로 'SB-9709'가 번쩍인다!",
+                    achieveId: "achieve_autopsy",
+                    docReward: {
+                        id: "doc_clinic_real_autopsy",
+                        title: "강서연 1차 부검 및 흉기 봉인 소견서 원본 (극비)",
+                        date: "1997.09.15 새벽",
+                        source: "보건소 지하 비밀 캐비닛",
+                        text: "【부검의 배상호 비밀 검안 기록】\n- 성명: 강서연 (24세)\n- 사인: 후두부 두개골 복합 골절에 의한 뇌출혈 (온실 대리석 천사 조각상 가격)\n- 결정적 특이사항: 자궁 내 '임신 9주차 태아' 확인됨.\n- 회수 증거물: 온실 장미 덤불에서 채취한 혈흔 묻은 대리석 천사상 흉기 확보 완료.\n\n※ 강태식 회장의 지시: 임신 사실과 흉기 채취 건을 공식 서류에서 영구 삭제함.\n흉기는 보건소 뒤편 지하 벙커 배수관 내에 밀봉 매립 조치함.\n보건소장 배상호에게 송백제약 주식 50,000주 지급 확약."
+                    }
+                },
+                {
+                    id: "obj_clinic_bunker_valve",
+                    name: "지하 벙커 배수관 봉인 밸브",
+                    zoneId: "clinic",
+                    pos: [3.8, 0, -4.2],
+                    type: "pickup",
+                    item: "bloody_statue",
+                    itemName: "피 묻은 대리석 천사상 (진짜 살해 흉기)",
+                    achieveId: "achieve_statue",
+                    inspectDesc: "20년 전의 검붉은 핏자국과 머리카락이 굳어있는 묵직한 대리석 천사 조각상. 반박할 수 없는 법적 살해 흉기다.",
+                    msg: "배수관 깊숙한 곳에서 20년간 은폐되었던 '피 묻은 대리석 천사상' 흉기를 발굴했다!"
+                }
+            ],
+
+            deductionQuestions: [
+                {
+                    id: "q1_culprit",
+                    question: "1. 1997년 9월 14일 밤, 온실에서 강서연을 살해한 '진짜 살인자'는 누구인가?",
+                    options: [
+                        { val: "cha", text: "차민혁 (송백제약 기획실장 / 약혼자)" },
+                        { val: "lim", text: "임예은 (전담 간호사 / 서연의 배다른 자매)", correct: true },
+                        { val: "jung", text: "정성태 (별장 관리인)" },
+                        { val: "han", text: "한우진 (성당 신부)" },
+                        { val: "bae", text: "배상호 (보건소장)" },
+                        { val: "oh", text: "오달수 (우체부)" }
+                    ]
+                },
+                {
+                    id: "q2_motive",
+                    question: "2. 진범의 결정적인 살해 동기는 무엇인가?",
+                    options: [
+                        { val: "embezzle", text: "회사 공금 횡령 비리 폭로를 막기 위한 입막음" },
+                        { val: "jealousy", text: "혼외자로서의 결핍감과 서연에 대한 뒤틀린 질투 및 박탈감", correct: true },
+                        { val: "blackmail", text: "우체부의 사서함 협박에 대한 우발적 방어" },
+                        { val: "faith", text: "성직자의 파문에 대한 두려움" }
+                    ]
+                },
+                {
+                    id: "q3_weapon",
+                    question: "3. 서연의 후두부를 가격한 진짜 살해 흉기는 무엇인가?",
+                    options: [
+                        { val: "wrench", text: "관리인의 녹슨 파이프 렌치" },
+                        { val: "statue", text: "온실의 무거운 대리석 천사 조각상", correct: true },
+                        { val: "poison", text: "보건소의 치사량 테트로도톡신 주사액" },
+                        { val: "gun", text: "산림 감시용 엽총" }
+                    ]
+                },
+                {
+                    id: "q4_caretaker",
+                    question: "4. 별장 관리인 정성태의 죽음에 얽힌 진실은 무엇인가?",
+                    options: [
+                        { val: "suicide", text: "서연을 구하지 못한 죄책감에 의한 실제 자살" },
+                        { val: "framed_murder", text: "진범 목격 후 기절당해 자살로 위장 살해당함", correct: true },
+                        { val: "accident", text: "폭풍우에 의한 저수지 실족사" }
+                    ]
+                },
+                {
+                    id: "q5_father",
+                    question: "5. 서연이 품고 있던 뱃속 아이의 진짜 친부는 누구인가?",
+                    options: [
+                        { val: "cha", text: "약혼자 차민혁" },
+                        { val: "han", text: "성당의 한우진 신부", correct: true },
+                        { val: "stranger", text: "알 수 없는 외부인" }
+                    ]
+                },
+                {
+                    id: "q6_player_identity",
+                    question: "6. [대반전] 당신(탐정 윤도현)과 피해자 강서연의 진짜 혈육 관계는?",
+                    options: [
+                        { val: "reporter", text: "우연히 특종을 쫓아 찾아온 외부 저널리스트" },
+                        { val: "son", text: "서연이 1년 전 비밀리에 출산해 입양 보낸 '친아들'", correct: true },
+                        { val: "nephew", text: "차민혁 기획실장의 먼 친척" }
+                    ]
+                }
+            ],
+
+            achievements: {
+                "achieve_start": { title: "금단의 문을 열다", desc: "송백리 출입문을 열고 첫 발을 내딛음", icon: "🔑" },
+                "achieve_clock": { title: "멈춰버린 시간", desc: "괘종시계 뒤편에서 관리인 오두막 열쇠를 발견함", icon: "⏰" },
+                "achieve_safe": { title: "시편 23편 4절", desc: "서재 벽금고 비밀번호를 풀어 비밀 각서를 입수함", icon: "📖" },
+                "achieve_uv": { title: "푸른 어둠의 눈", desc: "자외선(UV) 라이트를 켜서 숨겨진 형광 단서를 찾음", icon: "🩸" },
+                "achieve_photo": { title: "현장의 목격자", desc: "폴라로이드 카메라로 현장 결정적 사진 촬영", icon: "📷" },
+                "achieve_tape": { title: "도청된 진실", desc: "우체국에서 차민혁의 한밤중 통화 테이프를 청취함", icon: "📼" },
+                "achieve_autopsy": { title: "조작된 검안서", desc: "보건소 지하 캐비닛에서 은폐된 1차 부검서를 확보함", icon: "🩺" },
+                "achieve_statue": { title: "피 묻은 천사", desc: "지하 배수관에서 진짜 살해 흉기인 대리석상을 발굴함", icon: "👼" },
+                "achieve_church": { title: "사제관의 참회록", desc: "송백 성당 제단 아래에서 한우진 신부의 친자 고백서를 입수함", icon: "⛪" },
+                "achieve_pobox": { title: "사서함 104호의 악마", desc: "우체부 오달수가 은닉한 살해 현장 협박 사진 2장을 확보함", icon: "📬" },
+                "achieve_cabin": { title: "마루 밑 비망록", desc: "관리인 오두막 마루 밑에서 정성태의 진짜 유서를 발견함", icon: "🏚️" },
+                "achieve_greenhouse": { title: "깨진 유리 온실", desc: "사건 발생 현장인 유리 온실의 핏자국 튄 캔버스를 조사함", icon: "🥀" },
+                "achieve_thread_master": { title: "붉은 실의 인과율", desc: "수사 보드에서 용의자와 단서들을 붉은 실로 3회 이상 연결함", icon: "🧵" },
+                "achieve_rank_a": { title: "미완의 심판", desc: "최종 추리 보고서 60% 이상 정답 달성", icon: "⚖️" },
+                "achieve_rank_s": { title: "묻혀버린 진실의 부활", desc: "추리 보고서 100% 정답으로 RANK S 진엔딩 달성", icon: "🏆" }
+            }
+        };
+
+        /* ============================================================
+           4. 게임 메인 시스템 클래스
+           ============================================================ */
+        class SongbaekKillingsEngine {
+            constructor() {
+                this.audio = new UltraAudioEngine();
+                this.currentZoneId = "mansion_1f";
+                this.inventory = [];
+                this.clues = [];
+                this.visitedZones = ["mansion_1f"];
+                this.polaroids = [];
+                this.answers = {};
+                this.unlockedAchievements = [];
+                this.isUVActive = false;
+                this.activeModal = null;
+                this.currentSafe = null;
+
+                // 붉은 실 연결 상태
+                this.selectedCardId = null;
+                this.connections = [];
+
+                // 3D Engine
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.flashlight = null;
+                this.uvLight = null;
+                this.roomMesh = null;
+                this.interactiveMeshes = [];
+                this.hoveredObject = null;
+                this.dustPoints = null;
+
+                // Controls
+                this.isPointerLocked = false;
+                this.pitch = 0;
+                this.yaw = 0;
+                this.keys = {};
+                this.headBobCounter = 0;
+                this.isZooming = false;
+
+                // 3D Item Inspector
+                this.inspectScene = null;
+                this.inspectCamera = null;
+                this.inspectRenderer = null;
+                this.inspectMesh = null;
+                this.isDraggingInspect = false;
+                this.lastMousePos = { x: 0, y: 0 };
+
+                // Steam & UI Features
+                this.startTime = Date.now();
+                this.vhsEnabled = true;
+                this.flashlightIntensity = 1.0;
+                this.mouseSensitivity = 1.0;
+                this.currentNotebookTab = 0;
+
+                this.loadSave();
+            }
+
+            init() {
+                this.setupThree();
+                this.setupRainEffect();
+                this.setupItemInspector();
+                this.renderMapMenu();
+                this.setupInputHandlers();
+                this.loadZone(this.currentZoneId);
+                this.updateClueCount();
+                this.startThunderSystem();
+            }
+
+            startStory() {
+                this.audio.init();
+                document.getElementById('intro-modal').style.display = 'none';
+                this.showToast("송백리 저택에 진입했습니다. 손전등[F], 줌[우클릭], UV모드[L]를 활용하십시오.");
+                this.unlockAchievement("achieve_start");
+                if (!this.inventory.includes("key_starter")) {
+                    this.inventory.push("key_starter");
+                    this.save();
+                }
+            }
+
+            setupThree() {
+                const container = document.getElementById('viewport-container');
+                this.scene = new THREE.Scene();
+                this.scene.fog = new THREE.FogExp2(0x030406, 0.048);
+
+                this.camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 80);
+                this.camera.position.set(0, 1.65, 4.2);
+
+                this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                this.renderer.toneMappingExposure = 1.15;
+                container.appendChild(this.renderer.domElement);
+
+                this.flashlight = new THREE.SpotLight(0xfffaed, 2.8, 32, Math.PI / 4.6, 0.45, 1.2);
+                this.flashlight.position.set(0, 0, 0);
+                this.camera.add(this.flashlight);
+                this.camera.add(this.flashlight.target);
+                this.flashlight.target.position.set(0, 0, -6);
+
+                this.uvLight = new THREE.SpotLight(0xbc13fe, 4.2, 16, Math.PI / 3.8, 0.6, 1.0);
+                this.uvLight.position.set(0, 0, 0);
+                this.uvLight.visible = false;
+                this.camera.add(this.uvLight);
+                this.camera.add(this.uvLight.target);
+                this.uvLight.target.position.set(0, 0, -5);
+
+                this.scene.add(this.camera);
+
+                const amb = new THREE.AmbientLight(0x202834, 0.38);
+                this.scene.add(amb);
+
+                this.createDustParticles();
+
+                window.addEventListener('resize', () => {
+                    this.camera.aspect = window.innerWidth / window.innerHeight;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+
+                this.mainLoop();
+            }
+
+            setupRainEffect() {
+                const canvas = document.getElementById('rain-window-canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+
+                const drops = [];
+                for (let i = 0; i < 90; i++) {
+                    drops.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        length: Math.random() * 20 + 10,
+                        speed: Math.random() * 8 + 6
+                    });
+                }
+
+                const animateRain = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.strokeStyle = 'rgba(200, 225, 255, 0.35)';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    for (let d of drops) {
+                        ctx.moveTo(d.x, d.y);
+                        ctx.lineTo(d.x - 2, d.y + d.length);
+                        d.y += d.speed;
+                        d.x -= 1;
+                        if (d.y > canvas.height) {
+                            d.y = -20;
+                            d.x = Math.random() * canvas.width;
+                        }
+                    }
+                    ctx.stroke();
+                    requestAnimationFrame(animateRain);
+                };
+                animateRain();
+            }
+
+            createDustParticles() {
+                const count = 250;
+                const geom = new THREE.BufferGeometry();
+                const pos = new Float32Array(count * 3);
+                for (let i = 0; i < count * 3; i += 3) {
+                    pos[i] = (Math.random() - 0.5) * 18;
+                    pos[i+1] = Math.random() * 6.5;
+                    pos[i+2] = (Math.random() - 0.5) * 18;
+                }
+                geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+                const mat = new THREE.PointsMaterial({
+                    color: 0xd4ab5d,
+                    size: 0.045,
+                    transparent: true,
+                    opacity: 0.42
+                });
+                this.dustPoints = new THREE.Points(geom, mat);
+                this.scene.add(this.dustPoints);
+            }
+
+            toggleUVLight() {
+                this.isUVActive = !this.isUVActive;
+                this.uvLight.visible = this.isUVActive;
+                this.flashlight.visible = !this.isUVActive;
+                this.audio.setUVHum(this.isUVActive);
+
+                const filter = document.getElementById('uv-filter');
+                const btn = document.getElementById('btn-uv-toggle');
+                const bulbSvg = document.getElementById('flashlight-bulb-svg');
+
+                if (this.isUVActive) {
+                    filter.classList.add('active');
+                    btn.classList.add('active');
+                    if (bulbSvg) {
+                        bulbSvg.setAttribute('fill', '#bc13fe');
+                        bulbSvg.setAttribute('filter', 'drop-shadow(0 0 10px #bc13fe)');
+                    }
+                    this.showToast("[자외선(UV) 라이트 작동] 숨겨진 형광 혈흔과 비밀 암호를 비춥니다.");
+                    this.unlockAchievement("achieve_uv");
+                } else {
+                    filter.classList.remove('active');
+                    btn.classList.remove('active');
+                    if (bulbSvg) {
+                        bulbSvg.setAttribute('fill', '#fffaed');
+                        bulbSvg.setAttribute('filter', 'drop-shadow(0 0 8px #fffaed)');
+                    }
+                    this.showToast("[일반 손전등 전환]");
+                }
+            }
+
+            loadZone(zoneId) {
+                const zone = CASE_DB.zones.find(z => z.id === zoneId);
+                if (!zone) return;
+
+                this.currentZoneId = zoneId;
+                if (!this.visitedZones.includes(zoneId)) this.visitedZones.push(zoneId);
+
+                document.getElementById('bar-zone-title').innerText = zone.name;
+                document.getElementById('bar-zone-desc').innerText = zone.desc;
+                this.renderMapMenu();
+
+                if (this.roomMesh) this.scene.remove(this.roomMesh);
+                this.interactiveMeshes.forEach(m => this.scene.remove(m));
+                this.interactiveMeshes = [];
+
+                const roomGeo = new THREE.BoxGeometry(18, 7.5, 18);
+                const roomMat = new THREE.MeshStandardMaterial({
+                    map: TextureStudio.getDamagedWallpaper(zone.wallColor),
+                    side: THREE.BackSide,
+                    roughness: 0.9
+                });
+                this.roomMesh = new THREE.Mesh(roomGeo, roomMat);
+                this.roomMesh.position.y = 3.6;
+                this.scene.add(this.roomMesh);
+
+                const floorGeo = new THREE.PlaneGeometry(18, 18);
+                const floorMat = new THREE.MeshStandardMaterial({
+                    map: TextureStudio.getWoodPlanks(),
+                    roughness: 0.7
+                });
+                const floor = new THREE.Mesh(floorGeo, floorMat);
+                floor.rotation.x = -Math.PI / 2;
+                floor.position.y = -0.1;
+                this.roomMesh.add(floor);
+
+                const items = CASE_DB.interactables.filter(item => item.zoneId === zoneId);
+                items.forEach(item => {
+                    const group = this.assembleFurniture(item);
+                    group.position.set(item.pos[0], item.pos[1], item.pos[2]);
+                    group.userData = item;
+                    this.scene.add(group);
+                    this.interactiveMeshes.push(group);
+                });
+
+                this.camera.position.set(0, 1.65, 4.2);
+                this.yaw = 0;
+                this.pitch = 0;
+                this.save();
+            }
+
+            assembleFurniture(item) {
+                const group = new THREE.Group();
+
+                if (item.id === "obj_grandfather_clock") {
+                    const body = new THREE.Mesh(new THREE.BoxGeometry(0.95, 3.3, 0.65), new THREE.MeshStandardMaterial({ color: 0x3d2516, roughness: 0.6 }));
+                    body.position.y = 1.65; group.add(body);
+                    const face = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.08, 16), new THREE.MeshStandardMaterial({ color: 0xe6dcbe, roughness: 0.4 }));
+                    face.rotation.x = Math.PI / 2; face.position.set(0, 2.65, 0.35); group.add(face);
+                    const pendulum = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.2), new THREE.MeshStandardMaterial({ color: 0xd4ab5d, metalness: 0.8 }));
+                    pendulum.position.set(0, 1.4, 0.1); group.add(pendulum);
+                } 
+                else if (item.id === "obj_greenhouse_canvas") {
+                    const leg1 = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2.5), new THREE.MeshStandardMaterial({ color: 0x4a3725 }));
+                    leg1.rotation.z = 0.2; leg1.position.set(-0.4, 1.25, 0); group.add(leg1);
+                    const leg2 = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2.5), new THREE.MeshStandardMaterial({ color: 0x4a3725 }));
+                    leg2.rotation.z = -0.2; leg2.position.set(0.4, 1.25, 0); group.add(leg2);
+                    const canvasMesh = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.0, 0.05), new THREE.MeshStandardMaterial({ map: TextureStudio.getBloodyCanvas() }));
+                    canvasMesh.position.set(0, 1.35, 0.08); group.add(canvasMesh);
+                }
+                else if (item.type === "safe") {
+                    const safe = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.4, 1.0), new THREE.MeshStandardMaterial({ color: 0x222a33, metalness: 0.8, roughness: 0.3 }));
+                    safe.position.y = 0.7; group.add(safe);
+                    const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.12, 16), new THREE.MeshStandardMaterial({ color: 0xd4ab5d, metalness: 0.9 }));
+                    knob.rotation.x = Math.PI / 2; knob.position.set(0, 0.75, 0.55); group.add(knob);
+                }
+                else if (item.id === "obj_church_altar") {
+                    const altar = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.1, 1.2), new THREE.MeshStandardMaterial({ color: 0x44403c, roughness: 0.9 }));
+                    altar.position.y = 0.55; group.add(altar);
+                    const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.2, 0.06), new THREE.MeshStandardMaterial({ color: 0xd4ab5d, metalness: 0.6 }));
+                    crossV.position.set(0, 1.6, 0); group.add(crossV);
+                    const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.1, 0.06), new THREE.MeshStandardMaterial({ color: 0xd4ab5d, metalness: 0.6 }));
+                    crossH.position.set(0, 1.8, 0); group.add(crossH);
+                }
+                else {
+                    const table = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.9, 0.9), new THREE.MeshStandardMaterial({ color: 0x3d2d22, roughness: 0.7 }));
+                    table.position.y = 0.45; group.add(table);
+                    const prop = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.08, 0.3), new THREE.MeshStandardMaterial({ color: 0xe5dcbe, roughness: 0.4 }));
+                    prop.position.set(0, 0.94, 0); group.add(prop);
+                }
+
+                return group;
+            }
+
+            renderMapMenu() {
+                const host = document.getElementById('nav-list');
+                host.innerHTML = '';
+                document.getElementById('nav-count').innerText = `${this.visitedZones.length} / 7 구역`;
+
+                CASE_DB.zones.forEach(zone => {
+                    const isLocked = zone.locked && !this.inventory.includes(zone.reqItem);
+                    const isCur = (zone.id === this.currentZoneId);
+
+                    const row = document.createElement('div');
+                    row.className = `loc-row ${isCur ? 'active' : ''} ${isLocked ? 'locked' : ''}`;
+                    row.innerHTML = `
+                        <span>${zone.name}</span>
+                        <span style="font-size:10px;">${isLocked ? '🔒 자물쇠' : (isCur ? '현위치' : '이동')}</span>
+                    `;
+
+                    if (!isLocked) {
+                        row.onclick = () => {
+                            if (this.currentZoneId !== zone.id) {
+                                this.audio.playUnlock();
+                                this.loadZone(zone.id);
+                                this.showToast(`${zone.name}(으)로 이동했습니다.`);
+                            }
+                        };
+                    } else {
+                        row.onclick = () => {
+                            this.showToast(`잠겨 있습니다! ${zone.name}의 열쇠가 필요합니다.`);
+                        };
+                    }
+                    host.appendChild(row);
+                });
+            }
+
+            setupInputHandlers() {
+                window.addEventListener('keydown', (e) => {
+                    this.keys[e.code] = true;
+                    if (e.code === 'KeyE') this.interactHovered();
+                    if (e.code === 'KeyJ') this.toggleNotebook();
+                    if (e.code === 'KeyM') this.toggleMap();
+                    if (e.code === 'KeyV') this.toggleVHS();
+                    if (e.code === 'KeyB') this.togglePinboard();
+                    if (e.code === 'KeyR') this.openDeductionReport();
+                    if (e.code === 'KeyC') this.takePolaroid();
+                    if (e.code === 'KeyF') this.toggleFlashlight();
+                    if (e.code === 'KeyL') this.toggleUVLight();
+                    if (e.code === 'Escape') {
+                        if (this.activeModal) {
+                            this.closeAllModals();
+                        } else {
+                            this.openSteamOverlay();
+                        }
+                    }
+                    if (e.code === 'Tab' && e.shiftKey) {
+                        e.preventDefault();
+                        if (this.activeModal === 'modal-steam-overlay') {
+                            this.closeAllModals();
+                        } else {
+                            this.openSteamOverlay();
+                        }
+                    }
+                });
+
+                window.addEventListener('keyup', (e) => {
+                    this.keys[e.code] = false;
+                });
+
+                const cont = document.getElementById('viewport-container');
+                cont.addEventListener('mousedown', (e) => {
+                    if (e.button === 2) {
+                        // 우클릭 손전등 줌 포커스
+                        e.preventDefault();
+                        this.setZoom(true);
+                    } else if (e.button === 0) {
+                        if (!this.activeModal) {
+                            cont.requestPointerLock();
+                            this.interactHovered();
+                        }
+                    }
+                });
+
+                cont.addEventListener('mouseup', (e) => {
+                    if (e.button === 2) {
+                        e.preventDefault();
+                        this.setZoom(false);
+                    }
+                });
+
+                cont.addEventListener('contextmenu', (e) => e.preventDefault());
+
+                document.addEventListener('pointerlockchange', () => {
+                    this.isPointerLocked = (document.pointerLockElement === cont);
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (this.isPointerLocked && !this.activeModal) {
+                        const baseSens = this.isZooming ? 0.0011 : 0.0022;
+                        const sens = baseSens * (this.mouseSensitivity || 1.0);
+                        this.yaw -= e.movementX * sens;
+                        this.pitch -= e.movementY * sens;
+                        this.pitch = Math.max(-Math.PI / 2.3, Math.min(Math.PI / 2.3, this.pitch));
+
+                        const viewmodel = document.getElementById('fps-viewmodel');
+                        if (viewmodel) {
+                            const swayX = -e.movementX * 0.12;
+                            const swayY = -e.movementY * 0.12;
+                            viewmodel.style.transform = `translate(${swayX}px, ${swayY}px)`;
+                        }
+                    }
+                });
+            }
+
+            setZoom(enable) {
+                this.isZooming = enable;
+                if (enable) {
+                    this.camera.fov = 40;
+                    if (this.flashlight) {
+                        this.flashlight.angle = Math.PI / 7;
+                        this.flashlight.intensity = 4.2;
+                    }
+                } else {
+                    this.camera.fov = 65;
+                    if (this.flashlight) {
+                        this.flashlight.angle = Math.PI / 4.6;
+                        this.flashlight.intensity = 2.8;
+                    }
+                }
+                this.camera.updateProjectionMatrix();
+            }
+
+            toggleFlashlight() {
+                if (this.isUVActive) this.toggleUVLight();
+                this.flashlight.visible = !this.flashlight.visible;
+                const viewmodel = document.getElementById('fps-viewmodel');
+                if (viewmodel) {
+                    viewmodel.style.opacity = this.flashlight.visible ? "1" : "0.2";
+                }
+                this.showToast(this.flashlight.visible ? "손전등 On" : "손전등 Off");
+            }
+
+            mainLoop() {
+                requestAnimationFrame(() => this.mainLoop());
+
+                if (this.isPointerLocked && !this.activeModal) {
+                    const spd = this.isZooming ? 0.04 : 0.075;
+                    const fwd = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), this.yaw);
+                    const right = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), this.yaw);
+
+                    let moved = false;
+                    if (this.keys['KeyW']) { this.camera.position.addScaledVector(fwd, spd); moved = true; }
+                    if (this.keys['KeyS']) { this.camera.position.addScaledVector(fwd, -spd); moved = true; }
+                    if (this.keys['KeyA']) { this.camera.position.addScaledVector(right, -spd); moved = true; }
+                    if (this.keys['KeyD']) { this.camera.position.addScaledVector(right, spd); moved = true; }
+
+                    if (moved) {
+                        this.headBobCounter += 0.16;
+                        this.camera.position.y = 1.65 + Math.sin(this.headBobCounter) * 0.035;
+                        const vm = document.getElementById('fps-viewmodel');
+                        if (vm) {
+                            vm.style.transform = `translateY(${Math.sin(this.headBobCounter * 2) * 5}px)`;
+                        }
+                        if (Math.sin(this.headBobCounter) > 0.95) this.audio.playFootstep();
+                    }
+
+                    this.camera.position.x = Math.max(-7.5, Math.min(7.5, this.camera.position.x));
+                    this.camera.position.z = Math.max(-7.5, Math.min(7.5, this.camera.position.z));
+                }
+
+                const euler = new THREE.Euler(this.pitch, this.yaw, 0, 'YXZ');
+                this.camera.quaternion.setFromEuler(euler);
+
+                if (this.dustPoints) this.dustPoints.rotation.y += 0.0006;
+
+                this.detectRaycastHover();
+
+                this.renderer.render(this.scene, this.camera);
+            }
+
+            detectRaycastHover() {
+                if (this.activeModal) return;
+
+                const raycaster = new THREE.Raycaster();
+                raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
+                const hits = raycaster.intersectObjects(this.interactiveMeshes, true);
+
+                const cross = document.getElementById('crosshair');
+                const prompt = document.getElementById('interact-prompt');
+
+                if (hits.length > 0 && hits[0].distance < 6.5) {
+                    let root = hits[0].object;
+                    while (root.parent && !root.userData.id) root = root.parent;
+                    this.hoveredObject = root.userData;
+                    cross.classList.add('hovered');
+                    prompt.classList.add('show');
+
+                    let label = `${this.hoveredObject.name} 조사`;
+                    if (this.isUVActive && this.hoveredObject.uvHint) {
+                        label = `[UV 반응 감지] ${this.hoveredObject.name}`;
+                    }
+                    document.getElementById('prompt-txt').innerText = label;
+                } else {
+                    this.hoveredObject = null;
+                    cross.classList.remove('hovered');
+                    prompt.classList.remove('show');
+                }
+            }
+
+            interactHovered() {
+                if (!this.hoveredObject) return;
+                const obj = this.hoveredObject;
+
+                if (this.isUVActive && obj.uvHint) {
+                    this.showToast(obj.uvHint);
+                }
+
+                if (obj.type === 'document') {
+                    this.audio.playPaperTurn();
+                    this.openDocumentModal(obj.doc);
+                    this.addClue(obj.id);
+                } 
+                else if (obj.type === 'pickup') {
+                    this.audio.playUnlock();
+                    if (!this.inventory.includes(obj.item)) {
+                        this.inventory.push(obj.item);
+                        this.showToast(`[증거품 입수] ${obj.itemName}`);
+                        this.addClue(obj.id);
+                        if (obj.achieveId) this.unlockAchievement(obj.achieveId);
+                        this.renderMapMenu();
+                        this.save();
+                        this.openInspectViewer(obj.itemName, obj.inspectDesc || obj.msg);
+                    } else {
+                        this.showToast(obj.msg);
+                    }
+                } 
+                else if (obj.type === 'safe') {
+                    this.openSafeModal(obj);
+                } 
+                else if (obj.type === 'tape') {
+                    this.openTapeModal(obj);
+                }
+                else if (obj.type === 'transition') {
+                    this.audio.playPaperTurn();
+                    this.loadZone(obj.targetZone);
+                }
+            }
+
+            setupItemInspector() {
+                const stage = document.getElementById('inspect-stage');
+                this.inspectScene = new THREE.Scene();
+                this.inspectCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 20);
+                this.inspectCamera.position.z = 2.8;
+
+                this.inspectRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                this.inspectRenderer.setSize(480, 480);
+                stage.appendChild(this.inspectRenderer.domElement);
+
+                const l1 = new THREE.DirectionalLight(0xfffaed, 2.0); l1.position.set(2, 3, 4); this.inspectScene.add(l1);
+                const l2 = new THREE.AmbientLight(0xffffff, 0.6); this.inspectScene.add(l2);
+
+                stage.addEventListener('mousedown', (e) => {
+                    this.isDraggingInspect = true;
+                    this.lastMousePos = { x: e.clientX, y: e.clientY };
+                });
+                window.addEventListener('mouseup', () => { this.isDraggingInspect = false; });
+                window.addEventListener('mousemove', (e) => {
+                    if (this.isDraggingInspect && this.inspectMesh) {
+                        const dx = e.clientX - this.lastMousePos.x;
+                        const dy = e.clientY - this.lastMousePos.y;
+                        this.inspectMesh.rotation.y += dx * 0.01;
+                        this.inspectMesh.rotation.x += dy * 0.01;
+                        this.lastMousePos = { x: e.clientX, y: e.clientY };
+                        this.inspectRenderer.render(this.inspectScene, this.inspectCamera);
+                    }
+                });
+            }
+
+            openInspectViewer(name, desc) {
+                document.exitPointerLock();
+                document.getElementById('inspect-title').innerText = name;
+                document.getElementById('inspect-desc').innerText = desc;
+
+                if (this.inspectMesh) this.inspectScene.remove(this.inspectMesh);
+
+                if (name.includes("열쇠")) {
+                    const grp = new THREE.Group();
+                    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.06, 12, 24), new THREE.MeshStandardMaterial({ color: 0xd4ab5d, metalness: 0.9 }));
+                    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.9), new THREE.MeshStandardMaterial({ color: 0xd4ab5d, metalness: 0.9 }));
+                    stem.position.y = -0.55;
+                    const tooth = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.2, 0.05), new THREE.MeshStandardMaterial({ color: 0xd4ab5d, metalness: 0.9 }));
+                    tooth.position.set(0.1, -0.85, 0);
+                    grp.add(ring); grp.add(stem); grp.add(tooth);
+                    this.inspectMesh = grp;
+                } else {
+                    const grp = new THREE.Group();
+                    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.35, 1.2, 16), new THREE.MeshStandardMaterial({ map: TextureStudio.getBloodyCanvas() }));
+                    const head = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 16), new THREE.MeshStandardMaterial({ color: 0xd8d0c0, roughness: 0.5 }));
+                    head.position.y = 0.75;
+                    grp.add(body); grp.add(head);
+                    this.inspectMesh = grp;
+                }
+
+                this.inspectScene.add(this.inspectMesh);
+                this.inspectRenderer.render(this.inspectScene, this.inspectCamera);
+                document.getElementById('inspect-modal').style.display = 'flex';
+                this.activeModal = 'inspect';
+            }
+
+            takePolaroid() {
+                this.audio.playShutterSound();
+                const shutter = document.getElementById('camera-shutter');
+                shutter.style.opacity = '1';
+                setTimeout(() => { shutter.style.opacity = '0'; }, 180);
+
+                const data = {
+                    title: `현장 사진 #${this.polaroids.length + 1} (${CASE_DB.zones.find(z => z.id === this.currentZoneId).name})`,
+                    time: "1997.09.14 감식",
+                    zone: this.currentZoneId
+                };
+                this.polaroids.push(data);
+                this.showToast(`[📷 폴라로이드 촬영 완료] 수사 보드에 사진이 핀으로 고정되었습니다.`);
+                this.unlockAchievement("achieve_photo");
+                this.save();
+            }
+
+            startThunderSystem() {
+                const thunder = () => {
+                    const flash = document.getElementById('thunder-flash');
+                    flash.style.opacity = '0.9';
+                    setTimeout(() => { flash.style.opacity = '0.15'; }, 60);
+                    setTimeout(() => { flash.style.opacity = '0.7'; }, 110);
+                    setTimeout(() => { flash.style.opacity = '0'; }, 240);
+
+                    setTimeout(() => {
+                        this.audio.playThunderSound();
+                    }, 400);
+
+                    setTimeout(thunder, 18000 + Math.random() * 25000);
+                };
+                setTimeout(thunder, 12000);
+            }
+
+            openDocumentModal(doc) {
+                document.exitPointerLock();
+                document.getElementById('paper-head-title').innerText = doc.title;
+                document.getElementById('paper-head-date').innerText = doc.date;
+                document.getElementById('paper-head-body').innerText = doc.text;
+                document.getElementById('paper-head-src').innerText = `출처: ${doc.source}`;
+                this.openModal('modal-paper');
+            }
+
+            openSafeModal(item) {
+                document.exitPointerLock();
+                this.currentSafe = item;
+                document.getElementById('safe-head-title').innerText = item.name;
+                document.getElementById('safe-head-hint').innerText = item.hint || "4자리 비밀번호를 맞추십시오.";
+
+                const host = document.getElementById('safe-wheels-row');
+                host.innerHTML = '';
+                this.safeDigits = [0, 0, 0, 0];
+
+                for (let i = 0; i < 4; i++) {
+                    const col = document.createElement('div');
+                    col.className = 'rotary-col';
+                    col.innerHTML = `
+                        <button class="rotary-arrow-btn" onclick="game.turnDigit(${i}, 1)">▲</button>
+                        <div class="rotary-wheel" id="rotary-val-${i}">0</div>
+                        <button class="rotary-arrow-btn" onclick="game.turnDigit(${i}, -1)">▼</button>
+                    `;
+                    host.appendChild(col);
+                }
+                this.openModal('modal-safe');
+            }
+
+            turnDigit(idx, delta) {
+                this.audio.playPaperTurn();
+                this.safeDigits[idx] = (this.safeDigits[idx] + delta + 10) % 10;
+                document.getElementById(`rotary-val-${idx}`).innerText = this.safeDigits[idx];
+            }
+
+            submitSafeCode() {
+                const code = this.safeDigits.join('');
+                if (code === this.currentSafe.correctCode) {
+                    this.audio.playUnlock();
+                    this.showToast("철컥! 잠금장치 레버가 풀렸습니다!");
+                    this.closeAllModals();
+
+                    if (this.currentSafe.achieveId) this.unlockAchievement(this.currentSafe.achieveId);
+
+                    if (this.currentSafe.docReward) {
+                        setTimeout(() => {
+                            this.openDocumentModal(this.currentSafe.docReward);
+                            this.addClue(this.currentSafe.docReward.id);
+                        }, 350);
+                    }
+                    if (this.currentSafe.itemReward && !this.inventory.includes(this.currentSafe.itemReward)) {
+                        this.inventory.push(this.currentSafe.itemReward);
+                        this.showToast(`[증거품 입수] ${this.currentSafe.itemRewardName}`);
+                        this.renderMapMenu();
+                        this.save();
+                    }
+                } else {
+                    this.showToast("비밀번호가 일치하지 않습니다. 주변 단서를 정밀하게 재확인하십시오.");
+                }
+            }
+
+            openTapeModal(item) {
+                document.exitPointerLock();
+                this.currentTape = item;
+                document.getElementById('tape-title-label').innerText = item.tapeTitle;
+                document.getElementById('tape-text-transcript').innerText = item.tapeText;
+                this.openModal('modal-tape');
+            }
+
+            playCurrentTapeAudio() {
+                this.audio.playTapeAudioNoise(5.5);
+                const r1 = document.getElementById('reel-left');
+                const r2 = document.getElementById('reel-right');
+                r1.classList.add('spinning');
+                r2.classList.add('spinning');
+
+                if ('speechSynthesis' in window && this.currentTape && this.currentTape.spokenText) {
+                    window.speechSynthesis.cancel();
+                    const utter = new SpeechSynthesisUtterance(this.currentTape.spokenText);
+                    utter.lang = 'ko-KR';
+                    utter.rate = 1.05;
+                    utter.pitch = 0.85;
+                    window.speechSynthesis.speak(utter);
+                }
+
+                if (this.currentTape.achieveId) this.unlockAchievement(this.currentTape.achieveId);
+
+                setTimeout(() => {
+                    r1.classList.remove('spinning');
+                    r2.classList.remove('spinning');
+                }, 5500);
+            }
+
+            unlockAchievement(achieveKey) {
+                if (this.unlockedAchievements.includes(achieveKey)) return;
+                const achieve = CASE_DB.achievements[achieveKey];
+                if (!achieve) return;
+
+                this.unlockedAchievements.push(achieveKey);
+                this.audio.playAchievementSound();
+
+                const box = document.getElementById('steam-achievement');
+                document.getElementById('achieve-icon').innerText = achieve.icon;
+                document.getElementById('achieve-title').innerText = achieve.title;
+                document.getElementById('achieve-desc').innerText = achieve.desc;
+
+                box.classList.add('active');
+                setTimeout(() => {
+                    box.classList.remove('active');
+                }, 5000);
+
+                this.save();
+            }
+
+            addClue(clueId) {
+                if (!this.clues.includes(clueId)) {
+                    this.clues.push(clueId);
+                    this.audio.playClueStinger();
+                    this.updateClueCount();
+                    this.save();
+                }
+            }
+
+            updateClueCount() {
+                document.getElementById('badge-clues').innerText = this.clues.length;
+            }
+
+            toggleMap() {
+                if (this.activeModal === 'modal-map') this.closeAllModals();
+                else this.openMapModal();
+            }
+
+            openMapModal() {
+                document.exitPointerLock();
+                const host = document.getElementById('bp-rooms-host');
+                host.innerHTML = '';
+                CASE_DB.zones.forEach(z => {
+                    const isCur = (z.id === this.currentZoneId);
+                    const isLocked = z.locked && !this.inventory.includes(z.reqItem);
+                    const card = document.createElement('div');
+                    card.className = `bp-room-card ${isCur ? 'current' : ''} ${isLocked ? 'locked' : ''}`;
+                    card.innerHTML = `
+                        <div class="bp-room-title">
+                            <span>${z.name}</span>
+                            <span>${isCur ? '📍 현위치' : (isLocked ? '🔒 잠김' : '⚡ 즉시 이동')}</span>
+                        </div>
+                        <div class="bp-room-desc">${z.desc}</div>
+                        ${isLocked ? `<div style="font-size:11px; color:#ef4444; margin-top:8px; font-weight:700;">※ 잠금 해제 필요: [${this.getItemName(z.reqItem)}]</div>` : ''}
+                    `;
+                    card.onclick = () => {
+                        if (isLocked) {
+                            this.showToast(`잠겨 있습니다! ${this.getItemName(z.reqItem)}이(가) 필요합니다.`);
+                        } else if (z.id !== this.currentZoneId) {
+                            this.audio.playUnlock();
+                            this.loadZone(z.id);
+                            this.closeAllModals();
+                            this.showToast(`${z.name}(으)로 이동했습니다.`);
+                        }
+                    };
+                    host.appendChild(card);
+                });
+                this.openModal('modal-map');
+            }
+
+            getItemName(keyId) {
+                const map = {
+                    "key_greenhouse": "온실 열쇠",
+                    "key_cabin": "관리인 오두막 열쇠",
+                    "key_post_office": "우체국 사서함 열쇠 꾸러미",
+                    "key_church": "송백 성당 뒷문 열쇠",
+                    "key_clinic": "보건소 마스터키",
+                    "key_starter": "송백리 대문 황동 열쇠",
+                    "bloody_statue": "피 묻은 대리석 천사상"
+                };
+                return map[keyId] || "미확인 열쇠";
+            }
+
+            toggleNotebook() {
+                if (this.activeModal === 'modal-notebook') this.closeAllModals();
+                else this.openNotebookModal();
+            }
+
+            openNotebookModal() {
+                document.exitPointerLock();
+                this.switchNotebookTab(this.currentNotebookTab || 0);
+                this.openModal('modal-notebook');
+            }
+
+            switchNotebookTab(idx) {
+                this.currentNotebookTab = idx;
+                [0, 1, 2].forEach(i => {
+                    const btn = document.getElementById(`nb-tab-btn-${i}`);
+                    if (btn) {
+                        if (i === idx) btn.classList.add('active');
+                        else btn.classList.remove('active');
+                    }
+                });
+
+                const content = document.getElementById('nb-tab-content');
+                if (idx === 0) {
+                    content.innerHTML = `
+                        <h3 style="color:#facc15; font-size:18px; margin-bottom:12px;">📋 형사 윤도현 현장 조사 일지 (CASE #1997-0914)</h3>
+                        <p style="font-size:14px; line-height:1.8; color:#9ca3af; margin-bottom:20px;">
+                            영월 송백리 20년 전 미제 상속녀 강서연 살인사건 특별 수사 기록입니다.<br>
+                            현장의 자물쇠를 풀고 문서와 물품을 확보하여 [사건 핀보드(B)]와 [최종 추리 보고서(R)]를 완성하십시오.
+                        </p>
+                        <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:16px; margin-bottom:24px;">
+                            <div style="background:#111827; border:1px solid #374151; padding:16px; border-radius:6px;">
+                                <div style="color:#facc15; font-weight:700; margin-bottom:8px;">🔑 확보한 열쇠 및 도구 (${this.inventory.length}개)</div>
+                                <div style="font-size:13px; color:#d1d5db; line-height:1.7;">
+                                    ${this.inventory.map(k => `• ${this.getItemName(k)}`).join('<br>') || '아직 확보된 소지품이 없습니다.'}
+                                </div>
+                            </div>
+                            <div style="background:#111827; border:1px solid #374151; padding:16px; border-radius:6px;">
+                                <div style="color:#38bdf8; font-weight:700; margin-bottom:8px;">📁 확인한 수사 단서 (${this.clues.length}건)</div>
+                                <div style="font-size:13px; color:#d1d5db; line-height:1.7;">
+                                    수색 구역 완료도: ${this.visitedZones.length} / 7 구역 (${Math.round((this.visitedZones.length/7)*100)}%)<br>
+                                    도전 과제 달성: ${this.unlockedAchievements.length} / 15개<br>
+                                    붉은 실(인과율) 가설: ${this.connections.length}개 연결됨
+                                </div>
+                            </div>
+                        </div>
+                        <h4 style="color:#eab308; margin-bottom:10px;">📷 현장 촬영 폴라로이드 사진첩 (${this.polaroids.length}장)</h4>
+                        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                            ${this.polaroids.map((p, i) => `
+                                <div style="background:#0b0f15; border:1px solid #374151; padding:10px; width:190px; border-radius:4px;">
+                                    <div style="background:#1f2937; height:80px; display:flex; align-items:center; justify-content:center; color:#eab308; font-size:11px; margin-bottom:6px;">
+                                        [PHOTO #${i+1}]
+                                    </div>
+                                    <div style="font-weight:700; font-size:12px; color:#fff;">${p.title}</div>
+                                    <div style="font-size:10px; color:#9ca3af;">${p.time}</div>
+                                </div>
+                            `).join('') || '<div style="color:#6b7280; font-size:13px;">촬영된 폴라로이드 사진이 없습니다. [C] 키를 눌러 중요한 현장을 촬영하십시오.</div>'}
+                        </div>
+                    `;
+                } else if (idx === 1) {
+                    content.innerHTML = `
+                        <h3 style="color:#facc15; font-size:18px; margin-bottom:8px;">⏱️ 1997년 9월 14일 밤 알리바이 종합 타임라인 (20:00 ~ 24:00)</h3>
+                        <p style="font-size:13px; color:#9ca3af; margin-bottom:15px;">각 용의자들의 주장과 현장에서 확보된 물리적 증거(영수증, 도청 테이프, 육필 메모)를 대조한 매트릭스입니다.</p>
+                        <table class="timeline-matrix">
+                            <thead>
+                                <tr>
+                                    <th>시간대</th>
+                                    <th>피해자 강서연 (24)</th>
+                                    <th>차민혁 (기획실장/약혼자)</th>
+                                    <th>임예은 (전담 간호사)</th>
+                                    <th>한우진 (성당 주임신부)</th>
+                                    <th>정성태 (별장 관리인)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="font-weight:700; color:#38bdf8;">20:00 ~ 21:00</td>
+                                    <td>서재에서 아버지와 언쟁 후 침실로 이동</td>
+                                    <td>서울에서 영월행 승용차 출발 주장</td>
+                                    <td>서연의 침실에 차를 나르며 동태 파악</td>
+                                    <td>성당 저녁 미사 집전 후 사제관 짐 정리</td>
+                                    <td>오두막에서 저녁 식사 및 순찰 준비</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:700; color:#38bdf8;">21:30 ~ 22:30</td>
+                                    <td>짐가방을 싸며 한우진 신부에게 줄 쪽지 작성</td>
+                                    <td>별장 도착 후 서연과 고성 파혼 언쟁 (22:15 우체국 공중전화 도청 녹음)</td>
+                                    <td>침실 문밖에서 두 사람의 언쟁 도청, 질투 폭발</td>
+                                    <td>사제관에서 기도하며 탈출 시각(23:30) 대기</td>
+                                    <td>저수지 배수로 수위 점검 중 빗소리 청취</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:700; color:#ef4444;">23:15 ~ 23:35<br>【사건 발생】</td>
+                                    <td style="background:rgba(239,68,68,0.15); color:#fca5a5; font-weight:700;">우비를 입고 온실로 이동. 23:30경 대리석 천사상 둔기 타격 피살</td>
+                                    <td>차량 내에서 서연이 나오길 기다리며 알리바이 조작 영수증 준비</td>
+                                    <td style="background:rgba(239,68,68,0.2); color:#fca5a5; font-weight:700;">온실에 잠입, 멱살잡이 끝에 대리석 천사상으로 강서연 후두부 강타 후 도주</td>
+                                    <td>온실 뒷길 약속 장소에서 대기 중 서연의 비명 청취</td>
+                                    <td style="background:rgba(239,68,68,0.15); color:#fca5a5;">온실 불빛을 보고 접근하다 피 묻은 하얀 원피스의 임예은 목격</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:700; color:#38bdf8;">23:45 ~ 03:00</td>
+                                    <td>시신 현장 방치 (비 내리는 온실)</td>
+                                    <td>온실에 들어와 시신 목격 후 사색이 되어 배상호 원장에게 연락</td>
+                                    <td>보건소 숙직실로 도주하여 피 묻은 옷 은닉</td>
+                                    <td>비명을 듣고 온실로 왔으나 시신을 보고 오열, 신앙적 공황 상태</td>
+                                    <td>지서 신고 전 누군가에게 후두부 피습 기절 (오두막 마루 밑에 메모 은닉)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    `;
+                } else if (idx === 2) {
+                    content.innerHTML = `
+                        <h3 style="color:#facc15; font-size:18px; margin-bottom:12px;">👥 용의자 6인 전과 및 심문 조서 원본</h3>
+                        <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:16px;">
+                            ${CASE_DB.characters.map(c => `
+                                <div style="background:#111827; border:1px solid #374151; padding:16px; border-radius:6px; display:flex; gap:14px;">
+                                    <div style="width:70px; height:70px; flex-shrink:0; background:#000; border-radius:4px; overflow:hidden;">
+                                        ${c.svgPortrait}
+                                    </div>
+                                    <div>
+                                        <div style="font-weight:800; font-size:15px; color:#fff;">${c.name}</div>
+                                        <div style="font-size:12px; color:#eab308; margin-bottom:6px;">${c.role}</div>
+                                        <div style="font-size:12px; color:#9ca3af; line-height:1.6;">${c.dossier}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+            }
+
+            openSteamOverlay() {
+                document.exitPointerLock();
+                const elapsedSec = Math.floor((Date.now() - this.startTime) / 1000);
+                const hrs = String(Math.floor(elapsedSec / 3600)).padStart(2, '0');
+                const mins = String(Math.floor((elapsedSec % 3600) / 60)).padStart(2, '0');
+                const secs = String(elapsedSec % 60).padStart(2, '0');
+                document.getElementById('steam-live-timer').innerText = `PLAYTIME: ${hrs}:${mins}:${secs}`;
+
+                const total = Object.keys(CASE_DB.achievements).length;
+                const unlocked = this.unlockedAchievements.length;
+                document.getElementById('steam-achieve-ratio').innerText = `${unlocked} / ${total} 달성 (${Math.round((unlocked/total)*100)}%)`;
+                document.getElementById('steam-achieve-progress').style.width = `${(unlocked/total)*100}%`;
+
+                const grid = document.getElementById('steam-achieve-list');
+                grid.innerHTML = '';
+                Object.entries(CASE_DB.achievements).forEach(([key, a]) => {
+                    const isDone = this.unlockedAchievements.includes(key);
+                    const card = document.createElement('div');
+                    card.className = `steam-card ${isDone ? 'unlocked' : ''}`;
+                    card.innerHTML = `
+                        <div class="steam-card-icon">${a.icon}</div>
+                        <div>
+                            <div style="font-size:13px; font-weight:700; color:${isDone ? '#fff' : '#64748b'};">${a.title}</div>
+                            <div style="font-size:11px; color:${isDone ? '#94a3b8' : '#475569'}; margin-top:2px;">${a.desc}</div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+                this.openModal('modal-steam-overlay');
+            }
+
+            toggleVHSFilter(enabled) {
+                this.vhsEnabled = enabled;
+                const vhsOsd = document.getElementById('vhs-osd');
+                const filmNoise = document.getElementById('film-noise');
+                if (vhsOsd) vhsOsd.style.display = enabled ? 'block' : 'none';
+                if (filmNoise) filmNoise.style.opacity = enabled ? '0.06' : '0';
+            }
+
+            toggleVHS() {
+                this.vhsEnabled = !this.vhsEnabled;
+                this.toggleVHSFilter(this.vhsEnabled);
+                const chk = document.getElementById('setting-vhs');
+                if (chk) chk.checked = this.vhsEnabled;
+                this.showToast(`[1997 VHS 캠코더 OSD] ${this.vhsEnabled ? '활성화' : '비활성화'}`);
+            }
+
+            setFlashlightIntensity(val) {
+                this.flashlightIntensity = parseFloat(val);
+                if (this.flashlight) {
+                    this.flashlight.intensity = (this.isZooming ? 4.2 : 2.8) * this.flashlightIntensity;
+                }
+            }
+
+            setMouseSensitivity(val) {
+                this.mouseSensitivity = parseFloat(val);
+            }
+
+            togglePinboard() {
+                if (this.activeModal === 'modal-cork') this.closeAllModals();
+                else this.openPinboard();
+            }
+
+            openPinboard() {
+                document.exitPointerLock();
+                const host = document.getElementById('cork-cards-host');
+                host.innerHTML = '';
+                this.selectedCardId = null;
+
+                CASE_DB.characters.forEach(c => {
+                    const isConnected = this.connections.some(conn => conn.includes(c.id));
+                    const card = document.createElement('div');
+                    card.className = `suspect-card ${isConnected ? 'connected' : ''}`;
+                    card.dataset.id = c.id;
+                    card.innerHTML = `
+                        <div class="red-pin-head"></div>
+                        <div class="card-photo-box">
+                            ${c.svgPortrait}
+                        </div>
+                        <div class="suspect-name">${c.name}</div>
+                        <div class="suspect-title">${c.role}</div>
+                        <div class="suspect-notes">${c.dossier}</div>
+                    `;
+                    card.onclick = () => this.handlePinboardCardClick(c.id, card);
+                    host.appendChild(card);
+                });
+
+                this.polaroids.forEach((p, i) => {
+                    const pId = `photo_${i}`;
+                    const isConnected = this.connections.some(conn => conn.includes(pId));
+                    const pCard = document.createElement('div');
+                    pCard.className = `suspect-card ${isConnected ? 'connected' : ''}`;
+                    pCard.dataset.id = pId;
+                    pCard.style.borderTopColor = "#d4ab5d";
+                    pCard.innerHTML = `
+                        <div class="red-pin-head"></div>
+                        <div class="card-photo-box" style="background:#090d12; color:#d4ab5d; font-family:'Courier Prime',monospace; font-size:11px; display:flex; align-items:center; justify-content:center;">
+                            [현장 폴라로이드 #${i+1}]
+                        </div>
+                        <div class="suspect-name" style="font-size:13px;">${p.title}</div>
+                        <div class="suspect-title">${p.time}</div>
+                        <div class="suspect-notes" style="border-left-color:#d4ab5d;">현장에서 실시간으로 촬영된 중요한 물리적 정황 증거.</div>
+                    `;
+                    pCard.onclick = () => this.handlePinboardCardClick(pId, pCard);
+                    host.appendChild(pCard);
+                });
+
+                this.openModal('modal-cork');
+            }
+
+            handlePinboardCardClick(cardId, el) {
+                if (!this.selectedCardId) {
+                    this.selectedCardId = cardId;
+                    this.audio.playPaperTurn();
+                    el.style.outline = "3px solid #ff3b3b";
+                    this.showToast(`[붉은 실 연결 시작] 연결할 두 번째 카드를 선택하십시오.`);
+                } else if (this.selectedCardId === cardId) {
+                    this.selectedCardId = null;
+                    el.style.outline = "none";
+                } else {
+                    const pair = [this.selectedCardId, cardId].sort().join("---");
+                    if (!this.connections.includes(pair)) {
+                        this.connections.push(pair);
+                        this.audio.playDeductionConnectSound();
+                        this.showToast(`[추리 연결 성공] 두 단서 간의 붉은 실(Red Thread)이 형성되었습니다!`);
+                        if (this.connections.length >= 3) {
+                            this.unlockAchievement("achieve_thread_master");
+                        }
+                    }
+                    this.selectedCardId = null;
+                    this.openPinboard(); // 리프레시
+                    this.save();
+                }
+            }
+
+            openDeductionReport() {
+                document.exitPointerLock();
+                const host = document.getElementById('dossier-queries-host');
+                host.innerHTML = '';
+
+                CASE_DB.deductionQuestions.forEach(q => {
+                    const qBox = document.createElement('div');
+                    qBox.className = 'query-card';
+
+                    let opts = '';
+                    q.options.forEach(opt => {
+                        const sel = (this.answers[q.id] === opt.val);
+                        opts += `
+                            <button class="query-btn ${sel ? 'picked' : ''}" 
+                                onclick="game.pickAnswer('${q.id}', '${opt.val}', this)">
+                                ${opt.text}
+                            </button>
+                        `;
+                    });
+
+                    qBox.innerHTML = `
+                        <label>${q.question}</label>
+                        <div class="query-opts">${opts}</div>
+                    `;
+                    host.appendChild(qBox);
+                });
+
+                this.openModal('modal-dossier');
+            }
+
+            pickAnswer(qId, val, btnEl) {
+                this.audio.playPaperTurn();
+                this.answers[qId] = val;
+                const siblings = btnEl.parentElement.querySelectorAll('.query-btn');
+                siblings.forEach(b => b.classList.remove('picked'));
+                btnEl.classList.add('picked');
+                this.save();
+            }
+
+            submitFinalDeduction() {
+                let score = 0;
+                const total = CASE_DB.deductionQuestions.length;
+
+                CASE_DB.deductionQuestions.forEach(q => {
+                    const userVal = this.answers[q.id];
+                    const correct = q.options.find(o => o.correct);
+                    if (userVal === correct.val) score++;
+                });
+
+                this.closeAllModals();
+                this.showEnding(score, total);
+            }
+
+            showEnding(score, total) {
+                const screen = document.getElementById('ending-screen');
+                const badge = document.getElementById('rank-tag');
+                const title = document.getElementById('rank-title');
+                const text = document.getElementById('rank-story');
+
+                screen.classList.add('open');
+
+                if (score === total) {
+                    this.unlockAchievement("achieve_rank_s");
+                    badge.innerText = "RANK S : 완전한 진실 규명 (Perfect Truth)";
+                    badge.style.color = "var(--accent-gold)";
+                    title.innerText = "《묻혀버린 진실의 부활 (Truth Unearthed)》";
+                    text.innerText = 
+                        "당신의 냉철한 관찰과 흔들리지 않는 연역 추리로 20년간 송백리의 흙 속에 묻혀있던 모든 위선과 음모가 마침내 세상 밖으로 드러났습니다.\n\n" +
+                        "■ 진범 임예은의 자백:\n" +
+                        "임예은은 강태식 회장의 숨겨진 혼외자로서 평생을 서연의 시녀처럼 굴종하며 살아온 피해의식과 뒤틀린 질투의 화신이었습니다. " +
+                        "자신이 사랑했던 차민혁마저 서연의 정통 후계자 자리만을 탐내자, 서연이 모든 기득권을 버리고 한우진 신부와 사랑을 찾아 떠나려 하자 걷잡을 수 없는 살의에 사로잡혀 온실의 대리석 천사 조각상으로 서연의 머리를 내리쳤습니다.\n\n" +
+                        "■ 그리고 당신, 윤도현의 정체:\n" +
+                        "당신은 단순한 기자가 아니었습니다. 서연이 1996년에 낳아 비밀리에 입양 보냈던 '친아들'이었습니다.\n" +
+                        "당신이 지니고 있던 은팔찌의 각인 'S.Y to D.H'는 어머니 서연이 갓난아기였던 당신에게 남긴 마지막 사랑의 증표였습니다.\n" +
+                        "한우진 신부가 보낸 황동 열쇠는, 아들의 손으로 어머니의 억울한 원혼을 달래달라는 20년의 간절한 기도였습니다.\n\n" +
+                        "차민혁과 배상호 원장은 긴급 체포되었고, 임예은은 밀항 직전 덜미를 잡혔습니다.\n" +
+                        "새벽 안개가 걷힌 송백리의 어머니 묘소에 꽃 한 송이를 바치며, 당신은 마침내 눈물을 흘립니다.";
+                } else if (score >= 4) {
+                    this.unlockAchievement("achieve_rank_a");
+                    badge.innerText = "RANK A : 절반의 심판";
+                    badge.style.color = "#81c784";
+                    title.innerText = "《미완의 심판 (Incomplete Justice)》";
+                    text.innerText = 
+                        "진범 임예은의 살해 사실은 입증했으나, 배후의 정경유착과 당신 자신의 진짜 출생의 비밀을 완벽히 입증하지 못했습니다.\n\n" +
+                        "임예은은 해외로 도주했고 차민혁만 횡령 혐의로 가벼운 처벌을 받았습니다. 20년 전의 비극은 여전히 서늘한 의문으로 당신의 가슴속에 남습니다.";
+                } else {
+                    badge.innerText = "RANK B : 조작된 거짓말의 승리";
+                    badge.style.color = "#e57373";
+                    title.innerText = "《영원히 닫혀버린 안개 (Cold Fog)》";
+                    text.innerText = 
+                        "당신의 추리는 20년 전 조작된 거짓말의 덫에 완전히 걸려들었습니다.\n\n" +
+                        "엉뚱한 인물이 살인자로 몰리거나 증거 불충분으로 기각되었고, 사건은 영구 미제 파일로 다시 캐비닛에 처박혔습니다.\n" +
+                        "진실은 차가운 송백리의 흙 속으로 영원히 가라앉았습니다.";
+                }
+            }
+
+            openModal(modalId) {
+                this.activeModal = modalId;
+                const m = document.getElementById(modalId);
+                m.classList.add('open');
+            }
+
+            closeAllModals() {
+                if (!this.activeModal) return;
+                const m = document.getElementById(this.activeModal);
+                if (m) m.classList.remove('open');
+                document.getElementById('inspect-modal').style.display = 'none';
+                this.activeModal = null;
+                this.currentSafe = null;
+            }
+
+            showToast(text) {
+                const box = document.getElementById('toast-alert');
+                document.getElementById('toast-txt').innerText = text;
+                box.classList.add('show');
+                clearTimeout(this.toastTimer);
+                this.toastTimer = setTimeout(() => {
+                    box.classList.remove('show');
+                }, 3800);
+            }
+
+            save() {
+                const payload = {
+                    zone: this.currentZoneId,
+                    inventory: this.inventory,
+                    clues: this.clues,
+                    visited: this.visitedZones,
+                    polaroids: this.polaroids,
+                    answers: this.answers,
+                    achievements: this.unlockedAchievements,
+                    connections: this.connections
+                };
+                localStorage.setItem('songbaek_save_v5', JSON.stringify(payload));
+            }
+
+            loadSave() {
+                const raw = localStorage.getItem('songbaek_save_v5');
+                if (raw) {
+                    try {
+                        const parsed = JSON.parse(raw);
+                        this.currentZoneId = parsed.zone || "mansion_1f";
+                        this.inventory = parsed.inventory || [];
+                        this.clues = parsed.clues || [];
+                        this.visitedZones = parsed.visited || ["mansion_1f"];
+                        this.polaroids = parsed.polaroids || [];
+                        this.answers = parsed.answers || {};
+                        this.unlockedAchievements = parsed.achievements || [];
+                        this.connections = parsed.connections || [];
+                    } catch (e) {
+                        console.error("세이브 파싱 실패:", e);
+                    }
+                }
+            }
+        }
+
+        const game = new SongbaekKillingsEngine();
+        window.onload = () => {
+            game.init();
+        };
+    </script>
+</body>
+</html>

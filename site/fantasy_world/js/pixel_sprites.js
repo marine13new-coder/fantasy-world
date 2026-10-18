@@ -4466,6 +4466,7 @@
         else if (weaponId.includes('dorado') || weaponId.includes('sun') || weaponId.includes('solar') || weaponId.includes('serpent') || weaponId.includes('quetzal') || weaponId.includes('macuahuitl') || weaponId.includes('aztec') || weaponId.includes('inca')) { slashColor = '#facc15'; glowColor = 'rgba(234, 179, 8, 0.9)'; }
         else if (weaponId.includes('shangrila') || weaponId.includes('jade') || weaponId.includes('lotus') || weaponId.includes('tao') || weaponId.includes('flying_sword')) { slashColor = '#34d399'; glowColor = 'rgba(16, 185, 129, 0.9)'; }
         else if (weaponId.includes('babylon') || weaponId.includes('gilgamesh') || weaponId.includes('khopesh') || weaponId.includes('ishtar') || weaponId.includes('ziggurat') || weaponId.includes('lamassu')) { slashColor = '#facc15'; glowColor = 'rgba(37, 99, 235, 0.9)'; }
+        else if (weaponId.includes('sol_invictus') || weaponId.includes('phoenix') || weaponId.includes('basilica') || weaponId.includes('eagle_claymore') || weaponId.includes('byzantine')) { slashColor = '#fde047'; glowColor = 'rgba(249, 115, 22, 0.95)'; }
 
         const arcCenter = px + sideSign * 4 * sc;
         const startAng = isLeft ? Math.PI * 0.7 : Math.PI * 0.3;

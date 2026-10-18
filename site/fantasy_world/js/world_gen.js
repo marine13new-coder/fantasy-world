@@ -750,6 +750,16 @@ function createSettlementList() {
   add('fertile_crescent_date_palm_oasis', '비옥한 초승달 대추야자 운하 오아시스', 'town', 'babylon', 2980, 2320, 'human', false, 10);
   add('euphrates_reed_boat_delta_harbor', '유프라테스 파피루스 갈대선 삼각주 하구 나루터', 'port', 'babylon', 3120, 2340, 'human', false, 9);
 
+  // =========================================================================
+  // 31. THE SACRED SOLAR PHOENIX & BYZANTINE BASILICA EMPIRE (신성 불사조 솔 인빅투스 황금 바실리카 & 쌍두독수리 팔라티노 제국)
+  // =========================================================================
+  add('sol_invictus_golden_basilica', '솔 인빅투스 황금 돔 대바실리카 수도', 'capital', 'sol_invictus', 3680, 680, 'celestial', true, 18);
+  add('phoenix_flame_aether_citadel', '불사조 화염 에테르 대성채', 'castle', 'sol_invictus', 3760, 780, 'crusader', true, 16);
+  add('solar_eagle_triumphal_colosseum', '태양 독수리 개선문 검투장', 'palace', 'sol_invictus', 3580, 620, 'human', true, 14);
+  add('augustus_marble_pantheon_temple', '아우구스투스 대리석 판테온 신전', 'temple', 'sol_invictus', 3740, 600, 'celestial', true, 12);
+  add('byzantine_silk_mosaic_bazaar', '비잔틴 비단 모자이크 길드 마을', 'town', 'sol_invictus', 3600, 760, 'human', false, 10);
+  add('golden_horn_imperial_naval_harbor', '황금뿔 제국 함대 기국 군항', 'port', 'sol_invictus', 3660, 840, 'human', false, 9);
+
   return list;
 }
 
@@ -1239,6 +1249,18 @@ function generateWorld() {
           continue;
         }
 
+        // 신성 불사조 솔 인빅투스 황금 바실리카 & 쌍두독수리 팔라티노 제국 전용 지형 카빙
+        if (s.continent === 'sol_invictus') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.CASTLE_FLOOR : TILE.ROAD; // 순백 대리석 포장 광장 및 황금 모자이크 보도
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.MEADOW : TILE.ELVEN_FOREST; // 성스러운 사이프러스 숲 & 황금빛 햇살 초원
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.OASIS_WATER : TILE.MEADOW; // 성스러운 대리석 분수대 연못 & 잔디
+          }
+          continue;
+        }
+
         const curT = tiles[idx(tx, ty)];
         const isWater = (curT === TILE.DEEP_WATER || curT === TILE.WATER);
 
@@ -1538,7 +1560,17 @@ function generateWorld() {
     ['ishtar_winged_lamassu_gate', 'cuneiform_astronomer_ziggurat_observatory'],
     ['fertile_crescent_date_palm_oasis', 'euphrates_reed_boat_delta_harbor'],
     ['hanging_gardens_terrace_palace', 'euphrates_reed_boat_delta_harbor'],
-    ['ishtar_winged_lamassu_gate', 'ancient_pharaoh_pyramid_necropolis']
+    ['ishtar_winged_lamassu_gate', 'ancient_pharaoh_pyramid_necropolis'],
+
+    // [신성 불사조 솔 인빅투스 황금 바실리카 가도 (Sol Invictus Imperial Sacred Highway)]
+    ['sol_invictus_golden_basilica', 'phoenix_flame_aether_citadel'],
+    ['sol_invictus_golden_basilica', 'solar_eagle_triumphal_colosseum'],
+    ['sol_invictus_golden_basilica', 'augustus_marble_pantheon_temple'],
+    ['sol_invictus_golden_basilica', 'byzantine_silk_mosaic_bazaar'],
+    ['phoenix_flame_aether_citadel', 'golden_horn_imperial_naval_harbor'],
+    ['byzantine_silk_mosaic_bazaar', 'golden_horn_imperial_naval_harbor'],
+    ['augustus_marble_pantheon_temple', 'stellar_prism_monolith_shrine'],
+    ['golden_horn_imperial_naval_harbor', 'dragon_ruins']
   ];
   const roadLinks = rawRoadLinks.filter(([a, b]) => settlementMap[a] && settlementMap[b]);
 
