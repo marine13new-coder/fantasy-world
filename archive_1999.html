@@ -2189,6 +2189,17 @@
       thunderLight.castShadow = true;
       scene.add(thunderLight);
 
+      // 비 내리는 창문 침투 창백한 달빛 스팟라이트 (Atmospheric Moonlight Window Spotlight)
+      const windowMoonLight = new THREE.SpotLight(0x66aacc, isSafeMode ? 1.5 : 2.0, 14, Math.PI / 4.2, 0.45, 1.2);
+      windowMoonLight.position.set(-4.4, 2.3, 0);
+      windowMoonLight.target.position.set(0, 0.8, -1.0);
+      windowMoonLight.castShadow = true;
+      windowMoonLight.shadow.mapSize.width = 1024;
+      windowMoonLight.shadow.mapSize.height = 1024;
+      windowMoonLight.shadow.bias = -0.001;
+      scene.add(windowMoonLight);
+      scene.add(windowMoonLight.target);
+
       // 작업 데스크 전용 앤티크 스탠드 웜 조명 (Desk Workstation Spotlight)
       deskLampLight = new THREE.SpotLight(0xffdfaa, isSafeMode ? 3.5 : 2.9, 9, Math.PI / 3.6, 0.4, 1.15);
       deskLampLight.position.set(-1.1, 1.85, -3.9);
@@ -2854,8 +2865,8 @@
 
       // CRT 모니터 볼록 구면 인광 스크린 (Convex Spherical CRT Display)
       monitorCanvas = document.createElement('canvas');
-      monitorCanvas.width = 256;
-      monitorCanvas.height = 180;
+      monitorCanvas.width = 512;
+      monitorCanvas.height = 360;
       monitorCtx = monitorCanvas.getContext('2d');
       monitorTexture = new THREE.CanvasTexture(monitorCanvas);
 
@@ -3256,50 +3267,98 @@
       scene.add(polaroidObj);
     }
 
-    /* CRT 모니터 실시간 3D 인게임 디스플레이 갱신 */
+    /* CRT 모니터 실시간 3D 인게임 디스플레이 갱신 (512x360 Phosphor CRT Terminal) */
     function update3DMonitorScreen() {
       if (!monitorCtx) return;
 
-      monitorCtx.fillStyle = '#020904';
-      monitorCtx.fillRect(0, 0, 256, 180);
+      // 1. 깊은 인광 블랙 베이스
+      monitorCtx.fillStyle = '#010804';
+      monitorCtx.fillRect(0, 0, 512, 360);
 
-      monitorCtx.fillStyle = 'rgba(10, 35, 18, 0.4)';
-      for (let y = 0; y < 180; y += 4) {
-        monitorCtx.fillRect(0, y, 256, 2);
+      // 2. 수평 인터레이스 스캔라인 (CRT Interlaced Scanlines)
+      monitorCtx.fillStyle = 'rgba(6, 26, 14, 0.45)';
+      for (let y = 0; y < 360; y += 4) {
+        monitorCtx.fillRect(0, y, 512, 2);
       }
 
-      monitorCtx.font = 'bold 12px monospace';
+      // 3. 수직 롤링 래스터 주사선 바 (Rolling Raster Scanline Beam)
+      const scanY = (Date.now() * 0.08) % 380 - 20;
+      const scanGrad = monitorCtx.createLinearGradient(0, scanY - 30, 0, scanY + 30);
+      scanGrad.addColorStop(0, 'rgba(51, 255, 119, 0)');
+      scanGrad.addColorStop(0.5, 'rgba(51, 255, 119, 0.08)');
+      scanGrad.addColorStop(1, 'rgba(51, 255, 119, 0)');
+      monitorCtx.fillStyle = scanGrad;
+      monitorCtx.fillRect(0, scanY - 30, 512, 60);
+
+      // 4. 모니터 섀도우 마스크 베벨 비네트 (Vignette Shadow Border)
+      const vigGrad = monitorCtx.createRadialGradient(256, 180, 160, 256, 180, 270);
+      vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
+      vigGrad.addColorStop(0.7, 'rgba(0,0,0,0.3)');
+      vigGrad.addColorStop(1, 'rgba(0,0,0,0.92)');
+      monitorCtx.fillStyle = vigGrad;
+      monitorCtx.fillRect(0, 0, 512, 360);
+
+      // 5. 상단 헤더 정보 표시
+      monitorCtx.font = 'bold 20px "Share Tech Mono", monospace';
       monitorCtx.fillStyle = '#33ff77';
-      monitorCtx.fillText('ARCHIVE-1999 OS v2.4', 12, 22);
+      monitorCtx.shadowColor = '#33ff77';
+      monitorCtx.shadowBlur = 8;
+      monitorCtx.fillText('ARCHIVE-1999 OS v2.4 [FORENSIC SIGNAL LAB]', 24, 38);
+      monitorCtx.shadowBlur = 0;
 
-      monitorCtx.font = '11px monospace';
-      monitorCtx.fillStyle = '#82b596';
-      monitorCtx.fillText(`TAPE 0${curChapter}: ${chapterDB[curChapter].title.substring(0, 15)}...`, 12, 42);
-      monitorCtx.fillText(`FREQ: ${paramFreq}Hz | DEMOD: ${currentDemod}`, 12, 58);
-      monitorCtx.fillText(`SYNC LOCK: ${syncPct}%`, 12, 74);
+      monitorCtx.strokeStyle = 'rgba(51, 255, 119, 0.4)';
+      monitorCtx.lineWidth = 1.5;
+      monitorCtx.beginPath(); monitorCtx.moveTo(24, 48); monitorCtx.lineTo(488, 48); monitorCtx.stroke();
 
+      // 테이프 및 수사 상태 정보
+      monitorCtx.font = '16px "Share Tech Mono", monospace';
+      monitorCtx.fillStyle = '#82cf9e';
+      monitorCtx.fillText(`TAPE 0${curChapter}: ${chapterDB[curChapter].title.substring(0, 22)}`, 24, 76);
+      monitorCtx.fillText(`FREQ: ${paramFreq} Hz  |  DEMOD: [${currentDemod}]`, 24, 102);
+
+      const isLocked = syncPct >= 95;
+      monitorCtx.fillStyle = isLocked ? '#33ff77' : (syncPct > 50 ? '#ffcc33' : '#ff4455');
+      monitorCtx.fillText(`SYNC LOCK: ${syncPct}% ${isLocked ? '● [LOCKED]' : '○ [TUNING...]' }`, 24, 128);
+
+      // 오실로스코프 파형 박스 외곽선
+      monitorCtx.strokeStyle = 'rgba(51, 255, 119, 0.3)';
+      monitorCtx.strokeRect(24, 145, 464, 150);
+
+      // 6. 메인 실시간 인광 오실로스코프 파형 (Phosphor Oscilloscope Waveform)
       monitorCtx.strokeStyle = '#33ff77';
+      monitorCtx.lineWidth = 2.5;
+      monitorCtx.shadowColor = '#33ff77';
+      monitorCtx.shadowBlur = 10;
+      monitorCtx.beginPath();
+      const t = Date.now() * 0.006;
+      for (let x = 24; x < 488; x += 4) {
+        const normX = (x - 24) / 464;
+        const wave1 = Math.sin(normX * 18 + t * 4) * (isPlaying ? 35 : 8);
+        const wave2 = Math.sin(normX * 36 - t * 6) * (isPlaying ? 14 : 3);
+        const y = 220 + (wave1 + wave2) * (syncPct > 50 ? 1.0 : 0.4);
+        if (x === 24) monitorCtx.moveTo(x, y);
+        else monitorCtx.lineTo(x, y);
+      }
+      monitorCtx.stroke();
+      monitorCtx.shadowBlur = 0;
+
+      // 7. 하단 주황색 보조 헤테로다인 주파수 바
+      monitorCtx.strokeStyle = '#ffaa22';
       monitorCtx.lineWidth = 1.5;
       monitorCtx.beginPath();
-      const t = Date.now() * 0.005;
-      for (let x = 0; x < 256; x += 4) {
-        const wave = Math.sin(x * 0.08 + t * 4) * (isPlaying ? 18 : 3) * (syncPct > 50 ? 1.2 : 0.6);
-        const y = 115 + wave;
-        if (x === 0) monitorCtx.moveTo(x, y);
+      for (let x = 24; x < 488; x += 8) {
+        const pulse = (Math.sin(x * 0.15 + t * 8) > 0.8) ? 18 : 0;
+        const y = 280 - pulse;
+        if (x === 24) monitorCtx.moveTo(x, y);
         else monitorCtx.lineTo(x, y);
       }
       monitorCtx.stroke();
 
-      monitorCtx.strokeStyle = '#ffaa11';
-      monitorCtx.lineWidth = 1.0;
-      monitorCtx.beginPath();
-      for (let x = 0; x < 256; x += 6) {
-        const pulse = (Math.sin(x * 0.2 + t * 8) > 0.85) ? 14 : 0;
-        const y = 155 - pulse;
-        if (x === 0) monitorCtx.moveTo(x, y);
-        else monitorCtx.lineTo(x, y);
-      }
-      monitorCtx.stroke();
+      // 8. 하단 상태 바
+      monitorCtx.font = '13px monospace';
+      monitorCtx.fillStyle = '#558866';
+      monitorCtx.fillText('SIGNAL: 48kHz / 16-BIT  |  DEGAUSS: READY  |  SNR: 42dB', 24, 325);
+      monitorCtx.fillText('[E] 워크스테이션 복조 제어 패널 열기', 24, 345);
 
       if (monitorTexture) monitorTexture.needsUpdate = true;
     }
@@ -4212,34 +4271,43 @@
     let lampSwing = 0;
     let waterDropY = 3.8;
 
+    let heartPulsePhase = 0;
     function renderLoop3D() {
       requestAnimationFrame(renderLoop3D);
 
-      // 우클릭 캠코더 줌인 보간
+      const now = Date.now();
+      const t = now * 0.001;
+
+      // 1. 심박수 연동 카메라 호흡/맥동 (Heartbeat Psychological Breathing Pulse)
+      const currentBpm = typeof bpm !== 'undefined' ? bpm : 76;
+      heartPulsePhase += (currentBpm / 60) * 0.08;
+      const breathIntensity = !isSafeMode && sanity < 60 ? (60 - sanity) / 60 : 0.15;
+      const fovPulse = Math.sin(heartPulsePhase) * (0.45 * breathIntensity);
+
       if (camera) {
-        camera.fov += (camcorderTargetFov - camera.fov) * 0.18;
+        camera.fov += (camcorderTargetFov + fovPulse - camera.fov) * 0.18;
         camera.updateProjectionMatrix();
       }
 
-      // 이성 붕괴 시 색수차 펄스 오버레이
+      // 2. 이성 붕괴 시 색수차 및 핏줄 펄스 오버레이
       const chromLayer = document.getElementById('chromaticPulseOverlay');
       if (chromLayer) {
         if (!isSafeMode && sanity < 55) {
-          const pulse = (Math.sin(Date.now() * 0.008) + 1) * 0.5;
+          const pulse = (Math.sin(now * 0.008) + 1) * 0.5;
           chromLayer.style.opacity = (((55 - sanity) / 55) * 0.7 * pulse).toFixed(2);
         } else {
           chromLayer.style.opacity = '0';
         }
       }
 
-      // 빗물 창문 텍스처 갱신
+      // 3. 빗물 창문 텍스처 갱신
       updateRainWindowCanvas();
 
-      // CRT 모니터 실시간 3D 인게임 디스플레이 갱신
+      // 4. CRT 모니터 실시간 3D 인게임 디스플레이 갱신
       update3DMonitorScreen();
 
-      // 벽시계 초침 회전 및 째깍 앰비언스
-      const nowSec = Date.now() / 1000;
+      // 5. 벽시계 초침 회전 및 째깍 앰비언스
+      const nowSec = now / 1000;
       if (clockSecondHand) {
         clockSecondHand.rotation.z = -nowSec * ((Math.PI * 2) / 60);
       }
@@ -4248,7 +4316,7 @@
         if (Math.random() < 0.75) playClockTickSound();
       }
 
-      // 테이프 재생 중 릴 스풀 물리 회전
+      // 6. 테이프 재생 중 릴 스풀 물리 회전
       if (isPlaying) {
         tapeSpoolAngle += 0.08 * paramSpeed * (isReversed ? -1 : 1);
         const deg = tapeSpoolAngle * 57.3;
@@ -4264,8 +4332,10 @@
 
       if (ceilingFan) ceilingFan.rotation.y += 0.02;
 
+      // 7. 공기 중 부유하는 볼류메트릭 먼지 입자 회전 및 부유
       if (dustParticles) {
-        dustParticles.rotation.y += 0.0008;
+        dustParticles.rotation.y += 0.0006;
+        dustParticles.position.y = Math.sin(t * 0.5) * 0.03;
       }
 
       if (cctvCameraObj) {
