@@ -58,7 +58,8 @@ const LEGENDARY_ITEMS = [
   { id: 'babylon_khopesh_of_gilgamesh', slot: 'weapon', name: '바빌론 길가메시의 황금 청금석 코페쉬', icon: '🦁', atk: 74, hp: 160, desc: '우루크의 위대한 영웅왕 길가메시가 휘두르던 고대 청동과 청금석의 반월도. 타격 시 쐐기문자 점토판 룬과 왕의 권능이 폭발합니다.' },
   { id: 'sol_invictus_phoenix_claymore', slot: 'weapon', name: '솔 인빅투스 불사조 황금 대검', icon: '☀️', atk: 76, hp: 170, desc: '신성 제국의 태양 불사조 깃털과 천공의 오리하르콘을 제련한 황금 대검. 공격 시 맹렬한 태양 불길과 불사조 깃털 폭풍이 작렬합니다.' },
   { id: 'leviathan_magma_harpoon_blade', slot: 'weapon', name: '해저 화산 레비아탄 흑요석 작살검', icon: '🔱', atk: 78, hp: 180, desc: '수심 4,000m 열수구 흑요석 마그마와 레비아탄의 등뼈를 제련한 심해의 작살검. 타격 시 400도 끓는 열수 기포와 날카로운 흑요석 파편이 폭발합니다.' },
-  { id: 'persepolis_simurgh_atar_scimitar', slot: 'weapon', name: '페르세폴리스 시무르그 성화의 황금 언월도', icon: '🦚', atk: 80, hp: 190, desc: '3천 년 꺼지지 않은 아타르 성화와 영조 시무르그의 깃털로 벼려낸 페르시아 제국의 전설적 언월도. 참격 시 청록색 깃털 폭풍과 신성한 불티가 폭발합니다.' }
+  { id: 'persepolis_simurgh_atar_scimitar', slot: 'weapon', name: '페르세폴리스 시무르그 성화의 황금 언월도', icon: '🦚', atk: 80, hp: 190, desc: '3천 년 꺼지지 않은 아타르 성화와 영조 시무르그의 깃털로 벼려낸 페르시아 제국의 전설적 언월도. 참격 시 청록색 깃털 폭풍과 신성한 불티가 폭발합니다.' },
+  { id: 'lemuria_mu_aether_crystal_blade', slot: 'weapon', name: '레무리아 무 대륙 에테르 수정 대검', icon: '🧜‍♀️', atk: 82, hp: 200, desc: '바다 깊이 침몰한 고대 대륙 무(Mu)의 텔레파시 에테르 수정과 심해 청옥으로 제련한 전설의 대검. 공격 시 청록색 에테르 광륜과 쏟아지는 자개빛 수정 파편이 적을 분쇄합니다.' }
 ];
 
 const DUNGEONS = [
@@ -314,6 +315,29 @@ const DUNGEONS = [
     },
     goldReward: 12000,
     fameReward: 220
+  },
+  {
+    id: 'dungeon_lemuria',
+    name: '침몰 대륙 레무리아 심해 청옥 피라미드 & 해구 심연',
+    icon: '🧜‍♀️',
+    levelReq: 18,
+    x: 180, y: 2220,
+    color: '#059669',
+    desc: '아틀란티스보다 먼저 대양에 가라앉은 초고대 문명 레무리아의 중심 제단. 수만 년 동안 잠들어 있던 텔레파시 에테르 거신이 침입자의 정신을 흔들며 심해 수압으로 짓누릅니다.',
+    bossName: '레무리아 에테르 거신 메갈로돈 (Aether Colossus Megalodon of Mu)',
+    bossHp: 6600,
+    bossAtk: 88,
+    relicReward: {
+      id: 'relic_mu_telepathic_crystal',
+      slot: 'relic',
+      name: '무 대륙의 텔레파시 심해 에테르 수정',
+      icon: '💎',
+      atk: 74,
+      hp: 320,
+      desc: '공격 시 40% 확률로 전방에 텔레파시 에테르 충격파를 발사하여 220의 복합 마법 피해를 입히고 3초간 적의 모든 공격력을 35% 약화시킵니다.'
+    },
+    goldReward: 13000,
+    fameReward: 230
   }
 ];
 
@@ -3270,6 +3294,17 @@ const TOWN_LORE_DATABASE = {
     tavernToast: '진하게 빚은 대추야자 맥주(Date Beer)와 구운 석류 양고기를 삼켰습니다! 혈관에 고대 메소포타미아 영웅왕의 끓는 피가 솟구치며 타격 공격력이 폭발합니다.',
     questTitle: '갈대밭 늪지 모래전갈 괴수 소탕령',
     questDesc: '유프라테스 하구 갈대밭 관개 수로를 마비시키는 거대 맹독 모래전갈 둥지를 격퇴하고 수문 열쇠를 탈환하시오.'
+  },
+  lemuria: {
+    npcName: '고위 여제사 네리아 & 심해 탐험가 피테아스 (High Priestess Neriah & Pytheas)',
+    npcRole: '레무리아 심해 에테르 수정 수호사제 & 무 대륙 유적 조사단장',
+    icon: '🧜‍♀️',
+    disposition: '🌊 별들이 잠긴 태고 침몰 대륙의 침묵과 영혼의 공명을 노래하는 신비로운 지혜',
+    quote: '"지상의 인간들은 대지가 영원할 것이라 믿고 돌탑을 쌓지만, 별들의 주기가 바뀌면 가장 거대했던 대륙조차 푸른 물결 아래로 가라앉는 법이라네. 우리는 멸망한 것이 아니오. 물고기들의 숨결과 자개 속에 영원한 평화를 얻었을 뿐이지. 그대의 발걸음에도 별빛의 인도가 깃들기를."',
+    rumor: '💡 심해 잠수부의 기록: "달이 차오르는 밤, 에테르 수정 피라미드 꼭대기에서 들려오는 노랫소리를 들었소. 사이렌의 유혹과는 다른... 영혼의 깊은 상처를 어루만져 주는 침몰한 자들의 자장가였지."',
+    tavernToast: '심해 청옥빛 산호주(Lemurian Jade Nectar)와 구운 진주조개살을 맛보았습니다! 뼛속까지 차가운 영혼의 평정이 깃들며 마나 재생과 쿨다운이 크게 단축됩니다.',
+    questTitle: '심해 발광 해파리 괴수 및 침몰 유령선단 격퇴',
+    questDesc: '레무리아 회랑을 침범하여 에테르 수정을 오염시키는 심해 변종 괴수 무리를 소탕하고 순수한 에테르 파편을 회수하시오.'
   },
   persepolis: {
     npcName: '샤한샤 다리우스 & 대사제 자라투스트라 (Shahanshah Darius & Zarathustra)',

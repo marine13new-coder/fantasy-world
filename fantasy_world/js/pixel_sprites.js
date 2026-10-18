@@ -4469,6 +4469,7 @@
         else if (weaponId.includes('sol_invictus') || weaponId.includes('phoenix') || weaponId.includes('basilica') || weaponId.includes('eagle_claymore') || weaponId.includes('byzantine')) { slashColor = '#fde047'; glowColor = 'rgba(249, 115, 22, 0.95)'; }
         else if (weaponId.includes('leviathan') || weaponId.includes('hydrothermal') || weaponId.includes('abyssal') || weaponId.includes('magma_harpoon')) { slashColor = '#06b6d4'; glowColor = 'rgba(234, 88, 12, 0.95)'; }
         else if (weaponId.includes('persepolis') || weaponId.includes('simurgh') || weaponId.includes('atar') || weaponId.includes('immortal_scimitar')) { slashColor = '#2dd4bf'; glowColor = 'rgba(245, 158, 11, 0.95)'; }
+        else if (weaponId.includes('lemuria') || weaponId.includes('mu_crystal') || weaponId.includes('sunken_blade') || weaponId.includes('nautilus')) { slashColor = '#38bdf8'; glowColor = 'rgba(52, 211, 153, 0.95)'; }
 
         const arcCenter = px + sideSign * 4 * sc;
         const startAng = isLeft ? Math.PI * 0.7 : Math.PI * 0.3;
@@ -5022,6 +5023,51 @@
             // 타오르는 성화 불티 (Sacred Atar Fire Ember)
             ctx.fillStyle = 'rgba(239, 68, 68, 0.9)';
             ctx.fillRect(spx + sideSign * 3 * sc, spy - 3 * sc, 2.2 * sc, 2.2 * sc);
+          }
+        }
+
+        // 🧜‍♀️🐚 태고 침몰 레무리아 무 대륙 에테르 수정 대검 & 심해 텔레파시 파동 (Lemuria Aether Crystal Blade & Deepsea Telepathic Ripple)
+        if (weaponId.includes('lemuria') || weaponId.includes('mu_crystal') || weaponId.includes('sunken_blade') || weaponId.includes('nautilus')) {
+          // 청록빛 심해 & 에테르 하늘색 2중 초승달 참격호 (Deepsea Jade & Cyan Aether Dual Crescent Arc)
+          ctx.strokeStyle = '#059669';
+          ctx.lineWidth = 4.6 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 25 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 2.4 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 23 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          // 튀어나가는 5개의 부유 에테르 수정 파편 & 심해 자개 물결 (Floating Aether Crystal Shards & Mother-of-Pearl Droplets)
+          const lemTime = (e.animTime || 0) * 18;
+          for (let lp = 0; lp < 5; lp++) {
+            const lpAng = startAng + (lp / 4) * (endAng - startAng);
+            const lpDist = (23 + Math.sin(lemTime + lp * 2.2) * 7) * sc;
+            const lpx = arcCenter + Math.cos(lpAng) * lpDist;
+            const lpy = py - 10 * sc - bounce + Math.sin(lpAng) * lpDist;
+
+            // 팔면체 수정 파편 형상 (Octahedron Crystal Shard)
+            ctx.fillStyle = '#67e8f9';
+            ctx.beginPath();
+            ctx.moveTo(lpx, lpy - 3 * sc);
+            ctx.lineTo(lpx + 2 * sc, lpy);
+            ctx.lineTo(lpx, lpy + 3 * sc);
+            ctx.lineTo(lpx - 2 * sc, lpy);
+            ctx.closePath();
+            ctx.fill();
+
+            // 수정 중심 화이트 하이라이트
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(lpx - 0.7 * sc, lpy - 0.7 * sc, 1.4 * sc, 1.4 * sc);
+
+            // 자개빛 반투명 파문 수포 (Mother-of-Pearl Water Mote)
+            ctx.fillStyle = 'rgba(110, 231, 183, 0.85)';
+            ctx.beginPath();
+            ctx.arc(lpx + sideSign * 3 * sc, lpy - 3 * sc, 2.2 * sc, 0, Math.PI * 2);
+            ctx.fill();
           }
         }
 

@@ -1132,6 +1132,27 @@ class EntityManager {
     }
   }
 
+  // 💥 정밀 방향성 타격 파편 & 스파크 비산 (Directional Hit Splatter Burst)
+  addDirectionalHitBurst(x, y, dirAngle, color = '#facc15', count = 10) {
+    if (!this.sparkParticles) this.sparkParticles = [];
+    if (this.sparkParticles.length > 300) this.sparkParticles.splice(0, count);
+    for (let i = 0; i < count; i++) {
+      const spread = (Math.random() - 0.5) * 1.3;
+      const angle = dirAngle + spread;
+      const speed = 2.5 + Math.random() * 5.5;
+      this.sparkParticles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 0.8,
+        color,
+        size: Math.random() > 0.4 ? 2.8 : 1.8,
+        age: 0,
+        duration: 0.30 + Math.random() * 0.25
+      });
+    }
+  }
+
   // 🌟 레벨업 & 보물상자 황금 축하 스타버스트 (Level-Up Starburst)
   addLevelUpBurst(x, y) {
     if (!this.sparkParticles) this.sparkParticles = [];
@@ -3164,6 +3185,7 @@ class EntityManager {
         this.applyKnockbackWithWallImpact(ent, Math.cos(kAng) * 2.2, Math.sin(kAng) * 2.2, finalDmg);
 
         this.addHitSparks(ent.x, ent.y, isCrit ? '#facc15' : '#f97316', 10);
+        this.addDirectionalHitBurst(ent.x, ent.y, kAng, isCrit ? '#fde047' : '#f97316', isCrit ? 16 : 10);
         this.addFloatingText(ent.x, ent.y - 1.0, isCrit ? `💥 CRIT! -${finalDmg}` : `⚔️-${finalDmg}`, isCrit ? '#fde047' : '#f97316', 1.2);
 
         if (ent.hp <= 0) {
@@ -3298,6 +3320,7 @@ class EntityManager {
       const kAng = Math.atan2(target.y - p.y, target.x - p.x);
       const knockDist = p.comboStep === 2 ? 1.5 : 0.85;
       this.applyKnockbackWithWallImpact(target, Math.cos(kAng) * knockDist, Math.sin(kAng) * knockDist, dmg);
+      this.addDirectionalHitBurst(target.x, target.y, kAng, isCrit ? '#fde047' : effectColor, isCrit ? 14 : 9);
 
       this.addFloatingText(target.x, target.y - 0.9, isCrit ? `💥 CRIT! -${dmg}` : `-${dmg}`, isCrit ? '#fde047' : effectColor, 1.0);
 

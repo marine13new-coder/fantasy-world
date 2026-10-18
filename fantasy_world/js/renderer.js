@@ -3384,6 +3384,34 @@ class WorldRenderer {
       }
     }
 
+    // 4.7. 🧜‍♀️🐚 태고 침몰 레무리아 & 무 대륙 심해 에테르 수중 부유 광륜 (Lemuria Sunken Aether Caustics)
+    if (camX >= 80 && camX <= 300 && camY >= 2120 && camY <= 2400) {
+      // 심해 에메랄드 틸 엠비언트 틴트
+      ctx.fillStyle = 'rgba(5, 150, 105, 0.085)';
+      ctx.fillRect(0, 0, cw, ch);
+
+      // 흩날리는 자개빛 수포 및 발광 에테르 플랑크톤
+      for (let i = 0; i < 24; i++) {
+        const lx = Math.floor((i * 179 + Math.sin(timeSec * 2.4 + i) * 22) % cw);
+        const ly = Math.floor((i * 271 - timeSec * 45) % ch + ch) % ch;
+        const lAlpha = 0.28 + 0.35 * Math.sin(timeSec * 3.2 + i);
+        if (i % 2 === 0) {
+          // 에테르 발광 플랑크톤 (Aether Plankton)
+          ctx.fillStyle = `rgba(103, 232, 249, ${lAlpha})`;
+          ctx.fillRect(lx, ly, 2.5, 2.5);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(lx + 0.5, ly + 0.5, 1, 1);
+        } else {
+          // 자개빛 수포 기포 (Pearl Caustic Bubble)
+          ctx.strokeStyle = `rgba(167, 243, 208, ${lAlpha})`;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.arc(lx, ly, 2.8, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+    }
+
     // 5. 🌿 동부 안개 늪지대 도깨비불 (Swamp Will-o'-the-Wisps)
     if (camX > 450 && camY > 110 && camY < 280) {
       for (let i = 0; i < 22; i++) {

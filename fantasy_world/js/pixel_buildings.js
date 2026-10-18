@@ -5687,6 +5687,202 @@
     },
 
     // =========================================================================
+    // 34-A. 태고 침몰 레무리아 심해 청옥 대성채 (Lemuria Sunken Jade Citadel)
+    // =========================================================================
+    drawLemuriaSunkenJadeCitadel(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const podiumH = 8;
+
+      // 1. 심해 청옥 계단형 메갈리스 기단 (Megalithic Sea-Jade Stepped Tiers)
+      ctx.fillStyle = '#064e3b'; // 심해 암청옥
+      ctx.fillRect(px - halfW - 4, py - podiumH, bw + 8, podiumH);
+      ctx.fillStyle = '#047857'; // 청옥 하이라이트 층
+      ctx.fillRect(px - halfW - 2, py - podiumH + 2, bw + 4, podiumH - 2);
+
+      // 계단식 자개 상감 띠 (Mother-of-Pearl Inlay Trim)
+      ctx.fillStyle = '#6ee7b7';
+      ctx.fillRect(px - halfW - 4, py - podiumH, bw + 8, 1.5);
+      for (let m = -halfW - 2; m < halfW + 2; m += 7) {
+        ctx.fillStyle = '#a7f3d0';
+        ctx.fillRect(px + m, py - podiumH - 2, 4, 2);
+      }
+
+      // 2. 좌우 발광 산호 첨탑 오벨리스크 (Twin Bioluminescent Coral Obelisks)
+      [-1, 1].forEach(side => {
+        const ox = px + side * (halfW - 3);
+        const colW = 5;
+        const colH = bh - 16;
+        const oY = py - podiumH - colH;
+
+        // 산호 오벨리스크 기둥
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(ox - 2, oY, colW, colH);
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(ox - 1, oY, 2, colH);
+
+        // 산호 가지 돌출부 (Branching Corals)
+        ctx.fillStyle = side === -1 ? '#06b6d4' : '#22d3ee';
+        ctx.fillRect(ox + side * 3, oY + 8, side * 3, 2);
+        ctx.fillRect(ox + side * 2, oY + 16, side * 4, 2);
+
+        // 상단 발광 산호 보주 (Luminescent Pearl Finial)
+        const pulse = Math.sin(timeSec * 4 + side) * 0.3 + 0.7;
+        ctx.fillStyle = `rgba(56, 189, 248, ${pulse})`;
+        ctx.beginPath();
+        ctx.arc(ox, oY - 2, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(ox - 1, oY - 3, 2, 2);
+
+        // 오벨리스크 주변 상승하는 심해 기포 (Rising Micro Bubbles)
+        const bY = oY + 14 - ((timeSec * 16 + side * 8) % 18);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(ox + side * 3, bY, 1.5, 1.5);
+      });
+
+      // 3. 중앙 청옥 피라미드 본전 (Central Sunken Jade Temple)
+      const templeW = bw - 14;
+      const templeH = bh - 22;
+      const templeX = px - Math.round(templeW / 2);
+      const templeY = py - podiumH - templeH;
+
+      ctx.fillStyle = '#065f46';
+      ctx.fillRect(templeX, templeY, templeW, templeH);
+      ctx.fillStyle = '#059669';
+      ctx.fillRect(templeX + 2, templeY + 2, templeW - 4, templeH - 4);
+
+      // 심해 물결 수면 반사 리플 효과 (Caustic Shimmer)
+      const shimmerX = px + Math.sin(timeSec * 3) * (templeW * 0.35);
+      ctx.fillStyle = 'rgba(167, 243, 208, 0.45)';
+      ctx.fillRect(shimmerX - 3, templeY + 4, 6, templeH - 8);
+
+      // 4. 자개 아치 중앙 포털 (Mother-of-Pearl Arch Portal)
+      const portalW = 10;
+      const portalH = 14;
+      const portalX = px - 5;
+      const portalY = py - podiumH - portalH;
+
+      ctx.fillStyle = '#022c22';
+      ctx.fillRect(portalX, portalY, portalW, portalH);
+      ctx.strokeStyle = '#6ee7b7';
+      ctx.lineWidth = 1.4;
+      ctx.strokeRect(portalX, portalY, portalW, portalH);
+
+      // 포털 내부 회전하는 에테르 수정핵 (Hovering Cyan Aether Shard)
+      const shardY = portalY + 6 + Math.sin(timeSec * 3.5) * 1.5;
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.moveTo(px, shardY - 3.5);
+      ctx.lineTo(px + 2.5, shardY);
+      ctx.lineTo(px, shardY + 3.5);
+      ctx.lineTo(px - 2.5, shardY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 0.8, shardY - 1, 1.6, 2);
+
+      // 5. 상공을 유영하는 심해 가오리 영혼체 (Orbiting Spirit Manta Ray)
+      const rAng = timeSec * 1.8;
+      const rx = px + Math.cos(rAng) * (halfW - 2);
+      const ry = templeY - 5 + Math.sin(rAng) * 4;
+
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.85)';
+      ctx.beginPath();
+      ctx.ellipse(rx, ry, 5, 2.5, rAng + Math.PI / 2, 0, Math.PI * 2);
+      ctx.fill();
+      // 가오리 꼬리
+      ctx.strokeStyle = '#a7f3d0';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(rx, ry);
+      ctx.lineTo(rx - Math.cos(rAng) * 5, ry - Math.sin(rAng) * 5);
+      ctx.stroke();
+    },
+
+    // =========================================================================
+    // 34-B. 무 대륙 에테르 수정 피라미드 성소 (Mu Crystal Pyramid Sanctum)
+    // =========================================================================
+    drawMuCrystalPyramid(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const podiumH = 6;
+
+      // 1. 심해 산호석 기단 및 소용돌이 수조 (Coral Basin Plinth)
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - halfW - 2, py - podiumH, bw + 4, podiumH);
+      ctx.fillStyle = '#0891b2';
+      ctx.fillRect(px - halfW, py - podiumH + 2, bw, podiumH - 2);
+
+      // 발광 수조 리플
+      const rRad = (timeSec * 8) % 12;
+      ctx.strokeStyle = 'rgba(103, 232, 249, 0.55)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.ellipse(px, py - podiumH + 2, rRad + 4, (rRad + 4) * 0.4, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 2. 4개의 레무리아 룬 음각 지주 기둥 (Four Runic Pylon Pillars)
+      [-1, 1].forEach(side => {
+        const pxPos = px + side * (halfW - 5);
+        const pH = bh - 18;
+        const pY = py - podiumH - pH;
+
+        ctx.fillStyle = '#0f766e';
+        ctx.fillRect(pxPos - 2, pY, 4, pH);
+        ctx.fillStyle = '#14b8a6';
+        ctx.fillRect(pxPos - 1, pY, 2, pH);
+
+        // 룬 발광 점
+        ctx.fillStyle = '#a7f3d0';
+        ctx.fillRect(pxPos - 0.8, pY + 4, 1.6, 2);
+        ctx.fillRect(pxPos - 0.8, pY + 10, 1.6, 2);
+      });
+
+      // 3. 반중력 부유 거대 에테르 팔면체 수정 (Anti-Gravity Floating Octahedron Crystal)
+      const cryBob = Math.sin(timeSec * 3) * 2.5;
+      const cryY = py - podiumH - Math.round(bh * 0.55) + cryBob;
+      const crySize = 9;
+
+      // 투명 글로우 오라
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.28)';
+      ctx.beginPath();
+      ctx.arc(px, cryY, crySize + 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 수정 윗면 (Top Pyramid)
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.moveTo(px, cryY - crySize);
+      ctx.lineTo(px + crySize * 0.7, cryY);
+      ctx.lineTo(px, cryY + crySize * 0.2);
+      ctx.lineTo(px - crySize * 0.7, cryY);
+      ctx.closePath();
+      ctx.fill();
+
+      // 수정 아랫면 (Bottom Pyramid)
+      ctx.fillStyle = '#0284c7';
+      ctx.beginPath();
+      ctx.moveTo(px - crySize * 0.7, cryY);
+      ctx.lineTo(px, cryY + crySize * 0.2);
+      ctx.lineTo(px + crySize * 0.7, cryY);
+      ctx.lineTo(px, cryY + crySize);
+      ctx.closePath();
+      ctx.fill();
+
+      // 수정 중앙 하이라이트 코어
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 1.5, cryY - 2, 3, 3);
+
+      // 수정에서 수조로 쏟아지는 에테르 텔레파시 광선 (Telepathic Light Ray)
+      ctx.strokeStyle = 'rgba(167, 243, 208, 0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(px, cryY + crySize);
+      ctx.lineTo(px, py - podiumH + 2);
+      ctx.stroke();
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -5836,6 +6032,16 @@
       ctx.beginPath();
       ctx.ellipse(px + 6, py + bh / 2 + 4, bw * 0.42, 4, 0.08, 0, Math.PI * 2);
       ctx.fill();
+      // 🧜‍♀️🐚 태고 침몰 제국 레무리아 & 무 대륙의 에테르 수정 성소 (Lemuria Sunken Jade Citadel & Mu Crystal Pyramid)
+      if (type === 'lemuria_citadel' || (type === 'capital' && b && b.continent === 'lemuria') || (type === 'castle' && b && b.continent === 'lemuria')) {
+        this.drawLemuriaSunkenJadeCitadel(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'mu_pyramid' || (type === 'palace' && b && b.continent === 'lemuria') || (type === 'temple' && b && b.continent === 'lemuria') || (type === 'fortress' && b && b.continent === 'lemuria') || (type === 'lair' && b && b.continent === 'lemuria')) {
+        this.drawMuCrystalPyramid(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+
       // 🦚🏛️ 태고 페르시아 페르세폴리스 만국의 문 & 영조 시무르그 불멸 제국 (Persepolis Apadana Citadel & Winged Simurgh Sanctum)
       if (type === 'persepolis_apadana' || (type === 'capital' && b && b.continent === 'persepolis') || (type === 'castle' && b && b.continent === 'persepolis')) {
         this.drawPersepolisApadana(ctx, px, py, bw, bh, isNight, timeSec);

@@ -780,6 +780,16 @@ function createSettlementList() {
   add('turqoise_caravan_oasis_harbor', '청록 터키석 오아시스 캐러밴 대상 마을', 'town', 'persepolis', 3380, 2240, 'human', false, 10);
   add('royal_cyrus_cylinder_treasury', '키루스 원통 칙령 왕실 칙서 보물고', 'port', 'persepolis', 3460, 2320, 'human', false, 9);
 
+  // =========================================================================
+  // 34. THE LOST SUNKEN CONTINENT OF LEMURIA & MU (태고 침몰 제국 레무리아 & 무 대륙의 산호 요새)
+  // =========================================================================
+  add('lemuria_sunken_jade_citadel', '레무리아 심해 청옥 대성채 수도', 'capital', 'lemuria', 180, 2220, 'celestial', true, 18);
+  add('mu_crystal_pyramid_sanctum', '무 대륙 에테르 수정 피라미드 성소', 'castle', 'lemuria', 100, 2160, 'crusader', true, 16);
+  add('nautilus_shell_pearl_palace', '거대 앵무조개 진주 궁전', 'palace', 'lemuria', 260, 2180, 'beastkin', true, 14);
+  add('bioluminescent_angler_temple', '심해 초롱아귀 발광 신전', 'temple', 'lemuria', 140, 2300, 'undead', true, 12);
+  add('sunken_chitin_coral_diver_village', '심해 갑각 산호 채취 잠수부 마을', 'town', 'lemuria', 220, 2340, 'human', false, 10);
+  add('abyssal_trench_leviathan_wharf', '해구 레비아탄 심항 부두 기지', 'port', 'lemuria', 120, 2380, 'human', false, 9);
+
   return list;
 }
 
@@ -1305,6 +1315,18 @@ function generateWorld() {
           continue;
         }
 
+        // 태고 침몰 제국 레무리아 & 무 대륙의 산호 요새 전용 지형 카빙
+        if (s.continent === 'lemuria') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.CASTLE_FLOOR : TILE.CRYSTAL_CAVE; // 심해 청옥 기단 및 에테르 수정 회랑 바닥
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.CORAL : TILE.OBSIDIAN; // 발광 산호초 군락 및 굳은 심해 흑요석 암반
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.OASIS_WATER : TILE.DEEP_WATER; // 청록빛 심해 산호 연못 및 대양 해구
+          }
+          continue;
+        }
+
         const curT = tiles[idx(tx, ty)];
         const isWater = (curT === TILE.DEEP_WATER || curT === TILE.WATER);
 
@@ -1636,7 +1658,18 @@ function generateWorld() {
     ['turqoise_caravan_oasis_harbor', 'royal_cyrus_cylinder_treasury'],
     ['gate_of_all_nations_gatehouse', 'sandsea_caravan_bazaar_port'],
     ['gate_of_all_nations_gatehouse', 'void_astral_dredge_dock'],
-    ['simurgh_sacred_flame_sanctum', 'void_shadow_cloister']
+    ['simurgh_sacred_flame_sanctum', 'void_shadow_cloister'],
+
+    // [태고 침몰 제국 레무리아 해로 및 심해 회랑 가도 (Lemuria Sunken Highway)]
+    ['lemuria_sunken_jade_citadel', 'mu_crystal_pyramid_sanctum'],
+    ['lemuria_sunken_jade_citadel', 'nautilus_shell_pearl_palace'],
+    ['lemuria_sunken_jade_citadel', 'bioluminescent_angler_temple'],
+    ['mu_crystal_pyramid_sanctum', 'golden_cenote_emerald_harbor'],
+    ['nautilus_shell_pearl_palace', 'sunken_chitin_coral_diver_village'],
+    ['bioluminescent_angler_temple', 'sunken_chitin_coral_diver_village'],
+    ['bioluminescent_angler_temple', 'abyssal_trench_leviathan_wharf'],
+    ['sunken_chitin_coral_diver_village', 'abyssal_trench_leviathan_wharf'],
+    ['mu_crystal_pyramid_sanctum', 'obsidian_sun_disc_alchemist_forge']
   ];
   const roadLinks = rawRoadLinks.filter(([a, b]) => settlementMap[a] && settlementMap[b]);
 

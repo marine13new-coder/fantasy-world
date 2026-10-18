@@ -1278,6 +1278,7 @@ function startFantasyWorld() {
         else if (s.continent === 'sol_invictus') icon = '☀️';
         else if (s.continent === 'leviathan_trench') icon = '🔱';
         else if (s.continent === 'persepolis') icon = '🦚';
+        else if (s.continent === 'lemuria') icon = '🧜‍♀️';
         else if (s.type === 'capital') icon = '👑';
         else if (s.type === 'port') icon = '⚓';
         else if (s.type === 'fortress') icon = '🏰';
@@ -1310,6 +1311,7 @@ function startFantasyWorld() {
         else if (s.continent === 'sol_invictus') regionName = '☀️ 신성 불사조 솔 인빅투스 황금 바실리카 & 쌍두독수리 팔라티노 제국';
         else if (s.continent === 'leviathan_trench') regionName = '🌋🔱 해저 화산 열수구 흑요석 레비아탄 요새 & 마그마 환초 제국';
         else if (s.continent === 'persepolis') regionName = '🦚 태고 페르시아 페르세폴리스 만국의 문 & 영조 시무르그 불멸 제국';
+        else if (s.continent === 'lemuria') regionName = '🧜‍♀️ 태고 침몰 제국 레무리아 & 무 대륙의 산호 요새';
         else if (s.continent === 'west') regionName = '서부 실바니아';
         else if (s.continent === 'north') regionName = '북부 노스펠';
         else if (s.continent === 'south') regionName = '남부 드라코니아';
