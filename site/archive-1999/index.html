@@ -1675,6 +1675,474 @@
       return new THREE.CanvasTexture(c);
     }
 
+    /* 초정밀 빈티지 기계식 키보드 텍스처 (IBM Model M Style 1024x512) */
+    function createKeyboardTexture() {
+      const c = document.createElement('canvas');
+      c.width = 1024; c.height = 512;
+      const ctx = c.getContext('2d');
+
+      // 베이지/아이보리 베이스
+      ctx.fillStyle = '#cfc8b8';
+      ctx.fillRect(0, 0, 1024, 512);
+
+      // 미세 플라스틱 텍스처 노이즈
+      for (let i = 0; i < 8000; i++) {
+        const x = Math.random() * 1024, y = Math.random() * 512;
+        ctx.fillStyle = Math.random() < 0.5 ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+        ctx.fillRect(x, y, 2, 2);
+      }
+
+      // 상단 브랜드 명판 (좌측 상단 금속 플레이트)
+      ctx.fillStyle = '#1c221e';
+      ctx.fillRect(40, 24, 180, 28);
+      ctx.strokeStyle = '#4a564e';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(40, 24, 180, 28);
+      ctx.fillStyle = '#b8c6bc';
+      ctx.font = 'bold 12px monospace';
+      ctx.fillText('SONG-BAEK M-1986', 52, 43);
+
+      // 우측 상단 3개 LED 인디케이터 (Num, Caps, Scroll Lock)
+      const leds = ['NUM', 'CAPS', 'SCROLL'];
+      leds.forEach((lbl, idx) => {
+        const lx = 800 + idx * 60;
+        ctx.fillStyle = '#111513';
+        ctx.beginPath(); ctx.arc(lx, 32, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = idx === 0 ? '#33ff66' : '#1e3825'; // Num Lock ON
+        ctx.beginPath(); ctx.arc(lx, 32, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#555e58';
+        ctx.font = '9px monospace';
+        ctx.fillText(lbl, lx - 14, 50);
+      });
+
+      // 키보드 키캡 영역 베벨 & 음각 그리드
+      function drawKey(kx, ky, kw, kh, label, isSpecial = false, isRed = false) {
+        // 키캡 베이스 그림자
+        ctx.fillStyle = '#9e9787';
+        ctx.fillRect(kx, ky, kw, kh);
+
+        // 키캡 윗면 단차 (Bevel)
+        ctx.fillStyle = isRed ? '#8c2635' : (isSpecial ? '#b5aea0' : '#e2dcce');
+        ctx.fillRect(kx + 2, ky + 2, kw - 4, kh - 4);
+
+        // 키캡 상단 하이라이트
+        ctx.fillStyle = isRed ? '#ad3648' : (isSpecial ? '#c9c3b6' : '#f4efe4');
+        ctx.fillRect(kx + 2, ky + 2, kw - 4, 2);
+        ctx.fillRect(kx + 2, ky + 2, 2, kh - 4);
+
+        // 키캡 하단 섀도우
+        ctx.fillStyle = isRed ? '#611722' : (isSpecial ? '#8f887b' : '#aca596');
+        ctx.fillRect(kx + 2, ky + kh - 4, kw - 4, 2);
+        ctx.fillRect(kx + kw - 4, ky + 2, 2, kh - 4);
+
+        // 폰트 라벨
+        if (label) {
+          ctx.fillStyle = isRed ? '#ffffff' : '#222220';
+          ctx.font = kw > 50 || label.length > 2 ? 'bold 11px monospace' : 'bold 13px monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(label, kx + kw / 2, ky + kh / 2);
+        }
+      }
+
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+
+      // 1. 펑션키 열 (Function Row)
+      drawKey(40, 75, 42, 34, 'ESC', false, true); // ESC (Red)
+      for (let i = 1; i <= 12; i++) {
+        const offsetGroup = i > 8 ? 60 : (i > 4 ? 40 : 20);
+        drawKey(85 + (i - 1) * 44 + offsetGroup, 75, 38, 34, 'F' + i, true);
+      }
+      drawKey(720, 75, 42, 34, 'PRT', true);
+      drawKey(766, 75, 42, 34, 'SCR', true);
+      drawKey(812, 75, 42, 34, 'PAU', true);
+
+      // 2. 숫자열 (Number Row)
+      const numRow = ['`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='];
+      drawKey(40, 125, 38, 38, '~');
+      numRow.forEach((n, i) => drawKey(82 + i * 40, 125, 36, 38, n));
+      drawKey(602, 125, 78, 38, 'BACK', true);
+
+      // 3. QWERTY 열
+      drawKey(40, 170, 56, 38, 'TAB', true);
+      const qwerty = ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '\\'];
+      qwerty.forEach((q, i) => drawKey(100 + i * 40, 170, 36, 38, q));
+      drawKey(620, 170, 60, 38, 'DEL', true);
+
+      // 4. 홈 열 (Home Row)
+      drawKey(40, 215, 66, 38, 'CAPS', true);
+      const asdf = ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', '\''];
+      asdf.forEach((a, i) => drawKey(110 + i * 40, 215, 36, 38, a));
+      drawKey(550, 215, 95, 38, 'ENTER', true);
+
+      // 5. 시프트 열 (Shift Row)
+      drawKey(40, 260, 85, 38, 'SHIFT', true);
+      const zxcv = ['Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/'];
+      zxcv.forEach((z, i) => drawKey(129 + i * 40, 260, 36, 38, z));
+      drawKey(529, 260, 115, 38, 'SHIFT', true);
+
+      // 6. 하단 수정자 및 스페이스바 (Modifier & Spacebar)
+      drawKey(40, 305, 54, 40, 'CTRL', true);
+      drawKey(98, 305, 48, 40, 'ALT', true);
+      drawKey(150, 305, 300, 40, '            ARCHIVE  1999            '); // Spacebar
+      drawKey(454, 305, 48, 40, 'ALT', true);
+      drawKey(506, 305, 54, 40, 'CTRL', true);
+
+      // 7. 네비게이션 & 방향키 클러스터
+      const navKeys = ['INS', 'HM', 'PUP', 'DEL', 'END', 'PDN'];
+      navKeys.forEach((k, i) => {
+        const nx = 660 + (i % 3) * 40;
+        const ny = 215 + Math.floor(i / 3) * 42;
+        drawKey(nx, ny, 36, 38, k, true);
+      });
+      drawKey(700, 305, 36, 40, '▲', true);
+      drawKey(660, 350, 36, 40, '◀', true);
+      drawKey(700, 350, 36, 40, '▼', true);
+      drawKey(740, 350, 36, 40, '▶', true);
+
+      // 8. 우측 숫자 키패드 (Numpad)
+      const npKeys = [
+        ['NUM', '/', '*', '-'],
+        ['7', '8', '9', '+'],
+        ['4', '5', '6', ''],
+        ['1', '2', '3', 'ENT'],
+        ['0', '', '.', '']
+      ];
+      for (let r = 0; r < npKeys.length; r++) {
+        for (let col = 0; col < npKeys[r].length; col++) {
+          const val = npKeys[r][col];
+          if (!val) continue;
+          const kx = 800 + col * 42;
+          const ky = 125 + r * 42;
+          const kw = (val === '0' && r === 4) ? 80 : 38;
+          const kh = (val === '+' || (val === 'ENT' && r === 3)) ? 80 : 38;
+          drawKey(kx, ky, kw, kh, val, ['NUM', '/', '*', '-', '+', 'ENT'].includes(val));
+        }
+      }
+
+      const tex = new THREE.CanvasTexture(c);
+      return tex;
+    }
+
+    /* 키보드 입체 범프맵 (Keycaps Bump Map) */
+    function createKeyboardBumpMap() {
+      const c = document.createElement('canvas');
+      c.width = 1024; c.height = 512;
+      const ctx = c.getContext('2d');
+
+      ctx.fillStyle = '#404040'; // 베이스 깊이
+      ctx.fillRect(0, 0, 1024, 512);
+
+      // 각 키캡 돌출 영역 화이트 렌더링
+      ctx.fillStyle = '#e8e8e8';
+      // 주요 키캡 블록들
+      ctx.fillRect(38, 73, 820, 38);
+      ctx.fillRect(38, 123, 646, 175);
+      ctx.fillRect(38, 303, 524, 44);
+      ctx.fillRect(658, 213, 122, 180);
+      ctx.fillRect(798, 123, 172, 270);
+
+      // 키캡 사이 틈새 그루브 블랙 섀도우
+      ctx.strokeStyle = '#050505';
+      ctx.lineWidth = 4;
+      for (let y = 70; y < 420; y += 42) {
+        ctx.beginPath(); ctx.moveTo(35, y); ctx.lineTo(980, y); ctx.stroke();
+      }
+      for (let x = 38; x < 980; x += 40) {
+        ctx.beginPath(); ctx.moveTo(x, 70); ctx.lineTo(x, 420); ctx.stroke();
+      }
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    /* 릴-투-릴 데크 전면 초정밀 페이스플레이트 텍스처 (1024x1024) */
+    function createReelDeckFaceTexture() {
+      const c = document.createElement('canvas');
+      c.width = 1024; c.height = 1024;
+      const ctx = c.getContext('2d');
+
+      // 브러시드 다크 아노다이즈드 알루미늄
+      const grad = ctx.createLinearGradient(0, 0, 0, 1024);
+      grad.addColorStop(0, '#1c2420');
+      grad.addColorStop(0.5, '#26312b');
+      grad.addColorStop(1, '#18201a');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1024, 1024);
+
+      // 수평 헤어라인 메탈 텍스처
+      ctx.fillStyle = 'rgba(255,255,255,0.025)';
+      for (let y = 0; y < 1024; y += 3) {
+        ctx.fillRect(0, y, 1024, 1);
+      }
+      ctx.fillStyle = 'rgba(0,0,0,0.04)';
+      for (let y = 1; y < 1024; y += 3) {
+        ctx.fillRect(0, y, 1024, 1);
+      }
+
+      // 모서리 섀도우 & 베벨 테두리
+      ctx.strokeStyle = '#3d4d44';
+      ctx.lineWidth = 8;
+      ctx.strokeRect(4, 4, 1016, 1016);
+      ctx.strokeStyle = '#0a0f0c';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(12, 12, 1000, 1000);
+
+      // 4모서리 거대한 스튜디오 랙 볼트
+      const bolts = [[32, 32], [992, 32], [32, 992], [992, 992], [32, 512], [992, 512]];
+      for (let b of bolts) {
+        ctx.fillStyle = '#0a0e0b';
+        ctx.beginPath(); ctx.arc(b[0], b[1], 16, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#6e7d73';
+        ctx.beginPath(); ctx.arc(b[0], b[1], 12, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#1a221d';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(b[0] - 8, b[1]); ctx.lineTo(b[0] + 8, b[1]); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(b[0], b[1] - 8); ctx.lineTo(b[0], b[1] + 8); ctx.stroke();
+      }
+
+      // 브랜드 실크스크린 로고 & 스펙 각인
+      ctx.fillStyle = '#d0ded4';
+      ctx.font = 'bold 26px monospace';
+      ctx.fillText('SONG-BAEK PRECISION AUDIO LABS', 80, 80);
+      ctx.fillStyle = '#83988b';
+      ctx.font = '16px monospace';
+      ctx.fillText('MODEL 99-TR / 3-HEAD REVOX SPEC / 15 IPS DUAL CAPSTAN', 80, 110);
+
+      // 테이프 주행 경로 실크스크린 라인
+      ctx.strokeStyle = '#4e6155';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(250, 420);
+      ctx.lineTo(360, 480);
+      ctx.lineTo(664, 480);
+      ctx.lineTo(774, 420);
+      ctx.stroke();
+
+      // 헤드 블록 라벨
+      ctx.fillStyle = '#a6b8ad';
+      ctx.font = 'bold 15px monospace';
+      ctx.fillText('ERASE  •  RECORD  •  PLAYBACK', 400, 460);
+
+      // 기계식 카운터 창 (Counter Window)
+      ctx.fillStyle = '#080c09';
+      ctx.fillRect(430, 150, 164, 52);
+      ctx.strokeStyle = '#4e6155';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(430, 150, 164, 52);
+      ctx.fillStyle = '#ffeedd';
+      ctx.font = 'bold 32px monospace';
+      ctx.fillText('0 1 4 8', 460, 188);
+
+      // 하단 VU 미터 프레임 슬라이더 & 라벨
+      ctx.fillStyle = '#9cb0a3';
+      ctx.font = 'bold 16px monospace';
+      ctx.fillText('LEFT CHANNEL VU', 200, 600);
+      ctx.fillText('RIGHT CHANNEL VU', 680, 600);
+
+      // 하단 컨트롤 섹션 구분선
+      ctx.strokeStyle = '#2e3a32';
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(40, 800); ctx.lineTo(984, 800); ctx.stroke();
+
+      // 트랜스포트 버튼 라벨
+      const btns = ['REWIND', 'PLAY', 'FAST FWD', 'STOP', 'RECORD'];
+      btns.forEach((btn, idx) => {
+        const bx = 160 + idx * 160;
+        ctx.fillStyle = btn === 'RECORD' ? '#ff4444' : '#c2d2c6';
+        ctx.font = 'bold 15px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(btn, bx, 835);
+      });
+      ctx.textAlign = 'left';
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    /* 초정밀 아날로그 VU 미터 다이얼 페이스 (512x256) */
+    function createVUMeterDialTexture() {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 256;
+      const ctx = c.getContext('2d');
+
+      // 백라이트 호박색 앰버 그라디언트
+      const grad = ctx.createRadialGradient(256, 240, 10, 256, 180, 280);
+      grad.addColorStop(0, '#ffe494');
+      grad.addColorStop(0.6, '#e0aa34');
+      grad.addColorStop(1, '#9e6810');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 512, 256);
+
+      // 미세 백라이트 비네트
+      ctx.strokeStyle = '#5a3805';
+      ctx.lineWidth = 10;
+      ctx.strokeRect(5, 5, 502, 246);
+
+      // 아크 눈금선 (dB Scale Arc)
+      const cx = 256, cy = 250, r = 190;
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#1a1408';
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, -Math.PI * 0.76, -Math.PI * 0.24);
+      ctx.stroke();
+
+      // 오버로드 붉은색 아크 구간 (+0dB ~ +3dB)
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = '#cc1818';
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, -Math.PI * 0.40, -Math.PI * 0.24);
+      ctx.stroke();
+
+      // 주요 눈금 틱 마크 & 수치 (-20 to +3)
+      const ticks = [
+        { val: -20, ang: -0.74 },
+        { val: -10, ang: -0.66 },
+        { val: -7,  ang: -0.60 },
+        { val: -5,  ang: -0.54 },
+        { val: -3,  ang: -0.48 },
+        { val: -1,  ang: -0.43 },
+        { val: 0,   ang: -0.40, red: true },
+        { val: 1,   ang: -0.35, red: true },
+        { val: 2,   ang: -0.30, red: true },
+        { val: 3,   ang: -0.25, red: true }
+      ];
+
+      ticks.forEach(t => {
+        const a = Math.PI * t.ang;
+        const x1 = cx + Math.cos(a) * (r - 12);
+        const y1 = cy + Math.sin(a) * (r - 12);
+        const x2 = cx + Math.cos(a) * (r + 4);
+        const y2 = cy + Math.sin(a) * (r + 4);
+
+        ctx.strokeStyle = t.red ? '#cc1818' : '#1a1408';
+        ctx.lineWidth = t.val === 0 ? 4 : 2.5;
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+
+        const tx = cx + Math.cos(a) * (r - 28);
+        const ty = cy + Math.sin(a) * (r - 28);
+        ctx.fillStyle = t.red ? '#cc1818' : '#1a1408';
+        ctx.font = 'bold 15px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(t.val > 0 ? '+' + t.val : '' + t.val, tx, ty);
+      });
+
+      // 중앙 VU 로고
+      ctx.fillStyle = '#1c1408';
+      ctx.font = 'bold 28px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('VU', 256, 175);
+      ctx.font = 'bold 12px monospace';
+      ctx.fillText('BALLISTICS ANSI C16.5', 256, 195);
+
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    /* 비밀 수사 마닐라 서류철 텍스처 (1024x512) */
+    function createManilaFolderTexture() {
+      const c = document.createElement('canvas');
+      c.width = 1024; c.height = 512;
+      const ctx = c.getContext('2d');
+
+      // 크라프트지 누런 종이
+      ctx.fillStyle = '#c7ab77';
+      ctx.fillRect(0, 0, 1024, 512);
+
+      // 종이 그레인 노이즈 & 세월의 오염 얼룩
+      for (let i = 0; i < 4000; i++) {
+        ctx.fillStyle = Math.random() < 0.5 ? 'rgba(255,255,255,0.08)' : 'rgba(80,50,20,0.06)';
+        ctx.fillRect(Math.random() * 1024, Math.random() * 512, 2, 2);
+      }
+
+      // 테두리 접힘 음영
+      ctx.strokeStyle = '#9c8152';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(6, 6, 1012, 500);
+
+      // 커피 머그잔 얼룩 링 (Coffee Ring)
+      ctx.strokeStyle = 'rgba(85, 45, 15, 0.45)';
+      ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.arc(780, 220, 68, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = 'rgba(85, 45, 15, 0.12)';
+      ctx.fill();
+
+      // 상단 은색 페이퍼 클립 그래픽
+      ctx.strokeStyle = '#888888';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(80, 10, 25, 80);
+
+      // 붉은색 고무도장 스탬프 (CONFIDENTIAL / 극비)
+      ctx.save();
+      ctx.translate(450, 180);
+      ctx.rotate(-0.18);
+      ctx.strokeStyle = '#a62424';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(-180, -40, 360, 80);
+      ctx.fillStyle = '#a62424';
+      ctx.font = 'bold 36px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('[ TOP SECRET / 극비 수사 ]', 0, 12);
+      ctx.restore();
+
+      // 타자기 문서 본문 텍스트
+      ctx.fillStyle = '#2b2319';
+      ctx.font = 'bold 18px monospace';
+      ctx.fillText('수사보고서: 1979-송백-404호 참사 잔류 주파수 감식건', 60, 320);
+      ctx.font = '14px monospace';
+      ctx.fillText('• 감식 대상: 닥터 한의 뇌파 동조 실험 테이프 5개', 60, 360);
+      ctx.fillText('• 특이 사항: 108.4Hz 공명 주파수 접촉 시 청각 환각 및 이성 붕괴 발생', 60, 395);
+      ctx.fillText('• 경고: 지하실 404호 격리실 진입 전 반드시 신경 안정제를 복용할 것', 60, 430);
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    /* 노란색 리갈 메모 패드 텍스처 (512x512) */
+    function createLegalPadTexture() {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 512;
+      const ctx = c.getContext('2d');
+
+      // 리갈 옐로우 베이스
+      ctx.fillStyle = '#faec7e';
+      ctx.fillRect(0, 0, 512, 512);
+
+      // 상단 브라운 가죽 바인딩 테이프 & 스테이플러
+      ctx.fillStyle = '#422410';
+      ctx.fillRect(0, 0, 512, 45);
+      ctx.fillStyle = '#b0b0b0';
+      ctx.fillRect(120, 18, 25, 6);
+      ctx.fillRect(360, 18, 25, 6);
+
+      // 좌측 붉은 마진선 2줄
+      ctx.strokeStyle = '#e04444';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(65, 45); ctx.lineTo(65, 512); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(70, 45); ctx.lineTo(70, 512); ctx.stroke();
+
+      // 푸른색 수평 괘선 라인들
+      ctx.strokeStyle = '#7fa0cc';
+      ctx.lineWidth = 1;
+      for (let y = 75; y < 512; y += 28) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
+      }
+
+      // 손글씨 볼펜 수사 메모
+      ctx.fillStyle = '#1c284d';
+      ctx.font = '14px cursive, sans-serif';
+      ctx.fillText('12/31 23:50 녹음실 도착.', 80, 100);
+      ctx.fillText('Ch.1 테이프에서 사람 숨소리가 난다.', 80, 128);
+      ctx.fillStyle = '#8b1818';
+      ctx.fillText('누군가 문 밖에서 서성이고 있다...', 80, 156);
+      ctx.fillStyle = '#1c284d';
+      ctx.fillText('주파수를 맞추면 그들이 말하기 시작함.', 80, 184);
+      ctx.fillText('108.4 Hz 공명점 절대 잊지 말 것!', 80, 212);
+
+      return new THREE.CanvasTexture(c);
+    }
+
     function createMirrorTexture() {
       const c = document.createElement('canvas');
       c.width = 512; c.height = 1024;
@@ -2116,6 +2584,7 @@
     let monitorCanvas, monitorCtx, monitorTexture;
     let uvClueMesh, dustParticles, waterDropMesh;
     let tapeReelL, tapeReelR;
+    let vuNeedleL, vuNeedleR;
     let isPointerLocked = false;
     let inTerminalMode = false;
     let inDocInspectMode = false;
@@ -2143,7 +2612,7 @@
     const unlockedAchievements = new Set();
 
     const keys = { w: false, a: false, s: false, d: false };
-    const playerPos = new THREE.Vector3(0, 1.55, 0.4);
+    const playerPos = new THREE.Vector3(0, 1.36, -2.65);
     let cameraPitch = 0, cameraYaw = 0;
     let walkCycle = 0;
 
@@ -2606,7 +3075,7 @@
       // 회전 의자 접촉 그림자
       const chairShadow = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 1.0), shadowMat);
       chairShadow.rotation.x = -Math.PI / 2;
-      chairShadow.position.set(0.12, 0.005, -3.32);
+      chairShadow.position.set(0, 0.005, -2.95);
       scene.add(chairShadow);
     }
 
@@ -2665,9 +3134,9 @@
         chairGroup.add(pad);
       }
 
-      // 데스크 앞, 황급히 일어선 듯 16도 회전된 각도로 배치
-      chairGroup.position.set(0.12, 0, -3.32);
-      chairGroup.rotation.y = 0.28;
+      // 데스크 앞 착석 위치에 배치
+      chairGroup.position.set(0, 0, -2.95);
+      chairGroup.rotation.y = 0.05;
       scene.add(chairGroup);
     }
 
@@ -2675,68 +3144,116 @@
     function buildDeskKeyboardAndMouse(parentGroup) {
       const kbGroup = new THREE.Group();
 
-      // 레트로 베이지 & 회색 플라스틱 재질
-      const beigeCaseMat = new THREE.MeshStandardMaterial({ color: 0xc8c3b4, roughness: 0.72 });
-      const keyGrayMat = new THREE.MeshStandardMaterial({ color: 0x9e988b, roughness: 0.65 });
-      const keyDarkMat = new THREE.MeshStandardMaterial({ color: 0x6e6960, roughness: 0.65 });
-      const cableMat = new THREE.MeshStandardMaterial({ color: 0x222623, roughness: 0.85 });
+      const kbTex = createKeyboardTexture();
+      const kbBump = createKeyboardBumpMap();
 
-      // 키보드 본체 경사 웨지 베이스
-      const kbBase = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.032, 0.22), beigeCaseMat);
-      kbBase.position.set(0, 0.016, 0);
+      // 키보드 메인 페이스 매핑 (실사 텍스처 + 입체 범프)
+      const kbFaceMat = new THREE.MeshStandardMaterial({
+        map: kbTex,
+        bumpMap: kbBump,
+        bumpScale: 0.04,
+        roughness: 0.65,
+        metalness: 0.1
+      });
+
+      // 베이지색 섀시 플라스틱 매티리얼
+      const beigeCaseMat = new THREE.MeshStandardMaterial({ color: 0xc8c2b2, roughness: 0.72 });
+      const cableMat = new THREE.MeshStandardMaterial({ color: 0x1f2320, roughness: 0.85 });
+
+      // 1. 키보드 하단 메인 경사 섀시 (Wedge Base)
+      const kbBase = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.028, 0.23), beigeCaseMat);
+      kbBase.position.set(0, 0.014, 0);
+      kbBase.castShadow = true;
+      kbBase.receiveShadow = true;
       kbGroup.add(kbBase);
 
-      // 키보드 상단 펑션 열 단차
-      const kbStep = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.012, 0.05), beigeCaseMat);
-      kbStep.position.set(0, 0.035, -0.07);
-      kbGroup.add(kbStep);
+      // 2. 키보드 상단 경사면 (실사 키캡 텍스처 & 범프 매핑 상판)
+      const kbTopPlane = new THREE.Mesh(new THREE.PlaneGeometry(0.53, 0.20), kbFaceMat);
+      kbTopPlane.rotation.x = -Math.PI / 2 + 0.12; // 7도 경사각
+      kbTopPlane.position.set(0, 0.034, 0.005);
+      kbTopPlane.receiveShadow = true;
+      kbGroup.add(kbTopPlane);
 
-      // 키 캡 클러스터 (메인 쿼티 블록)
-      const qwertyBlock = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.015, 0.12), keyGrayMat);
-      qwertyBlock.position.set(-0.08, 0.038, 0.02);
-      kbGroup.add(qwertyBlock);
+      // 3. 키보드 상단 턱 & 브랜드 립 (Top Lip Molding)
+      const kbLip = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.015, 0.03), beigeCaseMat);
+      kbLip.position.set(0, 0.038, -0.095);
+      kbGroup.add(kbLip);
 
-      // 스페이스바 (도드라진 돌출부)
-      const spacebar = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.018, 0.022), keyDarkMat);
-      spacebar.position.set(-0.08, 0.042, 0.085);
+      // 4. 스페이스바 물리 입체 돌출 (Physical 3D Spacebar Extrusion)
+      const spacebarMat = new THREE.MeshStandardMaterial({ color: 0xd4cebf, roughness: 0.6 });
+      const spacebar = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.014, 0.024), spacebarMat);
+      spacebar.position.set(-0.065, 0.042, 0.068);
+      spacebar.rotation.x = 0.12;
       kbGroup.add(spacebar);
 
-      // 방향키 & 네비게이션 블록
-      const navBlock = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.015, 0.12), keyGrayMat);
-      navBlock.position.set(0.12, 0.038, 0.02);
-      kbGroup.add(navBlock);
+      // 5. ESC 적색 키캡 물리 입체 돌출 (Physical 3D Red ESC Key)
+      const redEscMat = new THREE.MeshStandardMaterial({ color: 0x8a2434, roughness: 0.5 });
+      const escKey = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.014, 0.022), redEscMat);
+      escKey.position.set(-0.23, 0.048, -0.068);
+      escKey.rotation.x = 0.12;
+      kbGroup.add(escKey);
 
-      // 숫자패드 (Numpad) 블록
-      const numpadBlock = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.015, 0.12), keyGrayMat);
-      numpadBlock.position.set(0.20, 0.038, 0.02);
-      kbGroup.add(numpadBlock);
+      // 6. 꼬불꼬불한 코일형 PS/2 스프링 케이블 (Coiled Cable)
+      const coilGroup = new THREE.Group();
+      for (let c = 0; c < 24; c++) {
+        const ring = new THREE.Mesh(
+          new THREE.TorusGeometry(0.012, 0.003, 6, 12),
+          cableMat
+        );
+        ring.position.set(
+          Math.sin(c * 0.25) * 0.01,
+          0.018,
+          -0.12 - c * 0.009
+        );
+        ring.rotation.y = 0.3;
+        coilGroup.add(ring);
+      }
+      kbGroup.add(coilGroup);
 
-      // 키보드 코일 케이블
-      const kbCable = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.35, 6), cableMat);
-      kbCable.rotation.x = Math.PI / 2;
-      kbCable.position.set(0, 0.02, -0.25);
-      kbGroup.add(kbCable);
-
+      // 책상 위 배치 (사용자 정면 착석 시점 기준)
       kbGroup.position.set(0, 0.90, 0.32);
-      kbGroup.rotation.x = 0.08;
+      kbGroup.rotation.x = 0.06;
       parentGroup.add(kbGroup);
 
-      // 90s 볼마우스 & 마우스패드 (모니터 우측 키보드 옆)
-      const padMat = new THREE.MeshStandardMaterial({ color: 0x1e2b22, roughness: 0.9 });
-      const mousePad = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.004, 0.26), padMat);
-      mousePad.position.set(0.42, 0.902, 0.32);
+      // 7. 빈티지 90s 볼마우스 & 마우스패드
+      const padMat = new THREE.MeshStandardMaterial({ color: 0x16241b, roughness: 0.92 });
+      const mousePad = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.004, 0.28), padMat);
+      mousePad.position.set(0.44, 0.902, 0.32);
+      mousePad.receiveShadow = true;
       parentGroup.add(mousePad);
 
-      const mouseMat = new THREE.MeshStandardMaterial({ color: 0xc2bdae, roughness: 0.6 });
-      const mouse = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.03, 0.12), mouseMat);
-      mouse.position.set(0.42, 0.92, 0.32);
-      mouse.rotation.y = -0.1;
-      parentGroup.add(mouse);
+      // 마우스패드 패브릭 테두리 림
+      const padRimMat = new THREE.MeshStandardMaterial({ color: 0x0d1711, roughness: 0.8 });
+      const padRim = new THREE.Mesh(new THREE.BoxGeometry(0.244, 0.005, 0.284), padRimMat);
+      padRim.position.set(0.44, 0.901, 0.32);
+      parentGroup.add(padRim);
 
-      // 마우스 중앙 클릭 휠/분할선
-      const mouseLine = new THREE.Mesh(new THREE.BoxGeometry(0.002, 0.032, 0.05), new THREE.MeshBasicMaterial({ color: 0x555048 }));
-      mouseLine.position.set(0.42, 0.925, 0.29);
-      parentGroup.add(mouseLine);
+      // 90년대 볼마우스 곡선 본체 (Rounded Mouse Body)
+      const mouseGroup = new THREE.Group();
+      const mouseBodyMat = new THREE.MeshStandardMaterial({ color: 0xccc5b4, roughness: 0.65 });
+      const mouseBody = new THREE.Mesh(new THREE.BoxGeometry(0.076, 0.032, 0.118), mouseBodyMat);
+      mouseBody.position.y = 0.016;
+      mouseGroup.add(mouseBody);
+
+      // 마우스 버튼 분할선 (Left/Right Button Seam)
+      const seamMat = new THREE.MeshBasicMaterial({ color: 0x444038 });
+      const seam = new THREE.Mesh(new THREE.BoxGeometry(0.002, 0.01, 0.05), seamMat);
+      seam.position.set(0, 0.033, -0.03);
+      mouseGroup.add(seam);
+
+      const seamH = new THREE.Mesh(new THREE.BoxGeometry(0.074, 0.002, 0.003), seamMat);
+      seamH.position.set(0, 0.033, -0.005);
+      mouseGroup.add(seamH);
+
+      // 마우스 얇은 블랙 케이블
+      const mouseWire = new THREE.Mesh(new THREE.CylinderGeometry(0.002, 0.002, 0.25, 6), cableMat);
+      mouseWire.rotation.x = Math.PI / 2;
+      mouseWire.position.set(0, 0.015, -0.18);
+      mouseGroup.add(mouseWire);
+
+      mouseGroup.position.set(0.44, 0.902, 0.31);
+      mouseGroup.rotation.y = -0.15;
+      parentGroup.add(mouseGroup);
     }
 
     /* ========================================================
@@ -2797,31 +3314,71 @@
       leftPed.position.set(-1.18, 0.42, 0);
       deskObj.add(leftPed);
 
-      // 앤티크 뱅커/스탠드 조명 (Anglepoise Lamp Mesh)
-      const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.04, 16), brassMat);
-      lampBase.position.set(-1.25, 0.92, -0.2);
-      deskObj.add(lampBase);
+      // 1. 클래식 에메랄드 그린 뱅커스 램프 (Authentic Vintage Banker's Desk Lamp)
+      const lampGroup = new THREE.Group();
+      // 2단 계단형 황동 주철 베이스
+      const lampBase1 = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.13, 0.025, 16), brassMat);
+      lampBase1.position.y = 0.012;
+      lampGroup.add(lampBase1);
+      const lampBase2 = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.10, 0.02, 16), brassMat);
+      lampBase2.position.y = 0.032;
+      lampGroup.add(lampBase2);
 
-      const lampArm1 = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.55, 8), brassMat);
-      lampArm1.position.set(-1.25, 1.2, -0.2);
-      lampArm1.rotation.z = -0.25;
-      deskObj.add(lampArm1);
+      // 수직 황동 기둥 & 듀얼 지지대
+      const lampStem = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.42, 12), brassMat);
+      lampStem.position.y = 0.24;
+      lampGroup.add(lampStem);
 
-      const lampArm2 = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.45, 8), brassMat);
-      lampArm2.position.set(-1.12, 1.6, -0.2);
-      lampArm2.rotation.z = 0.4;
-      deskObj.add(lampArm2);
+      // C자형 쉐이드 회전 피봇 브래킷
+      const pivotBar = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.30, 8), brassMat);
+      pivotBar.rotation.z = Math.PI / 2;
+      pivotBar.position.y = 0.44;
+      lampGroup.add(pivotBar);
 
-      const shadeMat = new THREE.MeshStandardMaterial({ color: 0x123620, roughness: 0.35, metalness: 0.5 });
-      const shade = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.22, 16, 1, true), shadeMat);
-      shade.position.set(-0.95, 1.82, -0.2);
-      shade.rotation.z = Math.PI - 0.45;
-      deskObj.add(shade);
+      for (let side of [-0.14, 0.14]) {
+        const pivotKnob = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.016, 8), brassMat);
+        pivotKnob.rotation.z = Math.PI / 2;
+        pivotKnob.position.set(side, 0.44, 0);
+        lampGroup.add(pivotKnob);
+      }
 
-      // 전구 발광 메쉬
-      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfff0aa }));
-      bulb.position.set(-0.95, 1.78, -0.2);
-      deskObj.add(bulb);
+      // 반원통형 유광 에메랄드 그린 글래스 쉐이드 (Emerald Green Cased Glass Shade)
+      const glassShadeMat = new THREE.MeshStandardMaterial({
+        color: 0x0d4726,
+        roughness: 0.12,
+        metalness: 0.15,
+        transparent: true,
+        opacity: 0.94
+      });
+      // 반원통형 쉘 (Half Cylinder geometry)
+      const shadeGeo = new THREE.CylinderGeometry(0.075, 0.075, 0.26, 24, 1, false, 0, Math.PI);
+      const shade = new THREE.Mesh(shadeGeo, glassShadeMat);
+      shade.rotation.z = Math.PI / 2;
+      shade.rotation.x = Math.PI / 2;
+      shade.position.set(0, 0.45, 0);
+      lampGroup.add(shade);
+
+      // 쉐이드 내부 따뜻한 텅스텐 백열전구 (Warm 2700K Glow)
+      const bulb = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.025, 0.025, 0.12, 12),
+        new THREE.MeshBasicMaterial({ color: 0xffeebb })
+      );
+      bulb.rotation.z = Math.PI / 2;
+      bulb.position.set(0, 0.44, 0.01);
+      lampGroup.add(bulb);
+
+      // 아래로 늘어진 황동 비즈 볼체인 스위치 (Beaded Pull Chain)
+      const chainMat = new THREE.MeshStandardMaterial({ color: 0xc4ab5c, metalness: 0.9, roughness: 0.2 });
+      const pullChain = new THREE.Mesh(new THREE.CylinderGeometry(0.0018, 0.0018, 0.18, 6), chainMat);
+      pullChain.position.set(0.06, 0.34, 0.04);
+      lampGroup.add(pullChain);
+      const pullFob = new THREE.Mesh(new THREE.SphereGeometry(0.006, 8, 8), chainMat);
+      pullFob.position.set(0.06, 0.24, 0.04);
+      lampGroup.add(pullFob);
+
+      lampGroup.position.set(-1.18, 0.90, -0.15);
+      lampGroup.rotation.y = 0.25;
+      deskObj.add(lampGroup);
 
       // 카세트 테이프 3개 묶음 소품
       for (let t = 0; t < 3; t++) {
@@ -2835,18 +3392,98 @@
         deskObj.add(cTape);
       }
 
-      // 비밀 수사 서류철 (Manila Folder)
-      const folderMat = new THREE.MeshStandardMaterial({ color: 0xd6c292, roughness: 0.85 });
-      const folder = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.01, 0.48), folderMat);
-      folder.position.set(-0.45, 0.906, 0.25);
-      folder.rotation.y = 0.12;
-      deskObj.add(folder);
+      // 2. 비밀 수사 마닐라 서류철 (실사 텍스처 & 삐져나온 서류지)
+      const folderTex = createManilaFolderTexture();
+      const folderFaceMat = new THREE.MeshStandardMaterial({ map: folderTex, roughness: 0.85 });
+      const folderBaseMat = new THREE.MeshStandardMaterial({ color: 0xbfa36d, roughness: 0.85 });
 
-      // 커피 머그컵
-      const mugMat = new THREE.MeshStandardMaterial({ color: 0xeeece5, roughness: 0.5 });
-      const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.04, 0.09, 12), mugMat);
-      mug.position.set(-0.75, 0.95, 0.1);
-      deskObj.add(mug);
+      const folderGroup = new THREE.Group();
+      // 폴더 본체 베이스
+      const folderBase = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.008, 0.32), folderBaseMat);
+      folderGroup.add(folderBase);
+      // 실사 텍스처 상판
+      const folderTop = new THREE.Mesh(new THREE.PlaneGeometry(0.41, 0.31), folderFaceMat);
+      folderTop.rotation.x = -Math.PI / 2;
+      folderTop.position.y = 0.005;
+      folderGroup.add(folderTop);
+      // 폴더 옆으로 비스듬히 삐져나온 A4 기밀 보고서 낱장
+      const paperSheetMat = new THREE.MeshStandardMaterial({ color: 0xe6e2d3, roughness: 0.9 });
+      const paperSheet = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 0.32), paperSheetMat);
+      paperSheet.rotation.x = -Math.PI / 2;
+      paperSheet.rotation.z = -0.18;
+      paperSheet.position.set(0.12, 0.006, 0.02);
+      folderGroup.add(paperSheet);
+
+      folderGroup.position.set(-0.50, 0.906, 0.22);
+      folderGroup.rotation.y = 0.18;
+      deskObj.add(folderGroup);
+
+      // 3. 차가운 블랙 커피 세라믹 머그잔 (Ceramic Mug with Handle & Dark Liquid)
+      const mugGroup = new THREE.Group();
+      const mugCeramicMat = new THREE.MeshStandardMaterial({ color: 0xe8e4d8, roughness: 0.35 });
+      const mugBody = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.04, 0.09, 16, 1, true), mugCeramicMat);
+      mugBody.position.y = 0.045;
+      mugGroup.add(mugBody);
+      const mugBottom = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.006, 16), mugCeramicMat);
+      mugBottom.position.y = 0.003;
+      mugGroup.add(mugBottom);
+
+      // 머그 손잡이 (Toroid Handle)
+      const mugHandle = new THREE.Mesh(new THREE.TorusGeometry(0.028, 0.007, 8, 16), mugCeramicMat);
+      mugHandle.position.set(-0.048, 0.048, 0);
+      mugHandle.rotation.y = Math.PI / 2;
+      mugGroup.add(mugHandle);
+
+      // 식은 블랙 커피 액면
+      const coffeeMat = new THREE.MeshStandardMaterial({ color: 0x160c05, roughness: 0.15, metalness: 0.1 });
+      const coffeeSurface = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.004, 16), coffeeMat);
+      coffeeSurface.position.y = 0.065;
+      mugGroup.add(coffeeSurface);
+
+      mugGroup.position.set(-0.85, 0.904, 0.18);
+      deskObj.add(mugGroup);
+
+      // 4. 1990년대 PC 본체 타워 (Desktop Tower Case under desk)
+      const towerGroup = new THREE.Group();
+      const towerMat = new THREE.MeshStandardMaterial({ color: 0xc4bea8, roughness: 0.7 });
+      const towerDarkMat = new THREE.MeshStandardMaterial({ color: 0x222622, roughness: 0.8 });
+      // 메인 타워 섀시
+      const towerCase = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.46, 0.48), towerMat);
+      towerCase.position.y = 0.23;
+      towerCase.castShadow = true;
+      towerGroup.add(towerCase);
+
+      // 전면 5.25인치 플로피 드라이브 베이 2개
+      for (let d = 0; d < 2; d++) {
+        const bay = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.042, 0.01), towerDarkMat);
+        bay.position.set(0, 0.38 - d * 0.052, 0.242);
+        towerGroup.add(bay);
+        const slot = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.004, 0.012), new THREE.MeshBasicMaterial({ color: 0x050505 }));
+        slot.position.set(0, 0.38 - d * 0.052, 0.246);
+        towerGroup.add(slot);
+      }
+      // 3.5인치 드라이브 슬롯
+      const fdd = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.03, 0.01), towerDarkMat);
+      fdd.position.set(0, 0.26, 0.242);
+      towerGroup.add(fdd);
+
+      // 전원 버튼 & TURBO 버튼
+      const pwrBtn = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.01, 8), towerDarkMat);
+      pwrBtn.rotation.x = Math.PI / 2;
+      pwrBtn.position.set(-0.05, 0.18, 0.244);
+      towerGroup.add(pwrBtn);
+
+      // 녹색 전원 LED & 붉은색 HDD LED
+      const pwrLed = new THREE.Mesh(new THREE.SphereGeometry(0.004, 6, 6), new THREE.MeshBasicMaterial({ color: 0x33ff66 }));
+      pwrLed.position.set(0.03, 0.18, 0.244);
+      towerGroup.add(pwrLed);
+      const hddLed = new THREE.Mesh(new THREE.SphereGeometry(0.0035, 6, 6), new THREE.MeshBasicMaterial({ color: 0xff2222 }));
+      hddLed.position.set(0.05, 0.18, 0.244);
+      towerGroup.add(hddLed);
+
+      // 데스크 우측 하단 발치 배치
+      towerGroup.position.set(1.15, 0.02, 0.15);
+      deskObj.add(towerGroup);
 
       // 빈티지 90s 기계식 키보드 & 마우스
       buildDeskKeyboardAndMouse(deskObj);
@@ -2916,108 +3553,216 @@
 
     /* 릴-투-릴 오디오 데크 & 3D 스풀 물리 (Studio Master Reel-to-Reel Recorder) */
     function buildReelToReelDeck(parentGroup) {
-      const metalFaceTex = createMetalBrushedTexture();
-      const faceMat = new THREE.MeshStandardMaterial({ map: metalFaceTex, roughness: 0.38, metalness: 0.82 });
-      const chassisMat = new THREE.MeshStandardMaterial({ color: 0x18201a, roughness: 0.8 });
-      const spoolMat = new THREE.MeshStandardMaterial({ color: 0xb0c2b5, metalness: 0.92, roughness: 0.2 });
-      const tapeBrownMat = new THREE.MeshStandardMaterial({ color: 0x4a2a1b, roughness: 0.7 });
-      const vuGlowMat = new THREE.MeshBasicMaterial({ color: 0xffaa22 });
-      const darkSteelMat = new THREE.MeshStandardMaterial({ color: 0x0e1310, metalness: 0.9, roughness: 0.3 });
+      const faceTex = createReelDeckFaceTexture();
+      const faceMat = new THREE.MeshStandardMaterial({
+        map: faceTex,
+        roughness: 0.35,
+        metalness: 0.8
+      });
+      const chassisMat = new THREE.MeshStandardMaterial({ color: 0x141a16, roughness: 0.75, metalness: 0.3 });
+      const spoolMat = new THREE.MeshStandardMaterial({ color: 0xc4d1c8, metalness: 0.94, roughness: 0.18 });
+      const tapeBrownMat = new THREE.MeshStandardMaterial({ color: 0x3d2012, roughness: 0.65 });
+      const darkSteelMat = new THREE.MeshStandardMaterial({ color: 0x0e1310, metalness: 0.9, roughness: 0.25 });
+      const brassKnobMat = new THREE.MeshStandardMaterial({ color: 0xb59e55, metalness: 0.85, roughness: 0.3 });
 
       const deckUnit = new THREE.Group();
 
-      // 스튜디오 랙 하우징 본체 (모니터 우측 배치)
-      const deckChassis = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.58, 0.34), chassisMat);
-      deckChassis.position.set(0, 0.29, 0);
+      // 1. 스튜디오 랙 하우징 본체 (모니터 우측 배치)
+      const deckChassis = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.60, 0.36), chassisMat);
+      deckChassis.position.set(0, 0.30, 0);
       deckChassis.castShadow = true;
       deckUnit.add(deckChassis);
 
-      // 전면 브러시드 알루미늄 페이스플레이트
-      const facePlate = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.56, 0.015), faceMat);
-      facePlate.position.set(0, 0.29, 0.172);
+      // 랙 측면 통풍구 슬릿 (Side Vents)
+      for (let v = 0; v < 8; v++) {
+        const ventL = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.012, 0.20), darkSteelMat);
+        ventL.position.set(-0.395, 0.15 + v * 0.035, 0);
+        deckUnit.add(ventL);
+        const ventR = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.012, 0.20), darkSteelMat);
+        ventR.position.set(0.395, 0.15 + v * 0.035, 0);
+        deckUnit.add(ventR);
+      }
+
+      // 2. 전면 브러시드 아노다이즈드 알루미늄 페이스플레이트
+      const facePlate = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.58, 0.015), faceMat);
+      facePlate.position.set(0, 0.30, 0.182);
+      facePlate.receiveShadow = true;
       deckUnit.add(facePlate);
 
-      // 상단 테이프 주행 가이드 핀 & 핀치 롤러 & 헤드 어셈블리
-      const headBlock = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.09, 0.04), darkSteelMat);
-      headBlock.position.set(0, 0.26, 0.19);
+      // 3. 상단 헤드 어셈블리 블록 (Precision 3-Head Block Cover)
+      const headBlock = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.09, 0.05), darkSteelMat);
+      headBlock.position.set(0, 0.25, 0.20);
       deckUnit.add(headBlock);
 
-      // 좌/우 텐션 암 롤러
-      for (let rx of [-0.22, 0.22]) {
-        const roller = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.035, 12), spoolMat);
+      // 헤드 블록 은색 엠블럼 스트립
+      const headBadge = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.02, 0.005), spoolMat);
+      headBadge.position.set(0, 0.25, 0.226);
+      deckUnit.add(headBadge);
+
+      // 듀얼 캡스턴 및 가이드 핀치 롤러 (Dual Capstan & Pinch Rollers)
+      for (let rx of [-0.21, 0.21]) {
+        // 테이프 텐션 롤러 가이드
+        const roller = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.04, 16), spoolMat);
         roller.rotation.x = Math.PI / 2;
-        roller.position.set(rx, 0.26, 0.19);
+        roller.position.set(rx, 0.27, 0.20);
         deckUnit.add(roller);
+
+        // 고무 핀치 롤러
+        const rubberRoller = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.022, 0.022, 0.025, 16),
+          new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 })
+        );
+        rubberRoller.rotation.x = Math.PI / 2;
+        rubberRoller.position.set(rx * 0.65, 0.23, 0.20);
+        deckUnit.add(rubberRoller);
       }
 
-      // 듀얼 아날로그 VU 미터 창 (Amber Backlit)
+      // 4. 주행 중인 갈색 자기 테이프 패스 (Physical Magnetic Tape Ribbon Path)
+      const tapePathMat = new THREE.MeshStandardMaterial({
+        color: 0x482618,
+        roughness: 0.5,
+        metalness: 0.2,
+        side: THREE.DoubleSide
+      });
+      // 좌측 릴 -> 롤러 -> 헤드 블록 -> 우측 릴을 잇는 3단 자기 테이프 리본
+      const tapeRibbonCenter = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.012), tapePathMat);
+      tapeRibbonCenter.position.set(0, 0.24, 0.21);
+      deckUnit.add(tapeRibbonCenter);
+
+      const tapeRibbonL = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.012), tapePathMat);
+      tapeRibbonL.position.set(-0.20, 0.34, 0.205);
+      tapeRibbonL.rotation.z = 1.35;
+      deckUnit.add(tapeRibbonL);
+
+      const tapeRibbonR = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.012), tapePathMat);
+      tapeRibbonR.position.set(0.20, 0.34, 0.205);
+      tapeRibbonR.rotation.z = -1.35;
+      deckUnit.add(tapeRibbonR);
+
+      // 5. 초정밀 아날로그 듀얼 VU 미터 (Dual Backlit VU Meters)
+      const vuDialTex = createVUMeterDialTexture();
+      const vuDialMat = new THREE.MeshBasicMaterial({ map: vuDialTex });
+
       for (let s of [-0.14, 0.14]) {
-        const vuFrame = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.09, 0.01), darkSteelMat);
-        vuFrame.position.set(s, 0.11, 0.182);
-        deckUnit.add(vuFrame);
+        // VU 미터 베젤 프레임 (음각 섀도우)
+        const vuBezel = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.11, 0.02), darkSteelMat);
+        vuBezel.position.set(s, 0.105, 0.185);
+        deckUnit.add(vuBezel);
 
-        const vuGlow = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.075), vuGlowMat);
-        vuGlow.position.set(s, 0.11, 0.188);
-        deckUnit.add(vuGlow);
+        // 아날로그 호박색 다이얼 페이스
+        const vuDial = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.095), vuDialMat);
+        vuDial.position.set(s, 0.105, 0.196);
+        deckUnit.add(vuDial);
 
-        const vuNeedle = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.065, 0.003), new THREE.MeshBasicMaterial({ color: 0x111111 }));
-        vuNeedle.position.set(s, 0.09, 0.191);
-        vuNeedle.rotation.z = -0.3;
-        deckUnit.add(vuNeedle);
+        // 정밀 아날로그 바늘 (Needle Pivot Group)
+        const needleGrp = new THREE.Group();
+        needleGrp.position.set(s, 0.07, 0.198);
+
+        // 바늘 기둥 (Black wire)
+        const needleStem = new THREE.Mesh(
+          new THREE.BoxGeometry(0.002, 0.065, 0.002),
+          new THREE.MeshBasicMaterial({ color: 0x111111 })
+        );
+        needleStem.position.y = 0.032;
+        needleGrp.add(needleStem);
+
+        // 바늘 끝 빨간색 팁 (Red Tip)
+        const needleTip = new THREE.Mesh(
+          new THREE.BoxGeometry(0.0025, 0.015, 0.002),
+          new THREE.MeshBasicMaterial({ color: 0xcc2222 })
+        );
+        needleTip.position.y = 0.06;
+        needleGrp.add(needleTip);
+
+        // 피봇 캡 (Pivot Cap)
+        const pivot = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.008, 0.008, 0.004, 12),
+          darkSteelMat
+        );
+        pivot.rotation.x = Math.PI / 2;
+        needleGrp.add(pivot);
+
+        needleGrp.rotation.z = -0.35; // 초기 대기 각도
+
+        if (s < 0) {
+          vuNeedleL = needleGrp;
+        } else {
+          vuNeedleR = needleGrp;
+        }
+        deckUnit.add(needleGrp);
       }
 
-      // 기계식 컨트롤 노브 & 토글 버튼
-      for (let k = -2; k <= 2; k++) {
-        const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.02, 12), spoolMat);
-        knob.rotation.x = Math.PI / 2;
-        knob.position.set(k * 0.07, 0.025, 0.185);
-        deckUnit.add(knob);
+      // 6. 하단 5대 대형 메탈 트랜스포트 버튼 (REW, PLAY, FF, STOP, REC)
+      const btnColors = [0x99a39d, 0x99a39d, 0x99a39d, 0x555555, 0xcc2228];
+      for (let b = 0; b < 5; b++) {
+        const bx = -0.22 + b * 0.11;
+        const bMat = new THREE.MeshStandardMaterial({
+          color: btnColors[b],
+          metalness: 0.8,
+          roughness: 0.3
+        });
+        const btn = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.035, 0.02), bMat);
+        btn.position.set(bx, 0.02, 0.195);
+        deckUnit.add(btn);
       }
 
-      // 3D 물리 7인치 NAB 테이프 릴 스풀 2개 (좌/우)
+      // 7. 정밀 7인치 NAB 알루미늄 마스터 테이프 릴 (좌/우 스풀)
       tapeReelL = new THREE.Group();
       tapeReelR = new THREE.Group();
 
-      const buildSpool = (grp) => {
-        // 중심 허브
-        const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.022, 16), spoolMat);
+      const buildStudioSpool = (grp, isFull) => {
+        // 중심 NAB 알루미늄 허브 보스
+        const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.024, 24), spoolMat);
         hub.rotation.x = Math.PI / 2;
         grp.add(hub);
 
-        // 감긴 자기 테이프 롤
-        const tapeRoll = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.095, 0.018, 24), tapeBrownMat);
+        // 3발 트위스트 락 노브 (NAB Twist Hub Lock Adapter)
+        const twistLock = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.032, 3), brassKnobMat);
+        twistLock.rotation.x = Math.PI / 2;
+        grp.add(twistLock);
+
+        // 감겨 있는 자기 테이프 롤 (테이프 양에 따른 두께)
+        const tapeRadius = isFull ? 0.125 : 0.075;
+        const tapeRoll = new THREE.Mesh(new THREE.CylinderGeometry(tapeRadius, tapeRadius, 0.018, 32), tapeBrownMat);
         tapeRoll.rotation.x = Math.PI / 2;
         grp.add(tapeRoll);
 
-        // 3-Spoke 알루미늄 플랜지 디스크 (회전 시 시각적 확인이 명확하도록 3개 앵커 살 추가)
-        for (let flange of [-0.01, 0.01]) {
-          const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.145, 0.145, 0.002, 24), spoolMat);
+        // 앞/뒤 2장의 7인치 알루미늄 플랜지 디스크 (3개 타원형 컷아웃 홀 포함)
+        for (let flange of [-0.011, 0.011]) {
+          const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.145, 0.145, 0.002, 32), spoolMat);
           disc.rotation.x = Math.PI / 2;
           disc.position.z = flange;
           grp.add(disc);
 
-          // 3개의 NAB 스풀 스포크 바
+          // 3개의 알루미늄 스포크 립 및 홀 인디케이터
           for (let sp = 0; sp < 3; sp++) {
-            const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.14, 0.003), darkSteelMat);
-            spoke.rotation.z = (sp * Math.PI * 2) / 3;
-            spoke.position.z = flange + (flange > 0 ? 0.001 : -0.001);
-            grp.add(spoke);
+            const spokeAngle = (sp * Math.PI * 2) / 3;
+            const spokeCutout = new THREE.Mesh(
+              new THREE.CylinderGeometry(0.024, 0.024, 0.004, 16),
+              new THREE.MeshBasicMaterial({ color: 0x111613 })
+            );
+            spokeCutout.rotation.x = Math.PI / 2;
+            spokeCutout.position.set(
+              Math.cos(spokeAngle) * 0.08,
+              Math.sin(spokeAngle) * 0.08,
+              flange + (flange > 0 ? 0.001 : -0.001)
+            );
+            grp.add(spokeCutout);
           }
         }
       };
 
-      buildSpool(tapeReelL);
-      buildSpool(tapeReelR);
+      buildStudioSpool(tapeReelL, true);  // 좌측 만재 릴
+      buildStudioSpool(tapeReelR, false); // 우측 권취 릴
 
-      // 상단 좌우 스풀 배치
-      tapeReelL.position.set(-0.19, 0.41, 0.19);
-      tapeReelR.position.set(0.19, 0.41, 0.19);
+      tapeReelL.position.set(-0.19, 0.43, 0.195);
+      tapeReelR.position.set(0.19, 0.43, 0.195);
       deckUnit.add(tapeReelL);
       deckUnit.add(tapeReelR);
 
-      // 데스크 우측, 플레이어 시야를 향해 12도 기울임
+      // 데스크 우측, 플레이어 시야를 향해 14도 기울임
       deckUnit.position.set(1.08, 0.90, 0.05);
-      deckUnit.rotation.y = -0.22;
+      deckUnit.rotation.y = -0.24;
       parentGroup.add(deckUnit);
     }
 
@@ -3032,6 +3777,38 @@
       const bezel = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.92, 0.12), bezelMat);
       bezel.castShadow = true;
       monitorObj.add(bezel);
+
+      // 안쪽으로 45도 경사진 4면 음각 베벨 몰딩 (Deep Inward Chamfered Frame)
+      const innerBezelMat = new THREE.MeshStandardMaterial({ color: 0x161e19, roughness: 0.75 });
+      const topBevel = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.05, 0.05), innerBezelMat);
+      topBevel.position.set(0, 0.32, 0.062);
+      topBevel.rotation.x = -0.4;
+      monitorObj.add(topBevel);
+
+      const btmBevel = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.05, 0.05), innerBezelMat);
+      btmBevel.position.set(0, -0.32, 0.062);
+      btmBevel.rotation.x = 0.4;
+      monitorObj.add(btmBevel);
+
+      const leftBevel = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.65, 0.05), innerBezelMat);
+      leftBevel.position.set(-0.44, 0, 0.062);
+      leftBevel.rotation.y = 0.4;
+      monitorObj.add(leftBevel);
+
+      const rightBevel = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.65, 0.05), innerBezelMat);
+      rightBevel.position.set(0.44, 0, 0.062);
+      rightBevel.rotation.y = -0.4;
+      monitorObj.add(rightBevel);
+
+      // 좌우 전면 수직 스피커 그릴 슬릿 (Stereo Speaker Perforations)
+      const slitMat = new THREE.MeshBasicMaterial({ color: 0x090d0b });
+      for (let side of [-0.53, 0.53]) {
+        for (let sp = -4; sp <= 4; sp++) {
+          const spSlit = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.015, 0.005), slitMat);
+          spSlit.position.set(side, sp * 0.045, 0.062);
+          monitorObj.add(spSlit);
+        }
+      }
 
       // CRT 후면 테이퍼형(깔때기 모양) 케이싱
       const rearHousing = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.72, 0.68), rearMat);
@@ -3172,18 +3949,21 @@
         parentGroup.add(pen);
       }
 
-      // 3. 노란색 리갈 메모 패드 (Yellow Legal Notepad)
-      const padMat = new THREE.MeshStandardMaterial({ color: 0xf4ea7b, roughness: 0.9 });
-      const bindingMat = new THREE.MeshStandardMaterial({ color: 0x5a3418, roughness: 0.8 });
-      const legalPad = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.008, 0.34), padMat);
-      legalPad.position.set(-0.35, 0.908, 0.28);
-      legalPad.rotation.y = -0.15;
-      parentGroup.add(legalPad);
+      // 3. 노란색 리갈 메모 패드 (Yellow Legal Notepad with Procedural Handwriting)
+      const legalTex = createLegalPadTexture();
+      const padFaceMat = new THREE.MeshStandardMaterial({ map: legalTex, roughness: 0.88 });
+      const padSideMat = new THREE.MeshStandardMaterial({ color: 0xf4ea7b, roughness: 0.9 });
+      const legalPadGroup = new THREE.Group();
+      const legalPadBase = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.008, 0.34), padSideMat);
+      legalPadGroup.add(legalPadBase);
+      const legalPadTop = new THREE.Mesh(new THREE.PlaneGeometry(0.236, 0.336), padFaceMat);
+      legalPadTop.rotation.x = -Math.PI / 2;
+      legalPadTop.position.y = 0.0045;
+      legalPadGroup.add(legalPadTop);
 
-      const binding = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.01, 0.035), bindingMat);
-      binding.position.set(-0.35, 0.912, 0.13);
-      binding.rotation.y = -0.15;
-      parentGroup.add(binding);
+      legalPadGroup.position.set(-0.92, 0.908, 0.34);
+      legalPadGroup.rotation.y = -0.15;
+      parentGroup.add(legalPadGroup);
     }
 
     /* 바닥 폐허 디브리 (구겨진 종이 뭉치, 찌그러진 캔, 깨진 파편) */
@@ -4270,10 +5050,21 @@
 
     let lampSwing = 0;
     let waterDropY = 3.8;
-
     let heartPulsePhase = 0;
+    let renderFrameCounter = 0;
+
+    // GC 방지를 위한 재사용 벡터/레이캐스터 풀 (Pre-allocated Math Pool)
+    const _moveVec = new THREE.Vector3();
+    const _upAxis = new THREE.Vector3(0, 1, 0);
+    const _forwardDir = new THREE.Vector3(0, 0, -1);
+    const _centerScreenVec2 = new THREE.Vector2(0, 0);
+    const _interactRaycaster = new THREE.Raycaster();
+    let _lastChromOpacity = '';
+    let _lastTipText = '';
+
     function renderLoop3D() {
       requestAnimationFrame(renderLoop3D);
+      renderFrameCounter++;
 
       const now = Date.now();
       const t = now * 0.001;
@@ -4285,26 +5076,33 @@
       const fovPulse = Math.sin(heartPulsePhase) * (0.45 * breathIntensity);
 
       if (camera) {
-        camera.fov += (camcorderTargetFov + fovPulse - camera.fov) * 0.18;
-        camera.updateProjectionMatrix();
-      }
-
-      // 2. 이성 붕괴 시 색수차 및 핏줄 펄스 오버레이
-      const chromLayer = document.getElementById('chromaticPulseOverlay');
-      if (chromLayer) {
-        if (!isSafeMode && sanity < 55) {
-          const pulse = (Math.sin(now * 0.008) + 1) * 0.5;
-          chromLayer.style.opacity = (((55 - sanity) / 55) * 0.7 * pulse).toFixed(2);
-        } else {
-          chromLayer.style.opacity = '0';
+        const nextFov = camera.fov + (camcorderTargetFov + fovPulse - camera.fov) * 0.18;
+        if (Math.abs(nextFov - camera.fov) > 0.005) {
+          camera.fov = nextFov;
+          camera.updateProjectionMatrix();
         }
       }
 
-      // 3. 빗물 창문 텍스처 갱신
-      updateRainWindowCanvas();
+      // 2. 이성 붕괴 시 색수차 및 핏줄 펄스 오버레이 (변경 시에만 DOM 갱신)
+      const chromLayer = document.getElementById('chromaticPulseOverlay');
+      if (chromLayer) {
+        let targetOpacity = '0';
+        if (!isSafeMode && sanity < 55) {
+          const pulse = (Math.sin(now * 0.008) + 1) * 0.5;
+          targetOpacity = (((55 - sanity) / 55) * 0.7 * pulse).toFixed(2);
+        }
+        if (targetOpacity !== _lastChromOpacity) {
+          chromLayer.style.opacity = targetOpacity;
+          _lastChromOpacity = targetOpacity;
+        }
+      }
 
-      // 4. CRT 모니터 실시간 3D 인게임 디스플레이 갱신
-      update3DMonitorScreen();
+      // 3 & 4. 동적 캔버스 텍스처 교차 프레임 갱신 (GPU 텍스처 업로드 대역폭 50% 절감)
+      if (renderFrameCounter % 2 === 0) {
+        updateRainWindowCanvas();
+      } else {
+        update3DMonitorScreen();
+      }
 
       // 5. 벽시계 초침 회전 및 째깍 앰비언스
       const nowSec = now / 1000;
@@ -4316,7 +5114,7 @@
         if (Math.random() < 0.75) playClockTickSound();
       }
 
-      // 6. 테이프 재생 중 릴 스풀 물리 회전
+      // 6. 테이프 재생 중 릴 스풀 물리 회전 & 아날로그 VU 미터 바늘 진동
       if (isPlaying) {
         tapeSpoolAngle += 0.08 * paramSpeed * (isReversed ? -1 : 1);
         const deg = tapeSpoolAngle * 57.3;
@@ -4328,6 +5126,15 @@
         // 3D 공간 속 실제 릴-투-릴 데크 스풀 물리 회전
         if (tapeReelL) tapeReelL.rotation.z = -tapeSpoolAngle;
         if (tapeReelR) tapeReelR.rotation.z = -tapeSpoolAngle * 1.04;
+
+        // 3D 아날로그 VU 미터 바늘 실시간 반응
+        const vuTargetL = -0.35 + (Math.sin(t * 18) * 0.16 + Math.cos(t * 27) * 0.08 + 0.28);
+        const vuTargetR = -0.35 + (Math.cos(t * 15) * 0.15 + Math.sin(t * 31) * 0.09 + 0.26);
+        if (vuNeedleL) vuNeedleL.rotation.z += (vuTargetL - vuNeedleL.rotation.z) * 0.25;
+        if (vuNeedleR) vuNeedleR.rotation.z += (vuTargetR - vuNeedleR.rotation.z) * 0.25;
+      } else {
+        if (vuNeedleL) vuNeedleL.rotation.z += (-0.35 - vuNeedleL.rotation.z) * 0.12;
+        if (vuNeedleR) vuNeedleR.rotation.z += (-0.35 - vuNeedleR.rotation.z) * 0.12;
       }
 
       if (ceilingFan) ceilingFan.rotation.y += 0.02;
@@ -4352,7 +5159,7 @@
       }
 
       if (isPhoneRinging && phoneObj) {
-        phoneObj.position.x = 1.1 + Math.sin(Date.now() * 0.05) * 0.015;
+        phoneObj.position.x = 1.1 + Math.sin(now * 0.05) * 0.015;
       }
 
       lampSwing += 0.03;
@@ -4360,7 +5167,7 @@
       if (isBlackoutActive) {
         ceilingLamp.intensity = 0;
         if (deskLampLight) deskLampLight.intensity = 0;
-        if (exitSignLamp) exitSignLamp.intensity = Math.sin(Date.now() * 0.01) * 0.5 + 0.5;
+        if (exitSignLamp) exitSignLamp.intensity = Math.sin(now * 0.01) * 0.5 + 0.5;
       } else if (!isSafeMode) {
         if (deskLampLight) deskLampLight.intensity = 2.5;
         if (Math.random() < 0.025) {
@@ -4374,18 +5181,18 @@
 
       if (isPointerLocked && !inTerminalMode && !inDocInspectMode) {
         const speed = 0.045;
-        const moveVec = new THREE.Vector3();
+        _moveVec.set(0, 0, 0);
         let isWalking = false;
 
-        if (keys.w) { moveVec.z -= 1; isWalking = true; }
-        if (keys.s) { moveVec.z += 1; isWalking = true; }
-        if (keys.a) { moveVec.x -= 1; isWalking = true; }
-        if (keys.d) { moveVec.x += 1; isWalking = true; }
+        if (keys.w) { _moveVec.z -= 1; isWalking = true; }
+        if (keys.s) { _moveVec.z += 1; isWalking = true; }
+        if (keys.a) { _moveVec.x -= 1; isWalking = true; }
+        if (keys.d) { _moveVec.x += 1; isWalking = true; }
 
         if (isWalking) {
-          moveVec.normalize().multiplyScalar(speed);
-          moveVec.applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraYaw);
-          playerPos.add(moveVec);
+          _moveVec.normalize().multiplyScalar(speed);
+          _moveVec.applyAxisAngle(_upAxis, cameraYaw);
+          playerPos.add(_moveVec);
 
           walkCycle += 0.16;
           camera.position.y = playerPos.y + Math.sin(walkCycle) * 0.04;
@@ -4408,15 +5215,17 @@
       camera.rotation.x = cameraPitch;
 
       flashlight.position.copy(camera.position);
-      const dir = new THREE.Vector3(0, 0, -1).applyEuler(camera.rotation);
-      flashlight.target.position.copy(camera.position).add(dir);
+      _forwardDir.set(0, 0, -1).applyEuler(camera.rotation);
+      flashlight.target.position.copy(camera.position).add(_forwardDir);
 
       if (flashlightCone) {
         flashlightCone.position.copy(camera.position);
         flashlightCone.rotation.set(cameraPitch, cameraYaw, 0, 'YXZ');
       }
 
-      checkInteractCrosshair();
+      if (renderFrameCounter % 3 === 0) {
+        checkInteractCrosshair();
+      }
       renderer.render(scene, camera);
     }
 
@@ -4429,8 +5238,7 @@
         return;
       }
 
-      const ray = new THREE.Raycaster();
-      ray.setFromCamera(new THREE.Vector2(0, 0), camera);
+      _interactRaycaster.setFromCamera(_centerScreenVec2, camera);
       const targets = [deskObj, monitorObj, doorObj];
       if (phoneObj) targets.push(phoneObj);
       if (breakerBoxObj) targets.push(breakerBoxObj);
@@ -4440,7 +5248,7 @@
       if (sedativeBottleObj && hasSedative) targets.push(sedativeBottleObj);
       if (polaroidObj) targets.push(polaroidObj);
 
-      const hits = ray.intersectObjects(targets, true);
+      const hits = _interactRaycaster.intersectObjects(targets, true);
 
       if (hits.length > 0 && hits[0].distance < 3.8) {
         reticle.classList.add(lightMode === 'uv' ? 'active-uv' : 'active');
@@ -4454,24 +5262,28 @@
           rootHit = rootHit.parent;
         }
 
+        let nextText = "[ E ] 오디오 워크스테이션 튜닝";
         if (rootHit === sedativeBottleObj && hasSedative) {
-          tip.innerText = "[ E ] 신경 안정제 복용 (이성 +30%)";
+          nextText = "[ E ] 신경 안정제 복용 (이성 +30%)";
         } else if (rootHit === polaroidObj) {
-          tip.innerText = "[ E ] 송백병원 참사 전경 폴라로이드 사진 조사";
+          nextText = "[ E ] 송백병원 참사 전경 폴라로이드 사진 조사";
         } else if (rootHit === deskDrawerObj) {
-          tip.innerText = isDrawerOpen ? "[ E ] 책상 서랍 닫기" : "[ E ] 책상 서랍 열기";
+          nextText = isDrawerOpen ? "[ E ] 책상 서랍 닫기" : "[ E ] 책상 서랍 열기";
         } else if (rootHit === noticeBoardObj) {
-          tip.innerText = "[ E ] 벽면 사건 증거 보드 정밀 조사";
+          nextText = "[ E ] 벽면 사건 증거 보드 정밀 조사";
         } else if (rootHit === clipboardObj) {
-          tip.innerText = "[ E ] 환자 17호 및 닥터 한 비밀 일지 열람";
+          nextText = "[ E ] 환자 17호 및 닥터 한 비밀 일지 열람";
         } else if (rootHit === breakerBoxObj) {
-          tip.innerText = isBlackoutActive ? "[ E ] 배전반 차단기 레버 복원" : "[ E ] 배전반 점검 (정상)";
+          nextText = isBlackoutActive ? "[ E ] 배전반 차단기 레버 복원" : "[ E ] 배전반 점검 (정상)";
         } else if (rootHit === phoneObj && isPhoneRinging) {
-          tip.innerText = "[ E ] 울리는 전화기 받기";
+          nextText = "[ E ] 울리는 전화기 받기";
         } else if (rootHit === doorObj) {
-          tip.innerText = "[ E ] 잠긴 404호 철문 조사";
-        } else {
-          tip.innerText = "[ E ] 오디오 워크스테이션 튜닝";
+          nextText = "[ E ] 잠긴 404호 철문 조사";
+        }
+
+        if (_lastTipText !== nextText) {
+          tip.innerText = nextText;
+          _lastTipText = nextText;
         }
       } else {
         reticle.classList.remove('active', 'active-uv');
