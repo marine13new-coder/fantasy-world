@@ -3037,6 +3037,7 @@
 
     const colliders = [];
     const interactables = [];
+    const doorMeshes = {};
     const sensorLights = [];
     let stalkerEnemy = null;
     let dustParticles = null;
@@ -4137,6 +4138,8 @@
         const doorMesh = new THREE.Mesh(doorGeo, doorMat);
         doorMesh.position.set(-2.04, 1.05, d.z);
         scene.add(doorMesh);
+        doorMesh.userData.z0 = d.z;
+        doorMeshes[d.num] = doorMesh;
 
         // 3D 기계식 원형 보조키 실린더 (Deadbolt Lock Cylinder)
         const deadboltMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9, roughness: 0.2 });
@@ -6732,8 +6735,8 @@ const AP_STEPS = [
   { to: [[0, -38]], face: Math.PI / 2, act: () => handleDoorInteraction('502'), wait: 7500 },
   { to: [[0, -44.4]], face: 0, final: true, act: () => {
       showSubtitle('최진우: \'이제... 이 문을 열어야 해.\'', 2500);
-      setTimeout(() => showEnding('C'), 2500);
-    }, wait: 3000 }
+      setTimeout(() => playFireDoorOpen(() => showEnding('C')), 1500);
+    }, wait: 5500 }
 ];
 function apTick() {
   if (!GAME_DATA.autoPilot) return;
@@ -6807,6 +6810,279 @@ window.addEventListener('keydown', e => {
 canvas.addEventListener('mousedown', () => {
   if (GAME_DATA.autoPilot && performance.now() - apStartedAt > 800) stopAutoPilot();
 });
+
+/* =========================================================
+   11. 실제로 보이는 연출 (FX) - 자막으로만 나오던 사건을 3D로 구현
+   ========================================================= */
+const fxList = [];
+let fxLast = performance.now();
+(function fxLoop() {
+  requestAnimationFrame(fxLoop);
+  const now = performance.now();
+  const dt = Math.min((now - fxLast) / 1000, 0.1);
+  fxLast = now;
+  for (let i = fxList.length - 1; i >= 0; i--) {
+    if (fxList[i](dt, now) === false) fxList.splice(i, 1);
+  }
+})();
+const fxSparkGeo = new THREE.BoxGeometry(0.025, 0.025, 0.025);
+function spawnSparks(x, y, z, n, color, spread) {
+  const mat = new THREE.MeshBasicMaterial({ color });
+  for (let i = 0; i < n; i++) {
+    const m = new THREE.Mesh(fxSparkGeo, mat);
+    m.position.set(x, y, z);
+    scene.add(m);
+    const sp = spread || 2.5;
+    const v = new THREE.Vector3((Math.random() - 0.5) * sp, Math.random() * sp * 0.8, (Math.random() - 0.5) * sp);
+    let life = 0.6 + Math.random() * 0.7;
+    fxList.push(dt => {
+      life -= dt; v.y -= 9 * dt;
+      m.position.addScaledVector(v, dt);
+      if (life <= 0 || m.position.y < 0.02) { scene.remove(m); return false; }
+    });
+  }
+}
+function fxLight(color, x, y, z, peak, dist, rampMs, holdMs, fadeMs) {
+  const l = new THREE.PointLight(color, 0, dist, 1.6);
+  l.position.set(x, y, z);
+  scene.add(l);
+  const t0 = performance.now();
+  fxList.push((dt, now) => {
+    const t = now - t0;
+    let k;
+    if (t < rampMs) k = t / rampMs;
+    else if (t < rampMs + holdMs) k = 1;
+    else if (fadeMs < 0) k = 1;
+    else if (t < rampMs + holdMs + fadeMs) k = 1 - (t - rampMs - holdMs) / fadeMs;
+    else { scene.remove(l); return false; }
+    l.intensity = peak * k * (0.9 + Math.random() * 0.2);
+  });
+  return l;
+}
+
+/* ---- 현관문 개폐 ---- */
+function doorSet(num, a) {
+  const m = doorMeshes[num];
+  if (!m) return;
+  const z0 = m.userData.z0;
+  m.rotation.y = a;
+  m.position.x = -2.04 - 0.55 * Math.sin(a);
+  m.position.z = (z0 + 0.55) - 0.55 * Math.cos(a);
+}
+function animateDoor(num, to, ms) {
+  const m = doorMeshes[num];
+  if (!m) return;
+  const from = m.rotation.y, t0 = performance.now();
+  fxList.push((dt, now) => {
+    const k = Math.min((now - t0) / ms, 1), e = k * k * (3 - 2 * k);
+    doorSet(num, from + (to - from) * e);
+    if (k >= 1) return false;
+  });
+}
+function doorGlow(num, color) {
+  const m = doorMeshes[num];
+  if (!m) return;
+  const z = m.userData.z0;
+  const p = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 2.05), new THREE.MeshBasicMaterial({ color }));
+  p.rotation.y = Math.PI / 2;
+  p.position.set(-2.003, 1.05, z);
+  scene.add(p);
+  fxLight(color, -1.5, 1.4, z, 2.4, 8, 900, 0, -1);
+}
+
+/* ---- 전력 (정전/복구) ---- */
+let powerPts = null;
+function setPower(f) {
+  if (!powerPts) powerPts = scene.children.filter(c => c.isPointLight).map(l => ({ l, i: l.intensity }));
+  powerPts.forEach(p => { p.l.intensity = p.i * f; });
+  if (typeof flickeringTubesMat !== 'undefined' && flickeringTubesMat) flickeringTubesMat.emissiveIntensity = 0.65 * f;
+}
+function powerSeq(arr, step) {
+  arr.forEach((f, i) => setTimeout(() => setPower(f), i * step));
+}
+
+/* ---- 소화전: 불탄 배냇저고리가 쏟아짐 ---- */
+function makeClothTexture() {
+  const c = document.createElement('canvas'); c.width = 128; c.height = 160;
+  const x = c.getContext('2d');
+  x.fillStyle = '#2a211a'; x.fillRect(0, 0, 128, 160);
+  for (let i = 0; i < 60; i++) { x.fillStyle = 'rgba(0,0,0,' + Math.random() * 0.6 + ')'; x.beginPath(); x.arc(Math.random() * 128, Math.random() * 160, 4 + Math.random() * 14, 0, 7); x.fill(); }
+  x.fillStyle = '#b3262a'; x.font = 'bold 30px sans-serif'; x.textAlign = 'center'; x.fillText('수진', 64, 90);
+  x.strokeStyle = '#cc5522'; x.lineWidth = 3; x.strokeRect(2, 2, 124, 156);
+  return new THREE.CanvasTexture(c);
+}
+function fxHydrantSpill() {
+  const ox = -1.25, oy = 1.1, oz = -10.2;
+  const pieces = [];
+  const mat1 = new THREE.MeshStandardMaterial({ color: 0x1c1612, roughness: 1 });
+  for (let i = 0; i < 9; i++) pieces.push({ m: new THREE.Mesh(new THREE.BoxGeometry(0.1 + Math.random() * 0.1, 0.01, 0.12 + Math.random() * 0.1), mat1), main: false });
+  const mainCloth = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.012, 0.38), new THREE.MeshStandardMaterial({ map: makeClothTexture(), roughness: 1 }));
+  pieces.push({ m: mainCloth, main: true });
+  pieces.forEach(p => {
+    p.m.position.set(ox, oy + Math.random() * 0.3, oz + (Math.random() - 0.5) * 0.4);
+    scene.add(p.m);
+    p.v = new THREE.Vector3(p.main ? 1.1 : 0.7 + Math.random() * 1.3, 1.2 + Math.random(), (Math.random() - 0.5) * 1.6);
+    p.w = new THREE.Vector3((Math.random() - 0.5) * 9, (Math.random() - 0.5) * 9, (Math.random() - 0.5) * 9);
+    p.rest = false;
+    fxList.push(dt => {
+      if (p.rest) return false;
+      p.v.y -= 9 * dt;
+      p.m.position.addScaledVector(p.v, dt);
+      p.m.rotation.x += p.w.x * dt; p.m.rotation.y += p.w.y * dt; p.m.rotation.z += p.w.z * dt;
+      if (p.m.position.y <= 0.03) {
+        p.m.position.y = 0.03;
+        if (Math.abs(p.v.y) > 1.2) { p.v.y *= -0.3; p.v.x *= 0.5; p.v.z *= 0.5; p.w.multiplyScalar(0.4); }
+        else { p.rest = true; p.m.rotation.x = 0; p.m.rotation.z = 0; }
+      }
+    });
+  });
+  spawnSparks(ox, oy, oz, 40, 0x777777, 2.0);
+  spawnSparks(ox, oy, oz, 14, 0xff6622, 2.6);
+  fxLight(0xff5522, -1.0, 1.2, oz, 2.0, 6, 150, 200, 1200);
+}
+
+/* ---- 502호: 불타는 방 ---- */
+let fxFireDone = false;
+function fxFireRoom() {
+  if (fxFireDone) return;
+  fxFireDone = true;
+  const z = -38;
+  animateDoor('502', -1.4, 1300);
+  doorGlow('502', 0xff6a1a);
+  const flames = [];
+  for (let i = 0; i < 8; i++) {
+    const f = new THREE.Mesh(new THREE.ConeGeometry(0.1 + Math.random() * 0.06, 0.5, 8), new THREE.MeshBasicMaterial({ color: i % 2 ? 0xffaa22 : 0xff4411, transparent: true, opacity: 0.85 }));
+    f.position.set(-1.85, 0.25, z - 0.6 + i * 0.17);
+    scene.add(f); flames.push(f);
+  }
+  const paper = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.01, 0.4), new THREE.MeshStandardMaterial({ color: 0x4a3a2a, emissive: 0x551100 }));
+  paper.position.set(-1.8, 0.04, z); paper.rotation.y = 0.5; scene.add(paper);
+  const fl = fxLight(0xff7722, -1.7, 1.0, z, 2.6, 9, 800, 0, -1);
+  fxList.push((dt, now) => {
+    flames.forEach((f, i) => { f.scale.y = 0.7 + 0.6 * Math.abs(Math.sin(now * 0.012 + i * 1.7)); f.position.y = 0.25 * f.scale.y; });
+    fl.intensity = 2.2 + Math.sin(now * 0.02) * 0.5 + Math.random() * 0.4;
+    if (Math.random() < 0.3) spawnSparks(-1.85, 0.5, z - 0.6 + Math.random() * 1.2, 1, 0xff8822, 1.2);
+  });
+}
+
+/* ---- 비상계단 방화문: 쇠사슬 + 새벽빛 ---- */
+let fireChains = null, fireOpened = false;
+function buildFireChains() {
+  const g = new THREE.Group();
+  const cm = new THREE.MeshStandardMaterial({ color: 0x4a4f55, metalness: 0.9, roughness: 0.45 });
+  [0.7, -0.7].forEach(a => {
+    for (let i = 0; i < 14; i++) {
+      const link = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.014, 6, 10), cm);
+      const t = (i - 6.5) * 0.15;
+      link.position.set(Math.cos(a) * t, Math.sin(a) * t, 0);
+      link.rotation.y = i % 2 ? 0 : Math.PI / 2;
+      link.rotation.z = a;
+      g.add(link);
+    }
+  });
+  const lock = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.2, 0.08), new THREE.MeshStandardMaterial({ color: 0x8a6a2a, metalness: 0.8, roughness: 0.4 }));
+  g.add(lock);
+  g.position.set(0, 1.2, -45.7);
+  scene.add(g);
+  fireChains = g;
+}
+function playFireDoorOpen(cb) {
+  if (fireOpened) { cb && cb(); return; }
+  fireOpened = true;
+  const it = interactables.find(i => i.prompt && i.prompt.indexOf('방화문') >= 0);
+  const door = it && it.mesh;
+  if (fireChains) {
+    const kids = fireChains.children.slice();
+    const vs = kids.map(() => new THREE.Vector3((Math.random() - 0.5) * 1.2, Math.random() * 1.5, Math.random() * 1.2));
+    spawnSparks(0, 1.2, -45.6, 40, 0xffcc66, 3);
+    let t = 0;
+    fxList.push(dt => {
+      t += dt;
+      kids.forEach((k, i) => { vs[i].y -= 9 * dt; k.position.addScaledVector(vs[i], dt); k.rotation.x += dt * 5; });
+      if (t > 1.4) { scene.remove(fireChains); return false; }
+    });
+  }
+  setTimeout(() => {
+    const glow = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 2.3), new THREE.MeshBasicMaterial({ color: 0xfff0c8 }));
+    glow.position.set(0, 1.2, -45.9); scene.add(glow);
+    fxLight(0xfff0d0, 0, 1.5, -44.4, 4.0, 16, 1800, 0, -1);
+    const t0 = performance.now();
+    fxList.push((dt, now) => {
+      const k = Math.min((now - t0) / 1600, 1), e = k * k * (3 - 2 * k), a = 1.6 * e;
+      if (door) { door.rotation.y = a; door.position.x = -0.75 + 0.75 * Math.cos(a); door.position.z = -45.85 - 0.75 * Math.sin(a); }
+      if (k >= 1) return false;
+    });
+  }, 700);
+  setTimeout(() => { cb && cb(); }, 3000);
+}
+
+/* ---- 라이터 불꽃 ---- */
+let lighterFlame = null;
+function ensureLighterFlame() {
+  if (lighterFlame) return;
+  lighterFlame = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.07, 8), new THREE.MeshBasicMaterial({ color: 0xffaa33 }));
+  lighterFlame.position.set(0.2, -0.17, -0.45);
+  lighterFlame.visible = false;
+  camera.add(lighterFlame);
+  fxList.push((dt, now) => { lighterFlame.scale.set(1, 0.8 + 0.4 * Math.sin(now * 0.03), 1); });
+}
+
+/* ---- 기존 함수에 시각 연출 덧씌우기 ---- */
+(function wrapAll() {
+  const hhi = handleHydrantInspection;
+  handleHydrantInspection = function () {
+    const first = hasItem('hydrantKey') && !GAME_DATA.flags.checkedHydrant2F;
+    hhi();
+    if (first) fxHydrantSpill();
+  };
+  const rf = repairFuse;
+  repairFuse = function () {
+    const ok = GAME_DATA.currentAct >= 2;
+    rf();
+    if (ok) {
+      spawnSparks(-1.3, 1.5, 12.2, 50, 0xffdd66, 4);
+      powerSeq([0.3, 0.05, 0.7, 0.1, 1.2, 0.8, 1], 140);
+    }
+  };
+  const ata = advanceToAct;
+  advanceToAct = function (n) {
+    ata(n);
+    if (n === 2 && !GAME_DATA.flags.repairedPower) {
+      spawnSparks(camera.position.x, 2.6, camera.position.z - 2, 30, 0xffcc55, 3);
+      powerSeq([0.2, 1, 0.1, 0.7, 0.08, 0.4, 0.12], 160);
+    } else if (n === 3) {
+      setPower(1);
+    }
+  };
+  const sk = submitKeypad;
+  submitKeypad = function () {
+    const was = GAME_DATA.flags.unlocked404Keypad;
+    sk();
+    if (!was && GAME_DATA.flags.unlocked404Keypad) {
+      animateDoor('404', -1.5, 1400);
+      doorGlow('404', 0xff2200);
+    }
+  };
+  const hdi = handleDoorInteraction;
+  handleDoorInteraction = function (n) {
+    const a = GAME_DATA.currentAct;
+    hdi(n);
+    if (n === '304') animateDoor('304', -0.14, 700);
+    if (n === '502' && a >= 4) fxFireRoom();
+  };
+  const hfd = handleFireDoorInteraction;
+  handleFireDoorInteraction = function () {
+    if (GAME_DATA.currentAct < 5) { hfd(); return; }
+    playFireDoorOpen(() => hfd());
+  };
+  const tl = toggleLighter;
+  toggleLighter = function () {
+    tl();
+    ensureLighterFlame();
+    lighterFlame.visible = !!GAME_DATA.lighterOn;
+  };
+})();
+buildFireChains();
 
     requestAnimationFrame(updateGameLoop);
   </script>
