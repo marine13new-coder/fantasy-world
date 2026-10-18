@@ -4812,6 +4812,184 @@
     },
 
     // =========================================================================
+    // 34. 바빌론 에테메난키 칠층 청금석 지구라트 수도 (Babylon Etemenanki Ziggurat)
+    // =========================================================================
+    drawBabylonZiggurat(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // 바닥 그림자 (Base Drop Shadow)
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.42)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 2, halfW + 6, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 4단 계단식 청금석 유약 벽돌 테라스 (4-Tier Glazed Lapis Lazuli Brick Terraces)
+      const tiers = [
+        { w: bw, h: Math.round(bh * 0.28), yOff: 0, color: '#1e3a8a', trim: '#172554' },
+        { w: Math.round(bw * 0.78), h: Math.round(bh * 0.24), yOff: Math.round(bh * 0.24), color: '#1d4ed8', trim: '#1e40af' },
+        { w: Math.round(bw * 0.56), h: Math.round(bh * 0.22), yOff: Math.round(bh * 0.44), color: '#2563eb', trim: '#1d4ed8' },
+        { w: Math.round(bw * 0.36), h: Math.round(bh * 0.20), yOff: Math.round(bh * 0.62), color: '#ca8a04', trim: '#eab308' } // 최상단 마르두크 황금 신전
+      ];
+
+      tiers.forEach((t, i) => {
+        const tw = t.w;
+        const th = t.h;
+        const tx = px - Math.round(tw / 2);
+        const ty = py + halfH - t.yOff - th;
+
+        // 테라스 본체 (Glazed Brick Body)
+        ctx.fillStyle = t.color;
+        ctx.fillRect(tx, ty, tw, th);
+
+        // 하단 그림자 테두리
+        ctx.fillStyle = t.trim;
+        ctx.fillRect(tx, ty + th - 2, tw, 2);
+
+        // 상단 황금 로제트 띠 몰딩 (Golden Rosette Frieze Trim)
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(tx, ty, tw, 2);
+
+        // 공중정원 덩굴 식물 & 꽃 (Hanging Ivy & Floral Vines on Terraces)
+        if (i < 3) {
+          ctx.fillStyle = '#16a34a';
+          for (let v = 0; v < Math.floor(tw / 6); v++) {
+            const vx = tx + 3 + v * 6;
+            const vLen = 2 + ((v + i) % 3) * 2;
+            ctx.fillRect(vx, ty + 2, 2, vLen);
+            // 붉은색 꽃송이
+            if (v % 2 === 0) {
+              ctx.fillStyle = '#f43f5e';
+              ctx.fillRect(vx, ty + 2 + vLen, 2, 2);
+              ctx.fillStyle = '#16a34a';
+            }
+          }
+        }
+      });
+
+      // 중앙 삼중 대계단 (Grand Ascending Triple Staircase)
+      const stairW = Math.max(6, Math.round(bw * 0.16));
+      const stairX = px - Math.round(stairW / 2);
+      ctx.fillStyle = '#fde047';
+      ctx.fillRect(stairX, py - Math.round(bh * 0.12), stairW, Math.round(bh * 0.62));
+      ctx.fillStyle = '#d97706';
+      for (let st = 0; st < 8; st++) {
+        const sy = py - Math.round(bh * 0.12) + st * 4;
+        ctx.fillRect(stairX, sy, stairW, 1.5);
+      }
+
+      // 최상단 마르두크 신전 아치 문 (Summit Sanctum Portal)
+      const topY = py + halfH - tiers[3].yOff - tiers[3].h;
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(px, topY + 4, 3, Math.PI, 0);
+      ctx.lineTo(px + 3, topY + 9);
+      ctx.lineTo(px - 3, topY + 9);
+      ctx.closePath();
+      ctx.fill();
+
+      // 신전 꼭대기 영원의 황금 화로 (Eternal Sacred Brazier Flame)
+      const firePhase = (timeSec * 8) % 1;
+      const fHeight = 4 + Math.sin(timeSec * 10) * 1.5;
+      ctx.fillStyle = '#ea580c';
+      ctx.fillRect(px - 2, topY - fHeight, 4, fHeight);
+      ctx.fillStyle = '#fde047';
+      ctx.fillRect(px - 1, topY - fHeight + 1, 2, fHeight - 1);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 0.5, topY - fHeight + 2, 1, 1.5);
+    },
+
+    // =========================================================================
+    // 35. 이슈타르 청금석 날개사자 라마수 관문 성채 (Ishtar Gate & Winged Lamassu)
+    // =========================================================================
+    drawLamassuGate(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // 바닥 그림자
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 2, halfW + 4, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 좌우 청금석 파일론 탑 (Twin Lapis Lazuli Pylon Towers)
+      const towerW = Math.round(bw * 0.32);
+      const towerH = Math.round(bh * 0.85);
+      const towerY = py + halfH - towerH;
+
+      [-1, 1].forEach(side => {
+        const tx = (side === -1) ? (px - halfW) : (px + halfW - towerW);
+
+        // 탑 본체
+        ctx.fillStyle = '#1e40af';
+        ctx.fillRect(tx, towerY, towerW, towerH);
+        ctx.fillStyle = '#1d4ed8';
+        ctx.fillRect(tx + 2, towerY + 2, towerW - 4, towerH - 4);
+
+        // 상부 계단식 총안 흉벽 (Stepped Merlon Crenellations)
+        ctx.fillStyle = '#172554';
+        for (let m = 0; m < 3; m++) {
+          const mx = tx + m * Math.round(towerW / 3);
+          ctx.fillRect(mx + 1, towerY - 4, Math.round(towerW / 3) - 2, 4);
+        }
+
+        // 탑 전면 날개달린 황소 라마수 부조 석상 (Carved Winged Bull Lamassu Relief)
+        const lx = tx + Math.round(towerW / 2);
+        const ly = towerY + Math.round(towerH * 0.55);
+
+        // 라마수 황소 몸통
+        ctx.fillStyle = '#fde047';
+        ctx.fillRect(lx - 4, ly, 8, 10);
+        // 수염난 왕의 머리 & 뿔 달린 티아라 관
+        ctx.fillStyle = '#ca8a04';
+        ctx.fillRect(lx - 2, ly - 5, 4, 4);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(lx - 3, ly - 7, 6, 2); // 뿔관
+        // 펼쳐진 깃털 날개 (Sweeping Feathered Wings)
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(lx, ly - 2);
+        ctx.lineTo(lx + side * 8, ly - 8);
+        ctx.lineTo(lx + side * 6, ly + 4);
+        ctx.closePath();
+        ctx.fill();
+      });
+
+      // 중앙 연결 성벽 & 아치형 관문 (Central Connecting Wall & Ishtar Arch)
+      const midW = bw - towerW * 2 + 4;
+      const midX = px - Math.round(midW / 2);
+      const midH = Math.round(bh * 0.65);
+      const midY = py + halfH - midH;
+
+      ctx.fillStyle = '#1e3a8a';
+      ctx.fillRect(midX, midY, midW, midH);
+
+      // 상단 황금 로제트 띠 몰딩
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(midX, midY, midW, 3);
+
+      // 아치형 성문 개구부 (Grand Archway)
+      const archR = Math.round(midW * 0.38);
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(px, py + halfH - archR - 4, archR, Math.PI, 0);
+      ctx.lineTo(px + archR, py + halfH);
+      ctx.lineTo(px - archR, py + halfH);
+      ctx.closePath();
+      ctx.fill();
+
+      // 청동 징이 박힌 레바논 삼나무 성문 (Bronze-Studded Cedar Gate)
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(px - archR + 2, py + halfH - archR, (archR - 2) * 2, archR);
+      ctx.fillStyle = '#facc15';
+      for (let r = 0; r < 2; r++) {
+        for (let c = 0; c < 3; c++) {
+          ctx.fillRect(px - archR + 4 + c * 4, py + halfH - archR + 2 + r * 4, 1.5, 1.5);
+        }
+      }
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -4961,6 +5139,16 @@
       ctx.beginPath();
       ctx.ellipse(px + 6, py + bh / 2 + 4, bw * 0.42, 4, 0.08, 0, Math.PI * 2);
       ctx.fill();
+      // 🦁 태고 바빌론 에테메난키 지구라트 & 공중정원 라마수 제국 (Babylon Ziggurat & Ishtar Lamassu Gate)
+      if (type === 'babylon_ziggurat' || (type === 'capital' && b && b.continent === 'babylon') || (type === 'palace' && b && b.continent === 'babylon')) {
+        this.drawBabylonZiggurat(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'lamassu_gate' || (type === 'castle' && b && b.continent === 'babylon') || (type === 'fortress' && b && b.continent === 'babylon') || (type === 'temple' && b && b.continent === 'babylon') || (type === 'lair' && b && b.continent === 'babylon')) {
+        this.drawLamassuGate(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+
       // 🪷 상그릴라 신선 비경 & 천년 백련 옥룡 성채 (Shangri-La Jade Dragon Pagoda & Thousand Lotus Sanctum)
       if (type === 'jade_pagoda' || (type === 'capital' && b && b.continent === 'shangrila') || (type === 'palace' && b && b.continent === 'shangrila')) {
         this.drawShangrilaJadePagoda(ctx, px, py, bw, bh, isNight, timeSec);

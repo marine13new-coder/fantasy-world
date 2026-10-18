@@ -54,7 +54,8 @@ const LEGENDARY_ITEMS = [
   { id: 'frostmourne_glacial_blade', slot: 'weapon', name: '서리고룡의 영구빙하 마검', icon: '❄️', atk: 62, hp: 140, desc: '혹한의 만년빙하에서 벼려낸 서리고룡의 마검. 타격 시 서리 파편이 폭발하며 적을 동결시킵니다.' },
   { id: 'starforge_aether_astrolabe', slot: 'weapon', name: '성좌의 티탄 에테르 아스트롤라베', icon: '🌌', atk: 68, hp: 160, desc: '별들의 궤적을 벼려낸 티탄의 천구의 마검. 공격 시 2중 성운 폭풍과 황도 12궁 별빛 파편이 방출됩니다.' },
   { id: 'jotun_thunder_warhammer', slot: 'weapon', name: '요툰하임 거인왕의 천둥 파쇄 망치', icon: '🔨', atk: 72, hp: 180, desc: '태고 거인족의 화강암과 번개로 주조한 거대 파쇄 망치. 타격 시 지진파 충격과 연쇄 벼락이 방출됩니다.' },
-  { id: 'shangrila_flying_sword_tai_ji', slot: 'weapon', name: '상그릴라 신선 옥룡 태극 비천검', icon: '🪷', atk: 70, hp: 150, desc: '천년 백련의 정기와 태고 옥룡의 기운이 깃든 신선의 어검. 비취빛 참격과 함께 회전하는 도력 태극진이 펼쳐집니다.' }
+  { id: 'shangrila_flying_sword_tai_ji', slot: 'weapon', name: '상그릴라 신선 옥룡 태극 비천검', icon: '🪷', atk: 70, hp: 150, desc: '천년 백련의 정기와 태고 옥룡의 기운이 깃든 신선의 어검. 비취빛 참격과 함께 회전하는 도력 태극진이 펼쳐집니다.' },
+  { id: 'babylon_khopesh_of_gilgamesh', slot: 'weapon', name: '바빌론 길가메시의 황금 청금석 코페쉬', icon: '🦁', atk: 74, hp: 160, desc: '우루크의 위대한 영웅왕 길가메시가 휘두르던 고대 청동과 청금석의 반월도. 타격 시 쐐기문자 점토판 룬과 왕의 권능이 폭발합니다.' }
 ];
 
 const DUNGEONS = [
@@ -218,6 +219,29 @@ const DUNGEONS = [
     },
     goldReward: 8800,
     fameReward: 170
+  },
+  {
+    id: 'dungeon_babylon',
+    name: '에레쉬키갈의 명계 심연 이슈타르 지하 신전',
+    icon: '🦁',
+    levelReq: 14,
+    x: 2900, y: 2140,
+    color: '#2563eb',
+    desc: '칠층 청금석 지구라트 지하 100보 밑에 숨겨진 명계의 일곱 관문. 하늘의 황소 구갈안나가 지하 유프라테스를 뒤흔들며 깨어납니다.',
+    bossName: '하늘의 황소 구갈안나 (The Bull of Heaven Gugalanna)',
+    bossHp: 5100,
+    bossAtk: 76,
+    relicReward: {
+      id: 'relic_tablet_of_destinies',
+      slot: 'relic',
+      name: '태고 운명의 점토판',
+      icon: '📜',
+      atk: 60,
+      hp: 250,
+      desc: '공격 시 35% 확률로 우루크 천벌의 벼락이 내리꽂히며 150의 추가 신성 피해를 입히고 주변 적들을 1.5초간 기절시킵니다.'
+    },
+    goldReward: 9500,
+    fameReward: 190
   }
 ];
 
@@ -3163,6 +3187,17 @@ const TOWN_LORE_DATABASE = {
     tavernToast: '천도복숭아 영천 계류의 백련 옥로주(White Lotus Jade Dew)를 비웠습니다! 온몸의 경락이 뚫리며 티끌 하나 없는 청량한 도력이 단전에 차오릅니다.',
     questTitle: '구름 안개 묵염 마기 정화 작전',
     questDesc: '비경 하류 연화지에 번져오는 탁한 요마의 묵염을 태극 도력으로 정화하고 정화된 백련 씨앗을 회수하시오.'
+  },
+  babylon: {
+    npcName: '서기관 엔키두 & 이슈타르 고위 여제사 샤마트 (Enkidu & Shamhat)',
+    npcRole: '바빌론 에테메난키 대지구라트 점토판 수호자 & 이슈타르 성역 여제사',
+    icon: '🦁',
+    disposition: '📜 태고 점토판에 새겨진 인간의 유한함과 영웅의 영광을 노래하는 장엄함',
+    quote: '"구운 점토판에 새긴 갈대 펜의 자국은 비바람이 천 년을 스쳐도 지워지지 않지. 필멸의 인간이 불멸을 얻는 길은 오직 무너지지 않는 성벽을 쌓고 후대에 전해질 용맹을 남기는 것뿐이오. 청금석 문패 아래로 걸어 들어오시오, 방랑자여."',
+    rumor: '💡 에테메난키 점성술사의 속삭임: "유프라테스 강물이 붉게 물드는 보름달 밤, 공중정원 최상층에 서서 일곱 행성의 궤도를 올려다보면... 지하 명계로 통하는 일곱 청동 문 중 첫 번째 빗장이 풀린다더군."',
+    tavernToast: '진하게 빚은 대추야자 맥주(Date Beer)와 구운 석류 양고기를 삼켰습니다! 혈관에 고대 메소포타미아 영웅왕의 끓는 피가 솟구치며 타격 공격력이 폭발합니다.',
+    questTitle: '갈대밭 늪지 모래전갈 괴수 소탕령',
+    questDesc: '유프라테스 하구 갈대밭 관개 수로를 마비시키는 거대 맹독 모래전갈 둥지를 격퇴하고 수문 열쇠를 탈환하시오.'
   },
   jotunheim: {
     npcName: '거인왕 이미르의 후예 군나르 & 천둥 주술사 토라 (Gunnar & Thora)',

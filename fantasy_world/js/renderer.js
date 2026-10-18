@@ -6045,6 +6045,10 @@ class WorldRenderer {
       else if (cx >= 2860 && cx <= 3220 && cy >= 440 && cy <= 780) {
         tintColor = 'rgba(16, 185, 129, 0.085)';
       }
+      // 태고 바빌론 에테메난키 지구라트 & 공중정원 라마수 제국: 찬란한 청금석 울트라마린 & 황금 림
+      else if (cx >= 2800 && cx <= 3200 && cy >= 2100 && cy <= 2380) {
+        tintColor = 'rgba(37, 99, 235, 0.085)';
+      }
 
       if (tintColor) {
         const bGrad = ctx.createRadialGradient(cw / 2, ch / 2, radius * 0.35, cw / 2, ch / 2, radius);

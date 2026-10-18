@@ -740,6 +740,16 @@ function createSettlementList() {
   add('flying_sword_alchemist_pavilion', '어검 비천 연단술 정자 신전', 'temple', 'shangrila', 3180, 500, 'celestial', true, 12);
   add('misty_tea_terrace_mountain_village', '운무 백련 다원 계단식 차밭 마을', 'town', 'shangrila', 3080, 740, 'human', false, 9);
 
+  // =========================================================================
+  // 30. THE ANCIENT BABYLON ZIGGURAT & HANGING TERRACE GARDENS (태고 바빌론 에테메난키 지구라트 & 공중정원 라마수 제국)
+  // =========================================================================
+  add('babylon_etemenanki_ziggurat', '바빌론 에테메난키 칠층 청금석 지구라트 수도', 'capital', 'babylon', 3020, 2180, 'human', true, 18);
+  add('ishtar_winged_lamassu_gate', '이슈타르 청금석 날개사자 라마수 관문 성채', 'castle', 'babylon', 2900, 2140, 'human', true, 16);
+  add('hanging_gardens_terrace_palace', '유프라테스 부유 공중정원 계단식 테라스 궁전', 'palace', 'babylon', 3140, 2240, 'elf', true, 14);
+  add('cuneiform_astronomer_ziggurat_observatory', '쐐기문자 점성술 점토판 천문대 신전', 'temple', 'babylon', 2840, 2280, 'human', true, 12);
+  add('fertile_crescent_date_palm_oasis', '비옥한 초승달 대추야자 운하 오아시스', 'town', 'babylon', 2980, 2320, 'human', false, 10);
+  add('euphrates_reed_boat_delta_harbor', '유프라테스 파피루스 갈대선 삼각주 하구 나루터', 'port', 'babylon', 3120, 2340, 'human', false, 9);
+
   return list;
 }
 
@@ -1217,6 +1227,18 @@ function generateWorld() {
           continue;
         }
 
+        // 태고 바빌론 에테메난키 지구라트 & 공중정원 라마수 제국 전용 지형 카빙
+        if (s.continent === 'babylon') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.CASTLE_FLOOR : TILE.ROAD; // 청금석 유약 벽돌 성채 바닥 및 황금 포장 도로
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.FARMLAND : TILE.MEADOW; // 비옥한 초승달 대추야자 농경지 및 공중정원 초원
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.OASIS_WATER : TILE.SAND; // 유프라테스 관개 운하 수로 및 황금 사막 모래
+          }
+          continue;
+        }
+
         const curT = tiles[idx(tx, ty)];
         const isWater = (curT === TILE.DEEP_WATER || curT === TILE.WATER);
 
@@ -1507,7 +1529,16 @@ function generateWorld() {
     ['thousand_lotus_yin_yang_sanctum', 'misty_tea_terrace_mountain_village'],
     ['celestial_peach_spring_harbor', 'cloud_bamboo_hermit_retreat'],
     ['celestial_peach_spring_harbor', 'misty_tea_terrace_mountain_village'],
-    ['cloud_bamboo_hermit_retreat', 'yggdrasil_fairy_haven']
+    ['cloud_bamboo_hermit_retreat', 'yggdrasil_fairy_haven'],
+
+    // [태고 바빌론 에테메난키 지구라트 가도 (Babylon Fertile Crescent Highway)]
+    ['babylon_etemenanki_ziggurat', 'ishtar_winged_lamassu_gate'],
+    ['babylon_etemenanki_ziggurat', 'hanging_gardens_terrace_palace'],
+    ['babylon_etemenanki_ziggurat', 'fertile_crescent_date_palm_oasis'],
+    ['ishtar_winged_lamassu_gate', 'cuneiform_astronomer_ziggurat_observatory'],
+    ['fertile_crescent_date_palm_oasis', 'euphrates_reed_boat_delta_harbor'],
+    ['hanging_gardens_terrace_palace', 'euphrates_reed_boat_delta_harbor'],
+    ['ishtar_winged_lamassu_gate', 'ancient_pharaoh_pyramid_necropolis']
   ];
   const roadLinks = rawRoadLinks.filter(([a, b]) => settlementMap[a] && settlementMap[b]);
 

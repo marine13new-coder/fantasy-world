@@ -4465,6 +4465,7 @@
         else if (weaponId.includes('fairy') || weaponId.includes('flora') || weaponId.includes('leaf') || weaponId.includes('spore') || weaponId.includes('sylph') || weaponId.includes('nectar') || weaponId.includes('pixie')) { slashColor = '#10b981'; glowColor = 'rgba(74, 222, 128, 0.85)'; }
         else if (weaponId.includes('dorado') || weaponId.includes('sun') || weaponId.includes('solar') || weaponId.includes('serpent') || weaponId.includes('quetzal') || weaponId.includes('macuahuitl') || weaponId.includes('aztec') || weaponId.includes('inca')) { slashColor = '#facc15'; glowColor = 'rgba(234, 179, 8, 0.9)'; }
         else if (weaponId.includes('shangrila') || weaponId.includes('jade') || weaponId.includes('lotus') || weaponId.includes('tao') || weaponId.includes('flying_sword')) { slashColor = '#34d399'; glowColor = 'rgba(16, 185, 129, 0.9)'; }
+        else if (weaponId.includes('babylon') || weaponId.includes('gilgamesh') || weaponId.includes('khopesh') || weaponId.includes('ishtar') || weaponId.includes('ziggurat') || weaponId.includes('lamassu')) { slashColor = '#facc15'; glowColor = 'rgba(37, 99, 235, 0.9)'; }
 
         const arcCenter = px + sideSign * 4 * sc;
         const startAng = isLeft ? Math.PI * 0.7 : Math.PI * 0.3;
@@ -4857,6 +4858,44 @@
             // 신선 도력의 에메랄드 비취 스파크 (Jade Qi Spark)
             ctx.fillStyle = 'rgba(52, 211, 153, 0.85)';
             ctx.fillRect(lpx + sideSign * 3 * sc, lpy - 2 * sc, 2 * sc, 2 * sc);
+          }
+        }
+
+        // 🦁 태고 바빌론 길가메시의 황금 코페쉬 참격 & 쐐기문자 점토판 신성 폭풍 (Babylon Gilgamesh Khopesh & Cuneiform Flurry)
+        if (weaponId.includes('babylon') || weaponId.includes('gilgamesh') || weaponId.includes('khopesh') || weaponId.includes('ishtar') || weaponId.includes('ziggurat') || weaponId.includes('lamassu')) {
+          // 청금석 & 황금 2중 초승달 참격호 (Lapis Lazuli & Golden Crescent Arc)
+          ctx.strokeStyle = '#2563eb';
+          ctx.lineWidth = 4.4 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 24 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#facc15';
+          ctx.lineWidth = 2.0 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 22 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          // 튀어나가는 5개의 황금 쐐기문자 점토판 룬 (Cuneiform Clay Tablet Runes)
+          const babylonTime = (e.animTime || 0) * 16;
+          for (let cp = 0; cp < 5; cp++) {
+            const cpAng = startAng + (cp / 4) * (endAng - startAng);
+            const cpDist = (22 + Math.sin(babylonTime + cp * 2.0) * 6) * sc;
+            const cpx = arcCenter + Math.cos(cpAng) * cpDist;
+            const cpy = py - 10 * sc - bounce + Math.sin(cpAng) * cpDist;
+
+            // 황금빛 구운 점토판 사각형
+            ctx.fillStyle = cp % 2 === 0 ? '#ca8a04' : '#d97706';
+            ctx.fillRect(cpx - 2 * sc, cpy - 2.5 * sc, 4 * sc, 5 * sc);
+
+            // 쐐기문자 음각 각인선 (Cuneiform Wedge Stroke)
+            ctx.fillStyle = '#fef08a';
+            ctx.fillRect(cpx - 1 * sc, cpy - 1.5 * sc, 2 * sc, 1 * sc);
+            ctx.fillRect(cpx - 1 * sc, cpy + 0.5 * sc, 2 * sc, 1 * sc);
+
+            // 청금석 보석 파편 스파크 (Lapis Lazuli Spark)
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.9)';
+            ctx.fillRect(cpx + sideSign * 3 * sc, cpy - 2 * sc, 2 * sc, 2 * sc);
           }
         }
 
