@@ -3333,6 +3333,32 @@ class WorldRenderer {
       ctx.globalAlpha = 1.0;
     }
 
+    // 4.5. 🌋🔱 해저 화산 열수구 칼데라 & 레비아탄 심연 부유 기포 및 마그마 스파크 (Leviathan Trench Vent Bubbles & Magma Sparks)
+    if (camX >= 860 && camX <= 1180 && camY >= 1840 && camY <= 2080) {
+      // 심해 청록 엠비언트 틴트
+      ctx.fillStyle = 'rgba(8, 145, 178, 0.085)';
+      ctx.fillRect(0, 0, cw, ch);
+
+      // 끓어오르는 수포 및 미세 마그마 불씨
+      for (let i = 0; i < 24; i++) {
+        const bx = Math.floor((i * 173 + Math.sin(timeSec * 2.5 + i) * 18) % cw);
+        const by = Math.floor((i * 283 - timeSec * 60) % ch + ch) % ch;
+        const bAlpha = 0.25 + 0.35 * Math.sin(timeSec * 3.0 + i);
+        if (i % 2 === 0) {
+          // 열수 기포 (Hydrothermal Bubble)
+          ctx.strokeStyle = `rgba(56, 189, 248, ${bAlpha})`;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.arc(bx, by, 2.5, 0, Math.PI * 2);
+          ctx.stroke();
+        } else {
+          // 마그마 미세 불씨 (Magma Ember)
+          ctx.fillStyle = `rgba(249, 115, 22, ${bAlpha})`;
+          ctx.fillRect(bx, by, 2, 2);
+        }
+      }
+    }
+
     // 5. 🌿 동부 안개 늪지대 도깨비불 (Swamp Will-o'-the-Wisps)
     if (camX > 450 && camY > 110 && camY < 280) {
       for (let i = 0; i < 22; i++) {

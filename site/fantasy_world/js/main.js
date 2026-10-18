@@ -1276,6 +1276,7 @@ function startFantasyWorld() {
         else if (s.continent === 'shangrila') icon = '🪷';
         else if (s.continent === 'babylon') icon = '🦁';
         else if (s.continent === 'sol_invictus') icon = '☀️';
+        else if (s.continent === 'leviathan_trench') icon = '🔱';
         else if (s.type === 'capital') icon = '👑';
         else if (s.type === 'port') icon = '⚓';
         else if (s.type === 'fortress') icon = '🏰';
@@ -1306,6 +1307,7 @@ function startFantasyWorld() {
         else if (s.continent === 'shangrila') regionName = '🪷 상그릴라 신선 비경 & 천년 백련 옥룡 성채';
         else if (s.continent === 'babylon') regionName = '🦁 태고 바빌론 에테메난키 지구라트 & 공중정원 라마수 제국';
         else if (s.continent === 'sol_invictus') regionName = '☀️ 신성 불사조 솔 인빅투스 황금 바실리카 & 쌍두독수리 팔라티노 제국';
+        else if (s.continent === 'leviathan_trench') regionName = '🌋🔱 해저 화산 열수구 흑요석 레비아탄 요새 & 마그마 환초 제국';
         else if (s.continent === 'west') regionName = '서부 실바니아';
         else if (s.continent === 'north') regionName = '북부 노스펠';
         else if (s.continent === 'south') regionName = '남부 드라코니아';

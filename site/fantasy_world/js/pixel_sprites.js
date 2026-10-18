@@ -4467,6 +4467,7 @@
         else if (weaponId.includes('shangrila') || weaponId.includes('jade') || weaponId.includes('lotus') || weaponId.includes('tao') || weaponId.includes('flying_sword')) { slashColor = '#34d399'; glowColor = 'rgba(16, 185, 129, 0.9)'; }
         else if (weaponId.includes('babylon') || weaponId.includes('gilgamesh') || weaponId.includes('khopesh') || weaponId.includes('ishtar') || weaponId.includes('ziggurat') || weaponId.includes('lamassu')) { slashColor = '#facc15'; glowColor = 'rgba(37, 99, 235, 0.9)'; }
         else if (weaponId.includes('sol_invictus') || weaponId.includes('phoenix') || weaponId.includes('basilica') || weaponId.includes('eagle_claymore') || weaponId.includes('byzantine')) { slashColor = '#fde047'; glowColor = 'rgba(249, 115, 22, 0.95)'; }
+        else if (weaponId.includes('leviathan') || weaponId.includes('hydrothermal') || weaponId.includes('abyssal') || weaponId.includes('magma_harpoon')) { slashColor = '#06b6d4'; glowColor = 'rgba(234, 88, 12, 0.95)'; }
 
         const arcCenter = px + sideSign * 4 * sc;
         const startAng = isLeft ? Math.PI * 0.7 : Math.PI * 0.3;
@@ -4936,6 +4937,49 @@
             // 타오르는 태양 불꽃 불티 (Solar Flame Ember)
             ctx.fillStyle = 'rgba(250, 204, 21, 0.9)';
             ctx.fillRect(fpx + sideSign * 3 * sc, fpy - 3 * sc, 2.5 * sc, 2.5 * sc);
+          }
+        }
+
+        // 🌋🔱 해저 화산 열수구 레비아탄 흑요석 작살검 & 심해 열수 거품 파열 (Leviathan Magma Harpoon & Hydrothermal Bubble Flurry)
+        if (weaponId.includes('leviathan') || weaponId.includes('hydrothermal') || weaponId.includes('abyssal') || weaponId.includes('magma_harpoon')) {
+          // 심해 청록 & 마그마 주홍 2중 초승달 참격호 (Abyssal Cyan & Magma Orange Dual Crescent Arc)
+          ctx.strokeStyle = '#ea580c';
+          ctx.lineWidth = 4.6 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 25 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#22d3ee';
+          ctx.lineWidth = 2.4 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 23 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          // 튀어나가는 5개의 흑요석 작살 가시 & 열수구 끓어오르는 기포 (Obsidian Harpoon Barb & Boiling Hydrothermal Bubbles)
+          const levTime = (e.animTime || 0) * 18;
+          for (let lp = 0; lp < 5; lp++) {
+            const lpAng = startAng + (lp / 4) * (endAng - startAng);
+            const lpDist = (23 + Math.sin(levTime + lp * 2.2) * 7) * sc;
+            const lpx = arcCenter + Math.cos(lpAng) * lpDist;
+            const lpy = py - 10 * sc - bounce + Math.sin(lpAng) * lpDist;
+
+            // 흑요석 가시 형상 (Obsidian Harpoon Barb)
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.ellipse(lpx, lpy, 3.8 * sc, 1.8 * sc, lpAng + Math.PI / 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 가시 날 끝 청록빛 형광 에지 (Cyan Phosphor Edge)
+            ctx.fillStyle = '#67e8f9';
+            ctx.fillRect(lpx - 0.8 * sc, lpy - 0.8 * sc, 1.6 * sc, 1.6 * sc);
+
+            // 끓어오르는 400도 열수구 수포 기포 (Boiling Hydrothermal Vent Bubble)
+            ctx.fillStyle = 'rgba(249, 115, 22, 0.85)';
+            ctx.beginPath();
+            ctx.arc(lpx + sideSign * 3 * sc, lpy - 3 * sc, 2.2 * sc, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(lpx + sideSign * 3 * sc - 0.5 * sc, lpy - 3 * sc - 0.5 * sc, 1 * sc, 1 * sc);
           }
         }
 
