@@ -762,85 +762,176 @@ body, html {
   color: #fff;
 }
 
-/* 하단 플레이어 조작 & 왕국 군주 칙령 컨트롤 도크 (Clean RPG Retro Hotbar) */
-#bottomControlDock {
+/* ==========================================================================
+   🩸 디아블로 스타일 하단 액션 RPG HUD 도크 (Diablo Action Bar & Orbs)
+   ========================================================================== */
+.sr-only,
+.hidden-stat {
+  display: none !important;
+}
+
+#bottomControlDock.diablo-hud-dock {
   position: fixed;
-  bottom: 8px;
+  bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 30;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(13, 17, 28, 0.96);
-  backdrop-filter: blur(14px);
-  border: 2px solid #78350f;
-  box-shadow: 
-    0 0 0 1px #0f172a,
-    0 0 0 2px #b45309,
-    inset 0 0 0 1px rgba(254, 240, 138, 0.2),
-    0 10px 32px rgba(0, 0, 0, 0.85);
-  border-radius: 6px;
-  padding: 5px 10px;
-  max-width: 96vw;
-  box-sizing: border-box;
+  align-items: flex-end;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  max-width: 98vw;
 }
 
-.dock-section {
+/* 좌/우 구형 크리스탈 오브 (Health & Wrath Globes) */
+.diablo-orb-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.diablo-orb {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #1e293b 0%, #020617 85%);
+  border: 2.5px solid #b45309;
+  box-shadow:
+    0 0 0 2px #090d16,
+    0 0 0 3.5px #78350f,
+    inset 0 4px 12px rgba(0, 0, 0, 0.9),
+    0 8px 24px rgba(0, 0, 0, 0.9);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.diablo-orb:hover {
+  transform: scale(1.05);
+  border-color: #fde047;
+}
+
+.orb-liquid {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  transition: height 0.2s ease-out;
+  z-index: 1;
+}
+
+.hp-liquid {
+  background: linear-gradient(180deg, #f87171 0%, #dc2626 30%, #991b1b 75%, #450a0a 100%);
+  box-shadow: 0 -2px 10px rgba(239, 68, 68, 0.8), inset 0 2px 6px rgba(255, 255, 255, 0.35);
+}
+
+.wrath-liquid {
+  background: linear-gradient(180deg, #fde047 0%, #a855f7 35%, #6b21a8 80%, #2e1065 100%);
+  box-shadow: 0 -2px 12px rgba(192, 132, 252, 0.85), inset 0 2px 6px rgba(255, 255, 255, 0.4);
+}
+
+.orb-glass-shine {
+  position: absolute;
+  top: 5px;
+  left: 10px;
+  width: 26px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 75%);
+  transform: rotate(-25deg);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.orb-content {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 1px 4px #000, 0 0 6px #000;
+  line-height: 1.15;
+}
+
+.orb-level {
+  font-size: 10px;
+  font-weight: 800;
+  color: #fde047;
+}
+
+.orb-label {
+  font-size: 12px;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.orb-key {
+  font-size: 9px;
+  font-weight: 800;
+  color: #fde047;
+  background: rgba(0, 0, 0, 0.75);
+  padding: 0 4px;
+  border-radius: 3px;
+  margin-bottom: 1px;
+}
+
+.orb-icon {
+  font-size: 16px;
+}
+
+/* 중앙 스킬 액션바 콘솔 프레임 */
+.diablo-center-console {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.96) 0%, rgba(9, 13, 22, 0.98) 100%);
+  border: 2px solid #78350f;
+  box-shadow:
+    0 0 0 1px #020617,
+    0 0 0 2px #b45309,
+    inset 0 1px 0 rgba(254, 240, 138, 0.25),
+    0 10px 30px rgba(0, 0, 0, 0.9);
+  border-radius: 6px;
+  padding: 5px 10px 6px;
+}
+
+.diablo-exp-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(2, 6, 23, 0.9);
+  border: 1px solid rgba(180, 83, 9, 0.45);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.diablo-exp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ca8a04, #facc15, #fef08a);
+  box-shadow: 0 0 8px rgba(250, 204, 21, 0.8);
+  transition: width 0.25s ease;
+}
+
+.diablo-slots-row {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.player-dock {
-  border-right: 1px solid rgba(202, 138, 4, 0.35);
-  padding-right: 8px;
-}
-
-.combat-dock {
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
-  padding-right: 8px;
-}
-
-.hero-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(180, 83, 9, 0.3));
-  border: 1.5px solid #d97706;
-  color: #fff;
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  text-align: left;
-}
-
-.hero-btn:hover {
-  background: rgba(234, 179, 8, 0.35);
-  border-color: #fde047;
-}
-
-.hero-btn.active {
-  background: linear-gradient(135deg, rgba(202, 138, 4, 0.4), rgba(120, 53, 15, 0.6));
-  border-color: #facc15;
-}
-
-.hero-icon {
-  font-size: 20px;
-  filter: drop-shadow(0 0 4px rgba(250, 204, 21, 0.8));
-}
-
-.hero-label {
-  font-size: 11.5px;
-  font-weight: 800;
-  color: #fef08a;
-  line-height: 1.2;
-}
-
-.hero-sub {
-  font-size: 9.5px;
-  color: #94a3b8;
+.dock-divider {
+  width: 1px;
+  height: 36px;
+  background: linear-gradient(180deg, transparent, rgba(202, 138, 4, 0.5), transparent);
+  margin: 0 2px;
 }
 
 .skill-slots {
@@ -857,9 +948,9 @@ body, html {
   justify-content: center;
   width: 44px;
   min-width: 44px;
-  height: 48px;
-  background: rgba(15, 23, 42, 0.85);
-  border: 1.5px solid rgba(148, 163, 184, 0.3);
+  height: 46px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1.5px solid rgba(148, 163, 184, 0.32);
   border-radius: 4px;
   color: #e2e8f0;
   cursor: pointer;
@@ -868,10 +959,10 @@ body, html {
 }
 
 .skill-btn:hover {
-  background: rgba(30, 41, 59, 0.95);
+  background: rgba(30, 41, 59, 0.98);
   border-color: #facc15;
   transform: translateY(-2px);
-  box-shadow: 0 0 10px rgba(250, 204, 21, 0.3);
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.35);
 }
 
 .skill-btn:active {
@@ -885,113 +976,56 @@ body, html {
 .skill-btn.action-atk:hover {
   border-color: #f87171;
   background: rgba(239, 68, 68, 0.32);
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.45);
 }
 
 .skill-btn.parry {
   border-color: rgba(56, 189, 248, 0.7);
   background: rgba(14, 165, 233, 0.2);
 }
-.skill-btn.parry:hover {
-  border-color: #38bdf8;
-  background: rgba(14, 165, 233, 0.38);
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.55);
-}
 
 .skill-btn.dodge {
   border-color: rgba(56, 189, 248, 0.65);
   background: rgba(56, 189, 248, 0.16);
-}
-.skill-btn.dodge:hover {
-  border-color: #38bdf8;
-  background: rgba(56, 189, 248, 0.32);
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.45);
 }
 
 .skill-btn.potion {
   border-color: rgba(34, 197, 94, 0.65);
   background: rgba(34, 197, 94, 0.16);
 }
-.skill-btn.potion:hover {
-  border-color: #4ade80;
-  background: rgba(34, 197, 94, 0.32);
-  box-shadow: 0 0 10px rgba(34, 197, 94, 0.45);
-}
 
 .skill-btn.mount {
   border-color: rgba(245, 158, 11, 0.6);
   background: rgba(245, 158, 11, 0.12);
 }
-.skill-btn.mount:hover {
-  border-color: #fde047;
-  background: rgba(245, 158, 11, 0.25);
-}
 
 .skill-btn.util {
-  border-color: rgba(96, 165, 250, 0.35);
-  background: rgba(30, 58, 138, 0.15);
-}
-.skill-btn.util:hover {
-  border-color: #93c5fd;
-  background: rgba(30, 58, 138, 0.3);
+  border-color: rgba(212, 175, 55, 0.45);
+  background: rgba(30, 41, 59, 0.75);
 }
 
-.skill-btn.stance {
-  border-color: rgba(234, 179, 8, 0.7);
-  background: linear-gradient(180deg, rgba(234, 179, 8, 0.15), rgba(15, 23, 42, 0.9));
-}
-.skill-btn.stance:hover {
-  border-color: #facc15;
-  background: linear-gradient(180deg, rgba(234, 179, 8, 0.3), rgba(30, 41, 59, 0.95));
-  box-shadow: 0 0 12px rgba(250, 204, 21, 0.5);
-}
-
-.skill-btn.ultimate {
-  border-color: rgba(168, 85, 247, 0.7);
-  background: linear-gradient(180deg, rgba(168, 85, 247, 0.18), rgba(15, 23, 42, 0.95));
-  overflow: hidden;
-}
-.skill-btn.ultimate:hover {
-  border-color: #c084fc;
-  box-shadow: 0 0 12px rgba(192, 132, 252, 0.5);
-}
-.skill-btn.ultimate.ready {
+.diablo-orb.ultimate.ready {
   border-color: #facc15 !important;
-  background: linear-gradient(180deg, rgba(250, 204, 21, 0.35), rgba(88, 28, 135, 0.85)) !important;
   animation: ultGlowPulse 1.2s infinite alternate ease-in-out;
 }
+
 @keyframes ultGlowPulse {
   0% {
-    box-shadow: 0 0 8px rgba(250, 204, 21, 0.6), inset 0 0 6px rgba(250, 204, 21, 0.3);
-    transform: translateY(0);
+    box-shadow: 0 0 10px rgba(250, 204, 21, 0.6), inset 0 0 8px rgba(250, 204, 21, 0.4);
   }
   100% {
-    box-shadow: 0 0 18px rgba(250, 204, 21, 1), 0 0 25px rgba(234, 88, 12, 0.8), inset 0 0 12px rgba(255, 255, 255, 0.6);
-    transform: translateY(-2px) scale(1.06);
+    box-shadow: 0 0 22px rgba(250, 204, 21, 1), 0 0 30px rgba(168, 85, 247, 0.9);
+    transform: scale(1.06);
   }
-}
-.ultimate-gauge-bar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: rgba(0, 0, 0, 0.7);
-}
-.ultimate-gauge-bar > div {
-  height: 100%;
-  background: linear-gradient(90deg, #f59e0b, #facc15, #ffffff);
-  transition: width 0.15s ease-out;
 }
 
 .skill-btn .key-badge {
   position: absolute;
   top: 1px;
   left: 2px;
-  font-size: 8.5px;
+  font-size: 8px;
   font-weight: 800;
   color: #fde047;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.78);
   padding: 0 3px;
   border-radius: 2px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1012,51 +1046,78 @@ body, html {
   margin-top: 1px;
 }
 
-/* Ruler Decree Dock & Popup */
+/* 접이식 통합 RPG & 왕국 메뉴 팝업 (Diablo Drawer Popup) */
 .ruler-dock {
   position: relative;
 }
 
-.ruler-toggle-btn {
+.diablo-drawer-popup {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  right: 0;
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(11, 15, 25, 0.98);
+  backdrop-filter: blur(16px);
+  border: 2px solid #ca8a04;
+  box-shadow:
+    0 0 0 1px #020617,
+    0 14px 36px rgba(0, 0, 0, 0.92);
+  border-radius: 8px;
+  padding: 12px;
+  z-index: 120;
+  animation: popupFade 0.15s ease-out;
+}
+
+.drawer-section-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fde047;
+  border-bottom: 1px solid rgba(202, 138, 4, 0.3);
+  padding-bottom: 4px;
+  margin-top: 2px;
+}
+
+.drawer-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+
+.drawer-item-btn {
   display: flex;
   align-items: center;
   gap: 5px;
-  background: linear-gradient(135deg, rgba(234, 179, 8, 0.25), rgba(180, 83, 9, 0.4));
-  border: 1.5px solid #ca8a04;
-  color: #fef08a;
-  padding: 6px 10px;
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.25);
   border-radius: 4px;
-  font-size: 11px;
-  font-weight: 800;
+  padding: 6px 7px;
+  color: #e2e8f0;
+  font-size: 10.5px;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.12s;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.ruler-toggle-btn:hover {
-  background: rgba(234, 179, 8, 0.45);
-  border-color: #fde047;
-  transform: translateY(-1px);
+.drawer-item-btn:hover {
+  background: rgba(202, 138, 4, 0.28);
+  border-color: #facc15;
+  color: #ffffff;
 }
 
-.ruler-popup {
-  position: absolute;
-  bottom: calc(100% + 10px);
-  right: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  background: rgba(13, 17, 28, 0.98);
-  backdrop-filter: blur(14px);
-  border: 2px solid #ca8a04;
-  box-shadow: 
-    0 0 0 1px #0f172a,
-    0 8px 24px rgba(0, 0, 0, 0.85);
-  border-radius: 6px;
-  padding: 8px;
-  min-width: 170px;
-  z-index: 100;
-  animation: popupFade 0.15s ease-out;
+.drawer-item-btn .d-ico {
+  font-size: 13px;
+}
+
+.drawer-decrees {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
 }
 
 @keyframes popupFade {
@@ -1071,13 +1132,14 @@ body, html {
 .ruler-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: rgba(30, 41, 59, 0.8);
+  justify-content: center;
+  gap: 4px;
+  background: rgba(30, 41, 59, 0.85);
   border: 1px solid rgba(202, 138, 4, 0.4);
   color: #f8fafc;
-  padding: 7px 10px;
+  padding: 6px 6px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.12s;
@@ -1088,27 +1150,16 @@ body, html {
   background: rgba(234, 179, 8, 0.25);
   border-color: #fde047;
   color: #fef08a;
-  transform: translateX(2px);
 }
 
 .ruler-btn.danger {
   border-color: rgba(239, 68, 68, 0.45);
   color: #fca5a5;
 }
-.ruler-btn.danger:hover {
-  background: rgba(239, 68, 68, 0.25);
-  border-color: #ef4444;
-  color: #fff;
-}
 
 .ruler-btn.gold {
   border-color: rgba(250, 204, 21, 0.5);
   color: #fde047;
-}
-.ruler-btn.gold:hover {
-  background: rgba(234, 179, 8, 0.35);
-  border-color: #fef08a;
-  color: #fff;
 }
 
 /* 스크롤바 스타일 */
@@ -1125,19 +1176,20 @@ body, html {
 }
 
 /* ==========================================================================
-   플로팅 퀘스트 HUD 카드 & 정착지 상호작용
+   플로팅 퀘스트 HUD 카드 (디아블로 우측 상단 미니멀 트래커)
    ========================================================================== */
 .quest-card {
   position: fixed;
-  top: 74px;
-  left: 316px;
-  width: 290px;
-  background: rgba(15, 23, 42, 0.93);
+  top: 66px;
+  right: 46px;
+  left: auto;
+  width: 248px;
+  background: rgba(11, 15, 25, 0.84);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(212, 175, 55, 0.45);
-  border-radius: 9px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-  z-index: 85;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+  z-index: 22;
   color: #f8fafc;
   font-family: inherit;
   transition: all 0.2s ease;

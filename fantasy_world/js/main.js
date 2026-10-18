@@ -155,7 +155,7 @@ function startFantasyWorld() {
       leftSidebar.classList.toggle('collapsed');
       const isCol = leftSidebar.classList.contains('collapsed');
       btnToggleLeftSidebar.classList.toggle('collapsed', isCol);
-      btnToggleLeftSidebar.textContent = isCol ? '▶' : '◀';
+      btnToggleLeftSidebar.textContent = isCol ? '🗺️' : '◀';
     });
   }
 
@@ -166,7 +166,7 @@ function startFantasyWorld() {
       rightSidebar.classList.toggle('collapsed');
       const isCol = rightSidebar.classList.contains('collapsed');
       btnToggleRightSidebar.classList.toggle('collapsed', isCol);
-      btnToggleRightSidebar.textContent = isCol ? '◀' : '▶';
+      btnToggleRightSidebar.textContent = isCol ? '🧭' : '▶';
     });
   }
 
@@ -1750,12 +1750,16 @@ function startFantasyWorld() {
     if (!p) return;
     const lvlEl = document.getElementById('heroLevelBadge');
     const hpFill = document.getElementById('dockHeroHpFill');
+    const hpText = document.getElementById('heroHpText');
     const expFill = document.getElementById('dockHeroExpFill');
 
-    if (lvlEl) lvlEl.textContent = `Lv. ${p.level || 5}`;
+    if (lvlEl) lvlEl.textContent = `Lv.${p.level || 5}`;
     if (hpFill) {
       const hpPct = Math.max(0, Math.min(100, (p.hp / p.maxHp) * 100));
-      hpFill.style.width = `${hpPct}%`;
+      hpFill.style.height = `${hpPct}%`;
+    }
+    if (hpText) {
+      hpText.textContent = `${Math.max(0, Math.ceil(p.hp))}`;
     }
     if (expFill) {
       const expPct = Math.max(0, Math.min(100, ((p.exp || 0) / (p.maxExp || 120)) * 100));
@@ -1801,11 +1805,11 @@ function startFantasyWorld() {
       }
     }
 
-    // 각성 초필살기 (X) 게이지 & 레디 상태
+    // 각성 초필살기 (X) 오브 게이지 & 레디 상태
     const ultBtn = document.getElementById('btnUltimateSkill');
     const ultFill = document.getElementById('ultimateGaugeFill');
     if (ultFill) {
-      ultFill.style.width = `${p.awakeningGauge || 0}%`;
+      ultFill.style.height = `${Math.max(0, Math.min(100, p.awakeningGauge || 0))}%`;
     }
     if (ultBtn) {
       if ((p.awakeningGauge || 0) >= 100) {
@@ -1816,7 +1820,7 @@ function startFantasyWorld() {
     }
   }
 
-  // 군주 칙령 토글 팝업 바인딩
+  // 군주 칙령 & 통합 RPG 메뉴 토글 팝업 바인딩
   const btnToggleRulerMenu = document.getElementById('btnToggleRulerMenu');
   const rulerMenuPopup = document.getElementById('rulerMenuPopup');
   if (btnToggleRulerMenu && rulerMenuPopup) {
@@ -1825,8 +1829,14 @@ function startFantasyWorld() {
       rulerMenuPopup.classList.toggle('hidden');
     });
 
+    rulerMenuPopup.querySelectorAll('.drawer-item-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        rulerMenuPopup.classList.add('hidden');
+      });
+    });
+
     document.addEventListener('click', (e) => {
-      if (!rulerMenuPopup.contains(e.target) && e.target !== btnToggleRulerMenu) {
+      if (!rulerMenuPopup.contains(e.target) && !btnToggleRulerMenu.contains(e.target)) {
         rulerMenuPopup.classList.add('hidden');
       }
     });
