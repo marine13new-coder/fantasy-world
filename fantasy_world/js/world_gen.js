@@ -770,6 +770,16 @@ function createSettlementList() {
   add('phosphor_pearl_diver_atoll_village', '인광 진주 채취 환초 해상 가옥', 'town', 'leviathan_trench', 920, 1980, 'human', false, 10);
   add('abyssal_trench_submarine_dock', '심해 해구 룬 추진 잠수함 기지', 'port', 'leviathan_trench', 1000, 2060, 'human', false, 9);
 
+  // =========================================================================
+  // 33. THE ANCIENT PERSIAN PERSEPOLIS & WINGED SIMURGH (태고 페르시아 페르세폴리스 만국의 문 & 영조 시무르그 불멸 제국)
+  // =========================================================================
+  add('persepolis_apadana_citadel', '페르세폴리스 아파다나 만국의 수도', 'capital', 'persepolis', 3500, 2180, 'human', true, 18);
+  add('gate_of_all_nations_gatehouse', '만국의 문 쌍익인면 황소 관문', 'castle', 'persepolis', 3420, 2120, 'crusader', true, 16);
+  add('simurgh_sacred_flame_sanctum', '영조 시무르그 성화의 하오마 성소', 'palace', 'persepolis', 3600, 2140, 'celestial', true, 14);
+  add('tachar_immortal_guard_fortress', '타차르 1만 불사부대 아타나토이 요새', 'temple', 'persepolis', 3540, 2260, 'crusader', true, 12);
+  add('turqoise_caravan_oasis_harbor', '청록 터키석 오아시스 캐러밴 대상 마을', 'town', 'persepolis', 3380, 2240, 'human', false, 10);
+  add('royal_cyrus_cylinder_treasury', '키루스 원통 칙령 왕실 칙서 보물고', 'port', 'persepolis', 3460, 2320, 'human', false, 9);
+
   return list;
 }
 
@@ -1283,6 +1293,18 @@ function generateWorld() {
           continue;
         }
 
+        // 태고 페르시아 페르세폴리스 만국의 문 & 영조 시무르그 불멸 제국 전용 지형 카빙
+        if (s.continent === 'persepolis') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.CASTLE_FLOOR : TILE.ROAD; // 흑색 석회암 및 청록석 유약 기단 바닥
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.MEADOW : TILE.FARMLAND; // 석류와 장미의 페르시아 정원 초원 & 관개 오아시스 농원
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.OASIS_WATER : TILE.SAND; // 대리석 카나트 수로 연못 및 황금 사막 모래
+          }
+          continue;
+        }
+
         const curT = tiles[idx(tx, ty)];
         const isWater = (curT === TILE.DEEP_WATER || curT === TILE.WATER);
 
@@ -1603,7 +1625,18 @@ function generateWorld() {
     ['phosphor_pearl_diver_atoll_village', 'abyssal_trench_submarine_dock'],
     ['bioluminescent_siren_chasm_palace', 'siren_coral'],
     ['hydrothermal_black_smoker_forge', 'lava_worm_trench'],
-    ['abyssal_trench_submarine_dock', 'atlantis_pearl_reef_harbor']
+    ['abyssal_trench_submarine_dock', 'atlantis_pearl_reef_harbor'],
+
+    // [태고 페르시아 페르세폴리스 가도 (Persepolis Royal Road of Nations)]
+    ['persepolis_apadana_citadel', 'gate_of_all_nations_gatehouse'],
+    ['persepolis_apadana_citadel', 'simurgh_sacred_flame_sanctum'],
+    ['persepolis_apadana_citadel', 'tachar_immortal_guard_fortress'],
+    ['persepolis_apadana_citadel', 'turqoise_caravan_oasis_harbor'],
+    ['tachar_immortal_guard_fortress', 'royal_cyrus_cylinder_treasury'],
+    ['turqoise_caravan_oasis_harbor', 'royal_cyrus_cylinder_treasury'],
+    ['gate_of_all_nations_gatehouse', 'sandsea_caravan_bazaar_port'],
+    ['gate_of_all_nations_gatehouse', 'void_astral_dredge_dock'],
+    ['simurgh_sacred_flame_sanctum', 'void_shadow_cloister']
   ];
   const roadLinks = rawRoadLinks.filter(([a, b]) => settlementMap[a] && settlementMap[b]);
 

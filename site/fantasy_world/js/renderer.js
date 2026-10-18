@@ -3359,6 +3359,31 @@ class WorldRenderer {
       }
     }
 
+    // 4.6. 🦚🏛️ 태고 페르시아 페르세폴리스 만국의 문 & 영조 시무르그 성화 사프란 꽃잎 (Persepolis Saffron & Sacred Rose Wind)
+    if (camX >= 3350 && camX <= 3650 && camY >= 2100 && camY <= 2350) {
+      // 황금빛 호박색 엠비언트 틴트
+      ctx.fillStyle = 'rgba(217, 119, 6, 0.085)';
+      ctx.fillRect(0, 0, cw, ch);
+
+      // 흩날리는 페르시아 장미 꽃잎 및 사프란 향기 입자
+      for (let i = 0; i < 24; i++) {
+        const rx = Math.floor((i * 187 + timeSec * 45 + Math.sin(timeSec * 2.2 + i) * 20) % cw);
+        const ry = Math.floor((i * 263 + timeSec * 35) % ch);
+        const pAlpha = 0.3 + 0.35 * Math.sin(timeSec * 2.5 + i);
+        if (i % 2 === 0) {
+          // 장미 꽃잎 (Rose Petal)
+          ctx.fillStyle = `rgba(244, 63, 94, ${pAlpha})`;
+          ctx.beginPath();
+          ctx.ellipse(rx, ry, 3.2, 1.8, timeSec + i, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // 황금 사프란 향기 입자 (Golden Saffron Mote)
+          ctx.fillStyle = `rgba(251, 191, 36, ${pAlpha})`;
+          ctx.fillRect(rx, ry, 2, 2);
+        }
+      }
+    }
+
     // 5. 🌿 동부 안개 늪지대 도깨비불 (Swamp Will-o'-the-Wisps)
     if (camX > 450 && camY > 110 && camY < 280) {
       for (let i = 0; i < 22; i++) {

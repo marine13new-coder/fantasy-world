@@ -5440,6 +5440,253 @@
     },
 
     // =========================================================================
+    // 33-A. 태고 페르시아 페르세폴리스 아파다나 100주 알현전 & 만국의 문 (Persepolis Apadana Citadel & Gate of All Nations)
+    // =========================================================================
+    drawPersepolisApadana(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const podiumH = 8;
+
+      // 1. 흑색 석회암 계단형 기단 테라스 (Tiered Black Limestone Podium)
+      ctx.fillStyle = '#1e293b'; // 흑색 석회암
+      ctx.fillRect(px - halfW - 4, py - podiumH, bw + 8, podiumH);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - halfW - 2, py - podiumH + 3, bw + 4, podiumH - 3);
+
+      // 계단식 메를론 총안 장식 띠 (Stepped Merlon Parapet Relief)
+      ctx.fillStyle = '#f59e0b'; // 황금 띠
+      ctx.fillRect(px - halfW - 4, py - podiumH, bw + 8, 2);
+      for (let m = -halfW - 2; m < halfW + 2; m += 6) {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(px + m, py - podiumH - 2, 4, 2);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(px + m + 1, py - podiumH - 1, 2, 1);
+      }
+
+      // 2. 좌우 만국의 문 거대 쌍익인면 황소 기둥상 (Lamassu Winged Bull Gate Columns)
+      [-1, 1].forEach(side => {
+        const gx = px + side * (halfW - 3);
+        const colW = 5;
+        const colH = bh - 18;
+
+        // 원형 홈파인 주신 (Fluted Column Shaft)
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(gx - 2, py - podiumH - colH, colW, colH);
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(gx - 1, py - podiumH - colH, 2, colH);
+
+        // 황소 머리 기둥머리 (Double-Bull Protome Capital)
+        const capY = py - podiumH - colH;
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(gx - 4, capY - 4, colW + 4, 4);
+        // 황금 뿔 (Golden Horns)
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(gx - 5, capY - 6, 2, 3);
+        ctx.fillRect(gx + 4, capY - 6, 2, 3);
+
+        // 날개 편 날개돋이 양각 (Winged Relief)
+        ctx.fillStyle = side === -1 ? 'rgba(56, 189, 248, 0.7)' : 'rgba(234, 179, 8, 0.7)';
+        ctx.beginPath();
+        ctx.arc(gx + side * 3, capY + 6, 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // 3. 중앙 100개 기둥의 아파다나 하이포스타일 홀 (Apadana Hypostyle Hall)
+      const hallW = bw - 14;
+      const hallH = bh - 24;
+      const hallX = px - Math.round(hallW / 2);
+      const hallY = py - podiumH - hallH;
+
+      // 주랑 내벽 (Deep Teal Lapis Lazuli & Gold Wall)
+      ctx.fillStyle = '#0f766e';
+      ctx.fillRect(hallX, hallY, hallW, hallH);
+      ctx.fillStyle = '#115e59';
+      ctx.fillRect(hallX + 2, hallY + 3, hallW - 4, hallH - 4);
+
+      // 레바논 백향목 들보 서까래 (Cedar Beam Rafters)
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(hallX - 2, hallY - 3, hallW + 4, 4);
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(hallX - 3, hallY - 5, hallW + 6, 2);
+
+      // 내부 회랑 3열 대리석 열주 (Interior Fluted Columns)
+      for (let c = -1; c <= 1; c++) {
+        const cx = px + c * 6;
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(cx - 1, hallY + 3, 3, hallH - 3);
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(cx, hallY + 3, 1, hallH - 3);
+        // 주두 (Capital)
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(cx - 2, hallY + 1, 5, 2);
+      }
+
+      // 4. 중앙 왕실 아치 출입문 & 페르시아 카펫 통로 (Royal Portal & Crimson Tapestry)
+      const gateW = 8;
+      const gateH = 12;
+      const gateX = px - 4;
+      const gateY = py - podiumH - gateH;
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(gateX, gateY, gateW, gateH);
+      ctx.fillStyle = '#be123c'; // 진홍빛 왕실 카펫
+      ctx.fillRect(gateX + 2, gateY + 2, 4, gateH);
+      // 황금 테두리 아치 린텔
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(gateX, gateY, gateW, gateH);
+
+      // 5. 상단 파라바하르 황금 날개 성휘 (Faravahar Winged Sun Emblem)
+      const fY = hallY - 7;
+      ctx.fillStyle = '#f59e0b';
+      // 중앙 원반
+      ctx.beginPath();
+      ctx.arc(px, fY, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 1, fY - 1, 2, 2);
+      // 좌우 날개 깃털 (Wing Feathers)
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.moveTo(px - 3, fY);
+      ctx.lineTo(px - 12, fY - 3);
+      ctx.lineTo(px - 10, fY + 2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(px + 3, fY);
+      ctx.lineTo(px + 12, fY - 3);
+      ctx.lineTo(px + 10, fY + 2);
+      ctx.closePath();
+      ctx.fill();
+
+      // 6. 아타르 성화대 (Atar Sacred Eternal Flame Brazier)
+      const flameX = px;
+      const flameY = py - podiumH - 3;
+      // 청동 화로
+      ctx.fillStyle = '#d97706';
+      ctx.fillRect(flameX - 3, flameY, 6, 3);
+      ctx.fillStyle = '#92400e';
+      ctx.fillRect(flameX - 2, flameY + 3, 4, 3);
+      // 타오르는 성화 불꽃 (Pulsing Eternal Flame)
+      const fPulse = Math.sin(timeSec * 8) * 1.5;
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(flameX, flameY - 3 + fPulse * 0.4, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.arc(flameX, flameY - 4 + fPulse * 0.4, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(flameX - 1, flameY - 5 + fPulse * 0.4, 2, 2);
+    },
+
+    // =========================================================================
+    // 33-B. 영조 시무르그 성화의 하오마 성소 (Simurgh Sacred Flame Sanctum & Tree of Seeds)
+    // =========================================================================
+    drawSimurghSacredSanctum(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const podiumH = 6;
+
+      // 1. 순백 대리석 & 청금석 원형 기단 (Circular White Marble & Lapis Plinth)
+      ctx.fillStyle = '#0f766e'; // 틸 블루 청금석 기단
+      ctx.fillRect(px - halfW - 2, py - podiumH, bw + 4, podiumH);
+      ctx.fillStyle = '#e2e8f0'; // 순백 대리석 층
+      ctx.fillRect(px - halfW, py - podiumH + 2, bw, podiumH - 2);
+      ctx.fillStyle = '#fbbf24'; // 황금 로제트 띠
+      ctx.fillRect(px - halfW - 2, py - podiumH, bw + 4, 1.5);
+
+      // 2. 만종의 나무 하오마 (Haoma Tree of All Seeds)
+      const trunkW = 6;
+      const trunkH = bh - 16;
+      const trunkY = py - podiumH - trunkH;
+
+      // 청동 목질 기둥 (Bronze & Cedar Trunk)
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(px - 3, trunkY, trunkW, trunkH);
+      ctx.fillStyle = '#92400e';
+      ctx.fillRect(px - 1, trunkY, 2, trunkH);
+
+      // 뻗어나가는 4갈래 신성 황금 가지 (Branching Celestial Limbs)
+      ctx.strokeStyle = '#b45309';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(px, trunkY + 8);
+      ctx.quadraticCurveTo(px - 10, trunkY + 2, px - 14, trunkY - 2);
+      ctx.moveTo(px, trunkY + 8);
+      ctx.quadraticCurveTo(px + 10, trunkY + 2, px + 14, trunkY - 2);
+      ctx.stroke();
+
+      // 에메랄드 & 터키석 신성 잎사귀 (Emerald & Turquoise Haoma Leaves)
+      [-14, -8, 8, 14].forEach((lx, idx) => {
+        const ly = trunkY - 2 + (idx % 2 === 0 ? -2 : 2);
+        ctx.fillStyle = idx % 2 === 0 ? '#10b981' : '#06b6d4';
+        ctx.beginPath();
+        ctx.arc(px + lx, ly, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#a7f3d0';
+        ctx.fillRect(px + lx - 1, ly - 1, 2, 2);
+      });
+
+      // 3. 둥지 튼 전설의 영조 시무르그 (The Roosting Simurgh Giant Bird)
+      const birdY = trunkY - 6;
+      // 깃털 꼬리 (Peacock Iridescent Tail Fan)
+      ctx.fillStyle = '#0d9488';
+      ctx.beginPath();
+      ctx.ellipse(px, birdY + 3, 11, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 시무르그 몸체 (Simurgh Body)
+      ctx.fillStyle = '#0284c7';
+      ctx.beginPath();
+      ctx.ellipse(px, birdY, 6, 4.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 양 날개 (Spread Wings)
+      const wingFlap = Math.sin(timeSec * 3) * 1.5;
+      ctx.fillStyle = '#22d3ee';
+      ctx.beginPath();
+      ctx.ellipse(px - 6, birdY - 1 + wingFlap, 5, 2.8, -0.4, 0, Math.PI * 2);
+      ctx.ellipse(px + 6, birdY - 1 + wingFlap, 5, 2.8, 0.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 황금 깃털 끝단 (Golden Wing Tips)
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(px - 10, birdY - 2 + wingFlap, 2, 2);
+      ctx.fillRect(px + 9, birdY - 2 + wingFlap, 2, 2);
+
+      // 시무르그 머리 & 황금 깃관 (Simurgh Crowned Head)
+      ctx.fillStyle = '#0369a1';
+      ctx.beginPath();
+      ctx.arc(px, birdY - 5, 3.2, 0, Math.PI * 2);
+      ctx.fill();
+      // 루비 눈
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(px - 1, birdY - 6, 1.5, 1.5);
+      // 황금 부리
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(px - 0.7, birdY - 4, 1.5, 2);
+      // 3갈래 황금 왕관 깃 (Triple Crown Feathers)
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(px - 2, birdY - 9, 1.2, 3);
+      ctx.fillRect(px, birdY - 10, 1.2, 4);
+      ctx.fillRect(px + 1.5, birdY - 9, 1.2, 3);
+
+      // 4. 주위를 공전하는 2개의 시무르그 영조 깃털 오라 (Orbiting Simurgh Feather Wisps)
+      for (let f = 0; f < 2; f++) {
+        const fAng = timeSec * 2.2 + f * Math.PI;
+        const fx = px + Math.cos(fAng) * (halfW + 2);
+        const fy = birdY + Math.sin(fAng) * 6;
+
+        ctx.fillStyle = f === 0 ? '#67e8f9' : '#fde047';
+        ctx.beginPath();
+        ctx.ellipse(fx, fy, 3.5, 1.5, fAng, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(fx - 0.8, fy - 0.8, 1.6, 1.6);
+      }
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -5589,6 +5836,16 @@
       ctx.beginPath();
       ctx.ellipse(px + 6, py + bh / 2 + 4, bw * 0.42, 4, 0.08, 0, Math.PI * 2);
       ctx.fill();
+      // 🦚🏛️ 태고 페르시아 페르세폴리스 만국의 문 & 영조 시무르그 불멸 제국 (Persepolis Apadana Citadel & Winged Simurgh Sanctum)
+      if (type === 'persepolis_apadana' || (type === 'capital' && b && b.continent === 'persepolis') || (type === 'castle' && b && b.continent === 'persepolis')) {
+        this.drawPersepolisApadana(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'simurgh_sanctum' || (type === 'palace' && b && b.continent === 'persepolis') || (type === 'temple' && b && b.continent === 'persepolis') || (type === 'fortress' && b && b.continent === 'persepolis') || (type === 'lair' && b && b.continent === 'persepolis')) {
+        this.drawSimurghSacredSanctum(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+
       // 🌋🔱 해저 화산 열수구 흑요석 레비아탄 요새 & 마그마 환초 제국 (Leviathan Obsidian Citadel & Bioluminescent Siren Palace)
       if (type === 'leviathan_citadel' || (type === 'capital' && b && b.continent === 'leviathan_trench') || (type === 'castle' && b && b.continent === 'leviathan_trench')) {
         this.drawLeviathanCitadel(ctx, px, py, bw, bh, isNight, timeSec);

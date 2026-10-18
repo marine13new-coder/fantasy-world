@@ -57,7 +57,8 @@ const LEGENDARY_ITEMS = [
   { id: 'shangrila_flying_sword_tai_ji', slot: 'weapon', name: '상그릴라 신선 옥룡 태극 비천검', icon: '🪷', atk: 70, hp: 150, desc: '천년 백련의 정기와 태고 옥룡의 기운이 깃든 신선의 어검. 비취빛 참격과 함께 회전하는 도력 태극진이 펼쳐집니다.' },
   { id: 'babylon_khopesh_of_gilgamesh', slot: 'weapon', name: '바빌론 길가메시의 황금 청금석 코페쉬', icon: '🦁', atk: 74, hp: 160, desc: '우루크의 위대한 영웅왕 길가메시가 휘두르던 고대 청동과 청금석의 반월도. 타격 시 쐐기문자 점토판 룬과 왕의 권능이 폭발합니다.' },
   { id: 'sol_invictus_phoenix_claymore', slot: 'weapon', name: '솔 인빅투스 불사조 황금 대검', icon: '☀️', atk: 76, hp: 170, desc: '신성 제국의 태양 불사조 깃털과 천공의 오리하르콘을 제련한 황금 대검. 공격 시 맹렬한 태양 불길과 불사조 깃털 폭풍이 작렬합니다.' },
-  { id: 'leviathan_magma_harpoon_blade', slot: 'weapon', name: '해저 화산 레비아탄 흑요석 작살검', icon: '🔱', atk: 78, hp: 180, desc: '수심 4,000m 열수구 흑요석 마그마와 레비아탄의 등뼈를 제련한 심해의 작살검. 타격 시 400도 끓는 열수 기포와 날카로운 흑요석 파편이 폭발합니다.' }
+  { id: 'leviathan_magma_harpoon_blade', slot: 'weapon', name: '해저 화산 레비아탄 흑요석 작살검', icon: '🔱', atk: 78, hp: 180, desc: '수심 4,000m 열수구 흑요석 마그마와 레비아탄의 등뼈를 제련한 심해의 작살검. 타격 시 400도 끓는 열수 기포와 날카로운 흑요석 파편이 폭발합니다.' },
+  { id: 'persepolis_simurgh_atar_scimitar', slot: 'weapon', name: '페르세폴리스 시무르그 성화의 황금 언월도', icon: '🦚', atk: 80, hp: 190, desc: '3천 년 꺼지지 않은 아타르 성화와 영조 시무르그의 깃털로 벼려낸 페르시아 제국의 전설적 언월도. 참격 시 청록색 깃털 폭풍과 신성한 불티가 폭발합니다.' }
 ];
 
 const DUNGEONS = [
@@ -290,6 +291,29 @@ const DUNGEONS = [
     },
     goldReward: 11000,
     fameReward: 210
+  },
+  {
+    id: 'dungeon_persepolis',
+    name: '페르세폴리스 아파다나 지하 왕실 보물고 & 불사신 묘실',
+    icon: '🦚',
+    levelReq: 17,
+    x: 3500, y: 2180,
+    color: '#0d9488',
+    desc: '다리우스 대왕의 아파다나 알현전 지하 100개 기둥 아래 숨겨진 키루스 칙령 보물고. 3천 년 동안 잠들지 않고 침입자를 처단하는 1만 불사부대의 군단장이 수호하고 있습니다.',
+    bossName: '불멸의 군단장 아르타바누스 (Immortal Commander Artabanus)',
+    bossHp: 6200,
+    bossAtk: 85,
+    relicReward: {
+      id: 'relic_feather_of_simurgh',
+      slot: 'relic',
+      name: '태고 영조 시무르그의 불멸 깃털',
+      icon: '🦚',
+      atk: 70,
+      hp: 300,
+      desc: '치명적 피해를 입을 시 1회에 한해 최대 체력의 50%로 즉시 부활하며, 5초간 모든 상태이상에 면역이 되고 공격력이 30% 상승합니다. (재사용 대기시간 180초)'
+    },
+    goldReward: 12000,
+    fameReward: 220
   }
 ];
 
@@ -3246,6 +3270,17 @@ const TOWN_LORE_DATABASE = {
     tavernToast: '진하게 빚은 대추야자 맥주(Date Beer)와 구운 석류 양고기를 삼켰습니다! 혈관에 고대 메소포타미아 영웅왕의 끓는 피가 솟구치며 타격 공격력이 폭발합니다.',
     questTitle: '갈대밭 늪지 모래전갈 괴수 소탕령',
     questDesc: '유프라테스 하구 갈대밭 관개 수로를 마비시키는 거대 맹독 모래전갈 둥지를 격퇴하고 수문 열쇠를 탈환하시오.'
+  },
+  persepolis: {
+    npcName: '샤한샤 다리우스 & 대사제 자라투스트라 (Shahanshah Darius & Zarathustra)',
+    npcRole: '아케메네스 만국의 황제 & 아타르 성화 수호 최고사제',
+    icon: '🦚',
+    disposition: '👑 진실(Asha)과 만국의 평화를 엄숙히 선포하는 제국의 장엄한 품격과 자애로움',
+    quote: '"나, 위대한 왕, 왕 중의 왕, 만국의 지배자 다리우스가 이 아파다나의 백 개 기둥 아래서 선포하노라. 세상은 거짓(Druj)과 기만의 흙탕물로 더럽혀졌으나, 타오르는 아타르의 불꽃 앞에선 어떤 어둠도 영원할 수 없다. 오라, 정직한 땀을 흘린 방랑자여. 만국의 문은 그대를 위해 열려 있다."',
+    rumor: '💡 왕실 서기관의 점토판 기록: "만국의 문을 지키는 두 날개 달린 황소 석상 사이를 정오에 지날 때, 영조 시무르그의 깃털을 가슴에 품고 있으면 보이지 않던 지하 비전 도서관의 비밀 빗장이 풀린다는 전설이 전해져 내려오지."',
+    tavernToast: '석류 시럽을 곁들인 양고기 케밥과 사프란 장미수(Persian Rose Sherbet)를 맛보았습니다! 온몸에 맑고 드높은 기운이 샘솟으며 최대 체력과 상태이상 저항이 극대화됩니다.',
+    questTitle: '사막 도적단과 타락한 모래마귀 소탕령',
+    questDesc: '만국의 문으로 통하는 왕도 캐러밴 행렬을 습격하는 모래폭풍 마귀 떼를 격퇴하고 왕실 공납품을 회수하시오.'
   },
   leviathan_trench: {
     npcName: '심해 잠항정 선장 네모 & 해저 무녀 탈라샤 (Captain Nemo & Priestess Thalasha)',

@@ -4468,6 +4468,7 @@
         else if (weaponId.includes('babylon') || weaponId.includes('gilgamesh') || weaponId.includes('khopesh') || weaponId.includes('ishtar') || weaponId.includes('ziggurat') || weaponId.includes('lamassu')) { slashColor = '#facc15'; glowColor = 'rgba(37, 99, 235, 0.9)'; }
         else if (weaponId.includes('sol_invictus') || weaponId.includes('phoenix') || weaponId.includes('basilica') || weaponId.includes('eagle_claymore') || weaponId.includes('byzantine')) { slashColor = '#fde047'; glowColor = 'rgba(249, 115, 22, 0.95)'; }
         else if (weaponId.includes('leviathan') || weaponId.includes('hydrothermal') || weaponId.includes('abyssal') || weaponId.includes('magma_harpoon')) { slashColor = '#06b6d4'; glowColor = 'rgba(234, 88, 12, 0.95)'; }
+        else if (weaponId.includes('persepolis') || weaponId.includes('simurgh') || weaponId.includes('atar') || weaponId.includes('immortal_scimitar')) { slashColor = '#2dd4bf'; glowColor = 'rgba(245, 158, 11, 0.95)'; }
 
         const arcCenter = px + sideSign * 4 * sc;
         const startAng = isLeft ? Math.PI * 0.7 : Math.PI * 0.3;
@@ -4980,6 +4981,47 @@
             ctx.fill();
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(lpx + sideSign * 3 * sc - 0.5 * sc, lpy - 3 * sc - 0.5 * sc, 1 * sc, 1 * sc);
+          }
+        }
+
+        // 🦚🏛️ 태고 페르시아 페르세폴리스 시무르그 성화 언월도 & 청록 터키석 깃털 폭풍 (Persepolis Simurgh Sacred Scimitar & Turquoise Feather Flurry)
+        if (weaponId.includes('persepolis') || weaponId.includes('simurgh') || weaponId.includes('atar') || weaponId.includes('immortal_scimitar')) {
+          // 청록 터키석 & 성화 황금 2중 초승달 참격호 (Turquoise & Sacred Fire Dual Crescent Arc)
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 4.6 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 25 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#2dd4bf';
+          ctx.lineWidth = 2.4 * sc;
+          ctx.beginPath();
+          ctx.arc(arcCenter + sideSign * 3 * sc, py - 10 * sc - bounce, 23 * sc, startAng, endAng, isLeft);
+          ctx.stroke();
+
+          // 튀어나가는 5개의 시무르그 영조 깃털 & 아타르 성화 불티 (Simurgh Iridescent Feathers & Sacred Atar Embers)
+          const perTime = (e.animTime || 0) * 18;
+          for (let sp = 0; sp < 5; sp++) {
+            const spAng = startAng + (sp / 4) * (endAng - startAng);
+            const spDist = (23 + Math.sin(perTime + sp * 2.2) * 7) * sc;
+            const spx = arcCenter + Math.cos(spAng) * spDist;
+            const spy = py - 10 * sc - bounce + Math.sin(spAng) * spDist;
+
+            // 시무르그 공작 깃털 형상 (Simurgh Peacock Feather Fan)
+            ctx.fillStyle = sp % 2 === 0 ? '#0d9488' : '#0284c7';
+            ctx.beginPath();
+            ctx.ellipse(spx, spy, 3.8 * sc, 1.8 * sc, spAng + Math.PI / 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 깃털 중심 황금 눈동자 반점 (Golden Peacock Eye)
+            ctx.fillStyle = '#fbbf24';
+            ctx.beginPath();
+            ctx.arc(spx, spy, 1.2 * sc, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 타오르는 성화 불티 (Sacred Atar Fire Ember)
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.9)';
+            ctx.fillRect(spx + sideSign * 3 * sc, spy - 3 * sc, 2.2 * sc, 2.2 * sc);
           }
         }
 
