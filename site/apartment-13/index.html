@@ -1873,6 +1873,68 @@
        2. 고해상도 절차적 텍스처 (1990년대 한국 복도식 아파트)
        ========================================================= */
     class ProceduralTextures {
+      static createWallBumpMap() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512; canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#808080';
+        ctx.fillRect(0, 0, 512, 512);
+
+        // 균열 및 페인트 칠 박리 요철
+        ctx.strokeStyle = '#222222';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 25; i++) {
+          ctx.beginPath();
+          let x = Math.random() * 512;
+          let y = Math.random() * 512;
+          ctx.moveTo(x, y);
+          for (let s = 0; s < 5; s++) {
+            x += (Math.random() - 0.5) * 40;
+            y += Math.random() * 30;
+            ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+
+        // 시멘트 표면 입자 노이즈
+        for (let i = 0; i < 1200; i++) {
+          const x = Math.random() * 512;
+          const y = Math.random() * 512;
+          const r = Math.random() * 6 + 1;
+          ctx.fillStyle = Math.random() > 0.5 ? '#b0b0b0' : '#505050';
+          ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+        }
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+        return tex;
+      }
+
+      static createFloorRoughnessMap() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512; canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#888888'; // 기본 타일 거칠기 (0.5)
+        ctx.fillRect(0, 0, 512, 512);
+
+        // 타일 줄눈 (Grout) 거칠기 높음
+        ctx.strokeStyle = '#eeeeee';
+        ctx.lineWidth = 6;
+        ctx.strokeRect(0, 0, 512, 512);
+
+        // 빗물 웅덩이 (Puddle) - 완전 매끄럽고 광택 반사 (Roughness 0.05 -> Black)
+        ctx.fillStyle = '#080808';
+        for (let i = 0; i < 6; i++) {
+          ctx.beginPath();
+          ctx.ellipse(Math.random() * 512, Math.random() * 512, 70 + Math.random() * 90, 30 + Math.random() * 50, Math.random(), 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+        return tex;
+      }
+
       static createWallTexture() {
         const canvas = document.createElement('canvas');
         canvas.width = 512; canvas.height = 512;
@@ -2218,11 +2280,24 @@
 
     const wallTex = ProceduralTextures.createWallTexture();
     wallTex.repeat.set(4, 1);
-    const wallMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.85, metalness: 0.1 });
+    const wallBump = ProceduralTextures.createWallBumpMap();
+    wallBump.repeat.set(4, 1);
+    const wallMat = new THREE.MeshStandardMaterial({
+      map: wallTex,
+      bumpMap: wallBump,
+      bumpScale: 0.035,
+      roughness: 0.82,
+      metalness: 0.12
+    });
 
-    const floorTex = ProceduralTextures.createFloorTexture();
-    floorTex.repeat.set(2, 20);
-    const floorMat = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.65, metalness: 0.25 });
+    const floorRough = ProceduralTextures.createFloorRoughnessMap();
+    floorRough.repeat.set(2, 20);
+    const floorMat = new THREE.MeshStandardMaterial({
+      map: floorTex,
+      roughnessMap: floorRough,
+      roughness: 0.65,
+      metalness: 0.35
+    });
 
     const ceilTex = ProceduralTextures.createCeilingTexture();
     ceilTex.repeat.set(2, 20);
@@ -2403,6 +2478,7 @@
       scene.add(southWall);
       colliders.push(southWall);
 
+      buildArchitecturalDetails();
       buildSecurityOffice();
       buildUvSecretMessages();
       buildBloodTrailsAndDecals();
@@ -2418,6 +2494,63 @@
       buildSensorLights();
       buildHidingSpots();
       createStalker();
+    }
+
+    function buildArchitecturalDetails() {
+      // 1. 천장 콘크리트 하리/보 (Concrete Ceiling Crossbeams every 6m)
+      const beamGeo = new THREE.BoxGeometry(3.2, 0.32, 0.38);
+      const beamMat = new THREE.MeshStandardMaterial({ color: 0x4a524e, roughness: 0.9 });
+      for (let z = -42; z <= 12; z += 6) {
+        const beam = new THREE.Mesh(beamGeo, beamMat);
+        beam.position.set(0, 2.64, z);
+        scene.add(beam);
+      }
+
+      // 2. 천장 노출 배관 (Galvanized Electrical Conduit Pipe & Junction Boxes)
+      const pipeGeo = new THREE.CylinderGeometry(0.022, 0.022, 60, 12);
+      const pipeMat = new THREE.MeshStandardMaterial({ color: 0x6a7580, metalness: 0.85, roughness: 0.3 });
+      const pipe = new THREE.Mesh(pipeGeo, pipeMat);
+      pipe.rotation.x = Math.PI / 2;
+      pipe.position.set(-0.85, 2.7, -15);
+      scene.add(pipe);
+
+      // 배관 접속 정션 박스 (Junction Boxes)
+      const boxGeo = new THREE.BoxGeometry(0.12, 0.12, 0.12);
+      const boxMat = new THREE.MeshStandardMaterial({ color: 0x444f59, metalness: 0.9, roughness: 0.25 });
+      for (let z = -40; z <= 10; z += 10) {
+        const jBox = new THREE.Mesh(boxGeo, boxMat);
+        jBox.position.set(-0.85, 2.7, z);
+        scene.add(jBox);
+
+        // 드롭 전선 (Drop wire)
+        const wireGeo = new THREE.CylinderGeometry(0.006, 0.006, 0.18, 6);
+        const wire = new THREE.Mesh(wireGeo, new THREE.MeshStandardMaterial({ color: 0x111111 }));
+        wire.position.set(-0.85, 2.6, z);
+        scene.add(wire);
+      }
+
+      // 3. 복도 바닥 걸레받이 몰딩 (Baseboard Moldings along wall seams)
+      const baseboardGeo = new THREE.BoxGeometry(0.04, 0.08, 62);
+      const baseboardMat = new THREE.MeshStandardMaterial({ color: 0x1f1a17, roughness: 0.7 });
+      const leftBase = new THREE.Mesh(baseboardGeo, baseboardMat);
+      leftBase.position.set(-1.58, 0.04, -15);
+      scene.add(leftBase);
+
+      const rightBase = new THREE.Mesh(baseboardGeo, baseboardMat);
+      rightBase.position.set(1.58, 0.04, -15);
+      scene.add(rightBase);
+
+      // 4. 비상 화재 경종 벨 (Fire Alarm Bell with red LED)
+      const bellGeo = new THREE.CylinderGeometry(0.11, 0.11, 0.05, 20);
+      const bellMat = new THREE.MeshStandardMaterial({ color: 0xcc2222, metalness: 0.7, roughness: 0.3 });
+      const bell = new THREE.Mesh(bellGeo, bellMat);
+      bell.rotation.z = Math.PI / 2;
+      bell.position.set(-1.52, 2.1, -9.5);
+      scene.add(bell);
+
+      const bellLed = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+      bellLed.position.set(-1.5, 2.24, -9.5);
+      scene.add(bellLed);
     }
 
     function buildSecurityOffice() {
@@ -2516,6 +2649,58 @@
       ];
 
       doorData.forEach(d => {
+        // A. 3D 입체 문틀 몰딩 (Doorframe / Architrave Casing)
+        const frameMat = new THREE.MeshStandardMaterial({ color: 0x3d4b44, roughness: 0.7 });
+        const topFrame = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.08, 1.26), frameMat);
+        topFrame.position.set(-1.52, 2.14, d.z);
+        scene.add(topFrame);
+
+        const sideFrame1 = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.15, 0.08), frameMat);
+        sideFrame1.position.set(-1.52, 1.075, d.z - 0.58);
+        scene.add(sideFrame1);
+
+        const sideFrame2 = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.15, 0.08), frameMat);
+        sideFrame2.position.set(-1.52, 1.075, d.z + 0.58);
+        scene.add(sideFrame2);
+
+        // B. 현관 문지방 턱 & 스텐 비드 (Threshold Plate)
+        const threshGeo = new THREE.BoxGeometry(0.2, 0.035, 1.2);
+        const threshMat = new THREE.MeshStandardMaterial({ color: 0x5a6368, metalness: 0.9, roughness: 0.2 });
+        const threshold = new THREE.Mesh(threshGeo, threshMat);
+        threshold.position.set(-1.52, 0.017, d.z);
+        scene.add(threshold);
+
+        // C. 코이어 현관 발판매트 (Doormat)
+        const matGeo = new THREE.BoxGeometry(0.55, 0.015, 0.75);
+        const matMat = new THREE.MeshStandardMaterial({ color: 0x5c4228, roughness: 0.95 });
+        const doormat = new THREE.Mesh(matGeo, matMat);
+        doormat.position.set(-1.18, 0.008, d.z);
+        scene.add(doormat);
+
+        // D. 3D 도어 클로저 유압 암 (Door Closer Assembly)
+        const closerMat = new THREE.MeshStandardMaterial({ color: 0x22262a, metalness: 0.8, roughness: 0.3 });
+        const cylinder = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.22, 12), closerMat);
+        cylinder.rotation.x = Math.PI / 2;
+        cylinder.position.set(-1.48, 2.05, d.z - 0.25);
+        scene.add(cylinder);
+
+        const arm1 = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.26, 8), closerMat);
+        arm1.rotation.z = Math.PI / 4;
+        arm1.position.set(-1.47, 2.08, d.z - 0.12);
+        scene.add(arm1);
+
+        // E. 3D 황동 레버 도어락 손잡이 (Brass Lever Handle Assembly)
+        const brassMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.9, roughness: 0.2 });
+        const escutcheon = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.015, 16), brassMat);
+        escutcheon.rotation.z = Math.PI / 2;
+        escutcheon.position.set(-1.48, 0.98, d.z + 0.42);
+        scene.add(escutcheon);
+
+        const leverHandle = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.13), brassMat);
+        leverHandle.position.set(-1.46, 0.98, d.z + 0.48);
+        scene.add(leverHandle);
+
+        
         const doorGeo = new THREE.BoxGeometry(0.1, 2.1, 1.1);
         const doorTex = ProceduralTextures.createDoorTexture(d.num);
         const doorMat = new THREE.MeshStandardMaterial({ map: doorTex, roughness: 0.5, metalness: 0.3 });
@@ -2690,26 +2875,151 @@
     function createStalker() {
       const stalkerGroup = new THREE.Group();
 
-      const coatGeo = new THREE.CylinderGeometry(0.35, 0.55, 1.8, 12);
-      const coatMat = new THREE.MeshStandardMaterial({ color: 0x08080a, roughness: 0.95 });
-      const body = new THREE.Mesh(coatGeo, coatMat);
-      body.position.y = 0.9;
-      stalkerGroup.add(body);
+      // 재질 정의: 썩고 그을린 피부 & 찢어진 검은 코트 & 녹슨 파이프 렌치
+      const skinMat = new THREE.MeshStandardMaterial({
+        color: 0x222524,
+        roughness: 0.9,
+        metalness: 0.1
+      });
+      const tatteredCoatMat = new THREE.MeshStandardMaterial({
+        color: 0x07090c,
+        roughness: 0.95,
+        bumpScale: 0.04
+      });
+      const bloodMat = new THREE.MeshStandardMaterial({
+        color: 0x4a0505,
+        roughness: 0.6
+      });
 
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), new THREE.MeshStandardMaterial({ color: 0x1a1a1a }));
-      head.position.y = 1.85;
-      stalkerGroup.add(head);
+      // 1. 굽은 척추 & 왜곡된 상체 (Hunched Torso & Spine)
+      const torsoGroup = new THREE.Group();
+      torsoGroup.position.set(0, 1.0, 0);
 
-      const eyeLight = new THREE.PointLight(0xff1111, 1.6, 4.5);
-      eyeLight.position.set(0, 1.85, 0.25);
-      stalkerGroup.add(eyeLight);
+      const spineChest = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.22, 0.65, 10), tatteredCoatMat);
+      spineChest.rotation.x = 0.25; // 앞으로 기괴하게 굽은 자세
+      torsoGroup.add(spineChest);
 
-      const wrenchGeo = new THREE.BoxGeometry(0.06, 0.9, 0.08);
-      const wrenchMat = new THREE.MeshStandardMaterial({ color: 0x551111, metalness: 0.8 });
-      const wrench = new THREE.Mesh(wrenchGeo, wrenchMat);
-      wrench.position.set(0.45, 0.7, 0.2);
-      wrench.rotation.z = Math.PI / 6;
-      stalkerGroup.add(wrench);
+      // 찢어진 코트 자락 (Tattered Coat Tails & Flaps)
+      for (let i = 0; i < 6; i++) {
+        const flap = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.75, 0.12), tatteredCoatMat);
+        const angle = (i / 6) * Math.PI * 2;
+        flap.position.set(Math.cos(angle) * 0.22, -0.45, Math.sin(angle) * 0.22);
+        flap.rotation.z = (Math.random() - 0.5) * 0.2;
+        torsoGroup.add(flap);
+      }
+
+      // 2. 비대칭 어깨 & 관절형 팔 (Articulated Arms with Skeletal Claws)
+      const rightArmGroup = new THREE.Group();
+      rightArmGroup.position.set(0.38, 0.25, 0.05);
+
+      const upperArmR = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.04, 0.42, 8), tatteredCoatMat);
+      upperArmR.position.y = -0.2;
+      upperArmR.rotation.z = -0.15;
+      rightArmGroup.add(upperArmR);
+
+      const forearmR = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.035, 0.45, 8), skinMat);
+      forearmR.position.set(0.05, -0.55, 0.1);
+      forearmR.rotation.x = -0.35;
+      rightArmGroup.add(forearmR);
+
+      // 뼈만 앙상한 손가락 5개 (Skeletal Claw Fingers)
+      const handR = new THREE.Group();
+      handR.position.set(0.08, -0.78, 0.2);
+      for (let f = 0; f < 5; f++) {
+        const finger = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.006, 0.12, 6), skinMat);
+        finger.position.set((f - 2) * 0.02, -0.05, (Math.random() - 0.5) * 0.02);
+        finger.rotation.x = 0.4;
+        handR.add(finger);
+      }
+      rightArmGroup.add(handR);
+
+      // 거대한 녹슨 80cm 파이프 렌치 (Heavy Rusted Pipe Wrench)
+      const wrenchHandle = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.024, 0.024, 0.85, 10),
+        new THREE.MeshStandardMaterial({ color: 0x3d271d, metalness: 0.9, roughness: 0.4 })
+      );
+      wrenchHandle.rotation.x = Math.PI / 3;
+      wrenchHandle.position.set(0.12, -0.7, 0.25);
+      rightArmGroup.add(wrenchHandle);
+
+      const wrenchJaw = new THREE.Mesh(
+        new THREE.BoxGeometry(0.07, 0.16, 0.12),
+        new THREE.MeshStandardMaterial({ color: 0x5a1818, metalness: 0.95, roughness: 0.3 })
+      );
+      wrenchJaw.position.set(0.12, -0.38, 0.48);
+      rightArmGroup.add(wrenchJaw);
+
+      torsoGroup.add(rightArmGroup);
+
+      // 왼쪽 팔 (비대칭으로 길게 늘어진 팔)
+      const leftArmGroup = new THREE.Group();
+      leftArmGroup.position.set(-0.36, 0.2, 0);
+      const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.035, 0.8, 8), tatteredCoatMat);
+      armL.position.y = -0.4;
+      armL.rotation.z = 0.12;
+      leftArmGroup.add(armL);
+      torsoGroup.add(leftArmGroup);
+
+      // 3. 뒤틀린 경추 & 해골 형상의 괴기한 두부 (Disfigured Skull Visage & Neck)
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.085, 0.2, 8), skinMat);
+      neck.position.set(0, 0.38, 0.08);
+      neck.rotation.x = 0.2;
+      torsoGroup.add(neck);
+
+      const headGroup = new THREE.Group();
+      headGroup.position.set(0, 0.55, 0.14);
+
+      const cranium = new THREE.Mesh(new THREE.SphereGeometry(0.18, 14, 14), skinMat);
+      cranium.scale.set(0.85, 1.15, 0.95);
+      headGroup.add(cranium);
+
+      // 썩은 턱뼈 (Charred Decayed Jaw)
+      const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.14), bloodMat);
+      jaw.position.set(0, -0.15, 0.08);
+      headGroup.add(jaw);
+
+      // 헝클어진 젖은 머리칼 (Stringy Matted Hair Strands)
+      for (let h = 0; h < 14; h++) {
+        const hair = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.32, 0.015), new THREE.MeshBasicMaterial({ color: 0x050505 }));
+        const hAngle = (h / 14) * Math.PI + Math.PI / 2;
+        hair.position.set(Math.cos(hAngle) * 0.16, 0.05, Math.sin(hAngle) * 0.16);
+        hair.rotation.z = (Math.random() - 0.5) * 0.3;
+        headGroup.add(hair);
+      }
+
+      // 움푹 패인 피눈물 안와 (Sunken Bleeding Eye Sockets)
+      const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 8), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+      eyeL.position.set(-0.065, 0.02, 0.15);
+      headGroup.add(eyeL);
+
+      const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 8), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+      eyeR.position.set(0.065, 0.02, 0.15);
+      headGroup.add(eyeR);
+
+      // 붉은 악의의 안광 (PointLight)
+      const eyeLight = new THREE.PointLight(0xff1111, 1.8, 5.5);
+      eyeLight.position.set(0, 0.02, 0.22);
+      headGroup.add(eyeLight);
+
+      torsoGroup.add(headGroup);
+      stalkerGroup.add(torsoGroup);
+
+      // 4. 관절형 다리 & 검게 그을린 맨발 (Articulated Legs & Blackened Bare Feet)
+      const legL = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.045, 0.9, 8), skinMat);
+      legL.position.set(-0.16, 0.45, 0);
+      stalkerGroup.add(legL);
+
+      const legR = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.045, 0.9, 8), skinMat);
+      legR.position.set(0.16, 0.45, 0);
+      stalkerGroup.add(legR);
+
+      const footL = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.06, 0.22), skinMat);
+      footL.position.set(-0.16, 0.03, 0.05);
+      stalkerGroup.add(footL);
+
+      const footR = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.06, 0.22), skinMat);
+      footR.position.set(0.16, 0.03, 0.05);
+      stalkerGroup.add(footR);
 
       stalkerGroup.position.set(0, 0, -38);
       stalkerGroup.visible = false;
@@ -2717,13 +3027,19 @@
 
       stalkerEnemy = {
         obj: stalkerGroup,
+        torso: torsoGroup,
+        head: headGroup,
+        rightArm: rightArmGroup,
         eyeLight: eyeLight,
         speed: 1.8,
         targetZ: -10,
         active: false,
-        state: 'patrol'
+        state: 'patrol',
+        animTimer: 0
       };
     }
+
+    
 
     let intercomMesh = null;
     let intercomRinging = false;
@@ -3699,6 +4015,22 @@
     }
 
     function updateStalkerAI(delta) {
+      if (!stalkerEnemy || !stalkerEnemy.active || !stalkerEnemy.obj.visible) return;
+
+      // 괴물 유기적 보행 및 기괴한 경추 경련 애니메이션 (Limping gait & neck twitching)
+      stalkerEnemy.animTimer += delta * (stalkerEnemy.state === 'chase' ? 8.5 : 4.0);
+      if (stalkerEnemy.torso) {
+        stalkerEnemy.torso.position.y = 1.0 + Math.abs(Math.sin(stalkerEnemy.animTimer)) * 0.06;
+        stalkerEnemy.torso.rotation.z = Math.sin(stalkerEnemy.animTimer) * 0.05;
+      }
+      if (stalkerEnemy.head && Math.random() > 0.92) {
+        stalkerEnemy.head.rotation.z = (Math.random() - 0.5) * 0.45; // 섬뜩한 목 꺾임 경련
+      } else if (stalkerEnemy.head) {
+        stalkerEnemy.head.rotation.z *= 0.88;
+      }
+      if (stalkerEnemy.rightArm) {
+        stalkerEnemy.rightArm.rotation.x = Math.sin(stalkerEnemy.animTimer) * 0.3;
+      }
       if (!stalkerEnemy || !stalkerEnemy.active || !stalkerEnemy.obj.visible) return;
 
       const stalkerPos = stalkerEnemy.obj.position;

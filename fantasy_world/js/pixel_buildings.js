@@ -5221,6 +5221,225 @@
     },
 
     // =========================================================================
+    // 38. 해저 칼데라 흑요석 레비아탄 수도 (Leviathan Caldera Obsidian Citadel)
+    // =========================================================================
+    drawLeviathanCitadel(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // 바닥 수중 심연 그림자 (Abyssal Drop Shadow)
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.55)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 2, halfW + 6, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // A. 화산 칼데라 현무암 기단 (Volcanic Basalt Caldera Base)
+      const baseW = bw;
+      const baseH = Math.round(bh * 0.52);
+      const baseY = py + halfH - baseH;
+
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - halfW, baseY, baseW, baseH);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(px - halfW + 2, baseY + 2, baseW - 4, baseH - 4);
+
+      // 붉게 이글거리는 마그마 단층 균열선 (Glowing Magma Fissure Veins)
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(px - halfW + 4, baseY + baseH - 4);
+      ctx.lineTo(px - 10, baseY + Math.round(baseH * 0.6));
+      ctx.lineTo(px + 4, baseY + Math.round(baseH * 0.75));
+      ctx.lineTo(px + halfW - 6, baseY + Math.round(baseH * 0.4));
+      ctx.stroke();
+
+      ctx.strokeStyle = '#f97316';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // B. 좌우 열수구 흑연 굴뚝 (Twin Hydrothermal Black Smoker Chimneys)
+      [-1, 1].forEach(side => {
+        const cx = px + side * (halfW - 8);
+        const chH = Math.round(bh * 0.75);
+        const chY = py + halfH - chH;
+
+        // 굴뚝 탑
+        ctx.fillStyle = '#090d16';
+        ctx.fillRect(cx - 5, chY, 10, chH);
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(cx - 3, chY + 2, 6, chH - 4);
+
+        // 굴뚝 끝 흑연 분출구 링
+        ctx.fillStyle = '#ea580c';
+        ctx.fillRect(cx - 4, chY - 2, 8, 2);
+
+        // 솟구치는 청록빛 지열 기포 & 열수 수증기 (Rising Geothermal Bubbles)
+        for (let b = 0; b < 3; b++) {
+          const bTime = (timeSec * 6 + b * 2) % 6;
+          const by = chY - bTime * 3.5;
+          const bx = cx + Math.sin(timeSec * 5 + b) * 3;
+          ctx.fillStyle = (b % 2 === 0) ? 'rgba(6, 182, 212, 0.75)' : 'rgba(249, 115, 22, 0.75)';
+          ctx.beginPath();
+          ctx.arc(bx, by, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+
+      // C. 중앙 거대 태고 레비아탄 골각 해골 관 (Giant Fossilized Leviathan Horned Skull)
+      const skullY = baseY - 6;
+      ctx.fillStyle = '#f8fafc';
+      // 해골 코와 이마
+      ctx.beginPath();
+      ctx.moveTo(px - 10, skullY + 6);
+      ctx.lineTo(px - 4, skullY - 8);
+      ctx.lineTo(px + 4, skullY - 8);
+      ctx.lineTo(px + 10, skullY + 6);
+      ctx.lineTo(px + 6, skullY + 12);
+      ctx.lineTo(px - 6, skullY + 12);
+      ctx.closePath();
+      ctx.fill();
+
+      // 해골 음영
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(px - 4, skullY + 4, 8, 6);
+
+      // 날카로운 레비아탄 엄니/이빨 (Fangs)
+      ctx.fillStyle = '#ffffff';
+      for (let f = 0; f < 3; f++) {
+        ctx.fillRect(px - 6 + f * 5, skullY + 12, 2, 3);
+      }
+
+      // 이글거리는 유황빛 호박색 눈 (Glowing Sulfuric Amber Eye Sockets)
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - 6, skullY, 3, 3);
+      ctx.fillRect(px + 3, skullY, 3, 3);
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(px - 5, skullY + 1, 1.5, 1.5);
+      ctx.fillRect(px + 4, skullY + 1, 1.5, 1.5);
+
+      // 뿔 (Curved Horns)
+      ctx.fillStyle = '#475569';
+      ctx.beginPath();
+      ctx.moveTo(px - 4, skullY - 8);
+      ctx.lineTo(px - 12, skullY - 14);
+      ctx.lineTo(px - 8, skullY - 6);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(px + 4, skullY - 8);
+      ctx.lineTo(px + 12, skullY - 14);
+      ctx.lineTo(px + 8, skullY - 6);
+      ctx.closePath();
+      ctx.fill();
+
+      // D. 거대한 흑요석 닻 쇠사슬 (Heavy Obsidian Anchor Chains across Keep)
+      ctx.fillStyle = '#334155';
+      for (let k = 0; k < 6; k++) {
+        const kx = px - 12 + k * 5;
+        const ky = baseY + 12 + (k % 2) * 2;
+        ctx.fillRect(kx, ky, 3, 2);
+      }
+    },
+
+    // =========================================================================
+    // 39. 발광 산호초 세이렌 심연 궁전 (Bioluminescent Siren Chasm Palace)
+    // =========================================================================
+    drawBioluminescentSirenPalace(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
+      const halfW = Math.round(bw / 2);
+      const halfH = Math.round(bh / 2);
+
+      // 바닥 청록빛 수중 그림자
+      ctx.fillStyle = 'rgba(6, 78, 59, 0.45)';
+      ctx.beginPath();
+      ctx.ellipse(px, py + halfH - 2, halfW + 6, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // A. 나선형 자개 노틸러스 조개 본관 (Spiral Mother-of-Pearl Nautilus Palace)
+      const shellW = Math.round(bw * 0.72);
+      const shellH = Math.round(bh * 0.78);
+      const shellY = py + halfH - shellH;
+
+      // 자개 외벽 그라데이션
+      const shellGrad = ctx.createLinearGradient(px - shellW / 2, shellY, px + shellW / 2, shellY + shellH);
+      shellGrad.addColorStop(0, '#a7f3d0');
+      shellGrad.addColorStop(0.5, '#67e8f9');
+      shellGrad.addColorStop(1, '#0284c7');
+
+      ctx.fillStyle = shellGrad;
+      ctx.beginPath();
+      ctx.moveTo(px - shellW / 2, shellY + shellH);
+      ctx.quadraticCurveTo(px - shellW / 2 - 4, shellY + 12, px, shellY);
+      ctx.quadraticCurveTo(px + shellW / 2 + 4, shellY + 12, px + shellW / 2, shellY + shellH);
+      ctx.closePath();
+      ctx.fill();
+
+      // 자개 나선형 챔버 골드 리브 라인
+      ctx.strokeStyle = '#fef08a';
+      ctx.lineWidth = 1.2;
+      for (let s = 1; s <= 3; s++) {
+        ctx.beginPath();
+        ctx.arc(px, shellY + shellH * 0.45, (shellW / 2) * (s / 3.5), Math.PI, 0);
+        ctx.stroke();
+      }
+
+      // B. 양옆으로 뻗어나온 발광 산호초 발코니 테라스 (Bioluminescent Coral Balconies)
+      [-1, 1].forEach(side => {
+        const cx = px + side * (halfW - 2);
+        const cy = py + halfH - Math.round(shellH * 0.45);
+
+        // 부채 산호
+        ctx.fillStyle = (side === -1) ? '#22d3ee' : '#c084fc';
+        for (let branch = 0; branch < 3; branch++) {
+          const bx = cx + side * (branch * 3);
+          const by = cy - branch * 4;
+          ctx.fillRect(bx, by, 3, 6);
+          // 산호 가지 끝 발광 점
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(bx, by - 1, 2, 2);
+          ctx.fillStyle = (side === -1) ? '#22d3ee' : '#c084fc';
+        }
+      });
+
+      // C. 부유하는 심해 발광 해파리 랜턴 2구 (Floating Deepsea Bioluminescent Jellyfish)
+      for (let j = 0; j < 2; j++) {
+        const jAng = timeSec * 2 + j * Math.PI;
+        const jx = px + Math.cos(jAng) * (halfW + 4);
+        const jy = shellY + 10 + Math.sin(jAng) * 6;
+
+        // 해파리 갓
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.85)';
+        ctx.beginPath();
+        ctx.arc(jx, jy, 3.5, Math.PI, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        // 발광 코어
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(jx - 1, jy - 2, 2, 2);
+
+        // 촉수 (Tentacles)
+        ctx.strokeStyle = 'rgba(192, 132, 252, 0.7)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(jx - 1.5, jy);
+        ctx.lineTo(jx - 1.5 + Math.sin(timeSec * 5) * 1.5, jy + 4);
+        ctx.moveTo(jx + 1.5, jy);
+        ctx.lineTo(jx + 1.5 - Math.sin(timeSec * 5) * 1.5, jy + 4);
+        ctx.stroke();
+      }
+
+      // D. 최상단 진주 보주 첨탑 (Grand Pearl Orb Finial)
+      const pearlY = shellY - 4;
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.arc(px, pearlY, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 1.5, pearlY - 1.5, 2, 2); // 진주 하이라이트
+    },
+
+    // =========================================================================
     // 12. 항구 선원 주점 & 여관 (Seafarer Tavern & Inn)
     // =========================================================================
     drawTavern(ctx, px, py, bw, bh, isNight = false, timeSec = 0) {
@@ -5370,6 +5589,16 @@
       ctx.beginPath();
       ctx.ellipse(px + 6, py + bh / 2 + 4, bw * 0.42, 4, 0.08, 0, Math.PI * 2);
       ctx.fill();
+      // 🌋🔱 해저 화산 열수구 흑요석 레비아탄 요새 & 마그마 환초 제국 (Leviathan Obsidian Citadel & Bioluminescent Siren Palace)
+      if (type === 'leviathan_citadel' || (type === 'capital' && b && b.continent === 'leviathan_trench') || (type === 'castle' && b && b.continent === 'leviathan_trench')) {
+        this.drawLeviathanCitadel(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+      if (type === 'siren_palace' || (type === 'palace' && b && b.continent === 'leviathan_trench') || (type === 'temple' && b && b.continent === 'leviathan_trench') || (type === 'fortress' && b && b.continent === 'leviathan_trench') || (type === 'lair' && b && b.continent === 'leviathan_trench')) {
+        this.drawBioluminescentSirenPalace(ctx, px, py, bw, bh, isNight, timeSec);
+        return true;
+      }
+
       // ☀️ 신성 불사조 솔 인빅투스 황금 바실리카 & 쌍두독수리 팔라티노 제국 (Sol Invictus Golden Basilica & Phoenix Citadel)
       if (type === 'sol_invictus_basilica' || (type === 'capital' && b && b.continent === 'sol_invictus') || (type === 'palace' && b && b.continent === 'sol_invictus')) {
         this.drawSolInvictusBasilica(ctx, px, py, bw, bh, isNight, timeSec);

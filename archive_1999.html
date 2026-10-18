@@ -1357,23 +1357,102 @@
        ======================================================== */
     function createTileTexture() {
       const c = document.createElement('canvas');
-      c.width = 512; c.height = 512;
+      c.width = 1024; c.height = 1024;
       const ctx = c.getContext('2d');
-      ctx.fillStyle = '#111814'; ctx.fillRect(0, 0, 512, 512);
+      ctx.fillStyle = '#101713';
+      ctx.fillRect(0, 0, 1024, 1024);
 
-      ctx.strokeStyle = '#070a08'; ctx.lineWidth = 4;
-      for (let x = 0; x < 512; x += 64) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 512); ctx.stroke();
-      }
-      for (let y = 0; y < 512; y += 64) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
+      const tileSize = 64;
+      for (let x = 0; x < 1024; x += tileSize) {
+        for (let y = 0; y < 1024; y += tileSize) {
+          const rnd = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+          const factor = (rnd - Math.floor(rnd));
+          const r = Math.floor(14 + factor * 9);
+          const g = Math.floor(22 + factor * 12);
+          const b = Math.floor(18 + factor * 9);
+          ctx.fillStyle = `rgb(${r},${g},${b})`;
+          ctx.fillRect(x + 2, y + 2, tileSize - 4, tileSize - 4);
+
+          ctx.fillStyle = 'rgba(5, 10, 7, 0.45)';
+          ctx.fillRect(x + 2, y + tileSize - 4, tileSize - 4, 2);
+          ctx.fillRect(x + tileSize - 4, y + 2, 2, tileSize - 4);
+        }
       }
 
-      for (let i = 0; i < 45; i++) {
-        ctx.fillStyle = Math.random() < 0.3 ? 'rgba(75, 10, 15, 0.45)' : 'rgba(10, 25, 15, 0.35)';
+      ctx.strokeStyle = '#050a07';
+      ctx.lineWidth = 3;
+      for (let x = 0; x <= 1024; x += tileSize) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 1024); ctx.stroke();
+      }
+      for (let y = 0; y <= 1024; y += tileSize) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1024, y); ctx.stroke();
+      }
+
+      for (let i = 0; i < 90; i++) {
+        const cx = Math.random() * 1024, cy = Math.random() * 1024, rad = Math.random() * 55 + 15;
+        const grad = ctx.createRadialGradient(cx, cy, 2, cx, cy, rad);
+        if (Math.random() < 0.25) {
+          grad.addColorStop(0, 'rgba(85, 12, 18, 0.45)');
+          grad.addColorStop(1, 'rgba(85, 12, 18, 0)');
+        } else {
+          grad.addColorStop(0, 'rgba(5, 14, 8, 0.55)');
+          grad.addColorStop(1, 'rgba(5, 14, 8, 0)');
+        }
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI * 2); ctx.fill();
+      }
+
+      ctx.strokeStyle = 'rgba(3, 8, 5, 0.65)';
+      ctx.lineWidth = 4;
+      for (let i = 0; i < 14; i++) {
+        const sx = Math.random() * 900, sy = Math.random() * 900;
         ctx.beginPath();
-        ctx.arc(Math.random() * 512, Math.random() * 512, Math.random() * 40 + 10, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.moveTo(sx, sy);
+        ctx.bezierCurveTo(sx + 30, sy + 40, sx + 60, sy + 20, sx + 90, sy + 50);
+        ctx.stroke();
+      }
+
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(4, 5);
+      return tex;
+    }
+
+    function createTileBumpMap() {
+      const c = document.createElement('canvas');
+      c.width = 1024; c.height = 1024;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#808080';
+      ctx.fillRect(0, 0, 1024, 1024);
+
+      const tileSize = 64;
+      for (let x = 0; x < 1024; x += tileSize) {
+        for (let y = 0; y < 1024; y += tileSize) {
+          ctx.fillStyle = '#a5a5a5';
+          ctx.fillRect(x + 2, y + 2, tileSize - 4, tileSize - 4);
+        }
+      }
+      ctx.strokeStyle = '#101010';
+      ctx.lineWidth = 4;
+      for (let x = 0; x <= 1024; x += tileSize) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 1024); ctx.stroke();
+      }
+      for (let y = 0; y <= 1024; y += tileSize) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1024, y); ctx.stroke();
+      }
+
+      ctx.strokeStyle = '#050505';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 20; i++) {
+        let cx = Math.random() * 1024, cy = Math.random() * 1024;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        for (let j = 0; j < 5; j++) {
+          cx += (Math.random() - 0.5) * 40;
+          cy += (Math.random() - 0.5) * 40;
+          ctx.lineTo(cx, cy);
+        }
+        ctx.stroke();
       }
 
       const tex = new THREE.CanvasTexture(c);
@@ -1384,25 +1463,251 @@
 
     function createWallTexture() {
       const c = document.createElement('canvas');
-      c.width = 1024; c.height = 512;
+      c.width = 2048; c.height = 1024;
       const ctx = c.getContext('2d');
-      ctx.fillStyle = '#17221c'; ctx.fillRect(0, 0, 1024, 512);
 
-      for (let i = 0; i < 160; i++) {
-        ctx.fillStyle = 'rgba(8, 14, 10, ' + (Math.random() * 0.4) + ')';
-        ctx.fillRect(Math.random() * 1024, Math.random() * 512, Math.random() * 80, Math.random() * 80);
+      const topGrad = ctx.createLinearGradient(0, 0, 0, 512);
+      topGrad.addColorStop(0, '#1c2821');
+      topGrad.addColorStop(1, '#24332b');
+      ctx.fillStyle = topGrad;
+      ctx.fillRect(0, 0, 2048, 512);
+
+      const botGrad = ctx.createLinearGradient(0, 512, 0, 1024);
+      botGrad.addColorStop(0, '#131e18');
+      botGrad.addColorStop(1, '#0e1611');
+      ctx.fillStyle = botGrad;
+      ctx.fillRect(0, 512, 2048, 512);
+
+      ctx.fillStyle = '#0a100c';
+      ctx.fillRect(0, 508, 2048, 8);
+      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      ctx.fillRect(0, 506, 2048, 2);
+
+      for (let i = 0; i < 50; i++) {
+        const sx = Math.random() * 2048;
+        const w = Math.random() * 18 + 4;
+        const h = Math.random() * 650 + 200;
+        const leakGrad = ctx.createLinearGradient(sx, 0, sx, h);
+        leakGrad.addColorStop(0, 'rgba(5, 12, 8, 0.7)');
+        leakGrad.addColorStop(1, 'rgba(5, 12, 8, 0)');
+        ctx.fillStyle = leakGrad;
+        ctx.fillRect(sx, 0, w, h);
       }
 
-      ctx.font = 'bold 36px "Special Elite", monospace';
-      ctx.fillStyle = 'rgba(180, 20, 25, 0.78)';
-      ctx.fillText('[ CAGED 1979 ]', 120, 180);
-      ctx.fillText('108.4 Hz', 480, 260);
-      ctx.fillText('너도 여기서 못 나가', 220, 380);
+      for (let i = 0; i < 220; i++) {
+        ctx.fillStyle = 'rgba(6, 11, 8, ' + (Math.random() * 0.45) + ')';
+        ctx.fillRect(Math.random() * 2048, Math.random() * 1024, Math.random() * 90 + 10, Math.random() * 90 + 10);
+      }
 
-      ctx.strokeStyle = 'rgba(150, 20, 30, 0.6)';
+      ctx.fillStyle = 'rgba(150, 20, 28, 0.75)';
+      ctx.beginPath();
+      ctx.ellipse(340, 480, 28, 35, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      for (let f = 0; f < 5; f++) {
+        ctx.beginPath();
+        ctx.ellipse(320 + f * 11, 440 - Math.abs(f - 2) * 5, 6, 16, 0.15 * (f - 2), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(318 + f * 11, 450, 4, 30 + Math.random() * 40);
+      }
+
+      ctx.font = 'bold 52px "Special Elite", monospace';
+      ctx.fillStyle = 'rgba(175, 22, 28, 0.85)';
+      ctx.fillText('[ CAGED 1979 ]', 220, 280);
+
+      ctx.font = 'bold 44px "Share Tech Mono", monospace';
+      ctx.fillStyle = 'rgba(210, 160, 40, 0.85)';
+      ctx.fillText('⚡ 108.4 Hz - 인격 치환 프로젝트', 860, 320);
+
+      ctx.font = 'bold 36px "Special Elite", monospace';
+      ctx.fillStyle = 'rgba(160, 18, 22, 0.8)';
+      ctx.fillText('너도 여기서 못 나가... 살려줘...', 440, 720);
+
+      ctx.strokeStyle = 'rgba(170, 25, 30, 0.75)';
+      ctx.lineWidth = 4;
+      for (let g = 0; g < 4; g++) {
+        const gx = 1550 + g * 85;
+        for (let t = 0; t < 4; t++) {
+          ctx.beginPath();
+          ctx.moveTo(gx + t * 15, 420);
+          ctx.lineTo(gx + t * 15 + (Math.random() - 0.5) * 4, 480);
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.moveTo(gx - 5, 470);
+        ctx.lineTo(gx + 55, 430);
+        ctx.stroke();
+      }
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    function createWallBumpMap() {
+      const c = document.createElement('canvas');
+      c.width = 1024; c.height = 512;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#808080';
+      ctx.fillRect(0, 0, 1024, 512);
+
+      const imgData = ctx.getImageData(0, 0, 1024, 512);
+      const data = imgData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        const n = (Math.random() - 0.5) * 30;
+        const v = Math.min(255, Math.max(0, 128 + n));
+        data[i] = v; data[i+1] = v; data[i+2] = v;
+      }
+      ctx.putImageData(imgData, 0, 0);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 252, 1024, 8);
+      ctx.fillStyle = '#202020';
+      ctx.fillRect(0, 260, 1024, 4);
+
+      ctx.strokeStyle = '#111111';
       ctx.lineWidth = 3;
-      for (let i = 0; i < 6; i++) {
-        ctx.beginPath(); ctx.moveTo(750 + i * 15, 120); ctx.lineTo(730 + i * 15, 300); ctx.stroke();
+      for (let i = 0; i < 30; i++) {
+        let x = Math.random() * 1024, y = Math.random() * 512;
+        ctx.beginPath(); ctx.moveTo(x, y);
+        for (let j = 0; j < 6; j++) {
+          x += (Math.random() - 0.5) * 50;
+          y += (Math.random() - 0.5) * 50;
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    function createDeskWoodTexture() {
+      const c = document.createElement('canvas');
+      c.width = 1024; c.height = 512;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#1c140d';
+      ctx.fillRect(0, 0, 1024, 512);
+
+      ctx.fillStyle = '#140e09';
+      for (let y = 0; y < 512; y += 4) {
+        ctx.fillRect(0, y, 1024, 2);
+      }
+
+      for (let i = 0; i < 1500; i++) {
+        ctx.fillStyle = Math.random() < 0.5 ? 'rgba(35, 25, 18, 0.4)' : 'rgba(8, 5, 3, 0.5)';
+        ctx.fillRect(Math.random() * 1024, Math.random() * 512, Math.random() * 80 + 20, 1.5);
+      }
+
+      ctx.strokeStyle = 'rgba(8, 4, 2, 0.75)';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(680, 260, 36, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(12, 6, 3, 0.35)';
+      ctx.beginPath();
+      ctx.arc(680, 260, 36, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#050201';
+      ctx.beginPath(); ctx.arc(420, 190, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(40, 20, 10, 0.8)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(50, 38, 28, 0.8)';
+      ctx.lineWidth = 1.5;
+      for (let i = 0; i < 15; i++) {
+        const x = Math.random() * 1024, y = Math.random() * 512;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 30 + Math.random() * 50, y + (Math.random() - 0.5) * 20); ctx.stroke();
+      }
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    function createDeskWoodBumpMap() {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 256;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#808080';
+      ctx.fillRect(0, 0, 512, 256);
+
+      for (let y = 0; y < 256; y += 4) {
+        ctx.fillStyle = '#707070';
+        ctx.fillRect(0, y, 512, 2);
+      }
+      ctx.strokeStyle = '#202020';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 10; i++) {
+        const x = Math.random() * 512, y = Math.random() * 256;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 40, y + (Math.random() - 0.5) * 10); ctx.stroke();
+      }
+      return new THREE.CanvasTexture(c);
+    }
+
+    function createMetalBrushedTexture() {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 512;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#222925';
+      ctx.fillRect(0, 0, 512, 512);
+
+      for (let y = 0; y < 512; y += 2) {
+        ctx.fillStyle = Math.random() < 0.5 ? 'rgba(50, 60, 55, 0.35)' : 'rgba(15, 20, 18, 0.35)';
+        ctx.fillRect(0, y, 512, 1);
+      }
+
+      ctx.strokeStyle = 'rgba(5, 8, 7, 0.8)';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(3, 3, 506, 506);
+
+      ctx.fillStyle = '#111513';
+      const corners = [[16, 16], [496, 16], [16, 496], [496, 496]];
+      for (let pt of corners) {
+        ctx.beginPath(); ctx.arc(pt[0], pt[1], 8, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#44554b';
+        ctx.fillRect(pt[0] - 6, pt[1] - 1, 12, 2);
+        ctx.fillStyle = '#111513';
+      }
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    function createMirrorTexture() {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 1024;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#5c7368';
+      ctx.fillRect(0, 0, 512, 1024);
+
+      for (let i = 0; i < 40; i++) {
+        ctx.fillStyle = 'rgba(12, 18, 15, 0.6)';
+        ctx.fillRect(0, Math.random() * 1024, Math.random() * 45 + 10, Math.random() * 80);
+        ctx.fillRect(512 - (Math.random() * 45 + 10), Math.random() * 1024, 50, Math.random() * 80);
+      }
+
+      ctx.strokeStyle = 'rgba(230, 245, 240, 0.85)';
+      ctx.lineWidth = 2.5;
+      const cx = 256, cy = 420;
+      for (let i = 0; i < 16; i++) {
+        const angle = (i / 16) * Math.PI * 2 + (Math.random() - 0.5) * 0.2;
+        let px = cx, py = cy;
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        for (let step = 0; step < 7; step++) {
+          px += Math.cos(angle) * (25 + Math.random() * 25);
+          py += Math.sin(angle) * (25 + Math.random() * 25);
+          ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+      }
+      for (let r = 25; r < 240; r += 32) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r + (Math.random() - 0.5) * 15, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = 'rgba(145, 18, 24, 0.75)';
+      ctx.beginPath(); ctx.ellipse(256, 560, 35, 45, -0.1, 0, Math.PI * 2); ctx.fill();
+      for (let f = 0; f < 5; f++) {
+        ctx.beginPath(); ctx.ellipse(230 + f * 14, 505 - Math.abs(f - 2) * 6, 7, 22, 0.1 * (f - 2), 0, Math.PI * 2); ctx.fill();
+        ctx.fillRect(228 + f * 14, 515, 5, 50 + Math.random() * 60);
       }
 
       return new THREE.CanvasTexture(c);
@@ -1438,51 +1743,149 @@
 
     function createNoticeBoardTexture() {
       const c = document.createElement('canvas');
-      c.width = 512; c.height = 256;
+      c.width = 1024; c.height = 512;
       const ctx = c.getContext('2d');
-      ctx.fillStyle = '#3a2717'; ctx.fillRect(0, 0, 512, 256);
 
-      ctx.fillStyle = '#f0ede6'; ctx.fillRect(40, 30, 90, 110);
-      ctx.fillStyle = '#111'; ctx.fillRect(48, 38, 74, 74);
-      ctx.strokeStyle = '#c01a24'; ctx.lineWidth = 4;
-      ctx.beginPath(); ctx.moveTo(48, 38); ctx.lineTo(122, 112); ctx.moveTo(122, 38); ctx.lineTo(48, 112); ctx.stroke();
+      ctx.fillStyle = '#3a2717';
+      ctx.fillRect(0, 0, 1024, 512);
+      for (let i = 0; i < 4000; i++) {
+        ctx.fillStyle = Math.random() < 0.5 ? 'rgba(35, 22, 12, 0.5)' : 'rgba(75, 52, 32, 0.4)';
+        ctx.fillRect(Math.random() * 1024, Math.random() * 512, 3, 3);
+      }
 
-      ctx.fillStyle = '#e8d8b8'; ctx.fillRect(160, 25, 200, 140);
-      ctx.fillStyle = '#222'; ctx.font = 'bold 13px "Special Elite", monospace';
-      ctx.fillText('1979 청송연구소 화재 참사', 170, 50);
-      ctx.font = '10px monospace';
-      ctx.fillText('지하 격리병동 방화 추정...', 170, 75);
-      ctx.fillText('한진우 원장 행방 묘연...', 170, 95);
-      ctx.fillText('[경찰 수사 잠정 중단]', 170, 120);
+      ctx.strokeStyle = '#1f130a';
+      ctx.lineWidth = 16;
+      ctx.strokeRect(8, 8, 1008, 496);
 
-      ctx.fillStyle = '#ff2233';
-      ctx.beginPath(); ctx.arc(260, 20, 6, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(85, 25, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#e8dcc4';
+      ctx.fillRect(60, 45, 280, 200);
+      ctx.fillStyle = '#111';
+      ctx.font = 'bold 18px "Special Elite", monospace';
+      ctx.fillText('1979 송백병원 화재 참사', 75, 80);
+      ctx.font = '12px monospace';
+      ctx.fillText('지하 404호 격리병동 전소...', 75, 110);
+      ctx.fillText('환자 17명 사망, 원장 잠적', 75, 130);
+      ctx.fillText('불법 뇌파 교체 음향 실험 의혹', 75, 150);
+      ctx.fillText('사건 파일 번호: 79-A-108', 75, 175);
+      ctx.strokeStyle = 'rgba(230, 30, 40, 0.6)';
+      ctx.lineWidth = 8;
+      ctx.beginPath(); ctx.moveTo(75, 146); ctx.lineTo(310, 146); ctx.stroke();
 
-      ctx.strokeStyle = '#ff2233'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(85, 25); ctx.lineTo(260, 20); ctx.stroke();
+      ctx.fillStyle = '#ece8df';
+      ctx.fillRect(400, 60, 170, 210);
+      ctx.fillStyle = '#18241e';
+      ctx.fillRect(415, 75, 140, 140);
+      ctx.fillStyle = '#3d4e44';
+      ctx.beginPath(); ctx.arc(485, 135, 35, 0, Math.PI * 2); ctx.fill();
+      ctx.fillRect(455, 170, 60, 45);
+      ctx.strokeStyle = '#cc1824';
+      ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.moveTo(420, 80); ctx.lineTo(550, 210); ctx.moveTo(550, 80); ctx.lineTo(420, 210); ctx.stroke();
+      ctx.fillStyle = '#222';
+      ctx.font = 'bold 13px monospace';
+      ctx.fillText('SUBJECT #17 [사망]', 425, 245);
+
+      ctx.fillStyle = '#f5efe0';
+      ctx.fillRect(630, 50, 320, 220);
+      ctx.fillStyle = '#1a1a1a';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText('EEG SPECTRUM: 108.4 Hz RESONANCE', 645, 80);
+      ctx.strokeStyle = '#2b7a4b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let x = 650; x < 920; x += 3) {
+        const y = 140 + Math.sin((x - 650) * 0.12) * 35;
+        if (x === 650) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.fillStyle = '#991122';
+      ctx.font = 'bold 13px monospace';
+      ctx.fillText('[경고: 특정 음파 노출 시 자아 소멸]', 650, 210);
+
+      ctx.fillStyle = '#fffa88';
+      ctx.fillRect(120, 290, 240, 160);
+      ctx.fillStyle = '#111';
+      ctx.font = 'bold 15px "Special Elite", monospace';
+      ctx.fillText('한진우 원장의 마지막 음성:', 135, 320);
+      ctx.font = '13px "Special Elite", monospace';
+      ctx.fillText('"108.4Hz는 망각이 아니다.', 135, 350);
+      ctx.fillText(' 그것은 다른 영혼의 주파수다."', 135, 375);
+      ctx.fillStyle = '#aa1122';
+      ctx.fillText('-> 비상 배전반 조작 금지', 135, 415);
+
+      const pins = [[200, 50], [485, 65], [790, 55], [240, 295], [880, 260]];
+      for (let p of pins) {
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.beginPath(); ctx.arc(p[0] + 3, p[1] + 5, 8, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ee1122';
+        ctx.beginPath(); ctx.arc(p[0], p[1], 8, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ff6677';
+        ctx.beginPath(); ctx.arc(p[0] - 2, p[1] - 2, 3, 0, Math.PI * 2); ctx.fill();
+      }
+
+      ctx.strokeStyle = '#ee1122';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(200, 50); ctx.lineTo(485, 65);
+      ctx.lineTo(790, 55); ctx.lineTo(240, 295);
+      ctx.stroke();
 
       return new THREE.CanvasTexture(c);
     }
 
     function createDoorTexture() {
       const c = document.createElement('canvas');
-      c.width = 256; c.height = 512;
+      c.width = 512; c.height = 1024;
       const ctx = c.getContext('2d');
-      ctx.fillStyle = '#221517'; ctx.fillRect(0, 0, 256, 512);
+      ctx.fillStyle = '#18241d';
+      ctx.fillRect(0, 0, 512, 1024);
 
-      ctx.strokeStyle = '#12090b'; ctx.lineWidth = 8;
-      ctx.strokeRect(10, 10, 236, 492);
+      ctx.fillStyle = '#131d17';
+      ctx.fillRect(20, 20, 472, 984);
 
-      ctx.fillStyle = '#020302'; ctx.fillRect(50, 60, 156, 120);
-      ctx.strokeStyle = '#3a443e'; ctx.lineWidth = 6;
-      for (let x = 70; x < 200; x += 25) {
-        ctx.beginPath(); ctx.moveTo(x, 60); ctx.lineTo(x, 180); ctx.stroke();
+      for (let y of [180, 500, 820]) {
+        ctx.fillStyle = '#0f1712';
+        ctx.fillRect(24, y, 464, 40);
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        ctx.fillRect(24, y, 464, 2);
+        for (let x = 50; x < 480; x += 55) {
+          ctx.fillStyle = '#2a3a30';
+          ctx.beginPath(); ctx.arc(x, y + 20, 6, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#080d0a';
+          ctx.beginPath(); ctx.arc(x + 1, y + 21, 5, 0, Math.PI * 2); ctx.fill();
+        }
       }
 
-      for (let i = 0; i < 40; i++) {
-        ctx.fillStyle = 'rgba(120, 40, 20, 0.35)';
-        ctx.fillRect(Math.random() * 256, Math.random() * 512, Math.random() * 40, Math.random() * 40);
+      ctx.fillStyle = '#050705';
+      ctx.fillRect(130, 80, 252, 220);
+      ctx.strokeStyle = '#27382d';
+      ctx.lineWidth = 8;
+      ctx.strokeRect(130, 80, 252, 220);
+
+      ctx.strokeStyle = 'rgba(160, 190, 175, 0.45)';
+      ctx.lineWidth = 2;
+      for (let x = -200; x < 600; x += 22) {
+        ctx.beginPath(); ctx.moveTo(x, 80); ctx.lineTo(x + 220, 300); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x, 300); ctx.lineTo(x + 220, 80); ctx.stroke();
+      }
+
+      const glassGlow = ctx.createLinearGradient(130, 80, 382, 300);
+      glassGlow.addColorStop(0, 'rgba(120, 200, 160, 0.15)');
+      glassGlow.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
+      glassGlow.addColorStop(1, 'rgba(180, 50, 50, 0.25)');
+      ctx.fillStyle = glassGlow;
+      ctx.fillRect(130, 80, 252, 220);
+
+      ctx.font = 'bold 28px "Share Tech Mono", monospace';
+      ctx.fillStyle = '#ff2233';
+      ctx.fillText('ISOLATION 404', 160, 370);
+      ctx.font = 'bold 16px monospace';
+      ctx.fillStyle = '#cca030';
+      ctx.fillText('MAXIMUM SECURITY QUARANTINE', 135, 400);
+
+      for (let i = 0; i < 90; i++) {
+        ctx.fillStyle = Math.random() < 0.4 ? 'rgba(100, 20, 25, 0.4)' : 'rgba(50, 30, 15, 0.35)';
+        ctx.fillRect(Math.random() * 512, Math.random() * 1024, Math.random() * 60 + 10, Math.random() * 60 + 10);
       }
 
       return new THREE.CanvasTexture(c);

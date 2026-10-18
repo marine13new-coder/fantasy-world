@@ -56,7 +56,8 @@ const LEGENDARY_ITEMS = [
   { id: 'jotun_thunder_warhammer', slot: 'weapon', name: '요툰하임 거인왕의 천둥 파쇄 망치', icon: '🔨', atk: 72, hp: 180, desc: '태고 거인족의 화강암과 번개로 주조한 거대 파쇄 망치. 타격 시 지진파 충격과 연쇄 벼락이 방출됩니다.' },
   { id: 'shangrila_flying_sword_tai_ji', slot: 'weapon', name: '상그릴라 신선 옥룡 태극 비천검', icon: '🪷', atk: 70, hp: 150, desc: '천년 백련의 정기와 태고 옥룡의 기운이 깃든 신선의 어검. 비취빛 참격과 함께 회전하는 도력 태극진이 펼쳐집니다.' },
   { id: 'babylon_khopesh_of_gilgamesh', slot: 'weapon', name: '바빌론 길가메시의 황금 청금석 코페쉬', icon: '🦁', atk: 74, hp: 160, desc: '우루크의 위대한 영웅왕 길가메시가 휘두르던 고대 청동과 청금석의 반월도. 타격 시 쐐기문자 점토판 룬과 왕의 권능이 폭발합니다.' },
-  { id: 'sol_invictus_phoenix_claymore', slot: 'weapon', name: '솔 인빅투스 불사조 황금 대검', icon: '☀️', atk: 76, hp: 170, desc: '신성 제국의 태양 불사조 깃털과 천공의 오리하르콘을 제련한 황금 대검. 공격 시 맹렬한 태양 불길과 불사조 깃털 폭풍이 작렬합니다.' }
+  { id: 'sol_invictus_phoenix_claymore', slot: 'weapon', name: '솔 인빅투스 불사조 황금 대검', icon: '☀️', atk: 76, hp: 170, desc: '신성 제국의 태양 불사조 깃털과 천공의 오리하르콘을 제련한 황금 대검. 공격 시 맹렬한 태양 불길과 불사조 깃털 폭풍이 작렬합니다.' },
+  { id: 'leviathan_magma_harpoon_blade', slot: 'weapon', name: '해저 화산 레비아탄 흑요석 작살검', icon: '🔱', atk: 78, hp: 180, desc: '수심 4,000m 열수구 흑요석 마그마와 레비아탄의 등뼈를 제련한 심해의 작살검. 타격 시 400도 끓는 열수 기포와 날카로운 흑요석 파편이 폭발합니다.' }
 ];
 
 const DUNGEONS = [
@@ -266,6 +267,29 @@ const DUNGEONS = [
     },
     goldReward: 10200,
     fameReward: 200
+  },
+  {
+    id: 'dungeon_leviathan',
+    name: '해저 화산 열수구 칼데라 & 레비아탄 심연 해구',
+    icon: '🔱',
+    levelReq: 16,
+    x: 1020, y: 1940,
+    color: '#0891b2',
+    desc: '수심 4,000미터 칠흑의 심해 열수 분출구 속, 마그마를 삼키며 동면하던 태고 화산 레비아탄의 둥지. 400기압의 수압과 섭씨 400도의 열수가 소용돌이칩니다.',
+    bossName: '태고 마그마 해룡 레비아탄 (Ancient Abyssal Leviathan)',
+    bossHp: 5800,
+    bossAtk: 82,
+    relicReward: {
+      id: 'relic_abyssal_heart_of_leviathan',
+      slot: 'relic',
+      name: '태고 레비아탄 심연 핵석',
+      icon: '💎',
+      atk: 66,
+      hp: 280,
+      desc: '공격 시 35% 확률로 심해 열수 소용돌이가 터져 나와 180의 복합 수열 피해를 입히고 주변 적들을 4초간 압박(둔화 40%)합니다.'
+    },
+    goldReward: 11000,
+    fameReward: 210
   }
 ];
 
@@ -3222,6 +3246,17 @@ const TOWN_LORE_DATABASE = {
     tavernToast: '진하게 빚은 대추야자 맥주(Date Beer)와 구운 석류 양고기를 삼켰습니다! 혈관에 고대 메소포타미아 영웅왕의 끓는 피가 솟구치며 타격 공격력이 폭발합니다.',
     questTitle: '갈대밭 늪지 모래전갈 괴수 소탕령',
     questDesc: '유프라테스 하구 갈대밭 관개 수로를 마비시키는 거대 맹독 모래전갈 둥지를 격퇴하고 수문 열쇠를 탈환하시오.'
+  },
+  leviathan_trench: {
+    npcName: '심해 잠항정 선장 네모 & 해저 무녀 탈라샤 (Captain Nemo & Priestess Thalasha)',
+    npcRole: '노틸러스 해구 탐사대 총사령관 & 열수 환초 고대 신앙 제사장',
+    icon: '🔱',
+    disposition: '🌊 400기압의 칠흑 심연과 끓어오르는 해저 화산을 견뎌낸 불굴의 관조와 신비',
+    quote: '"지상의 인간들은 햇살 한 줌 없으면 살 수 없다고 믿지만, 4,000미터 아래 검은 굴뚝(Black Smoker) 주위엔 태양 대신 지구의 내장이 뿜어내는 마그마를 먹고 피어나는 생명들이 있소. 수압에 폐가 찌그러지는 공포를 이겨낸 자만이 이 심연의 장엄함을 마주할 자격이 있지."',
+    rumor: '💡 심해 잠수부의 기록: "칼데라 중앙 해구 틈새에서 밤마다 거대한 심장박동 같은 고동이 울려 퍼지오. 태고 레비아탄이 완전히 깨어나면 대양 전체에 지진해일이 몰아칠 것이라는 전설이 결코 허풍이 아니었어."',
+    tavernToast: '열수구에서 쪄낸 심해 대왕게 다리살과 인광 해조주(Abyssal Phosphor Ale)를 들이켰습니다! 뼛속까지 차오르는 강인한 수압 저항력과 폐활량이 솟구치며 타격 저항이 극대화됩니다.',
+    questTitle: '심해 열수구 흑요석 채굴로 개척 작전',
+    questDesc: '검은 굴뚝 주변을 점거한 심해 돌연변이 갑각 괴수 무리를 처치하고 고순도 흑요석 마그마 결정을 회수하시오.'
   },
   sol_invictus: {
     npcName: '총대주교 콘스탄티누스 & 태양 성기사단장 헬레나 (Patriarch Constantinus & Helena)',

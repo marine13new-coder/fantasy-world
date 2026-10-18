@@ -760,6 +760,16 @@ function createSettlementList() {
   add('byzantine_silk_mosaic_bazaar', '비잔틴 비단 모자이크 길드 마을', 'town', 'sol_invictus', 3600, 760, 'human', false, 10);
   add('golden_horn_imperial_naval_harbor', '황금뿔 제국 함대 기국 군항', 'port', 'sol_invictus', 3660, 840, 'human', false, 9);
 
+  // =========================================================================
+  // 32. THE HYDROTHERMAL VOLCANIC ATOLL & OBSIDIAN LEVIATHAN (해저 화산 열수구 흑요석 레비아탄 요새 & 마그마 환초 제국)
+  // =========================================================================
+  add('leviathan_caldera_obsidian_citadel', '해저 칼데라 흑요석 레비아탄 수도', 'capital', 'leviathan_trench', 1020, 1940, 'undead', true, 18);
+  add('hydrothermal_black_smoker_forge', '심해 열수구 흑연 굴착 대장간', 'castle', 'leviathan_trench', 1120, 1900, 'dwarf', true, 16);
+  add('bioluminescent_siren_chasm_palace', '발광 산호초 세이렌 심연 궁전', 'palace', 'leviathan_trench', 940, 1880, 'beastkin', true, 14);
+  add('drowned_kraken_altar_sanctum', '침몰 크라켄 뼈 제단 심해 신전', 'temple', 'leviathan_trench', 1080, 2020, 'undead', true, 12);
+  add('phosphor_pearl_diver_atoll_village', '인광 진주 채취 환초 해상 가옥', 'town', 'leviathan_trench', 920, 1980, 'human', false, 10);
+  add('abyssal_trench_submarine_dock', '심해 해구 룬 추진 잠수함 기지', 'port', 'leviathan_trench', 1000, 2060, 'human', false, 9);
+
   return list;
 }
 
@@ -1261,6 +1271,18 @@ function generateWorld() {
           continue;
         }
 
+        // 해저 화산 열수구 흑요석 레비아탄 요새 & 마그마 환초 제국 전용 지형 카빙
+        if (s.continent === 'leviathan_trench') {
+          if (dist <= landRad - 6) {
+            tiles[idx(tx, ty)] = (dist <= 4) ? TILE.OBSIDIAN : TILE.CASTLE_FLOOR; // 칠흑의 흑요석 기단 및 굳은 마그마 암벽
+          } else if (dist <= landRad - 2) {
+            tiles[idx(tx, ty)] = (dist % 2 === 0) ? TILE.CORAL : TILE.CRYSTAL_CAVE; // 발광 산호초 군락 및 심해 수정동굴
+          } else if (dist <= landRad + 3) {
+            tiles[idx(tx, ty)] = (dist % 3 === 0) ? TILE.OASIS_WATER : TILE.DEEP_WATER; // 청록빛 열수 웅덩이 및 심연 해구
+          }
+          continue;
+        }
+
         const curT = tiles[idx(tx, ty)];
         const isWater = (curT === TILE.DEEP_WATER || curT === TILE.WATER);
 
@@ -1570,7 +1592,18 @@ function generateWorld() {
     ['phoenix_flame_aether_citadel', 'golden_horn_imperial_naval_harbor'],
     ['byzantine_silk_mosaic_bazaar', 'golden_horn_imperial_naval_harbor'],
     ['augustus_marble_pantheon_temple', 'stellar_prism_monolith_shrine'],
-    ['golden_horn_imperial_naval_harbor', 'dragon_ruins']
+    ['golden_horn_imperial_naval_harbor', 'dragon_ruins'],
+
+    // [해저 화산 열수구 흑요석 레비아탄 가도 (Leviathan Hydrothermal Abyssal Highway)]
+    ['leviathan_caldera_obsidian_citadel', 'hydrothermal_black_smoker_forge'],
+    ['leviathan_caldera_obsidian_citadel', 'bioluminescent_siren_chasm_palace'],
+    ['leviathan_caldera_obsidian_citadel', 'drowned_kraken_altar_sanctum'],
+    ['leviathan_caldera_obsidian_citadel', 'phosphor_pearl_diver_atoll_village'],
+    ['drowned_kraken_altar_sanctum', 'abyssal_trench_submarine_dock'],
+    ['phosphor_pearl_diver_atoll_village', 'abyssal_trench_submarine_dock'],
+    ['bioluminescent_siren_chasm_palace', 'siren_coral'],
+    ['hydrothermal_black_smoker_forge', 'lava_worm_trench'],
+    ['abyssal_trench_submarine_dock', 'atlantis_pearl_reef_harbor']
   ];
   const roadLinks = rawRoadLinks.filter(([a, b]) => settlementMap[a] && settlementMap[b]);
 

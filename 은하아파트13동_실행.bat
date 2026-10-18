@@ -23,6 +23,7 @@ echo - Space : 캐비닛 은신 중 숨 참기 (게이지 주의)
 echo - Tab : 소지품 열람 및 단서 [3D 정밀 회전 조사]
 echo - Q / Z : 좌/우 시점 기우뚱 피킹 (Lean Peek - 코너 엿보기)
 echo - P : 스팀 도전과제 도감 열람 (18종 업적 달성도)
+echo - N : IR 적외선 나이트비전 모드 On/Off (숨겨진 UV 혈흔 문자 탐지)
 echo - Esc : 일시정지 / 게임 저장 / 설정 (감도, 볼륨, FOV, 안심 탐험 모드)
 echo.
 echo ※ 쫄보 플레이어를 위한 [🛡️ 안심 탐험 모드(Brave Mode)]가
