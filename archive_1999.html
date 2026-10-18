@@ -675,6 +675,18 @@
       padding: 20px;
     }
 
+    /* 결말 모달 */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.96);
+      z-index: 120;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
     .modal-card {
       background: #09140e;
       border: 2px solid var(--phosphor);
@@ -685,6 +697,70 @@
       color: #ccebda;
       line-height: 1.85;
       box-shadow: 0 0 50px rgba(51, 255, 119, 0.35);
+    }
+
+    /* [ESC] 스팀 시스템 설정 & 일시정지 모달 */
+    #settingsModal {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 580px;
+      max-width: 92vw;
+      background: rgba(7, 14, 10, 0.96);
+      border: 2px solid var(--phosphor);
+      border-radius: 6px;
+      padding: 24px;
+      z-index: 110;
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 0 60px rgba(51, 255, 119, 0.4);
+      color: #bbf2d0;
+    }
+
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px dashed #173622;
+      font-size: 13px;
+    }
+
+    .settings-row input[type="range"] {
+      width: 180px;
+      accent-color: var(--phosphor);
+      cursor: pointer;
+    }
+
+    /* [TAB] 수사관 수첩 (Investigator's Journal) */
+    #journalModal {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 660px;
+      max-width: 94vw;
+      background: #141b16;
+      border: 2px solid #82b596;
+      border-radius: 6px;
+      padding: 24px;
+      z-index: 105;
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 0 60px rgba(130, 181, 150, 0.3);
+      color: #d8ebd9;
+      font-family: 'Share Tech Mono', 'Noto Serif KR', monospace;
+    }
+
+    .journal-entry {
+      background: #09120c;
+      border-left: 3px solid var(--amber);
+      padding: 10px 14px;
+      border-radius: 0 4px 4px 0;
+      margin-bottom: 8px;
+      font-size: 12.5px;
+      line-height: 1.6;
     }
   </style>
 </head>
@@ -711,6 +787,12 @@
     <button class="capsule-btn" id="btnAutoCinema" onclick="toggleAutoCinema()">
       🎬 자동 스토리 관전 (Cinema)
     </button>
+    <button class="capsule-btn" onclick="toggleJournal()">
+      📖 수사 수첩 [TAB]
+    </button>
+    <button class="capsule-btn" onclick="toggleSettingsModal()">
+      ⚙️ 설정 [ESC]
+    </button>
     <div class="capsule">
       <span>라이트 [F/G]: <strong id="lblLightMode" style="color:var(--phosphor);">FLASHLIGHT</strong></span>
     </div>
@@ -734,6 +816,48 @@
   </div>
 
   <canvas id="webglCanvas"></canvas>
+
+  <!-- [ESC] 시스템 설정 모달 -->
+  <div id="settingsModal">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #1f4f30; padding-bottom:8px;">
+      <span style="font-weight:bold; letter-spacing:1px; color:var(--phosphor);">⚙️ SYSTEM SETTINGS / PAUSE</span>
+      <button class="deck-btn" onclick="toggleSettingsModal()" style="padding:4px 10px;">닫기 [ESC]</button>
+    </div>
+    <div class="settings-row">
+      <span>마스터 음량 (Master Volume)</span>
+      <input type="range" id="rngMasterVol" min="0" max="100" value="70" oninput="setMasterVolume(this.value)">
+    </div>
+    <div class="settings-row">
+      <span>마우스 감도 (Look Sensitivity)</span>
+      <input type="range" id="rngSensitivity" min="5" max="30" value="15" oninput="setSensitivity(this.value)">
+    </div>
+    <div class="settings-row">
+      <span>1999 CRT 피쉬아이 왜곡 & 스캔라인</span>
+      <button class="deck-btn" id="btnToggleCRT" onclick="toggleCRTEffect()">강도: 높음 (NORMAL)</button>
+    </div>
+    <div class="settings-row">
+      <span>🛡️ 쫄보 안심 모드 (Safe Horror)</span>
+      <button class="deck-btn" id="btnSettingsSafeToggle" onclick="toggleSafeMode()">비활성 (OFF)</button>
+    </div>
+    <div class="settings-row">
+      <span>🎬 자동 스토리 관전 (Cinema Mode)</span>
+      <button class="deck-btn" id="btnSettingsCinemaToggle" onclick="toggleAutoCinema()">OFF</button>
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
+      <button class="deck-btn" onclick="toggleSettingsModal()" style="background:var(--phosphor); color:#040906;">게임 재개 (RESUME)</button>
+    </div>
+  </div>
+
+  <!-- [TAB] 수사관 수첩 모달 -->
+  <div id="journalModal">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #2f563d; padding-bottom:8px;">
+      <span style="font-weight:bold; letter-spacing:1px; color:#82b596;">📖 감식관 강서진의 현장 수첩 (INVESTIGATION LOG)</span>
+      <button class="deck-btn" onclick="toggleJournal()" style="padding:4px 10px;">닫기 [TAB / ESC]</button>
+    </div>
+    <div id="journalContent" style="max-height:360px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">
+      <!-- 수첩 내용 동적 렌더링 -->
+    </div>
+  </div>
 
   <!-- 문서 / 증거물 정밀 열람 모달 -->
   <div id="documentInspectModal">
@@ -1122,16 +1246,23 @@
     }
 
     /* ========================================================
-       2. THREE.JS 3D 환경 (번개, 천장 환기창, 거울, 서랍)
+       2. THREE.JS 3D 환경 (번개, 천장 환기창, 거울, 서랍, 비 내리는 창문)
        ======================================================== */
     let scene, camera, renderer;
     let flashlight, flashlightCone, ceilingLamp, ambientGlow, exitSignLamp, thunderLight;
     let deskObj, deskDrawerObj, sedativeBottleObj, monitorObj, doorObj, monsterFigure, ceilingFan;
     let wheelchairObj, ivStandObj, gurneyObj, phoneObj, breakerBoxObj, cctvCameraObj, noticeBoardObj, clipboardObj, exitSignObj, crackedMirrorObj;
+    let asylumWindowObj, rainStreakCanvas, rainStreakCtx, rainStreakTexture, rainDrops = [];
+    let bloodPuddleObj, shadowSilhouetteObj;
     let uvClueMesh, dustParticles, waterDropMesh;
     let isPointerLocked = false;
     let inTerminalMode = false;
     let inDocInspectMode = false;
+    let inJournalMode = false;
+    let inSettingsMode = false;
+    let mouseSensitivity = 0.0022;
+    let crtIntensityLevel = 2; // 0: None, 1: Low, 2: Normal, 3: Heavy
+    let secretGlyphIntensity = 0; // 스펙트로그램에 떠오르는 기괴한 눈/해골 글리프
 
     const keys = { w: false, a: false, s: false, d: false };
     const playerPos = new THREE.Vector3(0, 1.6, 2.8);
@@ -1334,6 +1465,13 @@
       buildWheelchairProp();
       buildIVStandProp();
       buildGurneyProp();
+
+      // 3D 비 내리는 철창 창문 (Rain-Streaked Asylum Window)
+      buildAsylumWindow();
+
+      // 점진적 공포 환경 변이 (피 웅덩이 & 창밖 그림자 실루엣)
+      buildBloodPuddle();
+      buildShadowSilhouette();
 
       // 물방울 낙하 시각화 메쉬
       const dropGeo = new THREE.SphereGeometry(0.02, 6, 6);
@@ -1654,6 +1792,164 @@
       scene.add(monsterFigure);
     }
 
+    /* 3D 비 내리는 철창 창문 (Rain-Streaked Asylum Window) */
+    function buildAsylumWindow() {
+      asylumWindowObj = new THREE.Group();
+
+      // 빗물 애니메이션용 절차적 캔버스
+      rainStreakCanvas = document.createElement('canvas');
+      rainStreakCanvas.width = 256;
+      rainStreakCanvas.height = 256;
+      rainStreakCtx = rainStreakCanvas.getContext('2d');
+
+      // 빗방울 객체 35개 초기화
+      rainDrops = [];
+      for (let i = 0; i < 35; i++) {
+        rainDrops.push({
+          x: Math.random() * 256,
+          y: Math.random() * 256,
+          speed: 1.5 + Math.random() * 3.5,
+          len: 10 + Math.random() * 20,
+          alpha: 0.3 + Math.random() * 0.5
+        });
+      }
+
+      rainStreakTexture = new THREE.CanvasTexture(rainStreakCanvas);
+      rainStreakTexture.wrapS = THREE.RepeatWrapping;
+      rainStreakTexture.wrapT = THREE.RepeatWrapping;
+
+      // 유리창
+      const glassMat = new THREE.MeshStandardMaterial({
+        map: rainStreakTexture,
+        roughness: 0.15,
+        metalness: 0.1,
+        transparent: true,
+        opacity: 0.65,
+        color: 0x99bbdd
+      });
+      const glass = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.4), glassMat);
+      asylumWindowObj.add(glass);
+
+      // 창틀 (Frame)
+      const frameMat = new THREE.MeshStandardMaterial({ color: 0x181a17, roughness: 0.9 });
+      const topFrame = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.08, 0.06), frameMat);
+      topFrame.position.y = 0.7;
+      asylumWindowObj.add(topFrame);
+
+      const botFrame = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.08, 0.06), frameMat);
+      botFrame.position.y = -0.7;
+      asylumWindowObj.add(botFrame);
+
+      const leftFrame = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.48, 0.06), frameMat);
+      leftFrame.position.x = -0.8;
+      asylumWindowObj.add(leftFrame);
+
+      const rightFrame = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.48, 0.06), frameMat);
+      rightFrame.position.x = 0.8;
+      asylumWindowObj.add(rightFrame);
+
+      // 철창 격자 (Security Iron Bars)
+      const barMat = new THREE.MeshStandardMaterial({ color: 0x2a2f2b, metalness: 0.8, roughness: 0.5 });
+      for (let i = -2; i <= 2; i++) {
+        const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1.4, 8), barMat);
+        bar.position.set(i * 0.3, 0, 0.02);
+        asylumWindowObj.add(bar);
+      }
+
+      // 창밖 어두운 폭풍우 밤하늘 쿼드
+      const skyMat = new THREE.MeshBasicMaterial({ color: 0x03080d });
+      const sky = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.8), skyMat);
+      sky.position.set(0, 0, -0.15);
+      asylumWindowObj.add(sky);
+
+      asylumWindowObj.position.set(4.46, 2.2, -2.2);
+      asylumWindowObj.rotation.y = -Math.PI / 2;
+      scene.add(asylumWindowObj);
+    }
+
+    function updateRainWindowCanvas() {
+      if (!rainStreakCtx) return;
+      rainStreakCtx.fillStyle = 'rgba(6, 12, 18, 0.15)';
+      rainStreakCtx.fillRect(0, 0, 256, 256);
+
+      rainStreakCtx.strokeStyle = 'rgba(180, 215, 255, 0.6)';
+      rainStreakCtx.lineWidth = 1.2;
+
+      for (let d of rainDrops) {
+        rainStreakCtx.beginPath();
+        rainStreakCtx.moveTo(d.x, d.y);
+        rainStreakCtx.lineTo(d.x + 0.2, d.y + d.len);
+        rainStreakCtx.stroke();
+
+        d.y += d.speed;
+        if (d.y > 256) {
+          d.y = -d.len;
+          d.x = Math.random() * 256;
+          d.speed = 1.5 + Math.random() * 3.5;
+        }
+      }
+      if (rainStreakTexture) rainStreakTexture.needsUpdate = true;
+    }
+
+    /* 바닥 피 웅덩이 (Blood Puddle Prop) */
+    function buildBloodPuddle() {
+      const puddleGeo = new THREE.CylinderGeometry(0.75, 0.75, 0.005, 16);
+      const puddleMat = new THREE.MeshStandardMaterial({
+        color: 0x550005,
+        roughness: 0.1,
+        metalness: 0.2,
+        transparent: true,
+        opacity: 0.88
+      });
+      bloodPuddleObj = new THREE.Mesh(puddleGeo, puddleMat);
+      bloodPuddleObj.position.set(-2.2, 0.003, 1.0);
+      bloodPuddleObj.scale.set(0.001, 0.001, 0.001); // 챕터 진행 전까지 숨김
+      scene.add(bloodPuddleObj);
+    }
+
+    /* 창밖 번개 실루엣 (Silhouette Figure in the Storm) */
+    function buildShadowSilhouette() {
+      shadowSilhouetteObj = new THREE.Group();
+      const silMat = new THREE.MeshBasicMaterial({ color: 0x020202 });
+
+      const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.25, 1.2, 8), silMat);
+      torso.position.y = 0.6;
+      shadowSilhouetteObj.add(torso);
+
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), silMat);
+      head.position.y = 1.35;
+      shadowSilhouetteObj.add(head);
+
+      shadowSilhouetteObj.position.set(4.68, 1.5, -2.2);
+      shadowSilhouetteObj.rotation.y = -Math.PI / 2;
+      shadowSilhouetteObj.visible = false;
+      scene.add(shadowSilhouetteObj);
+    }
+
+    /* 챕터 완료 시 환경 영구 변이 (Progressive Room Haunting) */
+    function progressRoomHaunting(chNum) {
+      if (isSafeMode) return; // 쫄보 모드에서는 불쾌한 환경 변이 억제
+
+      if (chNum === 1) {
+        // Ch 1 완료: 바닥 피 웅덩이 미세 생성
+        if (bloodPuddleObj) bloodPuddleObj.scale.set(0.5, 1, 0.5);
+      } else if (chNum === 2) {
+        // Ch 2 완료: 거울에 피 묻은 손자국 반사 효과 및 웅덩이 확장
+        if (bloodPuddleObj) bloodPuddleObj.scale.set(0.9, 1, 0.9);
+        if (crackedMirrorObj) crackedMirrorObj.material.color.setHex(0xaa6666);
+      } else if (chNum === 3) {
+        // Ch 3 완료: 웅덩이 최대 확장 및 창밖 번개 실루엣 해제
+        if (bloodPuddleObj) bloodPuddleObj.scale.set(1.5, 1, 1.5);
+        if (shadowSilhouetteObj) shadowSilhouetteObj.visible = true;
+      } else if (chNum === 4) {
+        // Ch 4 완료: 404 철문 비상등 붉은 펄스 가속
+        if (exitSignLamp) {
+          exitSignLamp.color.setHex(0xff0022);
+          exitSignLamp.intensity = 2.2;
+        }
+      }
+    }
+
     let lampSwing = 0;
     let waterDropY = 3.8;
 
@@ -1885,6 +2181,10 @@
       }
     };
 
+    let rainAmbienceGain = null;
+    let tinnitusOsc = null;
+    let tinnitusGain = null;
+
     function initAudio() {
       if (audioCtx) return;
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -1895,7 +2195,91 @@
       masterGain.connect(audioCtx.destination);
 
       startDrone();
+      startRainAmbience();
+      initTinnitusSynth();
       startHeartbeatTimer();
+    }
+
+    /* 창밖 폭풍우 빗소리 지속 앰비언스 (Rain Ambience Synth) */
+    function startRainAmbience() {
+      if (!audioCtx) return;
+      const bufferSize = audioCtx.sampleRate * 2;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+
+      const rainNoise = audioCtx.createBufferSource();
+      rainNoise.buffer = buffer;
+      rainNoise.loop = true;
+
+      const rainFilter = audioCtx.createBiquadFilter();
+      rainFilter.type = 'lowpass';
+      rainFilter.frequency.setValueAtTime(650, audioCtx.currentTime);
+
+      rainAmbienceGain = audioCtx.createGain();
+      rainAmbienceGain.gain.setValueAtTime(isSafeMode ? 0.08 : 0.16, audioCtx.currentTime);
+
+      rainNoise.connect(rainFilter);
+      rainFilter.connect(rainAmbienceGain);
+      rainAmbienceGain.connect(masterGain);
+      rainNoise.start();
+    }
+
+    /* 공포/광기 시 귓전의 날카로운 이명 (Tinnitus 3900Hz Synth) */
+    function initTinnitusSynth() {
+      if (!audioCtx) return;
+      tinnitusOsc = audioCtx.createOscillator();
+      tinnitusGain = audioCtx.createGain();
+
+      tinnitusOsc.type = 'sine';
+      tinnitusOsc.frequency.setValueAtTime(3900, audioCtx.currentTime);
+      tinnitusGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+
+      tinnitusOsc.connect(tinnitusGain);
+      tinnitusGain.connect(masterGain);
+      tinnitusOsc.start();
+    }
+
+    function updateTinnitusSound(san) {
+      if (!tinnitusGain || !audioCtx) return;
+      if (isSafeMode || san >= 45) {
+        tinnitusGain.gain.setTargetAtTime(0.0001, audioCtx.currentTime, 0.5);
+      } else {
+        // 이성이 낮을수록 이명 볼륨 급상승 (최대 0.12)
+        const vol = (1 - san / 45) * 0.12;
+        tinnitusGain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.4);
+      }
+    }
+
+    /* 형광등 깜빡임 버징음 (60Hz Buzzing) */
+    function playFluorescentHumSound() {
+      if (!audioCtx || isSafeMode) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(60, now);
+      g.gain.setValueAtTime(0.04, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      osc.connect(g); g.connect(masterGain);
+      osc.start(now); osc.stop(now + 0.16);
+    }
+
+    /* 단말기 튜닝 시 번호방송 카운트다운 신호음 (Numbers Station Tone Burst) */
+    function playNumbersStationBurst() {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(1020, now);
+      osc.frequency.setValueAtTime(800, now + 0.08);
+      g.gain.setValueAtTime(0.06, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+      osc.connect(g); g.connect(masterGain);
+      osc.start(now); osc.stop(now + 0.18);
     }
 
     function startDrone() {
@@ -2205,6 +2589,7 @@
       const ch = chapterDB[curChapter];
       appendLog("시스템", `[카트리지 복원 완료] ${ch.title} 해독이 끝났습니다.`);
       triggerHorrorEvent(ch.trigger);
+      progressRoomHaunting(curChapter);
 
       if (curChapter < 5) {
         const nextCh = curChapter + 1;
@@ -2428,6 +2813,7 @@
       document.getElementById('lblSAN').innerText = sanity + '%';
       document.getElementById('lblBPM').innerText = bpm;
       startHeartbeatTimer();
+      updateTinnitusSound(sanity);
 
       const vein = document.getElementById('sanityVeinOverlay');
       if (vein) {
@@ -2503,6 +2889,15 @@
       const data = line.data;
       const targetPos = (paramFreq / 3800) * 240;
 
+      // 동기화율 60% 이상 시 스펙트로그램에 기괴한 시각 글리프(악마의 눈/해골 형상) 침식
+      if (syncPct > 60 && isPlaying && !isSafeMode) {
+        secretGlyphIntensity = Math.min(1.0, secretGlyphIntensity + 0.025);
+      } else {
+        secretGlyphIntensity = Math.max(0, secretGlyphIntensity - 0.02);
+      }
+
+      const glyphScan = (Date.now() / 45) % 28;
+
       for (let x = 0; x < 240; x++) {
         const idx = x * 4;
         let intensity = isPlaying ? Math.random() * (paramNoise * 2.5) : 0;
@@ -2511,8 +2906,17 @@
           intensity += (1 - dist / 15) * 255 * (syncPct / 100);
         }
 
+        // 스펙트로그램 시각 글리프(중앙 부근 눈/해골 안와 윤곽선 주입)
+        if (secretGlyphIntensity > 0.15 && x >= 70 && x <= 170) {
+          const dx = (x - 120) * 0.14;
+          const eyeShape = Math.sin(dx * dx + glyphScan * 0.3);
+          if (Math.abs(eyeShape) > 0.6) {
+            intensity = Math.min(255, intensity + 180 * secretGlyphIntensity);
+          }
+        }
+
         intensity = Math.min(255, intensity);
-        data[idx] = intensity;
+        data[idx] = secretGlyphIntensity > 0.4 ? Math.min(255, intensity + 80) : intensity;
         data[idx + 1] = intensity > 120 ? intensity : 0;
         data[idx + 2] = 255 - intensity;
         data[idx + 3] = 255;
@@ -2521,7 +2925,7 @@
     }
 
     /* ========================================================
-       5. 단말기 UI 및 마우스 노브 조작
+       5. 단말기 UI, 마우스 조작, 수사 수첩 및 스팀 설정 메뉴
        ======================================================== */
     function enterTerminal() {
       inTerminalMode = true;
@@ -2536,6 +2940,106 @@
         const lockPromise = renderer.domElement.requestPointerLock();
         if (lockPromise && lockPromise.catch) lockPromise.catch(() => {});
       } catch(e) {}
+    }
+
+    /* [ESC] 시스템 설정 모달 토글 */
+    function toggleSettingsModal() {
+      inSettingsMode = !inSettingsMode;
+      const modal = document.getElementById('settingsModal');
+      if (modal) modal.style.display = inSettingsMode ? 'flex' : 'none';
+      if (inSettingsMode) {
+        document.exitPointerLock();
+      } else if (!inTerminalMode && !inDocInspectMode && !inJournalMode) {
+        try {
+          const p = renderer.domElement.requestPointerLock();
+          if (p && p.catch) p.catch(() => {});
+        } catch(e) {}
+      }
+    }
+
+    /* [TAB] 수사관 수첩 토글 및 내용 렌더링 */
+    function toggleJournal() {
+      inJournalMode = !inJournalMode;
+      const modal = document.getElementById('journalModal');
+      if (modal) modal.style.display = inJournalMode ? 'flex' : 'none';
+      if (inJournalMode) {
+        document.exitPointerLock();
+        renderJournalContent();
+      } else if (!inTerminalMode && !inDocInspectMode && !inSettingsMode) {
+        try {
+          const p = renderer.domElement.requestPointerLock();
+          if (p && p.catch) p.catch(() => {});
+        } catch(e) {}
+      }
+    }
+
+    function renderJournalContent() {
+      const box = document.getElementById('journalContent');
+      if (!box) return;
+      let html = `
+        <div class="journal-entry">
+          <strong style="color:var(--amber);">[국립과학수사연구소 감식관 강서진의 수첩]</strong><br>
+          1999년 12월 31일. 20년 전 불타버린 송백신경정신병원 404호 격리실의 미공개 음성 카트리지 5점을 수거해 긴급 복원 작업에 착수했다.<br>
+          지하 2층 철문은 바깥에서 용접되어 있었으나 내부 장비는 방금까지 누군가 사용한 듯 따뜻했다.
+        </div>
+      `;
+
+      for (let i = 1; i <= 5; i++) {
+        const isDone = i < curChapter || (i === curChapter && dialogueIndex >= chapterDB[i].script.length);
+        const isCur = i === curChapter;
+        const ch = chapterDB[i];
+        html += `
+          <div class="journal-entry" style="border-left-color:${isDone ? '#33ff77' : (isCur ? '#ffaa11' : '#445544')};">
+            <strong>카트리지 #${i}: ${ch.title}</strong><br>
+            - 목표 주파수: <strong>${ch.targetFreq} Hz</strong> (권장 복조: <strong>${ch.reqDemod}</strong>)<br>
+            - 상태: ${isDone ? '<span style="color:#33ff77;">[복원 완료 - 해독 완료]</span>' : (isCur ? '<span style="color:#ffaa11;">[현재 복원 진행 중]</span>' : '<span style="color:#888;">[암호화 잠금]</span>')}<br>
+            ${isDone ? `<div style="font-size:11.5px; color:#8abfa1; margin-top:4px;">마지막 대화: "${ch.script[ch.script.length-1].txt}"</div>` : ''}
+          </div>
+        `;
+      }
+
+      html += `
+        <div class="journal-entry" style="border-left-color:#aa44ff;">
+          <strong style="color:#aa44ff;">[자외선(UV) 블랙라이트 단서 암호표]</strong><br>
+          - CH.1 [AM 복조]: 850 Hz (환자 17호 취조 테이프)<br>
+          - CH.2 [SSB 단측파대 복조]: 108.4 Hz (뇌파 파괴 펄스 주파수)<br>
+          - CH.3 [BFO 비트 복조]: 1850 Hz (수간호사 최은경 도청 음성)<br>
+          - CH.4 [FM 역재생]: 2400 Hz (119 구조대 구조 무전)<br>
+          - CH.5 [AM 복조]: 440 Hz (거짓의 종말 & 진실의 자아)
+        </div>
+      `;
+      box.innerHTML = html;
+    }
+
+    function setMasterVolume(val) {
+      if (masterGain && audioCtx) {
+        masterGain.gain.setValueAtTime(val / 100, audioCtx.currentTime);
+      }
+    }
+
+    function setSensitivity(val) {
+      mouseSensitivity = (val / 1000) * 0.15;
+    }
+
+    function toggleCRTEffect() {
+      const vhs = document.querySelector('.vhs-overlay');
+      const track = document.querySelector('.vhs-tracking-bar');
+      const btn = document.getElementById('btnToggleCRT');
+
+      crtIntensityLevel = (crtIntensityLevel + 1) % 3;
+      if (crtIntensityLevel === 0) {
+        if (vhs) vhs.style.opacity = '0';
+        if (track) track.style.opacity = '0';
+        if (btn) btn.innerText = "강도: 꺼짐 (OFF)";
+      } else if (crtIntensityLevel === 1) {
+        if (vhs) vhs.style.opacity = '0.45';
+        if (track) track.style.opacity = '0.35';
+        if (btn) btn.innerText = "강도: 약함 (MILD)";
+      } else {
+        if (vhs) vhs.style.opacity = '0.92';
+        if (track) track.style.opacity = '0.85';
+        if (btn) btn.innerText = "강도: 높음 (NORMAL)";
+      }
     }
 
     document.getElementById('btnPlay').addEventListener('click', startTapeEngine);
@@ -2712,9 +3216,9 @@
     });
 
     window.addEventListener('mousemove', (e) => {
-      if (!isPointerLocked || inTerminalMode || inDocInspectMode) return;
-      cameraYaw -= e.movementX * 0.0022;
-      cameraPitch -= e.movementY * 0.0022;
+      if (!isPointerLocked || inTerminalMode || inDocInspectMode || inJournalMode || inSettingsMode) return;
+      cameraYaw -= e.movementX * mouseSensitivity;
+      cameraPitch -= e.movementY * mouseSensitivity;
       cameraPitch = Math.max(-Math.PI / 2.3, Math.min(Math.PI / 2.3, cameraPitch));
     });
 
@@ -2724,6 +3228,12 @@
       if (k === 'a') keys.a = true;
       if (k === 's') keys.s = true;
       if (k === 'd') keys.d = true;
+
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        toggleJournal();
+        return;
+      }
 
       if (k === 'f') {
         if (lightMode === 'flashlight') setLightMode('off');
@@ -2736,7 +3246,11 @@
       }
 
       if (k === 'e') {
-        if (inDocInspectMode) {
+        if (inSettingsMode) {
+          toggleSettingsModal();
+        } else if (inJournalMode) {
+          toggleJournal();
+        } else if (inDocInspectMode) {
           closeDocModal();
         } else if (inTerminalMode) {
           exitTerminal();
@@ -2781,8 +3295,17 @@
       }
 
       if (e.key === 'Escape') {
-        if (inDocInspectMode) closeDocModal();
-        if (inTerminalMode) exitTerminal();
+        if (inSettingsMode) {
+          toggleSettingsModal();
+        } else if (inJournalMode) {
+          toggleJournal();
+        } else if (inDocInspectMode) {
+          closeDocModal();
+        } else if (inTerminalMode) {
+          exitTerminal();
+        } else {
+          toggleSettingsModal();
+        }
         hangupPhone();
       }
     });

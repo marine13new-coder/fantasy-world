@@ -36,6 +36,9 @@ def test_game():
         mirror_exists = evaluate_js("typeof crackedMirrorObj !== 'undefined' && crackedMirrorObj !== null")
         breaker_exists = evaluate_js("typeof breakerBoxObj !== 'undefined' && breakerBoxObj !== null")
         exit_exists = evaluate_js("typeof exitSignObj !== 'undefined' && exitSignObj !== null")
+        window_exists = evaluate_js("typeof asylumWindowObj !== 'undefined' && asylumWindowObj !== null")
+        puddle_exists = evaluate_js("typeof bloodPuddleObj !== 'undefined' && bloodPuddleObj !== null")
+        sil_exists = evaluate_js("typeof shadowSilhouetteObj !== 'undefined' && shadowSilhouetteObj !== null")
 
         print(f"   - Three.js 씬: {scene_exists}")
         print(f"   - 볼류메트릭 라이트 콘: {cone_exists}")
@@ -46,7 +49,10 @@ def test_game():
         print(f"   - 깨진 관찰 거울: {mirror_exists}")
         print(f"   - 산업용 배전반: {breaker_exists}")
         print(f"   - 비상구 점멸등: {exit_exists}")
-        assert scene_exists and cone_exists and drawer_exists and sedative_exists and board_exists and clip_exists and mirror_exists and breaker_exists and exit_exists
+        print(f"   - 비 내리는 철창 창문: {window_exists}")
+        print(f"   - 바닥 피 웅덩이 오브젝트: {puddle_exists}")
+        print(f"   - 창밖 폭풍우 실루엣: {sil_exists}")
+        assert scene_exists and cone_exists and drawer_exists and sedative_exists and board_exists and clip_exists and mirror_exists and breaker_exists and exit_exists and window_exists and puddle_exists and sil_exists
 
         print("4. 서랍 열기 & 신경 안정제 복용 테스트")
         evaluate_js("toggleDeskDrawer()")
@@ -73,6 +79,23 @@ def test_game():
         evaluate_js("closeDocModal()")
         cdp.drain(200)
 
+        print("5.5. [TAB] 감식관 수첩 및 [ESC] 시스템 설정 모달 테스트")
+        evaluate_js("toggleJournal()")
+        cdp.drain(200)
+        journal_open = evaluate_js("inJournalMode")
+        print(f"   - 수사관 수첩 모달 열림: {journal_open}")
+        assert journal_open
+        evaluate_js("toggleJournal()")
+        cdp.drain(200)
+
+        evaluate_js("toggleSettingsModal()")
+        cdp.drain(200)
+        settings_open = evaluate_js("inSettingsMode")
+        print(f"   - 시스템 설정/일시정지 모달 열림: {settings_open}")
+        assert settings_open
+        evaluate_js("toggleSettingsModal()")
+        cdp.drain(200)
+
         print("6. UV 자외선 블랙라이트 [G] 모드 토글 테스트")
         evaluate_js("setLightMode('uv')")
         cdp.drain(400)
@@ -97,9 +120,14 @@ def test_game():
 
         hetero_exists = evaluate_js("typeof heterodyneOsc !== 'undefined' && heterodyneOsc !== null")
         lfo_exists = evaluate_js("typeof wowLfo !== 'undefined' && wowLfo !== null")
+        rain_exists = evaluate_js("typeof rainAmbienceGain !== 'undefined' && rainAmbienceGain !== null")
+        tinnitus_exists = evaluate_js("typeof tinnitusOsc !== 'undefined' && tinnitusOsc !== null")
+
         print(f"   - 헤테로다인 라디오 휘파람: {hetero_exists}")
         print(f"   - 아날로그 테이프 와우/플러터 LFO: {lfo_exists}")
-        assert hetero_exists and lfo_exists
+        print(f"   - 폭풍우 빗소리 앰비언스 노드: {rain_exists}")
+        print(f"   - 3900Hz 이명(Tinnitus) 오실레이터: {tinnitus_exists}")
+        assert hetero_exists and lfo_exists and rain_exists and tinnitus_exists
 
         evaluate_js("autoTuneAssist()")
         cdp.drain(1200)
@@ -107,10 +135,14 @@ def test_game():
         print(f"   - Ch.1 동기화 상태: {sync_text}")
         assert "LOCKED" in str(sync_text)
 
-        print("7.5. 천둥 및 번개 시뮬레이션 연출 테스트")
+        print("7.5. 천둥/번개 시뮬레이션 및 점진적 환경 변이 테스트")
         evaluate_js("triggerLightning()")
         cdp.drain(300)
-        print("   - 천둥/번개 사운드 및 섬광 트리거 정상 완료")
+        evaluate_js("progressRoomHaunting(1)")
+        cdp.drain(200)
+        puddle_scaled = evaluate_js("bloodPuddleObj.scale.x > 0.1")
+        print(f"   - Ch.1 완료 후 피 웅덩이 확장 상태: {puddle_scaled}")
+        assert puddle_scaled
 
         cdp.screenshot(Path("site/archive-1999-final-test.png"))
         print("   ✅ 최종 플레이테스트 스크린샷 저장 완료: site/archive-1999-final-test.png")
