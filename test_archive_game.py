@@ -39,6 +39,9 @@ def test_game():
         window_exists = evaluate_js("typeof asylumWindowObj !== 'undefined' && asylumWindowObj !== null")
         puddle_exists = evaluate_js("typeof bloodPuddleObj !== 'undefined' && bloodPuddleObj !== null")
         sil_exists = evaluate_js("typeof shadowSilhouetteObj !== 'undefined' && shadowSilhouetteObj !== null")
+        clock_exists = evaluate_js("typeof wallClockObj !== 'undefined' && wallClockObj !== null")
+        sec_hand_exists = evaluate_js("typeof clockSecondHand !== 'undefined' && clockSecondHand !== null")
+        achieve_banner_exists = evaluate_js("document.getElementById('steamAchievementBanner') !== null")
 
         print(f"   - Three.js 씬: {scene_exists}")
         print(f"   - 볼류메트릭 라이트 콘: {cone_exists}")
@@ -52,7 +55,10 @@ def test_game():
         print(f"   - 비 내리는 철창 창문: {window_exists}")
         print(f"   - 바닥 피 웅덩이 오브젝트: {puddle_exists}")
         print(f"   - 창밖 폭풍우 실루엣: {sil_exists}")
-        assert scene_exists and cone_exists and drawer_exists and sedative_exists and board_exists and clip_exists and mirror_exists and breaker_exists and exit_exists and window_exists and puddle_exists and sil_exists
+        print(f"   - 벽면 아날로그 괘종시계: {clock_exists}")
+        print(f"   - 시계 붉은 초침 메쉬: {sec_hand_exists}")
+        print(f"   - 스팀 업적 배너 요소: {achieve_banner_exists}")
+        assert scene_exists and cone_exists and drawer_exists and sedative_exists and board_exists and clip_exists and mirror_exists and breaker_exists and exit_exists and window_exists and puddle_exists and sil_exists and clock_exists and sec_hand_exists and achieve_banner_exists
 
         print("4. 서랍 열기 & 신경 안정제 복용 테스트")
         evaluate_js("toggleDeskDrawer()")
@@ -79,12 +85,20 @@ def test_game():
         evaluate_js("closeDocModal()")
         cdp.drain(200)
 
-        print("5.5. [TAB] 감식관 수첩 및 [ESC] 시스템 설정 모달 테스트")
+        print("5.5. [TAB] 감식관 수첩 및 [ESC] 시스템 설정 모달, 스팀 업적 테스트")
+        evaluate_js("unlockAchievement('firstTape')")
+        cdp.drain(200)
+        achieve_unlocked = evaluate_js("unlockedAchievements.has('firstTape')")
+        print(f"   - 스팀 업적 언락 확인 (firstTape): {achieve_unlocked}")
+        assert achieve_unlocked is True
+
         evaluate_js("toggleJournal()")
         cdp.drain(200)
         journal_open = evaluate_js("inJournalMode")
+        badge_count = evaluate_js("document.querySelectorAll('.achieve-badge-item').length")
         print(f"   - 수사관 수첩 모달 열림: {journal_open}")
-        assert journal_open
+        print(f"   - 수첩 내 스팀 업적 뱃지 갯수 (8종): {badge_count}")
+        assert journal_open and badge_count == 8
         evaluate_js("toggleJournal()")
         cdp.drain(200)
 
