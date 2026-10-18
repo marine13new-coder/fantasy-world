@@ -192,40 +192,46 @@
     }
 
     .capsule {
-      background: var(--hud-bg);
-      border: 1px solid #1a3824;
-      padding: 6px 14px;
-      border-radius: 4px;
+      background: rgba(3, 10, 6, 0.78);
+      border: 1px solid rgba(51, 255, 119, 0.28);
+      padding: 4px 10px;
+      border-radius: 2px;
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      backdrop-filter: blur(5px);
+      gap: 6px;
+      font-size: 11px;
+      letter-spacing: 1px;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.85);
+      backdrop-filter: blur(4px);
     }
 
     .capsule-btn {
-      background: #0f2418;
-      border: 1px solid #235436;
-      color: #79ff9c;
-      padding: 6px 12px;
-      font-family: inherit;
-      font-size: 12px;
-      font-weight: bold;
-      border-radius: 4px;
+      background: rgba(8, 20, 13, 0.82);
+      border: 1px solid rgba(51, 255, 119, 0.35);
+      color: #8be0a5;
+      padding: 4px 10px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 1px;
+      border-radius: 2px;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.2s;
+      transition: all 0.15s;
+      box-shadow: 0 0 6px rgba(0,0,0,0.7);
     }
     .capsule-btn:hover {
-      background: #19442a;
-      box-shadow: 0 0 10px rgba(51, 255, 119, 0.4);
+      background: rgba(22, 55, 33, 0.9);
+      border-color: #33ff77;
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(51, 255, 119, 0.5);
     }
     .capsule-btn.active {
-      background: var(--phosphor);
-      color: #030805;
-      border-color: #fff;
+      background: #184c2a;
+      color: #33ff77;
+      border-color: #33ff77;
+      box-shadow: 0 0 12px rgba(51, 255, 119, 0.6);
     }
 
     .heart-pulse-dot {
@@ -1930,7 +1936,7 @@
     const unlockedAchievements = new Set();
 
     const keys = { w: false, a: false, s: false, d: false };
-    const playerPos = new THREE.Vector3(0, 1.6, 2.8);
+    const playerPos = new THREE.Vector3(0, 1.55, 0.4);
     let cameraPitch = 0, cameraYaw = 0;
     let walkCycle = 0;
 
@@ -1938,22 +1944,32 @@
       if (scene) return;
       const canvas = document.getElementById('webglCanvas');
       scene = new THREE.Scene();
-      scene.fog = new THREE.FogExp2(0x020503, 0.11);
+      scene.fog = new THREE.FogExp2(0x020604, 0.05);
 
       camera = new THREE.PerspectiveCamera(74, window.innerWidth / window.innerHeight, 0.1, 50);
       camera.position.copy(playerPos);
 
-      renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: 'high-performance' });
       renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.3;
+      if (renderer.outputColorSpace !== undefined) {
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+      } else {
+        renderer.outputEncoding = THREE.sRGBEncoding;
+      }
 
-      ambientGlow = new THREE.AmbientLight(0x08100a, isSafeMode ? 1.6 : 0.7);
+      ambientGlow = new THREE.AmbientLight(0x0a120c, isSafeMode ? 1.6 : 0.75);
       scene.add(ambientGlow);
 
       ceilingLamp = new THREE.PointLight(0x44ff88, isSafeMode ? 1.8 : 1.2, 12);
       ceilingLamp.position.set(0, 3.4, 0);
       ceilingLamp.castShadow = true;
+      ceilingLamp.shadow.mapSize.width = 1024;
+      ceilingLamp.shadow.mapSize.height = 1024;
       scene.add(ceilingLamp);
 
       exitSignLamp = new THREE.PointLight(0xff2233, 0.9, 4.0);
@@ -1967,9 +1983,13 @@
       scene.add(thunderLight);
 
       // 작업 데스크 전용 앤티크 스탠드 웜 조명 (Desk Workstation Spotlight)
-      deskLampLight = new THREE.SpotLight(0xffddaa, isSafeMode ? 3.0 : 2.5, 8, Math.PI / 3.8, 0.45, 1.2);
-      deskLampLight.position.set(-0.9, 1.9, -4.0);
-      deskLampLight.target.position.set(0, 1.0, -4.2);
+      deskLampLight = new THREE.SpotLight(0xffdfaa, isSafeMode ? 3.5 : 2.9, 9, Math.PI / 3.6, 0.4, 1.15);
+      deskLampLight.position.set(-1.1, 1.85, -3.9);
+      deskLampLight.target.position.set(0, 0.95, -4.0);
+      deskLampLight.castShadow = true;
+      deskLampLight.shadow.mapSize.width = 1024;
+      deskLampLight.shadow.mapSize.height = 1024;
+      deskLampLight.shadow.bias = -0.0008;
       scene.add(deskLampLight);
       scene.add(deskLampLight.target);
 
@@ -2115,10 +2135,14 @@
       // 등 뒤 철문 & 상단 비상구 조명
       buildDoorAndExitSign(doorTex);
 
-      // 고정밀 병원 소품 (스포크 휠체어, 링거 수액대, 가위형 수술용 들것)
+      // 고정밀 병원 소품 (스포크 휠체어, 링거 수액대, 가위형 수술용 들것, 회전 의자)
       buildWheelchairProp();
       buildIVStandProp();
       buildGurneyProp();
+      buildDeskChairProp();
+
+      // 바닥 접촉 그림자 (Contact Shadows / Grounding Ambient Occlusion)
+      buildContactShadows();
 
       // 3D 비 내리는 철창 창문 (Rain-Streaked Asylum Window)
       buildAsylumWindow();
@@ -2258,6 +2282,200 @@
     }
 
     /* ========================================================
+       바닥 접촉 그림자 (Contact Shadows / Grounding Ambient Occlusion)
+       ======================================================== */
+    function createContactShadowTexture() {
+      const c = document.createElement('canvas');
+      c.width = 256;
+      c.height = 256;
+      const ctx = c.getContext('2d');
+      ctx.clearRect(0, 0, 256, 256);
+
+      const grad = ctx.createRadialGradient(128, 128, 10, 128, 128, 122);
+      grad.addColorStop(0, 'rgba(0, 0, 0, 0.95)');
+      grad.addColorStop(0.35, 'rgba(0, 0, 0, 0.65)');
+      grad.addColorStop(0.7, 'rgba(0, 0, 0, 0.2)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(128, 128, 122, 0, Math.PI * 2);
+      ctx.fill();
+
+      const tex = new THREE.CanvasTexture(c);
+      return tex;
+    }
+
+    function buildContactShadows() {
+      const shadowTex = createContactShadowTexture();
+      const shadowMat = new THREE.MeshBasicMaterial({
+        map: shadowTex,
+        transparent: true,
+        opacity: 0.88,
+        depthWrite: false
+      });
+
+      // 감식 데스크 접촉 그림자
+      const deskShadow = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 1.8), shadowMat);
+      deskShadow.rotation.x = -Math.PI / 2;
+      deskShadow.position.set(0, 0.005, -4.2);
+      scene.add(deskShadow);
+
+      // 휠체어 접촉 그림자
+      const wcShadow = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.4), shadowMat);
+      wcShadow.rotation.x = -Math.PI / 2;
+      wcShadow.position.set(3.2, 0.005, -1.8);
+      scene.add(wcShadow);
+
+      // 들것(Gurney) 접촉 그림자
+      const gurneyShadow = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.2), shadowMat);
+      gurneyShadow.rotation.x = -Math.PI / 2;
+      gurneyShadow.position.set(-3.0, 0.005, 1.2);
+      scene.add(gurneyShadow);
+
+      // 링거대 접촉 그림자
+      const ivShadow = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), shadowMat);
+      ivShadow.rotation.x = -Math.PI / 2;
+      ivShadow.position.set(-2.8, 0.005, -2.5);
+      scene.add(ivShadow);
+
+      // 회전 의자 접촉 그림자
+      const chairShadow = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 1.0), shadowMat);
+      chairShadow.rotation.x = -Math.PI / 2;
+      chairShadow.position.set(0.12, 0.005, -3.32);
+      scene.add(chairShadow);
+    }
+
+    /* 90년대 병원/수사관 가죽 회전의자 (Vintage Institutional Swivel Chair) */
+    function buildDeskChairProp() {
+      const chairGroup = new THREE.Group();
+      const leatherMat = new THREE.MeshStandardMaterial({ color: 0x161e19, roughness: 0.65, metalness: 0.15 });
+      const chromeMat = new THREE.MeshStandardMaterial({ color: 0x99a39d, metalness: 0.88, roughness: 0.25 });
+      const wheelMat = new THREE.MeshStandardMaterial({ color: 0x0d120f, roughness: 0.8 });
+
+      // 5발 스타 베이스 (5-Star Caster Base)
+      for (let i = 0; i < 5; i++) {
+        const angle = (i * Math.PI * 2) / 5;
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.025, 0.28), chromeMat);
+        leg.position.set(Math.sin(angle) * 0.14, 0.05, Math.cos(angle) * 0.14);
+        leg.rotation.y = angle;
+        chairGroup.add(leg);
+
+        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.025, 8), wheelMat);
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(Math.sin(angle) * 0.26, 0.025, Math.cos(angle) * 0.26);
+        chairGroup.add(wheel);
+      }
+
+      // 중심 유압 실린더
+      const cylinder = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.028, 0.38, 12), chromeMat);
+      cylinder.position.y = 0.24;
+      chairGroup.add(cylinder);
+
+      // 시트 쿠션
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.50, 0.08, 0.48), leatherMat);
+      seat.position.set(0, 0.45, 0);
+      seat.castShadow = true;
+      chairGroup.add(seat);
+
+      // L자 등받이 지지대
+      const spine = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.35, 0.03), chromeMat);
+      spine.position.set(0, 0.65, 0.24);
+      chairGroup.add(spine);
+
+      // 등받이 쿠션
+      const backrest = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.40, 0.06), leatherMat);
+      backrest.position.set(0, 0.80, 0.23);
+      backrest.rotation.x = -0.06;
+      backrest.castShadow = true;
+      chairGroup.add(backrest);
+
+      // 좌/우 팔걸이 (Armrests)
+      for (let side of [-0.26, 0.26]) {
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.22, 8), chromeMat);
+        post.position.set(side, 0.56, 0.02);
+        chairGroup.add(post);
+
+        const pad = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.025, 0.26), leatherMat);
+        pad.position.set(side, 0.67, 0.02);
+        chairGroup.add(pad);
+      }
+
+      // 데스크 앞, 황급히 일어선 듯 16도 회전된 각도로 배치
+      chairGroup.position.set(0.12, 0, -3.32);
+      chairGroup.rotation.y = 0.28;
+      scene.add(chairGroup);
+    }
+
+    /* 90년대 클래식 기계식 키보드 & 2버튼 볼마우스 (Vintage 90s Mechanical Keyboard & Mouse) */
+    function buildDeskKeyboardAndMouse(parentGroup) {
+      const kbGroup = new THREE.Group();
+
+      // 레트로 베이지 & 회색 플라스틱 재질
+      const beigeCaseMat = new THREE.MeshStandardMaterial({ color: 0xc8c3b4, roughness: 0.72 });
+      const keyGrayMat = new THREE.MeshStandardMaterial({ color: 0x9e988b, roughness: 0.65 });
+      const keyDarkMat = new THREE.MeshStandardMaterial({ color: 0x6e6960, roughness: 0.65 });
+      const cableMat = new THREE.MeshStandardMaterial({ color: 0x222623, roughness: 0.85 });
+
+      // 키보드 본체 경사 웨지 베이스
+      const kbBase = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.032, 0.22), beigeCaseMat);
+      kbBase.position.set(0, 0.016, 0);
+      kbGroup.add(kbBase);
+
+      // 키보드 상단 펑션 열 단차
+      const kbStep = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.012, 0.05), beigeCaseMat);
+      kbStep.position.set(0, 0.035, -0.07);
+      kbGroup.add(kbStep);
+
+      // 키 캡 클러스터 (메인 쿼티 블록)
+      const qwertyBlock = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.015, 0.12), keyGrayMat);
+      qwertyBlock.position.set(-0.08, 0.038, 0.02);
+      kbGroup.add(qwertyBlock);
+
+      // 스페이스바 (도드라진 돌출부)
+      const spacebar = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.018, 0.022), keyDarkMat);
+      spacebar.position.set(-0.08, 0.042, 0.085);
+      kbGroup.add(spacebar);
+
+      // 방향키 & 네비게이션 블록
+      const navBlock = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.015, 0.12), keyGrayMat);
+      navBlock.position.set(0.12, 0.038, 0.02);
+      kbGroup.add(navBlock);
+
+      // 숫자패드 (Numpad) 블록
+      const numpadBlock = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.015, 0.12), keyGrayMat);
+      numpadBlock.position.set(0.20, 0.038, 0.02);
+      kbGroup.add(numpadBlock);
+
+      // 키보드 코일 케이블
+      const kbCable = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.35, 6), cableMat);
+      kbCable.rotation.x = Math.PI / 2;
+      kbCable.position.set(0, 0.02, -0.25);
+      kbGroup.add(kbCable);
+
+      kbGroup.position.set(0, 0.90, 0.32);
+      kbGroup.rotation.x = 0.08;
+      parentGroup.add(kbGroup);
+
+      // 90s 볼마우스 & 마우스패드 (모니터 우측 키보드 옆)
+      const padMat = new THREE.MeshStandardMaterial({ color: 0x1e2b22, roughness: 0.9 });
+      const mousePad = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.004, 0.26), padMat);
+      mousePad.position.set(0.42, 0.902, 0.32);
+      parentGroup.add(mousePad);
+
+      const mouseMat = new THREE.MeshStandardMaterial({ color: 0xc2bdae, roughness: 0.6 });
+      const mouse = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.03, 0.12), mouseMat);
+      mouse.position.set(0.42, 0.92, 0.32);
+      mouse.rotation.y = -0.1;
+      parentGroup.add(mouse);
+
+      // 마우스 중앙 클릭 휠/분할선
+      const mouseLine = new THREE.Mesh(new THREE.BoxGeometry(0.002, 0.032, 0.05), new THREE.MeshBasicMaterial({ color: 0x555048 }));
+      mouseLine.position.set(0.42, 0.925, 0.29);
+      parentGroup.add(mouseLine);
+    }
+
+    /* ========================================================
        핵심 감식 워크스테이션 (Heavy Institutional Workstation)
        ======================================================== */
     function buildDeskWorkstation() {
@@ -2339,7 +2557,7 @@
           roughness: 0.4
         });
         const cTape = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.025, 0.11), tapeCaseMat);
-        cTape.position.set(0.95, 0.91 + t * 0.026, 0.25);
+        cTape.position.set(0.68, 0.91 + t * 0.026, 0.25);
         cTape.rotation.y = 0.15 * t;
         deskObj.add(cTape);
       }
@@ -2354,10 +2572,13 @@
       // 커피 머그컵
       const mugMat = new THREE.MeshStandardMaterial({ color: 0xeeece5, roughness: 0.5 });
       const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.04, 0.09, 12), mugMat);
-      mug.position.set(1.35, 0.95, -0.2);
+      mug.position.set(-0.75, 0.95, 0.1);
       deskObj.add(mug);
 
-      // 릴-투-릴 데크 베이스 유닛 & 3D 물리 회전 스풀
+      // 빈티지 90s 기계식 키보드 & 마우스
+      buildDeskKeyboardAndMouse(deskObj);
+
+      // 스튜디오 마스터 릴-투-릴 데크 (우측 배치 & 3D 물리 스풀 회전)
       buildReelToReelDeck(deskObj);
 
       deskObj.position.set(0, 0, -4.2);
@@ -2369,18 +2590,43 @@
       // CRT 모니터 본체 케이싱 (Monitor Chassis)
       buildMonitorChassis();
 
-      // CRT 모니터 실시간 동적 인광 스크린 (Real-Time 3D In-Game CRT Display)
+      // CRT 모니터 볼록 구면 인광 스크린 (Convex Spherical CRT Display)
       monitorCanvas = document.createElement('canvas');
       monitorCanvas.width = 256;
       monitorCanvas.height = 180;
       monitorCtx = monitorCanvas.getContext('2d');
       monitorTexture = new THREE.CanvasTexture(monitorCanvas);
 
-      const screenGeo = new THREE.PlaneGeometry(0.85, 0.6);
+      const screenGeo = new THREE.PlaneGeometry(0.86, 0.62, 32, 24);
+      const pos = screenGeo.attributes.position;
+      const halfW = 0.86 / 2;
+      const halfH = 0.62 / 2;
+      for (let i = 0; i < pos.count; i++) {
+        const nx = pos.getX(i) / halfW;
+        const ny = pos.getY(i) / halfH;
+        const d2 = nx * nx + ny * ny;
+        const curve = Math.max(0, 1 - d2 * 0.45);
+        pos.setZ(i, curve * 0.045);
+      }
+      screenGeo.computeVertexNormals();
+
       const screenMat = new THREE.MeshBasicMaterial({ map: monitorTexture });
       monitorScreenMesh = new THREE.Mesh(screenGeo, screenMat);
       monitorScreenMesh.position.set(0, 1.35, -3.79);
       scene.add(monitorScreenMesh);
+
+      // CRT 볼록 반사 유리 커버 (Curved Glass Reflection Cover)
+      const glassGeo = screenGeo.clone();
+      const glassMat = new THREE.MeshStandardMaterial({
+        color: 0xaaccbb,
+        roughness: 0.12,
+        metalness: 0.25,
+        transparent: true,
+        opacity: 0.18
+      });
+      const screenGlass = new THREE.Mesh(glassGeo, glassMat);
+      screenGlass.position.set(0, 1.35, -3.785);
+      scene.add(screenGlass);
 
       // 데스크 위 3D 수사 증거 폴라로이드 사진
       buildDeskPolaroid();
@@ -2392,75 +2638,111 @@
       buildDeskTelephone();
     }
 
-    /* 릴-투-릴 오디오 데크 & 3D 스풀 물리 */
+    /* 릴-투-릴 오디오 데크 & 3D 스풀 물리 (Studio Master Reel-to-Reel Recorder) */
     function buildReelToReelDeck(parentGroup) {
       const metalFaceTex = createMetalBrushedTexture();
-      const faceMat = new THREE.MeshStandardMaterial({ map: metalFaceTex, roughness: 0.45, metalness: 0.8 });
-      const chassisMat = new THREE.MeshStandardMaterial({ color: 0x151c17, roughness: 0.8 });
-      const spoolMat = new THREE.MeshStandardMaterial({ color: 0x99a89e, metalness: 0.9, roughness: 0.25 });
+      const faceMat = new THREE.MeshStandardMaterial({ map: metalFaceTex, roughness: 0.38, metalness: 0.82 });
+      const chassisMat = new THREE.MeshStandardMaterial({ color: 0x18201a, roughness: 0.8 });
+      const spoolMat = new THREE.MeshStandardMaterial({ color: 0xb0c2b5, metalness: 0.92, roughness: 0.2 });
       const tapeBrownMat = new THREE.MeshStandardMaterial({ color: 0x4a2a1b, roughness: 0.7 });
-      const vuGlowMat = new THREE.MeshBasicMaterial({ color: 0xffb833 });
+      const vuGlowMat = new THREE.MeshBasicMaterial({ color: 0xffaa22 });
+      const darkSteelMat = new THREE.MeshStandardMaterial({ color: 0x0e1310, metalness: 0.9, roughness: 0.3 });
 
-      // 오디오 랙마운트 섀시
-      const deckChassis = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.38, 0.55), chassisMat);
-      deckChassis.position.set(0, 1.05, 0.1);
-      parentGroup.add(deckChassis);
+      const deckUnit = new THREE.Group();
+
+      // 스튜디오 랙 하우징 본체 (모니터 우측 배치)
+      const deckChassis = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.58, 0.34), chassisMat);
+      deckChassis.position.set(0, 0.29, 0);
+      deckChassis.castShadow = true;
+      deckUnit.add(deckChassis);
 
       // 전면 브러시드 알루미늄 페이스플레이트
-      const facePlate = new THREE.Mesh(new THREE.BoxGeometry(1.38, 0.36, 0.02), faceMat);
-      facePlate.position.set(0, 1.05, 0.38);
-      parentGroup.add(facePlate);
+      const facePlate = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.56, 0.015), faceMat);
+      facePlate.position.set(0, 0.29, 0.172);
+      deckUnit.add(facePlate);
 
-      // 듀얼 아날로그 VU 미터 창 (Amber Backlit Windows)
-      for (let s of [-0.22, 0.22]) {
-        const vuFrame = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.12, 0.01), chassisMat);
-        vuFrame.position.set(s, 1.14, 0.395);
-        parentGroup.add(vuFrame);
+      // 상단 테이프 주행 가이드 핀 & 핀치 롤러 & 헤드 어셈블리
+      const headBlock = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.09, 0.04), darkSteelMat);
+      headBlock.position.set(0, 0.26, 0.19);
+      deckUnit.add(headBlock);
 
-        const vuGlow = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.1), vuGlowMat);
-        vuGlow.position.set(s, 1.14, 0.402);
-        parentGroup.add(vuGlow);
+      // 좌/우 텐션 암 롤러
+      for (let rx of [-0.22, 0.22]) {
+        const roller = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.035, 12), spoolMat);
+        roller.rotation.x = Math.PI / 2;
+        roller.position.set(rx, 0.26, 0.19);
+        deckUnit.add(roller);
+      }
 
-        const vuNeedle = new THREE.Mesh(new THREE.BoxGeometry(0.005, 0.08, 0.005), new THREE.MeshBasicMaterial({ color: 0x111111 }));
-        vuNeedle.position.set(s, 1.12, 0.405);
+      // 듀얼 아날로그 VU 미터 창 (Amber Backlit)
+      for (let s of [-0.14, 0.14]) {
+        const vuFrame = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.09, 0.01), darkSteelMat);
+        vuFrame.position.set(s, 0.11, 0.182);
+        deckUnit.add(vuFrame);
+
+        const vuGlow = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.075), vuGlowMat);
+        vuGlow.position.set(s, 0.11, 0.188);
+        deckUnit.add(vuGlow);
+
+        const vuNeedle = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.065, 0.003), new THREE.MeshBasicMaterial({ color: 0x111111 }));
+        vuNeedle.position.set(s, 0.09, 0.191);
         vuNeedle.rotation.z = -0.3;
-        parentGroup.add(vuNeedle);
+        deckUnit.add(vuNeedle);
       }
 
       // 기계식 컨트롤 노브 & 토글 버튼
       for (let k = -2; k <= 2; k++) {
-        const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.03, 12), spoolMat);
+        const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.02, 12), spoolMat);
         knob.rotation.x = Math.PI / 2;
-        knob.position.set(k * 0.16, 0.96, 0.395);
-        parentGroup.add(knob);
+        knob.position.set(k * 0.07, 0.025, 0.185);
+        deckUnit.add(knob);
       }
 
-      // 3D 물리 7인치 테이프 릴 스풀 2개 (좌/우)
+      // 3D 물리 7인치 NAB 테이프 릴 스풀 2개 (좌/우)
       tapeReelL = new THREE.Group();
       tapeReelR = new THREE.Group();
 
       const buildSpool = (grp) => {
-        const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.025, 12), spoolMat);
+        // 중심 허브
+        const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.022, 16), spoolMat);
         hub.rotation.x = Math.PI / 2;
         grp.add(hub);
-        const tapeRoll = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.02, 16), tapeBrownMat);
+
+        // 감긴 자기 테이프 롤
+        const tapeRoll = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.095, 0.018, 24), tapeBrownMat);
         tapeRoll.rotation.x = Math.PI / 2;
         grp.add(tapeRoll);
-        for (let flange of [-0.012, 0.012]) {
-          const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.003, 16), spoolMat);
+
+        // 3-Spoke 알루미늄 플랜지 디스크 (회전 시 시각적 확인이 명확하도록 3개 앵커 살 추가)
+        for (let flange of [-0.01, 0.01]) {
+          const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.145, 0.145, 0.002, 24), spoolMat);
           disc.rotation.x = Math.PI / 2;
           disc.position.z = flange;
           grp.add(disc);
+
+          // 3개의 NAB 스풀 스포크 바
+          for (let sp = 0; sp < 3; sp++) {
+            const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.14, 0.003), darkSteelMat);
+            spoke.rotation.z = (sp * Math.PI * 2) / 3;
+            spoke.position.z = flange + (flange > 0 ? 0.001 : -0.001);
+            grp.add(spoke);
+          }
         }
       };
 
       buildSpool(tapeReelL);
       buildSpool(tapeReelR);
 
-      tapeReelL.position.set(-0.48, 1.35, 0.1);
-      tapeReelR.position.set(0.48, 1.35, 0.1);
-      parentGroup.add(tapeReelL);
-      parentGroup.add(tapeReelR);
+      // 상단 좌우 스풀 배치
+      tapeReelL.position.set(-0.19, 0.41, 0.19);
+      tapeReelR.position.set(0.19, 0.41, 0.19);
+      deckUnit.add(tapeReelL);
+      deckUnit.add(tapeReelR);
+
+      // 데스크 우측, 플레이어 시야를 향해 12도 기울임
+      deckUnit.position.set(1.08, 0.90, 0.05);
+      deckUnit.rotation.y = -0.22;
+      parentGroup.add(deckUnit);
     }
 
     /* CRT 모니터 본체 케이싱 */
@@ -2649,6 +2931,33 @@
       p2.rotation.z = Math.PI / 2;
       p2.position.set(0, 3.75, 1.0);
       scene.add(p2);
+
+      // 산업용 적색 차단 밸브 휠 (Industrial Red Valve Wheel)
+      const valveMat = new THREE.MeshStandardMaterial({ color: 0xa8281b, roughness: 0.45, metalness: 0.5 });
+      const valveRim = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.018, 8, 20), valveMat);
+      valveRim.position.set(-4.1, 3.66, -1.2);
+      valveRim.rotation.x = Math.PI / 2;
+      scene.add(valveRim);
+
+      const valveSpoke1 = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.24, 6), valveMat);
+      valveSpoke1.position.set(-4.1, 3.66, -1.2);
+      scene.add(valveSpoke1);
+
+      const valveStem = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.12, 8), pipeMat);
+      valveStem.position.set(-4.1, 3.73, -1.2);
+      scene.add(valveStem);
+
+      // 황동 원형 압력 게이지 (Brass Pressure Gauge)
+      const brassMat = new THREE.MeshStandardMaterial({ color: 0xbf9c49, metalness: 0.85, roughness: 0.3 });
+      const gaugeBody = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.03, 16), brassMat);
+      gaugeBody.position.set(-4.1, 3.65, 0.8);
+      gaugeBody.rotation.x = Math.PI / 2;
+      scene.add(gaugeBody);
+
+      const dialMat = new THREE.MeshBasicMaterial({ color: 0xeeead8 });
+      const gaugeDial = new THREE.Mesh(new THREE.CircleGeometry(0.05, 16), dialMat);
+      gaugeDial.position.set(-4.1, 3.65, 0.816);
+      scene.add(gaugeDial);
     }
 
     function buildClinicalClipboard() {
