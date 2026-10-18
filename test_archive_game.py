@@ -158,6 +158,23 @@ def test_game():
         print(f"   - Ch.1 완료 후 피 웅덩이 확장 상태: {puddle_scaled}")
         assert puddle_scaled
 
+        print("7.6. 우클릭 캠코더 줌, 튜닝 바늘, 색수차 오버레이 검증")
+        zoom_frame_exists = evaluate_js("document.getElementById('camcorderZoomFrame') !== null")
+        needle_exists = evaluate_js("document.getElementById('tuningNeedleIndicator') !== null")
+        chromatic_exists = evaluate_js("document.getElementById('chromaticPulseOverlay') !== null")
+        print(f"   - 캠코더 줌 프레임: {zoom_frame_exists}")
+        print(f"   - 아날로그 튜닝 바늘: {needle_exists}")
+        print(f"   - 광기 색수차 오버레이: {chromatic_exists}")
+        assert zoom_frame_exists and needle_exists and chromatic_exists
+
+        print("7.7. 스팀 상용화 멀티 엔딩 시스템 테스트")
+        evaluate_js("showFinalEnding()")
+        cdp.drain(300)
+        final_open = evaluate_js("document.getElementById('finalModal').style.display === 'flex'")
+        print(f"   - 멀티 엔딩 모달 출력 확인: {final_open}")
+        assert final_open
+        evaluate_js("document.getElementById('finalModal').style.display = 'none'")
+
         cdp.screenshot(Path("site/archive-1999-final-test.png"))
         print("   ✅ 최종 플레이테스트 스크린샷 저장 완료: site/archive-1999-final-test.png")
 
