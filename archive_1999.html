@@ -249,7 +249,7 @@
       position: fixed;
       bottom: 28px; left: 50%;
       transform: translateX(-50%);
-      z-index: 50;
+      z-index: 80;
       pointer-events: none;
     }
 
@@ -263,7 +263,15 @@
       letter-spacing: 1.5px;
       box-shadow: 0 0 20px rgba(51, 255, 119, 0.35);
       display: none;
+      pointer-events: auto;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s, transform 0.15s;
       animation: pulse-tip 1.5s infinite;
+    }
+    .action-tip:hover {
+      background: rgba(20, 55, 32, 0.98);
+      box-shadow: 0 0 28px rgba(51, 255, 119, 0.65);
     }
     @keyframes pulse-tip { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
 
@@ -281,7 +289,9 @@
       font-weight: bold;
       letter-spacing: 2px;
       box-shadow: 0 0 35px #ff2233;
-      z-index: 60;
+      z-index: 320;
+      cursor: pointer;
+      pointer-events: auto;
       display: none;
       animation: phone-blink 0.8s infinite;
     }
@@ -301,7 +311,9 @@
       font-weight: bold;
       letter-spacing: 2px;
       box-shadow: 0 0 30px #cc33ff;
-      z-index: 60;
+      z-index: 320;
+      cursor: pointer;
+      pointer-events: auto;
       display: none;
       animation: phone-blink 0.8s infinite;
     }
@@ -961,6 +973,8 @@
       position: relative;
       overflow: hidden;
       margin-bottom: 6px;
+      cursor: ew-resize;
+      user-select: none;
     }
     .tuning-scale-ticks {
       position: absolute;
@@ -1045,11 +1059,11 @@
     </div>
   </div>
 
-  <div id="blackoutBanner">⚡ 전력 차단! 왼쪽 벽면의 배전반(Breaker)을 찾아 레버를 올리십시오! [ E ]</div>
-  <div id="phoneRingingBanner">📞 따르르릉! 데스크의 전화기가 울리고 있습니다! [ E ] 상호작용</div>
+  <div id="blackoutBanner" onclick="repairBreaker()">⚡ 전력 차단! 왼쪽 벽면 배전반(Breaker) 조작 또는 [여기를 클릭]하여 즉시 복구! [ E ]</div>
+  <div id="phoneRingingBanner" onclick="answerPhone()">📞 따르르릉! 데스크 전화기가 울립니다! [여기를 클릭] 또는 [ E ] 키로 수신</div>
 
   <div id="hudActionGuide">
-    <div class="action-tip" id="actionTipBox">[ E ] 상호작용</div>
+    <div class="action-tip" id="actionTipBox" onclick="triggerWorldInteraction()">[ E ] 상호작용</div>
   </div>
 
   <canvas id="webglCanvas"></canvas>
@@ -1166,10 +1180,10 @@
         <!-- 아날로그 주파수 눈금 스케일 바 & 바늘 -->
         <div style="display:flex; justify-content:space-between; font-size:10px; color:#82b596; margin-bottom:2px;">
           <span>0 Hz (DC)</span>
-          <span style="color:#ffaa11;">ANALOG TUNING SCALE</span>
+          <span style="color:#ffaa11;">ANALOG TUNING SCALE (클릭/드래그하여 주파수 튜닝)</span>
           <span>3800 Hz (HF)</span>
         </div>
-        <div class="tuning-scale-bar">
+        <div class="tuning-scale-bar" id="tuningScaleBar">
           <div class="tuning-scale-ticks"></div>
           <div class="tuning-needle" id="tuningNeedleIndicator"></div>
         </div>
@@ -1347,6 +1361,9 @@
       });
       playBeep(mode === 'SSB' ? 1400 : (mode === 'BFO' ? 1600 : 800));
       appendLog("시스템", `복조(Demodulation) 모드가 [${mode}]로 전환되었습니다.`);
+      if (typeof inTerminalMode !== 'undefined' && inTerminalMode && !isPlaying && typeof chapterDB !== 'undefined' && chapterDB[curChapter] && dialogueIndex < chapterDB[curChapter].script.length) {
+        startTapeEngine();
+      }
       updateFilterSettings();
     }
 
@@ -5179,8 +5196,8 @@
         if (deskLampLight) deskLampLight.intensity = 3.0;
       }
 
-      if (isPointerLocked && !inTerminalMode && !inDocInspectMode) {
-        const speed = 0.045;
+      if (!inTerminalMode && !inDocInspectMode && !inJournalMode && !inSettingsMode) {
+        const speed = 0.05;
         _moveVec.set(0, 0, 0);
         let isWalking = false;
 
@@ -5194,18 +5211,30 @@
           _moveVec.applyAxisAngle(_upAxis, cameraYaw);
           playerPos.add(_moveVec);
 
+          // 책상(Desk) 전면 충돌 방지 및 방 외벽 경계 클램핑
+          playerPos.x = Math.max(-3.8, Math.min(3.8, playerPos.x));
+          playerPos.z = Math.max(-3.8, Math.min(5.2, playerPos.z));
+          if (Math.abs(playerPos.x) < 1.62 && playerPos.z < -2.65) {
+            playerPos.z = -2.65;
+          }
+
+          // 책상 앞 착석 시점(1.36m) <-> 실내 보행 입식 시점(1.62m) 자연스러운 전환
+          const isNearDeskSeat = (Math.abs(playerPos.x) < 1.45 && playerPos.z < -2.35);
+          const targetEyeY = isNearDeskSeat ? 1.36 : 1.62;
+          playerPos.y += (targetEyeY - playerPos.y) * 0.14;
+
           walkCycle += 0.16;
-          camera.position.y = playerPos.y + Math.sin(walkCycle) * 0.04;
+          camera.position.y = playerPos.y + Math.sin(walkCycle) * 0.035;
 
           if (Math.sin(walkCycle) > 0.95 && Math.random() < 0.35) {
             playFootstepSound();
           }
         } else {
+          const isNearDeskSeat = (Math.abs(playerPos.x) < 1.45 && playerPos.z < -2.35);
+          const targetEyeY = isNearDeskSeat ? 1.36 : 1.62;
+          playerPos.y += (targetEyeY - playerPos.y) * 0.14;
           camera.position.y = playerPos.y;
         }
-
-        playerPos.x = Math.max(-3.8, Math.min(3.8, playerPos.x));
-        playerPos.z = Math.max(-3.5, Math.min(5.2, playerPos.z));
       }
 
       camera.position.x = playerPos.x;
@@ -5690,15 +5719,16 @@
     }
 
     function updateFilterSettings() {
-      if (!filterNode || !audioCtx) return;
-      filterNode.frequency.setTargetAtTime(paramFreq, audioCtx.currentTime, 0.05);
-      filterNode.Q.setTargetAtTime(paramRes, audioCtx.currentTime, 0.05);
-      updateHeterodyneWhistle();
-
       const needle = document.getElementById('tuningNeedleIndicator');
       if (needle) {
         needle.style.left = `${(paramFreq / 3800) * 100}%`;
       }
+      evaluateSyncState(false);
+
+      if (!filterNode || !audioCtx) return;
+      filterNode.frequency.setTargetAtTime(paramFreq, audioCtx.currentTime, 0.05);
+      filterNode.Q.setTargetAtTime(paramRes, audioCtx.currentTime, 0.05);
+      updateHeterodyneWhistle();
     }
 
     function playRatchetClick() {
@@ -5721,54 +5751,110 @@
     let dialogueIndex = 0;
     let syncPct = 0;
 
+    function evaluateSyncState(advanceScript = false) {
+      const ch = chapterDB[curChapter];
+      if (!ch) return;
+      const dist = Math.abs(paramFreq - ch.targetFreq);
+      const isFreqMatch = dist <= ch.tolerance;
+      const isDemodMatch = !ch.reqDemod || currentDemod === ch.reqDemod;
+      const isRevMatch = (curChapter !== 4) || isReversed;
+
+      const stateText = document.getElementById('lblSyncState');
+      const pctText = document.getElementById('lblSyncPct');
+
+      if (isFreqMatch && isDemodMatch && isRevMatch) {
+        syncPct = 100;
+        if (stateText) {
+          stateText.innerText = 'LOCKED (동기화 완료)';
+          stateText.style.color = '#33ff77';
+        }
+        if (pctText) pctText.innerText = '100%';
+        if (advanceScript && isPlaying) {
+          progressStoryScript();
+        }
+      } else {
+        let rawPct = Math.max(0, Math.min(95, Math.round((1 - dist / 1800) * 100)));
+        if (!isDemodMatch) rawPct = Math.min(rawPct, 45);
+        if (!isRevMatch) rawPct = Math.min(rawPct, 35);
+        syncPct = rawPct;
+        if (pctText) pctText.innerText = syncPct + '%';
+
+        if (stateText) {
+          if (isFreqMatch && !isDemodMatch) {
+            stateText.innerText = `⚠️ 복조 모드를 [${ch.reqDemod}]로 전환하십시오`;
+            stateText.style.color = '#ffaa11';
+          } else if (isFreqMatch && !isRevMatch) {
+            stateText.innerText = '⚠️ 하단 [⟲ REVERSE (역재생)] 버튼을 켜십시오';
+            stateText.style.color = '#caa8ff';
+          } else {
+            stateText.innerText = 'UNLOCKED';
+            stateText.style.color = '#7abf94';
+          }
+        }
+      }
+    }
+
     function startTuningCheckTimer() {
       if (tuningCheckTimer) clearInterval(tuningCheckTimer);
       tuningCheckTimer = setInterval(() => {
         if (!isPlaying) { clearInterval(tuningCheckTimer); return; }
+        evaluateSyncState(true);
+      }, 650);
+    }
 
-        const ch = chapterDB[curChapter];
-        const dist = Math.abs(paramFreq - ch.targetFreq);
-        syncPct = Math.max(0, Math.min(100, Math.round((1 - dist / 1800) * 100)));
-
-        // 복조 모드가 다르면 싱크율 40%로 제한
-        if (ch.reqDemod && currentDemod !== ch.reqDemod) {
-          syncPct = Math.min(syncPct, 38);
-        }
-
-        if (curChapter === 4 && (!isReversed || paramSpeed > 1.1 || paramSpeed < 0.6)) {
-          syncPct = Math.min(syncPct, 20);
-        }
-
-        document.getElementById('lblSyncPct').innerText = syncPct + '%';
-
-        const stateText = document.getElementById('lblSyncState');
-        if (dist <= ch.tolerance && (!ch.reqDemod || currentDemod === ch.reqDemod)) {
-          stateText.innerText = 'LOCKED (동기화 완료)';
-          stateText.style.color = '#33ff77';
-          progressStoryScript();
+    function setReverseState(rev) {
+      isReversed = !!rev;
+      const b = document.getElementById('btnReverse');
+      if (b) {
+        if (isReversed) {
+          b.classList.add('active');
+          b.innerText = "⟲ REVERSE 활성";
         } else {
-          stateText.innerText = 'UNLOCKED';
-          stateText.style.color = '#7abf94';
+          b.classList.remove('active');
+          b.innerText = "⟲ REVERSE (역재생)";
         }
-      }, 700);
+      }
+      if (isPlaying) {
+        const spL = document.getElementById('spoolL');
+        const spR = document.getElementById('spoolR');
+        if (spL) spL.className = 'cassette-spool ' + (isReversed ? 'reverse-spin' : 'spin');
+        if (spR) spR.className = 'cassette-spool ' + (isReversed ? 'reverse-spin' : 'spin');
+      }
+      evaluateSyncState(false);
     }
 
     function autoTuneAssist() {
       const ch = chapterDB[curChapter];
+      if (!ch) return;
+      if (!isPlaying) startTapeEngine();
+
       paramFreq = ch.targetFreq;
-      document.getElementById('valFreq').innerText = paramFreq + ' Hz';
-      document.getElementById('dialF').style.transform = `rotate(${(paramFreq / 3800) * 270 - 135}deg)`;
+      const vf = document.getElementById('valFreq');
+      if (vf) vf.innerText = paramFreq + ' Hz';
+      const df = document.getElementById('dialF');
+      if (df) df.style.transform = `rotate(${(paramFreq / 3800) * 270 - 135}deg)`;
 
       if (ch.reqDemod) {
         setDemodMode(ch.reqDemod);
       }
 
       if (curChapter === 4) {
-        if (!isReversed) document.getElementById('btnReverse').click();
+        setReverseState(true);
         paramSpeed = 0.8;
-        document.getElementById('valSpeed').innerText = '0.8 x';
+        const vs = document.getElementById('valSpeed');
+        if (vs) vs.innerText = '0.8 x';
+        const ds = document.getElementById('dialS');
+        if (ds) ds.style.transform = `rotate(${((paramSpeed - 0.5) / 1.5) * 270 - 135}deg)`;
+      } else {
+        setReverseState(false);
+        paramSpeed = 1.0;
+        const vs = document.getElementById('valSpeed');
+        if (vs) vs.innerText = '1.0 x';
+        const ds = document.getElementById('dialS');
+        if (ds) ds.style.transform = `rotate(${((paramSpeed - 0.5) / 1.5) * 270 - 135}deg)`;
       }
       updateFilterSettings();
+      evaluateSyncState(true);
       playBeep(880);
     }
 
@@ -5816,6 +5902,9 @@
       if (curChapter === 2) unlockAchievement('ssbMaster');
       if (curChapter === 5) unlockAchievement('truth1999');
 
+      const curTab = document.getElementById(`tapeTab${curChapter}`);
+      if (curTab) curTab.classList.add('completed');
+
       if (curChapter < 5) {
         const nextCh = curChapter + 1;
         if (!unlockedChapters.includes(nextCh)) {
@@ -5823,8 +5912,18 @@
           const nextTab = document.getElementById(`tapeTab${nextCh}`);
           if (nextTab) nextTab.classList.remove('locked');
         }
-        document.getElementById(`tapeTab${curChapter}`).classList.add('completed');
-        document.getElementById('btnNextTape').style.display = 'inline-block';
+        const nextBtn = document.getElementById('btnNextTape');
+        if (nextBtn) nextBtn.style.display = 'inline-block';
+
+        // 트랜스크립트 로그 내 즉시 다음 챕터 이동 버튼 삽입
+        const container = document.getElementById('transcriptLog');
+        if (container) {
+          const actionDiv = document.createElement('div');
+          actionDiv.style.marginTop = '8px';
+          actionDiv.innerHTML = `<button class="deck-btn" style="width:100%; background:#183d25; border-color:#33ff77; color:#ffffff; font-weight:bold; padding:9px;" onclick="proceedToNextTape()">⏩ 다음 카트리지 (TAPE 0${nextCh}: ${chapterDB[nextCh].title}) 즉시 로드 및 재생</button>`;
+          container.appendChild(actionDiv);
+          container.scrollTop = container.scrollHeight;
+        }
       }
     }
 
@@ -5843,23 +5942,30 @@
         if (tab) tab.classList.toggle('active', i === chNum);
       }
 
+      // 챕터 전환 시 역재생 및 배속 상태 초기화
+      setReverseState(false);
+      paramSpeed = 1.0;
+      const vs = document.getElementById('valSpeed');
+      if (vs) vs.innerText = '1.0 x';
+      const ds = document.getElementById('dialS');
+      if (ds) ds.style.transform = `rotate(${((paramSpeed - 0.5) / 1.5) * 270 - 135}deg)`;
+
+      const ch = chapterDB[curChapter];
       document.getElementById('lblChapterProg').innerText = `${curChapter} / 5`;
-      document.getElementById('txtTapeHeader').innerText = chapterDB[curChapter].title;
+      document.getElementById('txtTapeHeader').innerText = ch.title;
       document.getElementById('transcriptLog').innerHTML = '';
-      appendLog("시스템", `카트리지 #${chNum} 테이프가 헤드에 로드되었습니다.`);
+      appendLog("시스템", `카트리지 #${chNum} [${ch.title}] 테이프가 헤드에 로드되었습니다.`);
+      appendLog("감식 가이드", `목표 주파수 대역: [ ${ch.targetFreq} Hz ] / 권장 복조 모드: [ ${ch.reqDemod} ]${chNum === 4 ? ' / [⟲ REVERSE 역재생] 필수' : ''} (또는 상단 [🎯 자동 동기화 힌트] 클릭)`);
       document.getElementById('btnNextTape').style.display = 'none';
 
-      if (chNum === 4 && !isReversed) {
-        appendLog("주의", "이 테이프는 역방향으로 녹음되었습니다. [⟲ REVERSE] 버튼을 활성화하십시오.");
-      }
-
       playTapeEjectSound();
+      startTapeEngine();
+      evaluateSyncState(false);
     }
 
     function proceedToNextTape() {
       if (curChapter < 5) {
         switchTape(curChapter + 1);
-        startTapeEngine();
       }
     }
 
@@ -5908,33 +6014,36 @@
       }
     }
 
+    let phoneRingOsc2 = null;
     function startPhoneRinging() {
       if (isPhoneRinging || !audioCtx) return;
       isPhoneRinging = true;
       document.getElementById('phoneRingingBanner').style.display = 'block';
 
       phoneRingOsc = audioCtx.createOscillator();
-      const osc2 = audioCtx.createOscillator();
+      phoneRingOsc2 = audioCtx.createOscillator();
       phoneRingGain = audioCtx.createGain();
 
       phoneRingOsc.frequency.setValueAtTime(440, audioCtx.currentTime);
-      osc2.frequency.setValueAtTime(480, audioCtx.currentTime);
+      phoneRingOsc2.frequency.setValueAtTime(480, audioCtx.currentTime);
 
       phoneRingGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
       phoneRingOsc.connect(phoneRingGain);
-      osc2.connect(phoneRingGain);
+      phoneRingOsc2.connect(phoneRingGain);
       phoneRingGain.connect(masterGain);
 
       phoneRingOsc.start();
-      osc2.start();
+      phoneRingOsc2.start();
     }
 
     function stopPhoneRinging() {
       isPhoneRinging = false;
       document.getElementById('phoneRingingBanner').style.display = 'none';
-      if (phoneRingGain) {
+      if (phoneRingGain && audioCtx) {
         try { phoneRingGain.gain.setValueAtTime(0, audioCtx.currentTime); } catch(e){}
       }
+      if (phoneRingOsc) { try { phoneRingOsc.stop(); phoneRingOsc.disconnect(); } catch(e){} phoneRingOsc = null; }
+      if (phoneRingOsc2) { try { phoneRingOsc2.stop(); phoneRingOsc2.disconnect(); } catch(e){} phoneRingOsc2 = null; }
     }
 
     function answerPhone() {
@@ -5960,7 +6069,7 @@
       isBlackoutActive = true;
       document.getElementById('blackoutBanner').style.display = 'block';
       playJumpScare();
-      appendLog("위험", "쿵! 전력 과부하로 차단기가 내려갔습니다! 왼쪽 벽면의 배전반 레버를 올려 복원하십시오!");
+      appendLog("위험", "쿵! 전력 과부하로 차단기가 내려갔습니다! 상단 붉은색 배너를 클릭하거나 왼쪽 벽면 배전반 레버를 올려 복원하십시오!");
     }
 
     function repairBreaker() {
@@ -6001,6 +6110,13 @@
               내가 시작한 기억 소거 실험은... 이미 환자들의 뇌를 넘어 내 뇌까지 잠식하기 시작했다."</em></p>
             </div>
           </div>
+        `;
+      } else if (type === 'door') {
+        title.innerText = "🚪 지하 404호 격리병실 철문 (LOCKED WARD DOOR)";
+        body.innerHTML = `
+          <p><strong>[외부 폐쇄 격리문 상태 점검]</strong></p>
+          <p>지하 404호 격리실의 무거운 방화 철문입니다. 바깥에서 굵은 강철 사슬과 용접 자국으로 굳게 봉쇄되어 있어 물리적으로 열 수 없습니다.</p>
+          <p style="color:#ffaa11; margin-top:10px;"><strong>[단서]</strong> 책상 위의 <strong>오디오 워크스테이션</strong>에서 5개의 음성 카트리지를 모두 해독하여 이 방에 갇힌 진실을 밝혀내야 합니다.</p>
         `;
       } else {
         title.innerText = "📋 환자 17호 및 닥터 한 비밀 임상 일지";
@@ -6172,6 +6288,11 @@
       inTerminalMode = true;
       document.getElementById('tuningStationUI').style.display = 'flex';
       document.exitPointerLock();
+      const ch = chapterDB[curChapter];
+      if (!isPlaying && ch && dialogueIndex < ch.script.length) {
+        startTapeEngine();
+      }
+      evaluateSyncState(false);
     }
 
     function exitTerminal() {
@@ -6310,69 +6431,136 @@
       document.getElementById('transcriptLog').innerHTML = '';
       appendLog("시스템", "테이프를 처음으로 되감았습니다.");
       playBeep(300);
+      if (!isPlaying) startTapeEngine();
     });
 
     document.getElementById('btnReverse').addEventListener('click', () => {
-      isReversed = !isReversed;
-      const b = document.getElementById('btnReverse');
+      setReverseState(!isReversed);
       if (isReversed) {
-        b.classList.add('active');
-        b.innerText = "⟲ REVERSE 활성";
         appendLog("시스템", "오디오 헤드가 역방향(Reverse) 모드로 전환되었습니다.");
       } else {
-        b.classList.remove('active');
-        b.innerText = "⟲ REVERSE (역재생)";
+        appendLog("시스템", "오디오 헤드가 정방향(Normal) 모드로 전환되었습니다.");
       }
+      if (!isPlaying) startTapeEngine();
       playBeep(750);
     });
 
+    function applyFrequencyValue(newFreq) {
+      const oldF = paramFreq;
+      let clamped = Math.max(80, Math.min(3800, Math.round(newFreq)));
+      const ch = chapterDB[curChapter];
+      // 목표 주파수 근처 자석 스냅 보정 (Magnetic Soft Snap)
+      if (ch && Math.abs(clamped - ch.targetFreq) <= 32) {
+        clamped = ch.targetFreq;
+      }
+      paramFreq = clamped;
+      const vf = document.getElementById('valFreq');
+      if (vf) vf.innerText = paramFreq + ' Hz';
+      const df = document.getElementById('dialF');
+      if (df) df.style.transform = `rotate(${(paramFreq / 3800) * 270 - 135}deg)`;
+      if (!isPlaying && inTerminalMode && ch && dialogueIndex < ch.script.length) {
+        startTapeEngine();
+      }
+      updateFilterSettings();
+      if (Math.abs(paramFreq - oldF) > 20) playRatchetClick();
+    }
+
     let activeDial = null;
     let dragOriginY = 0;
+    let dragOriginX = 0;
     let dragOriginVal = 0;
+    let isScaleBarDragging = false;
 
     document.querySelectorAll('.knob-rotary').forEach(dial => {
       dial.addEventListener('mousedown', (e) => {
         activeDial = dial;
         dragOriginY = e.clientY;
+        dragOriginX = e.clientX;
         const k = dial.dataset.k;
         if (k === 'freq') dragOriginVal = paramFreq;
         else if (k === 'noise') dragOriginVal = paramNoise;
         else if (k === 'res') dragOriginVal = paramRes;
         else if (k === 'speed') dragOriginVal = paramSpeed;
         e.preventDefault();
+        e.stopPropagation();
       });
+
+      // 마우스 휠(Wheel)로도 노브 미세 조절 지원
+      dial.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const dir = e.deltaY < 0 ? 1 : -1;
+        const k = dial.dataset.k;
+        if (k === 'freq') {
+          applyFrequencyValue(paramFreq + dir * 25);
+        } else if (k === 'noise') {
+          paramNoise = Math.max(0, Math.min(100, paramNoise + dir * 5));
+          document.getElementById('valNoise').innerText = paramNoise + ' %';
+          dial.style.transform = `rotate(${(paramNoise / 100) * 270 - 135}deg)`;
+        } else if (k === 'res') {
+          paramRes = Math.max(1, Math.min(25, paramRes + dir * 1));
+          document.getElementById('valRes').innerText = paramRes + ' Q';
+          dial.style.transform = `rotate(${(paramRes / 25) * 270 - 135}deg)`;
+          updateFilterSettings();
+        } else if (k === 'speed') {
+          paramSpeed = Math.max(0.5, Math.min(2.0, parseFloat((paramSpeed + dir * 0.1).toFixed(1))));
+          document.getElementById('valSpeed').innerText = paramSpeed.toFixed(1) + ' x';
+          dial.style.transform = `rotate(${((paramSpeed - 0.5) / 1.5) * 270 - 135}deg)`;
+        }
+      }, { passive: false });
     });
 
+    // 아날로그 튜닝 스케일 바 클릭/드래그로 직접 주파수 튜닝 지원
+    const scaleBarEl = document.getElementById('tuningScaleBar');
+    function tuneFromScaleBarEvent(e) {
+      if (!scaleBarEl) return;
+      const rect = scaleBarEl.getBoundingClientRect();
+      const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      applyFrequencyValue(80 + ratio * 3720);
+    }
+    if (scaleBarEl) {
+      scaleBarEl.addEventListener('mousedown', (e) => {
+        isScaleBarDragging = true;
+        tuneFromScaleBarEvent(e);
+        e.preventDefault();
+      });
+    }
+
     window.addEventListener('mousemove', (e) => {
+      if (isScaleBarDragging) {
+        tuneFromScaleBarEvent(e);
+        return;
+      }
       if (!activeDial) return;
-      const deltaY = dragOriginY - e.clientY;
+      // 상하 드래그 + 좌우 드래그 통합 반영
+      const delta = (dragOriginY - e.clientY) + (e.clientX - dragOriginX);
       const k = activeDial.dataset.k;
 
       if (k === 'freq') {
-        const oldF = paramFreq;
-        paramFreq = Math.max(80, Math.min(3800, Math.round(dragOriginVal + deltaY * 8)));
-        document.getElementById('valFreq').innerText = paramFreq + ' Hz';
-        activeDial.style.transform = `rotate(${(paramFreq / 3800) * 270 - 135}deg)`;
-        updateFilterSettings();
-        if (Math.abs(paramFreq - oldF) > 20) playRatchetClick();
+        applyFrequencyValue(dragOriginVal + delta * 8);
       } else if (k === 'noise') {
-        paramNoise = Math.max(0, Math.min(100, Math.round(dragOriginVal + deltaY * 0.5)));
+        paramNoise = Math.max(0, Math.min(100, Math.round(dragOriginVal + delta * 0.5)));
         document.getElementById('valNoise').innerText = paramNoise + ' %';
         activeDial.style.transform = `rotate(${(paramNoise / 100) * 270 - 135}deg)`;
       } else if (k === 'res') {
-        paramRes = Math.max(1, Math.min(25, Math.round(dragOriginVal + deltaY * 0.1)));
+        paramRes = Math.max(1, Math.min(25, Math.round(dragOriginVal + delta * 0.1)));
         document.getElementById('valRes').innerText = paramRes + ' Q';
         activeDial.style.transform = `rotate(${(paramRes / 25) * 270 - 135}deg)`;
         updateFilterSettings();
       } else if (k === 'speed') {
-        paramSpeed = Math.max(0.5, Math.min(2.0, parseFloat((dragOriginVal + deltaY * 0.008).toFixed(2))));
+        paramSpeed = Math.max(0.5, Math.min(2.0, parseFloat((dragOriginVal + delta * 0.008).toFixed(2))));
         document.getElementById('valSpeed').innerText = paramSpeed.toFixed(1) + ' x';
         activeDial.style.transform = `rotate(${((paramSpeed - 0.5) / 1.5) * 270 - 135}deg)`;
       }
     });
 
+    let isCanvasLeftDragging = false;
+    let canvasMouseDownX = 0;
+    let canvasMouseDownY = 0;
+
     window.addEventListener('mouseup', (e) => {
       activeDial = null;
+      isScaleBarDragging = false;
+      isCanvasLeftDragging = false;
       if (e.button === 2) {
         // 우클릭 줌 해제
         isCamcorderZoomed = false;
@@ -6391,6 +6579,12 @@
           const zf = document.getElementById('camcorderZoomFrame');
           if (zf) zf.classList.add('zoomed');
           playBeep(1200);
+        }
+      } else if (e.button === 0 && e.target === document.getElementById('webglCanvas')) {
+        if (!inTerminalMode && !inDocInspectMode && !inJournalMode && !inSettingsMode) {
+          isCanvasLeftDragging = true;
+          canvasMouseDownX = e.clientX;
+          canvasMouseDownY = e.clientY;
         }
       }
     });
@@ -6489,8 +6683,64 @@
     }
 
     /* ========================================================
-       8. 포인터 락 & 키보드 이동 이벤트
+       8. 포인터 락 & 마우스/키보드 통합 상호작용 이벤트
        ======================================================== */
+    function triggerWorldInteraction(customUV = null) {
+      if (!camera || !scene) return false;
+      const ray = new THREE.Raycaster();
+      ray.setFromCamera(customUV || new THREE.Vector2(0, 0), camera);
+      const targets = [deskObj, monitorObj, doorObj];
+      if (phoneObj) targets.push(phoneObj);
+      if (breakerBoxObj) targets.push(breakerBoxObj);
+      if (noticeBoardObj) targets.push(noticeBoardObj);
+      if (clipboardObj) targets.push(clipboardObj);
+      if (deskDrawerObj) targets.push(deskDrawerObj);
+      if (sedativeBottleObj && hasSedative) targets.push(sedativeBottleObj);
+      if (polaroidObj) targets.push(polaroidObj);
+
+      const hits = ray.intersectObjects(targets.filter(Boolean), true);
+      if (hits.length > 0 && hits[0].distance < 4.2) {
+        let rootHit = hits[0].object;
+        while (rootHit.parent && rootHit.parent !== scene &&
+               rootHit !== deskObj && rootHit !== monitorObj && rootHit !== doorObj &&
+               rootHit !== deskDrawerObj && rootHit !== sedativeBottleObj && rootHit !== polaroidObj &&
+               rootHit !== noticeBoardObj && rootHit !== clipboardObj && rootHit !== breakerBoxObj && rootHit !== phoneObj) {
+          rootHit = rootHit.parent;
+        }
+
+        if (rootHit === sedativeBottleObj && hasSedative) {
+          consumeSedative();
+          return true;
+        } else if (rootHit === polaroidObj) {
+          openDocModal('polaroid');
+          return true;
+        } else if (rootHit === deskDrawerObj) {
+          toggleDeskDrawer();
+          return true;
+        } else if (rootHit === noticeBoardObj) {
+          openDocModal('board');
+          return true;
+        } else if (rootHit === clipboardObj) {
+          openDocModal('clipboard');
+          return true;
+        } else if (rootHit === breakerBoxObj) {
+          repairBreaker();
+          return true;
+        } else if (rootHit === phoneObj && isPhoneRinging) {
+          answerPhone();
+          return true;
+        } else if (rootHit === deskObj || rootHit === monitorObj || rootHit === phoneObj) {
+          enterTerminal();
+          return true;
+        } else if (rootHit === doorObj) {
+          playJumpScare();
+          openDocModal('door');
+          return true;
+        }
+      }
+      return false;
+    }
+
     document.getElementById('btnStartGame').addEventListener('click', () => {
       document.getElementById('launcherScreen').style.display = 'none';
       init3DEnvironment();
@@ -6501,23 +6751,50 @@
       } catch(e) {}
     });
 
+    // 3D 캔버스 클릭 시 포인터 락 재획득 또는 직접 오브젝트 클릭 상호작용 지원
+    document.getElementById('webglCanvas').addEventListener('click', (e) => {
+      if (inTerminalMode || inDocInspectMode || inJournalMode || inSettingsMode) return;
+      const moveDist = Math.hypot(e.clientX - canvasMouseDownX, e.clientY - canvasMouseDownY);
+      if (moveDist > 8) return; // 드래그 시점 회전이었던 경우 클릭 무시
+
+      if (!isPointerLocked) {
+        // 클릭한 마우스 좌표로 먼저 오브젝트 상호작용 시도, 없으면 시점 포인터 락 활성화
+        const clickUV = new THREE.Vector2(
+          (e.clientX / window.innerWidth) * 2 - 1,
+          -(e.clientY / window.innerHeight) * 2 + 1
+        );
+        const interacted = triggerWorldInteraction(clickUV);
+        if (!interacted && renderer && renderer.domElement) {
+          try {
+            const p = renderer.domElement.requestPointerLock();
+            if (p && p.catch) p.catch(() => {});
+          } catch(err) {}
+        }
+      } else {
+        // 포인터 락 상태에서 좌클릭 시 화면 중앙 크로스헤어 상호작용 실행
+        triggerWorldInteraction();
+      }
+    });
+
     document.addEventListener('pointerlockchange', () => {
-      isPointerLocked = (document.pointerLockElement === renderer.domElement);
+      isPointerLocked = !!(renderer && document.pointerLockElement === renderer.domElement);
     });
 
     window.addEventListener('mousemove', (e) => {
-      if (!isPointerLocked || inTerminalMode || inDocInspectMode || inJournalMode || inSettingsMode) return;
-      cameraYaw -= e.movementX * mouseSensitivity;
-      cameraPitch -= e.movementY * mouseSensitivity;
-      cameraPitch = Math.max(-Math.PI / 2.3, Math.min(Math.PI / 2.3, cameraPitch));
+      if (inTerminalMode || inDocInspectMode || inJournalMode || inSettingsMode) return;
+      if (isPointerLocked || isCanvasLeftDragging) {
+        cameraYaw -= e.movementX * mouseSensitivity;
+        cameraPitch -= e.movementY * mouseSensitivity;
+        cameraPitch = Math.max(-Math.PI / 2.3, Math.min(Math.PI / 2.3, cameraPitch));
+      }
     });
 
     window.addEventListener('keydown', (e) => {
       const k = e.key.toLowerCase();
-      if (k === 'w') keys.w = true;
-      if (k === 'a') keys.a = true;
-      if (k === 's') keys.s = true;
-      if (k === 'd') keys.d = true;
+      if (k === 'w' || e.key === 'ArrowUp') keys.w = true;
+      if (k === 'a' || e.key === 'ArrowLeft') keys.a = true;
+      if (k === 's' || e.key === 'ArrowDown') keys.s = true;
+      if (k === 'd' || e.key === 'ArrowRight') keys.d = true;
 
       if (e.key === 'Tab') {
         e.preventDefault();
@@ -6545,48 +6822,7 @@
         } else if (inTerminalMode) {
           exitTerminal();
         } else {
-          const ray = new THREE.Raycaster();
-          ray.setFromCamera(new THREE.Vector2(0, 0), camera);
-          const targets = [deskObj, monitorObj, doorObj];
-          if (phoneObj) targets.push(phoneObj);
-          if (breakerBoxObj) targets.push(breakerBoxObj);
-          if (noticeBoardObj) targets.push(noticeBoardObj);
-          if (clipboardObj) targets.push(clipboardObj);
-          if (deskDrawerObj) targets.push(deskDrawerObj);
-          if (sedativeBottleObj && hasSedative) targets.push(sedativeBottleObj);
-          if (polaroidObj) targets.push(polaroidObj);
-
-          const hits = ray.intersectObjects(targets, true);
-          if (hits.length > 0 && hits[0].distance < 3.8) {
-            let rootHit = hits[0].object;
-            while (rootHit.parent && rootHit.parent !== scene &&
-                   rootHit !== deskObj && rootHit !== monitorObj && rootHit !== doorObj &&
-                   rootHit !== deskDrawerObj && rootHit !== sedativeBottleObj && rootHit !== polaroidObj &&
-                   rootHit !== noticeBoardObj && rootHit !== clipboardObj && rootHit !== breakerBoxObj && rootHit !== phoneObj) {
-              rootHit = rootHit.parent;
-            }
-
-            if (rootHit === sedativeBottleObj && hasSedative) {
-              consumeSedative();
-            } else if (rootHit === polaroidObj) {
-              openDocModal('polaroid');
-            } else if (rootHit === deskDrawerObj) {
-              toggleDeskDrawer();
-            } else if (rootHit === noticeBoardObj) {
-              openDocModal('board');
-            } else if (rootHit === clipboardObj) {
-              openDocModal('clipboard');
-            } else if (rootHit === breakerBoxObj) {
-              repairBreaker();
-            } else if (rootHit === phoneObj && isPhoneRinging) {
-              answerPhone();
-            } else if (rootHit === deskObj || rootHit === monitorObj || rootHit === phoneObj) {
-              enterTerminal();
-            } else if (rootHit === doorObj) {
-              playJumpScare();
-              alert("지하 404호 격리실 철문입니다. 바깥에서 굵은 쇠사슬로 굳게 잠겨 있습니다!");
-            }
-          }
+          triggerWorldInteraction();
         }
       }
 
@@ -6608,10 +6844,10 @@
 
     window.addEventListener('keyup', (e) => {
       const k = e.key.toLowerCase();
-      if (k === 'w') keys.w = false;
-      if (k === 'a') keys.a = false;
-      if (k === 's') keys.s = false;
-      if (k === 'd') keys.d = false;
+      if (k === 'w' || e.key === 'ArrowUp') keys.w = false;
+      if (k === 'a' || e.key === 'ArrowLeft') keys.a = false;
+      if (k === 's' || e.key === 'ArrowDown') keys.s = false;
+      if (k === 'd' || e.key === 'ArrowRight') keys.d = false;
     });
 
     window.addEventListener('resize', () => {

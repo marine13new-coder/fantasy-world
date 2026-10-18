@@ -217,6 +217,47 @@ def test_game():
         assert cinema_on is True
         evaluate_js("toggleAutoCinema()")
 
+        print("8.5. 신규 조작/진행 버그 수정 검증 (비-포인터락 이동, 자석 튜닝, Ch.1~5 전환 리셋)")
+        evaluate_js("exitTerminal()")
+        cdp.drain(200)
+        # 포인터 락이 해제된 상태에서 WASD 이동 작동 확인
+        z_before = evaluate_js("playerPos.z")
+        evaluate_js("keys.w = true")
+        cdp.drain(250)
+        evaluate_js("keys.w = false")
+        z_after = evaluate_js("playerPos.z")
+        print(f"   - 포인터 락 해제 상태 WASD 전진 확인: {z_before:.2f} -> {z_after:.2f}")
+        assert z_after < z_before
+
+        # 404호 문 조사 모달 확인 (블로킹 alert 제거 확인)
+        evaluate_js("openDocModal('door')")
+        cdp.drain(150)
+        door_modal_open = evaluate_js("document.getElementById('documentInspectModal').style.display === 'flex'")
+        print(f"   - 404호 철문 인게임 조사 모달 작동 확인: {door_modal_open}")
+        assert door_modal_open is True
+        evaluate_js("closeDocModal()")
+
+        # 단말기 재진입 시 자동 재생 및 자석 주파수 스냅 확인
+        evaluate_js("enterTerminal()")
+        cdp.drain(200)
+        auto_playing = evaluate_js("isPlaying")
+        print(f"   - 워크스테이션 진입 시 테이프 자동 재생 확인: {auto_playing}")
+        assert auto_playing is True
+
+        # Ch.4 역재생 설정 후 Ch.5 전환 시 역재생 자동 초기화 확인
+        evaluate_js("unlockedChapters = [1, 2, 3, 4, 5]; switchTape(4); setReverseState(true);")
+        rev_ch4 = evaluate_js("isReversed")
+        evaluate_js("switchTape(5)")
+        rev_ch5 = evaluate_js("isReversed")
+        print(f"   - Ch.4 역재생({rev_ch4}) -> Ch.5 전환 시 역재생 자동 해제 확인({rev_ch5})")
+        assert rev_ch4 is True and rev_ch5 is False
+
+        # 목표 주파수 근처 자석 스냅(Magnetic Snap) 확인 (Ch.5 targetFreq = 440)
+        evaluate_js("applyFrequencyValue(460)")
+        snapped_freq = evaluate_js("paramFreq")
+        print(f"   - 자석 스냅(Magnetic Soft Snap) 460Hz 입력 -> {snapped_freq}Hz 스냅 확인")
+        assert snapped_freq == 440
+
         print("9. 브라우저 콘솔 에러 검사")
         cdp.drain(1000)
         errors = cdp.errors
