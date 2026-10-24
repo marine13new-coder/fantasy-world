@@ -9,7 +9,7 @@ namespace SeoulSurvival
     {
         readonly List<UnityEngine.Mesh> owned=new List<UnityEngine.Mesh>();
         readonly List<Renderer> cutaway=new List<Renderer>();Bounds bounds;float nextCheck;List<Vector3> outline;
-        public int Floors {get;private set;} public bool HeightReported {get;private set;} public bool Playable {get;private set;} public bool IsInside {get;private set;} public string BuildingName {get;private set;}
+        public int Floors {get;private set;} public bool HeightReported {get;private set;} public bool Playable {get;private set;} public bool IsInside {get;private set;} public string BuildingName {get;private set;} public Vector3 Entrance {get;private set;}
         public IReadOnlyList<Vector3> Outline=>outline;
         public float DistanceToFootprint(Vector3 world)
         {
@@ -76,6 +76,7 @@ namespace SeoulSurvival
             {
                 AddMesh("Interior floor",RoofMesh(points,.025f),new Color(.33f,.32f,.29f),false,false);
                 var entry=(points[door]+points[(door+1)%points.Count])*.5f;
+                Entrance=transform.TransformPoint(entry);
                 var vertices=roofMesh.vertices;var triangles=roofMesh.triangles;var inside=(vertices[triangles[0]]+vertices[triangles[1]]+vertices[triangles[2]])/3;inside.y=0;
                 float nearest=float.MaxValue;for(int i=0;i<triangles.Length;i+=3){var candidate=(vertices[triangles[i]]+vertices[triangles[i+1]]+vertices[triangles[i+2]])/3;candidate.y=0;float distance=(candidate-entry).sqrMagnitude;if(distance>6 && distance<nearest){inside=candidate;nearest=distance;}}
                 var box=new GameObject("Mapped ground-floor supplies");box.transform.SetParent(transform,false);box.transform.localPosition=inside;

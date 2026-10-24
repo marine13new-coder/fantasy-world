@@ -235,6 +235,7 @@ namespace SeoulSurvival.Editor
             Assert(Mathf.Abs(area-7)<.001f,"concave OSM roof preserves polygon area");UnityEngine.Object.DestroyImmediate(roof);
             Assert(OsmBuildingShell.Contains(outline,new Vector3(.5f,0,3)) && !OsmBuildingShell.Contains(outline,new Vector3(3,0,3)),"OSM footprint rejects spawn-inside buildings");
             var snapshot=Resources.Load<TextAsset>("MapSnapshots/Gangnam");Assert(snapshot && RealWorldMapManager.TryParse(snapshot.text,out var parsed) && parsed.elements.Length>100 && Array.Exists(parsed.elements,e=>e.tags!=null && e.tags.height!=null),"bundled Gangnam map contains building height tags");
+            var nowonSnapshot=Resources.Load<TextAsset>("MapSnapshots/Nowon");Assert(nowonSnapshot && RealWorldMapManager.TryParse(nowonSnapshot.text,out var nowonMap) && Array.Exists(nowonMap.elements,e=>e.tags!=null && e.tags.leisure=="park"),"bundled Nowon map contains OSM parks");
             Assert(JourneyDirector.TryResolve("노원역",out _,out double nowonLat,out _) && JourneyDirector.TryResolve("잠실역",out _,out double jamsilLat,out _) && nowonLat>jamsilLat,"Nowon to Jamsil route resolves north to south");
             Assert(JourneyDirector.CrossesHan(new JourneyPlan{fromLat=37.65637,fromLon=127.06345,toLat=37.51333,toLon=127.10028}) && !JourneyDirector.CrossesHan(new JourneyPlan{fromLat=37.4979,fromLon=127.0276,toLat=37.51333,toLon=127.10028}),"Han blockade text only appears on crossings");
             Assert(!JourneyDirector.TryResolve("노원구 상계동 123",out _,out _,out _) && JourneyDirector.TryResolve("37.65637,127.06345",out _,out _,out _),"journey rejects approximate address matches and accepts Korean coordinates");
@@ -377,12 +378,13 @@ namespace SeoulSurvival.Editor
                 } else if(phase==4 && elapsed>11) {
                     Check(game.Map.LoadedChunks==9,"stream boundary keeps chunk count bounded");
                     Check(UnityEngine.Object.FindObjectsByType<EnterableBuilding>(FindObjectsSortMode.None).Length==54,"old chunks unloaded");
-                    string fixture="{\"elements\":[{\"type\":\"node\",\"id\":9001,\"lat\":37.4989,\"lon\":127.0286,\"tags\":{\"amenity\":\"police\"}},{\"type\":\"node\",\"id\":9004,\"lat\":37.4989,\"lon\":127.0296,\"tags\":{\"shop\":\"convenience\",\"name\":\"동네 편의점\"}},{\"type\":\"way\",\"id\":9002,\"tags\":{\"highway\":\"residential\"},\"geometry\":[{\"lat\":37.4989,\"lon\":127.0286},{\"lat\":37.4990,\"lon\":127.0286}]},{\"type\":\"way\",\"id\":9003,\"center\":{\"lat\":37.4989,\"lon\":127.0296},\"tags\":{\"building\":\"apartments\",\"building:levels\":\"5\"},\"geometry\":[{\"lat\":37.49885,\"lon\":127.02955},{\"lat\":37.49885,\"lon\":127.02965},{\"lat\":37.49895,\"lon\":127.02965},{\"lat\":37.49895,\"lon\":127.02955},{\"lat\":37.49885,\"lon\":127.02955}]}]}";
+                    string fixture="{\"elements\":[{\"type\":\"node\",\"id\":9001,\"lat\":37.4989,\"lon\":127.0286,\"tags\":{\"amenity\":\"police\"}},{\"type\":\"node\",\"id\":9004,\"lat\":37.4989,\"lon\":127.0296,\"tags\":{\"shop\":\"convenience\",\"name\":\"동네 편의점\"}},{\"type\":\"way\",\"id\":9002,\"tags\":{\"highway\":\"residential\"},\"geometry\":[{\"lat\":37.4989,\"lon\":127.0286},{\"lat\":37.4990,\"lon\":127.0286}]},{\"type\":\"way\",\"id\":9003,\"center\":{\"lat\":37.4989,\"lon\":127.0296},\"tags\":{\"building\":\"apartments\",\"building:levels\":\"5\"},\"geometry\":[{\"lat\":37.49885,\"lon\":127.02955},{\"lat\":37.49885,\"lon\":127.02965},{\"lat\":37.49895,\"lon\":127.02965},{\"lat\":37.49895,\"lon\":127.02955},{\"lat\":37.49885,\"lon\":127.02955}]},{\"type\":\"way\",\"id\":9005,\"tags\":{\"leisure\":\"park\"},\"geometry\":[{\"lat\":37.49885,\"lon\":127.03055},{\"lat\":37.49885,\"lon\":127.03065},{\"lat\":37.49895,\"lon\":127.03065},{\"lat\":37.49895,\"lon\":127.03055},{\"lat\":37.49885,\"lon\":127.03055}]}]}";
                     Check(RealWorldMapManager.TryParse(fixture,out var mapFixture),"OSM node and road geometry parsed");
                     Transform originChunk=null; foreach(Transform child in game.Map.transform)if(child.position==Vector3.zero)originChunk=child;
                     typeof(RealWorldMapManager).GetMethod("ApplyMap",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance).Invoke(game.Map,new object[]{originChunk.gameObject,Vector2Int.zero,mapFixture});
-                    Check(game.Map.Status.Contains("시설 2") && game.Map.Status.Contains("도로 1") && game.Map.Status.Contains("건물 1"),"OSM fixture creates projected facilities, road and footprint: "+game.Map.Status);
+                    Check(game.Map.Status.Contains("시설 2") && game.Map.Status.Contains("도로 1") && game.Map.Status.Contains("건물 1") && game.Map.Status.Contains("공원·물가 1"),"OSM fixture creates projected facilities, road, footprint and park: "+game.Map.Status);
                     Check(game.Map.Buildings.Count==1 && game.Map.Buildings[0].Floors==5 && game.Map.Buildings[0].HeightReported && game.Map.Buildings[0].Playable && game.Map.Buildings[0].GetComponentInChildren<LootBox>()?.facility==Facility.Convenience && game.Map.Buildings[0].BuildingName=="동네 편의점","mapped five-floor building uses its real convenience-store POI and playable ground floor");
+                    Check(game.Map.Surfaces.Count==1 && !game.Map.Surfaces[0].Water,"mapped park uses its OSM polygon");
                     Teleport(game.Survival.Tower.position+new Vector3(0,0,-3));game.Map.BuildNavigation(game.Player.transform.position);
                     game.balance.defenseSeconds=3; game.balance.signalWindowSeconds=.5f; Check(game.Survival.ActivateTower(),"transmitter consumes repair kit and starts defense");
                     Check(game.Survival.Count(ResourceKind.RepairKit)==0,"repair kit consumed once"); phase=5;
@@ -444,7 +446,7 @@ namespace SeoulSurvival.Editor
                     typeof(RealWorldMapManager).GetMethod("ApplyMap",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance).Invoke(game.Map,new object[]{sampleChunk.gameObject,Vector2Int.zero,mappedSample});
                     Check(game.Map.Buildings.Count>=25 && game.Map.Buildings.Count<=91 && game.Map.CurrentChunkMapped,"real Gangnam snapshot creates bounded mapped buildings");
                     Teleport(new Vector3(2405,0,0));typeof(RealWorldMapManager).GetMethod("Refresh",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance).Invoke(game.Map,null);
-                    Check(game.Map.Buildings.Count==0 && game.Map.LoadedChunks==9 && !game.Map.CurrentChunkMapped,"streaming releases distant mapped buildings");Finish();
+                    Check(game.Map.Buildings.Count==0 && game.Map.Surfaces.Count==0 && game.Map.LoadedChunks==9 && !game.Map.CurrentChunkMapped,"streaming releases distant mapped buildings and parks");Finish();
                 }
                 if(EditorApplication.timeSinceStartup-wallStart>90) {Check(false,"playtest timeout");Finish();}
             } catch(Exception e) {failed=true;results.Add(e.ToString());Finish();}
@@ -1177,6 +1179,33 @@ namespace SeoulSurvival
 }
 ```
 
+## Assets/Game/Scripts/MapSurface.cs
+
+```csharp
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace SeoulSurvival
+{
+    public sealed class MapSurface : MonoBehaviour
+    {
+        public bool Water {get;private set;}
+        public IReadOnlyList<Vector3> Outline {get;private set;}
+        Mesh mesh;
+        public bool Build(List<Vector3> outline,bool water)
+        {
+            Water=water;Outline=outline;
+            mesh=OsmBuildingShell.RoofMesh(outline,water?.04f:.03f);
+            if(mesh.triangles.Length<3)return false;
+            gameObject.AddComponent<MeshFilter>().sharedMesh=mesh;
+            gameObject.AddComponent<MeshRenderer>().sharedMaterial=WorldFactory.Material(water?new Color(.12f,.32f,.44f):new Color(.23f,.41f,.24f));
+            return true;
+        }
+        void OnDestroy(){if(mesh)Destroy(mesh);}
+    }
+}
+```
+
 ## Assets/Game/Scripts/MobileControls.cs
 
 ```csharp
@@ -1233,7 +1262,7 @@ namespace SeoulSurvival
     {
         readonly List<UnityEngine.Mesh> owned=new List<UnityEngine.Mesh>();
         readonly List<Renderer> cutaway=new List<Renderer>();Bounds bounds;float nextCheck;List<Vector3> outline;
-        public int Floors {get;private set;} public bool HeightReported {get;private set;} public bool Playable {get;private set;} public bool IsInside {get;private set;} public string BuildingName {get;private set;}
+        public int Floors {get;private set;} public bool HeightReported {get;private set;} public bool Playable {get;private set;} public bool IsInside {get;private set;} public string BuildingName {get;private set;} public Vector3 Entrance {get;private set;}
         public IReadOnlyList<Vector3> Outline=>outline;
         public float DistanceToFootprint(Vector3 world)
         {
@@ -1300,6 +1329,7 @@ namespace SeoulSurvival
             {
                 AddMesh("Interior floor",RoofMesh(points,.025f),new Color(.33f,.32f,.29f),false,false);
                 var entry=(points[door]+points[(door+1)%points.Count])*.5f;
+                Entrance=transform.TransformPoint(entry);
                 var vertices=roofMesh.vertices;var triangles=roofMesh.triangles;var inside=(vertices[triangles[0]]+vertices[triangles[1]]+vertices[triangles[2]])/3;inside.y=0;
                 float nearest=float.MaxValue;for(int i=0;i<triangles.Length;i+=3){var candidate=(vertices[triangles[i]]+vertices[triangles[i+1]]+vertices[triangles[i+2]])/3;candidate.y=0;float distance=(candidate-entry).sqrMagnitude;if(distance>6 && distance<nearest){inside=candidate;nearest=distance;}}
                 var box=new GameObject("Mapped ground-floor supplies");box.transform.SetParent(transform,false);box.transform.localPosition=inside;
@@ -1486,7 +1516,7 @@ namespace SeoulSurvival
     public sealed class RealWorldMapManager : MonoBehaviour
     {
         [Serializable] public class OsmPoint { public double lat,lon; }
-        [Serializable] public class OsmTags { public string amenity,shop,building,landuse,highway,name,buildingLevels,height,levels,tunnel,layer; }
+        [Serializable] public class OsmTags { public string amenity,shop,building,landuse,highway,leisure,natural,name,buildingLevels,height,levels,tunnel,layer; }
         [Serializable] public class OsmElement { public long id; public string type; public double lat,lon; public OsmPoint center; public OsmPoint[] geometry; public OsmTags tags; }
         [Serializable] public class OsmResponse { public OsmElement[] elements; }
         struct MappedFacility {public Vector3 position;public Facility kind;public string key,name;public bool matched;}
@@ -1498,6 +1528,7 @@ namespace SeoulSurvival
         public struct RoadSegment {public Vector3 a,b;public Vector2Int chunk;public bool synthetic;}
         public readonly List<RoadSegment> Roads=new List<RoadSegment>();
         public readonly List<OsmBuildingShell> Buildings=new List<OsmBuildingShell>();
+        public readonly List<MapSurface> Surfaces=new List<MapSurface>();
         readonly Dictionary<Vector2Int,GameObject> chunks=new Dictionary<Vector2Int,GameObject>();
         readonly HashSet<Vector2Int> mapped=new HashSet<Vector2Int>();
         readonly Queue<Vector2Int> requests=new Queue<Vector2Int>();
@@ -1515,7 +1546,7 @@ namespace SeoulSurvival
         {
             var center=ChunkAt(GameBootstrap.Instance.Player.transform.position);
             var remove=new List<Vector2Int>(); foreach(var pair in chunks)if(Mathf.Abs(pair.Key.x-center.x)>1 || Mathf.Abs(pair.Key.y-center.y)>1)remove.Add(pair.Key);
-            foreach(var id in remove) { var chunk=chunks[id];Buildings.RemoveAll(b=>!b || b.transform.IsChildOf(chunk.transform));Destroy(chunk); chunks.Remove(id);mapped.Remove(id);Roads.RemoveAll(r=>r.chunk==id);navDirty=true; }
+            foreach(var id in remove) { var chunk=chunks[id];Buildings.RemoveAll(b=>!b || b.transform.IsChildOf(chunk.transform));Surfaces.RemoveAll(s=>!s || s.transform.IsChildOf(chunk.transform));Destroy(chunk); chunks.Remove(id);mapped.Remove(id);Roads.RemoveAll(r=>r.chunk==id);navDirty=true; }
             var pending=new HashSet<Vector2Int>(requests); requests.Clear(); foreach(var id in pending)if(chunks.ContainsKey(id))requests.Enqueue(id);
             // Current chunk first: immediate playable fallback, network enrichment is asynchronous.
             Load(center); for(int z=-1;z<=1;z++)for(int x=-1;x<=1;x++)Load(center+new Vector2Int(x,z));
@@ -1619,7 +1650,7 @@ namespace SeoulSurvival
                         if(request.result==UnityWebRequest.Result.Success && request.downloadedBytes<4*1024*1024)json=request.downloadHandler.text;
                         else Status="OSM 지연/실패 · 폴백 도시로 계속 플레이";
                     }
-                    if(json!=null && TryParse(json,out _)) { try { Directory.CreateDirectory(Path.GetDirectoryName(path)); File.WriteAllText(path,json); var files=new DirectoryInfo(Path.GetDirectoryName(path)).GetFiles("*.json"); Array.Sort(files,(a,b)=>b.LastWriteTimeUtc.CompareTo(a.LastWriteTimeUtc)); for(int i=32;i<files.Length;i++)files[i].Delete(); }catch(Exception e){Debug.LogWarning("OSM cache write: "+e.Message);} }
+                    if(json!=null && TryParse(json,out _)) { try { Directory.CreateDirectory(Path.GetDirectoryName(path)); File.WriteAllText(path,json); var files=new DirectoryInfo(Path.GetDirectoryName(path)).GetFiles("*.json"); Array.Sort(files,(a,b)=>b.LastWriteTimeUtc.CompareTo(a.LastWriteTimeUtc)); for(int i=128;i<files.Length;i++)files[i].Delete(); }catch(Exception e){Debug.LogWarning("OSM cache write: "+e.Message);} }
                 }
                 if(root && json!=null && TryParse(json,out var response))ApplyMap(root,id,response);
                 yield return new WaitForSeconds(3);
@@ -1645,12 +1676,12 @@ namespace SeoulSurvival
             double metresPerLongitude=111320*Math.Cos(latitude*Math.PI/180);
             double east=longitude+(id.x*ChunkSize+Radius)/metresPerLongitude, west=longitude+(id.x*ChunkSize-Radius)/metresPerLongitude;
             string box=string.Format(CultureInfo.InvariantCulture,"({0:F7},{1:F7},{2:F7},{3:F7})",south,west,north,east);
-            return "[out:json][timeout:12];(way[highway]"+box+";nwr[amenity~\"police|fire_station|school\"]"+box+";nwr[shop=convenience]"+box+";way[building]"+box+";);out body geom 2000;";
+            return "[out:json][timeout:12];(way[highway]"+box+";nwr[amenity~\"police|fire_station|school\"]"+box+";nwr[shop=convenience]"+box+";way[building]"+box+";way[leisure=park]"+box+";way[natural=water]"+box+";);out body geom 2000;";
         }
         static bool Valid(double lat,double lon) => !double.IsNaN(lat) && !double.IsInfinity(lat) && !double.IsNaN(lon) && !double.IsInfinity(lon) && lat>=-90 && lat<=90 && lon>=-180 && lon<=180;
         void ApplyMap(GameObject root,Vector2Int id,OsmResponse response)
         {
-            int facilities=0,footprints=0,segments=0;
+            int facilities=0,footprints=0,segments=0,landscapes=0;
             var signedRoads=new HashSet<string>();
             var ordinary=new List<OsmElement>();
             var mappedFacilities=new List<MappedFacility>();
@@ -1677,6 +1708,7 @@ namespace SeoulSurvival
                     }
                     continue;
                 }
+                if((e.tags.leisure=="park" || e.tags.natural=="water") && landscapes<12 && SpawnSurface(root.transform,id,e)) {landscapes++;continue;}
                 if(!string.IsNullOrEmpty(e.tags.building) && e.geometry!=null && e.geometry.Length>=4 && e.center!=null && Valid(e.center.lat,e.center.lon))ordinary.Add(e);
                 double lat=e.type=="node"?e.lat:e.center!=null?e.center.lat:double.NaN,lon=e.type=="node"?e.lon:e.center!=null?e.center.lon:double.NaN;
                 if(!Valid(lat,lon))continue; var pos=ToWorld(lat,lon);
@@ -1709,8 +1741,8 @@ namespace SeoulSurvival
                 if(!overlap){SpawnBuilding(root.transform,poi.position-root.transform.position,poi.kind,poi.key);facilities++;}
             }
             if(segments>0){foreach(Transform child in root.transform)if(child.name.StartsWith("Fallback ") || child.name=="Road marking" || child.name=="Sidewalk")Destroy(child.gameObject);Roads.RemoveAll(r=>r.chunk==id && r.synthetic);}
-            if(segments+footprints+facilities>0)mapped.Add(id);
-            navDirty=true; Status=$"실제 OSM 도로 {segments} / 건물 {footprints} / 시설 {facilities} · 실내는 게임용";
+            if(segments+footprints+facilities+landscapes>0)mapped.Add(id);
+            navDirty=true; Status=$"실제 OSM 도로 {segments} / 건물 {footprints} / 시설 {facilities} / 공원·물가 {landscapes} · 실내는 게임용";
         }
         float DistanceToPlayer(OsmElement e) => e.center==null?float.MaxValue:Vector3.Distance(ToWorld(e.center.lat,e.center.lon),GameBootstrap.Instance.Player.transform.position);
         bool FootprintContains(OsmElement building,Vector3 position)
@@ -1718,6 +1750,18 @@ namespace SeoulSurvival
             if(building.geometry==null || building.geometry.Length<4 || building.geometry.Length>80)return false;
             var polygon=new List<Vector3>();foreach(var point in building.geometry){if(point==null || !Valid(point.lat,point.lon))return false;polygon.Add(ToWorld(point.lat,point.lon));}
             return OsmBuildingShell.Contains(polygon,position);
+        }
+        bool SpawnSurface(Transform parent,Vector2Int id,OsmElement e)
+        {
+            if(e.geometry==null || e.geometry.Length<4 || e.geometry.Length>128)return false;
+            var polygon=new List<Vector3>();foreach(var point in e.geometry){if(point==null || !Valid(point.lat,point.lon))return false;polygon.Add(ToWorld(point.lat,point.lon));}
+            if(Vector3.Distance(polygon[0],polygon[polygon.Count-1])>1)return false;polygon.RemoveAt(polygon.Count-1);
+            var center=Vector3.zero;foreach(var point in polygon)center+=point;center/=polygon.Count;
+            if(ChunkAt(center)!=id)return false;
+            float span=0;foreach(var point in polygon)span=Mathf.Max(span,Vector3.Distance(point,center));if(span<2 || span>300)return false;
+            var go=new GameObject(e.tags.natural=="water"?"OSM water":"OSM park");go.transform.SetParent(parent,false);go.transform.position=center;
+            for(int i=0;i<polygon.Count;i++)polygon[i]-=center;
+            var surface=go.AddComponent<MapSurface>();if(!surface.Build(polygon,e.tags.natural=="water")){Destroy(go);return false;}Surfaces.Add(surface);return true;
         }
         static float RoadWidth(string highway)
         {
@@ -2234,7 +2278,8 @@ namespace SeoulSurvival
             var oldColor=GUI.color;GUI.color=new Color(.025f,.055f,.07f,.93f);GUI.DrawTexture(rect,Texture2D.whiteTexture);GUI.color=Color.white;
             var style=new GUIStyle(GUI.skin.label){font=WorldFactory.KoreanFont,fontSize=Expanded?16:12};GUI.Label(new Rect(rect.x+10,rect.y+8,size-20,24),Expanded?game.Map.AreaLabel+" · "+(game.Map.CurrentChunkMapped?"OSM 지도":"절차 지도"):"N ↑  지역도 · M 확대",style);
             GUI.BeginGroup(new Rect(rect.x+8,rect.y+36,size-16,size-44));float mapSize=size-16;float range=Expanded?350:105;var center=game.Player.transform.position;
-            int drawn=0;foreach(var building in game.Map.Buildings){if(!building || building.Outline==null || (building.transform.position-center).sqrMagnitude>range*range || drawn++>=70)continue;var outline=building.Outline;for(int i=0;i<outline.Count;i++)Line(Point(building.transform.TransformPoint(outline[i]),center,range,mapSize),Point(building.transform.TransformPoint(outline[(i+1)%outline.Count]),center,range,mapSize),building.Playable?new Color(.72f,.58f,.3f):new Color(.48f,.5f,.51f),Expanded?2:1);}
+            foreach(var surface in game.Map.Surfaces){if(!surface || (surface.transform.position-center).sqrMagnitude>range*range*2)continue;var outline=surface.Outline;for(int i=0;i<outline.Count;i++)Line(Point(surface.transform.TransformPoint(outline[i]),center,range,mapSize),Point(surface.transform.TransformPoint(outline[(i+1)%outline.Count]),center,range,mapSize),surface.Water?new Color(.18f,.6f,.85f):new Color(.3f,.75f,.4f),Expanded?3:2);}
+            int drawn=0;foreach(var building in game.Map.Buildings){if(!building || building.Outline==null || (building.transform.position-center).sqrMagnitude>range*range || drawn++>=70)continue;var outline=building.Outline;for(int i=0;i<outline.Count;i++)Line(Point(building.transform.TransformPoint(outline[i]),center,range,mapSize),Point(building.transform.TransformPoint(outline[(i+1)%outline.Count]),center,range,mapSize),building.Playable?new Color(.72f,.58f,.3f):new Color(.48f,.5f,.51f),Expanded?2:1);if(building.Playable){var door=Point(building.Entrance,center,range,mapSize);GUI.color=new Color(1,.78f,.24f);GUI.DrawTexture(new Rect(door.x-3,door.y-3,6,6),Texture2D.whiteTexture);GUI.color=Color.white;}}
             foreach(var road in game.Map.Roads){if((road.a-center).sqrMagnitude>range*range*5 && (road.b-center).sqrMagnitude>range*range*5)continue;Line(Point(road.a,center,range,mapSize),Point(road.b,center,range,mapSize),new Color(.45f,.53f,.55f),Expanded?3:2);}
             if(facilities!=null)foreach(var f in facilities)if(f && (f.transform.position-center).sqrMagnitude<range*range){var p=Point(f.transform.position,center,range,mapSize);bool objective=game.Campaign && game.Campaign.ReliefActive && !game.Campaign.ReliefRecovered && f.facility==game.Campaign.CurrentRelief.facility && !f.GetComponentInChildren<LootBox>().Opened;GUI.color=objective?Color.yellow:EnterableBuilding.Colors[(int)f.facility];float dot=objective?14:8;GUI.DrawTexture(new Rect(p.x-dot/2,p.y-dot/2,dot,dot),Texture2D.whiteTexture);GUI.color=Color.white;if(Expanded)GUI.Label(new Rect(p.x+8,p.y-8,95,24),objective?"의뢰 · 회수":new[]{"경찰","소방","편의점","학교","업무","주택"}[(int)f.facility],style);}
             Marker(SurvivalCampaign.Home,"거점",new Color(.4f,1,.85f));Marker(game.Survival.Tower.position,"송신탑",new Color(.9f,.5f,1));
