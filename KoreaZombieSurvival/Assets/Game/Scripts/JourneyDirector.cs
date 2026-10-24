@@ -23,6 +23,7 @@ namespace SeoulSurvival
         public JourneyPlan Plan {get;private set;}
         public float Progress {get;private set;}
         public float RemainingMetres {get;private set;}
+        public Vector3 Target=>target;
         public bool ReunionDefense {get;private set;}
         public float ReunionRemaining {get;private set;}
         public string Status {get;private set;}="출발지와 목적지를 입력하세요.";

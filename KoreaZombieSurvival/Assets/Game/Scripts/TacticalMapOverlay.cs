@@ -20,11 +20,24 @@ namespace SeoulSurvival
             foreach(var road in game.Map.Roads){if((road.a-center).sqrMagnitude>range*range*5 && (road.b-center).sqrMagnitude>range*range*5)continue;Line(Point(road.a,center,range,mapSize),Point(road.b,center,range,mapSize),new Color(.45f,.53f,.55f),Expanded?3:2);}
             if(facilities!=null)foreach(var f in facilities)if(f && (f.transform.position-center).sqrMagnitude<range*range){var p=Point(f.transform.position,center,range,mapSize);bool objective=game.Campaign && game.Campaign.ReliefActive && !game.Campaign.ReliefRecovered && f.facility==game.Campaign.CurrentRelief.facility && !f.GetComponentInChildren<LootBox>().Opened;GUI.color=objective?Color.yellow:EnterableBuilding.Colors[(int)f.facility];float dot=objective?14:8;GUI.DrawTexture(new Rect(p.x-dot/2,p.y-dot/2,dot,dot),Texture2D.whiteTexture);GUI.color=Color.white;if(Expanded)GUI.Label(new Rect(p.x+8,p.y-8,95,24),objective?"의뢰 · 회수":new[]{"경찰","소방","편의점","학교","업무","주택"}[(int)f.facility],style);}
             Marker(SurvivalCampaign.Home,"거점",new Color(.4f,1,.85f));Marker(game.Survival.Tower.position,"송신탑",new Color(.9f,.5f,1));
+            if(game.Journey && game.Journey.Ready && !game.Journey.Reached && game.Journey.Plan.fromName!=game.Journey.Plan.toName)
+            {
+                var goal=ObjectivePoint(game.Journey.Target,center,range,mapSize);var middle=new Vector2(mapSize/2,mapSize/2);
+                Line(middle,goal,new Color(.95f,.75f,.2f,.65f),Expanded?2:1);
+                GUI.color=new Color(1,.78f,.24f);GUI.DrawTexture(new Rect(goal.x-5,goal.y-5,10,10),Texture2D.whiteTexture);GUI.color=Color.white;
+                if(Expanded)GUI.Label(new Rect(Mathf.Clamp(goal.x+8,0,mapSize-170),Mathf.Clamp(goal.y-27,0,mapSize-24),170,24),$"목적지 · 직선 {game.Journey.RemainingMetres/1000:0.0}km",style);
+            }
             var player=Point(center,center,range,mapSize);GUI.color=new Color(.4f,1,.85f);GUI.DrawTexture(new Rect(player.x-3,player.y-3,6,6),Texture2D.whiteTexture);GUI.color=Color.white;
             GUI.EndGroup();if(nearby){var name=nearby.BuildingName;GUI.Box(new Rect(rect.x,rect.y+size+4,size,42),$"{name} · {nearby.Floors}층 {(nearby.HeightReported?"OSM 기록":"높이 추정")}{(nearby.Playable?" · 1층 진입 가능":"")}");}GUI.color=oldColor;GUI.matrix=Matrix4x4.identity;
             void Marker(Vector3 location,string text,Color color){var delta=location-center;if(delta.sqrMagnitude>range*range)return;var p=Point(location,center,range,mapSize);GUI.color=color;GUI.Label(new Rect(p.x-15,p.y-12,70,24),text,style);GUI.color=Color.white;}
         }
         static Vector2 Point(Vector3 point,Vector3 center,float range,float size)=>new Vector2(size/2+(point.x-center.x)*size/(range*2),size/2-(point.z-center.z)*size/(range*2));
+        public static Vector2 ObjectivePoint(Vector3 target,Vector3 center,float range,float size)
+        {
+            var delta=target-center;float extent=Mathf.Max(Mathf.Abs(delta.x),Mathf.Abs(delta.z));
+            float factor=extent>range?range/extent:1;var point=Point(center+delta*factor,center,range,size);
+            return new Vector2(Mathf.Clamp(point.x,8,size-8),Mathf.Clamp(point.y,8,size-8));
+        }
         static void Line(Vector2 a,Vector2 b,Color color,float width){var matrix=GUI.matrix;var old=GUI.color;GUI.color=color;GUIUtility.RotateAroundPivot(Mathf.Atan2(b.y-a.y,b.x-a.x)*Mathf.Rad2Deg,a);GUI.DrawTexture(new Rect(a.x,a.y-width/2,(b-a).magnitude,width),Texture2D.whiteTexture);GUI.matrix=matrix;GUI.color=old;}
     }
 }
