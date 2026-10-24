@@ -1,0 +1,14 @@
+# ninja log v5
+232	832	8145354463367295	FramePacing/CMakeFiles/swappywrapper.dir/UnitySwappyWrapper.cpp.o	790507d4e0889f3f
+834	1640	8145354470401480	Z:/KoreaZombieSurvival/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/5p4q6j2o/obj/arm64-v8a/libswappywrapper.so	314163e7a1f1cf18
+30	1690	8145354471838981	GameActivity/CMakeFiles/game.dir/UGAInputKeyEvent.cpp.o	5ced6ed230547f03
+17	1722	8145354472322248	GameActivity/CMakeFiles/game.dir/UGAConfiguration.cpp.o	227ab91e6f7fcb97
+97	1745	8145354472347336	GameActivity/CMakeFiles/game.dir/UGAEntry.cpp.o	4096d002340d9f14
+175	1828	8145354473371441	GameActivity/CMakeFiles/game.dir/UGAInputMotionEvent.cpp.o	8b3f8c7bd7eeb458
+23	1853	8145354473542440	GameActivity/CMakeFiles/game.dir/UGADebug.cpp.o	8eb062e61c6c6557
+200	2012	8145354475155326	GameActivity/CMakeFiles/game.dir/UGASoftKeyboard.cpp.o	cfaa71a6a65728a2
+155	2230	8145354477363418	GameActivity/CMakeFiles/game.dir/UGAInput.cpp.o	bdf136954a8af813
+1	2407	8145354479063815	GameActivity/CMakeFiles/game.dir/UGAApplication.cpp.o	d70b47b4409d81a1
+2408	2532	8145354480372532	Z:/KoreaZombieSurvival/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/5p4q6j2o/obj/arm64-v8a/libgame.so	85e44f4b48b6f5ce
+27	244	8145566790415177	Z:/KoreaZombieSurvival/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/5p4q6j2o/obj/arm64-v8a/libgame.so	85e44f4b48b6f5ce
+42	271	8145566790481396	Z:/KoreaZombieSurvival/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/5p4q6j2o/obj/arm64-v8a/libswappywrapper.so	314163e7a1f1cf18

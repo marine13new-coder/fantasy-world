@@ -1,0 +1,15 @@
+/Library/
+/Temp/
+/Obj/
+/Logs/
+/Builds/
+/UserSettings/
+/Tools/.venv/
+/Tools/unity-mcp/
+/Tools/Downloads/
+/Tools/AndroidJDK/
+/Tools/AndroidGradle/
+/Tools/AndroidTemp/
+/Tools/.freellm-key.clixml*
+*.csproj
+*.sln

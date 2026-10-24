@@ -1,0 +1,400 @@
+{
+  "weapon": {
+    "magazineSize": 12,
+    "startingReserve": 36,
+    "damage": 25.0,
+    "headshotMultiplier": 4.0,
+    "instantKillChance": 0.15000000596046448,
+    "focusSeconds": 0.6000000238418579,
+    "shotInterval": 0.25,
+    "reloadSeconds": 1.600000023841858,
+    "range": 40.0,
+    "spreadDegrees": 12.0,
+    "noiseRadius": 30.0,
+    "meleeDamage": 40.0,
+    "meleeRange": 2.700000047683716,
+    "meleeArc": 105.0,
+    "meleeInterval": 0.6499999761581421
+  },
+  "scoutRifle": {
+    "magazineSize": 20,
+    "startingReserve": 0,
+    "damage": 42,
+    "headshotMultiplier": 3.5,
+    "instantKillChance": 0.15,
+    "focusSeconds": 0.9,
+    "shotInterval": 0.18,
+    "reloadSeconds": 2.4,
+    "range": 65,
+    "spreadDegrees": 7,
+    "noiseRadius": 50,
+    "meleeDamage": 40,
+    "meleeRange": 2.7,
+    "meleeArc": 105,
+    "meleeInterval": 0.65
+  },
+  "journey": {
+    "encounterSeconds": 90,
+    "extraZombieStrength": 0.5,
+    "startEnemies": 1,
+    "endEnemies": 5,
+    "reunionHoldSeconds": 45,
+    "reunionRadius": 75,
+    "reunionWaveSeconds": 8,
+    "reunionWaveSize": 3,
+    "lateEncounterSeconds": 25,
+    "runnerStart": 0.25,
+    "armoredStart": 0.65,
+    "runnerChance": 0.35,
+    "armoredChance": 0.18,
+    "chapterTitles": [
+      "1장 · 마지막 연락",
+      "2장 · 동네의 생존자",
+      "3장 · 봉쇄선을 넘어서",
+      "4장 · 약속 장소의 신호"
+    ]
+  },
+  "vehicles": [
+    {
+      "name": "접이식 자전거",
+      "speed": 9,
+      "rangeMeters": 0,
+      "noiseRadius": 0,
+      "staminaPerSecond": 0.7
+    },
+    {
+      "name": "배달 전기 스쿠터",
+      "speed": 15,
+      "rangeMeters": 3500,
+      "noiseRadius": 18,
+      "staminaPerSecond": 0
+    }
+  ],
+  "zombie": {
+    "health": 100.0,
+    "speed": 2.299999952316284,
+    "vision": 18.0,
+    "damage": 12.0,
+    "attackInterval": 1.2000000476837158,
+    "maxAlive": 70
+  },
+  "playerHealth": 100.0,
+  "moveSpeed": 6.0,
+  "defenseSeconds": 60.0,
+  "daySeconds": 1200,
+  "loot": [
+    {
+      "facility": 0,
+      "items": [
+        {
+          "item": 0,
+          "count": 24
+        },
+        {
+          "item": 1,
+          "count": 2
+        }
+      ]
+    },
+    {
+      "facility": 1,
+      "items": [
+        {
+          "item": 2,
+          "count": 2
+        },
+        {
+          "item": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "facility": 2,
+      "items": [
+        {
+          "item": 4,
+          "count": 3
+        },
+        {
+          "item": 5,
+          "count": 1
+        },
+        {
+          "item": 10,
+          "count": 2
+        }
+      ]
+    },
+    {
+      "facility": 3,
+      "items": [
+        {
+          "item": 6,
+          "count": 6
+        },
+        {
+          "item": 7,
+          "count": 3
+        }
+      ]
+    },
+    {
+      "facility": 4,
+      "items": [
+        {
+          "item": 6,
+          "count": 6
+        },
+        {
+          "item": 7,
+          "count": 3
+        },
+        {
+          "item": 11,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "facility": 5,
+      "items": [
+        {
+          "item": 4,
+          "count": 2
+        },
+        {
+          "item": 6,
+          "count": 3
+        },
+        {
+          "item": 10,
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "reliefContracts": [
+    {
+      "facility": 0,
+      "title": "경찰서 · 치안 물자 회수",
+      "reward": {
+        "item": 2,
+        "count": 1
+      }
+    },
+    {
+      "facility": 1,
+      "title": "소방서 · 구조 장비 회수",
+      "reward": {
+        "item": 4,
+        "count": 2
+      }
+    },
+    {
+      "facility": 2,
+      "title": "편의점 · 비상 식량 회수",
+      "reward": {
+        "item": 6,
+        "count": 3
+      }
+    },
+    {
+      "facility": 3,
+      "title": "학교 · 대피소 부품 회수",
+      "reward": {
+        "item": 7,
+        "count": 2
+      }
+    }
+  ],
+  "recipes": [
+    {
+      "name": "탄약 12발",
+      "costs": [
+        {
+          "item": 6,
+          "count": 2
+        }
+      ],
+      "output": 0,
+      "count": 12,
+      "barricade": false
+    },
+    {
+      "name": "바리케이드",
+      "costs": [
+        {
+          "item": 6,
+          "count": 2
+        }
+      ],
+      "output": 0,
+      "count": 1,
+      "barricade": true
+    },
+    {
+      "name": "송신기 수리 키트",
+      "costs": [
+        {
+          "item": 6,
+          "count": 6
+        },
+        {
+          "item": 7,
+          "count": 4
+        }
+      ],
+      "output": 8,
+      "count": 1,
+      "barricade": false
+    },
+    {
+      "name": "현장 조립 소총",
+      "costs": [
+        {
+          "item": 1,
+          "count": 2
+        },
+        {
+          "item": 6,
+          "count": 4
+        }
+      ],
+      "output": 9,
+      "count": 1,
+      "barricade": false
+    },
+    {
+      "output": 12,
+      "count": 1,
+      "name": "유인 신호탄",
+      "barricade": false,
+      "costs": [
+        {
+          "item": 6,
+          "count": 2
+        },
+        {
+          "item": 7,
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "signalWindowSeconds": 20,
+  "signalLockSeconds": 1.2,
+  "hungerPerMinute": 3,
+  "staminaRecovery": 12,
+  "meleeStamina": 18,
+  "carefulSearchSeconds": 2.5,
+  "journeyEvents": [
+    {
+      "progress": 0.22,
+      "title": "주택가 임시 진료소",
+      "description": "대피 주민이 식량을 요청합니다. 약품을 나눌 여유가 있다고 합니다.",
+      "first": {
+        "label": "식량 1개를 건네고 구급상자 1개 받기",
+        "cost": {
+          "item": 4,
+          "count": 1
+        },
+        "reward": {
+          "item": 2,
+          "count": 1
+        }
+      },
+      "second": {
+        "label": "물자를 지키고 떠나기"
+      }
+    },
+    {
+      "progress": 0.78,
+      "title": "한강 접근 · 봉쇄선",
+      "description": "진행 방향에 봉쇄선이 보입니다. 조용히 돌아가거나 경보를 울리고 밀어붙일 수 있습니다.",
+      "first": {
+        "label": "골목 우회 · 기력 35 소모 / 추격 감소",
+        "staminaCost": 35,
+        "alertChange": -0.1
+      },
+      "second": {
+        "label": "경보 속 돌파 · 즉시 좀비 4마리 / 추격 증가",
+        "noiseRadius": 50,
+        "zombies": 4,
+        "alertChange": 0.15
+      }
+    },
+    {
+      "progress": 0.94,
+      "title": "목적지 인근 무전 중계",
+      "description": "안전한 연락에는 전자부품이 필요합니다. 공개 송신은 더 멀리 들립니다.",
+      "first": {
+        "label": "전자부품 2개로 암호화 송신 / 추격 감소",
+        "cost": {
+          "item": 7,
+          "count": 2
+        },
+        "alertChange": -0.2
+      },
+      "second": {
+        "label": "공개 송신 · 즉시 좀비 5마리 / 추격 증가",
+        "noiseRadius": 60,
+        "zombies": 5,
+        "alertChange": 0.2
+      }
+    }
+  ],
+  "flareNoiseRadius": 45,
+  "flareDuration": 8,
+  "carefulDistrictBonus": [
+    {
+      "districtName": "환승 거점",
+      "item": {
+        "count": 1,
+        "item": 11
+      }
+    },
+    {
+      "districtName": "주택 골목",
+      "item": {
+        "count": 1,
+        "item": 10
+      }
+    },
+    {
+      "districtName": "상업 거리",
+      "item": {
+        "count": 1,
+        "item": 4
+      }
+    }
+  ],
+  "pursuit": {
+    "quickSearchAlert": 0.08,
+    "decayPerMinute": 0.025,
+    "restRecovery": 0.2,
+    "gunshotAlert": 0.015,
+    "quickSearchNoise": 32,
+    "carefulSearchNoise": 8
+  },
+  "zombieVariants": [
+    {
+      "bodyDamage": 1,
+      "health": 1,
+      "speed": 1,
+      "attackDamage": 1
+    },
+    {
+      "bodyDamage": 1,
+      "health": 0.65,
+      "speed": 1.65,
+      "attackDamage": 0.8
+    },
+    {
+      "bodyDamage": 0.35,
+      "health": 2,
+      "speed": 0.7,
+      "attackDamage": 1.4
+    }
+  ]
+}

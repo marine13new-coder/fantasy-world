@@ -1,0 +1,6 @@
+{
+  "name": "AbyssRoll",
+  "rootNamespace": "AbyssRoll",
+  "autoReferenced": false,
+  "defineConstraints": ["ABYSS_ROLL_ENABLED"]
+}

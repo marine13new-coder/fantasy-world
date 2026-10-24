@@ -1,0 +1,491 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!29 &1
+OcclusionCullingSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_OcclusionBakeSettings:
+    smallestOccluder: 5
+    smallestHole: 0.25
+    backfaceThreshold: 100
+  m_SceneGUID: 00000000000000000000000000000000
+  m_OcclusionCullingData: {fileID: 0}
+--- !u!104 &2
+RenderSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 10
+  m_Fog: 0
+  m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  m_FogMode: 3
+  m_FogDensity: 0.01
+  m_LinearFogStart: 0
+  m_LinearFogEnd: 300
+  m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
+  m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
+  m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
+  m_AmbientIntensity: 1
+  m_AmbientMode: 0
+  m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
+  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_HaloStrength: 0.5
+  m_FlareStrength: 1
+  m_FlareFadeSpeed: 3
+  m_HaloTexture: {fileID: 0}
+  m_SpotCookie: {fileID: 10001, guid: 0000000000000000e000000000000000, type: 0}
+  m_DefaultReflectionMode: 0
+  m_DefaultReflectionResolution: 128
+  m_ReflectionBounces: 1
+  m_ReflectionIntensity: 1
+  m_CustomReflection: {fileID: 0}
+  m_Sun: {fileID: 0}
+  m_UseRadianceAmbientProbe: 0
+--- !u!157 &3
+LightmapSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 13
+  m_BakeOnSceneLoad: 0
+  m_GISettings:
+    serializedVersion: 2
+    m_BounceScale: 1
+    m_IndirectOutputScale: 1
+    m_AlbedoBoost: 1
+    m_EnvironmentLightingMode: 0
+    m_EnableBakedLightmaps: 1
+    m_EnableRealtimeLightmaps: 0
+  m_LightmapEditorSettings:
+    serializedVersion: 12
+    m_Resolution: 2
+    m_BakeResolution: 40
+    m_AtlasSize: 1024
+    m_AO: 0
+    m_AOMaxDistance: 1
+    m_CompAOExponent: 1
+    m_CompAOExponentDirect: 0
+    m_ExtractAmbientOcclusion: 0
+    m_Padding: 2
+    m_LightmapParameters: {fileID: 0}
+    m_LightmapsBakeMode: 1
+    m_TextureCompression: 1
+    m_ReflectionCompression: 2
+    m_MixedBakeMode: 2
+    m_BakeBackend: 2
+    m_PVRSampling: 1
+    m_PVRDirectSampleCount: 32
+    m_PVRSampleCount: 512
+    m_PVRBounces: 2
+    m_PVREnvironmentSampleCount: 256
+    m_PVREnvironmentReferencePointCount: 2048
+    m_PVRFilteringMode: 1
+    m_PVRDenoiserTypeDirect: 2
+    m_PVRDenoiserTypeIndirect: 2
+    m_PVRDenoiserTypeAO: 2
+    m_PVRFilterTypeDirect: 0
+    m_PVRFilterTypeIndirect: 0
+    m_PVRFilterTypeAO: 0
+    m_PVREnvironmentMIS: 1
+    m_PVRCulling: 1
+    m_PVRFilteringGaussRadiusDirect: 1
+    m_PVRFilteringGaussRadiusIndirect: 1
+    m_PVRFilteringGaussRadiusAO: 1
+    m_PVRFilteringAtrousPositionSigmaDirect: 0.5
+    m_PVRFilteringAtrousPositionSigmaIndirect: 2
+    m_PVRFilteringAtrousPositionSigmaAO: 1
+    m_ExportTrainingData: 0
+    m_TrainingDataDestination: TrainingData
+    m_LightProbeSampleCountMultiplier: 4
+  m_LightingDataAsset: {fileID: 20201, guid: 0000000000000000f000000000000000, type: 0}
+  m_LightingSettings: {fileID: 0}
+--- !u!196 &4
+NavMeshSettings:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_BuildSettings:
+    serializedVersion: 3
+    agentTypeID: 0
+    agentRadius: 0.5
+    agentHeight: 2
+    agentSlope: 45
+    agentClimb: 0.4
+    ledgeDropHeight: 0
+    maxJumpAcrossDistance: 0
+    minRegionArea: 2
+    manualCellSize: 0
+    cellSize: 0.16666667
+    manualTileSize: 0
+    tileSize: 256
+    buildHeightMesh: 0
+    maxJobWorkers: 0
+    preserveTilesOutsideBounds: 0
+    debug:
+      m_Flags: 0
+  m_NavMeshData: {fileID: 0}
+--- !u!1 &316304194
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 316304196}
+  - component: {fileID: 316304195}
+  m_Layer: 0
+  m_Name: GameBootstrap
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &316304195
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 316304194}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73d2a1c3de3ed554786ae1584028507b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SeoulSurvival.GameBootstrap
+  balance:
+    weapon:
+      magazineSize: 12
+      startingReserve: 36
+      damage: 25
+      headshotMultiplier: 4
+      instantKillChance: 0.15
+      focusSeconds: 0.6
+      shotInterval: 0.25
+      reloadSeconds: 1.6
+      range: 40
+      spreadDegrees: 12
+      noiseRadius: 30
+      meleeDamage: 40
+      meleeRange: 2.7
+      meleeArc: 105
+      meleeInterval: 0.65
+    scoutRifle:
+      magazineSize: 20
+      startingReserve: 0
+      damage: 42
+      headshotMultiplier: 3.5
+      instantKillChance: 0.15
+      focusSeconds: 0.9
+      shotInterval: 0.18
+      reloadSeconds: 2.4
+      range: 65
+      spreadDegrees: 7
+      noiseRadius: 50
+      meleeDamage: 40
+      meleeRange: 2.7
+      meleeArc: 105
+      meleeInterval: 0.65
+    zombie:
+      health: 100
+      speed: 2.3
+      vision: 18
+      damage: 12
+      attackInterval: 1.2
+      maxAlive: 70
+    zombieVariants:
+    - health: 1
+      speed: 1
+      bodyDamage: 1
+      attackDamage: 1
+    - health: 0.65
+      speed: 1.65
+      bodyDamage: 1
+      attackDamage: 0.8
+    - health: 2
+      speed: 0.7
+      bodyDamage: 0.35
+      attackDamage: 1.4
+    journey:
+      encounterSeconds: 35
+      lateEncounterSeconds: 25
+      extraZombieStrength: 0.5
+      runnerStart: 0.25
+      armoredStart: 0.65
+      runnerChance: 0.35
+      armoredChance: 0.18
+      chapterTitles:
+      - "1\uC7A5 \xB7 \uB9C8\uC9C0\uB9C9 \uC5F0\uB77D"
+      - "2\uC7A5 \xB7 \uB3D9\uB124\uC758 \uC0DD\uC874\uC790"
+      - "3\uC7A5 \xB7 \uBD09\uC1C4\uC120\uC744 \uB118\uC5B4\uC11C"
+      - "4\uC7A5 \xB7 \uC57D\uC18D \uC7A5\uC18C\uC758 \uC2E0\uD638"
+      startEnemies: 1
+      endEnemies: 5
+      reunionHoldSeconds: 45
+      reunionRadius: 75
+      reunionWaveSeconds: 8
+      reunionWaveSize: 3
+    pursuit:
+      quickSearchNoise: 32
+      carefulSearchNoise: 8
+      quickSearchAlert: 0.08
+      gunshotAlert: 0.015
+      restRecovery: 0.2
+      decayPerMinute: 0.025
+    vehicles:
+    - name: "\uC811\uC774\uC2DD \uC790\uC804\uAC70"
+      speed: 9
+      rangeMeters: 0
+      noiseRadius: 0
+      staminaPerSecond: 0.7
+    - name: "\uBC30\uB2EC \uC804\uAE30 \uC2A4\uCFE0\uD130"
+      speed: 15
+      rangeMeters: 3500
+      noiseRadius: 18
+      staminaPerSecond: 0
+    journeyEvents:
+    - progress: 0.22
+      title: "\uC8FC\uD0DD\uAC00 \uC784\uC2DC \uC9C4\uB8CC\uC18C"
+      description: "\uB300\uD53C \uC8FC\uBBFC\uC774 \uC2DD\uB7C9\uC744 \uC694\uCCAD\uD569\uB2C8\uB2E4. \uC57D\uD488\uC744 \uB098\uB20C \uC5EC\uC720\uAC00 \uC788\uB2E4\uACE0 \uD569\uB2C8\uB2E4."
+      first:
+        label: "\uC2DD\uB7C9 1\uAC1C\uB97C \uAC74\uB124\uACE0 \uAD6C\uAE09\uC0C1\uC790 1\uAC1C \uBC1B\uAE30"
+        cost:
+          item: 4
+          count: 1
+        reward:
+          item: 2
+          count: 1
+        staminaCost: 0
+        alertChange: 0
+        noiseRadius: 0
+        zombies: 0
+      second:
+        label: "\uBB3C\uC790\uB97C \uC9C0\uD0A4\uACE0 \uB5A0\uB098\uAE30"
+        cost:
+          item: 0
+          count: 0
+        reward:
+          item: 0
+          count: 0
+        staminaCost: 0
+        alertChange: 0
+        noiseRadius: 0
+        zombies: 0
+    - progress: 0.52
+      title: "\uD55C\uAC15 \uC811\uADFC \xB7 \uBD09\uC1C4\uC120"
+      description: "\uC9C4\uD589 \uBC29\uD5A5\uC5D0 \uBD09\uC1C4\uC120\uC774 \uBCF4\uC785\uB2C8\uB2E4. \uC870\uC6A9\uD788 \uB3CC\uC544\uAC00\uAC70\uB098 \uACBD\uBCF4\uB97C \uC6B8\uB9AC\uACE0 \uBC00\uC5B4\uBD99\uC77C \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+      first:
+        label: "\uACE8\uBAA9 \uC6B0\uD68C \xB7 \uAE30\uB825 35 \uC18C\uBAA8 / \uCD94\uACA9 \uAC10\uC18C"
+        cost:
+          item: 0
+          count: 0
+        reward:
+          item: 0
+          count: 0
+        staminaCost: 35
+        alertChange: -0.1
+        noiseRadius: 0
+        zombies: 0
+      second:
+        label: "\uACBD\uBCF4 \uC18D \uB3CC\uD30C \xB7 \uC989\uC2DC \uC880\uBE44 4\uB9C8\uB9AC / \uCD94\uACA9 \uC99D\uAC00"
+        cost:
+          item: 0
+          count: 0
+        reward:
+          item: 0
+          count: 0
+        staminaCost: 0
+        alertChange: 0.15
+        noiseRadius: 50
+        zombies: 4
+    - progress: 0.82
+      title: "\uBAA9\uC801\uC9C0 \uC778\uADFC \uBB34\uC804 \uC911\uACC4"
+      description: "\uC548\uC804\uD55C \uC5F0\uB77D\uC5D0\uB294 \uC804\uC790\uBD80\uD488\uC774 \uD544\uC694\uD569\uB2C8\uB2E4. \uACF5\uAC1C \uC1A1\uC2E0\uC740 \uB354 \uBA40\uB9AC \uB4E4\uB9BD\uB2C8\uB2E4."
+      first:
+        label: "\uC804\uC790\uBD80\uD488 2\uAC1C\uB85C \uC554\uD638\uD654 \uC1A1\uC2E0 / \uCD94\uACA9 \uAC10\uC18C"
+        cost:
+          item: 7
+          count: 2
+        reward:
+          item: 0
+          count: 0
+        staminaCost: 0
+        alertChange: -0.2
+        noiseRadius: 0
+        zombies: 0
+      second:
+        label: "\uACF5\uAC1C \uC1A1\uC2E0 \xB7 \uC989\uC2DC \uC880\uBE44 5\uB9C8\uB9AC / \uCD94\uACA9 \uC99D\uAC00"
+        cost:
+          item: 0
+          count: 0
+        reward:
+          item: 0
+          count: 0
+        staminaCost: 0
+        alertChange: 0.2
+        noiseRadius: 60
+        zombies: 5
+    playerHealth: 100
+    moveSpeed: 6
+    defenseSeconds: 60
+    daySeconds: 240
+    signalWindowSeconds: 20
+    signalLockSeconds: 1.2
+    hungerPerMinute: 3
+    staminaRecovery: 12
+    meleeStamina: 18
+    carefulSearchSeconds: 2.5
+    flareNoiseRadius: 45
+    flareDuration: 8
+    loot:
+    - facility: 0
+      items:
+      - item: 0
+        count: 24
+      - item: 1
+        count: 2
+    - facility: 1
+      items:
+      - item: 2
+        count: 2
+      - item: 3
+        count: 1
+    - facility: 2
+      items:
+      - item: 4
+        count: 3
+      - item: 5
+        count: 2
+    - facility: 3
+      items:
+      - item: 6
+        count: 6
+      - item: 7
+        count: 3
+    - facility: 4
+      items:
+      - item: 6
+        count: 6
+      - item: 7
+        count: 3
+    - facility: 5
+      items:
+      - item: 4
+        count: 2
+      - item: 6
+        count: 3
+    carefulDistrictBonus:
+    - districtName: "\uD658\uC2B9 \uAC70\uC810"
+      item:
+        item: 11
+        count: 1
+    - districtName: "\uC8FC\uD0DD \uACE8\uBAA9"
+      item:
+        item: 10
+        count: 1
+    - districtName: "\uC0C1\uC5C5 \uAC70\uB9AC"
+      item:
+        item: 4
+        count: 1
+    reliefContracts:
+    - facility: 0
+      title: "\uCE58\uC548 \uBB3C\uC790 \uD68C\uC218"
+      reward:
+        item: 2
+        count: 1
+    - facility: 1
+      title: "\uAD6C\uC870 \uC7A5\uBE44 \uD68C\uC218"
+      reward:
+        item: 4
+        count: 2
+    - facility: 2
+      title: "\uBE44\uC0C1 \uC2DD\uB7C9 \uD68C\uC218"
+      reward:
+        item: 6
+        count: 3
+    - facility: 3
+      title: "\uB300\uD53C\uC18C \uBD80\uD488 \uD68C\uC218"
+      reward:
+        item: 7
+        count: 2
+    recipes:
+    - name: "\uD0C4\uC57D 12\uBC1C"
+      costs:
+      - item: 6
+        count: 2
+      output: 0
+      count: 12
+      barricade: 0
+    - name: "\uBC14\uB9AC\uCF00\uC774\uB4DC"
+      costs:
+      - item: 6
+        count: 2
+      output: 0
+      count: 1
+      barricade: 1
+    - name: "\uC1A1\uC2E0\uAE30 \uC218\uB9AC \uD0A4\uD2B8"
+      costs:
+      - item: 6
+        count: 6
+      - item: 7
+        count: 4
+      output: 8
+      count: 1
+      barricade: 0
+  balanceJson: {fileID: 4900000, guid: 7eb464a766c9805468009a2c1fc2e782, type: 3}
+  balanceAsset: {fileID: 11400000, guid: 673a3e77f8e2bab4588dd2a4d4caa997, type: 2}
+  assets:
+    playerPrefab: {fileID: 1102364564194869057, guid: 1c80d48efed21a342ace13118d934757, type: 3}
+    zombiePrefab: {fileID: 2611416408072979316, guid: a7df01609a66bfc4e87e8086a3d7f308, type: 3}
+    lootPrefab: {fileID: 5708687785556851891, guid: 361a5f8f879a9704293239b5c2fdf114, type: 3}
+    barricadePrefab: {fileID: 1479765624666687604, guid: aaeeab063900972439521d1930b3e1c8, type: 3}
+    helicopterPrefab: {fileID: 0}
+    pistolPrefab: {fileID: 0}
+    riflePrefab: {fileID: 0}
+    axePrefab: {fileID: 0}
+    bicyclePrefab: {fileID: 0}
+    scooterPrefab: {fileID: 0}
+    muzzlePrefab: {fileID: 0}
+    impactPrefab: {fileID: 0}
+    flarePrefab: {fileID: 0}
+    runnerZombiePrefab: {fileID: 0}
+    armoredZombiePrefab: {fileID: 0}
+    buildingPrefabs:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    playerAnimator: {fileID: 9100000, guid: 4b460575a8c520648a0b436770a25b89, type: 2}
+    zombieAnimator: {fileID: 9100000, guid: 4b460575a8c520648a0b436770a25b89, type: 2}
+    shot: {fileID: 0}
+    headshot: {fileID: 0}
+    empty: {fileID: 0}
+    reload: {fileID: 0}
+    axe: {fileID: 0}
+    groan: {fileID: 0}
+    loot: {fileID: 0}
+    siren: {fileID: 0}
+    dayBgm: {fileID: 0}
+    nightBgm: {fileID: 0}
+  loadResourceJson: 1
+  useOnlineMap: 1
+  useBundledGangnamMap: 1
+  enablePersistence: 1
+  requireJourneySetup: 1
+--- !u!4 &316304196
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 316304194}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1660057539 &9223372036854775807
+SceneRoots:
+  m_ObjectHideFlags: 0
+  m_Roots:
+  - {fileID: 316304196}

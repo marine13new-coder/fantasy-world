@@ -1,0 +1,324 @@
+{
+  "skills": [
+    {
+      "id": 1,
+      "skillName": "Bleak Slash",
+      "diceCompatibility": "D6",
+      "baseValue": 6,
+      "effectType": "Damage",
+      "description": "A quick, jagged strike that deals modest damage."
+    },
+    {
+      "id": 2,
+      "skillName": "Ghoul's Bite",
+      "diceCompatibility": "D6",
+      "baseValue": 4,
+      "effectType": "Vampiric",
+      "description": "Siphons a small amount of health on hit."
+    },
+    {
+      "id": 3,
+      "skillName": "Dreadful Shock",
+      "diceCompatibility": "D6",
+      "baseValue": 2,
+      "effectType": "Stun",
+      "description": "A brief stun that interrupts enemy actions."
+    },
+    {
+      "id": 4,
+      "skillName": "Mournful Whisper",
+      "diceCompatibility": "D6",
+      "baseValue": 3,
+      "effectType": "StressHeal",
+      "description": "Calms the mind, reducing stress slightly."
+    },
+    {
+      "id": 5,
+      "skillName": "Toxic Spores",
+      "diceCompatibility": "D6",
+      "baseValue": 5,
+      "effectType": "Poison",
+      "description": "Applies a weak poison that ticks damage over time."
+    },
+    {
+      "id": 6,
+      "skillName": "Raven's Eye",
+      "diceCompatibility": "D6",
+      "baseValue": 2,
+      "effectType": "Crit3X",
+      "description": "Grants a small chance to triple damage on the next attack."
+    },
+    {
+      "id": 7,
+      "skillName": "Bonecrusher",
+      "diceCompatibility": "D8",
+      "baseValue": 9,
+      "effectType": "Damage",
+      "description": "A heavy blow that crushes bone."
+    },
+    {
+      "id": 8,
+      "skillName": "Bloodletting Strike",
+      "diceCompatibility": "D8",
+      "baseValue": 6,
+      "effectType": "Vampiric",
+      "description": "Steals a moderate amount of health with each hit."
+    },
+    {
+      "id": 9,
+      "skillName": "Paralyzing Gaze",
+      "diceCompatibility": "D8",
+      "baseValue": 3,
+      "effectType": "Stun",
+      "description": "Stuns the target for a short duration."
+    },
+    {
+      "id": 10,
+      "skillName": "Soothe the Soul",
+      "diceCompatibility": "D8",
+      "baseValue": 5,
+      "effectType": "StressHeal",
+      "description": "Reduces stress significantly."
+    },
+    {
+      "id": 11,
+      "skillName": "Venomous Fang",
+      "diceCompatibility": "D8",
+      "baseValue": 7,
+      "effectType": "Poison",
+      "description": "Inflicts a potent poison that deals damage over three turns."
+    },
+    {
+      "id": 12,
+      "skillName": "Feral Fury",
+      "diceCompatibility": "D8",
+      "baseValue": 3,
+      "effectType": "Crit3X",
+      "description": "Increases chance of a critical hit that triples damage."
+    },
+    {
+      "id": 13,
+      "skillName": "Cursed Cleaver",
+      "diceCompatibility": "D12",
+      "baseValue": 14,
+      "effectType": "Damage",
+      "description": "A cursed blade that deals heavy damage."
+    },
+    {
+      "id": 14,
+      "skillName": "Sanguine Harvest",
+      "diceCompatibility": "D12",
+      "baseValue": 10,
+      "effectType": "Vampiric",
+      "description": "Drains a large portion of enemy health."
+    },
+    {
+      "id": 15,
+      "skillName": "Terrifying Roar",
+      "diceCompatibility": "D12",
+      "baseValue": 5,
+      "effectType": "Stun",
+      "description": "Stuns all enemies in the room briefly."
+    },
+    {
+      "id": 16,
+      "skillName": "Ethereal Meditation",
+      "diceCompatibility": "D12",
+      "baseValue": 8,
+      "effectType": "StressHeal",
+      "description": "Greatly calms the mind, reducing a large amount of stress."
+    },
+    {
+      "id": 17,
+      "skillName": "Blight Cloud",
+      "diceCompatibility": "D12",
+      "baseValue": 12,
+      "effectType": "Poison",
+      "description": "Creates a lingering poison cloud that damages all foes each turn."
+    },
+    {
+      "id": 18,
+      "skillName": "Doomsday Strike",
+      "diceCompatibility": "D12",
+      "baseValue": 4,
+      "effectType": "Crit3X",
+      "description": "Massively increases critical chance for the next attack."
+    },
+    {
+      "id": 19,
+      "skillName": "Judgment Blade",
+      "diceCompatibility": "D20",
+      "baseValue": 20,
+      "effectType": "Damage",
+      "description": "A divine blade that deals crushing damage."
+    },
+    {
+      "id": 20,
+      "skillName": "Soul Reaver",
+      "diceCompatibility": "D20",
+      "baseValue": 15,
+      "effectType": "Vampiric",
+      "description": "Steals a huge amount of health, healing the user."
+    },
+    {
+      "id": 21,
+      "skillName": "Cataclysmic Shock",
+      "diceCompatibility": "D20",
+      "baseValue": 8,
+      "effectType": "Stun",
+      "description": "Stuns all enemies for multiple turns."
+    },
+    {
+      "id": 22,
+      "skillName": "Serene Resolve",
+      "diceCompatibility": "D20",
+      "baseValue": 12,
+      "effectType": "StressHeal",
+      "description": "Eliminates a massive amount of stress."
+    },
+    {
+      "id": 23,
+      "skillName": "Plague Bearer",
+      "diceCompatibility": "D20",
+      "baseValue": 18,
+      "effectType": "Poison",
+      "description": "Unleashes a deadly plague that decimates enemy health over time."
+    },
+    {
+      "id": 24,
+      "skillName": "Apocalypse Edge",
+      "diceCompatibility": "D20",
+      "baseValue": 6,
+      "effectType": "Crit3X",
+      "description": "Guarantees a triple-damage critical on the next hit."
+    },
+    {
+      "id": 25,
+      "skillName": "Razor Wind",
+      "diceCompatibility": "All",
+      "baseValue": 5,
+      "effectType": "Damage",
+      "description": "A swift slash of wind that works on any dice."
+    },
+    {
+      "id": 26,
+      "skillName": "Nightmare Drain",
+      "diceCompatibility": "All",
+      "baseValue": 4,
+      "effectType": "Vampiric",
+      "description": "Leeches a small amount of life regardless of die size."
+    },
+    {
+      "id": 27,
+      "skillName": "Shockwave",
+      "diceCompatibility": "All",
+      "baseValue": 3,
+      "effectType": "Stun",
+      "description": "A concussive blast that can stun any target."
+    },
+    {
+      "id": 28,
+      "skillName": "Calm Breath",
+      "diceCompatibility": "All",
+      "baseValue": 4,
+      "effectType": "StressHeal",
+      "description": "Reduces stress modestly on any die."
+    },
+    {
+      "id": 29,
+      "skillName": "Corrosive Mist",
+      "diceCompatibility": "All",
+      "baseValue": 6,
+      "effectType": "Poison",
+      "description": "Envelops enemies in a weak poison mist."
+    },
+    {
+      "id": 30,
+      "skillName": "Lucky Strike",
+      "diceCompatibility": "All",
+      "baseValue": 2,
+      "effectType": "Crit3X",
+      "description": "Slightly raises chance for a triple-damage crit."
+    },
+    {
+      "id": 31,
+      "skillName": "Heavy Maul",
+      "diceCompatibility": "D6",
+      "baseValue": 8,
+      "effectType": "Damage",
+      "description": "A blunt force attack dealing solid damage."
+    },
+    {
+      "id": 32,
+      "skillName": "Vampiric Touch",
+      "diceCompatibility": "D6",
+      "baseValue": 3,
+      "effectType": "Vampiric",
+      "description": "A faint life drain on contact."
+    },
+    {
+      "id": 33,
+      "skillName": "Stunning Glare",
+      "diceCompatibility": "D6",
+      "baseValue": 1,
+      "effectType": "Stun",
+      "description": "Momentarily blinds and stuns the foe."
+    },
+    {
+      "id": 34,
+      "skillName": "Quiet Prayer",
+      "diceCompatibility": "D6",
+      "baseValue": 2,
+      "effectType": "StressHeal",
+      "description": "A brief meditation that eases tension."
+    },
+    {
+      "id": 35,
+      "skillName": "Acid Splash",
+      "diceCompatibility": "D6",
+      "baseValue": 4,
+      "effectType": "Poison",
+      "description": "A splash of weak acid causing minor poison."
+    },
+    {
+      "id": 36,
+      "skillName": "Sharp Eye",
+      "diceCompatibility": "D6",
+      "baseValue": 1,
+      "effectType": "Crit3X",
+      "description": "Slightly improves accuracy for a critical hit."
+    },
+    {
+      "id": 37,
+      "skillName": "Arcane Burst",
+      "diceCompatibility": "D8",
+      "baseValue": 11,
+      "effectType": "Damage",
+      "description": "A burst of magical energy dealing high damage."
+    },
+    {
+      "id": 38,
+      "skillName": "Blood Pact",
+      "diceCompatibility": "D8",
+      "baseValue": 7,
+      "effectType": "Vampiric",
+      "description": "Forms a pact that drains health on each strike."
+    },
+    {
+      "id": 39,
+      "skillName": "Thunderclap",
+      "diceCompatibility": "D8",
+      "baseValue": 4,
+      "effectType": "Stun",
+      "description": "A resonant clap that can stun multiple foes."
+    },
+    {
+      "id": 40,
+      "skillName": "Serenity Chant",
+      "diceCompatibility": "D8",
+      "baseValue": 6,
+      "effectType": "StressHeal",
+      "description": "A chant that soothes the spirit, reducing stress."
+    }
+  ]
+}

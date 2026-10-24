@@ -1,0 +1,496 @@
+{
+  "relics": [
+    {
+      "id": "relic_1",
+      "name": "Bloodstone of the Abyss #1",
+      "rarity": "Common",
+      "passiveBenefit": "+5% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 1 faster per exploration turn."
+    },
+    {
+      "id": "relic_2",
+      "name": "Blackened Polyhedral Die #2",
+      "rarity": "Rare",
+      "passiveBenefit": "+10% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 2 faster per exploration turn."
+    },
+    {
+      "id": "relic_3",
+      "name": "Ashen Chalice #3",
+      "rarity": "Ancestral",
+      "passiveBenefit": "+15% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 3 faster per exploration turn."
+    },
+    {
+      "id": "relic_4",
+      "name": "Tormentor's Manacles #4",
+      "rarity": "Eldritch",
+      "passiveBenefit": "+20% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 1 faster per exploration turn."
+    },
+    {
+      "id": "relic_5",
+      "name": "Crown of Thorns #5",
+      "rarity": "Common",
+      "passiveBenefit": "+5% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 2 faster per exploration turn."
+    },
+    {
+      "id": "relic_6",
+      "name": "Eldritch Hourglass #6",
+      "rarity": "Rare",
+      "passiveBenefit": "+10% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 3 faster per exploration turn."
+    },
+    {
+      "id": "relic_7",
+      "name": "Bloodstone of the Abyss #7",
+      "rarity": "Ancestral",
+      "passiveBenefit": "+15% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 1 faster per exploration turn."
+    },
+    {
+      "id": "relic_8",
+      "name": "Blackened Polyhedral Die #8",
+      "rarity": "Eldritch",
+      "passiveBenefit": "+20% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 2 faster per exploration turn."
+    },
+    {
+      "id": "relic_9",
+      "name": "Ashen Chalice #9",
+      "rarity": "Common",
+      "passiveBenefit": "+5% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 3 faster per exploration turn."
+    },
+    {
+      "id": "relic_10",
+      "name": "Tormentor's Manacles #10",
+      "rarity": "Rare",
+      "passiveBenefit": "+10% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 1 faster per exploration turn."
+    },
+    {
+      "id": "relic_11",
+      "name": "Crown of Thorns #11",
+      "rarity": "Ancestral",
+      "passiveBenefit": "+15% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 2 faster per exploration turn."
+    },
+    {
+      "id": "relic_12",
+      "name": "Eldritch Hourglass #12",
+      "rarity": "Eldritch",
+      "passiveBenefit": "+20% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 3 faster per exploration turn."
+    },
+    {
+      "id": "relic_13",
+      "name": "Bloodstone of the Abyss #13",
+      "rarity": "Common",
+      "passiveBenefit": "+5% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 1 faster per exploration turn."
+    },
+    {
+      "id": "relic_14",
+      "name": "Blackened Polyhedral Die #14",
+      "rarity": "Rare",
+      "passiveBenefit": "+10% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 2 faster per exploration turn."
+    },
+    {
+      "id": "relic_15",
+      "name": "Ashen Chalice #15",
+      "rarity": "Ancestral",
+      "passiveBenefit": "+15% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 3 faster per exploration turn."
+    },
+    {
+      "id": "relic_16",
+      "name": "Tormentor's Manacles #16",
+      "rarity": "Eldritch",
+      "passiveBenefit": "+20% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 1 faster per exploration turn."
+    },
+    {
+      "id": "relic_17",
+      "name": "Crown of Thorns #17",
+      "rarity": "Common",
+      "passiveBenefit": "+5% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 2 faster per exploration turn."
+    },
+    {
+      "id": "relic_18",
+      "name": "Eldritch Hourglass #18",
+      "rarity": "Rare",
+      "passiveBenefit": "+10% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 3 faster per exploration turn."
+    },
+    {
+      "id": "relic_19",
+      "name": "Bloodstone of the Abyss #19",
+      "rarity": "Ancestral",
+      "passiveBenefit": "+15% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 1 faster per exploration turn."
+    },
+    {
+      "id": "relic_20",
+      "name": "Blackened Polyhedral Die #20",
+      "rarity": "Eldritch",
+      "passiveBenefit": "+20% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 2 faster per exploration turn."
+    },
+    {
+      "id": "relic_21",
+      "name": "Ashen Chalice #21",
+      "rarity": "Common",
+      "passiveBenefit": "+5% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 3 faster per exploration turn."
+    },
+    {
+      "id": "relic_22",
+      "name": "Tormentor's Manacles #22",
+      "rarity": "Rare",
+      "passiveBenefit": "+10% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 1 faster per exploration turn."
+    },
+    {
+      "id": "relic_23",
+      "name": "Crown of Thorns #23",
+      "rarity": "Ancestral",
+      "passiveBenefit": "+15% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 2 faster per exploration turn."
+    },
+    {
+      "id": "relic_24",
+      "name": "Eldritch Hourglass #24",
+      "rarity": "Eldritch",
+      "passiveBenefit": "+20% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 3 faster per exploration turn."
+    },
+    {
+      "id": "relic_25",
+      "name": "Bloodstone of the Abyss #25",
+      "rarity": "Common",
+      "passiveBenefit": "+5% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 1 faster per exploration turn."
+    },
+    {
+      "id": "relic_26",
+      "name": "Blackened Polyhedral Die #26",
+      "rarity": "Rare",
+      "passiveBenefit": "+10% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 2 faster per exploration turn."
+    },
+    {
+      "id": "relic_27",
+      "name": "Ashen Chalice #27",
+      "rarity": "Ancestral",
+      "passiveBenefit": "+15% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 3 faster per exploration turn."
+    },
+    {
+      "id": "relic_28",
+      "name": "Tormentor's Manacles #28",
+      "rarity": "Eldritch",
+      "passiveBenefit": "+20% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 1 faster per exploration turn."
+    },
+    {
+      "id": "relic_29",
+      "name": "Crown of Thorns #29",
+      "rarity": "Common",
+      "passiveBenefit": "+5% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 2 faster per exploration turn."
+    },
+    {
+      "id": "relic_30",
+      "name": "Eldritch Hourglass #30",
+      "rarity": "Rare",
+      "passiveBenefit": "+10% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 3 faster per exploration turn."
+    },
+    {
+      "id": "relic_31",
+      "name": "Bloodstone of the Abyss #31",
+      "rarity": "Ancestral",
+      "passiveBenefit": "+15% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 1 faster per exploration turn."
+    },
+    {
+      "id": "relic_32",
+      "name": "Blackened Polyhedral Die #32",
+      "rarity": "Eldritch",
+      "passiveBenefit": "+20% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 2 faster per exploration turn."
+    },
+    {
+      "id": "relic_33",
+      "name": "Ashen Chalice #33",
+      "rarity": "Common",
+      "passiveBenefit": "+5% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 3 faster per exploration turn."
+    },
+    {
+      "id": "relic_34",
+      "name": "Tormentor's Manacles #34",
+      "rarity": "Rare",
+      "passiveBenefit": "+10% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 1 faster per exploration turn."
+    },
+    {
+      "id": "relic_35",
+      "name": "Crown of Thorns #35",
+      "rarity": "Ancestral",
+      "passiveBenefit": "+15% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 2 faster per exploration turn."
+    },
+    {
+      "id": "relic_36",
+      "name": "Eldritch Hourglass #36",
+      "rarity": "Eldritch",
+      "passiveBenefit": "+20% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 3 faster per exploration turn."
+    },
+    {
+      "id": "relic_37",
+      "name": "Bloodstone of the Abyss #37",
+      "rarity": "Common",
+      "passiveBenefit": "+5% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 1 faster per exploration turn."
+    },
+    {
+      "id": "relic_38",
+      "name": "Blackened Polyhedral Die #38",
+      "rarity": "Rare",
+      "passiveBenefit": "+10% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 2 faster per exploration turn."
+    },
+    {
+      "id": "relic_39",
+      "name": "Ashen Chalice #39",
+      "rarity": "Ancestral",
+      "passiveBenefit": "+15% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 3 faster per exploration turn."
+    },
+    {
+      "id": "relic_40",
+      "name": "Tormentor's Manacles #40",
+      "rarity": "Eldritch",
+      "passiveBenefit": "+20% Dice Critical Damage and extra loot.",
+      "curseDrawback": "Torchlight decays 1 faster per exploration turn."
+    }
+  ],
+  "curios": [
+    {
+      "id": "curio_1",
+      "curioName": "Iron Maiden of Sins Room 1",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_2",
+      "curioName": "Defiled Bone Altar Room 2",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_3",
+      "curioName": "Cursed Relic Chest Room 3",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_4",
+      "curioName": "Eldritch Shrine Room 4",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_5",
+      "curioName": "Mangled Sarcophagus Room 5",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_6",
+      "curioName": "Iron Maiden of Sins Room 6",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_7",
+      "curioName": "Defiled Bone Altar Room 7",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_8",
+      "curioName": "Cursed Relic Chest Room 8",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_9",
+      "curioName": "Eldritch Shrine Room 9",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_10",
+      "curioName": "Mangled Sarcophagus Room 10",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_11",
+      "curioName": "Iron Maiden of Sins Room 11",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_12",
+      "curioName": "Defiled Bone Altar Room 12",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_13",
+      "curioName": "Cursed Relic Chest Room 13",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_14",
+      "curioName": "Eldritch Shrine Room 14",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_15",
+      "curioName": "Mangled Sarcophagus Room 15",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_16",
+      "curioName": "Iron Maiden of Sins Room 16",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_17",
+      "curioName": "Defiled Bone Altar Room 17",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_18",
+      "curioName": "Cursed Relic Chest Room 18",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_19",
+      "curioName": "Eldritch Shrine Room 19",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_20",
+      "curioName": "Mangled Sarcophagus Room 20",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_21",
+      "curioName": "Iron Maiden of Sins Room 21",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_22",
+      "curioName": "Defiled Bone Altar Room 22",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_23",
+      "curioName": "Cursed Relic Chest Room 23",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_24",
+      "curioName": "Eldritch Shrine Room 24",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_25",
+      "curioName": "Mangled Sarcophagus Room 25",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_26",
+      "curioName": "Iron Maiden of Sins Room 26",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_27",
+      "curioName": "Defiled Bone Altar Room 27",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_28",
+      "curioName": "Cursed Relic Chest Room 28",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_29",
+      "curioName": "Eldritch Shrine Room 29",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    },
+    {
+      "id": "curio_30",
+      "curioName": "Mangled Sarcophagus Room 30",
+      "interactionPrompt": "Investigate the ominous structure at the cost of blood?",
+      "positiveOutcome": "Gain ancestral heirlooms and a D20 dice upgrade.",
+      "negativeOutcome": "Inflicts 25 stress and drops torchlight by 30."
+    }
+  ]
+}

@@ -1,0 +1,317 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cf5f8343af87c14b8a73ef12aa2b66f, type: 3}
+  m_Name: GameBalance
+  m_EditorClassIdentifier: Assembly-CSharp::SeoulSurvival.GameBalanceAsset
+  values:
+    weapon:
+      magazineSize: 12
+      startingReserve: 36
+      damage: 25
+      headshotMultiplier: 4
+      instantKillChance: 0.15
+      focusSeconds: 0.6
+      shotInterval: 0.25
+      reloadSeconds: 1.6
+      range: 40
+      spreadDegrees: 12
+      noiseRadius: 30
+      meleeDamage: 40
+      meleeRange: 2.7
+      meleeArc: 105
+      meleeInterval: 0.65
+    scoutRifle:
+      magazineSize: 20
+      startingReserve: 0
+      damage: 42
+      headshotMultiplier: 3.5
+      instantKillChance: 0.15
+      focusSeconds: 0.9
+      shotInterval: 0.18
+      reloadSeconds: 2.4
+      range: 65
+      spreadDegrees: 7
+      noiseRadius: 50
+      meleeDamage: 40
+      meleeRange: 2.7
+      meleeArc: 105
+      meleeInterval: 0.65
+    zombie:
+      health: 100
+      speed: 2.3
+      vision: 18
+      damage: 12
+      attackInterval: 1.2
+      maxAlive: 70
+    zombieVariants:
+    - health: 1
+      speed: 1
+      bodyDamage: 1
+      attackDamage: 1
+    - health: 0.65
+      speed: 1.65
+      bodyDamage: 1
+      attackDamage: 0.8
+    - health: 2
+      speed: 0.7
+      bodyDamage: 0.35
+      attackDamage: 1.4
+    journey:
+      encounterSeconds: 90
+      lateEncounterSeconds: 25
+      extraZombieStrength: 0.5
+      runnerStart: 0.25
+      armoredStart: 0.65
+      runnerChance: 0.35
+      armoredChance: 0.18
+      chapterTitles:
+      - "1\uC7A5 \xB7 \uB9C8\uC9C0\uB9C9 \uC5F0\uB77D"
+      - "2\uC7A5 \xB7 \uB3D9\uB124\uC758 \uC0DD\uC874\uC790"
+      - "3\uC7A5 \xB7 \uBD09\uC1C4\uC120\uC744 \uB118\uC5B4\uC11C"
+      - "4\uC7A5 \xB7 \uC57D\uC18D \uC7A5\uC18C\uC758 \uC2E0\uD638"
+      startEnemies: 1
+      endEnemies: 5
+      reunionHoldSeconds: 45
+      reunionRadius: 75
+      reunionWaveSeconds: 8
+      reunionWaveSize: 3
+    pursuit:
+      quickSearchNoise: 32
+      carefulSearchNoise: 8
+      quickSearchAlert: 0.08
+      gunshotAlert: 0.015
+      restRecovery: 0.2
+      decayPerMinute: 0.025
+    vehicles:
+    - name: "\uC811\uC774\uC2DD \uC790\uC804\uAC70"
+      speed: 9
+      rangeMeters: 0
+      noiseRadius: 0
+      staminaPerSecond: 0.7
+    - name: "\uBC30\uB2EC \uC804\uAE30 \uC2A4\uCFE0\uD130"
+      speed: 15
+      rangeMeters: 3500
+      noiseRadius: 18
+      staminaPerSecond: 0
+    journeyEvents:
+    - progress: 0.22
+      title: "\uC8FC\uD0DD\uAC00 \uC784\uC2DC \uC9C4\uB8CC\uC18C"
+      description: "\uB300\uD53C \uC8FC\uBBFC\uC774 \uC2DD\uB7C9\uC744 \uC694\uCCAD\uD569\uB2C8\uB2E4. \uC57D\uD488\uC744 \uB098\uB20C \uC5EC\uC720\uAC00 \uC788\uB2E4\uACE0 \uD569\uB2C8\uB2E4."
+      first:
+        label: "\uC2DD\uB7C9 1\uAC1C\uB97C \uAC74\uB124\uACE0 \uAD6C\uAE09\uC0C1\uC790 1\uAC1C \uBC1B\uAE30"
+        cost:
+          item: 4
+          count: 1
+        reward:
+          item: 2
+          count: 1
+        staminaCost: 0
+        alertChange: 0
+        noiseRadius: 0
+        zombies: 0
+      second:
+        label: "\uBB3C\uC790\uB97C \uC9C0\uD0A4\uACE0 \uB5A0\uB098\uAE30"
+        cost:
+          item: 0
+          count: 0
+        reward:
+          item: 0
+          count: 0
+        staminaCost: 0
+        alertChange: 0
+        noiseRadius: 0
+        zombies: 0
+    - progress: 0.78
+      title: "\uD55C\uAC15 \uC811\uADFC \xB7 \uBD09\uC1C4\uC120"
+      description: "\uC9C4\uD589 \uBC29\uD5A5\uC5D0 \uBD09\uC1C4\uC120\uC774 \uBCF4\uC785\uB2C8\uB2E4. \uC870\uC6A9\uD788 \uB3CC\uC544\uAC00\uAC70\uB098 \uACBD\uBCF4\uB97C \uC6B8\uB9AC\uACE0 \uBC00\uC5B4\uBD99\uC77C \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+      first:
+        label: "\uACE8\uBAA9 \uC6B0\uD68C \xB7 \uAE30\uB825 35 \uC18C\uBAA8 / \uCD94\uACA9 \uAC10\uC18C"
+        cost:
+          item: 0
+          count: 0
+        reward:
+          item: 0
+          count: 0
+        staminaCost: 35
+        alertChange: -0.1
+        noiseRadius: 0
+        zombies: 0
+      second:
+        label: "\uACBD\uBCF4 \uC18D \uB3CC\uD30C \xB7 \uC989\uC2DC \uC880\uBE44 4\uB9C8\uB9AC / \uCD94\uACA9 \uC99D\uAC00"
+        cost:
+          item: 0
+          count: 0
+        reward:
+          item: 0
+          count: 0
+        staminaCost: 0
+        alertChange: 0.15
+        noiseRadius: 50
+        zombies: 4
+    - progress: 0.94
+      title: "\uBAA9\uC801\uC9C0 \uC778\uADFC \uBB34\uC804 \uC911\uACC4"
+      description: "\uC548\uC804\uD55C \uC5F0\uB77D\uC5D0\uB294 \uC804\uC790\uBD80\uD488\uC774 \uD544\uC694\uD569\uB2C8\uB2E4. \uACF5\uAC1C \uC1A1\uC2E0\uC740 \uB354 \uBA40\uB9AC \uB4E4\uB9BD\uB2C8\uB2E4."
+      first:
+        label: "\uC804\uC790\uBD80\uD488 2\uAC1C\uB85C \uC554\uD638\uD654 \uC1A1\uC2E0 / \uCD94\uACA9 \uAC10\uC18C"
+        cost:
+          item: 7
+          count: 2
+        reward:
+          item: 0
+          count: 0
+        staminaCost: 0
+        alertChange: -0.2
+        noiseRadius: 0
+        zombies: 0
+      second:
+        label: "\uACF5\uAC1C \uC1A1\uC2E0 \xB7 \uC989\uC2DC \uC880\uBE44 5\uB9C8\uB9AC / \uCD94\uACA9 \uC99D\uAC00"
+        cost:
+          item: 0
+          count: 0
+        reward:
+          item: 0
+          count: 0
+        staminaCost: 0
+        alertChange: 0.2
+        noiseRadius: 60
+        zombies: 5
+    playerHealth: 100
+    moveSpeed: 6
+    defenseSeconds: 60
+    daySeconds: 1200
+    signalWindowSeconds: 20
+    signalLockSeconds: 1.2
+    hungerPerMinute: 3
+    staminaRecovery: 12
+    meleeStamina: 18
+    carefulSearchSeconds: 2.5
+    flareNoiseRadius: 45
+    flareDuration: 8
+    loot:
+    - facility: 0
+      items:
+      - item: 0
+        count: 24
+      - item: 1
+        count: 2
+    - facility: 1
+      items:
+      - item: 2
+        count: 2
+      - item: 3
+        count: 1
+    - facility: 2
+      items:
+      - item: 4
+        count: 3
+      - item: 5
+        count: 1
+      - item: 10
+        count: 2
+    - facility: 3
+      items:
+      - item: 6
+        count: 6
+      - item: 7
+        count: 3
+    - facility: 4
+      items:
+      - item: 6
+        count: 6
+      - item: 7
+        count: 3
+      - item: 11
+        count: 1
+    - facility: 5
+      items:
+      - item: 4
+        count: 2
+      - item: 6
+        count: 3
+      - item: 10
+        count: 1
+    carefulDistrictBonus:
+    - districtName: "\uD658\uC2B9 \uAC70\uC810"
+      item:
+        item: 11
+        count: 1
+    - districtName: "\uC8FC\uD0DD \uACE8\uBAA9"
+      item:
+        item: 10
+        count: 1
+    - districtName: "\uC0C1\uC5C5 \uAC70\uB9AC"
+      item:
+        item: 4
+        count: 1
+    reliefContracts:
+    - facility: 0
+      title: "\uACBD\uCC30\uC11C \xB7 \uCE58\uC548 \uBB3C\uC790 \uD68C\uC218"
+      reward:
+        item: 2
+        count: 1
+    - facility: 1
+      title: "\uC18C\uBC29\uC11C \xB7 \uAD6C\uC870 \uC7A5\uBE44 \uD68C\uC218"
+      reward:
+        item: 4
+        count: 2
+    - facility: 2
+      title: "\uD3B8\uC758\uC810 \xB7 \uBE44\uC0C1 \uC2DD\uB7C9 \uD68C\uC218"
+      reward:
+        item: 6
+        count: 3
+    - facility: 3
+      title: "\uD559\uAD50 \xB7 \uB300\uD53C\uC18C \uBD80\uD488 \uD68C\uC218"
+      reward:
+        item: 7
+        count: 2
+    recipes:
+    - name: "\uD0C4\uC57D 12\uBC1C"
+      costs:
+      - item: 6
+        count: 2
+      output: 0
+      count: 12
+      barricade: 0
+    - name: "\uBC14\uB9AC\uCF00\uC774\uB4DC"
+      costs:
+      - item: 6
+        count: 2
+      output: 0
+      count: 1
+      barricade: 1
+    - name: "\uC1A1\uC2E0\uAE30 \uC218\uB9AC \uD0A4\uD2B8"
+      costs:
+      - item: 6
+        count: 6
+      - item: 7
+        count: 4
+      output: 8
+      count: 1
+      barricade: 0
+    - name: "\uD604\uC7A5 \uC870\uB9BD \uC18C\uCD1D"
+      costs:
+      - item: 1
+        count: 2
+      - item: 6
+        count: 4
+      output: 9
+      count: 1
+      barricade: 0
+    - name: "\uC720\uC778 \uC2E0\uD638\uD0C4"
+      costs:
+      - item: 6
+        count: 2
+      - item: 7
+        count: 1
+      output: 12
+      count: 1
+      barricade: 0

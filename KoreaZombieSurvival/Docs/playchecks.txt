@@ -1,0 +1,38 @@
+PASS bounded 9-chunk fallback
+PASS animated licensed character stays human scale
+PASS six enterable facilities per chunk
+PASS Gangnam projects to origin
+PASS cannot craft with missing resources
+PASS roof cutaway on entering interior
+PASS facility loot acquired
+PASS loot cannot be duplicated
+PASS spawn target
+PASS focus reaches 100 percent
+PASS shot consumes one round
+PASS focused unobstructed shot kills target
+PASS reload transfers reserve ammunition
+PASS repair kit crafting
+PASS repair kit inventory
+PASS stream boundary keeps chunk count bounded
+PASS old chunks unloaded
+PASS OSM node and road geometry parsed
+PASS OSM fixture creates a projected facility and road: OSM 도로 1 / 시설 1 + 필수 폴백 시설
+PASS transmitter consumes repair kit and starts defense
+PASS repair kit consumed once
+PASS loss of radio signal pauses evacuation
+PASS focused aim at transmitter restores radio signal
+PASS defense completes victory loop
+PASS extraction continues persistent campaign at shelter
+PASS extraction rewards cannot be duplicated
+PASS workshop upgrade spends resources
+PASS shelter rest consumes food
+PASS atomic campaign save
+PASS backup checkpoint created
+PASS inventory and progress restore
+PASS corrupt primary recovers valid backup
+PASS saving after recovery preserves valid backup
+PASS malformed campaign rejected
+PASS careful search starts timed interaction
+PASS damage cancels careful search without consuming loot
+PASS completed careful search grants extra components
+PASS insufficient stamina rejects melee cost

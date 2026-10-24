@@ -1,0 +1,278 @@
+{
+  "quirks": [
+    {
+      "id": "q001",
+      "name": "Dark Temptation",
+      "isPositive": false,
+      "effectDescription": "Increases stress gain by 15% when entering a new room."
+    },
+    {
+      "id": "q002",
+      "name": "Runic Obsession",
+      "isPositive": true,
+      "effectDescription": "Grants a 5% chance to ignore a critical hit on allies."
+    },
+    {
+      "id": "q003",
+      "name": "Fear of the Dark",
+      "isPositive": false,
+      "effectDescription": "Reduces accuracy by 10% in unlit chambers."
+    },
+    {
+      "id": "q004",
+      "name": "Unyielding Spine",
+      "isPositive": true,
+      "effectDescription": "Reduces incoming damage by 5% when health is below 30%."
+    },
+    {
+      "id": "q005",
+      "name": "Mournful Lament",
+      "isPositive": false,
+      "effectDescription": "Allies within 2 tiles suffer a -5% morale penalty."
+    },
+    {
+      "id": "q006",
+      "name": "Eldritch Curiosity",
+      "isPositive": true,
+      "effectDescription": "Gain a 10% boost to discovery chances on treasure chests."
+    },
+    {
+      "id": "q007",
+      "name": "Bloodied Hands",
+      "isPositive": false,
+      "effectDescription": "Increases bleed damage taken by 20%."
+    },
+    {
+      "id": "q008",
+      "name": "Silent Resolve",
+      "isPositive": true,
+      "effectDescription": "Reduces stress gain from enemy taunts by 25%."
+    },
+    {
+      "id": "q009",
+      "name": "Cursed Birthright",
+      "isPositive": false,
+      "effectDescription": "All healing effects are reduced by 10%."
+    },
+    {
+      "id": "q010",
+      "name": "Ashen Heart",
+      "isPositive": true,
+      "effectDescription": "Grants a 5% increase to fire resistance."
+    },
+    {
+      "id": "q011",
+      "name": "Gloomwalker",
+      "isPositive": false,
+      "effectDescription": "Movement speed reduced by 10% in bright light."
+    },
+    {
+      "id": "q012",
+      "name": "Hallowed Vow",
+      "isPositive": true,
+      "effectDescription": "Once per battle, can fully restore a single ally's morale."
+    },
+    {
+      "id": "q013",
+      "name": "Ravenous Appetite",
+      "isPositive": false,
+      "effectDescription": "Consumes 5% extra food each turn."
+    },
+    {
+      "id": "q014",
+      "name": "Stonebound Will",
+      "isPositive": true,
+      "effectDescription": "Reduces stun duration by 50%."
+    },
+    {
+      "id": "q015",
+      "name": "Wraithlike Presence",
+      "isPositive": true,
+      "effectDescription": "All enemies have a 5% chance to miss when targeting this character."
+    },
+    {
+      "id": "q016",
+      "name": "Bleak Prognostication",
+      "isPositive": false,
+      "effectDescription": "Increases chance of random events triggering negative outcomes by 10%."
+    },
+    {
+      "id": "q017",
+      "name": "Sanguine Pact",
+      "isPositive": false,
+      "effectDescription": "Whenever you deal damage, you lose 2% of max health."
+    },
+    {
+      "id": "q018",
+      "name": "Iron Discipline",
+      "isPositive": true,
+      "effectDescription": "Reduces stress gain from long battles by 20%."
+    },
+    {
+      "id": "q019",
+      "name": "Echoes of Madness",
+      "isPositive": false,
+      "effectDescription": "Periodically (every 3 turns) you act twice in a row, consuming extra stamina."
+    },
+    {
+      "id": "q020",
+      "name": "Divine Scars",
+      "isPositive": true,
+      "effectDescription": "Grants a flat +2 to all saving throws."
+    },
+    {
+      "id": "q021",
+      "name": "Nightmare Vision",
+      "isPositive": false,
+      "effectDescription": "Reduces perception, causing a -15% chance to detect hidden traps."
+    },
+    {
+      "id": "q022",
+      "name": "Grim Determination",
+      "isPositive": true,
+      "effectDescription": "When below 20% health, gain a 10% damage boost."
+    },
+    {
+      "id": "q023",
+      "name": "Soulbound Relic",
+      "isPositive": true,
+      "effectDescription": "Once per expedition, automatically revive with 30% health."
+    },
+    {
+      "id": "q024",
+      "name": "Pale Hunger",
+      "isPositive": false,
+      "effectDescription": "Increases hunger rate by 15%."
+    },
+    {
+      "id": "q025",
+      "name": "Twisted Faith",
+      "isPositive": false,
+      "effectDescription": "Reduces the effectiveness of holy abilities by 20%."
+    },
+    {
+      "id": "q026",
+      "name": "Veil of Shadows",
+      "isPositive": true,
+      "effectDescription": "Allies gain a 5% dodge bonus while standing next to you."
+    },
+    {
+      "id": "q027",
+      "name": "Obsidian Resolve",
+      "isPositive": true,
+      "effectDescription": "Reduces critical hit damage taken by 10%."
+    },
+    {
+      "id": "q028",
+      "name": "Maddening Echo",
+      "isPositive": false,
+      "effectDescription": "Every turn, a random ally gains +5% stress."
+    },
+    {
+      "id": "q029",
+      "name": "Harbinger's Gaze",
+      "isPositive": true,
+      "effectDescription": "Increases chance to predict enemy actions by 8%."
+    },
+    {
+      "id": "q030",
+      "name": "Cursed Echo",
+      "isPositive": false,
+      "effectDescription": "Whenever you heal, you also receive 5% of that healing as damage."
+    }
+  ],
+  "afflictions": [
+    {
+      "id": "a001",
+      "name": "Paranoia",
+      "barkQuote": "I can feel eyes watching us from the walls!",
+      "combatPenalty": -0.12
+    },
+    {
+      "id": "a002",
+      "name": "Masochism",
+      "barkQuote": "Pain sharpens my mind; let the blows rain!",
+      "combatPenalty": -0.08
+    },
+    {
+      "id": "a003",
+      "name": "Hopelessness",
+      "barkQuote": "What good is fighting when the darkness never ends?",
+      "combatPenalty": -0.15
+    },
+    {
+      "id": "a004",
+      "name": "Abusive",
+      "barkQuote": "You're all useless! I could do better alone!",
+      "combatPenalty": -0.1
+    },
+    {
+      "id": "a005",
+      "name": "Irrational",
+      "barkQuote": "The walls are breathing! We must flee!",
+      "combatPenalty": -0.09
+    },
+    {
+      "id": "a006",
+      "name": "Fearful",
+      "barkQuote": "Every shadow could be our doom!",
+      "combatPenalty": -0.07
+    },
+    {
+      "id": "a007",
+      "name": "Despair",
+      "barkQuote": "All hope is lost; why even try?",
+      "combatPenalty": -0.14
+    },
+    {
+      "id": "a008",
+      "name": "Rage Unbound",
+      "barkQuote": "I cannot think! Only smash!",
+      "combatPenalty": -0.11
+    },
+    {
+      "id": "a009",
+      "name": "Hysterical Laughter",
+      "barkQuote": "Hehehe... the abyss laughs with us!",
+      "combatPenalty": -0.06
+    },
+    {
+      "id": "a010",
+      "name": "Stagnant Mind",
+      "barkQuote": "My thoughts are heavy as stone.",
+      "combatPenalty": -0.13
+    }
+  ],
+  "virtues": [
+    {
+      "id": "v001",
+      "name": "Courage",
+      "barkQuote": "Stand firm! The night cannot break us!",
+      "combatBuff": 0.15
+    },
+    {
+      "id": "v002",
+      "name": "Fortitude",
+      "barkQuote": "I will endure whatever this darkness hurls!",
+      "combatBuff": 0.12
+    },
+    {
+      "id": "v003",
+      "name": "Focus",
+      "barkQuote": "My mind is clear; my blade finds its mark.",
+      "combatBuff": 0.18
+    },
+    {
+      "id": "v004",
+      "name": "Vigorous",
+      "barkQuote": "Feel the surge of life within me!",
+      "combatBuff": 0.14
+    },
+    {
+      "id": "v005",
+      "name": "Powerful",
+      "barkQuote": "Let my strength shatter the shadows!",
+      "combatBuff": 0.2
+    }
+  ]
+}
