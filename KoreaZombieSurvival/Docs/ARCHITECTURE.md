@@ -6,6 +6,7 @@ GameBootstrap → 데이터 로드/검증 → 플레이어/전투/카메라 → 
 |---|---|---|
 | GameData | Serializable 무기·좀비·드랍·레시피·상태 enum | JSON / Inspector |
 | JourneyDirector | 출발·도착 입력, 시범 지역 해석, 방향·거리, 선택 사건·추격 압력, 목적지 방어·재회 | 허가된 지오코더/경로 서비스 연결 지점 |
+| DistrictPressure | 청크별 소음 누적·감쇠·저장, 위험 지도와 조우 인원에 제공 | Inspector District Pressure 수치 |
 | BundledPlaceCatalog | 노원·잠실·강남 OSM 표본의 시설명을 오프라인에서 정확히 조회하고 중복 후보는 거부 | 지역별 지명 데이터 확장 |
 | RideableVehicle | 자전거·전동 스쿠터 이동, 기력·충전·소음, 탑승 상태 | 선택 프리팹/VehicleData |
 | RealWorldMapManager | 좌표 변환, 스트리밍, Overpass 요청/캐시/폴백, 로컬 NavMesh | endpoint, latitude/longitude |

@@ -112,8 +112,32 @@ namespace AbyssRoll.Core
             // 9. Monetization & Release
             _bmManager = gameObject.AddComponent<Release.PlayStoreReleaseAndBMManager>();
 
+            // 10. Risk & Double Down Engine
+            gameObject.AddComponent<RiskEngine.PushOrBustRiskManager>();
+            gameObject.AddComponent<CasinoGothic.EldritchCasinoCraftingManager>();
+            var gambleUi = gameObject.AddComponent<UI.DoubleDownGambleUIPanel>();
+            gambleUi.SetupGambleUI(_uiManager.safeAreaRoot);
+
+            // 11. Automated Test Harness
+            gameObject.AddComponent<AutomatedPlaytestHarness>();
+
             BuildRuntimeHeroCards();
             BuildRuntimeDiceSlots();
+        }
+
+        public void SimulateMainActionButton()
+        {
+            OnMainActionButtonPressed();
+        }
+
+        public void SimulateHoldDie(int index)
+        {
+            OnDiceSlotClicked(index);
+        }
+
+        public void SimulateRerollButton()
+        {
+            OnRerollButtonPressed();
         }
 
         private void BuildRuntimeHeroCards()

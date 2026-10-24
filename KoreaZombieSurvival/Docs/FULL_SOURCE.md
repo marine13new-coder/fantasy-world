@@ -227,6 +227,7 @@ namespace SeoulSurvival.Editor
             Assert(inspectorBalance && inspectorBalance.values.journey.chapterTitles.Length==4 && inspectorBalance.values.journey.chapterTitles[3].Contains("신호"),"Inspector contains journey chapter titles");
             Assert(inspectorBalance && inspectorBalance.values.zombieVariants.Length==3 && inspectorBalance.values.zombieVariants[2].health>1 && inspectorBalance.values.journey.runnerStart>0,"Inspector zombie variants remain editable");
             Assert(inspectorBalance && inspectorBalance.values.recipes.Length==5 && inspectorBalance.values.loot[2].items.Length==3 && inspectorBalance.values.carefulDistrictBonus.Length==3 && inspectorBalance.values.pursuit.quickSearchAlert>0,"Inspector balance includes loot, flare and pursuit tuning");
+            Assert(inspectorBalance.values.districtPressure!=null && inspectorBalance.values.districtPressure.extraEnemies>0 && DistrictPressure.DistanceToChunk(new Vector3(395,0,0),new Vector2Int(1,0))==5,"district sound crosses nearby chunk boundaries and uses Inspector tuning");
             Assert(JourneyDirector.NextEvent(.8f,0,rules.journeyEvents)==0 && JourneyDirector.NextEvent(.8f,1,rules.journeyEvents)==1 && JourneyDirector.NextEvent(.8f,3,rules.journeyEvents)==-1,"journey decisions unlock in order and cannot repeat");
             Assert(JourneyDirector.EncounterDelay(0,rules.journey)>JourneyDirector.EncounterDelay(1,rules.journey),"journey starts quieter and intensifies toward destination");
             var outline=new[]{new Vector3(0,0,0),new Vector3(4,0,0),new Vector3(4,0,1),new Vector3(1,0,1),new Vector3(1,0,4),new Vector3(0,0,4)};
@@ -353,6 +354,8 @@ namespace SeoulSurvival.Editor
                     Check(building && building.IsInside && !building.roof.activeSelf,"roof cutaway on entering interior");
                     var box=building.GetComponentInChildren<LootBox>(); Teleport(box.transform.position+Vector3.back); Check(box.TryOpen(),"facility loot acquired"); Check(!box.TryOpen(),"loot cannot be duplicated");
                     Check(Mathf.Abs(game.Journey.Alert-game.balance.pursuit.quickSearchAlert)<.001f,"fast search raises persistent pursuit once");
+                    Check(game.Pressure.At(RealWorldMapManager.ChunkAt(box.transform.position))>0,"loud search raises local district pressure");
+                    game.Pressure.RecordNoise(new Vector3(395,0,0),30);Check(game.Pressure.At(new Vector2Int(1,0))>0,"noise near a block boundary affects the next district");
                     Teleport(Vector3.zero); game.Map.BuildNavigation(Vector3.zero);
                     foreach(var zombie in ZombieAI.Active.ToArray())if(Vector3.Distance(zombie.transform.position,Vector3.zero)<100)UnityEngine.Object.Destroy(zombie.gameObject);
                     phase=2;
@@ -361,9 +364,10 @@ namespace SeoulSurvival.Editor
                     game.Player.transform.rotation=Quaternion.identity;
                     for(int i=0;i<1000;i++)game.Player.combat.SetFocus(true);
                     Check(game.Player.combat.Focus>=.999f,"focus reaches 100 percent");
-                    Physics.SyncTransforms(); int ammo=game.Player.combat.Magazine; game.Player.combat.Fire();
+                    Physics.SyncTransforms(); int ammo=game.Player.combat.Magazine;float heatBeforeShot=game.Pressure.At(Vector2Int.zero); game.Player.combat.Fire();
                     Check(game.Player.combat.Magazine==ammo-1,"shot consumes one round"); Check(z.State==ZombieState.Dead,"focused unobstructed shot kills target");
                     Check(game.Journey.Alert>game.balance.pursuit.quickSearchAlert,"gunshot raises pursuit beyond fast search");
+                    Check(game.Pressure.At(Vector2Int.zero)>heatBeforeShot,"gunshot intensifies the current district");
                     var runner=ZombieAI.Spawn(new Vector3(-5,0,8),null,null,1,ZombieVariant.Runner);
                     var armored=ZombieAI.Spawn(new Vector3(5,0,8),null,null,1,ZombieVariant.Armored);
                     Check(runner && armored && runner.Health<game.balance.zombie.health && armored.Health>game.balance.zombie.health,"runner and armored health differ from standard infected");
@@ -420,9 +424,11 @@ namespace SeoulSurvival.Editor
                     Teleport(SurvivalCampaign.Home+Vector3.forward*2);
                     game.Campaign.SavePath=Path.GetFullPath("Logs/campaign-check-"+Guid.NewGuid()+".json");
                     typeof(SurvivalCampaign).GetProperty("PersistenceEnabled").SetValue(game.Campaign,true);
+                    game.Pressure.RecordNoise(SurvivalCampaign.Home,40);float savedHeat=game.Pressure.At(Vector2Int.zero);
                     Check(game.Campaign.SaveNow(),"atomic campaign save");
                     int food=game.Survival.Count(ResourceKind.Food);Check(game.Campaign.SaveNow(),"backup checkpoint created");
-                    game.Survival.Add(ResourceKind.Food,90);Check(game.Campaign.Load() && game.Survival.Count(ResourceKind.Food)==food,"inventory and progress restore");
+                    game.Survival.Add(ResourceKind.Food,90);game.Pressure.Restore(null);Check(game.Campaign.Load() && game.Survival.Count(ResourceKind.Food)==food,"inventory and progress restore");
+                    Check(Mathf.Abs(game.Pressure.At(Vector2Int.zero)-savedHeat)<.01f,"district pressure survives campaign save and reload");
                     Check(game.Campaign.ReliefActive && game.Campaign.ReliefRecovered,"relief recovery survives reload");
                     int reliefCount=game.Campaign.CompletedReliefContracts;Check(game.Campaign.DeliverRelief() && game.Campaign.CompletedReliefContracts==reliefCount+1 && !game.Campaign.DeliverRelief(),"relief reward can be claimed once");
                     File.WriteAllText(game.Campaign.SavePath,"{broken");Check(game.Campaign.Load() && game.Campaign.CompletedOperations==1,"corrupt primary recovers valid backup");
@@ -520,7 +526,7 @@ namespace SeoulSurvival
         }
         public void Play(SoundKind kind,Vector3 position,float noiseRadius=0,AudioClip overrideClip=null)
         {
-            if(noiseRadius>0)ZombieAI.HearNoise(position,noiseRadius);
+            if(noiseRadius>0){ZombieAI.HearNoise(position,noiseRadius);if(game.Pressure)game.Pressure.RecordNoise(position,noiseRadius);}
             var clip=overrideClip ? overrideClip : kind==SoundKind.Shot?normalShot:kind==SoundKind.Headshot?headshotCrunch:kind==SoundKind.Empty?emptyClick:kind==SoundKind.Reload?reload:kind==SoundKind.Axe?axe:kind==SoundKind.Groan?groan:kind==SoundKind.Loot?loot:siren;
             if(!clip) { if(!procedural.TryGetValue(kind,out clip)) { clip=Synthesize(kind); procedural[kind]=clip; } }
             effects.PlayOneShot(clip,kind==SoundKind.Groan?.3f:.8f);
@@ -643,6 +649,72 @@ namespace SeoulSurvival
 }
 ```
 
+## Assets/Game/Scripts/DistrictPressure.cs
+
+```csharp
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace SeoulSurvival
+{
+    [Serializable] public class DistrictHeatSave { public int x,y; public float heat; }
+
+    public sealed class DistrictPressure : MonoBehaviour
+    {
+        readonly Dictionary<Vector2Int,float> heat=new Dictionary<Vector2Int,float>();
+        readonly List<Vector2Int> keys=new List<Vector2Int>();
+        GameBootstrap game;
+        public IReadOnlyDictionary<Vector2Int,float> Heat=>heat;
+        public void Initialize(GameBootstrap context){game=context;}
+        public float At(Vector2Int chunk)=>heat.TryGetValue(chunk,out var value)?value:0;
+        public static float DistanceToChunk(Vector3 point,Vector2Int chunk)
+        {
+            float x=Mathf.Max(0,Mathf.Abs(point.x-chunk.x*RealWorldMapManager.ChunkSize)-RealWorldMapManager.Radius);
+            float z=Mathf.Max(0,Mathf.Abs(point.z-chunk.y*RealWorldMapManager.ChunkSize)-RealWorldMapManager.Radius);
+            return Mathf.Sqrt(x*x+z*z);
+        }
+        public void RecordNoise(Vector3 position,float radius)
+        {
+            if(!game || !game.Running || radius<=0)return;
+            var tuning=game.balance.districtPressure;var center=RealWorldMapManager.ChunkAt(position);
+            for(int z=-1;z<=1;z++)for(int x=-1;x<=1;x++)
+            {
+                var chunk=center+new Vector2Int(x,z);float distance=DistanceToChunk(position,chunk);
+                if(distance>=radius)continue;
+                float gain=Mathf.Min(radius,180)*tuning.heatPerMetre*(1-distance/radius);
+                if(gain<=0)continue;
+                if(!heat.ContainsKey(chunk) && heat.Count>=64)
+                {
+                    var coldest=chunk;float value=float.MaxValue;
+                    foreach(var entry in heat)if(entry.Value<value){coldest=entry.Key;value=entry.Value;}
+                    if(gain<=value)continue;heat.Remove(coldest);
+                }
+                heat[chunk]=Mathf.Min(tuning.maximum,At(chunk)+gain);
+            }
+        }
+        void Update()
+        {
+            if(!game || !game.Running || heat.Count==0)return;
+            float decay=game.balance.districtPressure.decayPerMinute*Time.deltaTime/60;
+            keys.Clear();keys.AddRange(heat.Keys);
+            foreach(var key in keys){float value=heat[key]-decay;if(value<=.001f)heat.Remove(key);else heat[key]=value;}
+        }
+        public DistrictHeatSave[] Capture()
+        {
+            var result=new List<DistrictHeatSave>(heat.Count);
+            foreach(var entry in heat)result.Add(new DistrictHeatSave{x=entry.Key.x,y=entry.Key.y,heat=entry.Value});
+            return result.ToArray();
+        }
+        public void Restore(DistrictHeatSave[] saved)
+        {
+            heat.Clear();if(saved==null)return;
+            foreach(var entry in saved)if(entry!=null && entry.heat>0)heat[new Vector2Int(entry.x,entry.y)]=entry.heat;
+        }
+    }
+}
+```
+
 ## Assets/Game/Scripts/EnterableBuilding.cs
 
 ```csharp
@@ -738,6 +810,7 @@ namespace SeoulSurvival
         public AtmosphereAndAudioManager Atmosphere { get; private set; }
         public QuarterViewCamera CameraRig { get; private set; }
         public JourneyDirector Journey {get;private set;}
+        public DistrictPressure Pressure {get;private set;}
         public bool Running => Player && Player.State != PlayerState.Dead && Survival && !Survival.Victory && (!Journey || Journey.Ready);
         void Awake()
         {
@@ -756,6 +829,7 @@ namespace SeoulSurvival
             CameraRig=camera.gameObject.AddComponent<QuarterViewCamera>(); CameraRig.target=Player.transform;
             Map=gameObject.AddComponent<RealWorldMapManager>(); Map.online=useOnlineMap; Map.useBundledGangnamMap=useBundledGangnamMap;Map.enabled=false;
             Survival=gameObject.AddComponent<SurvivalAndEscapeManager>(); Survival.Initialize(this);
+            Pressure=gameObject.AddComponent<DistrictPressure>(); Pressure.Initialize(this);
             Campaign=gameObject.AddComponent<SurvivalCampaign>();
             Journey=gameObject.AddComponent<JourneyDirector>(); Journey.Initialize(this,requireJourneySetup,enablePersistence);
             Atmosphere.Initialize(this);
@@ -812,6 +886,10 @@ namespace SeoulSurvival
         public float quickSearchNoise=32, carefulSearchNoise=8;
         public float quickSearchAlert=.08f, gunshotAlert=.015f, restRecovery=.2f, decayPerMinute=.025f;
     }
+    [Serializable] public class DistrictPressureTuning
+    {
+        public float heatPerMetre=.004f, decayPerMinute=.04f, maximum=1, extraEnemies=4;
+    }
     [Serializable] public class VehicleData
     {
         public string name;
@@ -851,7 +929,7 @@ namespace SeoulSurvival
         public WeaponData scoutRifle = new WeaponData{magazineSize=20,startingReserve=0,damage=42,headshotMultiplier=3.5f,focusSeconds=.9f,shotInterval=.18f,reloadSeconds=2.4f,range=65,spreadDegrees=7,noiseRadius=50};
         public ZombieData zombie = new ZombieData();
         public ZombieVariantData[] zombieVariants={new ZombieVariantData(),new ZombieVariantData{health=.65f,speed=1.65f,attackDamage=.8f},new ZombieVariantData{health=2,speed=.7f,bodyDamage=.35f,attackDamage=1.4f}};
-        public JourneyTuning journey=new JourneyTuning(); public PursuitTuning pursuit=new PursuitTuning();
+        public JourneyTuning journey=new JourneyTuning(); public PursuitTuning pursuit=new PursuitTuning(); public DistrictPressureTuning districtPressure=new DistrictPressureTuning();
         public VehicleData[] vehicles={new VehicleData{name="접이식 자전거",speed=9,staminaPerSecond=.7f},new VehicleData{name="배달 전기 스쿠터",speed=15,rangeMeters=3500,noiseRadius=18}};
         public JourneyEventData[] journeyEvents={
             new JourneyEventData{progress=.22f,title="주택가 임시 진료소",description="대피 주민이 식량을 요청합니다. 약품을 나눌 여유가 있다고 합니다.",first=new JourneyChoiceData{label="식량 1개를 건네고 구급상자 1개 받기",cost=new ItemAmount(ResourceKind.Food,1),reward=new ItemAmount(ResourceKind.Medkit,1)},second=new JourneyChoiceData{label="물자를 지키고 떠나기"}},
@@ -892,7 +970,7 @@ namespace SeoulSurvival
         {
             if(zombieVariants==null || zombieVariants.Length==0)zombieVariants=new GameBalance().zombieVariants;
             if(journey!=null && (journey.chapterTitles==null || journey.chapterTitles.Length==0))journey.chapterTitles=new JourneyTuning().chapterTitles;
-            if(journey==null)journey=new JourneyTuning();if(pursuit==null)pursuit=new PursuitTuning();if(journey.lateEncounterSeconds==0)journey.lateEncounterSeconds=25;if(journey.reunionHoldSeconds==0 && journey.reunionRadius==0){journey.reunionHoldSeconds=45;journey.reunionRadius=75;journey.reunionWaveSeconds=8;journey.reunionWaveSize=3;}if(scoutRifle==null)scoutRifle=new WeaponData{magazineSize=20,damage=42,range=65};if(vehicles==null)vehicles=new VehicleData[0];if(journeyEvents==null || journeyEvents.Length==0)journeyEvents=new GameBalance().journeyEvents;if(reliefContracts==null || reliefContracts.Length==0)reliefContracts=new GameBalance().reliefContracts;if(carefulDistrictBonus==null || carefulDistrictBonus.Length==0)carefulDistrictBonus=new GameBalance().carefulDistrictBonus;if(flareNoiseRadius==0 && flareDuration==0){flareNoiseRadius=45;flareDuration=8;}
+            if(journey==null)journey=new JourneyTuning();if(pursuit==null)pursuit=new PursuitTuning();if(districtPressure==null)districtPressure=new DistrictPressureTuning();if(journey.lateEncounterSeconds==0)journey.lateEncounterSeconds=25;if(journey.reunionHoldSeconds==0 && journey.reunionRadius==0){journey.reunionHoldSeconds=45;journey.reunionRadius=75;journey.reunionWaveSeconds=8;journey.reunionWaveSize=3;}if(scoutRifle==null)scoutRifle=new WeaponData{magazineSize=20,damage=42,range=65};if(vehicles==null)vehicles=new VehicleData[0];if(journeyEvents==null || journeyEvents.Length==0)journeyEvents=new GameBalance().journeyEvents;if(reliefContracts==null || reliefContracts.Length==0)reliefContracts=new GameBalance().reliefContracts;if(carefulDistrictBonus==null || carefulDistrictBonus.Length==0)carefulDistrictBonus=new GameBalance().carefulDistrictBonus;if(flareNoiseRadius==0 && flareDuration==0){flareNoiseRadius=45;flareDuration=8;}
             if (weapon == null || zombie == null || journey == null || loot == null || recipes == null || weapon.magazineSize < 1 || weapon.focusSeconds <= 0 || weapon.reloadSeconds <= 0 || weapon.shotInterval <= 0 || weapon.meleeInterval <= 0 || scoutRifle.magazineSize<1 || scoutRifle.focusSeconds<=0 || scoutRifle.reloadSeconds<=0 || zombie.health <= 0 || zombie.attackInterval <= 0 || zombie.maxAlive < 1 || journey.encounterSeconds<=0 || journey.lateEncounterSeconds<=0 || journey.startEnemies<0 || journey.endEnemies<journey.startEnemies || journey.extraZombieStrength<0 || journey.reunionHoldSeconds<=0 || journey.reunionRadius<60 || journey.reunionWaveSeconds<=0 || journey.reunionWaveSize<0 || journey.reunionWaveSize>12 || playerHealth <= 0 || defenseSeconds <= 0 || daySeconds <= 0)
                 throw new ArgumentException("Invalid game balance: positive timings, health, magazine and population required.");
             if(zombieVariants.Length!=3)throw new ArgumentException("Three zombie variants required");
@@ -905,6 +983,7 @@ namespace SeoulSurvival
             if(signalWindowSeconds<=0 || signalLockSeconds<=0)throw new ArgumentException("Signal timings must be positive");
             if(hungerPerMinute<0 || staminaRecovery<=0 || meleeStamina<=0 || carefulSearchSeconds<=0 || flareNoiseRadius<=0 || flareDuration<=0)throw new ArgumentException("Survival rates invalid");
             if(pursuit.quickSearchNoise<0 || pursuit.carefulSearchNoise<0 || pursuit.quickSearchAlert<0 || pursuit.gunshotAlert<0 || pursuit.restRecovery<0 || pursuit.decayPerMinute<0)throw new ArgumentException("Pursuit tuning invalid");
+            if(float.IsNaN(districtPressure.heatPerMetre) || float.IsInfinity(districtPressure.heatPerMetre) || districtPressure.heatPerMetre<=0 || float.IsNaN(districtPressure.decayPerMinute) || float.IsInfinity(districtPressure.decayPerMinute) || districtPressure.decayPerMinute<=0 || float.IsNaN(districtPressure.maximum) || float.IsInfinity(districtPressure.maximum) || districtPressure.maximum<=0 || districtPressure.maximum>1 || float.IsNaN(districtPressure.extraEnemies) || float.IsInfinity(districtPressure.extraEnemies) || districtPressure.extraEnemies<0 || districtPressure.extraEnemies>12)throw new ArgumentException("District pressure tuning invalid");
             foreach(var vehicle in vehicles)if(vehicle==null || string.IsNullOrWhiteSpace(vehicle.name) || vehicle.speed<=0 || vehicle.rangeMeters<0 || vehicle.noiseRadius<0 || vehicle.staminaPerSecond<0)throw new ArgumentException("Vehicle data invalid");
             if(journeyEvents.Length>8)throw new ArgumentException("Too many journey events");float last=0;foreach(var scene in journeyEvents){if(scene==null || scene.progress<=last || scene.progress>=1 || string.IsNullOrWhiteSpace(scene.title) || scene.first==null || scene.second==null)throw new ArgumentException("Journey event invalid");last=scene.progress;foreach(var choice in new[]{scene.first,scene.second})if(string.IsNullOrWhiteSpace(choice.label) || choice.staminaCost<0 || choice.noiseRadius<0 || choice.zombies<0 || choice.zombies>12 || float.IsNaN(choice.alertChange) || (choice.cost!=null && (choice.cost.count<0 || choice.cost.count>0 && choice.cost.item==ResourceKind.Ammo)) || (choice.reward!=null && choice.reward.count<0))throw new ArgumentException("Journey choice invalid");}
             foreach(var recipe in recipes) { if(recipe == null || recipe.costs == null || recipe.count < 1) throw new ArgumentException("Invalid recipe"); foreach(var cost in recipe.costs) if(cost == null || cost.count < 1) throw new ArgumentException("Invalid recipe cost"); }
@@ -1080,7 +1159,8 @@ namespace SeoulSurvival
             if(ReunionDefense){TickReunion();return;}
             if(!game.Running || Reached || pendingEvent>=0 || Time.time<nextEncounter)return;
             nextEncounter=Time.time+EncounterDelay(Progress,game.balance.journey);
-            int count=Mathf.Max(0,Mathf.RoundToInt(Mathf.Lerp(game.balance.journey.startEnemies,game.balance.journey.endEnemies,Progress)+alert*3));
+            float localHeat=game.Pressure.At(RealWorldMapManager.ChunkAt(game.Player.transform.position));
+            int count=Mathf.Max(0,Mathf.RoundToInt(Mathf.Lerp(game.balance.journey.startEnemies,game.balance.journey.endEnemies,Progress)+alert*3+localHeat*game.balance.districtPressure.extraEnemies));
             float threat=Mathf.Max(.5f,1+Progress*game.balance.journey.extraZombieStrength+alert);
             for(int i=0;i<count;i++)
             {
@@ -1872,7 +1952,7 @@ namespace SeoulSurvival
             player.body.Move(direction*data.speed*Time.deltaTime+Vector3.down*.3f*Time.deltaTime);
             var distance=Vector3.Distance(before,player.transform.position);if(data.rangeMeters>0)RemainingRange=Mathf.Max(0,RemainingRange-distance);
             player.transform.rotation=Quaternion.LookRotation(direction);transform.SetPositionAndRotation(player.transform.position,player.transform.rotation);
-            if(data.noiseRadius>0 && Time.time>=nextNoise){ZombieAI.HearNoise(transform.position,data.noiseRadius);nextNoise=Time.time+3;}
+            if(data.noiseRadius>0 && Time.time>=nextNoise){ZombieAI.HearNoise(transform.position,data.noiseRadius);if(game.Pressure)game.Pressure.RecordNoise(transform.position,data.noiseRadius);nextNoise=Time.time+3;}
         }
         void OnGUI()
         {
@@ -2079,6 +2159,7 @@ namespace SeoulSurvival
         public ItemAmount[] inventory=new ItemAmount[0];
         public string[] looted=new string[0], killed=new string[0];
         public VehicleSave[] vehicles=new VehicleSave[0];
+        public DistrictHeatSave[] districtHeat=new DistrictHeatSave[0];
     }
     public sealed class SurvivalCampaign : MonoBehaviour
     {
@@ -2188,7 +2269,7 @@ namespace SeoulSurvival
         {
             var inventory=new List<ItemAmount>();foreach(var p in game.Survival.Inventory)inventory.Add(new ItemAmount(p.Key,p.Value));
             var vehicles=new List<VehicleSave>();if(game.Journey)foreach(var vehicle in game.Journey.Vehicles)vehicles.Add(new VehicleSave{position=vehicle.transform.position,remainingRange=vehicle.RemainingRange});
-            return new CampaignData{completedOperations=CompletedOperations,completedReliefContracts=CompletedReliefContracts,reliefActive=ReliefActive,reliefRecovered=ReliefRecovered,shelterLevel=ShelterLevel,workshopLevel=WorkshopLevel,elapsed=Elapsed,hunger=Hunger,stamina=Stamina,health=game.Player.Health,position=game.Player.transform.position,magazine=game.Player.combat.Magazine,reserve=game.Player.combat.Reserve,loadoutVersion=1,equippedSlot=game.Player.combat.EquippedSlot,pistolMagazine=game.Player.combat.PistolMagazine,rifleMagazine=game.Player.combat.RifleMagazine,resolvedJourneyEvents=game.Journey?game.Journey.ResolvedEvents:0,journeyAlert=game.Journey?game.Journey.Alert:0,reunionDefense=game.Journey && game.Journey.ReunionDefense,reunionRemaining=game.Journey?game.Journey.ReunionRemaining:0,extractionReady=game.Survival.Victory,inventory=inventory.ToArray(),looted=new List<string>(game.Survival.Looted).ToArray(),killed=new List<string>(game.Survival.Killed).ToArray(),vehicles=vehicles.ToArray()};
+            return new CampaignData{completedOperations=CompletedOperations,completedReliefContracts=CompletedReliefContracts,reliefActive=ReliefActive,reliefRecovered=ReliefRecovered,shelterLevel=ShelterLevel,workshopLevel=WorkshopLevel,elapsed=Elapsed,hunger=Hunger,stamina=Stamina,health=game.Player.Health,position=game.Player.transform.position,magazine=game.Player.combat.Magazine,reserve=game.Player.combat.Reserve,loadoutVersion=1,equippedSlot=game.Player.combat.EquippedSlot,pistolMagazine=game.Player.combat.PistolMagazine,rifleMagazine=game.Player.combat.RifleMagazine,resolvedJourneyEvents=game.Journey?game.Journey.ResolvedEvents:0,journeyAlert=game.Journey?game.Journey.Alert:0,reunionDefense=game.Journey && game.Journey.ReunionDefense,reunionRemaining=game.Journey?game.Journey.ReunionRemaining:0,extractionReady=game.Survival.Victory,inventory=inventory.ToArray(),looted=new List<string>(game.Survival.Looted).ToArray(),killed=new List<string>(game.Survival.Killed).ToArray(),vehicles=vehicles.ToArray(),districtHeat=game.Pressure.Capture()};
         }
         public static CampaignData Parse(string json)
         {
@@ -2198,6 +2279,7 @@ namespace SeoulSurvival
             foreach(float n in new[]{d.elapsed,d.hunger,d.stamina,d.health,d.position.x,d.position.y,d.position.z})if(float.IsNaN(n)||float.IsInfinity(n))throw new InvalidDataException("Non-finite save value");
             if(d.elapsed<0||d.health<=0||d.health>100000||d.hunger<0||d.hunger>100||d.stamina<0||d.stamina>100||d.position.sqrMagnitude>1e14f || d.loadoutVersion<0 || d.loadoutVersion>1 || (d.loadoutVersion==1 && (d.equippedSlot<1 || d.equippedSlot>3 || d.pistolMagazine<0 || d.rifleMagazine<0)) || d.resolvedJourneyEvents<0 || d.resolvedJourneyEvents>255 || float.IsNaN(d.journeyAlert) || d.journeyAlert<-.3f || d.journeyAlert>.7f || float.IsNaN(d.reunionRemaining) || d.reunionRemaining<0 || d.reunionRemaining>3600 || d.completedReliefContracts<0 || d.completedReliefContracts>100000 || d.reliefRecovered && !d.reliefActive)throw new InvalidDataException("Save values out of range");
             if(d.vehicles!=null){if(d.vehicles.Length>2)throw new InvalidDataException("Invalid vehicle count");foreach(var vehicle in d.vehicles)if(vehicle==null || vehicle.position.sqrMagnitude>1e14f || float.IsNaN(vehicle.remainingRange) || vehicle.remainingRange<0 || vehicle.remainingRange>1000000)throw new InvalidDataException("Invalid vehicle state");}
+            if(d.districtHeat!=null){if(d.districtHeat.Length>64)throw new InvalidDataException("Invalid district heat count");var chunks=new HashSet<Vector2Int>();foreach(var entry in d.districtHeat)if(entry==null || Mathf.Abs(entry.x)>10000 || Mathf.Abs(entry.y)>10000 || float.IsNaN(entry.heat) || float.IsInfinity(entry.heat) || entry.heat<0 || entry.heat>1 || !chunks.Add(new Vector2Int(entry.x,entry.y)))throw new InvalidDataException("Invalid district heat");}
             var seen=new HashSet<ResourceKind>();foreach(var item in d.inventory)if(item==null || !Enum.IsDefined(typeof(ResourceKind),item.item) || !seen.Add(item.item) || item.count<0 || item.count>1000000)throw new InvalidDataException("Invalid inventory");
             foreach(var id in d.looted)if(string.IsNullOrEmpty(id)||id.Length>200)throw new InvalidDataException("Invalid loot id");foreach(var id in d.killed)if(string.IsNullOrEmpty(id)||id.Length>200)throw new InvalidDataException("Invalid zombie id");return d;
         }
@@ -2210,6 +2292,7 @@ namespace SeoulSurvival
             game.Player.Restore(d.position,d.health);if(d.loadoutVersion==1)game.Player.combat.RestoreLoadout(d.equippedSlot,d.pistolMagazine,d.rifleMagazine,d.reserve);else game.Player.combat.RestoreAmmo(d.magazine,d.reserve);game.Survival.RestoreCompleted(d.extractionReady);UpdateObjective();
             if(game.Journey)game.Journey.RestoreEvents(d.resolvedJourneyEvents,d.journeyAlert);
             if(game.Journey)game.Journey.RestoreReunion(d.reunionDefense,d.reunionRemaining);
+            game.Pressure.Restore(d.districtHeat);
             if(d.vehicles!=null && game.Journey)for(int i=0;i<Mathf.Min(d.vehicles.Length,game.Journey.Vehicles.Count);i++)game.Journey.Vehicles[i].Restore(d.vehicles[i].position,d.vehicles[i].remainingRange);
         }
         public bool SaveNow()
@@ -2280,8 +2363,9 @@ namespace SeoulSurvival
             float scale=Mathf.Clamp(Screen.height/900f,.65f,1.6f);GUI.matrix=Matrix4x4.Scale(Vector3.one*scale);float width=Screen.width/scale,height=Screen.height/scale;
             float size=Expanded?Mathf.Min(570,height-180):190;var rect=Expanded?new Rect(width/2-size/2,110,size,size):new Rect(width-size-20,184,size,size);
             var oldColor=GUI.color;GUI.color=new Color(.025f,.055f,.07f,.93f);GUI.DrawTexture(rect,Texture2D.whiteTexture);GUI.color=Color.white;
-            var style=new GUIStyle(GUI.skin.label){font=WorldFactory.KoreanFont,fontSize=Expanded?16:12};GUI.Label(new Rect(rect.x+10,rect.y+8,size-20,24),Expanded?game.Map.AreaLabel+" · "+(game.Map.CurrentChunkMapped?"OSM 지도":"절차 지도"):"N ↑  지역도 · M 확대",style);
+            var style=new GUIStyle(GUI.skin.label){font=WorldFactory.KoreanFont,fontSize=Expanded?16:12};float localHeat=game.Pressure.At(RealWorldMapManager.ChunkAt(game.Player.transform.position));GUI.Label(new Rect(rect.x+10,rect.y+8,size-20,24),Expanded?game.Map.AreaLabel+" · "+(game.Map.CurrentChunkMapped?"OSM 지도":"절차 지도")+$" · 감염 압력 {localHeat*100:0}%":"N ↑  지역도 · M 확대",style);
             GUI.BeginGroup(new Rect(rect.x+8,rect.y+36,size-16,size-44));float mapSize=size-16;float range=Expanded?350:105;var center=game.Player.transform.position;
+            foreach(var entry in game.Pressure.Heat){var chunkCenter=new Vector3(entry.Key.x*RealWorldMapManager.ChunkSize,0,entry.Key.y*RealWorldMapManager.ChunkSize);if(Mathf.Abs(chunkCenter.x-center.x)>range+RealWorldMapManager.Radius || Mathf.Abs(chunkCenter.z-center.z)>range+RealWorldMapManager.Radius)continue;var a=Point(chunkCenter+new Vector3(-RealWorldMapManager.Radius,0,RealWorldMapManager.Radius),center,range,mapSize);var b=Point(chunkCenter+new Vector3(RealWorldMapManager.Radius,0,-RealWorldMapManager.Radius),center,range,mapSize);GUI.color=new Color(1,.18f,.1f,entry.Value*.24f);GUI.DrawTexture(new Rect(a.x,a.y,b.x-a.x,b.y-a.y),Texture2D.whiteTexture);GUI.color=Color.white;}
             foreach(var surface in game.Map.Surfaces){if(!surface || (surface.transform.position-center).sqrMagnitude>range*range*2)continue;var outline=surface.Outline;for(int i=0;i<outline.Count;i++)Line(Point(surface.transform.TransformPoint(outline[i]),center,range,mapSize),Point(surface.transform.TransformPoint(outline[(i+1)%outline.Count]),center,range,mapSize),surface.Water?new Color(.18f,.6f,.85f):new Color(.3f,.75f,.4f),Expanded?3:2);}
             int drawn=0;foreach(var building in game.Map.Buildings){if(!building || building.Outline==null || (building.transform.position-center).sqrMagnitude>range*range || drawn++>=70)continue;var outline=building.Outline;for(int i=0;i<outline.Count;i++)Line(Point(building.transform.TransformPoint(outline[i]),center,range,mapSize),Point(building.transform.TransformPoint(outline[(i+1)%outline.Count]),center,range,mapSize),building.Playable?new Color(.72f,.58f,.3f):new Color(.48f,.5f,.51f),Expanded?2:1);if(building.Playable){var door=Point(building.Entrance,center,range,mapSize);GUI.color=new Color(1,.78f,.24f);GUI.DrawTexture(new Rect(door.x-3,door.y-3,6,6),Texture2D.whiteTexture);GUI.color=Color.white;}}
             foreach(var road in game.Map.Roads){if((road.a-center).sqrMagnitude>range*range*5 && (road.b-center).sqrMagnitude>range*range*5)continue;Line(Point(road.a,center,range,mapSize),Point(road.b,center,range,mapSize),new Color(.45f,.53f,.55f),Expanded?3:2);}
