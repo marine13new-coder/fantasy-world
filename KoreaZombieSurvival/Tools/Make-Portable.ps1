@@ -40,5 +40,6 @@ $files=Get-ChildItem -LiteralPath $build -Recurse -File | Sort-Object FullName
 $manifest=foreach($file in $files) { $relative=$file.FullName.Substring($build.Length+1); (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()+"`t"+$relative }
 Set-Content -LiteralPath (Join-Path $package 'Checksums.sha256') -Value $manifest -Encoding utf8
 if(Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
-Compress-Archive -LiteralPath $package -DestinationPath $zip -CompressionLevel Optimal
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+[IO.Compression.ZipFile]::CreateFromDirectory($package,$zip,[IO.Compression.CompressionLevel]::Optimal,$true)
 Write-Output "PORTABLE_PACKAGE_OK $zip"

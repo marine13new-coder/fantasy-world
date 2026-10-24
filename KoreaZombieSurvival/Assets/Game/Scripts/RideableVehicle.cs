@@ -61,7 +61,7 @@ namespace SeoulSurvival
             player.body.Move(direction*data.speed*Time.deltaTime+Vector3.down*.3f*Time.deltaTime);
             var distance=Vector3.Distance(before,player.transform.position);if(data.rangeMeters>0)RemainingRange=Mathf.Max(0,RemainingRange-distance);
             player.transform.rotation=Quaternion.LookRotation(direction);transform.SetPositionAndRotation(player.transform.position,player.transform.rotation);
-            if(data.noiseRadius>0 && Time.time>=nextNoise){ZombieAI.HearNoise(transform.position,data.noiseRadius);nextNoise=Time.time+3;}
+            if(data.noiseRadius>0 && Time.time>=nextNoise){ZombieAI.HearNoise(transform.position,data.noiseRadius);if(game.Pressure)game.Pressure.RecordNoise(transform.position,data.noiseRadius);nextNoise=Time.time+3;}
         }
         void OnGUI()
         {

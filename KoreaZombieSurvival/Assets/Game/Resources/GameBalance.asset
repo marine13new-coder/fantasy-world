@@ -91,6 +91,11 @@ MonoBehaviour:
       gunshotAlert: 0.015
       restRecovery: 0.2
       decayPerMinute: 0.025
+    districtPressure:
+      heatPerMetre: 0.004
+      decayPerMinute: 0.04
+      maximum: 1
+      extraEnemies: 4
     vehicles:
     - name: "\uC811\uC774\uC2DD \uC790\uC804\uAC70"
       speed: 9

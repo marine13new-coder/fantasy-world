@@ -22,6 +22,7 @@ namespace SeoulSurvival
         public ItemAmount[] inventory=new ItemAmount[0];
         public string[] looted=new string[0], killed=new string[0];
         public VehicleSave[] vehicles=new VehicleSave[0];
+        public DistrictHeatSave[] districtHeat=new DistrictHeatSave[0];
     }
     public sealed class SurvivalCampaign : MonoBehaviour
     {
@@ -131,7 +132,7 @@ namespace SeoulSurvival
         {
             var inventory=new List<ItemAmount>();foreach(var p in game.Survival.Inventory)inventory.Add(new ItemAmount(p.Key,p.Value));
             var vehicles=new List<VehicleSave>();if(game.Journey)foreach(var vehicle in game.Journey.Vehicles)vehicles.Add(new VehicleSave{position=vehicle.transform.position,remainingRange=vehicle.RemainingRange});
-            return new CampaignData{completedOperations=CompletedOperations,completedReliefContracts=CompletedReliefContracts,reliefActive=ReliefActive,reliefRecovered=ReliefRecovered,shelterLevel=ShelterLevel,workshopLevel=WorkshopLevel,elapsed=Elapsed,hunger=Hunger,stamina=Stamina,health=game.Player.Health,position=game.Player.transform.position,magazine=game.Player.combat.Magazine,reserve=game.Player.combat.Reserve,loadoutVersion=1,equippedSlot=game.Player.combat.EquippedSlot,pistolMagazine=game.Player.combat.PistolMagazine,rifleMagazine=game.Player.combat.RifleMagazine,resolvedJourneyEvents=game.Journey?game.Journey.ResolvedEvents:0,journeyAlert=game.Journey?game.Journey.Alert:0,reunionDefense=game.Journey && game.Journey.ReunionDefense,reunionRemaining=game.Journey?game.Journey.ReunionRemaining:0,extractionReady=game.Survival.Victory,inventory=inventory.ToArray(),looted=new List<string>(game.Survival.Looted).ToArray(),killed=new List<string>(game.Survival.Killed).ToArray(),vehicles=vehicles.ToArray()};
+            return new CampaignData{completedOperations=CompletedOperations,completedReliefContracts=CompletedReliefContracts,reliefActive=ReliefActive,reliefRecovered=ReliefRecovered,shelterLevel=ShelterLevel,workshopLevel=WorkshopLevel,elapsed=Elapsed,hunger=Hunger,stamina=Stamina,health=game.Player.Health,position=game.Player.transform.position,magazine=game.Player.combat.Magazine,reserve=game.Player.combat.Reserve,loadoutVersion=1,equippedSlot=game.Player.combat.EquippedSlot,pistolMagazine=game.Player.combat.PistolMagazine,rifleMagazine=game.Player.combat.RifleMagazine,resolvedJourneyEvents=game.Journey?game.Journey.ResolvedEvents:0,journeyAlert=game.Journey?game.Journey.Alert:0,reunionDefense=game.Journey && game.Journey.ReunionDefense,reunionRemaining=game.Journey?game.Journey.ReunionRemaining:0,extractionReady=game.Survival.Victory,inventory=inventory.ToArray(),looted=new List<string>(game.Survival.Looted).ToArray(),killed=new List<string>(game.Survival.Killed).ToArray(),vehicles=vehicles.ToArray(),districtHeat=game.Pressure.Capture()};
         }
         public static CampaignData Parse(string json)
         {
@@ -141,6 +142,7 @@ namespace SeoulSurvival
             foreach(float n in new[]{d.elapsed,d.hunger,d.stamina,d.health,d.position.x,d.position.y,d.position.z})if(float.IsNaN(n)||float.IsInfinity(n))throw new InvalidDataException("Non-finite save value");
             if(d.elapsed<0||d.health<=0||d.health>100000||d.hunger<0||d.hunger>100||d.stamina<0||d.stamina>100||d.position.sqrMagnitude>1e14f || d.loadoutVersion<0 || d.loadoutVersion>1 || (d.loadoutVersion==1 && (d.equippedSlot<1 || d.equippedSlot>3 || d.pistolMagazine<0 || d.rifleMagazine<0)) || d.resolvedJourneyEvents<0 || d.resolvedJourneyEvents>255 || float.IsNaN(d.journeyAlert) || d.journeyAlert<-.3f || d.journeyAlert>.7f || float.IsNaN(d.reunionRemaining) || d.reunionRemaining<0 || d.reunionRemaining>3600 || d.completedReliefContracts<0 || d.completedReliefContracts>100000 || d.reliefRecovered && !d.reliefActive)throw new InvalidDataException("Save values out of range");
             if(d.vehicles!=null){if(d.vehicles.Length>2)throw new InvalidDataException("Invalid vehicle count");foreach(var vehicle in d.vehicles)if(vehicle==null || vehicle.position.sqrMagnitude>1e14f || float.IsNaN(vehicle.remainingRange) || vehicle.remainingRange<0 || vehicle.remainingRange>1000000)throw new InvalidDataException("Invalid vehicle state");}
+            if(d.districtHeat!=null){if(d.districtHeat.Length>64)throw new InvalidDataException("Invalid district heat count");var chunks=new HashSet<Vector2Int>();foreach(var entry in d.districtHeat)if(entry==null || Mathf.Abs(entry.x)>10000 || Mathf.Abs(entry.y)>10000 || float.IsNaN(entry.heat) || float.IsInfinity(entry.heat) || entry.heat<0 || entry.heat>1 || !chunks.Add(new Vector2Int(entry.x,entry.y)))throw new InvalidDataException("Invalid district heat");}
             var seen=new HashSet<ResourceKind>();foreach(var item in d.inventory)if(item==null || !Enum.IsDefined(typeof(ResourceKind),item.item) || !seen.Add(item.item) || item.count<0 || item.count>1000000)throw new InvalidDataException("Invalid inventory");
             foreach(var id in d.looted)if(string.IsNullOrEmpty(id)||id.Length>200)throw new InvalidDataException("Invalid loot id");foreach(var id in d.killed)if(string.IsNullOrEmpty(id)||id.Length>200)throw new InvalidDataException("Invalid zombie id");return d;
         }
@@ -153,6 +155,7 @@ namespace SeoulSurvival
             game.Player.Restore(d.position,d.health);if(d.loadoutVersion==1)game.Player.combat.RestoreLoadout(d.equippedSlot,d.pistolMagazine,d.rifleMagazine,d.reserve);else game.Player.combat.RestoreAmmo(d.magazine,d.reserve);game.Survival.RestoreCompleted(d.extractionReady);UpdateObjective();
             if(game.Journey)game.Journey.RestoreEvents(d.resolvedJourneyEvents,d.journeyAlert);
             if(game.Journey)game.Journey.RestoreReunion(d.reunionDefense,d.reunionRemaining);
+            game.Pressure.Restore(d.districtHeat);
             if(d.vehicles!=null && game.Journey)for(int i=0;i<Mathf.Min(d.vehicles.Length,game.Journey.Vehicles.Count);i++)game.Journey.Vehicles[i].Restore(d.vehicles[i].position,d.vehicles[i].remainingRange);
         }
         public bool SaveNow()

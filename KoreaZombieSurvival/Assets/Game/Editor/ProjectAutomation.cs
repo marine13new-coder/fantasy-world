@@ -104,6 +104,7 @@ namespace SeoulSurvival.Editor
             Assert(inspectorBalance && inspectorBalance.values.journey.chapterTitles.Length==4 && inspectorBalance.values.journey.chapterTitles[3].Contains("신호"),"Inspector contains journey chapter titles");
             Assert(inspectorBalance && inspectorBalance.values.zombieVariants.Length==3 && inspectorBalance.values.zombieVariants[2].health>1 && inspectorBalance.values.journey.runnerStart>0,"Inspector zombie variants remain editable");
             Assert(inspectorBalance && inspectorBalance.values.recipes.Length==5 && inspectorBalance.values.loot[2].items.Length==3 && inspectorBalance.values.carefulDistrictBonus.Length==3 && inspectorBalance.values.pursuit.quickSearchAlert>0,"Inspector balance includes loot, flare and pursuit tuning");
+            Assert(inspectorBalance.values.districtPressure!=null && inspectorBalance.values.districtPressure.extraEnemies>0 && DistrictPressure.DistanceToChunk(new Vector3(395,0,0),new Vector2Int(1,0))==5,"district sound crosses nearby chunk boundaries and uses Inspector tuning");
             Assert(JourneyDirector.NextEvent(.8f,0,rules.journeyEvents)==0 && JourneyDirector.NextEvent(.8f,1,rules.journeyEvents)==1 && JourneyDirector.NextEvent(.8f,3,rules.journeyEvents)==-1,"journey decisions unlock in order and cannot repeat");
             Assert(JourneyDirector.EncounterDelay(0,rules.journey)>JourneyDirector.EncounterDelay(1,rules.journey),"journey starts quieter and intensifies toward destination");
             var outline=new[]{new Vector3(0,0,0),new Vector3(4,0,0),new Vector3(4,0,1),new Vector3(1,0,1),new Vector3(1,0,4),new Vector3(0,0,4)};
@@ -230,6 +231,8 @@ namespace SeoulSurvival.Editor
                     Check(building && building.IsInside && !building.roof.activeSelf,"roof cutaway on entering interior");
                     var box=building.GetComponentInChildren<LootBox>(); Teleport(box.transform.position+Vector3.back); Check(box.TryOpen(),"facility loot acquired"); Check(!box.TryOpen(),"loot cannot be duplicated");
                     Check(Mathf.Abs(game.Journey.Alert-game.balance.pursuit.quickSearchAlert)<.001f,"fast search raises persistent pursuit once");
+                    Check(game.Pressure.At(RealWorldMapManager.ChunkAt(box.transform.position))>0,"loud search raises local district pressure");
+                    game.Pressure.RecordNoise(new Vector3(395,0,0),30);Check(game.Pressure.At(new Vector2Int(1,0))>0,"noise near a block boundary affects the next district");
                     Teleport(Vector3.zero); game.Map.BuildNavigation(Vector3.zero);
                     foreach(var zombie in ZombieAI.Active.ToArray())if(Vector3.Distance(zombie.transform.position,Vector3.zero)<100)UnityEngine.Object.Destroy(zombie.gameObject);
                     phase=2;
@@ -238,9 +241,10 @@ namespace SeoulSurvival.Editor
                     game.Player.transform.rotation=Quaternion.identity;
                     for(int i=0;i<1000;i++)game.Player.combat.SetFocus(true);
                     Check(game.Player.combat.Focus>=.999f,"focus reaches 100 percent");
-                    Physics.SyncTransforms(); int ammo=game.Player.combat.Magazine; game.Player.combat.Fire();
+                    Physics.SyncTransforms(); int ammo=game.Player.combat.Magazine;float heatBeforeShot=game.Pressure.At(Vector2Int.zero); game.Player.combat.Fire();
                     Check(game.Player.combat.Magazine==ammo-1,"shot consumes one round"); Check(z.State==ZombieState.Dead,"focused unobstructed shot kills target");
                     Check(game.Journey.Alert>game.balance.pursuit.quickSearchAlert,"gunshot raises pursuit beyond fast search");
+                    Check(game.Pressure.At(Vector2Int.zero)>heatBeforeShot,"gunshot intensifies the current district");
                     var runner=ZombieAI.Spawn(new Vector3(-5,0,8),null,null,1,ZombieVariant.Runner);
                     var armored=ZombieAI.Spawn(new Vector3(5,0,8),null,null,1,ZombieVariant.Armored);
                     Check(runner && armored && runner.Health<game.balance.zombie.health && armored.Health>game.balance.zombie.health,"runner and armored health differ from standard infected");
@@ -297,9 +301,11 @@ namespace SeoulSurvival.Editor
                     Teleport(SurvivalCampaign.Home+Vector3.forward*2);
                     game.Campaign.SavePath=Path.GetFullPath("Logs/campaign-check-"+Guid.NewGuid()+".json");
                     typeof(SurvivalCampaign).GetProperty("PersistenceEnabled").SetValue(game.Campaign,true);
+                    game.Pressure.RecordNoise(SurvivalCampaign.Home,40);float savedHeat=game.Pressure.At(Vector2Int.zero);
                     Check(game.Campaign.SaveNow(),"atomic campaign save");
                     int food=game.Survival.Count(ResourceKind.Food);Check(game.Campaign.SaveNow(),"backup checkpoint created");
-                    game.Survival.Add(ResourceKind.Food,90);Check(game.Campaign.Load() && game.Survival.Count(ResourceKind.Food)==food,"inventory and progress restore");
+                    game.Survival.Add(ResourceKind.Food,90);game.Pressure.Restore(null);Check(game.Campaign.Load() && game.Survival.Count(ResourceKind.Food)==food,"inventory and progress restore");
+                    Check(Mathf.Abs(game.Pressure.At(Vector2Int.zero)-savedHeat)<.01f,"district pressure survives campaign save and reload");
                     Check(game.Campaign.ReliefActive && game.Campaign.ReliefRecovered,"relief recovery survives reload");
                     int reliefCount=game.Campaign.CompletedReliefContracts;Check(game.Campaign.DeliverRelief() && game.Campaign.CompletedReliefContracts==reliefCount+1 && !game.Campaign.DeliverRelief(),"relief reward can be claimed once");
                     File.WriteAllText(game.Campaign.SavePath,"{broken");Check(game.Campaign.Load() && game.Campaign.CompletedOperations==1,"corrupt primary recovers valid backup");

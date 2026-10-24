@@ -20,6 +20,7 @@ namespace SeoulSurvival
         public AtmosphereAndAudioManager Atmosphere { get; private set; }
         public QuarterViewCamera CameraRig { get; private set; }
         public JourneyDirector Journey {get;private set;}
+        public DistrictPressure Pressure {get;private set;}
         public bool Running => Player && Player.State != PlayerState.Dead && Survival && !Survival.Victory && (!Journey || Journey.Ready);
         void Awake()
         {
@@ -38,6 +39,7 @@ namespace SeoulSurvival
             CameraRig=camera.gameObject.AddComponent<QuarterViewCamera>(); CameraRig.target=Player.transform;
             Map=gameObject.AddComponent<RealWorldMapManager>(); Map.online=useOnlineMap; Map.useBundledGangnamMap=useBundledGangnamMap;Map.enabled=false;
             Survival=gameObject.AddComponent<SurvivalAndEscapeManager>(); Survival.Initialize(this);
+            Pressure=gameObject.AddComponent<DistrictPressure>(); Pressure.Initialize(this);
             Campaign=gameObject.AddComponent<SurvivalCampaign>();
             Journey=gameObject.AddComponent<JourneyDirector>(); Journey.Initialize(this,requireJourneySetup,enablePersistence);
             Atmosphere.Initialize(this);

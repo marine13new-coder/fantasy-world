@@ -31,7 +31,7 @@ namespace SeoulSurvival
         }
         public void Play(SoundKind kind,Vector3 position,float noiseRadius=0,AudioClip overrideClip=null)
         {
-            if(noiseRadius>0)ZombieAI.HearNoise(position,noiseRadius);
+            if(noiseRadius>0){ZombieAI.HearNoise(position,noiseRadius);if(game.Pressure)game.Pressure.RecordNoise(position,noiseRadius);}
             var clip=overrideClip ? overrideClip : kind==SoundKind.Shot?normalShot:kind==SoundKind.Headshot?headshotCrunch:kind==SoundKind.Empty?emptyClick:kind==SoundKind.Reload?reload:kind==SoundKind.Axe?axe:kind==SoundKind.Groan?groan:kind==SoundKind.Loot?loot:siren;
             if(!clip) { if(!procedural.TryGetValue(kind,out clip)) { clip=Synthesize(kind); procedural[kind]=clip; } }
             effects.PlayOneShot(clip,kind==SoundKind.Groan?.3f:.8f);

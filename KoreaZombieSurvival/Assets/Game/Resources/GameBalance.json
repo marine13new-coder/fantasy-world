@@ -377,6 +377,12 @@
     "quickSearchNoise": 32,
     "carefulSearchNoise": 8
   },
+  "districtPressure": {
+    "heatPerMetre": 0.004,
+    "decayPerMinute": 0.04,
+    "maximum": 1,
+    "extraEnemies": 4
+  },
   "zombieVariants": [
     {
       "bodyDamage": 1,

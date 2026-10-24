@@ -154,7 +154,8 @@ namespace SeoulSurvival
             if(ReunionDefense){TickReunion();return;}
             if(!game.Running || Reached || pendingEvent>=0 || Time.time<nextEncounter)return;
             nextEncounter=Time.time+EncounterDelay(Progress,game.balance.journey);
-            int count=Mathf.Max(0,Mathf.RoundToInt(Mathf.Lerp(game.balance.journey.startEnemies,game.balance.journey.endEnemies,Progress)+alert*3));
+            float localHeat=game.Pressure.At(RealWorldMapManager.ChunkAt(game.Player.transform.position));
+            int count=Mathf.Max(0,Mathf.RoundToInt(Mathf.Lerp(game.balance.journey.startEnemies,game.balance.journey.endEnemies,Progress)+alert*3+localHeat*game.balance.districtPressure.extraEnemies));
             float threat=Mathf.Max(.5f,1+Progress*game.balance.journey.extraZombieStrength+alert);
             for(int i=0;i<count;i++)
             {
