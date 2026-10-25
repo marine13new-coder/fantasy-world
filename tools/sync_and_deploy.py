@@ -31,15 +31,21 @@ if gamst_src.exists():
     shutil.copy2(gamst_src, gamst_dst)
     print("✔ Synced #03 Gamst Lake Park")
 
-# 4. Update Portal HTML
+# 4. Sync Game 14 (Cozy Pixel Fishing full web build)
+fishing_build_script = root / "tools" / "build_cozy_fishing_full_web.py"
+if fishing_build_script.exists():
+    subprocess.run([sys.executable, str(fishing_build_script)], check=True, cwd=root)
+    print("✔ Synced #14 Cozy Pixel Fishing (Full Web Build with 7 systems & 73 textures)")
+
+# 5. Update Portal HTML
 sys.path.insert(0, str(root / "tools"))
 import update_arcade_portal
 print("✔ Rebuilt site/index.html & manifest.json")
 
-# 5. Git Commit & Push
+# 6. Git Commit & Push
 try:
-    subprocess.run(["git", "add", "site/", "SeamlessPixelRPG/pixel_rpg_playable_test.html"], check=True, cwd=root)
-    res = subprocess.run(["git", "commit", "-m", "fix(rpg): fix runtime error in 13 and sync all games to GitHub Pages"], capture_output=True, text=True, cwd=root)
+    subprocess.run(["git", "add", "site/", "SeamlessPixelRPG/pixel_rpg_playable_test.html", "tools/"], check=True, cwd=root)
+    res = subprocess.run(["git", "commit", "-m", "sync: auto-sync latest game builds (11, 13, 14) to GitHub Pages"], capture_output=True, text=True, cwd=root)
     print(res.stdout or res.stderr)
     subprocess.run(["git", "push", "origin", "main"], check=True, cwd=root)
     print("🚀 Successfully pushed to GitHub Pages! Deployment in progress.")
