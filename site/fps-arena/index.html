@@ -1,169 +1,146 @@
 <!DOCTYPE html>
-<html lang="ko"><head><meta charset="utf-8"><title>CHRONO-PULSE 3D : OVERDRIVE APEX</title>
+<html lang="ko"><head><meta charset="utf-8"><title>TACTICAL PROTOCOL : MODERN COMBAT</title>
 <style>
-:root{--cp-cyan:#00f2ff;--cp-magenta:#ff0077;--cp-amber:#ffaa00;--cp-purple:#aa00ff;--cp-bg:#020408}
-body{margin:0;background:var(--cp-bg);overflow:hidden;font-family:'Consolas','Segoe UI',sans-serif;color:#fff;user-select:none}
+:root{--tac-red:#ff4655;--tac-gold:#e5b869;--tac-dark:#0f1923;--tac-panel:rgba(15,25,35,0.92);--tac-cyan:#00f0ff}
+body{margin:0;background:#0b0e14;overflow:hidden;font-family:'Segoe UI',sans-serif;color:#ece8e1;user-select:none}
 canvas#c{display:block;width:100vw;height:100vh}
 #ui{position:fixed;inset:0;pointer-events:none}
 
-/* 상단 메인 헤더 */
-#top{position:absolute;top:16px;left:50%;transform:translateX(-50%);display:flex;gap:20px;background:rgba(6,10,18,.88);border:1px solid rgba(0,242,255,.5);padding:8px 26px;border-radius:4px;box-shadow:0 0 25px rgba(0,242,255,.25);letter-spacing:1px;font-size:13px}
-#top span{color:var(--cp-cyan);font-weight:900}
-#boss-box{position:absolute;top:60px;left:50%;transform:translateX(-50%);width:460px;display:none;flex-direction:column;align-items:center;background:rgba(14,6,18,.92);padding:7px 18px;border:1px solid var(--cp-magenta);border-radius:4px;box-shadow:0 0 24px rgba(255,0,119,.5)}
-#boss-name{font-size:12px;font-weight:900;color:var(--cp-magenta);letter-spacing:2px;margin-bottom:4px}
-#boss-bar{width:100%;height:8px;background:#240816;border-radius:2px;overflow:hidden}
-#boss-fill{height:100%;width:100%;background:linear-gradient(90deg,#ffaa00,#ff0077);transition:width .1s}
+/* 상단 매치 인포 패널 */
+#top-hud{position:absolute;top:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:20px;background:var(--tac-panel);border-bottom:2px solid var(--tac-red);padding:8px 30px;border-radius:4px;box-shadow:0 8px 24px rgba(0,0,0,0.6);letter-spacing:1px;font-weight:700}
+.team-score{font-size:22px;font-weight:900}
+#score-atk{color:#00f0ff}
+#score-def{color:var(--tac-red)}
+#round-timer{font-size:18px;color:var(--tac-gold);min-width:60px;text-align:center}
 
-/* 좌하단 코어 게이지 */
-#hud-bl{position:absolute;bottom:24px;left:28px;background:rgba(6,10,18,.88);border-left:4px solid var(--cp-cyan);padding:12px 20px;border-radius:4px;box-shadow:0 4px 20px rgba(0,0,0,.8)}
-.hud-title{font-size:11px;color:#8a9ba8;letter-spacing:1px;text-transform:uppercase}
-#hp-val{font-size:32px;font-weight:900;color:#fff}
-.bar-track{width:210px;height:7px;background:#101622;margin-top:3px;border-radius:2px;overflow:hidden}
-#hp-fill{height:100%;width:100%;background:linear-gradient(90deg,#00f2ff,#00ff88);transition:width .1s}
-#time-fill{height:100%;width:100%;background:linear-gradient(90deg,#ffaa00,#ff0077);transition:width .08s}
+/* 좌하단 요원 아머 & 체력 */
+#hud-bl{position:absolute;bottom:26px;left:28px;background:var(--tac-panel);border-left:4px solid var(--tac-cyan);padding:12px 24px;border-radius:4px;box-shadow:0 8px 20px rgba(0,0,0,0.7)}
+.hud-tag{font-size:11px;color:#8b978f;letter-spacing:1.5px;text-transform:uppercase;font-weight:800}
+#hp-val{font-size:36px;font-weight:900;color:#fff}
+.bar-track{width:220px;height:8px;background:#1b2733;margin-top:4px;border-radius:2px;overflow:hidden}
+#hp-fill{height:100%;width:100%;background:linear-gradient(90deg,#00f0ff,#38ef7d);transition:width .1s}
+#shield-fill{height:100%;width:100%;background:#00f0ff;transition:width .1s}
 
-/* 우하단 무기 & 과열 상태 */
-#hud-br{position:absolute;bottom:24px;right:28px;background:rgba(6,10,18,.88);border-right:4px solid var(--cp-magenta);padding:12px 20px;border-radius:4px;text-align:right;box-shadow:0 4px 20px rgba(0,0,0,.8)}
-#ammo-val{font-size:30px;font-weight:900;color:#fff}
-#wep-name{font-size:13px;color:#ff88aa;font-weight:700}
-#mode-tag{font-size:11px;color:#00f2ff}
+/* 우하단 현대 무기 및 탄약 */
+#hud-br{position:absolute;bottom:26px;right:28px;background:var(--tac-panel);border-right:4px solid var(--tac-red);padding:12px 24px;border-radius:4px;text-align:right;box-shadow:0 8px 20px rgba(0,0,0,0.7)}
+#ammo-val{font-size:34px;font-weight:900;color:#fff}
+#wep-name{font-size:14px;color:#ff8899;font-weight:800;letter-spacing:1px}
+#fire-mode{font-size:11px;color:#8b978f;margin-top:2px}
 
-/* 중앙 스킬 독 */
-#skills{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:10px}
-.sk-box{background:rgba(6,10,18,.88);border:1px solid #1f2f42;padding:8px 12px;border-radius:4px;text-align:center;min-width:68px;font-size:11px;transition:border-color .2s,box-shadow .2s}
-.sk-box b{display:block;font-size:13px;color:var(--cp-cyan);margin-bottom:2px}
-.sk-box.active{border-color:var(--cp-cyan);box-shadow:0 0 16px var(--cp-cyan)}
+/* 중앙 전술 스킬 슬롯 */
+#skills{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);display:flex;gap:12px}
+.sk-box{background:var(--tac-panel);border:1px solid #2c3e50;padding:8px 14px;border-radius:4px;text-align:center;min-width:72px;font-size:11px;box-shadow:0 4px 14px rgba(0,0,0,0.5)}
+.sk-box b{display:block;font-size:13px;color:var(--tac-cyan);margin-bottom:2px}
 
 /* 킬 피드 & 배너 */
-#feed{position:absolute;top:68px;right:24px;display:flex;flex-direction:column;gap:6px;align-items:flex-end}
-.kf{background:rgba(8,14,24,.92);border-right:3px solid var(--cp-cyan);padding:5px 12px;font-size:12px;border-radius:3px;box-shadow:0 2px 10px rgba(0,0,0,.6);animation:pop .15s ease}
+#feed{position:absolute;top:70px;right:24px;display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.kf{background:rgba(15,25,35,0.95);border-right:3px solid var(--tac-red);padding:6px 14px;font-size:12px;border-radius:3px;box-shadow:0 2px 10px rgba(0,0,0,0.6);animation:pop .15s ease}
 @keyframes pop{from{opacity:0;transform:translateX(15px)}to{opacity:1;transform:none}}
 
-#banner{position:absolute;top:19%;left:50%;transform:translateX(-50%);font-size:24px;font-weight:900;color:var(--cp-cyan);text-shadow:0 0 20px var(--cp-cyan);text-align:center;letter-spacing:2px;opacity:0;transition:opacity .2s}
-#kill-badge{position:absolute;bottom:140px;left:50%;transform:translateX(-50%);font-size:26px;font-weight:900;color:var(--cp-magenta);letter-spacing:4px;text-shadow:0 0 16px var(--cp-magenta);opacity:0;transition:opacity .15s,transform .15s}
-#radio-sub{position:absolute;top:90px;left:50%;transform:translateX(-50%);background:rgba(4,8,14,.88);padding:4px 18px;border-radius:20px;font-size:12px;color:var(--cp-amber);letter-spacing:1px;opacity:0;transition:opacity .2s;border:1px solid rgba(255,170,0,.35)}
+#banner{position:absolute;top:20%;left:50%;transform:translateX(-50%);font-size:26px;font-weight:900;color:var(--tac-red);text-shadow:0 2px 16px rgba(0,0,0,0.8);text-align:center;letter-spacing:2px;opacity:0;transition:opacity .2s}
+#kill-badge{position:absolute;bottom:140px;left:50%;transform:translateX(-50%);font-size:26px;font-weight:900;color:var(--tac-red);letter-spacing:4px;text-shadow:0 0 16px rgba(255,70,85,0.6);opacity:0;transition:opacity .15s,transform .15s}
+#net-status{position:absolute;top:16px;right:24px;font-size:12px;color:#8b978f;background:var(--tac-panel);padding:4px 12px;border-radius:4px;border:1px solid #233446}
 
 /* 미니맵 */
-#minimap{position:absolute;top:16px;left:16px;width:170px;height:170px;background:rgba(4,8,14,.92);border:1px solid rgba(0,242,255,.35);border-radius:4px;box-shadow:0 0 16px rgba(0,0,0,.8)}
+#minimap{position:absolute;top:16px;left:16px;width:160px;height:160px;background:rgba(11,18,26,0.92);border:1px solid rgba(255,70,85,0.4);border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,0.7)}
 
-/* 정밀 크로스헤어 캔버스 */
+/* 조준선 캔버스 & 저격 스코프 오버레이 */
 #ch-canvas{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;width:160px;height:160px;z-index:40}
+#scope-overlay{position:fixed;inset:0;pointer-events:none;display:none;background:radial-gradient(circle at center, transparent 32%, rgba(0,0,0,0.92) 38%, #000 68%)}
+#scope-overlay::before,#scope-overlay::after{content:'';position:absolute;background:rgba(255,70,85,0.75)}
+#scope-overlay::before{top:0;bottom:0;left:50%;width:1.5px}
+#scope-overlay::after{left:0;right:0;top:50%;height:1.5px}
 
-/* 부동 대미지 텍스트 */
-.dmg-float{position:fixed;pointer-events:none;font-weight:900;font-size:18px;text-shadow:0 0 8px #000;animation:dmgRise .55s ease-out forwards;z-index:50}
-@keyframes dmgRise{0%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}100%{opacity:0;transform:translate(-50%,-120%) scale(.9)}}
-
-/* 연구소 오버레이 */
-#upgrades{position:absolute;inset:0;background:rgba(4,8,14,.94);display:none;flex-direction:column;align-items:center;justify-content:center;pointer-events:auto;z-index:90}
-#upgrades h2{font-size:28px;color:var(--cp-cyan);letter-spacing:3px;margin-bottom:6px}
-#shard-avail{font-size:14px;color:var(--cp-amber);margin-bottom:24px}
-.up-grid{display:flex;gap:18px}
-.up-card{background:rgba(14,20,32,.9);border:1px solid #28364a;padding:18px 22px;border-radius:6px;width:170px;text-align:center;cursor:pointer;transition:all .15s}
-.up-card:hover{border-color:var(--cp-cyan);box-shadow:0 0 18px rgba(0,242,255,.35);transform:translateY(-4px)}
-.up-card h3{font-size:15px;color:#fff;margin:0 0 8px}
-.up-card p{font-size:12px;color:#8a9ba8;margin:0 0 12px;line-height:1.4}
-.up-card .cost{font-size:12px;color:var(--cp-amber);font-weight:700}
-
-/* 메인 시작 오버레이 */
-#overlay{position:absolute;inset:0;background:rgba(3,5,9,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:auto;cursor:pointer;z-index:95}
-#overlay h1{font-size:48px;margin:0 0 6px;color:var(--cp-cyan);letter-spacing:6px;text-shadow:0 0 30px rgba(0,242,255,.7)}
-#overlay h2{font-size:16px;margin:0 0 16px;color:var(--cp-magenta);letter-spacing:3px}
-#overlay p{color:#89a;margin:4px 0;font-size:14px}
-#chrono-vignette{position:fixed;inset:0;pointer-events:none;box-shadow:inset 0 0 100px rgba(0,242,255,0);transition:box-shadow .2s}
+/* 메인 로비 / 모드 선택 모달 */
+#lobby{position:absolute;inset:0;background:rgba(11,14,20,0.94);display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:auto;z-index:99}
+#lobby h1{font-size:46px;margin:0 0 4px;color:var(--tac-red);letter-spacing:4px}
+#lobby h2{font-size:14px;margin:0 0 24px;color:#8b978f;letter-spacing:2px}
+.mode-card-box{display:flex;gap:20px;margin-bottom:24px}
+.mode-card{background:rgba(20,30,42,0.9);border:1px solid #334455;padding:24px 28px;border-radius:6px;width:240px;text-align:center;cursor:pointer;transition:all .18s}
+.mode-card:hover{border-color:var(--tac-red);box-shadow:0 0 22px rgba(255,70,85,0.4);transform:translateY(-4px)}
+.mode-card h3{margin:0 0 8px;font-size:18px;color:#fff}
+.mode-card p{font-size:12px;color:#8b978f;line-height:1.5;margin:0}
+#room-input-box{display:none;flex-direction:column;gap:10px;align-items:center}
+#room-input{background:#141f2a;border:1px solid #334455;color:#fff;padding:8px 16px;border-radius:4px;font-size:14px;outline:none;text-align:center;letter-spacing:1px}
+.btn-act{background:var(--tac-red);color:#fff;border:none;padding:10px 24px;font-weight:700;letter-spacing:1px;border-radius:4px;cursor:pointer;font-size:13px}
+.btn-act:hover{background:#ff283b}
 </style></head><body>
 <div id="ui">
- <canvas id="minimap" width="170" height="170"></canvas>
- <div id="top">
-  <div>SECTOR <span id="w-num">1</span></div>
-  <div>CORES REMAINING <span id="e-num">0</span></div>
-  <div>CHRONO SHARDS <span id="s-num">0</span></div>
-  <div>COMBO <span id="k-num">0x</span></div>
-  <div>[U] 연구소 강화</div>
- </div>
+ <canvas id="minimap" width="160" height="160"></canvas>
+ <div id="net-status">모드: 대기 중</div>
 
- <div id="boss-box">
-  <div id="boss-name">CHRONO TITAN : OVERLORD</div>
-  <div id="boss-bar"><div id="boss-fill"></div></div>
+ <div id="top-hud">
+  <div class="team-score" id="score-atk">ATK 0</div>
+  <div id="round-timer">01:45</div>
+  <div class="team-score" id="score-def">DEF 0</div>
  </div>
 
  <div id="feed"></div>
  <div id="banner"></div>
- <div id="kill-badge">CRITICAL PURGE</div>
- <div id="radio-sub">AI LINK</div>
+ <div id="kill-badge">HEADSHOT</div>
 
  <div id="hud-bl">
-  <div class="hud-title">CHRONO ARMOR</div>
+  <div class="hud-tag">TACTICAL AGENT VEST</div>
   <div id="hp-val">100</div>
   <div class="bar-track"><div id="hp-fill"></div></div>
-  <div class="hud-title" style="margin-top:6px">TIME-FLUX DILATION (SHIFT)</div>
-  <div class="bar-track"><div id="time-fill"></div></div>
+  <div class="hud-tag" style="margin-top:6px">KEVLAR SHIELD (50)</div>
+  <div class="bar-track"><div id="shield-fill"></div></div>
  </div>
 
  <div id="skills">
-  <div class="sk-box" id="sk-shift"><b>SHIFT</b>시간 정지<br>(슬로우모션)</div>
-  <div class="sk-box" id="sk-f"><b>F</b>블링크 대시<br>(순간이동)</div>
-  <div class="sk-box" id="sk-e"><b>E</b>타임 리와인드<br>(되감기)</div>
-  <div class="sk-box" id="sk-c"><b>C</b>중력 펄스 왜곡장<br>(투사체 흡수)</div>
-  <div class="sk-box" id="sk-q"><b>Q</b>나노 과충전<br>(치유/버프)</div>
-  <div class="sk-box"><b>U 키</b>코어 강화 연구소</div>
-  <div class="sk-box"><b>R</b>방열</div>
+  <div class="sk-box"><b>[1] M4A1</b>돌격소총</div>
+  <div class="sk-box"><b>[2] GLOCK</b>전술권총</div>
+  <div class="sk-box"><b>[3] AWP</b>저격소총</div>
+  <div class="sk-box"><b>우클릭</b>ADS 줌</div>
+  <div class="sk-box"><b>[C]</b>연막탄</div>
+  <div class="sk-box"><b>[R]</b>탄창교체</div>
  </div>
 
  <div id="hud-br">
-  <div class="hud-title" id="mode-tag">ENERGY CELL</div>
-  <div id="ammo-val">30 / ∞</div>
-  <div id="wep-name">[1] 펄스 빔 라이플</div>
+  <div class="hud-tag" id="fire-mode">5.56MM NATO · 연사</div>
+  <div id="ammo-val">30 / 90</div>
+  <div id="wep-name">M4A1 TACTICAL RIFLE</div>
  </div>
 
- <div id="chrono-vignette"></div>
  <canvas id="ch-canvas" width="160" height="160"></canvas>
+ <div id="scope-overlay"></div>
 
- <div id="upgrades">
-  <h2>CHRONO LAB : PERK MATRIX</h2>
-  <div id="shard-avail">사용 가능한 크로노 파편: 0</div>
-  <div class="up-grid">
-   <div class="up-card" onclick="buyPerk('dmg')">
-    <h3>플라즈마 과출력</h3>
-    <p>모든 무기 기본 공격력 +20% 증가</p>
-    <div class="cost" id="cost-dmg">비용: 300 파편 (Lv.0)</div>
+ <div id="lobby">
+  <h1>TACTICAL PROTOCOL</h1>
+  <h2>MODERN COUNTER-STRIKE ARENA</h2>
+  <div class="mode-card-box">
+   <div class="mode-card" onclick="startSingleplayer()">
+    <h3>🎯 전술 싱글 작전 (AI 봇 대전)</h3>
+    <p>현대식 전술 돌격소총/저격총으로 무장하고 엄폐/브레이킹 무빙을 구사하는 대테러 특수부대 봇들과 교전합니다.</p>
    </div>
-   <div class="up-card" onclick="buyPerk('flux')">
-    <h3>시간 플럭스 축전기</h3>
-    <p>시간 감속 지속 시간 및 회복 속도 +35%</p>
-    <div class="cost" id="cost-flux">비용: 250 파편 (Lv.0)</div>
-   </div>
-   <div class="up-card" onclick="buyPerk('armor')">
-    <h3>나노 복합 차폐막</h3>
-    <p>최대 체력 +30 및 방어력 상승</p>
-    <div class="cost" id="cost-armor">비용: 250 파편 (Lv.0)</div>
-   </div>
-   <div class="up-card" onclick="buyPerk('vamp')">
-    <h3>파편 흡혈 매트릭스</h3>
-    <p>적 처치 시 체력 즉시 +12 수복</p>
-    <div class="cost" id="cost-vamp">비용: 400 파편 (Lv.0)</div>
+   <div class="mode-card" onclick="showMultiplayerPrompt()">
+    <h3>🌐 친구와 멀티플레이 (P2P 실시간)</h3>
+    <p>별도 가입 없이 P2P 전술 네트워크 룸 코드로 친구와 접속하여 1v1 또는 팀 데스매치를 플레이합니다.</p>
    </div>
   </div>
-  <p style="color:#789;margin-top:24px">닫으려면 [U] 또는 [ESC] 키를 누르세요</p>
- </div>
-
- <div id="overlay">
-  <h1>CHRONO-PULSE</h1>
-  <h2>NEON EXPANSION : OVERDRIVE APEX</h2>
-  <p>클릭하여 동기화 개시 (마우스 잠금 & 입체 음향 활성화)</p>
-  <p style="color:#789;margin-top:10px">WASD 이동 · SPACE 부스트 점프 · <b>F 순간 점멸(Blink Dash)</b></p>
-  <p style="color:#789"><b>SHIFT 누르고 있으면 시간 감속</b> · <b>E:</b> 3초 리와인드 · <b>C:</b> 중력 왜곡장 · <b>Q:</b> 과충전</p>
-  <p style="color:#789">적 파괴 시 드롭되는 <b>빛나는 픽업 큐브(체력 수복 / 에너지 완충)</b>를 획득하세요!</p>
+  <div id="room-input-box">
+   <input type="text" id="room-input" placeholder="전술 룸 코드 입력 (예: room123)" value="room101">
+   <div style="display:flex;gap:10px">
+    <button class="btn-act" onclick="startMultiplayer()">전장 진입 (P2P 접속)</button>
+    <button class="btn-act" style="background:#334455" onclick="cancelMulti()">취소</button>
+   </div>
+  </div>
+  <p style="color:#678;margin-top:20px;font-size:12px">WASD 이동 · SHIFT 정숙 보행 · SPACE 점프 · 좌클릭 사격 · 우클릭 ADS 스코프 · C 연막탄 · 1/2/3 무기</p>
  </div>
 </div>
 <canvas id="c"></canvas>
+
+<!-- Three.js + PeerJS (공용 P2P WebRTC 무료 서버를 활용한 무설치 멀티플레이) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
 <script>
-// ===== SYNTHETIC AUDIO ENGINE =====
+// ===== 리얼리스틱 현대전 사운드 신시사이저 (WebAudio 합성) =====
 let AC=null;
 function audio(){if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC}
 function noise(dur,vol,fq,type='lowpass',delay=0){
  const a=audio(),n=Math.max(1,(a.sampleRate*dur)|0),b=a.createBuffer(1,n,a.sampleRate),d=b.getChannelData(0);
- for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,1.8);
+ for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,1.6);
  const s=a.createBufferSource();s.buffer=b;const f=a.createBiquadFilter();f.type=type;f.frequency.value=fq;
  const g=a.createGain(),t0=a.currentTime+delay;g.gain.setValueAtTime(vol,t0);g.gain.exponentialRampToValueAtTime(.001,t0+dur);
  s.connect(f);f.connect(g);g.connect(a.destination);s.start(t0);
@@ -176,71 +153,63 @@ function tone(f0,f1,dur,vol,type='sine',delay=0){
 }
 function distPan(x,z){
  const dx=x-P.x,dz=z-P.z,d=Math.hypot(dx,dz);
- const v=Math.max(.04,1-d/42);
+ const v=Math.max(.03,1-d/36);
  return{vol:v,pan:Math.max(-1,Math.min(1,(dx*Math.cos(P.yaw)-dz*Math.sin(P.yaw))/Math.max(3,d)))};
 }
-function play3DTone(f0,f1,dur,vol,type,x,z){
- const a=audio(),dp=distPan(x,z);
- const o=a.createOscillator(),g=a.createGain(),p=a.createStereoPanner?a.createStereoPanner():null;
- o.type=type;const t0=a.currentTime;o.frequency.setValueAtTime(f0,t0);o.frequency.exponentialRampToValueAtTime(Math.max(10,f1),t0+dur);
- g.gain.setValueAtTime(vol*dp.vol,t0);g.gain.exponentialRampToValueAtTime(.001,t0+dur);
- if(p){p.pan.setValueAtTime(dp.pan,t0);o.connect(g);g.connect(p);p.connect(a.destination)}else{o.connect(g);g.connect(a.destination)}
- o.start(t0);o.stop(t0+dur);
+function play3DSound(fn,x,z){
+ const dp=distPan(x,z);
+ fn(dp.vol,dp.pan);
 }
 
 const SND={
- pulseLaser(){tone(950,220,.12,.32,'sawtooth');noise(.08,.25,3200,'bandpass')},
- plasmaShotgun(){noise(.24,.7,1600,'lowpass');tone(220,40,.2,.5,'sawtooth')},
- railBeam(){tone(180,2400,.18,.5,'sine');noise(.35,.8,4500,'highpass');tone(1400,120,.4,.45,'sawtooth',.08)},
- empty(){tone(1100,850,.04,.25,'square')},
- vent(){tone(600,1200,.1,.2,'sine');noise(.4,.35,1200,'lowpass')},
- blink(){noise(.15,.4,2400,'bandpass');tone(400,1200,.15,.35,'sine')},
- timeSlowStart(){tone(800,150,.45,.4,'sine');noise(.5,.3,400,'lowpass')},
- timeSlowEnd(){tone(150,900,.35,.35,'sine')},
- rewind(){tone(200,1600,.3,.45,'sawtooth');tone(400,2400,.3,.3,'triangle',.05)},
- vortex(){noise(.8,.55,800,'bandpass');tone(120,440,.6,.3,'sawtooth')},
- overload(){tone(330,880,.25,.35,'sine');tone(550,1100,.3,.3,'triangle',.08)},
- enemyShot(x,z){const dp=distPan(x,z);noise(.12,.3*dp.vol,1800);play3DTone(420,90,.12,.28,'sawtooth',x,z)},
- bossBeam(x,z){noise(.5,.6,800,'lowpass');play3DTone(150,60,.4,.6,'sawtooth',x,z)},
- hit(){tone(1400,900,.04,.3,'square')},
- crit(){tone(2200,1600,.06,.5,'square');tone(3200,2100,.08,.35,'sine',.02)},
- pickup(){tone(659,1046,.18,.35,'triangle');tone(880,1318,.2,.3,'sine',.06)},
- purge(streak){
-  const bases=[440,580,720,880,1050];
-  const b=bases[Math.min(streak-1,bases.length-1)]||440;
-  tone(b,b*1.8,.2,.4,'triangle');
-  tone(b*1.4,b*.4,.3,.35,'sawtooth',.05);
+ m4Shot(){
+  noise(.18,.65,1800,'lowpass');tone(160,35,.15,.55,'sawtooth');noise(.1,.3,3200,'bandpass',.02);
  },
- perk(){tone(523,659,.15,.3,'sine');tone(659,784,.2,.35,'sine',.12)},
- hurt(){tone(110,45,.25,.55,'sawtooth');noise(.15,.4,350)},
- step(x,z,self){const v=self?.12:.09*distPan(x,z).vol;noise(.04,v,850)},
- over(){tone(400,40,1.2,.5,'sawtooth')}
+ glockShot(){
+  noise(.12,.45,2200,'lowpass');tone(220,50,.1,.38,'square');
+ },
+ awpShot(){
+  noise(.45,.95,1400,'lowpass');tone(110,25,.45,.8,'sawtooth');noise(.2,.6,3800,'bandpass',.03);tone(50,20,.6,.5,'sine');
+ },
+ reloadMag(){
+  tone(550,350,.07,.2,'square',0);tone(380,620,.08,.25,'square',.25);tone(650,900,.06,.25,'triangle',.65);
+ },
+ enemyGun(x,z){
+  const dp=distPan(x,z);
+  noise(.14,.38*dp.vol,1500,'lowpass');tone(150,40,.11,.32*dp.vol,'sawtooth');
+ },
+ hitMarker(){tone(1400,900,.04,.35,'square')},
+ headshot(){tone(2100,1400,.07,.55,'square');tone(2800,1900,.09,.4,'sine',.02)},
+ footstep(x,z,self){
+  const v=self?.11:.09*distPan(x,z).vol;noise(.04,v,600);
+ },
+ smokeDeploy(){noise(.8,.5,750,'lowpass');tone(140,80,.5,.3,'sine')}
 };
 
-// ===== EXPANDED 24x24 CYBERPUNK MAP =====
+// ===== 현대 시가지/밀리터리 전술 맵 (더스트2 스타일 샌드스톤 & 콘크리트) =====
 const MAP=[
 "########################",
 "#......................#",
 "#..##....####....##....#",
 "#..#......##......#....#",
-"#......P......P........#",
-"#..#...P..##..P...##...#",
+"#......C......C........#",
+"#..#...C..##..C...##...#",
 "#..#......##......#....#",
-"#....P.####....P.......#",
-"#..##......##......P...#",
+"#....C.####....C.......#",
+"#..##......##......C...#",
 "#.....#....##.#....#...#",
 "#..#..#.......#....#...#",
-"#..#...P..##..P........#",
+"#..#...C..##..C........#",
 "#......##.##.##..##....#",
 "#......................#",
-"#...P...######...P.....#",
+"#...C...######...C.....#",
 "#..##.....##.....##....#",
 "#..#......##......#....#",
-"#......P......P........#",
-"#..#...P..##..P...##...#",
+"#......C......C........#",
+"#..#...C..##..C...##...#",
 "#..#......##......#....#",
-"#....P.####....P.......#",
-"#..##......##......P...#",
+"#....C.####....C.......#",
+"#..##......##......C...#",
 "#......................#",
 "########################"
 ];
@@ -248,190 +217,163 @@ const N=24,CELL=2;
 function cellAt(wx,wz){const gx=(wx/CELL)|0,gz=(wz/CELL)|0;if(gx<0||gz<0||gx>=N||gz>=N)return'#';return MAP[gz][gx]}
 function isWall(wx,wz){return cellAt(wx,wz)!=='.'}
 
-function makeTex(fn){const c=document.createElement('canvas');c.width=c.height=256;fn(c.getContext('2d'));const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t}
-const wallTex=makeTex(g=>{
- g.fillStyle='#090f18';g.fillRect(0,0,256,256);
- g.strokeStyle='#142032';g.lineWidth=4;g.strokeRect(4,4,248,248);
- g.strokeStyle='#00f2ff';g.lineWidth=3;
- g.beginPath();g.moveTo(0,128);g.lineTo(256,128);g.stroke();
- g.fillStyle='rgba(0,242,255,.09)';g.fillRect(16,16,224,96);g.fillRect(16,144,224,96);
- g.fillStyle='#ff0077';g.fillRect(124,16,8,96);g.fillRect(124,144,8,96);
+// 절차적 리얼리스틱 현대 시가지 텍스처 (샌드스톤 벽돌 & 군용 목재/철제 박스 & 아스팔트)
+function makeCanvasTex(fn){const c=document.createElement('canvas');c.width=c.height=256;fn(c.getContext('2d'));const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t}
+const sandWallTex=makeCanvasTex(g=>{
+ g.fillStyle='#8f7d6b';g.fillRect(0,0,256,256);
+ g.fillStyle='#7a6958';for(let y=0;y<256;y+=32)for(let x=0;x<256;x+=64)g.fillRect(x+((y/32)%2)*32+2,y+2,60,28);
+ g.strokeStyle='#524538';g.lineWidth=2;for(let y=0;y<=256;y+=32){g.beginPath();g.moveTo(0,y);g.lineTo(256,y);g.stroke()}
 });
-const pylonTex=makeTex(g=>{
- g.fillStyle='#140b1c';g.fillRect(0,0,256,256);
- g.strokeStyle='#ff0077';g.lineWidth=6;g.strokeRect(6,6,244,244);
- g.fillStyle='#ff0077';g.fillRect(64,20,128,216);
- g.fillStyle='#00f2ff';g.fillRect(108,0,40,256);
+const crateTex=makeCanvasTex(g=>{
+ g.fillStyle='#6b563b';g.fillRect(0,0,256,256);
+ g.strokeStyle='#3d2f1f';g.lineWidth=12;g.strokeRect(6,6,244,244);
+ g.beginPath();g.moveTo(10,10);g.lineTo(246,246);g.moveTo(246,10);g.lineTo(10,246);g.stroke();
+ g.fillStyle='#2c2217';g.fillRect(100,100,56,56);
 });
-const floorTex=makeTex(g=>{
- g.fillStyle='#05080f';g.fillRect(0,0,256,256);
- g.strokeStyle='#101a28';g.lineWidth=3;g.strokeRect(0,0,256,256);
- g.fillStyle='rgba(0,242,255,.04)';g.fillRect(8,8,116,116);g.fillRect(132,132,116,116);
- g.strokeStyle='rgba(0,242,255,.15)';g.lineWidth=1;
- g.beginPath();g.moveTo(0,0);g.lineTo(256,256);g.moveTo(256,0);g.lineTo(0,256);g.stroke();
+const groundTex=makeCanvasTex(g=>{
+ g.fillStyle='#363c42';g.fillRect(0,0,256,256);
+ g.strokeStyle='#282d32';g.lineWidth=3;g.strokeRect(0,0,256,256);
+ for(let i=0;i<600;i++){g.fillStyle=Math.random()>.5?'#41484f':'#2d3238';g.fillRect(Math.random()*256,Math.random()*256,3,3)}
 });
-floorTex.repeat.set(24,24);
+groundTex.repeat.set(24,24);
 
-// ===== THREE.JS RENDERER & SCENE =====
+// ===== Three.js 씬 & 조명 구성 =====
 const cv=document.getElementById('c');
 const renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});
 renderer.setSize(innerWidth,innerHeight);
 renderer.setPixelRatio(Math.min(2,devicePixelRatio));
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x020408);
-scene.fog=new THREE.FogExp2(0x020408,0.022);
+scene.background=new THREE.Color(0x8fa4b8); // 자연스러운 대낮 주간 하늘
+scene.fog=new THREE.FogExp2(0x8fa4b8,0.016);
 
-const camera=new THREE.PerspectiveCamera(78,innerWidth/innerHeight,0.1,90);
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,90);
 camera.rotation.order='YXZ';
 scene.add(camera);
 
-scene.add(new THREE.HemisphereLight(0x00f2ff,0x020408,0.75));
-const dirLight=new THREE.DirectionalLight(0xff0077,0.85);
-dirLight.position.set(24,36,20);
-scene.add(dirLight);
+// 태양광 및 야외 앰비언트 라이트
+scene.add(new THREE.HemisphereLight(0xfff6e6,0x444d56,0.85));
+const sunLight=new THREE.DirectionalLight(0xfffaed,1.1);
+sunLight.position.set(30,45,25);
+scene.add(sunLight);
 
-const pLights=[
- [8,3.2,8,0x00f2ff],[40,3.2,8,0xff0077],[8,3.2,40,0xffaa00],[40,3.2,40,0xaa00ff],[24,4,24,0x00f2ff]
-];
-pLights.forEach(([x,y,z,col])=>{
- const pl=new THREE.PointLight(col,1.4,18);
- pl.position.set(x,y,z);
- scene.add(pl);
-});
-
-// 사이버 홀로그램 파티클 더스트 (공중에 떠다니는 네온 입자)
-const dustGeo=new THREE.BufferGeometry();
-const dustCount=140,dustPos=new Float32Array(dustCount*3);
-for(let i=0;i<dustCount*3;i+=3){
- dustPos[i]=Math.random()*N*CELL;
- dustPos[i+1]=0.3+Math.random()*3.5;
- dustPos[i+2]=Math.random()*N*CELL;
-}
-dustGeo.setAttribute('position',new THREE.BufferAttribute(dustPos,3));
-const dustMat=new THREE.PointsMaterial({color:0x00f2ff,size:0.06,transparent:true,opacity:0.6});
-const dustParticles=new THREE.Points(dustGeo,dustMat);
-scene.add(dustParticles);
-
-const floor=new THREE.Mesh(new THREE.PlaneGeometry(N*CELL,N*CELL),new THREE.MeshLambertMaterial({map:floorTex}));
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(N*CELL,N*CELL),new THREE.MeshLambertMaterial({map:groundTex}));
 floor.rotation.x=-Math.PI/2;floor.position.set(N*CELL/2,0,N*CELL/2);scene.add(floor);
 
 const wallMeshes=[];
-const wallGeo=new THREE.BoxGeometry(CELL,3.8,CELL);
-const pylonGeo=new THREE.BoxGeometry(CELL*.75,4.2,CELL*.75);
-const wallMat=new THREE.MeshLambertMaterial({map:wallTex});
-const pylonMat=new THREE.MeshLambertMaterial({map:pylonTex});
+const wallGeo=new THREE.BoxGeometry(CELL,3.5,CELL);
+const crateGeo=new THREE.BoxGeometry(CELL*.85,2.0,CELL*.85);
+const wallMat=new THREE.MeshLambertMaterial({map:sandWallTex});
+const crateMat=new THREE.MeshLambertMaterial({map:crateTex});
 for(let z=0;z<N;z++)for(let x=0;x<N;x++){
  const ch=MAP[z][x];if(ch==='.')continue;
- const isP=ch==='P';
- const m=new THREE.Mesh(isP?pylonGeo:wallGeo,isP?pylonMat:wallMat);
- m.position.set((x+.5)*CELL,isP?2.1:1.9,(z+.5)*CELL);
+ const isC=ch==='C';
+ const m=new THREE.Mesh(isC?crateGeo:wallGeo,isC?crateMat:wallMat);
+ m.position.set((x+.5)*CELL,isC?1.0:1.75,(z+.5)*CELL);
  scene.add(m);wallMeshes.push(m);
 }
 
-// ===== 1인칭 무기 3D 모델 =====
+// ===== 현대식 무기 3D 모델 (M4A1, GLOCK, AWP) =====
 const gunRoot=new THREE.Group();
 camera.add(gunRoot);
-function buildSciFiGuns(){
- const suitMat=new THREE.MeshLambertMaterial({color:0x121824});
- const armorMat=new THREE.MeshLambertMaterial({color:0x1e2838});
- const cyanMat=new THREE.MeshBasicMaterial({color:0x00f2ff});
- const magMat=new THREE.MeshBasicMaterial({color:0xff0077});
+function buildModernArmory(){
+ const gloveMat=new THREE.MeshLambertMaterial({color:0x222a22}); // 밀리터리 올리브 드랩 전술 장갑
+ const sleeveMat=new THREE.MeshLambertMaterial({color:0x394336}); // 군용 위장 야상 슬리브
+ const steelMat=new THREE.MeshLambertMaterial({color:0x1a1d20});  // 총기 파커라이징 무광 스틸
+ const darkPolyMat=new THREE.MeshLambertMaterial({color:0x2b2e30});// 폴리머 총열 덮개
+ const oliveMat=new THREE.MeshLambertMaterial({color:0x4d5643});  // AWP 전술 카키 바디
 
- const arm=new THREE.Mesh(new THREE.BoxGeometry(.11,.11,.44),suitMat);
+ const arm=new THREE.Mesh(new THREE.BoxGeometry(.11,.11,.44),sleeveMat);
  arm.position.set(.26,-.26,-.24);arm.rotation.x=.2;gunRoot.add(arm);
- const glove=new THREE.Mesh(new THREE.BoxGeometry(.1,.1,.14),armorMat);
+ const glove=new THREE.Mesh(new THREE.BoxGeometry(.1,.1,.14),gloveMat);
  glove.position.set(.24,-.22,-.44);gunRoot.add(glove);
 
- // [1] CHRONO PULSE BEAM RIFLE
- const rifle=new THREE.Group();
- const rBody=new THREE.Mesh(new THREE.BoxGeometry(.08,.12,.56),armorMat);rBody.position.set(0,0,-.46);rifle.add(rBody);
- const rCore=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,.3,8),cyanMat);rCore.rotation.x=Math.PI/2;rCore.position.set(0,.04,-.44);rifle.add(rCore);
- const rRailT=new THREE.Mesh(new THREE.BoxGeometry(.06,.02,.48),suitMat);rRailT.position.set(0,.08,-.48);rifle.add(rRailT);
- const rMuzzle=new THREE.Mesh(new THREE.BoxGeometry(.07,.07,.12),magMat);rMuzzle.position.set(0,.02,-.76);rifle.add(rMuzzle);
- rifle.position.set(.22,-.2,0);
+ // [1] M4A1 TACTICAL RIFLE
+ const m4=new THREE.Group();
+ const m4Rec=new THREE.Mesh(new THREE.BoxGeometry(.065,.1,.38),steelMat);m4Rec.position.set(0,0,-.44);m4.add(m4Rec);
+ const m4Hand=new THREE.Mesh(new THREE.BoxGeometry(.06,.075,.28),darkPolyMat);m4Hand.position.set(0,.01,-.66);m4.add(m4Hand);
+ const m4Barrel=new THREE.Mesh(new THREE.CylinderGeometry(.014,.014,.3,8),steelMat);m4Barrel.rotation.x=Math.PI/2;m4Barrel.position.set(0,.01,-.86);m4.add(m4Barrel);
+ const m4Sight=new THREE.Mesh(new THREE.BoxGeometry(.012,.03,.012),steelMat);m4Sight.position.set(0,.065,-.78);m4.add(m4Sight);
+ const m4Mag=new THREE.Mesh(new THREE.BoxGeometry(.045,.18,.07),darkPolyMat);m4Mag.position.set(0,-.12,-.46);m4Mag.rotation.x=.2;m4.add(m4Mag);
+ m4.position.set(.22,-.2,0);
 
- // [2] PLASMA SHATTER CANNON
- const shotgun=new THREE.Group();
- const sBody=new THREE.Mesh(new THREE.BoxGeometry(.12,.13,.42),armorMat);sBody.position.set(0,0,-.38);shotgun.add(sBody);
- const sB1=new THREE.Mesh(new THREE.CylinderGeometry(.024,.024,.32,8),magMat);sB1.rotation.x=Math.PI/2;sB1.position.set(-.03,.02,-.54);shotgun.add(sB1);
- const sB2=new THREE.Mesh(new THREE.CylinderGeometry(.024,.024,.32,8),magMat);sB2.rotation.x=Math.PI/2;sB2.position.set(.03,.02,-.54);shotgun.add(sB2);
- shotgun.position.set(.22,-.2,0);shotgun.visible=false;
+ // [2] GLOCK-17 TACTICAL PISTOL
+ const glock=new THREE.Group();
+ const gSlide=new THREE.Mesh(new THREE.BoxGeometry(.055,.065,.26),steelMat);gSlide.position.set(0,0,-.42);glock.add(gSlide);
+ const gGrip=new THREE.Mesh(new THREE.BoxGeometry(.048,.14,.07),darkPolyMat);gGrip.position.set(0,-.09,-.36);gGrip.rotation.x=-.2;glock.add(gGrip);
+ glock.position.set(.22,-.2,0);glock.visible=false;
 
- // [3] SINGULARITY RAIL-LANCE
- const rail=new THREE.Group();
- const lBody=new THREE.Mesh(new THREE.BoxGeometry(.08,.11,.74),armorMat);lBody.position.set(0,0,-.56);rail.add(lBody);
- for(let i=0;i<4;i++){
-  const ring=new THREE.Mesh(new THREE.TorusGeometry(.05,.01,8,16),cyanMat);
-  ring.position.set(0,.02,-.4-(i*.14));rail.add(ring);
- }
- rail.position.set(.22,-.2,0);rail.visible=false;
+ // [3] AWP HEAVY SNIPER RIFLE
+ const awp=new THREE.Group();
+ const awpBody=new THREE.Mesh(new THREE.BoxGeometry(.07,.11,.66),oliveMat);awpBody.position.set(0,0,-.52);awp.add(awpBody);
+ const awpBarrel=new THREE.Mesh(new THREE.CylinderGeometry(.016,.016,.54,8),steelMat);awpBarrel.rotation.x=Math.PI/2;awpBarrel.position.set(0,.02,-1.02);awp.add(awpBarrel);
+ const awpMuzzle=new THREE.Mesh(new THREE.BoxGeometry(.04,.04,.08),steelMat);awpMuzzle.position.set(0,.02,-1.3);awp.add(awpMuzzle);
+ const awpScope=new THREE.Mesh(new THREE.CylinderGeometry(.032,.032,.32,8),steelMat);awpScope.rotation.x=Math.PI/2;awpScope.position.set(0,.1,-.54);awp.add(awpScope);
+ awp.position.set(.22,-.2,0);awp.visible=false;
 
- const flashMesh=new THREE.Mesh(new THREE.RingGeometry(.03,.16,12),cyanMat);
- flashMesh.position.set(.22,-.18,-1.02);flashMesh.visible=false;
- gunRoot.add(rifle,shotgun,rail,flashMesh);
+ const flash=new THREE.Mesh(new THREE.ConeGeometry(.08,.22,6),new THREE.MeshBasicMaterial({color:0xffd566,transparent:true,opacity:.9}));
+ flash.rotation.x=-Math.PI/2;flash.position.set(.22,-.19,-1.15);flash.visible=false;
+ gunRoot.add(m4,glock,awp,flash);
 
- return{rifle,shotgun,rail,flashMesh};
+ return{m4,glock,awp,flash};
 }
-const GUNS=buildSciFiGuns();
+const GUNS=buildModernArmory();
 
-// ===== 적 & 보스 모델 생성 =====
-function makeAndroidMesh(type,isBoss=false){
+// ===== 대테러 특수부대 군인 모델 (현대 밀리터리 택티컬 기어) =====
+function makeSoldierMesh(isEnemy=true){
  const root=new THREE.Group();
- const scale=isBoss?2.2:1.0;
- root.scale.set(scale,scale,scale);
-
- const coreCol=isBoss?0xff0044:(type===1?0x00f2ff:type===2?0xff0077:0xffaa00);
- const matChassis=new THREE.MeshLambertMaterial({color:isBoss?0x26101c:0x141a24});
- const matPlating=new THREE.MeshLambertMaterial({color:isBoss?0x421c2e:0x222d3d});
- const matCore=new THREE.MeshBasicMaterial({color:coreCol});
- const matJoint=new THREE.MeshLambertMaterial({color:0x0a0e14});
+ const camoMat=new THREE.MeshLambertMaterial({color:isEnemy?0x485244:0x394858}); // 적: 군용 삼림위장, 아군: 대테러 블루/블랙
+ const vestMat=new THREE.MeshLambertMaterial({color:0x1e241c});  // 몰리 시스템 전술 방탄조끼
+ const skinMat=new THREE.MeshLambertMaterial({color:0xd2a47e});  // 피부 톤
+ const gearMat=new THREE.MeshLambertMaterial({color:0x151815});  // 컴뱃 부츠 & 무전기
 
  const legL=new THREE.Group();legL.position.set(-.14,.76,0);
- const legLM=new THREE.Mesh(new THREE.BoxGeometry(.15,.76,.16),matPlating);legLM.position.y=-.38;legL.add(legLM);
+ const legLM=new THREE.Mesh(new THREE.BoxGeometry(.16,.76,.17),camoMat);legLM.position.y=-.38;legL.add(legLM);
+ const bootL=new THREE.Mesh(new THREE.BoxGeometry(.17,.16,.22),gearMat);bootL.position.set(0,-.68,.02);legL.add(bootL);
+
  const legR=new THREE.Group();legR.position.set(.14,.76,0);
- const legRM=new THREE.Mesh(new THREE.BoxGeometry(.15,.76,.16),matPlating);legRM.position.y=-.38;legR.add(legRM);
+ const legRM=new THREE.Mesh(new THREE.BoxGeometry(.16,.76,.17),camoMat);legRM.position.y=-.38;legR.add(legRM);
+ const bootR=new THREE.Mesh(new THREE.BoxGeometry(.17,.16,.22),gearMat);bootR.position.set(0,-.68,.02);legR.add(bootR);
 
- const torso=new THREE.Mesh(new THREE.BoxGeometry(.46,.66,.26),matPlating);torso.position.y=1.1;
- const coreHeart=new THREE.Mesh(new THREE.OctahedronGeometry(.12),matCore);coreHeart.position.set(0,1.15,.14);
- root.add(coreHeart);
+ const torso=new THREE.Mesh(new THREE.BoxGeometry(.46,.66,.26),camoMat);torso.position.y=1.1;
+ const vest=new THREE.Mesh(new THREE.BoxGeometry(.49,.48,.29),vestMat);vest.position.y=1.12;
+ const pouch=new THREE.Mesh(new THREE.BoxGeometry(.32,.12,.08),gearMat);pouch.position.set(0,.98,.16);
 
- const head=new THREE.Mesh(new THREE.BoxGeometry(.28,.32,.28),matChassis);head.position.y=1.62;
+ const head=new THREE.Mesh(new THREE.BoxGeometry(.28,.32,.28),skinMat);head.position.y=1.62;
  head.userData.isHead=true;
- const visor=new THREE.Mesh(new THREE.BoxGeometry(.3,.08,.16),matCore);visor.position.set(0,1.64,.1);
+ const helmet=new THREE.Mesh(new THREE.BoxGeometry(.33,.18,.33),vestMat);helmet.position.y=1.72;
+ helmet.userData.isHead=true;
+ const goggle=new THREE.Mesh(new THREE.BoxGeometry(.31,.08,.08),gearMat);goggle.position.set(0,1.64,.14);
 
  const armL=new THREE.Group();armL.position.set(-.3,1.35,0);
- const armLM=new THREE.Mesh(new THREE.BoxGeometry(.13,.56,.13),matPlating);armLM.position.y=-.24;armL.add(armLM);
+ const armLM=new THREE.Mesh(new THREE.BoxGeometry(.13,.56,.13),camoMat);armLM.position.y=-.24;armL.add(armLM);
  const armR=new THREE.Group();armR.position.set(.3,1.35,0);
- const armRM=new THREE.Mesh(new THREE.BoxGeometry(.13,.52,.13),matPlating);armRM.position.y=-.15;armRM.rotation.x=-1.1;armR.add(armRM);
- const eCannon=new THREE.Mesh(new THREE.BoxGeometry(.1,.12,.52),matJoint);eCannon.position.set(0,-.15,.38);armR.add(eCannon);
- const eFlash=new THREE.Mesh(new THREE.SphereGeometry(.1,6,6),matCore);
- eFlash.position.set(0,-.15,.68);eFlash.visible=false;armR.add(eFlash);
+ const armRM=new THREE.Mesh(new THREE.BoxGeometry(.13,.52,.13),camoMat);armRM.position.y=-.15;armRM.rotation.x=-1.1;armR.add(armRM);
+ const sGun=new THREE.Mesh(new THREE.BoxGeometry(.08,.1,.52),gearMat);sGun.position.set(0,-.15,.36);armR.add(sGun);
 
- const hpBg=new THREE.Mesh(new THREE.PlaneGeometry(.65,.08),new THREE.MeshBasicMaterial({color:0x10141c,side:THREE.DoubleSide}));
+ // 상단 빌보드 전술 체력바
+ const hpBg=new THREE.Mesh(new THREE.PlaneGeometry(.65,.08),new THREE.MeshBasicMaterial({color:0x11161d,side:THREE.DoubleSide}));
  hpBg.position.set(0,2.05,0);
- const hpFill=new THREE.Mesh(new THREE.PlaneGeometry(.63,.06),new THREE.MeshBasicMaterial({color:coreCol,side:THREE.DoubleSide}));
+ const hpFill=new THREE.Mesh(new THREE.PlaneGeometry(.63,.06),new THREE.MeshBasicMaterial({color:isEnemy?0xff4655:0x00f0ff,side:THREE.DoubleSide}));
  hpFill.position.set(0,2.05,.001);
  root.add(hpBg,hpFill);
 
- torso.userData.isBody=true;legLM.userData.isBody=true;legRM.userData.isBody=true;
- root.add(legL,legR,torso,head,visor,armL,armR);
- root.userData={legL,legR,armL,armR,head,torso,eFlash,coreHeart,hpFill,matPlating,matCore,isBoss};
+ torso.userData.isBody=true;vest.userData.isBody=true;legLM.userData.isBody=true;legRM.userData.isBody=true;
+ root.add(legL,legR,torso,vest,pouch,head,helmet,goggle,armL,armR);
+ root.userData={legL,legR,armL,armR,head,torso,hpFill};
  return root;
 }
 
-// ===== 무기 및 PERKS 상태 =====
+// ===== 현대식 무기 스펙 =====
 const WEAPONS=[
- {name:'[1] CHRONO PULSE BEAM',type:'rifle',mag:30,cd:.1,dmg:34,crit:105,recoil:.016,pellets:1,auto:true},
- {name:'[2] PLASMA SHATTER',type:'shotgun',mag:8,cd:.45,dmg:16,crit:32,recoil:.05,pellets:6,auto:false},
- {name:'[3] SINGULARITY LANCE',type:'rail',mag:4,cd:1.1,dmg:140,crit:320,recoil:.08,pellets:1,auto:false}
+ {name:'M4A1 TACTICAL RIFLE',mag:30,reserve:90,cd:.095,dmg:36,head:126,recoil:.016,zoom:false,mode:'5.56MM · 완전 자동'},
+ {name:'GLOCK-17 PISTOL',mag:15,reserve:60,cd:.18,dmg:26,head:84,recoil:.011,zoom:false,mode:'9MM · 반자동'},
+ {name:'AWP HEAVY SNIPER',mag:5,reserve:20,cd:1.25,dmg:115,head:280,recoil:.07,zoom:true,mode:'.338 LAPUA · 볼트 액션'}
 ];
 
-const PERKS={dmg:0,flux:0,armor:0,vamp:0};
-
-let P,E=[],tracers=[],ebullets=[],particles=[],vortices=[],history=[],pickups=[];
-let keys={},mouseDown=false,locked=false,over=false,sector=0,shards=0,combo=0;
-let timeScale=1.0;
-let inUpgrades=false,bossActive=false,bossRef=null;
+// 게임 상태
+let P,E=[],tracers=[],ebullets=[],particles=[],smokes=[],keys={};
+let mouseDown=false,locked=false,over=false,scoreAtk=0,scoreDef=0;
+let isMultiplayer=false,peer=null,conn=null,remotePlayers={},myPeerId='';
 let hitMarkerAlpha=0,hitMarkerCrit=false;
 
 function freeCell(){
@@ -443,80 +385,41 @@ function banner(txt){
  const b=document.getElementById('banner');b.innerHTML=txt;b.style.opacity=1;
  clearTimeout(b._t);b._t=setTimeout(()=>b.style.opacity=0,1800);
 }
-function radio(txt){
- const r=document.getElementById('radio-sub');r.textContent=txt;r.style.opacity=1;
- clearTimeout(r._t);r._t=setTimeout(()=>r.style.opacity=0,1600);
-}
 function addFeed(txt){
  const f=document.getElementById('feed'),d=document.createElement('div');
  d.className='kf';d.textContent=txt;f.appendChild(d);
  setTimeout(()=>d.remove(),3200);
 }
-function showBadge(txt){
- const b=document.getElementById('kill-badge');b.textContent=txt;b.style.opacity=1;
- b.style.transform='translateX(-50%) scale(1.15)';
- clearTimeout(b._t);b._t=setTimeout(()=>{b.style.opacity=0;b.style.transform='translateX(-50%) scale(0.95)'},800);
-}
 function triggerHit(crit=false){
- hitMarkerAlpha=1.0;
- hitMarkerCrit=crit;
-}
-function spawnDamageFloat(dmg,crit,pos){
- const v=pos.clone().project(camera);
- if(v.z>1)return;
- const x=(v.x*.5+.5)*innerWidth,y=(-v.y*.5+.5)*innerHeight;
- const el=document.createElement('div');
- el.className='dmg-float';el.textContent=(crit?'CRIT ':'')+dmg;
- el.style.left=x+'px';el.style.top=y+'px';
- el.style.color=crit?'#ff0077':'#00f2ff';
- document.body.appendChild(el);
- setTimeout(()=>el.remove(),550);
+ hitMarkerAlpha=1.0;hitMarkerCrit=crit;
 }
 
-// ===== 전장 드롭 픽업 아이템 (나노 아머 팩 & 플럭스 배터리) =====
-function spawnPickup(x,z){
- const isHp=Math.random()>.5;
- const geo=new THREE.OctahedronGeometry(.26);
- const mat=new THREE.MeshBasicMaterial({color:isHp?0x00ff88:0xffaa00,wireframe:true});
+// ===== 전술 연막탄 전개 =====
+function deploySmoke(){
+ if(P.smokeCd>0||!locked)return;
+ P.smokeCd=14;SND.smokeDeploy();
+ const sx=P.x-Math.sin(P.yaw)*7,sz=P.z-Math.cos(P.yaw)*7;
+ const geo=new THREE.SphereGeometry(2.8,14,14);
+ const mat=new THREE.MeshLambertMaterial({color:0xd4d8d8,transparent:true,opacity:0.92});
  const m=new THREE.Mesh(geo,mat);
- m.position.set(x,.5,z);scene.add(m);
- pickups.push({m,x,z,isHp,life:18});
+ m.position.set(sx,1.5,sz);scene.add(m);
+ smokes.push({m,x:sx,z:sz,rad:2.8,life:12});
+ banner('연막탄 투척 (12초 차폐)');
 }
 
-// ===== 특성 상점 =====
-function toggleUpgrades(){
- inUpgrades=!inUpgrades;
- document.getElementById('upgrades').style.display=inUpgrades?'flex':'none';
- if(inUpgrades){
-  if(document.pointerLockElement)document.exitPointerLock();
-  refreshPerksUI();
- }else{
-  cv.requestPointerLock();
+// ===== LOS & A* PATHFINDING =====
+function isBlockedBySmoke(x0,z0,x1,z1){
+ for(const s of smokes){
+  if(s.life<=0)continue;
+  const ldx=x1-x0,ldz=z1-z0,len=Math.hypot(ldx,ldz);if(len===0)continue;
+  const t=Math.max(0,Math.min(1,((s.x-x0)*ldx+(s.z-z0)*ldz)/(len*len)));
+  const px=x0+t*ldx,pz=z0+t*ldz;
+  if(Math.hypot(px-s.x,pz-s.z)<s.rad*.85)return true;
  }
+ return false;
 }
-function buyPerk(type){
- const costs={dmg:300*(PERKS.dmg+1),flux:250*(PERKS.flux+1),armor:250*(PERKS.armor+1),vamp:400*(PERKS.vamp+1)};
- const c=costs[type];
- if(shards>=c){
-  shards-=c;PERKS[type]++;
-  SND.perk();
-  if(type==='armor'){P.maxHp=100+PERKS.armor*30;P.hp=Math.min(P.maxHp,P.hp+30)}
-  refreshPerksUI();updateHUD();
-  banner('연구 완료! 특성 강화 적용됨');
- }else{
-  SND.empty();
- }
-}
-function refreshPerksUI(){
- document.getElementById('shard-avail').textContent='사용 가능한 크로노 파편: '+shards;
- document.getElementById('cost-dmg').textContent=`비용: ${300*(PERKS.dmg+1)} 파편 (Lv.${PERKS.dmg})`;
- document.getElementById('cost-flux').textContent=`비용: ${250*(PERKS.flux+1)} 파편 (Lv.${PERKS.flux})`;
- document.getElementById('cost-armor').textContent=`비용: ${250*(PERKS.armor+1)} 파편 (Lv.${PERKS.armor})`;
- document.getElementById('cost-vamp').textContent=`비용: ${400*(PERKS.vamp+1)} 파편 (Lv.${PERKS.vamp})`;
-}
-
-// ===== A* & LOS =====
 function los(x0,z0,x1,z1){
+ if(isBlockedBySmoke(x0,z0,x1,z1))return false;
  const d=Math.hypot(x1-x0,z1-z0),steps=Math.ceil(d*4);
  for(let i=1;i<steps;i++){if(isWall(x0+(x1-x0)*i/steps,z0+(z1-z0)*i/steps))return false}
  return true;
@@ -540,319 +443,276 @@ function moveWithSlide(o,dx,dz,r=.38){
  if(!isWall(o.x-r*.7,o.z+dz+Math.sign(dz)*r)&&!isWall(o.x+r*.7,o.z+dz+Math.sign(dz)*r))o.z+=dz;
 }
 
-// ===== SPAWN SECTOR & BOSS EVENT =====
-function spawnSector(){
- sector++;combo=0;
- const isBossWave=(sector%5===0);
- bossActive=isBossWave;
- document.getElementById('boss-box').style.display=isBossWave?'flex':'none';
+// ===== 게임 초기화 & 모드 선택 =====
+function initGame(single=true){
+ isMultiplayer=!single;
+ document.getElementById('lobby').style.display='none';
+ document.getElementById('net-status').textContent=single?'모드: 싱글 전술 작전':'모드: P2P 전술 네트워크';
 
- if(isBossWave){
-  banner(`SECTOR ${sector} : BOSS ENCOUNTER<br><span style="font-size:15px;color:#ff0077">CHRONO TITAN 오버로드 출현!</span>`);
-  radio('경고: 구역 수호자 오버로드 타이탄 감지됨!');
-  let[x,z]=freeCell();
-  const mesh=makeAndroidMesh(1,true);
-  mesh.position.set(x,0,z);scene.add(mesh);
-  bossRef={x,z,hp:800,maxHp:800,type:4,mesh,cd:1.2,st:0,lx:P.x,lz:P.z,lost:0,path:[],rp:0,walk:0,fireT:0,hitT:0,isBoss:true,beamCharge:0};
-  E.push(bossRef);
- }else{
-  banner(`SECTOR ${sector}<br><span style="font-size:15px;color:#8ab">안드로이드 방어망 재구성</span>`);
-  const count=2+sector;
-  for(let i=0;i<count;i++){
-   let[x,z]=freeCell(),tries=0;
-   while(Math.hypot(x-P.x,z-P.z)<9&&tries++<30)[x,z]=freeCell();
-   const type=(i%3)+1;
-   const mesh=makeAndroidMesh(type,false);
-   mesh.position.set(x,0,z);scene.add(mesh);
-   E.push({x,z,hp:100,maxHp:100,type,mesh,cd:.8+Math.random(),st:Math.random()*6,lx:P.x,lz:P.z,lost:9,path:[],rp:0,walk:0,fireT:0,hitT:0,stepAcc:0,teleportCd:3+Math.random()*2});
-  }
- }
- updateHUD();
-}
-
-function reset(){
  E.forEach(e=>scene.remove(e.mesh));E=[];
+ Object.values(remotePlayers).forEach(rp=>scene.remove(rp.mesh));remotePlayers={};
  tracers.forEach(t=>scene.remove(t.m));tracers=[];
  ebullets.forEach(b=>scene.remove(b.m));ebullets=[];
  particles.forEach(p=>scene.remove(p.m));particles=[];
- vortices.forEach(v=>scene.remove(v.m));vortices=[];
- pickups.forEach(pk=>scene.remove(pk.m));pickups=[];
- history=[];
+ smokes.forEach(s=>scene.remove(s.m));smokes=[];
+
  P={
-  x:2.5*CELL,y:0,z:21.5*CELL,vy:0,yaw:0,pitch:0,hp:100,maxHp:100+PERKS.armor*30,timeFlux:100,
-  wep:0,ammo:[30,8,4],cooling:0,cool:0,recoil:0,bob:0,swayX:0,swayY:0,hurt:0,
-  rewindCd:0,vortexCd:0,overloadCd:0,blinkCd:0,stepAcc:0
+  x:2.5*CELL,y:0,z:21.5*CELL,vy:0,yaw:0,pitch:0,hp:100,shield:50,
+  wep:0,ammo:[30,15,5],reserve:[90,60,20],reloading:0,cool:0,recoil:0,bob:0,swayX:0,swayY:0,hurt:0,
+  smokeCd:0,zoomed:false,stepAcc:0
  };
- sector=0;shards=0;combo=0;over=false;
- selectWeapon(0);spawnSector();
+ selectWeapon(0);
+
+ if(single){
+  // 싱글플레이 시 전술 AI 봇 4기 배치
+  for(let i=0;i<4;i++){
+   let[x,z]=freeCell();
+   const mesh=makeSoldierMesh(true);
+   mesh.position.set(x,0,z);scene.add(mesh);
+   E.push({x,z,hp:100,mesh,cd:1.0+Math.random(),st:Math.random()*6,lx:P.x,lz:P.z,lost:9,path:[],rp:0,walk:0,stepAcc:0});
+  }
+  banner('대테러 전술 작전 개시!');
+ }
+
+ audio();
+ cv.requestPointerLock();
+}
+
+function startSingleplayer(){initGame(true)}
+function showMultiplayerPrompt(){
+ document.querySelector('.mode-card-box').style.display='none';
+ document.getElementById('room-input-box').style.display='flex';
+}
+function cancelMulti(){
+ document.querySelector('.mode-card-box').style.display='flex';
+ document.getElementById('room-input-box').style.display='none';
+}
+
+// ===== P2P WebRTC 멀티플레이 (PeerJS 기반) =====
+function startMultiplayer(){
+ const room=document.getElementById('room-input').value.trim()||'room101';
+ initGame(false);
+ initP2P(room);
+}
+function initP2P(roomId){
+ const hostId='tac-fps-'+roomId+'-host';
+ peer=new Peer('tac-fps-'+roomId+'-guest-'+Math.floor(Math.random()*1000));
+
+ peer.on('open',id=>{
+  myPeerId=id;
+  // 호스트에게 접속 시도
+  conn=peer.connect(hostId);
+  setupConnection(conn);
+ });
+ peer.on('error',err=>{
+  // 게스트 연결 실패 시 자신이 호스트가 됨
+  if(peer)peer.destroy();
+  peer=new Peer(hostId);
+  peer.on('connection',c=>{
+   setupConnection(c);
+   banner('새로운 전술 요원이 전장에 합류했습니다!');
+  });
+ });
+}
+function setupConnection(c){
+ conn=c;
+ conn.on('open',()=>{
+  banner('P2P 전술 링크 연결 완료!');
+ });
+ conn.on('data',data=>{
+  if(data.type==='pos'){
+   if(!remotePlayers[data.id]){
+    const mesh=makeSoldierMesh(false);
+    scene.add(mesh);
+    remotePlayers[data.id]={mesh,x:data.x,z:data.z,yaw:data.yaw};
+   }
+   const rp=remotePlayers[data.id];
+   rp.x=data.x;rp.z=data.z;rp.yaw=data.yaw;
+   rp.mesh.position.set(data.x,0,data.z);
+   rp.mesh.rotation.y=data.yaw;
+  }else if(data.type==='shoot'){
+   SND.m4Shot();
+   addTracer(data.x0,data.y0,data.z0,data.x1,data.y1,data.z1,0xffdd88);
+  }
+ });
+}
+function broadcastMyPos(){
+ if(conn&&conn.open){
+  conn.send({type:'pos',id:myPeerId,x:P.x,z:P.z,yaw:P.yaw});
+ }
 }
 
 function selectWeapon(idx){
- if(P.cooling>0||P.wep===idx)return;
- P.wep=idx;
- GUNS.rifle.visible=idx===0;
- GUNS.shotgun.visible=idx===1;
- GUNS.rail.visible=idx===2;
+ if(P.reloading>0||P.wep===idx)return;
+ P.wep=idx;P.zoomed=false;
+ GUNS.m4.visible=idx===0;
+ GUNS.glock.visible=idx===1;
+ GUNS.awp.visible=idx===2;
  updateHUD();
 }
-function ventHeat(){
+function reload(){
  const w=WEAPONS[P.wep];
- if(P.cooling>0||P.ammo[P.wep]===w.mag)return;
- P.cooling=.9;SND.vent();updateHUD();
+ if(P.reloading>0||P.ammo[P.wep]===w.mag||P.reserve[P.wep]<=0)return;
+ P.reloading=1.2;P.zoomed=false;SND.reloadMag();updateHUD();
 }
 
-// ===== 독창적 크로노 스킬군 =====
-function blinkDash(){
- if(P.blinkCd>0)return;
- P.blinkCd=3.5;SND.blink();
- const fw=(keys.w?1:0)-(keys.s?1:0)||1,st=(keys.d?1:0)-(keys.a?1:0);
- const bx=(-Math.sin(P.yaw)*fw+Math.cos(P.yaw)*st)*6;
- const bz=(-Math.cos(P.yaw)*fw-Math.sin(P.yaw)*st)*6;
- addSparks(P.x,1.4,P.z,0x00f2ff,10);
- moveWithSlide(P,bx,bz,.45);
- addSparks(P.x,1.4,P.z,0x00f2ff,10);
- banner('BLINK DASH! 공간 도약');
-}
-function timeRewind(){
- if(P.rewindCd>0||history.length<20)return;
- P.rewindCd=9;SND.rewind();
- const old=history[0];
- P.x=old.x;P.z=old.z;P.hp=Math.max(P.hp,old.hp);
- banner('TIME REWIND! 3초 전 상태로 전이');
- addFeed('타임 리와인드 시전 (+시공간 탈출)');
-}
-function deployVortex(){
- if(P.vortexCd>0)return;
- P.vortexCd=11;SND.vortex();
- const vx=P.x-Math.sin(P.yaw)*6,vz=P.z-Math.cos(P.yaw)*6;
- const geo=new THREE.TorusGeometry(1.8,.2,10,24);
- const mat=new THREE.MeshBasicMaterial({color:0xff0077,wireframe:true});
- const m=new THREE.Mesh(geo,mat);
- m.rotation.x=Math.PI/2;m.position.set(vx,1.3,vz);scene.add(m);
- vortices.push({m,x:vx,z:vz,rad:2.6,life:6});
- banner('중력 왜곡장 전개 (적 투사체 흡수)');
-}
-function coreOverload(){
- if(P.overloadCd>0)return;
- P.overloadCd=13;SND.overload();
- P.hp=Math.min(P.maxHp,P.hp+50);P.timeFlux=100;
- banner('CORE OVERCHARGE! (HP 50 회복 & 플럭스 완충)');
-}
-
-// ===== 정밀 사격 및 레이캐스팅 =====
+// ===== 현대식 히트스캔 사격 & 에임 브레이킹 =====
 const raycaster=new THREE.Raycaster();
 function shoot(){
- if(over||P.cool>0||P.cooling>0||inUpgrades)return;
+ if(over||P.cool>0||P.reloading>0)return;
  const w=WEAPONS[P.wep];
- if(P.ammo[P.wep]<=0){SND.empty();ventHeat();return}
+ if(P.ammo[P.wep]<=0){reload();return}
  P.ammo[P.wep]--;P.cool=w.cd;
 
- if(w.type==='rifle')SND.pulseLaser();
- else if(w.type==='shotgun')SND.plasmaShotgun();
- else SND.railBeam();
+ if(P.wep===0)SND.m4Shot();
+ else if(P.wep===1)SND.glockShot();
+ else SND.awpShot();
 
- GUNS.flashMesh.visible=true;setTimeout(()=>GUNS.flashMesh.visible=false,45);
+ GUNS.flash.visible=true;setTimeout(()=>GUNS.flash.visible=false,40);
+
+ // 카운터 스트라이크/발로란트 스타일 브레이킹 탄퍼짐
  const moving=keys.w||keys.a||keys.s||keys.d||P.y>0.01;
- const dmgMultiplier=1+PERKS.dmg*.2;
+ let spread=(moving&&!keys.shift?.038:.0015)+P.recoil*.25;
+ if(P.zoomed)spread*=.2;
+ const rx=(Math.random()-.5)*spread,ry=(Math.random()-.5)*spread;
  P.recoil=Math.min(.22,P.recoil+w.recoil);
 
- for(let p=0;p<w.pellets;p++){
-  let spread=(moving?.035:.002)+P.recoil*.25;
-  if(w.type==='shotgun')spread+=.045;
-  const rx=(Math.random()-.5)*spread,ry=(Math.random()-.5)*spread;
+ raycaster.setFromCamera({x:rx,y:ry},camera);
+ const targets=[...wallMeshes];
+ E.forEach(e=>e.mesh.traverse(c=>{if(c.isMesh)targets.push(c)}));
+ Object.values(remotePlayers).forEach(rp=>rp.mesh.traverse(c=>{if(c.isMesh)targets.push(c)}));
+ const hits=raycaster.intersectObjects(targets,false);
 
-  raycaster.setFromCamera({x:rx,y:ry},camera);
-  const targets=[...wallMeshes];
-  E.forEach(e=>e.mesh.traverse(c=>{if(c.isMesh)targets.push(c)}));
-  const hits=raycaster.intersectObjects(targets,false);
+ const muz=new THREE.Vector3(.22,-.19,-1.0).applyMatrix4(camera.matrixWorld);
+ let endPt=raycaster.ray.at(55,new THREE.Vector3());
+ if(hits.length){
+  endPt=hits[0].point;
+  const obj=hits[0].object;
+  const enemy=E.find(e=>{let f=false;e.mesh.traverse(c=>{if(c===obj)f=true});return f});
+  if(enemy){
+   const isHead=!!obj.userData.isHead;
+   const dmg=isHead?w.head:w.dmg;
+   enemy.hp-=dmg;
+   triggerHit(isHead);
+   if(isHead)SND.headshot();else SND.hitMarker();
+   addSparks(endPt.x,endPt.y,endPt.z,isHead?0xff4655:0xffaa00,8);
 
-  const muz=new THREE.Vector3(.22,-.16,-.9).applyMatrix4(camera.matrixWorld);
-  let endPt=raycaster.ray.at(50,new THREE.Vector3());
-  if(hits.length){
-   endPt=hits[0].point;
-   const obj=hits[0].object;
-   const enemy=E.find(e=>{let f=false;e.mesh.traverse(c=>{if(c===obj)f=true});return f});
-   if(enemy){
-    const isCrit=!!obj.userData.isHead;
-    const baseDmg=isCrit?w.crit:w.dmg;
-    const finalDmg=Math.round(baseDmg*dmgMultiplier);
-    enemy.hp-=finalDmg;enemy.hitT=.15;
-    triggerHit(isCrit);
-    spawnDamageFloat(finalDmg,isCrit,endPt);
-
-    E.forEach(a=>{if(Math.hypot(a.x-enemy.x,a.z-enemy.z)<14){a.lx=P.x;a.lz=P.z;a.lost=0}});
-    addSparks(endPt.x,endPt.y,endPt.z,isCrit?0xff0077:0x00f2ff,isCrit?12:6);
-    if(isCrit)SND.crit();else SND.hit();
-
-    if(enemy.hp<=0){
-     combo++;
-     SND.purge(combo);
-     spawnPickup(enemy.x,enemy.z);
-     scene.remove(enemy.mesh);
-     E.splice(E.indexOf(enemy),1);
-     const pts=(isCrit?220:120)*(enemy.isBoss?8:1);
-     shards+=pts;
-     if(PERKS.vamp>0)P.hp=Math.min(P.maxHp,P.hp+PERKS.vamp*12);
-
-     if(enemy.isBoss){
-      bossActive=false;
-      document.getElementById('boss-box').style.display='none';
-      showBadge('BOSS DESTROYED! +'+pts);
-      addFeed('CHRONO TITAN 오버로드 완전 파괴!');
-     }else{
-      showBadge(combo>1?`PURGE COMBO x${combo}!`:'CORE SHATTERED');
-      addFeed(isCrit?`헤드 코어 관통 (+${pts})`:`안드로이드 파괴 (+${pts})`);
-     }
-     if(!E.length)setTimeout(()=>{if(!over){P.hp=Math.min(P.maxHp,P.hp+35);spawnSector()}},1200);
-    }
-   }else{
-    addSparks(endPt.x,endPt.y,endPt.z,0x334466,4);
+   if(enemy.hp<=0){
+    scene.remove(enemy.mesh);
+    E.splice(E.indexOf(enemy),1);
+    scoreAtk++;
+    addFeed(isHead?'헤드샷 적 사살 (M4A1)':'적 제압 완료');
+    if(!E.length)setTimeout(()=>{if(!over){banner('라운드 승리! 적 분대 전멸');setTimeout(()=>initGame(true),2000)}},1200);
    }
+  }else{
+   addSparks(endPt.x,endPt.y,endPt.z,0xb0b8b8,4);
   }
-  addTracer(muz.x,muz.y,muz.z,endPt.x,endPt.y,endPt.z,w.type==='rail'?0x00f2ff:0xff0077);
  }
- if(P.ammo[P.wep]===0)ventHeat();
+ addTracer(muz.x,muz.y,muz.z,endPt.x,endPt.y,endPt.z,0xffe288);
+ if(conn&&conn.open){
+  conn.send({type:'shoot',x0:muz.x,y0:muz.y,z0:muz.z,x1:endPt.x,y1:endPt.y,z1:endPt.z});
+ }
+ if(P.ammo[P.wep]===0)reload();
  updateHUD();
 }
 
 function addTracer(x0,y0,z0,x1,y1,z1,col){
  const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x0,y0,z0),new THREE.Vector3(x1,y1,z1)]);
  const m=new THREE.Line(g,new THREE.LineBasicMaterial({color:col,transparent:true,opacity:.9}));
- scene.add(m);tracers.push({m,t:.08});
+ scene.add(m);tracers.push({m,t:.07});
 }
-function addSparks(x,y,z,col,n=8){
+function addSparks(x,y,z,col,n=6){
  for(let i=0;i<n;i++){
-  const m=new THREE.Mesh(new THREE.BoxGeometry(.06,.06,.06),new THREE.MeshBasicMaterial({color:col}));
+  const m=new THREE.Mesh(new THREE.BoxGeometry(.05,.05,.05),new THREE.MeshBasicMaterial({color:col}));
   m.position.set(x,y,z);scene.add(m);
-  particles.push({m,vx:(Math.random()-.5)*6,vy:Math.random()*5,vz:(Math.random()-.5)*6,t:.35});
+  particles.push({m,vx:(Math.random()-.5)*5,vy:Math.random()*4,vz:(Math.random()-.5)*5,t:.3});
  }
 }
 
-// ===== AI & BOSS LOGIC =====
+// ===== 전술 봇 AI =====
 function updateAI(e,dt){
- const simDt=dt*timeScale;
  const ox=e.x,oz=e.z;
  const dx=P.x-e.x,dz=P.z-e.z,d=Math.hypot(dx,dz);
- const see=d<36&&los(e.x,e.z,P.x,P.z);
- e.st+=simDt;e.fireT=Math.max(0,e.fireT-simDt);e.hitT=Math.max(0,e.hitT-simDt);
- e.mesh.userData.eFlash.visible=e.fireT>0;
- e.mesh.userData.matCore.color.setHex(e.hitT>0?0xffffff:(e.isBoss?0xff0044:(e.type===1?0x00f2ff:e.type===2?0xff0077:0xffaa00)));
+ const see=d<34&&los(e.x,e.z,P.x,P.z);
+ e.st=(e.st||0)+dt;
 
- const hpR=Math.max(0,e.hp)/e.maxHp;
+ const hpR=Math.max(0,e.hp)/100;
  e.mesh.userData.hpFill.scale.set(hpR,1,1);
  e.mesh.userData.hpFill.position.x=-(1-hpR)*.32;
 
- if(e.isBoss){
-  document.getElementById('boss-fill').style.width=(hpR*100)+'%';
- }
+ if(see){e.lx=P.x;e.lz=P.z;e.lost=0;e.path=[]}else e.lost+=dt;
 
- e.teleportCd=Math.max(0,(e.teleportCd||0)-simDt);
- if(e.type===2&&see&&e.teleportCd<=0&&d>5){
-  e.teleportCd=4.2;
-  const perp=P.yaw+(Math.random()>.5?1.57:-1.57);
-  const nx=P.x+Math.sin(perp)*4,nz=P.z+Math.cos(perp)*4;
-  if(!isWall(nx,nz)){
-   addSparks(e.x,1.2,e.z,0xff0077,10);
-   e.x=nx;e.z=nz;
-   addSparks(e.x,1.2,e.z,0xff0077,10);
-   radio('경고: 플리커 개체 공간 점멸!');
-  }
- }
-
- if(see){
-  e.lx=P.x;e.lz=P.z;e.lost=0;e.path=[];
- }else e.lost+=simDt;
-
- const sp=(e.isBoss?2.4:(e.type===2?4.5:3.6))*simDt;
+ const sp=3.8*dt;
  if(see){
   const ang=Math.atan2(dx,dz);
   e.mesh.rotation.y=ang;
-  const prefDist=e.isBoss?10:(e.type===1?6:e.type===2?5:13);
-  const fw=d>prefDist+2?1:d<prefDist-2?-1:0;
-  const side=Math.sin(e.st*2.8+(e.type*2))>0?1:-1;
-  moveWithSlide(e,(Math.sin(ang)*fw+Math.cos(ang)*side)*sp,(Math.cos(ang)*fw-Math.sin(ang)*side)*sp,e.isBoss?.7:.38);
+  const fw=d>12?1:d<7?-1:0;
+  const side=Math.sin(e.st*2.5)>0?1:-1;
+  moveWithSlide(e,(Math.sin(ang)*fw+Math.cos(ang)*side*.8)*sp,(Math.cos(ang)*fw-Math.sin(ang)*side*.8)*sp,.38);
 
-  e.cd-=simDt;
+  e.cd-=dt;
   if(e.cd<=0){
-   if(e.isBoss){
-    e.cd=1.2;e.fireT=.15;SND.bossBeam(e.x,e.z);
-    for(let angOff of[-.22,0,.22]){
-     const ba=Math.atan2(P.x-e.x,P.z-e.z)+angOff;
-     const bm=new THREE.Mesh(new THREE.SphereGeometry(.18,8,8),new THREE.MeshBasicMaterial({color:0xff0077}));
-     bm.position.set(e.x,2.6,e.z);scene.add(bm);
-     ebullets.push({m:bm,x:e.x,y:2.6,z:e.z,vx:Math.sin(ba)*22,vz:Math.cos(ba)*22,dmg:22});
-    }
-   }else{
-    e.cd=Math.max(.4,1.1-sector*.06+Math.random()*.4);
-    e.fireT=.08;SND.enemyShot(e.x,e.z);
-    const lead=d/20;
-    const tx=P.x+(P.vx||0)*lead+(Math.random()-.5)*.9;
-    const tz=P.z+(P.vz||0)*lead+(Math.random()-.5)*.9;
-    const ba=Math.atan2(tx-e.x,tz-e.z);
-    const bm=new THREE.Mesh(new THREE.SphereGeometry(.09,6,6),new THREE.MeshBasicMaterial({color:0x00f2ff}));
-    bm.position.set(e.x,1.35,e.z);scene.add(bm);
-    ebullets.push({m:bm,x:e.x,y:1.35,z:e.z,vx:Math.sin(ba)*20,vz:Math.cos(ba)*20,dmg:12});
-   }
+   e.cd=0.9+Math.random()*.5;
+   SND.enemyGun(e.x,e.z);
+   const lead=d/22;
+   const tx=P.x+(P.vx||0)*lead+(Math.random()-.5)*1.1;
+   const tz=P.z+(P.vz||0)*lead+(Math.random()-.5)*1.1;
+   const ba=Math.atan2(tx-e.x,tz-e.z);
+   const bm=new THREE.Mesh(new THREE.SphereGeometry(.08,6,6),new THREE.MeshBasicMaterial({color:0xffaa00}));
+   bm.position.set(e.x,1.35,e.z);scene.add(bm);
+   ebullets.push({m:bm,x:e.x,y:1.35,z:e.z,vx:Math.sin(ba)*22,vz:Math.cos(ba)*22});
   }
  }else{
   if(e.lost>7){const[rx,rz]=freeCell();e.lx=rx;e.lz=rz;e.lost=0;e.path=[]}
-  if(!e.path.length||(e.rp-=simDt)<0){e.path=findPath(e.x,e.z,e.lx,e.lz);e.rp=1}
+  if(!e.path.length||(e.rp-=dt)<0){e.path=findPath(e.x,e.z,e.lx,e.lz);e.rp=1}
   if(e.path.length){
    const wp=e.path[0],wd=Math.hypot(wp.x-e.x,wp.z-e.z);
    if(wd<.25)e.path.shift();
-   else{moveWithSlide(e,(wp.x-e.x)/wd*sp,(wp.z-e.z)/wd*sp,e.isBoss?.7:.38);e.mesh.rotation.y=Math.atan2(wp.x-e.x,wp.z-e.z)}
+   else{moveWithSlide(e,(wp.x-e.x)/wd*sp,(wp.z-e.z)/wd*sp,.38);e.mesh.rotation.y=Math.atan2(wp.x-e.x,wp.z-e.z)}
   }
  }
 
  const moved=Math.hypot(e.x-ox,e.z-oz);
  e.mesh.position.set(e.x,0,e.z);
  if(moved>.001){
-  e.walk+=moved*5;e.stepAcc+=moved;
-  if(e.stepAcc>1.9){e.stepAcc=0;SND.step(e.x,e.z,false)}
-  const sw=Math.sin(e.walk)*.6;
+  e.walk=(e.walk||0)+moved*5;e.stepAcc=(e.stepAcc||0)+moved;
+  if(e.stepAcc>1.9){e.stepAcc=0;SND.footstep(e.x,e.z,false)}
+  const sw=Math.sin(e.walk)*.55;
   e.mesh.userData.legL.rotation.x=sw;
   e.mesh.userData.legR.rotation.x=-sw;
  }
 }
 
-// ===== MAIN GAME LOOP =====
+// ===== 메인 업데이트 루프 =====
+let netSendTimer=0;
 function update(dt){
- if(over||inUpgrades)return;
-
- // 홀로그램 더스트 살짝 부유 애니메이션
- if(dustParticles){dustParticles.rotation.y+=dt*.03}
-
- const fluxRate=1+PERKS.flux*.35;
- const wantsSlow=keys.shift&&P.timeFlux>5;
- if(wantsSlow){
-  if(timeScale>0.25){SND.timeSlowStart();document.getElementById('sk-shift').classList.add('active')}
-  timeScale+=(0.2-timeScale)*.2;
-  P.timeFlux=Math.max(0,P.timeFlux-dt*(24/fluxRate));
-  document.getElementById('chrono-vignette').style.boxShadow='inset 0 0 120px rgba(0,242,255,.45)';
- }else{
-  if(timeScale<0.95&&!keys.shift){SND.timeSlowEnd();document.getElementById('sk-shift').classList.remove('active')}
-  timeScale+=(1.0-timeScale)*.2;
-  P.timeFlux=Math.min(100,P.timeFlux+dt*15*fluxRate);
-  document.getElementById('chrono-vignette').style.boxShadow='inset 0 0 120px rgba(0,242,255,0)';
- }
-
+ if(over)return;
  P.cool=Math.max(0,P.cool-dt);
  P.recoil=Math.max(0,P.recoil-dt*.55);
  P.hurt=Math.max(0,P.hurt-dt);
- P.rewindCd=Math.max(0,P.rewindCd-dt);
- P.vortexCd=Math.max(0,P.vortexCd-dt);
- P.overloadCd=Math.max(0,P.overloadCd-dt);
- P.blinkCd=Math.max(0,P.blinkCd-dt);
+ P.smokeCd=Math.max(0,P.smokeCd-dt);
  hitMarkerAlpha=Math.max(0,hitMarkerAlpha-dt*7);
 
- if(P.cooling>0){
-  P.cooling-=dt;
-  if(P.cooling<=0){P.ammo[P.wep]=WEAPONS[P.wep].mag;updateHUD()}
+ if(P.reloading>0){
+  P.reloading-=dt;
+  if(P.reloading<=0){
+   const w=WEAPONS[P.wep];
+   const need=w.mag-P.ammo[P.wep];
+   const take=Math.min(need,P.reserve[P.wep]);
+   P.ammo[P.wep]+=take;P.reserve[P.wep]-=take;
+   updateHUD();
+  }
  }
- if(mouseDown&&WEAPONS[P.wep].auto&&P.cool<=0)shoot();
+ if(mouseDown&&P.wep===0&&P.cool<=0)shoot();
 
+ const targetFov=P.zoomed?(P.wep===2?20:45):75;
+ camera.fov+=(targetFov-camera.fov)*.2;
+ camera.updateProjectionMatrix();
+ document.getElementById('scope-overlay').style.display=P.zoomed&&P.wep===2?'block':'none';
+
+ // 플레이어 정숙 보행 및 이동
  const ox=P.x,oz=P.z;
- const spd=6.2*dt;
+ const spd=(keys.shift?3.2:5.8)*dt*(P.zoomed?.45:1);
  const fw=(keys.w?1:0)-(keys.s?1:0),st=(keys.d?1:0)-(keys.a?1:0);
  const len=Math.hypot(fw,st)||1;
  const vx=(-Math.sin(P.yaw)*(fw/len)+Math.cos(P.yaw)*(st/len))*spd;
@@ -864,57 +724,33 @@ function update(dt){
  const pm=Math.hypot(P.x-ox,P.z-oz);
  if(pm>.001&&P.y===0){
   P.bob+=pm*4.2;P.stepAcc+=pm;
-  if(P.stepAcc>2.1){P.stepAcc=0;SND.step(P.x,P.z,true)}
+  if(P.stepAcc>2.1&&!keys.shift){P.stepAcc=0;SND.footstep(P.x,P.z,true)}
  }
 
- camera.position.set(P.x,1.55+P.y+Math.sin(P.bob*2)*.035,P.z);
+ camera.position.set(P.x,1.55+P.y+Math.sin(P.bob*2)*.03,P.z);
  P.swayX*=.88;P.swayY*=.88;
- const ventTilt=P.cooling>0?Math.sin(P.cooling*Math.PI)*.4:0;
- gunRoot.position.set(Math.cos(P.bob)*.012+P.swayX,Math.abs(Math.sin(P.bob))*.015+P.swayY-ventTilt*.2,P.recoil*1.2);
- gunRoot.rotation.set(-ventTilt+P.recoil*1.4,0,-ventTilt*.5);
+ const relTilt=P.reloading>0?Math.sin(P.reloading*Math.PI)*.4:0;
+ gunRoot.position.set(Math.cos(P.bob)*.012+P.swayX,Math.abs(Math.sin(P.bob))*.014+P.swayY-relTilt*.2,P.recoil*1.2);
+ gunRoot.rotation.set(-relTilt+P.recoil*1.4,0,-relTilt*.5);
+ gunRoot.visible=!(P.zoomed&&P.wep===2);
 
- history.push({x:P.x,z:P.z,hp:P.hp});
- if(history.length>60)history.shift();
-
- for(let i=vortices.length-1;i>=0;i--){
-  const v=vortices[i];v.life-=dt;v.m.rotation.z+=dt*4;
-  if(v.life<=0){scene.remove(v.m);vortices.splice(i,1)}
- }
-
- // 픽업 아이템 회전 및 습득 판정
- for(let i=pickups.length-1;i>=0;i--){
-  const pk=pickups[i];pk.life-=dt;
-  pk.m.rotation.x+=dt*2;pk.m.rotation.y+=dt*3;
-  if(Math.hypot(P.x-pk.x,P.z-pk.z)<1.2){
-   if(pk.isHp){P.hp=Math.min(P.maxHp,P.hp+25);banner('+25 HP 나노 팩 획득');}
-   else{P.timeFlux=Math.min(100,P.timeFlux+40);banner('+40% 플럭스 배터리 충전');}
-   SND.pickup();
-   scene.remove(pk.m);pickups.splice(i,1);updateHUD();continue;
-  }
-  if(pk.life<=0){scene.remove(pk.m);pickups.splice(i,1)}
+ for(let i=smokes.length-1;i>=0;i--){
+  const s=smokes[i];s.life-=dt;
+  if(s.life<2)s.m.material.opacity=Math.max(0,s.life/2)*.92;
+  if(s.life<=0){scene.remove(s.m);smokes.splice(i,1)}
  }
 
  E.forEach(e=>updateAI(e,dt));
 
  for(let i=ebullets.length-1;i>=0;i--){
-  const b=ebullets[i];
-  const bDt=dt*timeScale;
-  b.x+=b.vx*bDt;b.z+=b.vz*bDt;b.m.position.set(b.x,b.y,b.z);
-
-  let absorbed=false;
-  for(const vt of vortices){
-   if(Math.hypot(b.x-vt.x,b.z-vt.z)<vt.rad){
-    absorbed=true;scene.remove(b.m);ebullets.splice(i,1);
-    addSparks(b.x,b.y,b.z,0xff0077,4);break;
-   }
-  }
-  if(absorbed)continue;
-
+  const b=ebullets[i];b.x+=b.vx*dt;b.z+=b.vz*dt;b.m.position.set(b.x,b.y,b.z);
   if(isWall(b.x,b.z)){scene.remove(b.m);ebullets.splice(i,1);continue}
   if(Math.hypot(b.x-P.x,b.z-P.z)<.48&&Math.abs(b.y-(1.2+P.y))<.9){
    scene.remove(b.m);ebullets.splice(i,1);
-   P.hp-=(b.dmg||12);P.hurt=.35;SND.hurt();updateHUD();
-   if(P.hp<=0){over=true;SND.over();document.exitPointerLock();showOverlay('CHRONO DESYNC (패배)','R 키를 눌러 타임 루프 재시작')}
+   let dmg=18;
+   if(P.shield>0){const abs=Math.min(P.shield,dmg*.7);P.shield-=abs;dmg-=abs}
+   P.hp-=dmg;P.hurt=.35;updateHUD();
+   if(P.hp<=0){over=true;scoreDef++;banner('작전 실패 - 요원 전사 (R 재시작)');document.exitPointerLock()}
   }
  }
 
@@ -925,58 +761,51 @@ function update(dt){
   if(p.t<=0){scene.remove(p.m);particles.splice(i,1)}
  }
 
- document.getElementById('sk-f').textContent=P.blinkCd>0?P.blinkCd.toFixed(1)+'s':'F (점멸)';
- document.getElementById('sk-e').textContent=P.rewindCd>0?P.rewindCd.toFixed(1)+'s':'E (리와인드)';
- document.getElementById('sk-c').textContent=P.vortexCd>0?P.vortexCd.toFixed(1)+'s':'C (왜곡장)';
- document.getElementById('sk-q').textContent=P.overloadCd>0?P.overloadCd.toFixed(1)+'s':'Q (과충전)';
+ netSendTimer+=dt;
+ if(netSendTimer>.05){netSendTimer=0;broadcastMyPos()}
 }
 
-// ===== MINIMAP & REFINED 2D CROSSHAIR RENDERING =====
+// ===== 미니맵 & 크로스헤어 렌더링 =====
 const mm=document.getElementById('minimap').getContext('2d');
 function drawMinimap(){
- mm.clearRect(0,0,170,170);
- const s=170/N;
+ mm.clearRect(0,0,160,160);
+ const s=160/N;
  for(let z=0;z<N;z++)for(let x=0;x<N;x++){
   const ch=MAP[z][x];if(ch==='.')continue;
-  mm.fillStyle=ch==='P'?'#ff0077':'#1a2636';
+  mm.fillStyle=ch==='C'?'#6b563b':'#2b3542';
   mm.fillRect(x*s,z*s,s,s);
  }
- vortices.forEach(v=>{
-  mm.strokeStyle='#ff0077';mm.beginPath();mm.arc(v.x/CELL*s,v.z/CELL*s,v.rad/CELL*s,0,7);mm.stroke();
- });
- pickups.forEach(pk=>{
-  mm.fillStyle=pk.isHp?'#00ff88':'#ffaa00';
-  mm.fillRect(pk.x/CELL*s-1.5,pk.z/CELL*s-1.5,3,3);
+ smokes.forEach(sm=>{
+  mm.fillStyle='rgba(200,210,210,.4)';
+  mm.beginPath();mm.arc(sm.x/CELL*s,sm.z/CELL*s,sm.rad/CELL*s,0,7);mm.fill();
  });
  const px=P.x/CELL*s,pz=P.z/CELL*s;
- mm.fillStyle='#00f2ff';mm.beginPath();mm.arc(px,pz,3.5,0,7);mm.fill();
+ mm.strokeStyle='rgba(0,240,255,.4)';mm.beginPath();mm.moveTo(px,pz);
+ mm.lineTo(px-Math.sin(P.yaw-.5)*24,pz-Math.cos(P.yaw-.5)*24);
+ mm.lineTo(px-Math.sin(P.yaw+.5)*24,pz-Math.cos(P.yaw+.5)*24);mm.closePath();mm.fillStyle='rgba(0,240,255,.15)';mm.fill();
+ mm.fillStyle='#00f0ff';mm.beginPath();mm.arc(px,pz,3.5,0,7);mm.fill();
  E.forEach(e=>{
-  mm.fillStyle=e.isBoss?'#ff0044':(e.type===2?'#ff0077':'#ffaa00');
-  mm.beginPath();mm.arc(e.x/CELL*s,e.z/CELL*s,e.isBoss?6:3,0,7);mm.fill();
+  mm.fillStyle='#ff4655';mm.beginPath();mm.arc(e.x/CELL*s,e.z/CELL*s,3,0,7);mm.fill();
+ });
+ Object.values(remotePlayers).forEach(rp=>{
+  mm.fillStyle='#38ef7d';mm.beginPath();mm.arc(rp.x/CELL*s,rp.z/CELL*s,3.5,0,7);mm.fill();
  });
 }
 
-// 전용 2D 캔버스에 그리는 완벽한 사이버펑크 크로스헤어
 const chCanvas=document.getElementById('ch-canvas');
 const cg=chCanvas.getContext('2d');
-function drawRefinedCrosshair(){
+function drawCrosshair(){
  cg.clearRect(0,0,160,160);
+ if(P.zoomed&&P.wep===2)return;
  const cx=80,cy=80;
 
- // 1. 중심 정밀 도트
- cg.fillStyle='#00f2ff';
- cg.beginPath();cg.arc(cx,cy,2,0,Math.PI*2);cg.fill();
-
- // 2. 반동/이동에 따라 자연스럽게 벌어지는 4방향 십자선 (Gap)
+ // 정밀 그린/시안 크로스헤어
  const moving=keys.w||keys.a||keys.s||keys.d||P.y>0.01;
- const gap=7+(moving?6:0)+P.recoil*100;
+ const gap=6+(moving&&!keys.shift?8:0)+P.recoil*90;
  const len=8,th=2;
 
- cg.strokeStyle='#00f2ff';
+ cg.strokeStyle='#00ff88';
  cg.lineWidth=th;
- cg.shadowColor='#00f2ff';
- cg.shadowBlur=8;
-
  cg.beginPath();
  cg.moveTo(cx-gap-len,cy);cg.lineTo(cx-gap,cy);
  cg.moveTo(cx+gap,cy);cg.lineTo(cx+gap+len,cy);
@@ -984,102 +813,74 @@ function drawRefinedCrosshair(){
  cg.moveTo(cx,cy+gap);cg.lineTo(cx,cy+gap+len);
  cg.stroke();
 
- // 3. 보조 코너 인디케이터 (사이버 HUD 괄호)
- const bGap=gap+len+4;
- cg.strokeStyle='rgba(0,242,255,.35)';
- cg.lineWidth=1.5;
- cg.shadowBlur=0;
- cg.beginPath();
- cg.arc(cx,cy,bGap,Math.PI*.15,Math.PI*.35);
- cg.arc(cx,cy,bGap,Math.PI*.65,Math.PI*.85);
- cg.arc(cx,cy,bGap,Math.PI*1.15,Math.PI*1.35);
- cg.arc(cx,cy,bGap,Math.PI*1.65,Math.PI*1.85);
- cg.stroke();
+ cg.fillStyle='#00ff88';
+ cg.beginPath();cg.arc(cx,cy,1.5,0,Math.PI*2);cg.fill();
 
- // 4. 중앙 다이나믹 히트마커 (피격 시 'X' 마크 발광)
  if(hitMarkerAlpha>0.02){
-  cg.strokeStyle=hitMarkerCrit?`rgba(255,0,119,${hitMarkerAlpha})`:`rgba(0,242,255,${hitMarkerAlpha})`;
+  cg.strokeStyle=hitMarkerCrit?`rgba(255,70,85,${hitMarkerAlpha})`:`rgba(255,255,255,${hitMarkerAlpha})`;
   cg.lineWidth=2.5;
-  cg.shadowColor=hitMarkerCrit?'#ff0077':'#00f2ff';
-  cg.shadowBlur=12;
   const hSize=9;
   cg.beginPath();
-  cg.moveTo(cx-hSize,cy-hSize);cg.lineTo(cx-4,cy-4);
-  cg.moveTo(cx+4,cy+4);cg.lineTo(cx+hSize,cy+hSize);
-  cg.moveTo(cx+hSize,cy-hSize);cg.lineTo(cx+4,cy-4);
-  cg.moveTo(cx-4,cy+4);cg.lineTo(cx-hSize,cy+hSize);
+  cg.moveTo(cx-hSize,cy-hSize);cg.lineTo(cx-3,cy-3);
+  cg.moveTo(cx+3,cy+3);cg.lineTo(cx+hSize,cy+hSize);
+  cg.moveTo(cx+hSize,cy-hSize);cg.lineTo(cx+3,cy-3);
+  cg.moveTo(cx-3,cy+3);cg.lineTo(cx-hSize,cy+hSize);
   cg.stroke();
-  cg.shadowBlur=0;
  }
-
- document.body.style.boxShadow=P.hurt>0?`inset 0 0 100px rgba(255,0,119,${P.hurt*1.8})`:'none';
+ document.body.style.boxShadow=P.hurt>0?`inset 0 0 100px rgba(255,40,40,${P.hurt*1.8})`:'none';
 }
 
 function updateHUD(){
- document.getElementById('w-num').textContent=sector;
- document.getElementById('e-num').textContent=E.length;
- document.getElementById('s-num').textContent=shards;
- document.getElementById('k-num').textContent=combo+'x';
  document.getElementById('hp-val').textContent=Math.max(0,P.hp|0);
- document.getElementById('hp-fill').style.width=(Math.max(0,P.hp)/P.maxHp*100)+'%';
- document.getElementById('time-fill').style.width=Math.max(0,P.timeFlux)+'%';
- document.getElementById('ammo-val').textContent=P.cooling>0?'VENTING...':`${P.ammo[P.wep]} / ∞`;
+ document.getElementById('hp-fill').style.width=Math.max(0,P.hp)+'%';
+ document.getElementById('shield-fill').style.width=(Math.max(0,P.shield)/50*100)+'%';
+ document.getElementById('ammo-val').textContent=P.reloading>0?'RELOADING...':`${P.ammo[P.wep]} / ${P.reserve[P.wep]}`;
  document.getElementById('wep-name').textContent=WEAPONS[P.wep].name;
-}
-function showOverlay(title,sub){
- const ov=document.getElementById('overlay');ov.style.display='flex';
- ov.querySelector('h1').textContent=title;
- ov.querySelector('p').textContent=sub;
+ document.getElementById('fire-mode').textContent=WEAPONS[P.wep].mode;
+ document.getElementById('score-atk').textContent=`ATK ${scoreAtk}`;
+ document.getElementById('score-def').textContent=`DEF ${scoreDef}`;
 }
 
-// ===== INPUT EVENT LISTENERS =====
+// ===== 입력 이벤트 =====
 addEventListener('keydown',e=>{
  const k=e.key.toLowerCase();keys[k]=true;
- if(k==='u')toggleUpgrades();
- if(k==='escape'&&inUpgrades)toggleUpgrades();
- if(inUpgrades)return;
-
  if(k==='1')selectWeapon(0);
  if(k==='2')selectWeapon(1);
  if(k==='3')selectWeapon(2);
- if(k==='f')blinkDash();
- if(k==='e')timeRewind();
- if(k==='c')deployVortex();
- if(k==='q')coreOverload();
- if(k==='r'){if(over)reset();else ventHeat()}
- if(k===' '&&P.y===0&&locked){P.vy=6.5;tone(180,360,.12,.25,'sine')}
+ if(k==='c')deploySmoke();
+ if(k==='r'){if(over)initGame(true);else reload()}
+ if(k===' '&&P.y===0&&locked){P.vy=6.2}
 });
 addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 addEventListener('mousemove',e=>{
- if(!locked||inUpgrades)return;
- P.yaw-=e.movementX*.0022;
- P.pitch=Math.max(-1.35,Math.min(1.35,P.pitch-e.movementY*.0022));
+ if(!locked)return;
+ const sens=P.zoomed?.001:.0022;
+ P.yaw-=e.movementX*sens;
+ P.pitch=Math.max(-1.35,Math.min(1.35,P.pitch-e.movementY*sens));
  camera.rotation.y=P.yaw;camera.rotation.x=P.pitch;
  P.swayX=Math.max(-.04,Math.min(.04,P.swayX-e.movementX*.0004));
  P.swayY=Math.max(-.04,Math.min(.04,P.swayY+e.movementY*.0004));
 });
-addEventListener('mousedown',e=>{if(e.button===0){mouseDown=true;if(locked&&!inUpgrades)shoot()}});
+addEventListener('mousedown',e=>{
+ if(e.button===0){mouseDown=true;if(locked)shoot()}
+ if(e.button===2){P.zoomed=!P.zoomed}
+});
 addEventListener('mouseup',e=>{if(e.button===0)mouseDown=false});
 addEventListener('contextmenu',e=>e.preventDefault());
-document.getElementById('overlay').addEventListener('click',()=>{
- audio();if(over)reset();cv.requestPointerLock();
-});
 document.addEventListener('pointerlockchange',()=>{
  locked=document.pointerLockElement===cv;
- if(!inUpgrades)document.getElementById('overlay').style.display=locked?'none':'flex';
 });
 addEventListener('resize',()=>{
  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
  renderer.setSize(innerWidth,innerHeight);
 });
 
-reset();
+// 초기화 대기 (로비 선택 후 시작)
 let last=performance.now();
 (function loop(now){
  const dt=Math.min(.05,(now-last)/1000);last=now;
- if(locked)update(dt);
- drawMinimap();
- drawRefinedCrosshair();
+ if(locked&&P)update(dt);
+ if(P){drawMinimap();drawCrosshair()}
  renderer.render(scene,camera);
  requestAnimationFrame(loop);
 })(last);

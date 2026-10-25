@@ -15,7 +15,7 @@ GAMES_LAUNCHERS = [
     ("08_송백리살인사건_실행.bat", "site/songbaek-killings/index.html", "🔍 [08] 송백리 살인사건 1997"),
     ("09_은하아파트13동_실행.bat", "site/apartment-13/index.html", "🔦 [09] 은하아파트 13동"),
     ("10_아카이브1999_실행.bat", "site/archive-1999/index.html", "📼 [10] 아카이브 1999: 잔향의 병동"),
-    ("11_크로노펄스FPS_실행.bat", "site/fps-arena/index.html", "🎯 [11] 크로노 펄스 3D (CHRONO-PULSE)"),
+    ("11_택티컬프로토콜FPS_실행.bat", "site/fps-arena/index.html", "🎯 [11] 택티컬 프로토콜 3D (TACTICAL PROTOCOL)"),
     ("12_어비스롤_실행.bat", "site/abyss-roll/index.html", "🎲 [12] 어비스 롤: 피의 카지노"),
     ("13_심리스픽셀RPG_실행.bat", "site/seamless-pixel-rpg/index.html", "⚔️ [13] 심리스 오픈월드 픽셀 RPG"),
     ("14_코지픽셀낚시_실행.bat", "site/cozy-fishing/index.html", "🎣 [14] 코지 픽셀 낚시터")

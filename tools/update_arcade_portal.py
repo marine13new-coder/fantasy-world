@@ -171,18 +171,18 @@ GAMES = [
     {
         "session": "11",
         "slug": "fps-arena",
-        "title": "크로노 펄스 3D (CHRONO-PULSE)",
-        "sub_title": "Cyberpunk Sector Tactical FPS",
+        "title": "택티컬 프로토콜 3D (TACTICAL PROTOCOL)",
+        "sub_title": "Modern Combat Fast Tactical FPS",
         "category": "action",
         "category_name": "아케이드/액션",
-        "genre": "사이버펑크 3D 1인칭 슈터",
+        "genre": "모던 택티컬 3D 1인칭 FPS",
         "platform": "Web HTML5",
-        "tech": "Three.js · 3D Arm Rig & Plasma Gun",
+        "tech": "Three.js · Procedural Guns & Arm Rig",
         "score": 99,
         "fun": 98,
-        "desc": "플라즈마 샷건, 레일건 3단 무기 스왑, 정밀 3D 팔/글러브 반동 모션 및 사이버 전장 맵을 탑재한 고감도 1인칭 FPS.",
+        "desc": "정밀 3D 소총/반동 모션, 엄폐물 지형, 크리티컬 킬 배지 및 웨이브 교전을 탑재한 패스트 페이스 1인칭 아레나 슈터.",
         "icon": "🎯",
-        "theme_color": "#00f0ff"
+        "theme_color": "#ff4655"
     },
     {
         "session": "12",
