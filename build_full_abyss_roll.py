@@ -859,6 +859,47 @@ HTML_CONTENT = """<!DOCTYPE html>
     100% { transform: scale(1.1); }
   }
 
+
+  /* 데미지 플로팅 텍스트 & 피격 플래시 & 분노 모드 */
+  .floating-damage {
+    position: absolute;
+    font-size: 20px;
+    font-weight: 900;
+    color: #ff3333;
+    text-shadow: 0 0 8px #000, 0 0 15px rgba(255, 0, 0, 0.8);
+    pointer-events: none;
+    z-index: 220;
+    animation: floatUp 0.8s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+  }
+  .floating-damage.crit {
+    font-size: 26px;
+    color: #ffd700;
+    text-shadow: 0 0 10px #ff3300, 0 0 20px rgba(255, 215, 0, 0.9);
+  }
+  @keyframes floatUp {
+    0% { transform: translateY(0) scale(0.6); opacity: 0; }
+    20% { transform: translateY(-12px) scale(1.3); opacity: 1; }
+    80% { transform: translateY(-30px) scale(1.0); opacity: 1; }
+    100% { transform: translateY(-45px) scale(0.8); opacity: 0; }
+  }
+
+  /* 피격 화이트/레드 플래시 */
+  .hit-flash {
+    filter: brightness(3.5) saturate(2) drop-shadow(0 0 15px #ff2222) !important;
+    transform: scale(0.92) !important;
+    transition: filter 0.08s, transform 0.08s;
+  }
+
+  /* 보스 분노 모드 (Enrage) */
+  .boss-enraged .boss-svg {
+    filter: drop-shadow(0 0 22px #ff0000) drop-shadow(0 0 35px #ff5500) !important;
+    animation: bossEnragePulse 0.8s infinite ease-in-out alternate !important;
+  }
+  @keyframes bossEnragePulse {
+    0% { transform: scale(1.0) translateY(0); }
+    100% { transform: scale(1.12) translateY(-5px); }
+  }
+
 </style>
 </head>
 <body>
@@ -1917,7 +1958,58 @@ function pushDoubleDown() {
   updateBalatroUI();
   playCoinSound();
   triggerHaptic('push');
+
+  // 고배율 도박 긴장감 심장박동 사운드
+  if (currentMult >= 4 && bgmOsc1) {
+    try {
+      bgmOsc1.frequency.setValueAtTime(73.42 * 1.5, actx.currentTime);
+      playTone(90, 0.15, 'square', 0.5);
+      setTimeout(() => playTone(80, 0.2, 'square', 0.5), 180 / gameSpeed);
+    } catch(e) {}
+  }
   setLog(`🔥 [X2 MULT 돌파!] 주사위 [${testRoll}] 안착! 배율 ${currentMult}X! 화력: ${currentPot} POT!`);
+}
+
+
+// ----------------------------------------------------
+// 플로팅 데미지 텍스트 & 피격 연출 (Combat Juice)
+// ----------------------------------------------------
+function spawnFloatingDamage(targetEl, amount, isCrit) {
+  if (!targetEl) return;
+  const rect = targetEl.getBoundingClientRect();
+  const parentRect = document.getElementById('mobile-viewport').getBoundingClientRect();
+
+  const dmgEl = document.createElement('div');
+  dmgEl.className = 'floating-damage' + (isCrit ? ' crit' : '');
+  dmgEl.innerText = isCrit ? `🔥 -${amount}` : `-${amount}`;
+  dmgEl.style.left = `${rect.left - parentRect.left + (rect.width / 4)}px`;
+  dmgEl.style.top = `${rect.top - parentRect.top - 10}px`;
+
+  document.getElementById('mobile-viewport').appendChild(dmgEl);
+  setTimeout(() => dmgEl.remove(), 800);
+}
+
+function flashTarget(targetEl) {
+  if (!targetEl) return;
+  targetEl.classList.add('hit-flash');
+  setTimeout(() => targetEl.classList.remove('hit-flash'), 120 / gameSpeed);
+}
+
+function checkBossEnrage() {
+  const boss = monsters[0];
+  const bossEl = document.getElementById('mon-0');
+  if (boss && bossEl) {
+    if (boss.hp > 0 && boss.hp <= boss.maxHp * 0.4) {
+      if (!bossEl.classList.contains('boss-enraged')) {
+        bossEl.classList.add('boss-enraged');
+        showBanner('🔥 [보스 분노!] 체력 40% 이하 격노 발동!');
+        setLog(`🔥 [보스 분노!] ${boss.name}의 안광이 붉게 타오르며 광폭화 상태에 돌입했습니다!`);
+        playTone(150, 0.4, 'sawtooth', 0.6);
+      }
+    } else {
+      bossEl.classList.remove('boss-enraged');
+    }
+  }
 }
 
 function bankAndStrike() {
@@ -1944,6 +2036,10 @@ function bankAndStrike() {
   triggerCutIn('🛡️', target.icon, finalDmg, multSnapshot >= 4, () => {
     target.hp = Math.max(0, target.hp - finalDmg);
     updateEntityUI();
+    const monEl = document.getElementById('mon-0');
+    flashTarget(monEl);
+    spawnFloatingDamage(monEl, finalDmg, multSnapshot >= 4);
+    checkBossEnrage();
 
     let rewardGold = Math.floor(Math.random() * 50) + 50;
     gold += rewardGold;
@@ -1989,6 +2085,9 @@ function enemyTurn() {
   targetHero.stress = Math.min(100, targetHero.stress + 10);
   playHeavySlashSound();
   updateEntityUI();
+  const heroEl = document.getElementById(`hero-${heroes.indexOf(targetHero)}`);
+  flashTarget(heroEl);
+  spawnFloatingDamage(heroEl, dmg, false);
 
   // 보스 턴에 저주 슬롯 무작위 변경
   cursedSlotIndex = Math.floor(Math.random() * 4);
@@ -2484,12 +2583,8 @@ respawnMonsters();
 initialRoll();
 updateEntityUI();
 
-// 첫 실행 튜토리얼 자동 노출 체크
-try {
-  if (!localStorage.getItem('abyss_roll_tutorial_seen')) {
-    openTutorialModal();
-  }
-} catch(e) {}
+// 첫 실행 환영 배너
+showBanner('🎲 피의 카지노에 오신 것을 환영합니다! [❓ 가이드]로 룰 확인!');
 
 </script>
 </body>
