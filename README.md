@@ -91,7 +91,7 @@ auto gnimag/
 | **08** | **송백리 살인사건 1997** | 1997년 시골 마을 의문사 반전 추리 | Web (State Tree) | [`site/songbaek-killings/`](site/songbaek-killings/index.html) |
 | **09** | **은하아파트 13동** | 입체 공간 음향 기반 심야 순찰 1인칭 공포 | Web (WebAudio Spatial)| [`site/apartment-13/`](site/apartment-13/index.html) |
 | **10** | **아카이브 1999** | PS1 로우폴리 3D 폐병원 단서 공포 | Web (Three.js Retro)| [`site/archive-1999/`](site/archive-1999/index.html) |
-| **11** | **VALO-LITE 3D FPS** | 제트 대시 & 세이지 힐 스킬 3D 아레나 FPS | Web (Three.js) | [`site/fps-arena/`](site/fps-arena/index.html) |
+| **11** | **크로노 펄스 3D** | 플라즈마 샷건 & 3D 반동 사이버펑크 FPS | Web (Three.js) | [`site/fps-arena/`](site/fps-arena/index.html) |
 | **12** | **어비스 롤: 피의 카지노** | [칩 x 배수] 발라트로풍 주사위 로그라이크 | Web · Unity · APK | [`site/abyss-roll/`](site/abyss-roll/index.html) |
 | **13** | **심리스 오픈월드 픽셀 RPG** | 200직업, 용병 전술 AI, 거대 드래곤 레이드 | Web · Unity 2D | [`site/seamless-pixel-rpg/`](site/seamless-pixel-rpg/index.html) |
 | **14** | **코지 픽셀 낚시터** | 50종 도감, 6단계 FSM 텐션 릴링 & ASMR | Web · Unity Overlay | [`site/cozy-fishing/`](site/cozy-fishing/index.html) |

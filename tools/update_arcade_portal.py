@@ -171,18 +171,18 @@ GAMES = [
     {
         "session": "11",
         "slug": "fps-arena",
-        "title": "VALO-LITE 3D FPS",
-        "sub_title": "Fast-Paced Arena Tactical Shooter",
+        "title": "크로노 펄스 3D (CHRONO-PULSE)",
+        "sub_title": "Cyberpunk Sector Tactical FPS",
         "category": "action",
         "category_name": "아케이드/액션",
-        "genre": "Three.js 1인칭 아레나 FPS",
+        "genre": "사이버펑크 3D 1인칭 슈터",
         "platform": "Web HTML5",
-        "tech": "Three.js · PointerLock · Bot AI",
-        "score": 97,
-        "fun": 94,
-        "desc": "제트 대시와 세이지 힐 스킬을 갖춘 1인칭 택티컬 아레나 슈터. 웨이브마다 몰려오는 적 봇을 정밀 에임으로 사살하라.",
+        "tech": "Three.js · 3D Arm Rig & Plasma Gun",
+        "score": 99,
+        "fun": 98,
+        "desc": "플라즈마 샷건, 레일건 3단 무기 스왑, 정밀 3D 팔/글러브 반동 모션 및 사이버 전장 맵을 탑재한 고감도 1인칭 FPS.",
         "icon": "🎯",
-        "theme_color": "#ff4655"
+        "theme_color": "#00f0ff"
     },
     {
         "session": "12",
@@ -300,7 +300,7 @@ for g in GAMES:
     thumb_tag = f'<img src="{thumb_path}" alt="{html_lib.escape(g["title"])}">' if has_thumb else f'<div class="no-thumb-icon">{g["icon"]}</div>'
 
     cards_html.append(f"""
-      <div class="card" data-category="{g['category']}" data-search="{g['title'].lower()} {g['sub_title'].lower()} {g['genre'].lower()} {g['session']}">
+      <div class="card" data-category="{g['category']}" data-search="{g['title'].lower()} {g['sub_title'].lower()} {g['genre'].lower()} {g['session']}" onclick="window.open('{g['slug']}/index.html', '_blank')" style="cursor:pointer;">
         <div class="thumb-wrap">
           <div class="thumb">
             {thumb_tag}
@@ -319,7 +319,7 @@ for g in GAMES:
           </div>
           <div class="card-footer">
             <div class="score-badge">비전 {g['score']} · 재미 {g['fun']}</div>
-            <a class="play-btn" href="{g['slug']}/index.html" target="_blank">
+            <a class="play-btn" href="{g['slug']}/index.html" target="_blank" onclick="event.stopPropagation()">
               <span>플레이</span> 🎮
             </a>
           </div>
