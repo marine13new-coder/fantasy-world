@@ -52,6 +52,25 @@ canvas#c{display:block;width:100vw;height:100vh}
 .quest-item.done{color:var(--rpg-green);text-decoration:line-through}
 
 /* 좌하단 실드 & 체력 HUD (5초 비피격 자동재생) */
+
+/* 아군 분대원 HUD & 무전 브리핑 자막 */
+#squad-hud{
+  position:absolute;bottom:148px;left:22px;
+  background:var(--rpg-panel);border:1px solid var(--rpg-border);border-left:4px solid #38ef7d;
+  padding:8px 16px;border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,0.8);
+  min-width:240px;backdrop-filter:blur(6px);pointer-events:none;z-index:22;
+}
+.sq-header{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:800;margin-bottom:4px}
+.sq-name{color:#38ef7d}
+.sq-status{color:var(--rpg-cyan);font-size:10px}
+#radio-sub{
+  position:absolute;bottom:192px;left:50%;transform:translateX(-50%);
+  background:rgba(8,14,20,0.92);border:1px solid var(--rpg-cyan);
+  padding:8px 24px;border-radius:20px;font-size:13px;font-weight:700;
+  color:#e2e8f0;box-shadow:0 0 15px rgba(0,240,255,0.4);
+  opacity:0;transition:opacity .2s;pointer-events:none;z-index:32;white-space:nowrap;
+}
+
 #hud-vital{
   position:absolute;bottom:22px;left:22px;
   background:var(--rpg-panel);border:1px solid var(--rpg-border);border-left:4px solid var(--rpg-cyan);
@@ -199,6 +218,137 @@ canvas#c{display:block;width:100vw;height:100vh}
 }
 .btn-act:hover{background:#38ef7d}
 
+
+/* 전술 레이더 미니맵 & 좌표 HUD */
+#minimap-box{
+  position:absolute;top:56px;right:22px;
+  width:160px;height:160px;border-radius:50%;
+  background:rgba(8,14,20,0.92);border:2px solid var(--rpg-cyan);
+  box-shadow:0 0 20px rgba(0,240,255,0.35), inset 0 0 15px rgba(0,0,0,0.8);
+  overflow:hidden;pointer-events:none;z-index:25;
+}
+#minimap-canvas{display:block;width:100%;height:100%}
+#minimap-coords{
+  position:absolute;top:222px;right:22px;
+  font-family:monospace;font-size:10.5px;color:var(--rpg-cyan);
+  background:var(--rpg-panel);padding:3px 10px;border-radius:3px;
+  border:1px solid var(--rpg-border);pointer-events:none;z-index:25;
+}
+
+/* 저격 스코프 비네트 (AWM 4배율 전용) */
+#sniper-scope{
+  position:fixed;inset:0;pointer-events:none;display:none;z-index:38;
+  background:radial-gradient(circle at center, transparent 28%, rgba(0,0,0,0.95) 44%, #000 65%);
+}
+#sniper-crosshair{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:360px;height:360px;pointer-events:none;
+}
+
+/* 전술 핑 팝업 레이어 */
+#ping-marker{
+  position:absolute;transform:translate(-50%, -50%);
+  font-size:11px;font-weight:900;color:var(--rpg-gold);
+  background:rgba(12,18,26,0.92);border:1px solid var(--rpg-gold);
+  padding:3px 8px;border-radius:4px;box-shadow:0 0 14px rgba(245,197,66,0.8);
+  pointer-events:none;display:none;align-items:center;gap:4px;z-index:36;
+}
+
+
+/* 설정 메뉴 모달 [Esc] */
+#settings-modal{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:520px;background:rgba(10,15,22,0.98);border:2px solid var(--rpg-cyan);
+  border-radius:6px;box-shadow:0 20px 60px rgba(0,0,0,0.95);
+  display:none;z-index:99;backdrop-filter:blur(10px);pointer-events:auto;
+  flex-direction:column;padding:24px 30px;
+}
+#settings-modal h2{margin:0 0 16px;color:var(--rpg-gold);font-size:18px;letter-spacing:2px}
+.setting-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:13px}
+.setting-row input[type=range]{width:160px;cursor:pointer}
+.keybind-list{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11.5px;color:#94a3b8;margin-top:14px;border-top:1px solid #1e293b;padding-top:12px}
+.keybind-list span b{color:var(--rpg-cyan);margin-right:4px}
+
+/* 차량 탑승 계기판 HUD */
+#vehicle-hud{
+  position:absolute;bottom:90px;left:50%;transform:translateX(-50%);
+  background:rgba(10,15,22,0.94);border:2px solid #f5c542;
+  padding:10px 28px;border-radius:6px;display:none;
+  align-items:center;gap:18px;pointer-events:none;z-index:30;
+}
+.spd-val{font-size:32px;font-weight:900;color:#f5c542}
+
+
+/* 코옵 멀티플레이 버튼 & 모달 */
+#coop-btn{
+  position:absolute;top:16px;right:210px;font-size:12px;font-weight:700;
+  color:#fff;background:linear-gradient(135deg,#1e3a8a,#2563eb);
+  padding:7px 16px;border-radius:4px;border:1px solid #3b82f6;
+  pointer-events:auto;cursor:pointer;box-shadow:0 0 15px rgba(37,99,235,0.4);
+}
+#coop-btn:hover{background:#1d4ed8;box-shadow:0 0 20px rgba(59,130,246,0.7)}
+
+#coop-modal{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:580px;background:rgba(8,12,18,0.98);border:2px solid var(--rpg-cyan);
+  border-radius:6px;box-shadow:0 25px 70px rgba(0,0,0,0.95);
+  display:none;z-index:98;backdrop-filter:blur(10px);pointer-events:auto;
+  flex-direction:column;padding:24px 30px;
+}
+#coop-modal h2{margin:0 0 12px;font-size:18px;color:var(--rpg-gold);letter-spacing:1.5px}
+.coop-section{background:#111924;border:1px solid var(--rpg-border);padding:14px;border-radius:4px;margin-bottom:12px}
+.coop-section h4{margin:0 0 8px;font-size:13px;color:var(--rpg-cyan)}
+.coop-row{display:flex;gap:8px;align-items:center}
+.coop-input{flex:1;background:#090d13;border:1px solid var(--rpg-border);color:#fff;padding:8px 12px;border-radius:4px;font-family:monospace;font-size:13px}
+.coop-status{font-size:12px;color:#94a3b8;margin-top:8px}
+
+/* 열화상 IR 필터 오버레이 */
+#thermal-overlay{
+  position:fixed;inset:0;pointer-events:none;display:none;z-index:37;
+  background:rgba(10,25,47,0.35);mix-blend-mode:luminosity;
+  box-shadow:inset 0 0 100px rgba(0,240,255,0.4);
+}
+#thermal-badge{
+  position:absolute;top:70px;left:50%;transform:translateX(-50%);
+  font-size:11px;font-weight:900;letter-spacing:2px;color:#00f0ff;
+  background:rgba(0,20,40,0.85);padding:4px 12px;border-radius:3px;
+  border:1px solid #00f0ff;pointer-events:none;display:none;z-index:38;
+}
+
+/* 건스미스 부착물 카드 */
+.mod-card{
+  background:#141c26;border:1px solid #233142;padding:10px 14px;border-radius:4px;
+  margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;
+}
+.mod-card.installed{border-color:#38ef7d;background:rgba(34,197,94,0.12)}
+
+
+/* [M] 전술 위성 지도 모달 */
+#sat-map-modal{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:920px;height:620px;background:rgba(6,10,16,0.98);
+  border:2px solid var(--rpg-cyan);border-radius:6px;
+  box-shadow:0 0 50px rgba(0,240,255,0.4), 0 25px 80px rgba(0,0,0,0.95);
+  display:none;z-index:97;backdrop-filter:blur(12px);pointer-events:auto;
+  flex-direction:column;overflow:hidden;
+}
+.sat-header{
+  padding:12px 24px;background:#0d1522;border-bottom:1px solid var(--rpg-border);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.sat-header h3{margin:0;font-size:16px;color:var(--rpg-cyan);letter-spacing:2px}
+.sat-body{display:flex;flex:1;overflow:hidden}
+#sat-canvas{flex:1;display:block;cursor:crosshair;background:#05080c}
+.sat-sidebar{width:280px;background:#090e15;border-left:1px solid var(--rpg-border);padding:18px;overflow-y:auto}
+.sector-badge{padding:8px;border-radius:4px;background:#121a24;border:1px solid #1f2b38;margin-bottom:8px;font-size:12px}
+.sector-badge b{display:block;color:var(--rpg-gold);margin-bottom:2px}
+
+/* 슬라이딩 및 불릿타임 블러 FX */
+#bullet-time-vignette{
+  position:fixed;inset:0;pointer-events:none;display:none;z-index:42;
+  box-shadow:inset 0 0 120px rgba(245,197,66,0.5);mix-blend-mode:screen;
+}
+
 #ch-canvas{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;width:160px;height:160px;z-index:40}
 #hit-indicator{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .15s;z-index:30}
 #arcade-btn{position:absolute;top:16px;right:22px;font-size:12px;color:#ece8e1;background:var(--rpg-panel);padding:7px 16px;border-radius:4px;border:1px solid var(--rpg-border);pointer-events:auto;cursor:pointer;text-decoration:none}
@@ -208,6 +358,39 @@ canvas#c{display:block;width:100vw;height:100vh}
 <body>
 <div id="ui">
  <div id="dmg-layer"></div>
+ 
+ <button id="coop-btn" onclick="toggleCoopModal()">👥 2인 코옵 멀티</button>
+ <div id="thermal-overlay"></div>
+ <div id="thermal-badge">FLIR THERMAL IR VISION [ON]</div>
+
+ <!-- 2인 코옵 멀티플레이 모달 -->
+ <div id="coop-modal">
+  <h2>🌐 전술 코옵 멀티플레이 (P2P CO-OP SQUAD)</h2>
+  <p style="font-size:12px;color:#94a3b8;margin:0 0 14px">
+   친구와 함께 같은 전장에 투입되어 실시간 협동 레이드 및 보스 공략을 진행합니다. (서버 설치 없이 WebRTC P2P로 직접 연결)
+  </p>
+  <div class="coop-section">
+   <h4>방 만들기 (HOST SQUAD)</h4>
+   <div class="coop-row">
+    <input type="text" id="host-code-input" class="coop-input" readonly value="생성 대기 중...">
+    <button class="btn-up" style="padding:8px 16px" onclick="createCoopRoom()">방 생성</button>
+    <button class="btn-up" style="padding:8px 16px;background:var(--rpg-gold)" onclick="copyCoopLink()">링크 복사</button>
+   </div>
+   <div id="host-status" class="coop-status">방 생성 버튼을 누르면 초대 코드 및 링크가 발급됩니다.</div>
+  </div>
+  <div class="coop-section">
+   <h4>방 참가하기 (JOIN SQUAD)</h4>
+   <div class="coop-row">
+    <input type="text" id="join-code-input" class="coop-input" placeholder="호스트의 6자리 방 코드 입력">
+    <button class="btn-up" style="padding:8px 16px" onclick="joinCoopRoom()">참가</button>
+   </div>
+   <div id="join-status" class="coop-status">친구가 공유한 코드나 URL 링크로 접속할 수 있습니다.</div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;margin-top:10px">
+   <button class="btn-act" style="margin-top:0;padding:8px 22px" onclick="toggleCoopModal()">닫기</button>
+  </div>
+ </div>
+
  <a id="arcade-btn" href="../site/index.html">🏠 아케이드 포털로 나가기</a>
 
  <div id="top-hud">
@@ -237,6 +420,18 @@ canvas#c{display:block;width:100vw;height:100vh}
   <p><b id="extract-time" style="color:#fff;font-size:22px">5.0</b>초 동안 탈출 구역 유지</p>
  </div>
 
+ 
+ <div id="squad-hud">
+  <div class="sq-header">
+   <span class="sq-name">🛡️ ALPHA-1 (아군 특수요원)</span>
+   <span id="sq-status" class="sq-status">동행 대기 [READY]</span>
+  </div>
+  <div class="vital-track" style="height:6px;margin-bottom:0">
+   <div id="sq-hp-fill" style="height:100%;width:100%;background:linear-gradient(90deg,#22c55e,#38ef7d)"></div>
+  </div>
+ </div>
+ <div id="radio-sub">📻 [Alpha-1] 대위님, 엄호 준비 완료되었습니다. 함께 이동하시죠.</div>
+
  <div id="hud-vital">
   <div class="vital-row"><span>KEVLAR SHIELD (5초 비피격 시 자동 재생)</span><span id="shield-val">100 / 100</span></div>
   <div class="vital-track"><div id="shield-fill"></div></div>
@@ -262,8 +457,124 @@ canvas#c{display:block;width:100vw;height:100vh}
   <div class="hb-slot" id="hb-g"><b>[G] 수류탄</b><span id="cnt-g">2개 소지</span></div>
   <div class="hb-slot"><b>[Tab]</b>스킬/스탯</div>
   <div class="hb-slot"><b>[B]</b>암시장상인</div>
-  <div class="hb-slot"><b>[C]</b>앉기</div>
+     <div class="hb-slot"><b>[우클릭]</b>정밀조준</div>
+      <div class="hb-slot"><b>[M]</b>위성지도</div>
+   <div class="hb-slot"><b>[T]</b>열화상</div>
+   <div class="hb-slot"><b>[Z]</b>전술핑</div>
+   <div class="hb-slot"><b>[C]</b>앉기</div>
   <div class="hb-slot"><b>[R]</b>장전</div>
+ </div>
+
+ 
+ <div id="minimap-box">
+  <canvas id="minimap-canvas" width="160" height="160"></canvas>
+ </div>
+ <div id="minimap-coords">GRID: X:00 Z:-34</div>
+ <div id="ping-marker"><span id="ping-icon">📍</span> <span id="ping-dist">35m</span></div>
+
+ <div id="sniper-scope">
+  <svg id="sniper-crosshair" viewBox="0 0 360 360">
+    <circle cx="180" cy="180" r="160" fill="none" stroke="#22d3ee" stroke-width="1.8" opacity="0.6"/>
+    <line x1="20" y1="180" x2="340" y2="180" stroke="#22d3ee" stroke-width="1.4" opacity="0.85"/>
+    <line x1="180" y1="20" x2="180" y2="340" stroke="#22d3ee" stroke-width="1.4" opacity="0.85"/>
+    <circle cx="180" cy="180" r="3.5" fill="#ff4655"/>
+    <line x1="150" y1="180" x2="150" y2="186" stroke="#22d3ee" stroke-width="1.2"/>
+    <line x1="210" y1="180" x2="210" y2="186" stroke="#22d3ee" stroke-width="1.2"/>
+    <line x1="120" y1="180" x2="120" y2="190" stroke="#22d3ee" stroke-width="1.2"/>
+    <line x1="240" y1="180" x2="240" y2="190" stroke="#22d3ee" stroke-width="1.2"/>
+    <line x1="180" y1="150" x2="186" y2="150" stroke="#22d3ee" stroke-width="1.2"/>
+    <line x1="180" y1="210" x2="186" y2="210" stroke="#22d3ee" stroke-width="1.2"/>
+    <line x1="180" y1="120" x2="190" y2="120" stroke="#22d3ee" stroke-width="1.2"/>
+    <line x1="180" y1="240" x2="190" y2="240" stroke="#22d3ee" stroke-width="1.2"/>
+    <text x="188" y="172" fill="#22d3ee" font-size="10" font-family="monospace" font-weight="bold">4.0x MIL-DOT</text>
+    <text x="188" y="196" fill="#f5c542" font-size="10" font-family="monospace">RANGE: AUTO</text>
+  </svg>
+ </div>
+
+ 
+ <!-- 차량 계기판 HUD -->
+ <div id="vehicle-hud">
+  <div>
+   <div style="font-size:10px;color:#8ba2b5;font-weight:800">4x4 TACTICAL BUGGY</div>
+   <div class="spd-val"><span id="buggy-spd">0</span> <span style="font-size:14px;color:#8ba2b5">KM/H</span></div>
+  </div>
+  <div style="font-size:11px;color:#cbd5e1">
+   • <kbd>W</kbd>/<kbd>S</kbd> 전진 및 후진<br>
+   • <kbd>A</kbd>/<kbd>D</kbd> 핸들 조향<br>
+   • <kbd>F</kbd> 차량 하차
+  </div>
+ </div>
+
+ <!-- 설정 모달 [Esc] -->
+ <div id="settings-modal">
+  <h2>⚙️ 작전 설정 & 제어 패널 (SETTINGS)</h2>
+  <div class="setting-row">
+   <span>마우스 회전 감도 (Mouse Sensitivity)</span>
+   <input type="range" id="sens-slider" min="0.5" max="3.0" step="0.1" value="1.0" oninput="updateSens(this.value)">
+   <b id="sens-val" style="color:var(--rpg-cyan)">1.0x</b>
+  </div>
+  <div class="setting-row">
+   <span>효과음 볼륨 (Master Volume)</span>
+   <input type="range" id="vol-slider" min="0" max="1" step="0.05" value="0.8" oninput="updateVol(this.value)">
+   <b id="vol-val" style="color:var(--rpg-gold)">80%</b>
+  </div>
+  <div class="keybind-list">
+   <span><b>[W,A,S,D]</b> 이동/조향</span>
+   <span><b>[Shift]</b> 전력 질주</span>
+   <span><b>[우클릭]</b> 정밀 조준(ADS)</span>
+   <span><b>[좌클릭]</b> 무기 격발</span>
+   <span><b>[1,2,3,4]</b> 무기 교체</span>
+   <span><b>[R]</b> 탄창 재장전</span>
+   <span><b>[Q]</b> 전술 정찰 드론</span>
+   <span><b>[E]</b> 나노 스팀 회복</span>
+   <span><b>[G]</b> 세열 수류탄</span>
+   <span><b>[Z]</b> 전술 핑 지정</span>
+   <span><b>[C]</b> 앉기 (반동 -55%)</span>
+   <span><b>[F]</b> 상호작용/탑승</span>
+   <span><b>[Tab]</b> 스킬/스탯창</span>
+   <span><b>[B]</b> 암시장 거래소</span>
+  </div>
+  <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px">
+   <button class="btn-act" style="margin-top:0;padding:8px 22px" onclick="toggleSettings()">작전 재개 (Resume)</button>
+  </div>
+ </div>
+
+ 
+ <div id="bullet-time-vignette"></div>
+
+ <!-- [M] 전술 위성 Recon 지도 모달 -->
+ <div id="sat-map-modal">
+  <div class="sat-header">
+   <h3>🛰️ TACTICAL SATELLITE RECON MAP (작전 전구 위성 지도)</h3>
+   <div style="font-size:12px;color:#94a3b8">지도를 클릭하여 전술 웨이포인트(핑) 설정 | <kbd style="background:#22d3ee;color:#000;padding:2px 6px;border-radius:2px">M</kbd> 닫기</div>
+  </div>
+  <div class="sat-body">
+   <canvas id="sat-canvas" width="640" height="560"></canvas>
+   <div class="sat-sidebar">
+    <h4 style="margin:0 0 12px;font-size:13px;color:var(--rpg-gold)">작전 섹터 구역 정보</h4>
+    <div class="sector-badge">
+     <b>🛡️ SECTOR A: 아웃포스트 안전 벙커</b>
+     <span style="color:#94a3b8">기지 안전 구역, 보급품 및 버기카 대기</span>
+    </div>
+    <div class="sector-badge">
+     <b>🏭 SECTOR B: 중앙 레이더 전술 기지</b>
+     <span style="color:#94a3b8">다수 스캐브 주둔, 유류 드럼통 및 파밍 상자</span>
+    </div>
+    <div class="sector-badge">
+     <b>👑 SECTOR C: 감시탑 요새 (보스 구역)</b>
+     <span style="color:#ff4655">보스 글루하르 주둔, 광폭화 주의</span>
+    </div>
+    <div class="sector-badge">
+     <b>🚁 SECTOR D: 델타 헬리패드 생환 지점</b>
+     <span style="color:#22c55e">신호탄 작동 및 UH-60 헬리콥터 탈출 구역</span>
+    </div>
+    <div style="margin-top:16px;border-top:1px solid #1e293b;padding-top:12px;font-size:11.5px;color:#cbd5e1;line-height:1.7">
+     • <b>[Shift + C]</b>: 고속 전술 슬라이딩<br>
+     • <b>[빨간 드럼통]</b>: 사격 시 광역 폭발 유발<br>
+     • <b>[T]</b>: FLIR 열화상 스코프 모드
+    </div>
+   </div>
+  </div>
  </div>
 
  <canvas id="ch-canvas" width="160" height="160"></canvas>
@@ -304,7 +615,27 @@ canvas#c{display:block;width:100vw;height:100vh}
      • 안전 기지: 시작 지점은 안전 구역입니다.<br>
      • 퀘스트 수행 후 동북쪽 녹색 신호탄 탈출 지점으로 생환하세요!
     </p>
-   </div>
+   
+    <div class="modal-col">
+     <h4>건스미스 총기 부착물 개조</h4>
+     <div class="mod-card" id="mod-sup">
+      <div><b>전술 소음기 (Suppressor)</b><p>총성 소음화, 화염 제거, 적 감지 거리 60% 감소</p></div>
+      <button class="btn-up" onclick="toggleMod('suppressor')">장착</button>
+     </div>
+     <div class="mod-card" id="mod-grip">
+      <div><b>수직 손잡이 (Foregrip)</b><p>모든 총기 반동 50% 억제</p></div>
+      <button class="btn-up" onclick="toggleMod('foregrip')">장착</button>
+     </div>
+     <div class="mod-card" id="mod-mag">
+      <div><b>확장 드럼 탄창 (Ext Mag)</b><p>탄창 용량 +50% 증가</p></div>
+      <button class="btn-up" onclick="toggleMod('extMag')">장착</button>
+     </div>
+     <div class="mod-card" id="mod-flir">
+      <div><b>FLIR 열화상 스코프 ([T] 키)</b><p>적군 체온 열원 탐지 발광 모드</p></div>
+      <button class="btn-up" onclick="toggleMod('thermal')">장착</button>
+     </div>
+    </div>
+</div>
   </div>
  </div>
 
@@ -338,6 +669,7 @@ canvas#c{display:block;width:100vw;height:100vh}
 
 <!-- Three.js Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
 <script>
 // ==========================================
@@ -367,6 +699,20 @@ function tone(f0, f1, dur, vol, type='sine', delay=0) {
 }
 
 const SND = {
+        planeHum() { noise(2.5, 0.45, 120, 'lowpass'); tone(80, 75, 2.5, 0.4, 'sine'); },
+  thunder() { noise(1.4, 0.9, 220, 'lowpass'); tone(60, 20, 1.2, 0.8, 'sawtooth'); },
+        slideSound() { noise(0.35, 0.45, 800, 'bandpass'); tone(150, 60, 0.25, 0.3, 'sine'); },
+  barrelBoom() { noise(0.9, 1.3, 400, 'lowpass'); tone(80, 15, 0.8, 1.0, 'sawtooth'); },
+  bulletTimeIn() { tone(300, 100, 0.35, 0.6, 'sine'); },
+  bgmPulse() { tone(73.4, 73.4, 0.12, 0.08 * masterGain, 'triangle'); tone(146.8, 110, 0.15, 0.05 * masterGain, 'sine', 0.04); },
+  chopper() { noise(0.2, 0.7, 90, 'lowpass'); tone(45, 25, 0.18, 0.6, 'sawtooth'); },
+  roar() { noise(1.2, 1.0, 180, 'lowpass'); tone(90, 30, 1.0, 0.9, 'sawtooth'); },
+  connectBeep() { tone(600, 900, 0.1, 0.4, 'triangle'); tone(900, 1400, 0.15, 0.4, 'triangle', 0.1); },
+  engine(spd) { tone(55 + spd * 3, 50 + spd * 3, 0.08, 0.25, 'sawtooth'); },
+  heartbeat() { tone(65, 45, 0.12, 0.6, 'sine'); tone(55, 35, 0.1, 0.4, 'sine', 0.14); },
+  geiger() { noise(0.015, 0.35, 3500, 'bandpass'); },
+  radioBeep() { tone(880, 1200, 0.05, 0.25, 'sine'); tone(1200, 1600, 0.06, 0.2, 'sine', 0.04); },
+  pingTone() { tone(1200, 1600, 0.08, 0.35, 'sine'); tone(1600, 2200, 0.08, 0.35, 'sine', 0.06); },
   m4Shot() { noise(0.16, 0.65, 1900, 'lowpass'); tone(180, 40, 0.14, 0.55, 'sawtooth'); },
   akShot() { noise(0.22, 0.8, 1300, 'lowpass'); tone(140, 25, 0.2, 0.75, 'sawtooth'); },
   sniperShot() { noise(0.48, 1.05, 1050, 'lowpass'); tone(90, 20, 0.5, 0.95, 'sawtooth'); },
@@ -537,7 +883,7 @@ let P = {
   grenades: 2,
   droneCd: 0, stimCd: 0,
   reloading: 0, cool: 0, recoil: 0, bob: 0, swayX: 0, swayY: 0,
-  crouching: false, stepAcc: 0,
+  crouching: false, isADS: false, isThermal: false, stepAcc: 0, attachments: { suppressor: false, foregrip: false, extMag: false, thermal: false },
   kills: 0, cratesOpened: 0, bossKilled: false
 };
 
@@ -572,14 +918,26 @@ function buildFPSGun() {
 
   const flash = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.25, 6), new THREE.MeshBasicMaterial({ color: 0xffe277 }));
   flash.rotation.x = -Math.PI / 2; flash.position.set(0.22, -0.19, -1.18); flash.visible = false;
+  
+  // 전술 그린 레이저 사이트
+  const laserMat = new THREE.LineBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.75 });
+  const laserGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -45)]);
+  const laserLine = new THREE.Line(laserGeo, laserMat);
+  laserLine.position.set(0.02, 0.01, -0.9);
+  g.add(laserLine);
+
+  const laserDot = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 6), new THREE.MeshBasicMaterial({ color: 0x00ff88 }));
+  scene.add(laserDot);
+
   gunRoot.add(g, flash);
-  return { g, mag, flash };
+  return { g, mag, flash, laserLine, laserDot };
 }
 const GUN_MESH = buildFPSGun();
 
 // ==========================================
 // 4. 인간형 스켈레톤 애니메이션 적 AI (Scav & Boss)
 // ==========================================
+let activePing = null;
 let bots = [], tracers = [], particles = [], casings = [], thrownGrenades = [], keys = {};
 let locked = false, raidOver = false, extractTimer = 0;
 
@@ -645,6 +1003,771 @@ spawnBot(0, 24, true); // 저격탑 보스
 spawnBot(-22, -10, false);
 spawnBot(18, 14, false);
 
+
+// ==========================================
+// 4-B. 전술 지원 AI 분대원 (Alpha-1 동행 요원)
+// ==========================================
+let alpha1 = null;
+let radioTimer = null;
+
+function showRadioSub(text) {
+  const el = document.getElementById('radio-sub');
+  if (!el) return;
+  el.textContent = `📻 ${text}`;
+  el.style.opacity = '1';
+  SND.radioBeep();
+  clearTimeout(radioTimer);
+  radioTimer = setTimeout(() => { if (el) el.style.opacity = '0'; }, 3500);
+}
+
+function spawnAlpha1Squadmate() {
+  const root = new THREE.Group();
+  const camoMat = new THREE.MeshStandardMaterial({ color: 0x22364a, roughness: 0.7 });
+  const vestMat = new THREE.MeshStandardMaterial({ color: 0x141e28, roughness: 0.8 });
+  const skinMat = new THREE.MeshStandardMaterial({ color: 0xd2a47e, roughness: 0.6 });
+
+  // 다리 관절
+  const legL = new THREE.Group(); legL.position.set(-0.14, 0.76, 0);
+  const legLM = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.76, 0.17), camoMat); legLM.position.y = -0.38; legLM.castShadow = true; legL.add(legLM);
+
+  const legR = new THREE.Group(); legR.position.set(0.14, 0.76, 0);
+  const legRM = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.76, 0.17), camoMat); legRM.position.y = -0.38; legRM.castShadow = true; legR.add(legRM);
+
+  // 상체 & 전술 베레모
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.66, 0.28), camoMat); torso.position.y = 1.1; torso.castShadow = true;
+  const vest = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.48, 0.3), vestMat); vest.position.y = 1.12; vest.castShadow = true;
+
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.3, 0.28), skinMat); head.position.y = 1.62; head.castShadow = true;
+  const beret = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.08, 8), new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.5 }));
+  beret.rotation.z = 0.2; beret.position.set(0.04, 1.76, 0);
+
+  // 팔 & 화기
+  const armL = new THREE.Group(); armL.position.set(-0.3, 1.35, 0);
+  const armLM = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.54, 0.13), camoMat); armLM.position.y = -0.24; armL.add(armLM);
+
+  const armR = new THREE.Group(); armR.position.set(0.3, 1.35, 0);
+  const armRM = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.52, 0.13), camoMat); armRM.position.y = -0.15; armRM.rotation.x = -1.1; armR.add(armRM);
+  const carbine = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.1, 0.52), vestMat); carbine.position.set(0, -0.15, 0.35); armR.add(carbine);
+
+  // 아군 식별 오버헤드 태그
+  const tagMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.12), new THREE.MeshBasicMaterial({ color: 0x38ef7d, side: THREE.DoubleSide }));
+  tagMesh.position.set(0, 2.05, 0);
+  root.add(tagMesh);
+
+  root.add(legL, legR, torso, vest, head, beret, armL, armR);
+  root.position.set(2.5, 0, -32);
+  scene.add(root);
+
+  alpha1 = {
+    mesh: root,
+    x: 2.5, z: -32,
+    hp: 200, maxHp: 200,
+    legL, legR, armL, armR,
+    walkCycle: 0,
+    fireCd: 0.8,
+    state: 'FOLLOWING'
+  };
+
+  setTimeout(() => showRadioSub('[Alpha-1] 대위님, 엄호 준비 완료되었습니다. 함께 이동하시죠.'), 1200);
+}
+spawnAlpha1Squadmate();
+
+
+// ==========================================
+// 4-C. 동적 날씨 시스템 (주간 -> 노을 -> 비/천둥) & C-130 공중 보급
+// ==========================================
+let weatherTimer = 0;
+let currentWeatherMode = 0; // 0: 맑음, 1: 노을, 2: 비/천둥
+const weatherNames = ['맑은 주간 (CLEAR DAY)', '황혼 노을 (GOLDEN DUSK)', '비와 천둥 (THUNDERSTORM NIGHT)'];
+
+const hemiLight = scene.children.find(c => c.isHemisphereLight);
+
+// 비 파티클 시스템
+const rainCount = 400;
+const rainGeo = new THREE.BufferGeometry();
+const rainPositions = new Float32Array(rainCount * 3);
+for (let i = 0; i < rainCount; i++) {
+  rainPositions[i * 3] = (Math.random() - 0.5) * 80;
+  rainPositions[i * 3 + 1] = Math.random() * 25;
+  rainPositions[i * 3 + 2] = (Math.random() - 0.5) * 80;
+}
+rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPositions, 3));
+const rainMat = new THREE.PointsMaterial({ color: 0x93c5fd, size: 0.12, transparent: true, opacity: 0 });
+const rainSystem = new THREE.Points(rainGeo, rainMat);
+scene.add(rainSystem);
+
+let dynamicAirdrop = null;
+let airdropTimer = 45; // 45초 후 첫 투하, 이후 90초 주기
+
+function triggerAirdrop() {
+  const dropX = (Math.random() - 0.5) * 60;
+  const dropZ = (Math.random() - 0.5) * 60;
+  SND.planeHum();
+  banner('🚨 [C-130 공중 보급] 작전 구역에 전술 보급 상자가 투하됩니다!');
+  showRadioSub('[Alpha-1] 대위님, 아군 수송기가 보급품을 투하했습니다! 좌표를 확인하십시오.');
+
+  const root = new THREE.Group();
+  const box = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.4, 1.9), new THREE.MeshStandardMaterial({ color: 0xb91c1c, roughness: 0.5 }));
+  const parachute = new THREE.Mesh(new THREE.ConeGeometry(2.4, 1.8, 8), new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.9 }));
+  parachute.position.y = 2.4;
+  const smoke = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 1.5, 14, 8), new THREE.MeshBasicMaterial({ color: 0xef4444, transparent: true, opacity: 0.5 }));
+  smoke.position.y = 7.5;
+  root.add(box, parachute, smoke);
+  root.position.set(dropX, 36, dropZ);
+  scene.add(root);
+
+  dynamicAirdrop = {
+    root, x: dropX, z: dropZ, y: 36, vy: 5.5,
+    landed: false, parachute
+  };
+}
+
+function updateWeatherAndAirdrop(dt) {
+  weatherTimer += dt;
+  if (weatherTimer > 65) {
+    weatherTimer = 0;
+    currentWeatherMode = (currentWeatherMode + 1) % 3;
+    banner(`🌤️ 환경 변화: ${weatherNames[currentWeatherMode]}`);
+  }
+
+  // 날씨 색상 보간
+  if (currentWeatherMode === 0) { // 맑음
+    scene.background.lerp(new THREE.Color(0x6e8396), dt * 0.5);
+    scene.fog.color.lerp(new THREE.Color(0x6e8396), dt * 0.5);
+    sunLight.color.lerp(new THREE.Color(0xfff8ee), dt * 0.5);
+    sunLight.intensity = THREE.MathUtils.lerp(sunLight.intensity, 1.25, dt * 0.5);
+    rainMat.opacity = Math.max(0, rainMat.opacity - dt * 0.8);
+  } else if (currentWeatherMode === 1) { // 노을
+    scene.background.lerp(new THREE.Color(0xb45309), dt * 0.5);
+    scene.fog.color.lerp(new THREE.Color(0xb45309), dt * 0.5);
+    sunLight.color.lerp(new THREE.Color(0xf97316), dt * 0.5);
+    sunLight.intensity = THREE.MathUtils.lerp(sunLight.intensity, 1.0, dt * 0.5);
+    rainMat.opacity = Math.max(0, rainMat.opacity - dt * 0.8);
+  } else { // 비/천둥
+    scene.background.lerp(new THREE.Color(0x0f172a), dt * 0.5);
+    scene.fog.color.lerp(new THREE.Color(0x0f172a), dt * 0.5);
+    sunLight.color.lerp(new THREE.Color(0x38bdf8), dt * 0.5);
+    sunLight.intensity = THREE.MathUtils.lerp(sunLight.intensity, 0.4, dt * 0.5);
+    rainMat.opacity = Math.min(0.65, rainMat.opacity + dt * 0.8);
+
+    // 비 낙하 애니메이션
+    const pos = rainGeo.attributes.position.array;
+    for (let i = 0; i < rainCount; i++) {
+      pos[i * 3 + 1] -= dt * 26;
+      if (pos[i * 3 + 1] <= 0) pos[i * 3 + 1] = 25;
+    }
+    rainGeo.attributes.position.needsUpdate = true;
+    rainSystem.position.set(P.x, 0, P.z);
+
+    // 랜덤 천둥 번개 섬광
+    if (Math.random() < 0.003) {
+      SND.thunder();
+      sunLight.intensity = 2.8;
+      setTimeout(() => { sunLight.intensity = 0.4; }, 70);
+    }
+  }
+
+  // C-130 보급 투하 로직
+  airdropTimer -= dt;
+  if (airdropTimer <= 0) {
+    airdropTimer = 95;
+    triggerAirdrop();
+  }
+
+  if (dynamicAirdrop && !dynamicAirdrop.landed) {
+    dynamicAirdrop.y -= dynamicAirdrop.vy * dt;
+    dynamicAirdrop.root.position.y = dynamicAirdrop.y;
+    if (dynamicAirdrop.y <= 0.7) {
+      dynamicAirdrop.y = 0.7;
+      dynamicAirdrop.landed = true;
+      dynamicAirdrop.root.remove(dynamicAirdrop.parachute);
+      lootCrates.push({ group: dynamicAirdrop.root, x: dynamicAirdrop.x, z: dynamicAirdrop.z, isAirdrop: true, opened: false, label: '전설 C-130 공중 보급품' });
+      banner('📦 보급 상자가 지면에 착륙했습니다!');
+    }
+  }
+}
+
+
+// ==========================================
+// 4-D. 4x4 전술 버기카 & ASMR 환경 시스템
+// ==========================================
+let mouseSensitivity = 1.0;
+let masterGain = 0.8;
+let inVehicle = false;
+let vehicleSpeed = 0;
+let vehicleSteer = 0;
+let heartbeatTimer = 0;
+let geigerTimer = 0;
+
+function updateSens(v) {
+  mouseSensitivity = parseFloat(v);
+  document.getElementById('sens-val').textContent = `${mouseSensitivity.toFixed(1)}x`;
+  localStorage.setItem('eft_rpg_sens', mouseSensitivity);
+}
+function updateVol(v) {
+  masterGain = parseFloat(v);
+  document.getElementById('vol-val').textContent = `${Math.round(masterGain * 100)}%`;
+}
+
+function toggleSettings() {
+  const m = document.getElementById('settings-modal');
+  if (m.style.display === 'flex') {
+    m.style.display = 'none';
+    if (!isModalOpen()) cv.requestPointerLock();
+  } else {
+    m.style.display = 'flex';
+    document.exitPointerLock();
+  }
+}
+
+// 4x4 전술 버기카 3D 메쉬 생성
+function buildTacticalBuggy() {
+  const root = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0x3d4b3a, roughness: 0.6, metalness: 0.3 });
+  const cageMat = new THREE.MeshStandardMaterial({ color: 0x1a2119, roughness: 0.4, metalness: 0.7 });
+  const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
+
+  // 차체 바디
+  const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.65, 3.8), bodyMat);
+  chassis.position.y = 0.75; chassis.castShadow = true;
+  root.add(chassis);
+
+  // 롤케이지 프레임
+  const cage = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.2, 2.0), cageMat);
+  cage.position.set(0, 1.5, -0.2); cage.castShadow = true;
+  root.add(cage);
+
+  // 전조등 헤드라이트 2개
+  const hlL = new THREE.SpotLight(0xfff5cc, 2.0, 38, Math.PI / 4, 0.4);
+  hlL.position.set(-0.7, 0.8, -1.9); hlL.target.position.set(-0.7, 0, -15);
+  const hlR = new THREE.SpotLight(0xfff5cc, 2.0, 38, Math.PI / 4, 0.4);
+  hlR.position.set(0.7, 0.8, -1.9); hlR.target.position.set(0.7, 0, -15);
+  root.add(hlL, hlL.target, hlR, hlR.target);
+
+  // 4개 타이어
+  const wheels = [];
+  const wheelPos = [
+    [-1.15, 0.5, 1.3],
+    [1.15, 0.5, 1.3],
+    [-1.15, 0.5, -1.3],
+    [1.15, 0.5, -1.3]
+  ];
+  wheelPos.forEach(pos => {
+    const w = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.38, 12), wheelMat);
+    w.rotation.z = Math.PI / 2;
+    w.position.set(pos[0], pos[1], pos[2]);
+    w.castShadow = true;
+    root.add(w);
+    wheels.push(w);
+  });
+
+  root.position.set(8, 0, -30);
+  scene.add(root);
+  return { root, wheels, hlL, hlR, x: 8, z: -30, yaw: 0 };
+}
+const BUGGY = buildTacticalBuggy();
+
+function checkBuggyInteraction() {
+  const d = Math.hypot(BUGGY.x - P.x, BUGGY.z - P.z);
+  const promptEl = document.getElementById('prompt');
+  if (d < 3.2 && !inVehicle && !activeCrate) {
+    promptEl.style.display = 'block';
+    document.getElementById('prompt-txt').textContent = '4x4 전술 버기카 탑승';
+    return true;
+  }
+  return false;
+}
+
+function enterBuggy() {
+  inVehicle = true;
+  document.getElementById('vehicle-hud').style.display = 'flex';
+  banner('🏎️ 4x4 전술 버기카에 탑승했습니다! (충돌 시 적 처치)');
+}
+function exitBuggy() {
+  inVehicle = false;
+  vehicleSpeed = 0;
+  P.x = BUGGY.x + 2.2;
+  P.z = BUGGY.z;
+  document.getElementById('vehicle-hud').style.display = 'none';
+  banner('버기카에서 하차했습니다.');
+}
+
+
+// ==========================================
+// 4-E. 2인 코옵 멀티플레이 & 건스미스 & 헬기 탈출
+// ==========================================
+let peer = null;
+let coopConn = null;
+let broadcastChannel = null;
+let isCoopHost = false;
+let coopRoomCode = '';
+let remotePlayer = null;
+let cinematicHelicopter = null;
+let isExtractingCinematic = false;
+let chopperSoundTimer = 0;
+
+function toggleCoopModal() {
+  const m = document.getElementById('coop-modal');
+  if (m.style.display === 'flex') {
+    m.style.display = 'none';
+    if (!isModalOpen()) cv.requestPointerLock();
+  } else {
+    m.style.display = 'flex';
+    document.exitPointerLock();
+  }
+}
+
+function initBroadcastChannel(room) {
+  try {
+    if (broadcastChannel) broadcastChannel.close();
+    broadcastChannel = new BroadcastChannel('outpost_raid_' + room);
+    broadcastChannel.onmessage = (e) => {
+      handleCoopMessage(e.data);
+    };
+  } catch(e){}
+}
+
+function createCoopRoom() {
+  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+  coopRoomCode = code;
+  isCoopHost = true;
+  document.getElementById('host-code-input').value = code;
+  document.getElementById('host-status').textContent = `🟢 방 개설 완료! 코드 [${code}] 또는 초대 링크를 친구에게 공유하세요.`;
+  initBroadcastChannel(code);
+
+  try {
+    if (typeof Peer !== 'undefined') {
+      if (peer) peer.destroy();
+      peer = new Peer('outpost-host-' + code);
+      peer.on('open', (id) => {
+        document.getElementById('host-status').textContent = `🟢 P2P 브로커 대기 중... 코드: [${code}]`;
+      });
+      peer.on('connection', (conn) => {
+        setupCoopConnection(conn);
+      });
+    }
+  } catch(e){}
+}
+
+function copyCoopLink() {
+  if (!coopRoomCode) { banner('먼저 방을 생성하십시오.'); return; }
+  const url = `${location.origin}${location.pathname}?room=${coopRoomCode}`;
+  navigator.clipboard.writeText(url).then(() => {
+    banner('📋 코옵 초대 링크가 클립보드에 복사되었습니다!');
+  }).catch(() => {
+    banner(`초대 코드: ${coopRoomCode}`);
+  });
+}
+
+function joinCoopRoom(targetCode) {
+  const code = (targetCode || document.getElementById('join-code-input').value).trim().toUpperCase();
+  if (!code) { banner('방 코드를 입력하세요.'); return; }
+  coopRoomCode = code;
+  isCoopHost = false;
+  document.getElementById('join-status').textContent = `연결 시도 중... [${code}]`;
+  initBroadcastChannel(code);
+  broadcastChannel.postMessage({ type: 'join_request', name: '요원 2' });
+
+  try {
+    if (typeof Peer !== 'undefined') {
+      if (peer) peer.destroy();
+      peer = new Peer('outpost-guest-' + Math.random().toString(36).substring(2, 6));
+      peer.on('open', () => {
+        const conn = peer.connect('outpost-host-' + code);
+        setupCoopConnection(conn);
+      });
+    }
+  } catch(e){}
+}
+
+function setupCoopConnection(conn) {
+  coopConn = conn;
+  conn.on('open', () => {
+    onCoopConnected();
+  });
+  conn.on('data', (data) => {
+    handleCoopMessage(data);
+  });
+}
+
+function onCoopConnected() {
+  SND.connectBeep();
+  banner('🟢 [코옵 연결 성공] 분대원과 링크되었습니다! (2/2 요원 편성)');
+  showRadioSub('[HQ] 코옵 링크 활성화. 2인 분대 작전이 개시되었습니다.');
+  document.getElementById('coop-modal').style.display = 'none';
+  if (!remotePlayer) spawnRemotePlayerMesh();
+}
+
+function spawnRemotePlayerMesh() {
+  const root = new THREE.Group();
+  const camoMat = new THREE.MeshStandardMaterial({ color: 0x1e3a5f, roughness: 0.6 });
+  const vestMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.8 });
+  const skinMat = new THREE.MeshStandardMaterial({ color: 0xd2a47e, roughness: 0.6 });
+
+  const legL = new THREE.Group(); legL.position.set(-0.14, 0.76, 0);
+  const legLM = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.76, 0.17), camoMat); legLM.position.y = -0.38; legL.add(legLM);
+  const legR = new THREE.Group(); legR.position.set(0.14, 0.76, 0);
+  const legRM = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.76, 0.17), camoMat); legRM.position.y = -0.38; legR.add(legRM);
+
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.66, 0.28), camoMat); torso.position.y = 1.1;
+  const vest = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.48, 0.3), vestMat); vest.position.y = 1.12;
+
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.3, 0.28), skinMat); head.position.y = 1.62;
+  const helmet = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.18, 0.32), new THREE.MeshStandardMaterial({ color: 0x2563eb, metalness: 0.3 })); helmet.position.y = 1.72;
+
+  const armL = new THREE.Group(); armL.position.set(-0.3, 1.35, 0);
+  const armLM = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.54, 0.13), camoMat); armLM.position.y = -0.24; armL.add(armLM);
+
+  const armR = new THREE.Group(); armR.position.set(0.3, 1.35, 0);
+  const armRM = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.52, 0.13), camoMat); armRM.position.y = -0.15; armRM.rotation.x = -1.1; armR.add(armRM);
+  const gun = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.1, 0.55), vestMat); gun.position.set(0, -0.15, 0.36); armR.add(gun);
+
+  // 파트너 닉네임 태그
+  const tagCanvas = document.createElement('canvas'); tagCanvas.width = 256; tagCanvas.height = 64;
+  const tg = tagCanvas.getContext('2d');
+  tg.fillStyle = '#f5c542'; tg.font = 'bold 22px system-ui'; tg.textAlign = 'center';
+  tg.fillText('파트너 요원 (CO-OP)', 128, 40);
+  const tagTex = new THREE.CanvasTexture(tagCanvas);
+  const tagMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.3), new THREE.MeshBasicMaterial({ map: tagTex, transparent: true, side: THREE.DoubleSide }));
+  tagMesh.position.set(0, 2.15, 0);
+  root.add(tagMesh);
+
+  root.add(legL, legR, torso, vest, head, helmet, armL, armR);
+  root.position.set(P.x + 2, 0, P.z + 2);
+  scene.add(root);
+
+  remotePlayer = {
+    mesh: root, x: P.x + 2, z: P.z + 2,
+    hp: 100, maxHp: 100, legL, legR, armL, armR, walkCycle: 0
+  };
+}
+
+function handleCoopMessage(msg) {
+  if (!msg) return;
+  if (msg.type === 'join_request') {
+    onCoopConnected();
+    sendCoopData({ type: 'join_ack' });
+  } else if (msg.type === 'join_ack') {
+    onCoopConnected();
+  } else if (msg.type === 'state') {
+    if (!remotePlayer) spawnRemotePlayerMesh();
+    remotePlayer.x = msg.x; remotePlayer.z = msg.z;
+    remotePlayer.mesh.position.set(msg.x, msg.y || 0, msg.z);
+    remotePlayer.mesh.rotation.y = msg.yaw || 0;
+    if (msg.isShooting) {
+      SND.m4Shot();
+      addTracer(msg.x, 1.2, msg.z, msg.targetX, 1.2, msg.targetZ, 0x38ef7d);
+    }
+  }
+}
+
+function sendCoopData(data) {
+  if (coopConn && coopConn.open) {
+    try { coopConn.send(data); } catch(e){}
+  }
+  if (broadcastChannel) {
+    try { broadcastChannel.postMessage(data); } catch(e){}
+  }
+}
+
+// URL에 ?room= 파라미터가 있을 시 자동 접속
+const urlParams = new URLSearchParams(window.location.search);
+const roomParam = urlParams.get('room');
+if (roomParam) {
+  setTimeout(() => joinCoopRoom(roomParam), 800);
+}
+
+// 건스미스 부착물 토글
+function toggleMod(modType) {
+  P.attachments[modType] = !P.attachments[modType];
+  const card = document.getElementById({
+    suppressor: 'mod-sup', foregrip: 'mod-grip', extMag: 'mod-mag', thermal: 'mod-flir'
+  }[modType]);
+  if (card) {
+    card.classList.toggle('installed', P.attachments[modType]);
+    card.querySelector('button').textContent = P.attachments[modType] ? '탈착' : '장착';
+  }
+
+  // 확장 탄창 적용
+  if (modType === 'extMag') {
+    WEAPONS[0].mag = P.attachments.extMag ? 45 : 30;
+    WEAPONS[1].mag = P.attachments.extMag ? 45 : 30;
+    WEAPONS[2].mag = P.attachments.extMag ? 10 : 5;
+    WEAPONS[3].mag = P.attachments.extMag ? 14 : 8;
+  }
+  SND.lootBox();
+  banner(`총기 부착물: ${modType.toUpperCase()} ${P.attachments[modType] ? '장착 완료' : '탈착 완료'}`);
+  updateHUD();
+}
+
+function toggleThermal() {
+  if (!P.attachments.thermal) {
+    banner('FLIR 열화상 스코프 부착물이 필요합니다 (Tab 모달에서 장착).');
+    return;
+  }
+  P.isThermal = !P.isThermal;
+  document.getElementById('thermal-overlay').style.display = P.isThermal ? 'block' : 'none';
+  document.getElementById('thermal-badge').style.display = P.isThermal ? 'block' : 'none';
+
+  // 몹 발광 재질 전환
+  bots.forEach(b => {
+    b.mesh.traverse(c => {
+      if (c.isMesh && c.material) {
+        c.material.emissive = new THREE.Color(P.isThermal ? 0xff4400 : 0x000000);
+        c.material.emissiveIntensity = P.isThermal ? 0.8 : 0;
+      }
+    });
+  });
+  SND.radioBeep();
+}
+
+// UH-60 블랙호크 헬리콥터 탈출 시네마틱 생성
+function buildHelicopter() {
+  const root = new THREE.Group();
+  const heliMat = new THREE.MeshStandardMaterial({ color: 0x2b382c, roughness: 0.5, metalness: 0.6 });
+  const rotorMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.4, metalness: 0.8 });
+
+  // 동체
+  const body = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.2, 7.5), heliMat);
+  body.position.y = 1.4; root.add(body);
+
+  // 꼬리 날개 붐
+  const tail = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.7, 5.5), heliMat);
+  tail.position.set(0, 1.6, 5.8); root.add(tail);
+
+  // 메인 로터 (상단 회전익)
+  const mainRotor = new THREE.Group();
+  const rotorBlade1 = new THREE.Mesh(new THREE.BoxGeometry(11, 0.08, 0.4), rotorMat);
+  const rotorBlade2 = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.08, 11), rotorMat);
+  mainRotor.add(rotorBlade1, rotorBlade2);
+  mainRotor.position.set(0, 2.6, -0.4); root.add(mainRotor);
+
+  // 테일 로터
+  const tailRotor = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.0, 0.25), rotorMat);
+  tailRotor.position.set(0.4, 2.2, 8.4); root.add(tailRotor);
+
+  // 탐조등
+  const spot = new THREE.SpotLight(0xa5f3fc, 3.5, 45, Math.PI / 4, 0.3);
+  spot.position.set(0, 0.8, -3.2); spot.target.position.set(0, -6, -4);
+  root.add(spot, spot.target);
+
+  root.position.set(exfilZone.x, 38, exfilZone.z);
+  scene.add(root);
+  return { root, mainRotor, tailRotor, y: 38, landing: false, takeoff: false };
+}
+
+function startCinematicExtraction() {
+  if (isExtractingCinematic) return;
+  isExtractingCinematic = true;
+  cinematicHelicopter = buildHelicopter();
+  banner('🚁 [생환 헬리콥터] UH-60 블랙호크가 착륙 지점으로 강하 중입니다!');
+  showRadioSub('[PILOT] 알바트로스-1 진입 중. 탈출 준비하십시오!');
+}
+
+
+// ==========================================
+// 4-F. 폭발성 유류 드럼통 & 전술 슬라이딩 & 위성 지도
+// ==========================================
+const explosiveBarrels = [];
+let slideTimer = 0;
+let slideVx = 0, slideVz = 0;
+let bulletTimeTimer = 0;
+let bgmTimer = 0;
+
+function spawnExplosiveBarrel(x, z) {
+  const root = new THREE.Group();
+  const drumMat = new THREE.MeshStandardMaterial({ color: 0xcc2222, roughness: 0.4, metalness: 0.5 });
+  const bandMat = new THREE.MeshStandardMaterial({ color: 0xf5c542, roughness: 0.5 });
+
+  const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 1.2, 12), drumMat);
+  drum.position.y = 0.6; drum.castShadow = true;
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.25, 12), bandMat);
+  band.position.y = 0.6;
+  root.add(drum, band);
+  root.position.set(x, 0, z);
+  scene.add(root);
+
+  const bObj = { root, x, z, hp: 40, exploded: false };
+  drum.userData = { isBarrel: true, barrelRef: bObj };
+  explosiveBarrels.push(bObj);
+  wallMeshes.push(drum);
+}
+
+// 전장 곳곳에 폭발성 유류 드럼통 배치
+spawnExplosiveBarrel(-11, 4);
+spawnExplosiveBarrel(2, 21);
+spawnExplosiveBarrel(14, -6);
+spawnExplosiveBarrel(-6, -20);
+spawnExplosiveBarrel(19, 11);
+
+function explodeBarrel(b) {
+  if (b.exploded) return;
+  b.exploded = true;
+  scene.remove(b.root);
+  SND.barrelBoom();
+  dynamicLight.intensity = 5.0;
+  dynamicLight.position.set(b.x, 1.0, b.z);
+  setTimeout(() => dynamicLight.intensity = 0, 180);
+
+  // 주변 9m 광역 280 대미지
+  bots.forEach(bot => {
+    const d = Math.hypot(bot.x - b.x, bot.z - b.z);
+    if (d < 9) {
+      const dmg = Math.round((1 - d / 9) * 280);
+      bot.hp -= dmg;
+      spawnDmgPop(bot.x, 1.6, bot.z, dmg, true);
+      if (bot.hp <= 0) {
+        P.kills++;
+        scene.remove(bot.mesh);
+        bots.splice(bots.indexOf(bot), 1);
+        if (bot.isBoss) P.bossKilled = true;
+        addExp(bot.isBoss ? 250 : 80);
+        showKillBadge('💥 유류통 연쇄 폭사 제압!');
+        updateQuests();
+      }
+    }
+  });
+
+  // 플레이어가 근처에 있을 경우 충격파
+  const pDist = Math.hypot(P.x - b.x, P.z - b.z);
+  if (pDist < 8) {
+    applyDamageToPlayer(Math.round((1 - pDist / 8) * 60));
+  }
+}
+
+// [Shift + C] 전술 슬라이딩 발동
+function triggerSlide() {
+  if (slideTimer > 0 || P.y > 0 || inVehicle) return;
+  const fw = (keys.w ? 1 : 0) - (keys.s ? 1 : 0), st = (keys.d ? 1 : 0) - (keys.a ? 1 : 0);
+  const len = Math.hypot(fw, st) || 1;
+  slideTimer = 0.85;
+  slideVx = (-Math.sin(P.yaw) * (fw / len) + Math.cos(P.yaw) * (st / len)) * 11.5;
+  slideVz = (-Math.cos(P.yaw) * (fw / len) - Math.sin(P.yaw) * (st / len)) * 11.5;
+  SND.slideSound();
+  banner('⚡ 전술 슬라이딩! (피탄 면적 감소)');
+}
+
+// [M] 전술 위성 지도 토글 및 렌더링
+function toggleSatMap() {
+  const m = document.getElementById('sat-map-modal');
+  if (m.style.display === 'flex') {
+    m.style.display = 'none';
+    if (!isModalOpen()) cv.requestPointerLock();
+  } else {
+    m.style.display = 'flex';
+    document.exitPointerLock();
+    renderSatMap();
+  }
+}
+
+function renderSatMap() {
+  const c = document.getElementById('sat-canvas');
+  if (!c) return;
+  const g = c.getContext('2d');
+  const w = c.width, h = c.height;
+
+  g.fillStyle = '#060a10';
+  g.fillRect(0, 0, w, h);
+
+  // 그리드 라인
+  g.strokeStyle = '#122030';
+  g.lineWidth = 1;
+  for (let x = 0; x < w; x += 40) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
+  for (let y = 0; y < h; y += 40) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+
+  // 월드 좌표 변환 (-55m ~ +55m -> 0 ~ w, 0 ~ h)
+  const toScreen = (wx, wz) => {
+    return {
+      sx: ((wx + 55) / 110) * w,
+      sy: ((wz + 55) / 110) * h
+    };
+  };
+
+  // 섹터 영역 표시
+  g.fillStyle = 'rgba(0, 240, 255, 0.1)';
+  const sA = toScreen(0, -34);
+  g.fillRect(sA.sx - 35, sA.sy - 35, 70, 70);
+  g.strokeStyle = '#00f0ff'; g.strokeRect(sA.sx - 35, sA.sy - 35, 70, 70);
+  g.fillStyle = '#00f0ff'; g.font = 'bold 11px system-ui'; g.fillText('SECTOR A: 벙커', sA.sx - 32, sA.sy - 40);
+
+  const sC = toScreen(0, 24);
+  g.fillStyle = 'rgba(239, 68, 68, 0.12)';
+  g.beginPath(); g.arc(sC.sx, sC.sy, 45, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = '#ef4444'; g.stroke();
+  g.fillStyle = '#ef4444'; g.fillText('SECTOR C: 보스 감시탑', sC.sx - 48, sC.sy - 50);
+
+  const sD = toScreen(exfilZone.x, exfilZone.z);
+  g.fillStyle = 'rgba(34, 197, 94, 0.15)';
+  g.beginPath(); g.arc(sD.sx, sD.sy, 35, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = '#22c55e'; g.stroke();
+  g.fillStyle = '#22c55e'; g.fillText('SECTOR D: 탈출 헬리패드', sD.sx - 52, sD.sy - 40);
+
+  // 파밍 상자 및 드럼통
+  lootCrates.forEach(cr => {
+    if (cr.opened) return;
+    const pt = toScreen(cr.x, cr.z);
+    g.fillStyle = cr.isAirdrop ? '#ff3b30' : '#f5c542';
+    g.fillRect(pt.sx - 4, pt.sy - 4, 8, 8);
+  });
+  explosiveBarrels.forEach(br => {
+    if (br.exploded) return;
+    const pt = toScreen(br.x, br.z);
+    g.fillStyle = '#ff2222';
+    g.beginPath(); g.arc(pt.sx, pt.sy, 4, 0, Math.PI * 2); g.fill();
+  });
+
+  // 적 봇들
+  bots.forEach(b => {
+    const pt = toScreen(b.x, b.z);
+    g.fillStyle = b.isBoss ? '#f5c542' : '#ff4455';
+    g.beginPath(); g.arc(pt.sx, pt.sy, b.isBoss ? 6 : 4, 0, Math.PI * 2); g.fill();
+  });
+
+  // 플레이어 위치 (청록색 삼각 화살표)
+  const pPt = toScreen(P.x, P.z);
+  g.save();
+  g.translate(pPt.sx, pPt.sy);
+  g.rotate(P.yaw);
+  g.fillStyle = '#00f0ff';
+  g.beginPath();
+  g.moveTo(0, -9); g.lineTo(7, 8); g.lineTo(0, 4); g.lineTo(-7, 8);
+  g.closePath(); g.fill();
+  g.restore();
+
+  // 코옵 파트너
+  if (remotePlayer) {
+    const rPt = toScreen(remotePlayer.x, remotePlayer.z);
+    g.fillStyle = '#f5c542';
+    g.beginPath(); g.arc(rPt.sx, rPt.sy, 6, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#fff'; g.font = '10px monospace'; g.fillText('P2', rPt.sx + 8, rPt.sy + 3);
+  }
+
+  // 핑 위치
+  if (activePing) {
+    const pPos = toScreen(activePing.x, activePing.z);
+    g.strokeStyle = activePing.isEnemy ? '#ff4655' : '#f5c542';
+    g.lineWidth = 2;
+    g.beginPath(); g.arc(pPos.sx, pPos.sy, 8, 0, Math.PI * 2); g.stroke();
+    g.fillStyle = activePing.isEnemy ? '#ff4655' : '#f5c542';
+    g.fillText(activePing.isEnemy ? '⚠️ 적 표적' : '📍 목표 웨이포인트', pPos.sx + 10, pPos.sy + 3);
+  }
+}
+
+// 위성 지도 클릭 시 해당 좌표로 즉시 전술 핑 설정
+const satCanvas = document.getElementById('sat-canvas');
+if (satCanvas) {
+  satCanvas.onclick = (e) => {
+    const rect = satCanvas.getBoundingClientRect();
+    const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+    const wx = (sx / satCanvas.width) * 110 - 55;
+    const wz = (sy / satCanvas.height) * 110 - 55;
+    activePing = { x: wx, y: 1.0, z: wz, isEnemy: false, life: 12.0 };
+    SND.pingTone();
+    banner(`📍 위성 지도 좌표 웨이포인트 지정: [X:${wx.toFixed(0)}, Z:${wz.toFixed(0)}]`);
+    renderSatMap();
+  };
+}
+
 // ==========================================
 // 5. RPG 대미지 팝업 & 격발 로직
 // ==========================================
@@ -680,7 +1803,7 @@ function shoot() {
   dynamicLight.position.copy(muzWorld);
   setTimeout(() => { GUN_MESH.flash.visible = false; dynamicLight.intensity = 0; }, 45);
 
-  const recoilMult = P.crouching ? 0.45 : 1.0;
+  const recoilMult = (P.crouching ? 0.45 : 1.0) * (P.attachments.foregrip ? 0.5 : 1.0);
   P.recoil = Math.min(0.25, P.recoil + w.recoil * recoilMult);
   P.pitch = Math.min(1.35, P.pitch + w.recoil * 0.35 * recoilMult);
 
@@ -698,12 +1821,22 @@ function shoot() {
       const obj = hits[0].object;
       const bot = bots.find(b => { let f = false; b.mesh.traverse(c => { if (c === obj) f = true; }); return f; });
 
+      
+      // 폭발성 유류 드럼통 피격 판정
+      if (obj.userData && obj.userData.isBarrel) {
+        const bRef = obj.userData.barrelRef;
+        bRef.hp -= dmg;
+        SND.hitMarker();
+        spawnDmgPop(endPt.x, endPt.y + 0.3, endPt.z, dmg, false);
+        if (bRef.hp <= 0) explodeBarrel(bRef);
+      }
+
       if (bot) {
         const isHead = !!obj.userData.isHead;
         let dmg = Math.round((w.dmg * (1 + P.dmgBonus)) * (isHead ? 2.2 : 1.0));
         bot.hp -= dmg;
 
-        if (isHead) SND.headshot(); else SND.hitMarker();
+        if (isHead) { SND.headshot(); if (P.wep === 2) { bulletTimeTimer = 0.45; SND.bulletTimeIn(); } } else SND.hitMarker();
         spawnDmgPop(endPt.x, endPt.y + 0.3, endPt.z, dmg, isHead);
 
         if (P.vampLevel > 0) P.shield = Math.min(P.shieldMax, P.shield + 10 * P.vampLevel);
@@ -732,6 +1865,25 @@ function addTracer(x0, y0, z0, x1, y1, z1, col) {
   const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x0, y0, z0), new THREE.Vector3(x1, y1, z1)]);
   const m = new THREE.Line(g, new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.9 }));
   scene.add(m); tracers.push({ m, t: 0.07 });
+}
+
+
+function triggerTacticalPing() {
+  if (raidOver) return;
+  raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+  const targets = [...wallMeshes, terrain];
+  bots.forEach(b => b.mesh.traverse(c => { if (c.isMesh) targets.push(c); }));
+  const hits = raycaster.intersectObjects(targets, false);
+  if (hits.length > 0) {
+    const hit = hits[0];
+    const isEnemy = bots.some(b => { let found = false; b.mesh.traverse(c => { if (c === hit.object) found = true; }); return found; });
+    activePing = {
+      x: hit.point.x, y: hit.point.y + 0.6, z: hit.point.z,
+      isEnemy, life: 8.0
+    };
+    SND.pingTone();
+    banner(isEnemy ? '⚠️ 적 표적 전술 핑 지정!' : '📍 전술 좌표 핑 지정!');
+  }
 }
 
 function reload() {
@@ -1012,6 +2164,264 @@ function update(dt) {
     }
   }
 
+  
+  // ADS (정밀 조준) 시야각 및 무기 위치 전환
+  const targetFov = P.isADS ? (P.wep === 2 ? 18 : 46) : 75;
+  camera.fov += (targetFov - camera.fov) * Math.min(1, dt * 16);
+  camera.updateProjectionMatrix();
+
+  const sniperScope = document.getElementById('sniper-scope');
+  if (sniperScope) sniperScope.style.display = (P.isADS && P.wep === 2) ? 'block' : 'none';
+
+  const targetGunX = P.isADS ? 0 : 0.22;
+  const targetGunY = P.isADS ? -0.155 : -0.2;
+  const targetGunZ = P.isADS ? -0.16 : 0;
+  GUN_MESH.g.position.x += (targetGunX - GUN_MESH.g.position.x) * Math.min(1, dt * 18);
+  GUN_MESH.g.position.y += (targetGunY - GUN_MESH.g.position.y) * Math.min(1, dt * 18);
+  GUN_MESH.g.position.z += (targetGunZ - GUN_MESH.g.position.z) * Math.min(1, dt * 18);
+
+  // 레이저 사이트 충돌 판정
+  raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+  const laserHits = raycaster.intersectObjects([...wallMeshes, terrain], false);
+  if (laserHits.length > 0) {
+    GUN_MESH.laserDot.visible = true;
+    GUN_MESH.laserDot.position.copy(laserHits[0].point);
+    GUN_MESH.laserLine.scale.z = Math.min(1, laserHits[0].distance / 45);
+  } else {
+    GUN_MESH.laserDot.visible = false;
+    GUN_MESH.laserLine.scale.z = 1.0;
+  }
+
+  // 전술 핑 HUD 위치 갱신
+  const pingEl = document.getElementById('ping-marker');
+  if (activePing) {
+    activePing.life -= dt;
+    if (activePing.life <= 0) {
+      activePing = null;
+      if (pingEl) pingEl.style.display = 'none';
+    } else if (pingEl) {
+      const pv = new THREE.Vector3(activePing.x, activePing.y, activePing.z);
+      pv.project(camera);
+      if (pv.z < 1) {
+        pingEl.style.display = 'flex';
+        pingEl.style.left = `${(pv.x * 0.5 + 0.5) * innerWidth}px`;
+        pingEl.style.top = `${(-(pv.y * 0.5) + 0.5) * innerHeight}px`;
+        const dist = Math.round(Math.hypot(activePing.x - P.x, activePing.z - P.z));
+        document.getElementById('ping-icon').textContent = activePing.isEnemy ? '⚠️' : '📍';
+        document.getElementById('ping-dist').textContent = `${dist}m`;
+        pingEl.style.borderColor = activePing.isEnemy ? 'var(--rpg-red)' : 'var(--rpg-gold)';
+        pingEl.style.color = activePing.isEnemy ? 'var(--rpg-red)' : 'var(--rpg-gold)';
+      } else {
+        pingEl.style.display = 'none';
+      }
+    }
+  } else if (pingEl) {
+    pingEl.style.display = 'none';
+  }
+
+  
+  // 아군 분대원 Alpha-1 AI 로직 (동행, 엄호 사격, 무전)
+  if (alpha1 && alpha1.mesh) {
+    const aDx = P.x - alpha1.x, aDz = P.z - alpha1.z, aDist = Math.hypot(aDx, aDz);
+    alpha1.fireCd -= dt;
+
+    // 플레이어 추종 이동 (4~7m 거리 유지)
+    if (aDist > 5.5) {
+      alpha1.walkCycle += dt * 6.5;
+      const aSw = Math.sin(alpha1.walkCycle) * 0.6;
+      alpha1.legL.rotation.x = aSw;
+      alpha1.legR.rotation.x = -aSw;
+      alpha1.armL.rotation.x = -aSw * 0.6;
+      const spd = aDist > 12 ? 6.2 : 3.8;
+      alpha1.x += (aDx / aDist) * spd * dt;
+      alpha1.z += (aDz / aDist) * spd * dt;
+      alpha1.mesh.position.set(alpha1.x, 0, alpha1.z);
+      alpha1.mesh.rotation.y = Math.atan2(aDx, aDz);
+      document.getElementById('sq-status').textContent = '동행 전진 중 [FOLLOWING]';
+    } else {
+      alpha1.legL.rotation.x = 0;
+      alpha1.legR.rotation.x = 0;
+      alpha1.armL.rotation.x = 0;
+      document.getElementById('sq-status').textContent = '엄호 태세 [COVERING]';
+    }
+
+    // 적 발견 시 엄호 사격
+    let nearestBot = null, nearestDist = 32;
+    bots.forEach(b => {
+      const bDist = Math.hypot(b.x - alpha1.x, b.z - alpha1.z);
+      if (bDist < nearestDist) { nearestDist = bDist; nearestBot = b; }
+    });
+
+    if (nearestBot) {
+      alpha1.mesh.rotation.y = Math.atan2(nearestBot.x - alpha1.x, nearestBot.z - alpha1.z);
+      document.getElementById('sq-status').textContent = '교전 사격 중 [ENGAGING]';
+      if (alpha1.fireCd <= 0) {
+        alpha1.fireCd = 1.1;
+        SND.m4Shot();
+        addTracer(alpha1.x, 1.2, alpha1.z, nearestBot.x, 1.2, nearestBot.z, 0x38ef7d);
+        nearestBot.hp -= 24;
+        spawnDmgPop(nearestBot.x, 1.4, nearestBot.z, 24, false);
+        const ratio = Math.max(0, nearestBot.hp / nearestBot.maxHp);
+        nearestBot.mesh.userData.hpBar.scale.set(ratio, 1, 1);
+        nearestBot.mesh.userData.hpBar.position.x = -(1 - ratio) * 0.39;
+        if (nearestBot.hp <= 0) {
+          P.kills++;
+          scene.remove(nearestBot.mesh);
+          bots.splice(bots.indexOf(nearestBot), 1);
+          if (nearestBot.isBoss) P.bossKilled = true;
+          addExp(nearestBot.isBoss ? 250 : 60);
+          showRadioSub('[Alpha-1] 표적 무력화 확인! 계속 전진합니다.');
+          updateQuests();
+        }
+      }
+    }
+  }
+
+  
+  // 4x4 버기카 물리 주행
+  if (inVehicle) {
+    const accel = keys.w ? 28 : keys.s ? -18 : 0;
+    vehicleSpeed += accel * dt;
+    vehicleSpeed *= 0.94; // 마찰 감속
+
+    if (keys.a) BUGGY.yaw += 1.8 * dt * (vehicleSpeed >= 0 ? 1 : -1);
+    if (keys.d) BUGGY.yaw -= 1.8 * dt * (vehicleSpeed >= 0 ? 1 : -1);
+
+    BUGGY.x += -Math.sin(BUGGY.yaw) * vehicleSpeed * dt;
+    BUGGY.z += -Math.cos(BUGGY.yaw) * vehicleSpeed * dt;
+    BUGGY.root.position.set(BUGGY.x, 0, BUGGY.z);
+    BUGGY.root.rotation.y = BUGGY.yaw;
+
+    // 플레이어 좌표 동기화
+    P.x = BUGGY.x;
+    P.z = BUGGY.z;
+    P.yaw = BUGGY.yaw;
+
+    // 타이어 굴림 애니메이션
+    BUGGY.wheels.forEach(w => w.rotation.x += vehicleSpeed * dt * 2.5);
+
+    // 계기판 속도
+    const kmh = Math.round(Math.abs(vehicleSpeed) * 3.6);
+    document.getElementById('buggy-spd').textContent = kmh;
+    if (Math.abs(vehicleSpeed) > 1.0) SND.engine(Math.abs(vehicleSpeed));
+
+    // 적 로드킬 판정
+    if (Math.abs(vehicleSpeed) > 4.0) {
+      bots.forEach(b => {
+        if (Math.hypot(b.x - BUGGY.x, b.z - BUGGY.z) < 2.4) {
+          b.hp -= 250;
+          spawnDmgPop(b.x, 1.2, b.z, 250, true);
+          if (b.hp <= 0) {
+            P.kills++;
+            scene.remove(b.mesh);
+            bots.splice(bots.indexOf(b), 1);
+            if (b.isBoss) P.bossKilled = true;
+            addExp(b.isBoss ? 250 : 80);
+            showKillBadge('전술 차량 로드킬 제압! (+80 EXP)');
+            updateQuests();
+          }
+        }
+      });
+    }
+  }
+
+  // ASMR 심장박동 (HP 35 이하 빈사 상태)
+  if (P.hp <= 35 && !raidOver) {
+    heartbeatTimer += dt;
+    if (heartbeatTimer >= 0.9) {
+      heartbeatTimer = 0;
+      SND.heartbeat();
+    }
+  }
+
+  // ASMR 방사능 게이거 카운터 (보스 구역 및 외곽 접근 시)
+  const distToBoss = Math.hypot(0 - P.x, 24 - P.z);
+  if (distToBoss < 20 && !raidOver) {
+    geigerTimer += dt;
+    if (geigerTimer >= (distToBoss / 30) * 0.4) {
+      geigerTimer = 0;
+      SND.geiger();
+    }
+  }
+
+  
+  // 헬리콥터 강하 및 이륙 애니메이션
+  if (cinematicHelicopter) {
+    cinematicHelicopter.mainRotor.rotation.y += dt * 35;
+    cinematicHelicopter.tailRotor.rotation.x += dt * 35;
+    chopperSoundTimer += dt;
+    if (chopperSoundTimer >= 0.16) { chopperSoundTimer = 0; SND.chopper(); }
+
+    if (!cinematicHelicopter.landing) {
+      cinematicHelicopter.y -= dt * 9.5;
+      cinematicHelicopter.root.position.y = cinematicHelicopter.y;
+      if (cinematicHelicopter.y <= 0.6) {
+        cinematicHelicopter.y = 0.6;
+        cinematicHelicopter.landing = true;
+        banner('🚁 헬리콥터 탑승 완료! 기지로 귀환합니다.');
+        setTimeout(() => { cinematicHelicopter.takeoff = true; }, 1800);
+      }
+    } else if (cinematicHelicopter.takeoff) {
+      cinematicHelicopter.y += dt * 14;
+      cinematicHelicopter.root.position.y = cinematicHelicopter.y;
+      cinematicHelicopter.root.position.x += dt * 8;
+      camera.position.x += dt * 4;
+      camera.lookAt(cinematicHelicopter.root.position);
+      if (cinematicHelicopter.y > 28 && !raidOver) {
+        finishRaid(true);
+      }
+    }
+  }
+
+  // 보스 글루하르 2페이즈 광폭화 체크 (HP 50% 이하)
+  bots.forEach(b => {
+    if (b.isBoss && !b.enraged && b.hp <= b.maxHp * 0.5) {
+      b.enraged = true;
+      SND.roar();
+      banner('⚠️ [보스 2페이즈] 글루하르 광폭화! 중화기 제압 난사!');
+      showRadioSub('[Alpha-1] 보스가 이성을 잃었습니다! 전술 수류탄으로 엄폐물을 파괴하십시오!');
+      b.mesh.userData.hpBar.material.color.setHex(0xff0044);
+
+      // 정예 호위병 2명 증원
+      spawnBot(b.x - 4, b.z - 3, false);
+      spawnBot(b.x + 4, b.z + 3, false);
+    }
+  });
+
+  // 코옵 플레이어 상태 전송 (초당 20회)
+  if (Math.random() < dt * 20) {
+    sendCoopData({
+      type: 'state',
+      x: P.x, y: P.y, z: P.z, yaw: P.yaw, pitch: P.pitch,
+      hp: P.hp, shield: P.shield, wep: P.wep
+    });
+  }
+
+  
+  // 슬라이딩 물리 및 카메라 로워링
+  if (slideTimer > 0) {
+    slideTimer -= dt;
+    P.x += slideVx * dt * (slideTimer / 0.85);
+    P.z += slideVz * dt * (slideTimer / 0.85);
+  }
+
+  // 불릿타임 슬로우모션 연출
+  if (bulletTimeTimer > 0) {
+    bulletTimeTimer -= dt;
+    document.getElementById('bullet-time-vignette').style.display = 'block';
+    if (bulletTimeTimer <= 0) {
+      document.getElementById('bullet-time-vignette').style.display = 'none';
+    }
+  }
+
+  // 어댑티브 앰비언트 신스 BGM 펄스
+  bgmTimer += dt;
+  const inCombat = bots.some(b => b.aggro);
+  if (bgmTimer >= (inCombat ? 0.46 : 1.8)) {
+    bgmTimer = 0;
+    if (typeof audio !== 'undefined' && AC && AC.state === 'running') SND.bgmPulse();
+  }
+
   // 이동
   const baseSpd = (keys.shift && !P.crouching ? 6.5 : P.crouching ? 2.6 : 4.2) * (1 + P.speedBonus) * dt;
   const fw = (keys.w ? 1 : 0) - (keys.s ? 1 : 0), st = (keys.d ? 1 : 0) - (keys.a ? 1 : 0);
@@ -1027,7 +2437,7 @@ function update(dt) {
     if (P.stepAcc > (P.crouching ? 3.0 : 2.0)) { P.stepAcc = 0; SND.footstep(true); }
   }
 
-  const eyeH = P.crouching ? 0.95 : 1.55;
+  const eyeH = slideTimer > 0 ? 0.65 : P.crouching ? 0.95 : 1.55;
   camera.position.set(P.x, eyeH + P.y + Math.sin(P.bob * 2) * 0.03, P.z);
   gunRoot.position.set(Math.cos(P.bob) * 0.012 + P.swayX, Math.abs(Math.sin(P.bob)) * 0.014 + P.swayY, P.recoil * 1.2);
   gunRoot.rotation.set(P.recoil * 1.3, 0, 0);
@@ -1038,13 +2448,14 @@ function update(dt) {
     extractTimer += dt;
     document.getElementById('extract-banner').style.display = 'block';
     document.getElementById('extract-time').textContent = Math.max(0, 5.0 - extractTimer).toFixed(1);
-    if (extractTimer >= 5.0) finishRaid(true);
+    if (extractTimer >= 5.0) { if (!isExtractingCinematic) startCinematicExtraction(); }
   } else {
     extractTimer = 0;
     document.getElementById('extract-banner').style.display = 'none';
   }
 
-  checkInteractions();
+  if (!checkBuggyInteraction()) checkInteractions();
+  updateWeatherAndAirdrop(dt);
 
   // 수류탄 물리
   for (let i = thrownGrenades.length - 1; i >= 0; i--) {
@@ -1075,7 +2486,8 @@ function update(dt) {
       b.mesh.position.set(b.x, 0, b.z);
     }
 
-    if (d < 34) {
+    const detectRange = P.attachments.suppressor ? 14 : 34;
+    if (d < detectRange) {
       b.mesh.rotation.y = Math.atan2(dx, dz);
       if (!b.aggro) {
         b.aggro = true;
@@ -1190,8 +2602,17 @@ addEventListener('keydown', e => {
   if (k === 'g') throwGrenade();
   if (k === 'b') toggleTrader();
   if (k === 'c') { P.crouching = !P.crouching; updateHUD(); }
-  if (k === 'f') { if (activeCrate) openCrate(); }
+  if (k === 'f') {
+    if (inVehicle) exitBuggy();
+    else if (Math.hypot(BUGGY.x - P.x, BUGGY.z - P.z) < 3.2) enterBuggy();
+    else if (activeCrate) openCrate();
+  }
+  if (k === 'escape') toggleSettings();
   if (k === 'r') reload();
+  if (k === 'z') triggerTacticalPing();
+  if (k === 't') toggleThermal();
+  if (k === 'm') toggleSatMap();
+  if (k === 'c' && keys.shift) { triggerSlide(); }
   if (k === 'tab') {
     e.preventDefault();
     const modal = document.getElementById('rpg-modal');
@@ -1207,14 +2628,25 @@ addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
 addEventListener('mousemove', e => {
   if (!locked) return;
-  P.yaw -= e.movementX * 0.0022;
-  P.pitch = Math.max(-1.35, Math.min(1.35, P.pitch - e.movementY * 0.0022));
+  P.yaw -= e.movementX * 0.0022 * mouseSensitivity;
+  P.pitch = Math.max(-1.35, Math.min(1.35, P.pitch - e.movementY * 0.0022 * mouseSensitivity));
   camera.rotation.y = P.yaw; camera.rotation.x = P.pitch;
 });
 addEventListener('mousedown', e => {
   if (e.button === 0) {
     if (locked) shoot();
     else if (!isModalOpen()) cv.requestPointerLock();
+  } else if (e.button === 1) { // 휠 클릭 핑
+    e.preventDefault();
+    if (locked) triggerTacticalPing();
+  } else if (e.button === 2) { // 우클릭 ADS
+    e.preventDefault();
+    if (locked) P.isADS = true;
+  }
+});
+addEventListener('mouseup', e => {
+  if (e.button === 2) {
+    P.isADS = false;
   }
 });
 addEventListener('contextmenu', e => e.preventDefault());
@@ -1224,6 +2656,147 @@ addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
 });
+
+
+let minimapSweep = 0;
+const mmCanvas = document.getElementById('minimap-canvas');
+const mg = mmCanvas ? mmCanvas.getContext('2d') : null;
+
+function drawMinimap(dt) {
+  if (!mg) return;
+  minimapSweep += dt * 3.5;
+  const cw = 160, ch = 160, cx = 80, cy = 80, rad = 78;
+  const scale = 1.8; // 월드 1m = 1.8px (약 45m 반경 가시)
+
+  mg.clearRect(0, 0, cw, ch);
+  mg.save();
+  mg.beginPath();
+  mg.arc(cx, cy, rad, 0, Math.PI * 2);
+  mg.clip();
+
+  // 레이더 배경 그리드
+  mg.fillStyle = '#080e14';
+  mg.fillRect(0, 0, cw, ch);
+
+  mg.strokeStyle = '#142533';
+  mg.lineWidth = 1;
+  mg.beginPath();
+  mg.arc(cx, cy, 25, 0, Math.PI * 2);
+  mg.arc(cx, cy, 50, 0, Math.PI * 2);
+  mg.arc(cx, cy, 72, 0, Math.PI * 2);
+  mg.moveTo(cx, 0); mg.lineTo(cx, ch);
+  mg.moveTo(0, cy); mg.lineTo(cw, cy);
+  mg.stroke();
+
+  // 플레이어 중심 회전 변환 (헤딩이 언제나 위쪽)
+  mg.save();
+  mg.translate(cx, cy);
+  mg.rotate(P.yaw);
+
+  // 1. 전초 기지 안전 구역 (청록색)
+  const safeDx = (0 - P.x) * scale, safeDz = (-34 - P.z) * scale;
+  mg.fillStyle = 'rgba(0, 240, 255, 0.25)';
+  mg.fillRect(safeDx - 11, safeDz - 11, 22, 22);
+  mg.strokeStyle = '#00f0ff';
+  mg.strokeRect(safeDx - 11, safeDz - 11, 22, 22);
+
+  // 2. 탈출 지점 (녹색 펄스)
+  const exDx = (exfilZone.x - P.x) * scale, exDz = (exfilZone.z - P.z) * scale;
+  mg.fillStyle = 'rgba(34, 197, 94, 0.4)';
+  mg.beginPath(); mg.arc(exDx, exDz, 12, 0, Math.PI * 2); mg.fill();
+  mg.fillStyle = '#22c55e';
+  mg.beginPath();
+  mg.moveTo(exDx, exDz - 6); mg.lineTo(exDx + 5, exDz); mg.lineTo(exDx, exDz + 6); mg.lineTo(exDx - 5, exDz);
+  mg.fill();
+
+  // 3. 파밍 상자 및 보급 투하 (골드/레드)
+  lootCrates.forEach(c => {
+    if (c.opened) return;
+    const cDx = (c.x - P.x) * scale, cDz = (c.z - P.z) * scale;
+    mg.fillStyle = c.isAirdrop ? '#ff3b30' : '#f5c542';
+    mg.fillRect(cDx - 3, cDz - 3, 6, 6);
+  });
+
+  // 4. 감지된 적 (빨간 점)
+  bots.forEach(b => {
+    const bDx = (b.x - P.x) * scale, bDz = (b.z - P.z) * scale;
+    const dist = Math.hypot(bDx, bDz);
+    if (dist < rad) {
+      mg.fillStyle = b.isBoss ? '#f5c542' : '#ff4655';
+      mg.beginPath(); mg.arc(bDx, bDz, b.isBoss ? 4.5 : 3.2, 0, Math.PI * 2); mg.fill();
+    }
+  });
+
+  
+  // 4-B. 아군 분대원 Alpha-1 (녹색 점)
+  if (alpha1) {
+    const aDx = (alpha1.x - P.x) * scale, aDz = (alpha1.z - P.z) * scale;
+    mg.fillStyle = '#38ef7d';
+    mg.beginPath(); mg.arc(aDx, aDz, 4, 0, Math.PI * 2); mg.fill();
+    mg.strokeStyle = '#ffffff'; mg.lineWidth = 1; mg.stroke();
+  }
+
+  
+  // 4-C. 전술 버기카 (주황색 차량)
+  const bgDx = (BUGGY.x - P.x) * scale, bgDz = (BUGGY.z - P.z) * scale;
+  mg.fillStyle = '#f5c542';
+  mg.fillRect(bgDx - 4, bgDz - 5, 8, 10);
+
+  
+  // 4-D. 코옵 파트너 원격 플레이어 (황금 별)
+  if (remotePlayer) {
+    const rDx = (remotePlayer.x - P.x) * scale, rDz = (remotePlayer.z - P.z) * scale;
+    mg.fillStyle = '#f5c542';
+    mg.beginPath(); mg.arc(rDx, rDz, 5, 0, Math.PI * 2); mg.fill();
+    mg.strokeStyle = '#ffffff'; mg.lineWidth = 1.5; mg.stroke();
+  }
+
+  // 5. 전술 핑 마커
+  if (activePing) {
+    const pDx = (activePing.x - P.x) * scale, pDz = (activePing.z - P.z) * scale;
+    mg.strokeStyle = activePing.isEnemy ? '#ff4655' : '#f5c542';
+    mg.lineWidth = 2;
+    mg.beginPath(); mg.arc(pDx, pDz, 6 + Math.sin(minimapSweep * 2) * 2, 0, Math.PI * 2); mg.stroke();
+  }
+
+  mg.restore();
+
+  // 레이더 스위프 빔
+  const sweepGrad = mg.createRadialGradient(cx, cy, 0, cx, cy, rad);
+  sweepGrad.addColorStop(0, 'rgba(0, 240, 255, 0.25)');
+  sweepGrad.addColorStop(1, 'rgba(0, 240, 255, 0)');
+  mg.save();
+  mg.translate(cx, cy);
+  mg.rotate(minimapSweep);
+  mg.fillStyle = sweepGrad;
+  mg.beginPath();
+  mg.moveTo(0, 0);
+  mg.arc(0, 0, rad, 0, 0.45);
+  mg.closePath();
+  mg.fill();
+  mg.restore();
+
+  // 중앙 플레이어 화살표 (청록색)
+  mg.fillStyle = '#00f0ff';
+  mg.beginPath();
+  mg.moveTo(cx, cy - 6);
+  mg.lineTo(cx + 5, cy + 5);
+  mg.lineTo(cx, cy + 2);
+  mg.lineTo(cx - 5, cy + 5);
+  mg.closePath();
+  mg.fill();
+
+  mg.restore();
+
+  // 미니맵 테두리 & 방위각
+  mg.strokeStyle = '#00f0ff';
+  mg.lineWidth = 2;
+  mg.beginPath(); mg.arc(cx, cy, rad - 1, 0, Math.PI * 2); mg.stroke();
+
+  // 좌표 텍스트 갱신
+  const coordEl = document.getElementById('minimap-coords');
+  if (coordEl) coordEl.textContent = `GRID: X:${P.x.toFixed(0).padStart(2,'0')} Z:${P.z.toFixed(0).padStart(2,'0')}`;
+}
 
 const chCanvas = document.getElementById('ch-canvas');
 const cg = chCanvas.getContext('2d');
@@ -1246,6 +2819,7 @@ let last = performance.now();
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   if (P) update(dt);
   drawCrosshair();
+  drawMinimap(dt);
   renderer.render(scene, camera);
   requestAnimationFrame(loop);
 })(last);
