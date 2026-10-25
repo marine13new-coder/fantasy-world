@@ -21,6 +21,9 @@
     position: relative;
     width: 1260px;
     height: 760px;
+    max-width: 98vw;
+    max-height: 96vh;
+    aspect-ratio: 1260 / 760;
     background: #08090d;
     border: 3px solid #55442b;
     box-shadow: 0 0 60px rgba(0,0,0,0.98), 0 0 25px rgba(214, 48, 49, 0.4);
@@ -113,7 +116,7 @@
     <div style="font-size: 11px; font-weight: bold; color: #c5a059; margin-top: 6px;">ACTIVE SKILLS (Weather Synergized):</div>
     <div id="skillSlotList"></div>
     <div class="btn-row" style="margin-top:6px;">
-      <button class="game-btn" style="background:#222f3e;" onclick="upgradeTown()">🏛️ [영지 재건] 룬대장간 T2 해금</button>
+      <button class="game-btn" id="townUpgradeBtn" style="background:#222f3e;" onclick="upgradeTown()">🏛️ [영지 재건] 룬대장간 T2 해금</button>
       <button class="game-btn" style="background:#2c3e50; max-width:80px;" id="audioToggleBtn" onclick="toggleAudio()">🔊 SOUND</button>
     </div>
   </div>
@@ -132,8 +135,14 @@
   <div id="telegraphWarning" class="telegraph-warning">⚠️ MASSIVE TELEGRAPH WARNING! EVADE! ⚠️</div>
 
   <div id="partyHUD" class="hud-panel">
-    <div style="font-size: 13px; font-weight: bold; color: #ffd32a; margin-bottom: 6px;">🛡️ MERCENARY PARTY (3 SLOTS)</div>
+    <div style="font-size: 13px; font-weight: bold; color: #ffd32a; margin-bottom: 4px;">🛡️ MERCENARY PARTY (3 SLOTS)</div>
     <div id="mercPartyList"></div>
+    <div style="font-size:10px; color:#c5a059; margin-top:5px; border-top:1px dashed #443725; padding-top:4px;">전술 지휘: [1] 일점사 | [2] 수호방벽 | [3] 산개</div>
+    <div class="btn-row" style="margin-top:4px;">
+      <button class="game-btn" onclick="orderMercenaries('focus')">⚔️ [1] 집중</button>
+      <button class="game-btn" onclick="orderMercenaries('guard')">🛡️ [2] 방벽</button>
+      <button class="game-btn" onclick="orderMercenaries('scatter')">💨 [3] 산개</button>
+    </div>
   </div>
 
   <div id="weatherNemesisHUD" class="hud-panel">
@@ -150,16 +159,20 @@
   </div>
 
   <div id="inventoryHUD" class="hud-panel">
-    <div style="font-size: 11px; font-weight: bold; color: #ffd32a; margin-bottom: 4px;">💰 LOOT & INVENTORY (Persistent):</div>
+    <div style="font-size: 11px; font-weight: bold; color: #ffd32a; margin-bottom: 4px;">💰 LOOT & ENHANCE (Persistent):</div>
     <div style="font-size: 10px; color: #dcdde1; display:flex; justify-content:space-between;">
-      <span>🪙 골드: <strong id="goldCount" style="color:#ffd32a;">1200</strong></span>
-      <span>💎 룬스톤: <strong id="gemCount" style="color:#54a0ff;">15</strong></span>
-      <span>🐉 비늘: <strong id="scaleCount" style="color:#ff6b6b;">5</strong></span>
+      <span>🪙 <strong id="goldCount" style="color:#ffd32a;">1200</strong></span>
+      <span>💎 <strong id="gemCount" style="color:#54a0ff;">15</strong></span>
+      <span>🐉 <strong id="scaleCount" style="color:#ff6b6b;">5</strong></span>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; border-top:1px dashed #443725; padding-top:4px;">
+      <span id="weaponLevelText" style="font-size:10px; font-weight:bold; color:#00f2fe;">+0 룬 대검</span>
+      <button class="game-btn" style="max-width:115px; padding:3px 6px; font-size:10px; background:#4b3820;" onclick="upgradeEquipment()">⚔️ 장비 제련(+25%)</button>
     </div>
   </div>
 
   <div id="guideHUD" class="hud-panel">
-    🕹️ <strong>컨트롤:</strong> [WASD] 심리스 오픈월드 이동 | [마우스 조준] 부채꼴 전술 시야(FoV) & 공격 | [좌클릭/Q/E/R] 날씨 물리 스킬 | [ [ / ] / Tab] 200 직업 핫스왑 | [🌀 Chimera] 3직업 융합
+    🕹️ <strong>컨트롤:</strong> [WASD] 이동 | [마우스 조준 & 좌클릭 3단 콤보] | [Q/E/R] 날씨 스킬 | [1/2/3] 용병 전술 지휘 | [ [ / ] / Tab] 200 직업 핫스왑 | [🌀 Chimera] 3직업 융합
   </div>
 </div>
 
@@ -285,11 +298,23 @@ function toggleAudio() {
 // ==========================================
 // 💎 PERSISTENT SAVE/LOAD & LOOT SYSTEM
 // ==========================================
+let currentClassIdx = 0;
 let inventory = {
   gold: 1200,
   gems: 15,
-  scales: 5
+  scales: 5,
+  weaponLevel: 0
 };
+
+const WEAPON_COLORS = ['#00f2fe', '#00ff88', '#ffd700', '#a29bfe', '#ff3838', '#ff9f43'];
+const WEAPON_NAMES = [
+  '+0 룬 대검',
+  '+1 룬 대검 (+25%)',
+  '+2 축복받은 룬 대검 (+50%)',
+  '+3 비전 파멸검 (+75%)',
+  '+4 용살자의 대검 (+100%)',
+  '+5 신성 태양광선 대검 (+125%)'
+];
 
 function loadSavedGame() {
   try {
@@ -297,6 +322,7 @@ function loadSavedGame() {
     if (raw) {
       const parsed = JSON.parse(raw);
       inventory = parsed.inventory || inventory;
+      if (inventory.weaponLevel === undefined) inventory.weaponLevel = 0;
       currentClassIdx = parsed.currentClassIdx || 0;
     }
   } catch(e) {}
@@ -396,6 +422,44 @@ const townBuildings = [
   { name: "비전 마법탑", x: -260, y: 90, tier: 1, color: "#5f27cd" }
 ];
 
+// 🏛️ HD-2D Gothic Ruin Monoliths (Stone Pillars with Ancient Glyphs)
+const ruinPillars = [
+  { x: -180, y: -90, w: 34, h: 68, runeColor: "#00d2d3" },
+  { x: 180, y: -90, w: 34, h: 68, runeColor: "#00d2d3" },
+  { x: -180, y: 110, w: 34, h: 68, runeColor: "#ffd32a" },
+  { x: 180, y: 110, w: 34, h: 68, runeColor: "#ffd32a" }
+];
+
+// 💧 Dynamic Water Puddles & Rippling
+const waterPuddles = [
+  { x: -80, y: 35, rx: 58, ry: 24 },
+  { x: 110, y: 75, rx: 72, ry: 28 },
+  { x: -70, y: -130, rx: 52, ry: 22 },
+  { x: 130, y: -120, rx: 46, ry: 20 }
+];
+let waterRipples = [];
+function spawnRipple(x, y) {
+  waterRipples.push({ x, y, r: 3, maxR: 26, alpha: 0.75 });
+}
+
+// 🌋 Ground Scorch Marks & Magma Fissures
+let groundScorches = [];
+function spawnScorchFissure(startX, startY, dirX, dirY, length = 75, width = 12) {
+  groundScorches.push({
+    x1: startX, y1: startY,
+    x2: startX + dirX * length, y2: startY + dirY * length,
+    width: width,
+    life: 9.0, maxLife: 9.0
+  });
+}
+
+// ⚔️ 3-Hit Combat Combo & Mercenary Tactical Command State
+let comboStep = 0;
+let comboTimer = 0;
+let holyShieldTimer = 0;
+let mercenaryBuffTimer = 0;
+let mercenaryCommand = 'normal';
+
 // Projectiles & AoEs
 let activeProjectiles = [];
 let activeAoEs = [];
@@ -412,17 +476,45 @@ window.addEventListener('keydown', e => {
   if (e.key.toLowerCase() === 'q') castPlayerSkill(1);
   if (e.key.toLowerCase() === 'e') castPlayerSkill(2);
   if (e.key.toLowerCase() === 'r') castPlayerSkill(3);
+  if (e.key === '1') orderMercenaries('focus');
+  if (e.key === '2') orderMercenaries('guard');
+  if (e.key === '3') orderMercenaries('scatter');
 });
 window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 canvas.addEventListener('mousemove', e => {
   const rect = canvas.getBoundingClientRect();
-  mousePos.x = e.clientX - rect.left;
-  mousePos.y = e.clientY - rect.top;
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  mousePos.x = (e.clientX - rect.left) * scaleX;
+  mousePos.y = (e.clientY - rect.top) * scaleY;
 });
 canvas.addEventListener('mousedown', e => {
   initAudio();
   if (e.button === 0) castPlayerSkill(0);
 });
+
+// Mobile & Tablet Touch Support
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  initAudio();
+  if (e.touches.length > 0) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    mousePos.x = (e.touches[0].clientX - rect.left) * scaleX;
+    mousePos.y = (e.touches[0].clientY - rect.top) * scaleY;
+    castPlayerSkill(0);
+  }
+}, { passive: false });
+canvas.addEventListener('touchmove', e => {
+  if (e.touches.length > 0) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    mousePos.x = (e.touches[0].clientX - rect.left) * scaleX;
+    mousePos.y = (e.touches[0].clientY - rect.top) * scaleY;
+  }
+}, { passive: true });
 
 function applyClass(idx) {
   currentClassIdx = (idx + CLASSDATA.length) % CLASSDATA.length;
@@ -454,11 +546,27 @@ function triggerChimera() {
 
   playerClass = {
     ...playerClass,
-    className: "【키메라】 " + c1.subCategory + "+" + c2.subCategory + "+" + c3.subCategory,
-    archetype: "ChimeraFusion"
+    className: "【키메라】 " + (c1.subCategory || c1.className) + "+" + (c2.subCategory || c2.className) + "+" + (c3.subCategory || c3.className),
+    archetype: "ChimeraFusion",
+    weaponType: "카오스 블레이드 (Chaos Blade)"
   };
   player.maxHP = Math.round(c1.baseStats.maxHP * 0.6 + c2.baseStats.maxHP * 0.25 + c3.baseStats.maxHP * 0.25);
   player.hp = player.maxHP;
+
+  // Hybridize skills from the 3 fused classes!
+  const s0 = skillMap[c1.availableSkillIds[0]] || SKILLDATA[0];
+  const s1 = skillMap[c2.availableSkillIds[Math.min(1, c2.availableSkillIds.length - 1)]] || SKILLDATA[1];
+  const s2 = skillMap[c3.availableSkillIds[Math.min(2, c3.availableSkillIds.length - 1)]] || SKILLDATA[2];
+  const s3 = {
+    id: 9999,
+    skillName: "초융합: 카오스 차원폭발",
+    element: "Dark",
+    skillType: "AoEZone",
+    damageMultiplier: 4.8,
+    cooldown: 8.0,
+    particleColor: "#ff00ff"
+  };
+  player.skills = [s0, s1, s2, s3].map(s => ({ ...s, cdRemaining: 0 }));
 
   SoundEngine.playLevelUp();
   flashScreen('#9b59b6', 0.6);
@@ -485,7 +593,7 @@ function triggerMercenaryBetrayal() {
     x: player.x + (Math.random() > 0.5 ? 180 : -180),
     y: player.y + 120,
     hp: 1500, maxHP: 1500,
-    speed: 170,
+    speed: 175,
     name: "암살자 [" + b.grudgeType + "]"
   };
   document.getElementById('nemesisStatusText').innerText = "난입: " + b.ambushDialogue;
@@ -494,22 +602,146 @@ function triggerMercenaryBetrayal() {
   doShake(8);
 }
 
+let townTier = 1;
+const HIDDEN_SKILLS = [
+  {
+    id: 9901,
+    skillName: "고대 룬 파쇄검 (Rune Cleave)",
+    element: "Physical",
+    skillType: "GroundSlam",
+    damageMultiplier: 3.4,
+    cooldown: 5.0,
+    areaRadius: 110,
+    castTime: 0.1,
+    hitStopDuration: 0.12,
+    shakeIntensity: 1.0,
+    particleColor: "#ffd32a"
+  },
+  {
+    id: 9902,
+    skillName: "비전 차원 왜곡 (Arcane Warp)",
+    element: "Lightning",
+    skillType: "DashStun",
+    damageMultiplier: 4.2,
+    cooldown: 6.5,
+    range: 160,
+    castTime: 0.05,
+    hitStopDuration: 0.14,
+    shakeIntensity: 1.2,
+    particleColor: "#a29bfe"
+  },
+  {
+    id: 9903,
+    skillName: "대천사의 성역 (Seraphim Aura)",
+    element: "Holy",
+    skillType: "HealAura",
+    damageMultiplier: 3.0,
+    healMultiplier: 2.2,
+    cooldown: 8.0,
+    areaRadius: 180,
+    castTime: 0.15,
+    hitStopDuration: 0.1,
+    shakeIntensity: 0.8,
+    particleColor: "#2ed573"
+  }
+];
+
 function upgradeTown() {
   initAudio();
   if (inventory.gold >= 300) {
     inventory.gold -= 300;
+    townTier++;
     townBuildings.forEach(b => {
-      b.tier++;
-      b.color = "#f39c12";
+      b.tier = townTier;
+      b.color = townTier >= 3 ? "#e67e22" : "#f39c12";
     });
+
+    const newSkill = HIDDEN_SKILLS[(townTier - 2) % HIDDEN_SKILLS.length];
+    if (player.skills.length >= 4) {
+      player.skills[3] = { ...newSkill, cdRemaining: 0 };
+    } else {
+      player.skills.push({ ...newSkill, cdRemaining: 0 });
+    }
+
     SoundEngine.playLevelUp();
     spawnShards(player.x, player.y, '#f1c40f', 30);
-    addDamageText(player.x, player.y - 25, "TOWN UPGRADED! (히든스킬 해금)", true, '#f1c40f');
+    addDamageText(player.x, player.y - 25, "TOWN TIER " + townTier + "! " + newSkill.skillName + " 해금!", true, '#f1c40f');
+    document.getElementById('townUpgradeBtn').innerText = "🏛️ [영지 재건] T" + (townTier + 1) + " 업그레이드";
     saveGame();
     updateHUD();
   } else {
     addDamageText(player.x, player.y - 20, "골드 부족! (필요: 300G)", false, '#e74c3c');
   }
+}
+
+function upgradeEquipment() {
+  initAudio();
+  if (inventory.weaponLevel >= 5) {
+    addDamageText(player.x, player.y - 20, "최대 제련 레벨 도달 (+5 MAX)!", true, '#ffd700');
+    return;
+  }
+  const costGold = (inventory.weaponLevel + 1) * 200;
+  const costScales = inventory.weaponLevel + 1;
+  if (inventory.gold >= costGold && inventory.scales >= costScales) {
+    inventory.gold -= costGold;
+    inventory.scales -= costScales;
+    inventory.weaponLevel++;
+    SoundEngine.playLevelUp();
+    flashScreen(WEAPON_COLORS[inventory.weaponLevel], 0.5);
+    doShake(10);
+    spawnShards(player.x, player.y, WEAPON_COLORS[inventory.weaponLevel], 35);
+    addDamageText(player.x, player.y - 30, WEAPON_NAMES[inventory.weaponLevel] + " 제련 성공!", true, WEAPON_COLORS[inventory.weaponLevel]);
+    saveGame();
+    updateHUD();
+  } else {
+    addDamageText(player.x, player.y - 20, "재료 부족! (필요: " + costGold + "G + " + costScales + "비늘)", false, '#e74c3c');
+  }
+}
+
+function orderMercenaries(order) {
+  initAudio();
+  mercenaryCommand = order;
+  if (order === 'focus') {
+    mercenaryBuffTimer = 6.0;
+    SoundEngine.playSlash();
+    flashScreen('#ff4757', 0.25);
+    doShake(5);
+    addDamageText(player.x, player.y - 30, "⚔️ 전술: 전 용병 보스 일점사!", true, '#ff4757');
+    mercenaries.forEach(m => {
+      if (m.hp > 0) {
+        m.state = "FOCUSING!";
+        spawnShards(m.x, m.y, '#ff4757', 10);
+      }
+    });
+  } else if (order === 'guard') {
+    holyShieldTimer = 4.5;
+    SoundEngine.playHeal();
+    flashScreen('#ffd700', 0.35);
+    doShake(6);
+    addDamageText(player.x, player.y - 30, "🛡️ 전술: 수호 방벽 전개! (-65% 피해)", true, '#ffd700');
+    mercenaries.forEach(m => {
+      if (m.hp > 0) {
+        m.state = "GUARDING!";
+        spawnShards(m.x, m.y, '#ffd700', 12);
+      }
+    });
+  } else if (order === 'scatter') {
+    mercenaryBuffTimer = 4.0;
+    SoundEngine.playSlash();
+    flashScreen('#00d2d3', 0.25);
+    doShake(4);
+    addDamageText(player.x, player.y - 30, "💨 전술: 전 용병 긴급 산개 회피!", true, '#00d2d3');
+    mercenaries.forEach(m => {
+      if (m.hp > 0) {
+        m.state = "SCATTER!";
+        const angle = Math.random() * Math.PI * 2;
+        m.x += Math.cos(angle) * 85;
+        m.y += Math.sin(angle) * 85;
+        spawnShards(m.x, m.y, '#00d2d3', 10);
+      }
+    });
+  }
+  updateHUD();
 }
 
 function reSummonBoss() {
@@ -565,8 +797,85 @@ function addDamageText(x, y, dmg, isCrit = false, color = '#ffffff') {
   });
 }
 
+function damagePlayer(damage, attackerName = "Boss") {
+  if (player.isDead) return;
+  if (holyShieldTimer > 0) {
+    damage = Math.round(damage * 0.35); // 65% barrier reduction!
+    spawnShards(player.x, player.y, '#ffd700', 8);
+    addDamageText(player.x, player.y - 12, "BARRIER (-65%)", false, '#ffd700');
+  }
+  player.hp = Math.max(0, player.hp - damage);
+  doShake(Math.min(16, damage * 0.08 + 4));
+  SoundEngine.playHitCrunch(false);
+  doSquash(player, 0.72, 1.38);
+  addDamageText(player.x, player.y, damage, false, '#ff4757');
+
+  if (player.hp <= 0) {
+    playerDeath(attackerName);
+  }
+}
+
+function playerDeath(attackerName) {
+  if (player.isDead) return;
+  player.isDead = true;
+  player.hp = 0;
+  SoundEngine.playHitCrunch(true);
+  flashScreen('#c0392b', 0.85);
+  doShake(25);
+  spawnShards(player.x, player.y, '#ff4757', 35);
+  addDamageText(player.x, player.y - 30, "YOU DIED!", true, '#ff0000');
+
+  // Nemesis Evolution & Weapon Theft
+  if (bossState && !bossState.isNemesis) {
+    bossState.isNemesis = true;
+    const title = NEMESISDATA.nemesisTitles[Math.floor(Math.random() * NEMESISDATA.nemesisTitles.length)];
+    bossState.title = "👑 [NEMESIS 진화] " + title + " 발라카스";
+    bossState.maxHP = Math.round(bossState.maxHP * 1.4);
+    bossState.hp = bossState.maxHP;
+    const taunt = NEMESISDATA.deathDialogueTrees[Math.floor(Math.random() * NEMESISDATA.deathDialogueTrees.length)];
+    document.getElementById('nemesisStatusText').innerText = '👑 [장비 강탈] 보스: "' + taunt + '" (플레이어의 무기를 강탈했습니다!)';
+  } else if (activeAssassin) {
+    document.getElementById('nemesisStatusText').innerText = "🗡️ [원한 성취] 암살자가 플레이어를 쓰러뜨리고 장비를 탈취했습니다!";
+  }
+
+  // Respawn at Town after 2.5s
+  setTimeout(() => {
+    player.x = 0;
+    player.y = 120;
+    player.hp = player.maxHP;
+    player.isDead = false;
+    SoundEngine.playHeal();
+    flashScreen('#2ed573', 0.5);
+    addDamageText(player.x, player.y - 20, "RESPAWNED AT TOWN!", true, '#2ed573');
+    mercenaries.forEach(m => {
+      m.x = player.x + (Math.random() * 40 - 20);
+      m.y = player.y + (Math.random() * 40 - 20);
+      m.hp = m.maxHP;
+      m.state = "Following";
+    });
+    updateHUD();
+  }, 2500);
+}
+
+function damageAssassin(damage, isCrit, color) {
+  if (!activeAssassin) return;
+  activeAssassin.hp -= damage;
+  addDamageText(activeAssassin.x, activeAssassin.y - 12, damage, isCrit, color || '#ff5252');
+  spawnShards(activeAssassin.x, activeAssassin.y, '#ff5252', 8);
+  SoundEngine.playHitCrunch(isCrit);
+  if (activeAssassin.hp <= 0) {
+    SoundEngine.playLevelUp();
+    addDamageText(activeAssassin.x, activeAssassin.y - 25, "ASSASSIN SLAIN!", true, '#ffd700');
+    flashScreen('#2ecc71', 0.4);
+    for (let i = 0; i < 8; i++) spawnLootGem(activeAssassin.x, activeAssassin.y, "gold");
+    for (let i = 0; i < 2; i++) spawnLootGem(activeAssassin.x, activeAssassin.y, "gem");
+    document.getElementById('nemesisStatusText').innerText = "배반 암살자를 처치하여 복수를 완료했습니다!";
+    activeAssassin = null;
+  }
+}
+
 function castPlayerSkill(slotIdx) {
-  if (!player.skills[slotIdx] || player.skills[slotIdx].cdRemaining > 0) return;
+  if (player.isDead || !player.skills[slotIdx] || player.skills[slotIdx].cdRemaining > 0) return;
   const sk = player.skills[slotIdx];
   sk.cdRemaining = sk.cooldown;
 
@@ -576,15 +885,47 @@ function castPlayerSkill(slotIdx) {
   const dirY = worldMouseY - player.y;
   const len = Math.hypot(dirX, dirY) || 1;
 
-  player.attackSwingTimer = 0.22;
+  let comboMult = 1.0;
+  let forceCrit = false;
+
+  if (slotIdx === 0) {
+    if (comboTimer <= 0) comboStep = 0;
+    comboTimer = 0.95;
+
+    if (comboStep === 0) {
+      comboMult = 1.0;
+      player.attackSwingTimer = 0.18;
+      SoundEngine.playSlash();
+      addDamageText(player.x, player.y - 18, "COMBO I", false, WEAPON_COLORS[inventory.weaponLevel]);
+    } else if (comboStep === 1) {
+      comboMult = 1.45;
+      player.attackSwingTimer = 0.24;
+      SoundEngine.playSlash();
+      addDamageText(player.x, player.y - 18, "COMBO II", false, '#ffd700');
+    } else {
+      comboMult = 2.6;
+      forceCrit = true;
+      player.attackSwingTimer = 0.34;
+      SoundEngine.playHitCrunch(true);
+      doShake(15);
+      doHitStop(0.12);
+      spawnScorchFissure(player.x, player.y, dirX / len, dirY / len, 95, 14);
+      addDamageText(player.x, player.y - 24, "CRUSH FINISHER!", true, '#ff3838');
+    }
+    comboStep = (comboStep + 1) % 3;
+  } else {
+    player.attackSwingTimer = 0.22;
+    SoundEngine.playSlash();
+  }
+
   doSquash(player, 1.35, 0.7);
-  SoundEngine.playSlash();
-  executeSkill(player, sk, dirX / len, dirY / len, worldMouseX, worldMouseY, true);
+  executeSkill(player, sk, dirX / len, dirY / len, worldMouseX, worldMouseY, true, comboMult, forceCrit);
 }
 
-function executeSkill(source, skill, dirX, dirY, targetX, targetY, isPlayer) {
-  const isCrit = Math.random() < 0.22;
-  let baseDmg = source.classData ? source.classData.baseStats.attackPower * skill.damageMultiplier : 95 * skill.damageMultiplier;
+function executeSkill(source, skill, dirX, dirY, targetX, targetY, isPlayer, comboMult = 1.0, forceCrit = false) {
+  const isCrit = forceCrit || (Math.random() < 0.22);
+  let weaponBoost = isPlayer ? (1 + (inventory.weaponLevel || 0) * 0.25) : 1.0;
+  let baseDmg = (source.classData ? source.classData.baseStats.attackPower * skill.damageMultiplier : 95 * skill.damageMultiplier) * comboMult * weaponBoost;
 
   const mult = currentWeather.elementalMultipliers[skill.element] || 1.0;
   let dmg = Math.round(baseDmg * mult * (isCrit ? 1.8 : 1));
@@ -605,6 +946,11 @@ function executeSkill(source, skill, dirX, dirY, targetX, targetY, isPlayer) {
       if (Math.random() < 0.35) spawnLootGem(bossState.x, bossState.y, "gold");
       if (Math.random() < 0.15) spawnLootGem(bossState.x, bossState.y, "gem");
     }
+
+    if (activeAssassin) {
+      const distAss = Math.hypot(activeAssassin.x - source.x, activeAssassin.y - source.y);
+      if (distAss < 95) damageAssassin(dmg, isCrit, skill.particleColor);
+    }
   } else if (skill.skillType === "DashStun") {
     source.x += dirX * 95;
     source.y += dirY * 95;
@@ -619,6 +965,11 @@ function executeSkill(source, skill, dirX, dirY, targetX, targetY, isPlayer) {
       doSquash(bossState, 1.3, 0.7);
       addDamageText(bossState.x, bossState.y, dmg, isCrit, '#00ffff');
       spawnLootGem(bossState.x, bossState.y, "gem");
+    }
+
+    if (activeAssassin) {
+      const distAss = Math.hypot(activeAssassin.x - source.x, activeAssassin.y - source.y);
+      if (distAss < 95) damageAssassin(dmg, isCrit, '#00ffff');
     }
   } else if (skill.skillType === "Projectile" || skill.skillType === "PiercingBeam") {
     activeProjectiles.push({
@@ -733,16 +1084,19 @@ function executeBossAttack() {
 
   const distPlayer = Math.hypot(player.x - bossState.x, player.y - (bossState.y + 65));
   if (distPlayer < (p.radius || 8) * 12) {
-    player.hp = Math.max(0, player.hp - (p.damage || 150));
-    doSquash(player, 0.7, 1.4);
-    addDamageText(player.x, player.y, p.damage || 150, false, '#ff0000');
+    damagePlayer(p.damage || 150, "Valakas");
   }
 
   mercenaries.forEach(m => {
+    if (m.hp <= 0) return;
     const distMerc = Math.hypot(m.x - bossState.x, m.y - (bossState.y + 65));
     if (distMerc < (p.radius || 8) * 12) {
       m.hp = Math.max(0, m.hp - (p.damage || 150));
       addDamageText(m.x, m.y, p.damage || 150, false, '#ff0000');
+      if (m.hp <= 0) {
+        m.state = "Downed (부상)";
+        m.downedTimer = 0;
+      }
     }
   });
 }
@@ -750,6 +1104,19 @@ function executeBossAttack() {
 // Mercenary AI (Formation & Evade)
 function updateMercenaries(dt) {
   mercenaries.forEach((m, idx) => {
+    if (m.hp <= 0) {
+      m.state = "Downed (부상)";
+      m.downedTimer = (m.downedTimer || 0) + dt;
+      if (m.downedTimer >= 7.0) {
+        m.hp = Math.round(m.maxHP * 0.45);
+        m.state = "Recovered";
+        m.downedTimer = 0;
+        addDamageText(m.x, m.y - 15, "REVIVED!", false, '#2ecc71');
+        SoundEngine.playHeal();
+      }
+      return;
+    }
+
     if (bossState.activeTelegraph) {
       m.state = "EVADING!";
       const tel = bossState.activeTelegraph;
@@ -799,17 +1166,16 @@ function updateMercenaries(dt) {
 
 function updateAssassin(dt) {
   if (!activeAssassin) return;
+  if (player.isDead) return;
   const dx = player.x - activeAssassin.x;
   const dy = player.y - activeAssassin.y;
   const dist = Math.hypot(dx, dy);
 
-  if (dist > 35) {
+  if (dist > 38) {
     activeAssassin.x += (dx / dist) * activeAssassin.speed * dt;
     activeAssassin.y += (dy / dist) * activeAssassin.speed * dt;
   } else {
-    player.hp = Math.max(0, player.hp - 220 * dt);
-    doShake(4);
-    SoundEngine.playHitCrunch(false);
+    damagePlayer(Math.round(180 * dt), "Revenge Mercenary");
     if (Math.random() < 0.1) spawnShards(player.x, player.y, '#e74c3c', 4);
   }
 }
@@ -873,20 +1239,47 @@ function gameLoop(now) {
   if (player.attackSwingTimer > 0) player.attackSwingTimer -= dt;
 
   // Player Movement (WASD)
-  let moveX = 0, moveY = 0;
-  if (keys['w'] || keys['arrowup']) moveY -= 1;
-  if (keys['s'] || keys['arrowdown']) moveY += 1;
-  if (keys['a'] || keys['arrowleft']) moveX -= 1;
-  if (keys['d'] || keys['arrowright']) moveX += 1;
+  if (!player.isDead) {
+    let moveX = 0, moveY = 0;
+    if (keys['w'] || keys['arrowup']) moveY -= 1;
+    if (keys['s'] || keys['arrowdown']) moveY += 1;
+    if (keys['a'] || keys['arrowleft']) moveX -= 1;
+    if (keys['d'] || keys['arrowright']) moveX += 1;
 
-  const moveLen = Math.hypot(moveX, moveY);
-  if (moveLen > 0) {
-    player.x += (moveX / moveLen) * player.speed * dt;
-    player.y += (moveY / moveLen) * player.speed * dt;
-    player.walkTimer += dt * 14;
+    const moveLen = Math.hypot(moveX, moveY);
+    if (moveLen > 0) {
+      player.x += (moveX / moveLen) * player.speed * dt;
+      player.y += (moveY / moveLen) * player.speed * dt;
+      player.walkTimer += dt * 14;
+
+      // Ripple effects when splashing in puddles
+      waterPuddles.forEach(pad => {
+        if (Math.hypot(player.x - pad.x, player.y - pad.y) < pad.rx) {
+          if (Math.random() < 0.22) spawnRipple(player.x, player.y);
+        }
+      });
+    } else {
+      player.walkTimer = 0;
+    }
   } else {
     player.walkTimer = 0;
   }
+
+  // Tactical & Combo Timers
+  comboTimer = Math.max(0, comboTimer - dt);
+  holyShieldTimer = Math.max(0, holyShieldTimer - dt);
+  mercenaryBuffTimer = Math.max(0, mercenaryBuffTimer - dt);
+
+  // Water Ripples Animation
+  waterRipples.forEach(r => {
+    r.r += 24 * dt;
+    r.alpha -= 0.8 * dt;
+  });
+  waterRipples = waterRipples.filter(r => r.alpha > 0);
+
+  // Magma Scorches Fade
+  groundScorches.forEach(s => { s.life -= dt; });
+  groundScorches = groundScorches.filter(s => s.life > 0);
 
   // Camera Follow
   camera.x += (player.x - camera.x) * 6 * dt;
@@ -916,6 +1309,9 @@ function gameLoop(now) {
       SoundEngine.playHitCrunch(p.isCrit);
       doHitStop(0.06);
       p.life = -1;
+    } else if (activeAssassin && Math.hypot(p.x - activeAssassin.x, p.y - activeAssassin.y) < 38) {
+      damageAssassin(p.damage, p.isCrit, p.color);
+      p.life = -1;
     }
   });
   activeProjectiles = activeProjectiles.filter(p => p.life > 0);
@@ -929,6 +1325,9 @@ function gameLoop(now) {
         bossState.hp = Math.max(0, bossState.hp - a.damage);
         addDamageText(bossState.x, bossState.y, a.damage, false, a.color);
         spawnShards(a.x, a.y, a.color, 6);
+      }
+      if (activeAssassin && Math.hypot(a.x - activeAssassin.x, a.y - activeAssassin.y) < a.radius + 25) {
+        damageAssassin(a.damage, false, a.color);
       }
     }
   });
@@ -958,8 +1357,13 @@ function drawPixelHero(ctx, x, y, walkTimer, swingTimer, aimAngle) {
   ctx.translate(x, y);
   ctx.scale(player.squashX, player.squashY);
 
-  const bounce = Math.sin(walkTimer) * 3;
-  const legOffset = Math.sin(walkTimer) * 4;
+  if (player.isDead) {
+    ctx.rotate(Math.PI / 2); // Fallen to the ground
+    ctx.globalAlpha = 0.75;
+  }
+
+  const bounce = player.isDead ? 0 : Math.sin(walkTimer) * 3;
+  const legOffset = player.isDead ? 0 : Math.sin(walkTimer) * 4;
 
   // 1. Soft Dynamic Drop Shadow
   ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
@@ -1020,6 +1424,8 @@ function drawPixelHero(ctx, x, y, walkTimer, swingTimer, aimAngle) {
   ctx.save();
   ctx.rotate(aimAngle);
 
+  const wpColor = WEAPON_COLORS[inventory.weaponLevel || 0];
+
   // Claymore Blade & Crossguard
   ctx.fillStyle = '#dcdde1';
   ctx.fillRect(12, -3, 34, 6);
@@ -1029,23 +1435,29 @@ function drawPixelHero(ctx, x, y, walkTimer, swingTimer, aimAngle) {
   ctx.fillStyle = '#e1b12c';
   ctx.fillRect(10, -9, 4, 18);
   ctx.fillRect(6, -2, 4, 4);
-  // Runic Fuller Glow
-  ctx.fillStyle = '#00d2d3';
+  // Runic Fuller Glow (Color scales with weapon enhancement tier!)
+  ctx.fillStyle = wpColor;
   ctx.fillRect(20, -1, 18, 2);
+
+  // Weapon Glow aura
+  ctx.fillStyle = wpColor;
+  ctx.globalAlpha = 0.35;
+  ctx.fillRect(14, -4, 32, 8);
+  ctx.globalAlpha = 1.0;
 
   // Slash Arc Visual & Sparks
   if (swingTimer > 0) {
-    const swingProgress = swingTimer / 0.18;
-    ctx.strokeStyle = 'rgba(0, 242, 254, ' + (swingProgress * 0.9) + ')';
-    ctx.lineWidth = 8;
+    const swingProgress = Math.min(1.0, swingTimer / 0.18);
+    ctx.strokeStyle = wpColor;
+    ctx.lineWidth = 9;
     ctx.beginPath();
-    ctx.arc(0, 0, 52, -0.75, 0.75);
+    ctx.arc(0, 0, 52, -0.85, 0.85);
     ctx.stroke();
 
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 3.0;
     ctx.beginPath();
-    ctx.arc(0, 0, 50, -0.65, 0.65);
+    ctx.arc(0, 0, 50, -0.75, 0.75);
     ctx.stroke();
   }
 
@@ -1056,7 +1468,13 @@ function drawPixelHero(ctx, x, y, walkTimer, swingTimer, aimAngle) {
 function drawPixelMercenary(ctx, m) {
   ctx.save();
   ctx.translate(m.x, m.y);
-  const bounce = Math.sin(m.walkTimer) * 2.5;
+
+  if (m.hp <= 0) {
+    ctx.rotate(0.35); // Kneeling downed posture
+    ctx.globalAlpha = 0.65;
+  }
+
+  const bounce = m.hp <= 0 ? 0 : Math.sin(m.walkTimer) * 2.5;
 
   // Shadow
   ctx.fillStyle = 'rgba(0,0,0,0.5)';
@@ -1132,10 +1550,11 @@ function drawPixelMercenary(ctx, m) {
     }
   }
 
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = m.hp <= 0 ? '#ff4757' : '#fff';
   ctx.font = 'bold 10px monospace';
   ctx.textAlign = 'center';
-  ctx.fillText(m.role, 0, -34);
+  const label = m.hp <= 0 ? "⚠️ DOWNED (" + Math.max(0, Math.ceil(7.0 - (m.downedTimer || 0))) + "s)" : m.role;
+  ctx.fillText(label, 0, -34);
   ctx.restore();
 }
 
@@ -1352,6 +1771,86 @@ function render() {
     }
   }
 
+  // 1.5. Dynamic Water Puddles & Rippling
+  waterPuddles.forEach(pad => {
+    ctx.fillStyle = 'rgba(28, 45, 68, 0.45)';
+    ctx.beginPath();
+    ctx.ellipse(pad.x, pad.y, pad.rx, pad.ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(100, 180, 240, 0.25)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // Specular puddle highlight
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.beginPath();
+    ctx.ellipse(pad.x - pad.rx * 0.25, pad.y - pad.ry * 0.25, pad.rx * 0.45, pad.ry * 0.35, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  waterRipples.forEach(r => {
+    ctx.strokeStyle = 'rgba(130, 200, 255, ' + r.alpha + ')';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+
+  // 1.6. Magma Fissures & Scorch Marks
+  groundScorches.forEach(s => {
+    const alpha = Math.min(1.0, s.life / 2.0);
+    ctx.strokeStyle = 'rgba(255, 71, 87, ' + (alpha * 0.85) + ')';
+    ctx.lineWidth = s.width;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(s.x1, s.y1);
+    ctx.lineTo(s.x2, s.y2);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(255, 211, 42, ' + (alpha * 0.9) + ')';
+    ctx.lineWidth = s.width * 0.45;
+    ctx.beginPath();
+    ctx.moveTo(s.x1, s.y1);
+    ctx.lineTo(s.x2, s.y2);
+    ctx.stroke();
+  });
+
+  // 1.7. 🏛️ Gothic Ruin Monoliths (Stone Pillars with Ancient Glyphs)
+  ruinPillars.forEach(p => {
+    // Cast shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.beginPath();
+    ctx.ellipse(p.x + 18, p.y + 24, 28, 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Stone Column Base & Shaft
+    ctx.fillStyle = '#1c1f2b';
+    ctx.fillRect(p.x - 17, p.y - 28, 34, 56);
+    ctx.fillStyle = '#2d3345';
+    ctx.fillRect(p.x - 14, p.y - 25, 28, 50);
+    ctx.fillStyle = '#485460';
+    ctx.fillRect(p.x - 12, p.y - 23, 8, 46);
+
+    // Glowing Runic Carvings
+    ctx.fillStyle = p.runeColor;
+    ctx.fillRect(p.x - 3, p.y - 12, 6, 4);
+    ctx.fillRect(p.x - 1, p.y - 4, 2, 14);
+    ctx.fillRect(p.x - 4, p.y + 12, 8, 3);
+
+    // Pillar Capital & Torch Fire on Top
+    ctx.fillStyle = '#1e272e';
+    ctx.fillRect(p.x - 18, p.y - 34, 36, 8);
+    // Flickering Torch Flame
+    const flameFlicker = Math.sin(performance.now() * 0.01 + p.x) * 3;
+    ctx.fillStyle = '#ff4757';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y - 40 + flameFlicker, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffd32a';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y - 39 + flameFlicker, 4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
   // 2. Town Ruin Buildings
   townBuildings.forEach(b => {
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
@@ -1484,6 +1983,32 @@ function render() {
   const aimAngle = Math.atan2(mouseWorldY - player.y, mouseWorldX - player.x);
   drawPixelHero(ctx, player.x, player.y, player.walkTimer, player.attackSwingTimer, aimAngle);
 
+  // 10.5. Holy Protective Barrier Dome
+  if (holyShieldTimer > 0) {
+    const pulse = Math.sin(performance.now() * 0.008) * 4;
+    ctx.save();
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, 115 + pulse, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.12)';
+    ctx.fill();
+
+    const shieldAng = performance.now() * 0.0025;
+    for (let g = 0; g < 6; g++) {
+      const a = shieldAng + (g * Math.PI / 3);
+      const gx = player.x + Math.cos(a) * (115 + pulse);
+      const gy = player.y + Math.sin(a) * (115 + pulse);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(gx - 3, gy - 3, 6, 6);
+      ctx.fillStyle = '#ffd700';
+      ctx.fillRect(gx - 2, gy - 2, 4, 4);
+    }
+    ctx.restore();
+  }
+
   // 11. Projectiles, Shards, Floating Numbers
   activeProjectiles.forEach(p => {
     ctx.fillStyle = p.color;
@@ -1610,6 +2135,13 @@ function updateHUD() {
   document.getElementById('goldCount').innerText = inventory.gold;
   document.getElementById('gemCount').innerText = inventory.gems;
   document.getElementById('scaleCount').innerText = inventory.scales;
+
+  const wpLvl = inventory.weaponLevel || 0;
+  const wpEl = document.getElementById('weaponLevelText');
+  if (wpEl) {
+    wpEl.innerText = WEAPON_NAMES[wpLvl];
+    wpEl.style.color = WEAPON_COLORS[wpLvl];
+  }
 }
 
 requestAnimationFrame(gameLoop);

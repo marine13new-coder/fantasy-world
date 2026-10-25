@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="ko"><head><meta charset="utf-8"><title>CHRONO-PULSE 3D : CYBERPUNK SECTOR</title>
+<html lang="ko"><head><meta charset="utf-8"><title>CHRONO-PULSE 3D : OVERDRIVE APEX</title>
 <style>
-:root{--cp-cyan:#00f2ff;--cp-magenta:#ff0077;--cp-amber:#ffaa00;--cp-purple:#aa00ff;--cp-bg:#030509}
+:root{--cp-cyan:#00f2ff;--cp-magenta:#ff0077;--cp-amber:#ffaa00;--cp-purple:#aa00ff;--cp-bg:#020408}
 body{margin:0;background:var(--cp-bg);overflow:hidden;font-family:'Consolas','Segoe UI',sans-serif;color:#fff;user-select:none}
 canvas#c{display:block;width:100vw;height:100vh}
 #ui{position:fixed;inset:0;pointer-events:none}
@@ -148,11 +148,11 @@ canvas#c{display:block;width:100vw;height:100vh}
 
  <div id="overlay">
   <h1>CHRONO-PULSE</h1>
-  <h2>NEON EXPANSION : SECTOR ARENA</h2>
+  <h2>NEON EXPANSION : OVERDRIVE APEX</h2>
   <p>클릭하여 동기화 개시 (마우스 잠금 & 입체 음향 활성화)</p>
   <p style="color:#789;margin-top:10px">WASD 이동 · SPACE 부스트 점프 · <b>F 순간 점멸(Blink Dash)</b></p>
   <p style="color:#789"><b>SHIFT 누르고 있으면 시간 감속</b> · <b>E:</b> 3초 리와인드 · <b>C:</b> 중력 왜곡장 · <b>Q:</b> 과충전</p>
-  <p style="color:#789">광활해진 24x24 사이버 아레나에서 파편을 모아 <b>[U] 연구소 특성</b>을 강화하세요!</p>
+  <p style="color:#789">적 파괴 시 드롭되는 <b>빛나는 픽업 큐브(체력 수복 / 에너지 완충)</b>를 획득하세요!</p>
  </div>
 </div>
 <canvas id="c"></canvas>
@@ -204,6 +204,7 @@ const SND={
  bossBeam(x,z){noise(.5,.6,800,'lowpass');play3DTone(150,60,.4,.6,'sawtooth',x,z)},
  hit(){tone(1400,900,.04,.3,'square')},
  crit(){tone(2200,1600,.06,.5,'square');tone(3200,2100,.08,.35,'sine',.02)},
+ pickup(){tone(659,1046,.18,.35,'triangle');tone(880,1318,.2,.3,'sine',.06)},
  purge(streak){
   const bases=[440,580,720,880,1050];
   const b=bases[Math.min(streak-1,bases.length-1)]||440;
@@ -247,7 +248,6 @@ const N=24,CELL=2;
 function cellAt(wx,wz){const gx=(wx/CELL)|0,gz=(wz/CELL)|0;if(gx<0||gz<0||gx>=N||gz>=N)return'#';return MAP[gz][gx]}
 function isWall(wx,wz){return cellAt(wx,wz)!=='.'}
 
-// ===== PROCEDURAL NEON TEXTURES =====
 function makeTex(fn){const c=document.createElement('canvas');c.width=c.height=256;fn(c.getContext('2d'));const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t}
 const wallTex=makeTex(g=>{
  g.fillStyle='#090f18';g.fillRect(0,0,256,256);
@@ -278,30 +278,40 @@ const renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});
 renderer.setSize(innerWidth,innerHeight);
 renderer.setPixelRatio(Math.min(2,devicePixelRatio));
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x030509);
-scene.fog=new THREE.FogExp2(0x030509,0.024);
+scene.background=new THREE.Color(0x020408);
+scene.fog=new THREE.FogExp2(0x020408,0.022);
 
-const camera=new THREE.PerspectiveCamera(78,innerWidth/innerHeight,0.1,85);
+const camera=new THREE.PerspectiveCamera(78,innerWidth/innerHeight,0.1,90);
 camera.rotation.order='YXZ';
 scene.add(camera);
 
-// 다중 앰비언트 & 동적 네온 포인트 라이트
-scene.add(new THREE.HemisphereLight(0x00f2ff,0x030509,0.75));
+scene.add(new THREE.HemisphereLight(0x00f2ff,0x020408,0.75));
 const dirLight=new THREE.DirectionalLight(0xff0077,0.85);
 dirLight.position.set(24,36,20);
 scene.add(dirLight);
 
-// 맵 곳곳에 배치할 4대 사이버 네온 포인트 라이트
 const pLights=[
- [8,3,8,0x00f2ff],[40,3,8,0xff0077],[8,3,40,0xffaa00],[40,3,40,0xaa00ff]
+ [8,3.2,8,0x00f2ff],[40,3.2,8,0xff0077],[8,3.2,40,0xffaa00],[40,3.2,40,0xaa00ff],[24,4,24,0x00f2ff]
 ];
 pLights.forEach(([x,y,z,col])=>{
- const pl=new THREE.PointLight(col,1.2,16);
+ const pl=new THREE.PointLight(col,1.4,18);
  pl.position.set(x,y,z);
  scene.add(pl);
 });
 
-// 바닥 & 천장
+// 사이버 홀로그램 파티클 더스트 (공중에 떠다니는 네온 입자)
+const dustGeo=new THREE.BufferGeometry();
+const dustCount=140,dustPos=new Float32Array(dustCount*3);
+for(let i=0;i<dustCount*3;i+=3){
+ dustPos[i]=Math.random()*N*CELL;
+ dustPos[i+1]=0.3+Math.random()*3.5;
+ dustPos[i+2]=Math.random()*N*CELL;
+}
+dustGeo.setAttribute('position',new THREE.BufferAttribute(dustPos,3));
+const dustMat=new THREE.PointsMaterial({color:0x00f2ff,size:0.06,transparent:true,opacity:0.6});
+const dustParticles=new THREE.Points(dustGeo,dustMat);
+scene.add(dustParticles);
+
 const floor=new THREE.Mesh(new THREE.PlaneGeometry(N*CELL,N*CELL),new THREE.MeshLambertMaterial({map:floorTex}));
 floor.rotation.x=-Math.PI/2;floor.position.set(N*CELL/2,0,N*CELL/2);scene.add(floor);
 
@@ -418,7 +428,7 @@ const WEAPONS=[
 
 const PERKS={dmg:0,flux:0,armor:0,vamp:0};
 
-let P,E=[],tracers=[],ebullets=[],particles=[],vortices=[],history=[];
+let P,E=[],tracers=[],ebullets=[],particles=[],vortices=[],history=[],pickups=[];
 let keys={},mouseDown=false,locked=false,over=false,sector=0,shards=0,combo=0;
 let timeScale=1.0;
 let inUpgrades=false,bossActive=false,bossRef=null;
@@ -461,6 +471,16 @@ function spawnDamageFloat(dmg,crit,pos){
  el.style.color=crit?'#ff0077':'#00f2ff';
  document.body.appendChild(el);
  setTimeout(()=>el.remove(),550);
+}
+
+// ===== 전장 드롭 픽업 아이템 (나노 아머 팩 & 플럭스 배터리) =====
+function spawnPickup(x,z){
+ const isHp=Math.random()>.5;
+ const geo=new THREE.OctahedronGeometry(.26);
+ const mat=new THREE.MeshBasicMaterial({color:isHp?0x00ff88:0xffaa00,wireframe:true});
+ const m=new THREE.Mesh(geo,mat);
+ m.position.set(x,.5,z);scene.add(m);
+ pickups.push({m,x,z,isHp,life:18});
 }
 
 // ===== 특성 상점 =====
@@ -556,6 +576,7 @@ function reset(){
  ebullets.forEach(b=>scene.remove(b.m));ebullets=[];
  particles.forEach(p=>scene.remove(p.m));particles=[];
  vortices.forEach(v=>scene.remove(v.m));vortices=[];
+ pickups.forEach(pk=>scene.remove(pk.m));pickups=[];
  history=[];
  P={
   x:2.5*CELL,y:0,z:21.5*CELL,vy:0,yaw:0,pitch:0,hp:100,maxHp:100+PERKS.armor*30,timeFlux:100,
@@ -666,6 +687,7 @@ function shoot(){
     if(enemy.hp<=0){
      combo++;
      SND.purge(combo);
+     spawnPickup(enemy.x,enemy.z);
      scene.remove(enemy.mesh);
      E.splice(E.indexOf(enemy),1);
      const pts=(isCrit?220:120)*(enemy.isBoss?8:1);
@@ -797,6 +819,9 @@ function updateAI(e,dt){
 function update(dt){
  if(over||inUpgrades)return;
 
+ // 홀로그램 더스트 살짝 부유 애니메이션
+ if(dustParticles){dustParticles.rotation.y+=dt*.03}
+
  const fluxRate=1+PERKS.flux*.35;
  const wantsSlow=keys.shift&&P.timeFlux>5;
  if(wantsSlow){
@@ -856,6 +881,19 @@ function update(dt){
   if(v.life<=0){scene.remove(v.m);vortices.splice(i,1)}
  }
 
+ // 픽업 아이템 회전 및 습득 판정
+ for(let i=pickups.length-1;i>=0;i--){
+  const pk=pickups[i];pk.life-=dt;
+  pk.m.rotation.x+=dt*2;pk.m.rotation.y+=dt*3;
+  if(Math.hypot(P.x-pk.x,P.z-pk.z)<1.2){
+   if(pk.isHp){P.hp=Math.min(P.maxHp,P.hp+25);banner('+25 HP 나노 팩 획득');}
+   else{P.timeFlux=Math.min(100,P.timeFlux+40);banner('+40% 플럭스 배터리 충전');}
+   SND.pickup();
+   scene.remove(pk.m);pickups.splice(i,1);updateHUD();continue;
+  }
+  if(pk.life<=0){scene.remove(pk.m);pickups.splice(i,1)}
+ }
+
  E.forEach(e=>updateAI(e,dt));
 
  for(let i=ebullets.length-1;i>=0;i--){
@@ -905,6 +943,10 @@ function drawMinimap(){
  }
  vortices.forEach(v=>{
   mm.strokeStyle='#ff0077';mm.beginPath();mm.arc(v.x/CELL*s,v.z/CELL*s,v.rad/CELL*s,0,7);mm.stroke();
+ });
+ pickups.forEach(pk=>{
+  mm.fillStyle=pk.isHp?'#00ff88':'#ffaa00';
+  mm.fillRect(pk.x/CELL*s-1.5,pk.z/CELL*s-1.5,3,3);
  });
  const px=P.x/CELL*s,pz=P.z/CELL*s;
  mm.fillStyle='#00f2ff';mm.beginPath();mm.arc(px,pz,3.5,0,7);mm.fill();
