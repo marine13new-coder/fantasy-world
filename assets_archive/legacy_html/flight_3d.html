@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>스카이 에이스 3D - 비행기 비행 시뮬레이터 (Sky Ace 3D)</title>
+  <style>
+    :root {
+      --primary: #00d2ff;
+      --primary-glow: rgba(0, 210, 255, 0.6);
+      --accent: #ffb703;
+      --accent-glow: rgba(255, 183, 3, 0.6);
+      --danger: #ff0055;
+      --hud-green: #00ff88;
+      --hud-glow: rgba(0, 255, 136, 0.4);
+      --dark-glass: rgba(10, 16, 26, 0.78);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+
+    body {
+      background-color: #030813;
+      color: #fff;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Malgun Gothic", sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #canvas-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* ====== HUD Layer ====== */
+    #hud-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* 상단 상태 바 */
+    .top-bar {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      background: var(--dark-glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(0, 210, 255, 0.3);
+      border-radius: 40px;
+      padding: 10px 28px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 210, 255, 0.2);
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #8da4be;
+      font-weight: 700;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 900;
+      color: #fff;
+      font-family: 'Courier New', Courier, monospace;
+      text-shadow: 0 0 10px var(--primary-glow);
+    }
+
+    .stat-divider {
+      width: 1px;
+      height: 28px;
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* 좌측 계기판 (속도계 & 쓰로틀) */
+    .left-instruments {
+      position: absolute;
+      left: 30px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: var(--dark-glass);
+      backdrop-filter: blur(10px);
+      padding: 18px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(0, 255, 136, 0.25);
+    }
+
+    .gauge-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 50px;
+    }
+
+    .gauge-title {
+      font-size: 11px;
+      color: var(--hud-green);
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .gauge-bar-bg {
+      width: 16px;
+      height: 140px;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 8px;
+      border: 1px solid rgba(0, 255, 136, 0.4);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column-reverse;
+      position: relative;
+    }
+
+    .gauge-bar-fill {
+      width: 100%;
+      height: 40%;
+      background: linear-gradient(to top, #00ff88, #00d2ff, #ffb703, #ff0055);
+      border-radius: 6px;
+      transition: height 0.1s ease-out;
+      box-shadow: 0 0 12px var(--hud-glow);
+    }
+
+    .gauge-val-text {
+      font-size: 13px;
+      font-weight: bold;
+      margin-top: 6px;
+      font-family: monospace;
+      color: #fff;
+    }
+
+    /* 우측 계기판 (고도계 & 자세) */
+    .right-instruments {
+      position: absolute;
+      right: 30px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: var(--dark-glass);
+      backdrop-filter: blur(10px);
+      padding: 18px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(0, 210, 255, 0.25);
+    }
+
+    /* 중앙 조준선 & 인공 수평선 (HUD Crosshair) */
+    .center-hud {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 260px;
+      height: 260px;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .crosshair-reticle {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border: 2px solid rgba(0, 255, 136, 0.8);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+    }
+
+    .crosshair-center-dot {
+      width: 6px;
+      height: 6px;
+      background: #00ff88;
+      border-radius: 50%;
+    }
+
+    .pitch-ladder {
+      position: absolute;
+      width: 140px;
+      height: 2px;
+      background: rgba(0, 255, 136, 0.4);
+      transform-origin: center;
+    }
+
+    .pitch-ladder::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: -6px;
+      width: 2px;
+      height: 14px;
+      background: rgba(0, 255, 136, 0.7);
+    }
+    .pitch-ladder::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: -6px;
+      width: 2px;
+      height: 14px;
+      background: rgba(0, 255, 136, 0.7);
+    }
+
+    /* 미니맵 레이더 */
+    .radar-box {
+      position: absolute;
+      bottom: 24px;
+      left: 30px;
+      width: 130px;
+      height: 130px;
+      background: rgba(6, 12, 22, 0.85);
+      border: 2px solid rgba(0, 210, 255, 0.4);
+      border-radius: 50%;
+      box-shadow: 0 0 20px rgba(0, 210, 255, 0.25);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .radar-sweep {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, rgba(0, 210, 255, 0.35) 0deg, transparent 60deg, transparent 360deg);
+      animation: radar-spin 3s linear infinite;
+    }
+
+    @keyframes radar-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .radar-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px;
+      height: 8px;
+      background: #00ff88;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #00ff88;
+    }
+
+    .radar-blip-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* 하단 메시지 및 조작 가이드 안내 */
+    .bottom-info {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+    }
+
+    .control-tip {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.75);
+      background: rgba(0, 0, 0, 0.6);
+      padding: 6px 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .key-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 11px;
+      font-weight: bold;
+      color: #00d2ff;
+    }
+
+    .alert-banner {
+      font-size: 18px;
+      font-weight: 800;
+      color: #ff0055;
+      text-shadow: 0 0 10px rgba(255, 0, 85, 0.8);
+      letter-spacing: 2px;
+      animation: pulse-danger 0.6s infinite alternate;
+      display: none;
+    }
+
+    @keyframes pulse-danger {
+      from { opacity: 0.3; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1.05); }
+    }
+
+    /* 모달 오버레이 (시작, 게임오버, 일시정지) */
+    .modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(4, 9, 18, 0.85);
+      backdrop-filter: blur(14px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      transition: opacity 0.3s;
+    }
+
+    .modal-card {
+      background: linear-gradient(135deg, rgba(20, 32, 54, 0.95), rgba(9, 16, 28, 0.98));
+      border: 2px solid rgba(0, 210, 255, 0.5);
+      border-radius: 24px;
+      padding: 40px;
+      max-width: 580px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 210, 255, 0.3);
+      position: relative;
+    }
+
+    .game-logo {
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      background: linear-gradient(45deg, #00d2ff, #00ff88, #ffb703);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .game-subtitle {
+      font-size: 16px;
+      color: #9cb3ce;
+      margin-bottom: 24px;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 18px;
+      border-radius: 14px;
+      margin-bottom: 28px;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    .control-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .plane-selector {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 28px;
+      justify-content: center;
+    }
+
+    .plane-btn {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 12px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .plane-btn.active {
+      background: rgba(0, 210, 255, 0.2);
+      border-color: #00d2ff;
+      box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
+      font-weight: bold;
+    }
+
+    .plane-btn:hover {
+      transform: translateY(-2px);
+      border-color: #00d2ff;
+    }
+
+    .start-btn {
+      width: 100%;
+      padding: 18px;
+      font-size: 20px;
+      font-weight: 900;
+      color: #030813;
+      background: linear-gradient(45deg, #00d2ff, #00ff88);
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      letter-spacing: 1.5px;
+      box-shadow: 0 8px 24px rgba(0, 210, 255, 0.5);
+      transition: all 0.2s;
+    }
+
+    .start-btn:hover {
+      transform: scale(1.02);
+      box-shadow: 0 10px 30px rgba(0, 255, 136, 0.7);
+    }
+
+    /* 플로팅 버튼들 (상단 우측) */
+    .top-actions {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      display: flex;
+      gap: 10px;
+      z-index: 20;
+    }
+
+    .action-btn {
+      background: var(--dark-glass);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .action-btn:hover {
+      border-color: #00d2ff;
+      background: rgba(0, 210, 255, 0.2);
+    }
+
+    /* 모바일 가상 컨트롤러 */
+    #mobile-controls {
+      display: none;
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      padding: 0 30px;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    .touch-stick-zone {
+      width: 130px;
+      height: 130px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px dashed rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      position: relative;
+      pointer-events: auto;
+    }
+
+    .touch-stick-knob {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 50px;
+      height: 50px;
+      background: rgba(0, 210, 255, 0.6);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--primary-glow);
+    }
+
+    .touch-btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      pointer-events: auto;
+    }
+
+    .touch-btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba(0, 210, 255, 0.3);
+      border: 2px solid #00d2ff;
+      color: #fff;
+      font-weight: bold;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    .touch-btn:active {
+      background: #00d2ff;
+      color: #000;
+    }
+
+    @media (max-width: 768px) {
+      .left-instruments, .right-instruments {
+        display: none;
+      }
+      #mobile-controls {
+        display: flex;
+      }
+      .radar-box {
+        bottom: 160px;
+        left: 20px;
+        width: 90px;
+        height: 90px;
+      }
+      .control-tip {
+        display: none;
+      }
+    }
+  </style>
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <!-- 3D 캔버스 영역 -->
+  <div id="canvas-container"></div>
+
+  <!-- HUD 레이어 -->
+  <div id="hud-layer">
+    <!-- 상단 상태 정보 -->
+    <div class="top-bar">
+      <div class="stat-item">
+        <span class="stat-label">SCORE</span>
+        <span class="stat-value" id="hud-score">00000</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-label">RINGS</span>
+        <span class="stat-value" id="hud-rings" style="color: #ffb703;">0 / 20</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-label">TARGETS</span>
+        <span class="stat-value" id="hud-targets" style="color: #ff0055;">0 / 10</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-label">TIME</span>
+        <span class="stat-value" id="hud-timer">00:00</span>
+      </div>
+    </div>
+
+    <!-- 좌측 속도계 & 쓰로틀 -->
+    <div class="left-instruments">
+      <div class="gauge-container">
+        <div class="gauge-title">THROTTLE</div>
+        <div class="gauge-bar-bg">
+          <div class="gauge-bar-fill" id="throttle-fill"></div>
+        </div>
+        <div class="gauge-val-text" id="throttle-val">50%</div>
+      </div>
+      <div class="gauge-container">
+        <div class="gauge-title">SPEED</div>
+        <div class="gauge-val-text" id="speed-val" style="color:#00ff88; font-size:16px;">180<span style="font-size:10px;">km/h</span></div>
+      </div>
+    </div>
+
+    <!-- 우측 고도계 & G-포스 -->
+    <div class="right-instruments">
+      <div class="gauge-container">
+        <div class="gauge-title">ALTITUDE</div>
+        <div class="gauge-bar-bg">
+          <div class="gauge-bar-fill" id="alt-fill" style="background: linear-gradient(to top, #00d2ff, #7928ca);"></div>
+        </div>
+        <div class="gauge-val-text" id="alt-val">450m</div>
+      </div>
+      <div class="gauge-container">
+        <div class="gauge-title">G-FORCE</div>
+        <div class="gauge-val-text" id="gforce-val" style="color:#ffb703; font-size:16px;">1.0G</div>
+      </div>
+    </div>
+
+    <!-- 중앙 조준 HUD & 수평선 -->
+    <div class="center-hud">
+      <div class="crosshair-reticle">
+        <div class="crosshair-center-dot"></div>
+      </div>
+      <div class="pitch-ladder" id="pitch-ladder"></div>
+    </div>
+
+    <!-- 미니 레이더 -->
+    <div class="radar-box">
+      <div class="radar-sweep"></div>
+      <div class="radar-center"></div>
+      <div class="radar-blip-container" id="radar-blips"></div>
+    </div>
+
+    <!-- 하단 경고 및 가이드 안내 -->
+    <div class="bottom-info">
+      <div class="alert-banner" id="warning-banner">⚠️ TERRAIN PULL UP! ⚠️</div>
+      <div class="control-tip">
+        <span><span class="key-badge">W/S</span> 피치(상승/하강)</span>
+        <span><span class="key-badge">A/D</span> 롤(선회)</span>
+        <span><span class="key-badge">Q/E</span> 요우(방향타)</span>
+        <span><span class="key-badge">SHIFT/SPACE</span> 부스터</span>
+        <span><span class="key-badge">좌클릭 / F</span> 기관총 발사</span>
+        <span><span class="key-badge">C</span> 카메라 전환</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 상단 우측 액션 버튼들 -->
+  <div class="top-actions">
+    <button class="action-btn" id="btn-camera">🎥 시점: 3인칭 (C)</button>
+    <button class="action-btn" id="btn-time">☀️ 낮/노을/밤</button>
+    <button class="action-btn" id="btn-audio">🔊 소리 켜짐</button>
+  </div>
+
+  <!-- 모바일 가상 조이스틱 -->
+  <div id="mobile-controls">
+    <div class="touch-stick-zone" id="touch-stick">
+      <div class="touch-stick-knob" id="touch-knob"></div>
+    </div>
+    <div class="touch-btn-group">
+      <div class="touch-btn" id="btn-touch-fire">FIRE</div>
+      <div class="touch-btn" id="btn-touch-boost" style="border-color:#ffb703;">BOOST</div>
+      <div class="touch-btn" id="btn-touch-cam">CAM</div>
+    </div>
+  </div>
+
+  <!-- 시작 / 게임 오버 모달 -->
+  <div class="modal-overlay" id="main-modal">
+    <div class="modal-card">
+      <h1 class="game-logo">✈️ SKY ACE 3D</h1>
+      <p class="game-subtitle">푸른 하늘을 가르는 창공의 비행 에이스 시뮬레이터</p>
+
+      <div class="plane-selector">
+        <button class="plane-btn active" data-plane="propeller">
+          🛩️<br><strong>빈티지 에이스</strong><br><small>균형잡힌 비행기</small>
+        </button>
+        <button class="plane-btn" data-plane="jet">
+          🚀<br><strong>스텔스 팰컨</strong><br><small>초음속 제트기</small>
+        </button>
+        <button class="plane-btn" data-plane="scifi">
+          ⚡<br><strong>사이버 레이서</strong><br><small>고기동 미래기</small>
+        </button>
+      </div>
+
+      <div class="controls-grid">
+        <div class="control-row">🕹️ <strong>상승/하강</strong>: W / S 또는 마우스/터치</div>
+        <div class="control-row">🔄 <strong>선회/기울기</strong>: A / D 또는 방향키</div>
+        <div class="control-row">🚀 <strong>부스터 가속</strong>: Shift 또는 Space</div>
+        <div class="control-row">🎯 <strong>기관포 발사</strong>: 마우스 좌클릭 또는 F</div>
+        <div class="control-row">🎮 <strong>방향타(Yaw)</strong>: Q / E 키</div>
+        <div class="control-row">🎥 <strong>시점 전환</strong>: C 키 (1인칭/3인칭)</div>
+      </div>
+
+      <button class="start-btn" id="btn-start-game">비행 출격 시작 (FLY NOW)</button>
+    </div>
+  </div>
+
+  <script>
+    /* ============================================================
+       SKY ACE 3D - Three.js WebGL Flight Simulator
+       ============================================================ */
+
+    // --- 오디오 사운드 신시사이저 (Web Audio API) ---
+    class AudioManager {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+        this.engineOsc = null;
+        this.engineGain = null;
+        this.windGain = null;
+      }
+
+      init() {
+        if (this.ctx) return;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioContext();
+
+        // 엔진 소리 신시사이저 (저음 럼블 + 펄스)
+        this.engineOsc = this.ctx.createOscillator();
+        this.engineOsc.type = 'sawtooth';
+        this.engineOsc.frequency.value = 65;
+
+        // 엔진 필터
+        this.engineFilter = this.ctx.createBiquadFilter();
+        this.engineFilter.type = 'lowpass';
+        this.engineFilter.frequency.value = 400;
+
+        this.engineGain = this.ctx.createGain();
+        this.engineGain.gain.value = 0.08;
+
+        this.engineOsc.connect(this.engineFilter);
+        this.engineFilter.connect(this.engineGain);
+        this.engineGain.connect(this.ctx.destination);
+        this.engineOsc.start();
+
+        // 바람 소리 (화이트 노이즈 기반)
+        const bufferSize = this.ctx.sampleRate * 2;
+        const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          output[i] = Math.random() * 2 - 1;
+        }
+        const whiteNoise = this.ctx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        whiteNoise.loop = true;
+
+        const windFilter = this.ctx.createBiquadFilter();
+        windFilter.type = 'bandpass';
+        windFilter.frequency.value = 350;
+        windFilter.Q.value = 1.0;
+
+        this.windGain = this.ctx.createGain();
+        this.windGain.gain.value = 0.03;
+
+        whiteNoise.connect(windFilter);
+        windFilter.connect(this.windGain);
+        this.windGain.connect(this.ctx.destination);
+        whiteNoise.start();
+      }
+
+      updateEngine(speedRatio, isBoost) {
+        if (!this.ctx || !this.enabled) return;
+        const targetFreq = 50 + speedRatio * 90 + (isBoost ? 60 : 0);
+        this.engineOsc.frequency.setTargetAtTime(targetFreq, this.ctx.currentTime, 0.1);
+        this.engineFilter.frequency.setTargetAtTime(350 + speedRatio * 800, this.ctx.currentTime, 0.1);
+        this.engineGain.gain.setTargetAtTime(0.06 + speedRatio * 0.08 + (isBoost ? 0.05 : 0), this.ctx.currentTime, 0.1);
+        this.windGain.gain.setTargetAtTime(0.02 + speedRatio * 0.07, this.ctx.currentTime, 0.1);
+      }
+
+      playShoot() {
+        if (!this.ctx || !this.enabled) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.08);
+
+        gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.08);
+      }
+
+      playRingCollect() {
+        if (!this.ctx || !this.enabled) return;
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 아르페지오
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          const startTime = this.ctx.currentTime + idx * 0.05;
+          gain.gain.setValueAtTime(0.2, startTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(startTime);
+          osc.stop(startTime + 0.35);
+        });
+      }
+
+      playExplosion() {
+        if (!this.ctx || !this.enabled) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(20, this.ctx.currentTime + 0.4);
+
+        gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.4);
+      }
+
+      toggleAudio() {
+        this.enabled = !this.enabled;
+        if (this.ctx) {
+          if (this.enabled) {
+            this.ctx.resume();
+          } else {
+            this.ctx.suspend();
+          }
+        }
+        return this.enabled;
+      }
+    }
+
+    const audioMgr = new AudioManager();
+
+    // --- 전역 설정 및 상태 변수 ---
+    const CONFIG = {
+      worldSize: 6000,
+      ringCount: 20,
+      targetCount: 15,
+      cloudCount: 70,
+      islandCount: 18
+    };
+
+    let scene, camera, renderer;
+    let airplane, airplanePropeller;
+    let cameraMode = 0; // 0: 3인칭, 1: 1인칭 조종석, 2: 원거리 시네마틱
+    let timeOfDay = 0; // 0: 낮, 1: 노을, 2: 밤
+    let isGameRunning = false;
+    let selectedPlaneType = 'propeller';
+
+    // 비행 물리 상태
+    const flight = {
+      pos: new THREE.Vector3(0, 150, 0),
+      velocity: new THREE.Vector3(0, 0, -1),
+      speed: 80,
+      minSpeed: 40,
+      maxSpeed: 240,
+      boostSpeed: 340,
+      accel: 50,
+      drag: 0.985,
+      throttle: 0.5,
+      pitch: 0,
+      roll: 0,
+      yaw: 0,
+      isBoosting: false,
+      altitude: 150,
+      gForce: 1.0,
+      bullets: [],
+      score: 0,
+      ringsCollected: 0,
+      targetsDestroyed: 0,
+      startTime: 0,
+      lastShootTime: 0
+    };
+
+    // 키보드 & 터치 입력
+    const keys = {
+      w: false, s: false, a: false, d: false,
+      q: false, e: false, shift: false, space: false,
+      f: false, mouseClick: false
+    };
+
+    // 상호작용 객체들
+    let rings = [];
+    let targets = [];
+    let particles = [];
+    let contrails = [];
+    let terrainMeshes = [];
+    let clouds = [];
+    let hemiLight, dirLight, ambientLight;
+
+    // --- Three.js 초기화 ---
+    function init() {
+      const container = document.getElementById('canvas-container');
+
+      // 씬 생성
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x76b6ff);
+      scene.fog = new THREE.FogExp2(0x76b6ff, 0.00045);
+
+      // 카메라 설정
+      camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 1, 12000);
+      camera.position.set(0, 160, 40);
+
+      // 렌더러 생성
+      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.1;
+      container.appendChild(renderer.domElement);
+
+      // 조명 설정
+      setupLights();
+
+      // 환경 생성 (바다, 산, 섬, 구름)
+      createOcean();
+      createIslandsAndTerrain();
+      createClouds();
+
+      // 미션 오브젝트 생성 (링, 표적)
+      createRings();
+      createFloatingTargets();
+
+      // 비행기 생성
+      buildAirplane(selectedPlaneType);
+
+      // 이벤트 리스너 등록
+      setupEvents();
+
+      // 렌더 루프 시작
+      animate(0);
+    }
+
+    // --- 조명 구성 ---
+    function setupLights() {
+      ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+      scene.add(ambientLight);
+
+      hemiLight = new THREE.HemisphereLight(0xdff0ff, 0x1d4e89, 0.7);
+      hemiLight.position.set(0, 500, 0);
+      scene.add(hemiLight);
+
+      dirLight = new THREE.DirectionalLight(0xfff3d6, 1.3);
+      dirLight.position.set(1200, 1800, 1000);
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize.width = 2048;
+      dirLight.shadow.mapSize.height = 2048;
+      dirLight.shadow.camera.near = 100;
+      dirLight.shadow.camera.far = 4000;
+      const d = 1500;
+      dirLight.shadow.camera.left = -d;
+      dirLight.shadow.camera.right = d;
+      dirLight.shadow.camera.top = d;
+      dirLight.shadow.camera.bottom = -d;
+      scene.add(dirLight);
+    }
+
+    // --- 바다 생성 ---
+    let oceanMesh;
+    function createOcean() {
+      const geo = new THREE.PlaneGeometry(CONFIG.worldSize * 1.5, CONFIG.worldSize * 1.5, 64, 64);
+      const mat = new THREE.MeshStandardMaterial({
+        color: 0x004777,
+        roughness: 0.15,
+        metalness: 0.8,
+        flatShading: true
+      });
+      oceanMesh = new THREE.Mesh(geo, mat);
+      oceanMesh.rotation.x = -Math.PI / 2;
+      oceanMesh.position.y = 0;
+      oceanMesh.receiveShadow = true;
+      scene.add(oceanMesh);
+    }
+
+    // --- 지형 & 열대 섬 생성 ---
+    function createIslandsAndTerrain() {
+      const islandMaterial = new THREE.MeshStandardMaterial({
+        color: 0x2b8a3e,
+        roughness: 0.8,
+        flatShading: true
+      });
+      const rockMaterial = new THREE.MeshStandardMaterial({
+        color: 0x5c677d,
+        roughness: 0.9,
+        flatShading: true
+      });
+      const sandMaterial = new THREE.MeshStandardMaterial({
+        color: 0xddb892,
+        roughness: 0.9,
+        flatShading: true
+      });
+
+      // 활주로가 있는 메인 스타트 섬
+      const runwayIsland = new THREE.Group();
+      const mainBaseGeo = new THREE.CylinderGeometry(400, 500, 60, 16);
+      const mainBase = new THREE.Mesh(mainBaseGeo, sandMaterial);
+      mainBase.position.y = 20;
+      mainBase.receiveShadow = true;
+      runwayIsland.add(mainBase);
+
+      // 활주로 아스팔트
+      const runwayGeo = new THREE.BoxGeometry(70, 4, 700);
+      const runwayMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.7 });
+      const runway = new THREE.Mesh(runwayGeo, runwayMat);
+      runway.position.set(0, 52, 0);
+      runway.receiveShadow = true;
+      runwayIsland.add(runway);
+
+      // 활주로 센터 라인
+      for (let z = -300; z <= 300; z += 50) {
+        const stripeGeo = new THREE.BoxGeometry(4, 4.5, 25);
+        const stripeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+        stripe.position.set(0, 52, z);
+        runwayIsland.add(stripe);
+      }
+
+      // 관제탑
+      const towerGeo = new THREE.CylinderGeometry(15, 20, 120, 8);
+      const towerMat = new THREE.MeshStandardMaterial({ color: 0xcccccc });
+      const tower = new THREE.Mesh(towerGeo, towerMat);
+      tower.position.set(120, 110, -100);
+      tower.castShadow = true;
+      runwayIsland.add(tower);
+
+      const cabinGeo = new THREE.CylinderGeometry(25, 20, 25, 8);
+      const cabinMat = new THREE.MeshStandardMaterial({ color: 0x00d2ff, roughness: 0.2, metalness: 0.9 });
+      const cabin = new THREE.Mesh(cabinGeo, cabinMat);
+      cabin.position.set(120, 175, -100);
+      runwayIsland.add(cabin);
+
+      scene.add(runwayIsland);
+      terrainMeshes.push(mainBase);
+
+      // 무작위 산과 섬들 배치
+      for (let i = 0; i < CONFIG.islandCount; i++) {
+        const angle = (i / CONFIG.islandCount) * Math.PI * 2 + Math.random() * 0.4;
+        const dist = 700 + Math.random() * 1800;
+        const x = Math.cos(angle) * dist;
+        const z = Math.sin(angle) * dist;
+
+        const islandGroup = new THREE.Group();
+        const baseRadius = 150 + Math.random() * 250;
+        const height = 180 + Math.random() * 320;
+
+        // 원뿔 형태의 산
+        const mountainGeo = new THREE.ConeGeometry(baseRadius, height, 9);
+        const mountain = new THREE.Mesh(mountainGeo, Math.random() > 0.5 ? islandMaterial : rockMaterial);
+        mountain.position.set(0, height / 2 - 10, 0);
+        mountain.castShadow = true;
+        mountain.receiveShadow = true;
+        islandGroup.add(mountain);
+
+        // 해변 테두리
+        const beachGeo = new THREE.CylinderGeometry(baseRadius * 1.25, baseRadius * 1.35, 15, 12);
+        const beach = new THREE.Mesh(beachGeo, sandMaterial);
+        beach.position.set(0, 5, 0);
+        beach.receiveShadow = true;
+        islandGroup.add(beach);
+
+        // 아치형 암석 (통과할 수 있는 재미난 지형 지물)
+        if (i % 4 === 0) {
+          const archGeo = new THREE.TorusGeometry(80, 25, 8, 16, Math.PI);
+          const archMat = new THREE.MeshStandardMaterial({ color: 0x4a5568, roughness: 0.8, flatShading: true });
+          const arch = new THREE.Mesh(archGeo, archMat);
+          arch.position.set(0, 60, baseRadius + 40);
+          arch.rotation.y = Math.random() * Math.PI;
+          arch.castShadow = true;
+          islandGroup.add(arch);
+        }
+
+        islandGroup.position.set(x, 0, z);
+        scene.add(islandGroup);
+        terrainMeshes.push(mountain);
+      }
+    }
+
+    // --- 구름 생성 ---
+    function createClouds() {
+      const cloudMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        roughness: 0.9,
+        flatShading: true,
+        transparent: true,
+        opacity: 0.85
+      });
+
+      for (let i = 0; i < CONFIG.cloudCount; i++) {
+        const cloudGroup = new THREE.Group();
+        const puffCount = 4 + Math.floor(Math.random() * 5);
+
+        for (let j = 0; j < puffCount; j++) {
+          const r = 35 + Math.random() * 55;
+          const puffGeo = new THREE.DodecahedronGeometry(r, 1);
+          const puff = new THREE.Mesh(puffGeo, cloudMat);
+          puff.position.set(
+            (Math.random() - 0.5) * 120,
+            (Math.random() - 0.5) * 30,
+            (Math.random() - 0.5) * 120
+          );
+          cloudGroup.add(puff);
+        }
+
+        const range = CONFIG.worldSize * 0.9;
+        cloudGroup.position.set(
+          (Math.random() - 0.5) * range,
+          250 + Math.random() * 450,
+          (Math.random() - 0.5) * range
+        );
+        scene.add(cloudGroup);
+        clouds.push(cloudGroup);
+      }
+    }
+
+    // --- 비행기 모델 생성 ---
+    function buildAirplane(type) {
+      if (airplane) {
+        scene.remove(airplane);
+      }
+
+      airplane = new THREE.Group();
+
+      if (type === 'propeller') {
+        // [1] 빈티지 레이스 프로펠러기
+        // 본체 (Fuselage)
+        const bodyGeo = new THREE.ConeGeometry(3.5, 24, 8);
+        bodyGeo.rotateX(Math.PI / 2);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0xd90429, roughness: 0.3, metalness: 0.4 });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.castShadow = true;
+        airplane.add(body);
+
+        // 조종석 캐노피 (Cockpit Glass)
+        const cockpitGeo = new THREE.SphereGeometry(2.5, 8, 8);
+        cockpitGeo.scale(0.8, 1, 2.2);
+        const cockpitMat = new THREE.MeshStandardMaterial({
+          color: 0x00d2ff,
+          roughness: 0.1,
+          metalness: 0.9,
+          transparent: true,
+          opacity: 0.75
+        });
+        const cockpit = new THREE.Mesh(cockpitGeo, cockpitMat);
+        cockpit.position.set(0, 2.2, -1);
+        airplane.add(cockpit);
+
+        // 주 날개 (Main Wings)
+        const wingGeo = new THREE.BoxGeometry(34, 0.5, 5);
+        const wingMat = new THREE.MeshStandardMaterial({ color: 0xef233c, roughness: 0.3 });
+        const wings = new THREE.Mesh(wingGeo, wingMat);
+        wings.position.set(0, 0, -2);
+        wings.castShadow = true;
+        airplane.add(wings);
+
+        // 날개 끝 라이트 (Wingtip Lights)
+        const lightLeft = new THREE.PointLight(0xff0000, 1.5, 20);
+        lightLeft.position.set(-17, 0, -2);
+        airplane.add(lightLeft);
+        const lightRight = new THREE.PointLight(0x00ff00, 1.5, 20);
+        lightRight.position.set(17, 0, -2);
+        airplane.add(lightRight);
+
+        // 꼬리날개 (Tail fin & Elevators)
+        const tailFinGeo = new THREE.BoxGeometry(0.5, 6, 4);
+        const tailFin = new THREE.Mesh(tailFinGeo, wingMat);
+        tailFin.position.set(0, 3.2, 9);
+        airplane.add(tailFin);
+
+        const tailWingGeo = new THREE.BoxGeometry(11, 0.4, 3);
+        const tailWing = new THREE.Mesh(tailWingGeo, wingMat);
+        tailWing.position.set(0, 0.8, 9);
+        airplane.add(tailWing);
+
+        // 프로펠러 허브 & 블레이드
+        const propHubGeo = new THREE.ConeGeometry(1.6, 3, 8);
+        propHubGeo.rotateX(Math.PI / 2);
+        const propHubMat = new THREE.MeshStandardMaterial({ color: 0xffb703 });
+        airplanePropeller = new THREE.Group();
+        const hub = new THREE.Mesh(propHubGeo, propHubMat);
+        airplanePropeller.add(hub);
+
+        const bladeGeo = new THREE.BoxGeometry(8, 0.8, 0.2);
+        const bladeMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+        const blade1 = new THREE.Mesh(bladeGeo, bladeMat);
+        const blade2 = new THREE.Mesh(bladeGeo, bladeMat);
+        blade2.rotation.z = Math.PI / 2;
+        airplanePropeller.add(blade1);
+        airplanePropeller.add(blade2);
+
+        airplanePropeller.position.set(0, 0, -12);
+        airplane.add(airplanePropeller);
+
+      } else if (type === 'jet') {
+        // [2] 초음속 제트기 (스텔스 팰컨)
+        const bodyGeo = new THREE.ConeGeometry(4, 28, 6);
+        bodyGeo.rotateX(Math.PI / 2);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2b2d42, roughness: 0.2, metalness: 0.7 });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        airplane.add(body);
+
+        // 델타 윙
+        const wingShape = new THREE.Shape();
+        wingShape.moveTo(0, -6);
+        wingShape.lineTo(-18, 6);
+        wingShape.lineTo(18, 6);
+        wingShape.closePath();
+        const extrudeSettings = { depth: 0.6, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.2, bevelThickness: 0.2 };
+        const wingGeo = new THREE.ExtrudeGeometry(wingShape, extrudeSettings);
+        wingGeo.rotateX(Math.PI / 2);
+        const wingMat = new THREE.MeshStandardMaterial({ color: 0x415a77, metalness: 0.8 });
+        const wings = new THREE.Mesh(wingGeo, wingMat);
+        wings.position.set(0, 0, 0);
+        airplane.add(wings);
+
+        // 듀얼 수직 꼬리날개
+        const vTailGeo = new THREE.BoxGeometry(0.5, 7, 5);
+        const vTailL = new THREE.Mesh(vTailGeo, wingMat);
+        vTailL.position.set(-3.5, 3.5, 8);
+        vTailL.rotation.z = -0.3;
+        airplane.add(vTailL);
+
+        const vTailR = new THREE.Mesh(vTailGeo, wingMat);
+        vTailR.position.set(3.5, 3.5, 8);
+        vTailR.rotation.z = 0.3;
+        airplane.add(vTailR);
+
+        // 조종석
+        const cockpitGeo = new THREE.SphereGeometry(2.2, 8, 8);
+        cockpitGeo.scale(0.7, 0.9, 3);
+        const cockpitMat = new THREE.MeshStandardMaterial({ color: 0xffb703, roughness: 0.1, metalness: 0.9 });
+        const cockpit = new THREE.Mesh(cockpitGeo, cockpitMat);
+        cockpit.position.set(0, 1.8, -4);
+        airplane.add(cockpit);
+
+        // 제트 엔진 노즐 화염
+        const nozzleGeo = new THREE.CylinderGeometry(2, 2.4, 4, 8);
+        nozzleGeo.rotateX(Math.PI / 2);
+        const nozzleMat = new THREE.MeshBasicMaterial({ color: 0x00d2ff });
+        const nozzle = new THREE.Mesh(nozzleGeo, nozzleMat);
+        nozzle.position.set(0, 0, 14);
+        airplane.add(nozzle);
+        airplanePropeller = nozzle; // 회전 대신 펄스용
+
+      } else {
+        // [3] 사이버 퓨처 윙
+        const bodyGeo = new THREE.CylinderGeometry(2, 4, 26, 5);
+        bodyGeo.rotateX(Math.PI / 2);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.1, metalness: 0.9 });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        airplane.add(body);
+
+        // 전진익 (Forward-swept Wings)
+        const wingShape = new THREE.Shape();
+        wingShape.moveTo(0, 0);
+        wingShape.lineTo(-20, -10);
+        wingShape.lineTo(-22, -6);
+        wingShape.lineTo(0, 6);
+        wingShape.lineTo(22, -6);
+        wingShape.lineTo(20, -10);
+        wingShape.closePath();
+        const wingGeo = new THREE.ExtrudeGeometry(wingShape, { depth: 0.8, bevelEnabled: false });
+        wingGeo.rotateX(Math.PI / 2);
+        const wingMat = new THREE.MeshStandardMaterial({
+          color: 0x00f0ff,
+          emissive: 0x004466,
+          metalness: 0.8,
+          roughness: 0.2
+        });
+        const wings = new THREE.Mesh(wingGeo, wingMat);
+        wings.position.set(0, 0, 0);
+        airplane.add(wings);
+
+        // 네온 링 엔진
+        const ringGeo = new THREE.TorusGeometry(3.5, 0.6, 8, 16);
+        const ringMat = new THREE.MeshBasicMaterial({ color: 0x00ff88 });
+        const ringEngine = new THREE.Mesh(ringGeo, ringMat);
+        ringEngine.position.set(0, 0, 11);
+        airplane.add(ringEngine);
+        airplanePropeller = ringEngine;
+      }
+
+      airplane.position.copy(flight.pos);
+      scene.add(airplane);
+    }
+
+    // --- 통과할 링 코스 (Sky Rings) 생성 ---
+    function createRings() {
+      // 기존 링 제거
+      rings.forEach(r => scene.remove(r.mesh));
+      rings = [];
+
+      const ringGeo = new THREE.TorusGeometry(26, 2.2, 12, 32);
+      const ringMat = new THREE.MeshStandardMaterial({
+        color: 0xffb703,
+        emissive: 0xff9900,
+        emissiveIntensity: 0.6,
+        roughness: 0.2,
+        metalness: 0.9
+      });
+
+      // 흥미진진한 비행 궤적 코스 생성 (활주로 출발 -> 협곡 통과 -> 고공 비행 -> 해안선)
+      let currentPos = new THREE.Vector3(0, 160, -300);
+      let heading = new THREE.Vector3(0, 0, -1);
+
+      for (let i = 0; i < CONFIG.ringCount; i++) {
+        // 부드럽게 굽이치는 웨이포인트 링 배치
+        const angle = (i / CONFIG.ringCount) * Math.PI * 4;
+        const radius = 900 + Math.sin(i * 0.7) * 350;
+        const x = Math.sin(angle) * radius;
+        const z = -Math.cos(angle) * radius - 200;
+        const y = 140 + Math.sin(i * 0.5) * 120 + (i % 2 === 0 ? 60 : 0);
+
+        const ringMesh = new THREE.Mesh(ringGeo, ringMat.clone());
+        ringMesh.position.set(x, y, z);
+
+        // 다음 링을 향해 링 회전
+        if (i > 0) {
+          const prev = rings[i - 1].mesh.position;
+          ringMesh.lookAt(prev);
+        } else {
+          ringMesh.rotation.y = Math.PI / 2;
+        }
+
+        ringMesh.castShadow = true;
+        scene.add(ringMesh);
+
+        rings.push({
+          mesh: ringMesh,
+          collected: false,
+          index: i,
+          radius: 26
+        });
+      }
+    }
+
+    // --- 파괴 가능한 공중 타겟 (Floating Targets) 생성 ---
+    function createFloatingTargets() {
+      targets.forEach(t => scene.remove(t.mesh));
+      targets = [];
+
+      for (let i = 0; i < CONFIG.targetCount; i++) {
+        const targetGroup = new THREE.Group();
+
+        // 붉은색 타겟 구체
+        const sphereGeo = new THREE.SphereGeometry(14, 16, 16);
+        const sphereMat = new THREE.MeshStandardMaterial({
+          color: 0xff0055,
+          emissive: 0xaa0033,
+          roughness: 0.3
+        });
+        const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+        targetGroup.add(sphere);
+
+        // 회전하는 타겟 링
+        const outerRingGeo = new THREE.TorusGeometry(20, 1.5, 8, 24);
+        const outerRingMat = new THREE.MeshBasicMaterial({ color: 0xffdd00 });
+        const outerRing = new THREE.Mesh(outerRingGeo, outerRingMat);
+        targetGroup.add(outerRing);
+
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 600 + Math.random() * 1500;
+        targetGroup.position.set(
+          Math.cos(angle) * dist,
+          100 + Math.random() * 250,
+          Math.sin(angle) * dist
+        );
+
+        scene.add(targetGroup);
+        targets.push({
+          mesh: targetGroup,
+          ring: outerRing,
+          radius: 18,
+          active: true
+        });
+      }
+    }
+
+    // --- 총알 발사 시스템 ---
+    function shootBullet() {
+      const now = performance.now();
+      if (now - flight.lastShootTime < 130) return; // 연사 딜레이
+      flight.lastShootTime = now;
+
+      audioMgr.playShoot();
+
+      // 양쪽 날개에서 2발 발사
+      const offsets = [-7, 7];
+      offsets.forEach(offset => {
+        const bulletGeo = new THREE.CylinderGeometry(0.4, 0.4, 8, 6);
+        bulletGeo.rotateX(Math.PI / 2);
+        const bulletMat = new THREE.MeshBasicMaterial({ color: 0x00ff88 });
+        const bullet = new THREE.Mesh(bulletGeo, bulletMat);
+
+        // 비행기 좌표계 기준으로 날개 위치 계산
+        const spawnPos = new THREE.Vector3(offset, 0, -4);
+        spawnPos.applyEuler(airplane.rotation);
+        spawnPos.add(airplane.position);
+
+        bullet.position.copy(spawnPos);
+        bullet.rotation.copy(airplane.rotation);
+
+        // 발사 벡터
+        const forward = new THREE.Vector3(0, 0, -1);
+        forward.applyEuler(airplane.rotation);
+        const bulletVel = forward.multiplyScalar(flight.speed + 600);
+
+        scene.add(bullet);
+        flight.bullets.push({
+          mesh: bullet,
+          vel: bulletVel,
+          spawnTime: now
+        });
+      });
+    }
+
+    // --- 파티클 폭발 이펙트 ---
+    function spawnExplosion(pos, color = 0xff0055, count = 25) {
+      for (let i = 0; i < count; i++) {
+        const geo = new THREE.DodecahedronGeometry(1.5 + Math.random() * 2, 0);
+        const mat = new THREE.MeshBasicMaterial({ color: color });
+        const p = new THREE.Mesh(geo, mat);
+        p.position.copy(pos);
+
+        const vel = new THREE.Vector3(
+          (Math.random() - 0.5) * 80,
+          (Math.random() - 0.5) * 80,
+          (Math.random() - 0.5) * 80
+        );
+
+        scene.add(p);
+        particles.push({
+          mesh: p,
+          vel: vel,
+          life: 1.0,
+          decay: 1.5 + Math.random() * 1.5
+        });
+      }
+    }
+
+    // --- 날개 끝 증기운 트레일 (Wingtip Contrails) ---
+    function updateContrails() {
+      if (Math.random() > 0.4) {
+        [-16, 16].forEach(offset => {
+          const pt = new THREE.Vector3(offset, 0, 0);
+          pt.applyEuler(airplane.rotation);
+          pt.add(airplane.position);
+
+          const trailGeo = new THREE.SphereGeometry(1.2, 4, 4);
+          const trailMat = new THREE.MeshBasicMaterial({
+            color: flight.isBoosting ? 0x00d2ff : 0xffffff,
+            transparent: true,
+            opacity: 0.6
+          });
+          const trail = new THREE.Mesh(trailGeo, trailMat);
+          trail.position.copy(pt);
+          scene.add(trail);
+
+          contrails.push({
+            mesh: trail,
+            life: 1.0,
+            scaleSpeed: 2.5
+          });
+        });
+      }
+
+      // 트레일 수명 업데이트
+      for (let i = contrails.length - 1; i >= 0; i--) {
+        const c = contrails[i];
+        c.life -= 0.035;
+        c.mesh.scale.multiplyScalar(1.05);
+        c.mesh.material.opacity = c.life * 0.5;
+
+        if (c.life <= 0) {
+          scene.remove(c.mesh);
+          contrails.splice(i, 1);
+        }
+      }
+    }
+
+    // --- 비행 물리 및 조작 업데이트 ---
+    function updateFlightPhysics(dt) {
+      // 1. 쓰로틀 및 가속도
+      let targetSpeed = flight.minSpeed + flight.throttle * (flight.maxSpeed - flight.minSpeed);
+      if (keys.shift || keys.space || flight.isBoosting) {
+        targetSpeed = flight.boostSpeed;
+        flight.isBoosting = true;
+      } else {
+        flight.isBoosting = false;
+      }
+
+      flight.speed += (targetSpeed - flight.speed) * (flight.accel * 0.05 * dt);
+      const speedRatio = (flight.speed - flight.minSpeed) / (flight.boostSpeed - flight.minSpeed);
+
+      // 2. 피치 (Pitch) - W/S (W: 기수 숙임, S: 기수 들어올림)
+      const pitchSpeed = 1.6 * dt;
+      if (keys.s) flight.pitch += pitchSpeed;
+      if (keys.w) flight.pitch -= pitchSpeed;
+
+      // 3. 롤 (Roll) - A/D
+      const rollSpeed = 2.4 * dt;
+      if (keys.a) flight.roll += rollSpeed;
+      if (keys.d) flight.roll -= rollSpeed;
+
+      // 4. 요우 (Yaw) - Q/E
+      const yawSpeed = 1.0 * dt;
+      if (keys.q) flight.yaw += yawSpeed;
+      if (keys.e) flight.yaw -= yawSpeed;
+
+      // 선회 시 롤에 따른 자연스러운 Yaw 결합 (Banked Turn)
+      flight.yaw += Math.sin(flight.roll) * 0.8 * dt;
+
+      // 복원력 (키를 놓으면 수평으로 부드럽게 돌아오는 조종성 보정)
+      if (!keys.a && !keys.d) {
+        flight.roll *= Math.pow(0.92, dt * 60);
+      }
+
+      // 회전값 Euler 적용 (ZYX 순서)
+      airplane.rotation.order = 'YXZ';
+      airplane.rotation.y = flight.yaw;
+      airplane.rotation.x = flight.pitch;
+      airplane.rotation.z = flight.roll;
+
+      // 5. 전진 이동 벡터
+      const forward = new THREE.Vector3(0, 0, -1);
+      forward.applyEuler(airplane.rotation);
+
+      flight.velocity.copy(forward).multiplyScalar(flight.speed * dt);
+      flight.pos.add(flight.velocity);
+      airplane.position.copy(flight.pos);
+
+      flight.altitude = Math.max(0, Math.round(flight.pos.y));
+
+      // 프로펠러 또는 제트엔진 애니메이션
+      if (airplanePropeller) {
+        if (selectedPlaneType === 'propeller') {
+          airplanePropeller.rotation.z += (flight.speed * 0.4) * dt;
+        } else {
+          // 제트 엔진 펄스 효과
+          const scale = 1.0 + Math.sin(performance.now() * 0.03) * (flight.isBoosting ? 0.35 : 0.15);
+          airplanePropeller.scale.set(scale, scale, flight.isBoosting ? 1.8 : 1.0);
+        }
+      }
+
+      // 엔진 사운드 갱신
+      audioMgr.updateEngine(speedRatio, flight.isBoosting);
+
+      // 날개 연기 생성
+      updateContrails();
+
+      // 지형 충돌 및 경고 검사
+      checkTerrainCollision();
+    }
+
+    // --- 지형 충돌 & PULL UP 경고 ---
+    function checkTerrainCollision() {
+      const warningBanner = document.getElementById('warning-banner');
+
+      // 바다 표면 충돌 체크
+      if (flight.pos.y < 5) {
+        flight.pos.y = 5;
+        triggerCrash();
+        return;
+      }
+
+      // 고도 경고
+      if (flight.pos.y < 35 && flight.pitch < 0) {
+        warningBanner.style.display = 'block';
+      } else {
+        warningBanner.style.display = 'none';
+      }
+
+      // 산 지형 근접 검사
+      terrainMeshes.forEach(mesh => {
+        const dist = flight.pos.distanceTo(mesh.parent ? mesh.parent.position : mesh.position);
+        if (dist < 120 && flight.pos.y < 150) {
+          warningBanner.style.display = 'block';
+          if (dist < 50) {
+            triggerCrash();
+          }
+        }
+      });
+    }
+
+    function triggerCrash() {
+      audioMgr.playExplosion();
+      spawnExplosion(flight.pos, 0xff3300, 50);
+
+      // 부활 리스폰
+      flight.pos.set(0, 180, 0);
+      flight.pitch = 0;
+      flight.roll = 0;
+      flight.yaw = 0;
+      flight.speed = 80;
+    }
+
+    // --- 총알 및 타겟 충돌 업데이트 ---
+    function updateBullets(dt) {
+      const now = performance.now();
+
+      for (let i = flight.bullets.length - 1; i >= 0; i--) {
+        const b = flight.bullets[i];
+        b.mesh.position.addScaledVector(b.vel, dt);
+
+        // 사거리 만료 (1.8초)
+        if (now - b.spawnTime > 1800) {
+          scene.remove(b.mesh);
+          flight.bullets.splice(i, 1);
+          continue;
+        }
+
+        // 공중 타겟과 충돌 검사
+        let hit = false;
+        for (let j = 0; j < targets.length; j++) {
+          const t = targets[j];
+          if (!t.active) continue;
+
+          if (b.mesh.position.distanceTo(t.mesh.position) < t.radius) {
+            // 명중!
+            t.active = false;
+            scene.remove(t.mesh);
+            audioMgr.playExplosion();
+            spawnExplosion(t.mesh.position, 0xff0055, 30);
+
+            flight.score += 500;
+            flight.targetsDestroyed++;
+            updateHUDStats();
+
+            hit = true;
+            break;
+          }
+        }
+
+        if (hit) {
+          scene.remove(b.mesh);
+          flight.bullets.splice(i, 1);
+        }
+      }
+    }
+
+    // --- 링 통과 체크 ---
+    function updateRings() {
+      rings.forEach(ring => {
+        if (ring.collected) return;
+
+        // 회전 애니메이션
+        ring.mesh.rotation.z += 0.01;
+
+        const dist = flight.pos.distanceTo(ring.mesh.position);
+        if (dist < ring.radius + 6) {
+          ring.collected = true;
+          audioMgr.playRingCollect();
+          spawnExplosion(ring.mesh.position, 0xffb703, 25);
+
+          // 링 통과 성공 연출 (색상 변경 및 축소)
+          ring.mesh.material.color.setHex(0x00ff88);
+          ring.mesh.material.emissive.setHex(0x00ff88);
+
+          flight.score += 1000;
+          flight.ringsCollected++;
+          updateHUDStats();
+        }
+      });
+    }
+
+    // --- 파티클 시뮬레이션 ---
+    function updateParticles(dt) {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.life -= p.decay * dt;
+        p.mesh.position.addScaledVector(p.vel, dt);
+        p.mesh.scale.multiplyScalar(0.96);
+
+        if (p.life <= 0) {
+          scene.remove(p.mesh);
+          particles.splice(i, 1);
+        }
+      }
+    }
+
+    // --- 카메라 시점 추적 ---
+    function updateCamera() {
+      if (cameraMode === 0) {
+        // [3인칭 시점] 비행기 뒤쪽 상단에서 부드럽게 추적
+        const offset = new THREE.Vector3(0, 10, 36);
+        offset.applyEuler(airplane.rotation);
+        const targetCamPos = flight.pos.clone().add(offset);
+        camera.position.lerp(targetCamPos, 0.15);
+
+        // 조준점 (비행기 앞쪽)
+        const lookTarget = new THREE.Vector3(0, 2, -50);
+        lookTarget.applyEuler(airplane.rotation);
+        lookTarget.add(airplane.position);
+        camera.lookAt(lookTarget);
+
+      } else if (cameraMode === 1) {
+        // [1인칭 콕핏 시점]
+        const cockpitPos = new THREE.Vector3(0, 2.5, -2);
+        cockpitPos.applyEuler(airplane.rotation);
+        cockpitPos.add(airplane.position);
+        camera.position.copy(cockpitPos);
+
+        const lookTarget = new THREE.Vector3(0, 2.5, -80);
+        lookTarget.applyEuler(airplane.rotation);
+        lookTarget.add(airplane.position);
+        camera.lookAt(lookTarget);
+
+      } else {
+        // [시네마틱 원거리 뷰]
+        const offset = new THREE.Vector3(25, 20, 65);
+        offset.applyEuler(airplane.rotation);
+        const targetCamPos = flight.pos.clone().add(offset);
+        camera.position.lerp(targetCamPos, 0.08);
+        camera.lookAt(airplane.position);
+      }
+    }
+
+    // --- HUD 레이더 및 계기판 갱신 ---
+    function updateHUD() {
+      // 1. 속도 & 쓰로틀 게이지
+      const kmh = Math.round(flight.speed * 2.2);
+      document.getElementById('speed-val').innerHTML = `${kmh}<span style="font-size:10px;">km/h</span>`;
+      const throttlePercent = Math.round((flight.speed / flight.boostSpeed) * 100);
+      document.getElementById('throttle-fill').style.height = `${throttlePercent}%`;
+      document.getElementById('throttle-val').textContent = `${throttlePercent}%`;
+
+      // 2. 고도계
+      document.getElementById('alt-val').textContent = `${flight.altitude}m`;
+      const altPercent = Math.min(100, Math.round((flight.altitude / 800) * 100));
+      document.getElementById('alt-fill').style.height = `${altPercent}%`;
+
+      // 3. 인공수평선 (Pitch Ladder)
+      const pitchLadder = document.getElementById('pitch-ladder');
+      const pitchDeg = THREE.MathUtils.radToDeg(flight.pitch);
+      const rollDeg = THREE.MathUtils.radToDeg(flight.roll);
+      pitchLadder.style.transform = `translateY(${pitchDeg * 2}px) rotate(${-rollDeg}deg)`;
+
+      // 4. 타이머
+      if (isGameRunning) {
+        const elapsed = Math.floor((performance.now() - flight.startTime) / 1000);
+        const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+        const s = String(elapsed % 60).padStart(2, '0');
+        document.getElementById('hud-timer').textContent = `${m}:${s}`;
+      }
+
+      // 5. 미니맵 레이더 블립
+      updateRadarBlips();
+    }
+
+    function updateRadarBlips() {
+      const container = document.getElementById('radar-blips');
+      container.innerHTML = '';
+
+      const radarRange = 1500;
+      const radarRadius = 65; // px
+
+      // 가장 가까운 링 3개 레이더에 표시
+      rings.forEach(ring => {
+        if (ring.collected) return;
+        const relX = ring.mesh.position.x - flight.pos.x;
+        const relZ = ring.mesh.position.z - flight.pos.z;
+
+        // 비행기 Heading에 맞춰 회전 변환
+        const angle = -flight.yaw;
+        const rotX = relX * Math.cos(angle) - relZ * Math.sin(angle);
+        const rotZ = relX * Math.sin(angle) + relZ * Math.cos(angle);
+
+        if (Math.abs(rotX) < radarRange && Math.abs(rotZ) < radarRange) {
+          const px = 65 + (rotX / radarRange) * radarRadius;
+          const py = 65 + (rotZ / radarRange) * radarRadius;
+
+          const dot = document.createElement('div');
+          dot.style.position = 'absolute';
+          dot.style.left = `${px}px`;
+          dot.style.top = `${py}px`;
+          dot.style.width = '6px';
+          dot.style.height = '6px';
+          dot.style.background = '#ffb703';
+          dot.style.borderRadius = '50%';
+          dot.style.transform = 'translate(-50%, -50%)';
+          container.appendChild(dot);
+        }
+      });
+    }
+
+    function updateHUDStats() {
+      document.getElementById('hud-score').textContent = String(flight.score).padStart(5, '0');
+      document.getElementById('hud-rings').textContent = `${flight.ringsCollected} / ${CONFIG.ringCount}`;
+      document.getElementById('hud-targets').textContent = `${flight.targetsDestroyed} / ${CONFIG.targetCount}`;
+    }
+
+    // --- 시간대(낮/노을/밤) 전환 ---
+    function cycleTimeOfDay() {
+      timeOfDay = (timeOfDay + 1) % 3;
+      if (timeOfDay === 0) {
+        // 낮 (Sunny Day)
+        scene.background.setHex(0x76b6ff);
+        scene.fog.color.setHex(0x76b6ff);
+        dirLight.color.setHex(0xfff3d6);
+        dirLight.intensity = 1.3;
+        ambientLight.color.setHex(0xffffff);
+      } else if (timeOfDay === 1) {
+        // 노을 (Sunset / Golden Hour)
+        scene.background.setHex(0xff7744);
+        scene.fog.color.setHex(0xff8855);
+        dirLight.color.setHex(0xffaa44);
+        dirLight.intensity = 1.5;
+        ambientLight.color.setHex(0xffbb99);
+      } else {
+        // 사이버 밤 (Cyber Night)
+        scene.background.setHex(0x060c18);
+        scene.fog.color.setHex(0x0a1426);
+        dirLight.color.setHex(0x00d2ff);
+        dirLight.intensity = 0.5;
+        ambientLight.color.setHex(0x1a2b4c);
+      }
+    }
+
+    // --- 이벤트 리스너 설정 ---
+    function setupEvents() {
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // 키보드 누름
+      window.addEventListener('keydown', (e) => {
+        const k = e.key.toLowerCase();
+        if (k === 'w' || e.key === 'ArrowUp') keys.w = true;
+        if (k === 's' || e.key === 'ArrowDown') keys.s = true;
+        if (k === 'a' || e.key === 'ArrowLeft') keys.a = true;
+        if (k === 'd' || e.key === 'ArrowRight') keys.d = true;
+        if (k === 'q') keys.q = true;
+        if (k === 'e') keys.e = true;
+        if (e.shiftKey) keys.shift = true;
+        if (e.code === 'Space') {
+          keys.space = true;
+          shootBullet();
+        }
+        if (k === 'f') shootBullet();
+        if (k === 'c') toggleCamera();
+      });
+
+      window.addEventListener('keyup', (e) => {
+        const k = e.key.toLowerCase();
+        if (k === 'w' || e.key === 'ArrowUp') keys.w = false;
+        if (k === 's' || e.key === 'ArrowDown') keys.s = false;
+        if (k === 'a' || e.key === 'ArrowLeft') keys.a = false;
+        if (k === 'd' || e.key === 'ArrowRight') keys.d = false;
+        if (k === 'q') keys.q = false;
+        if (k === 'e') keys.e = false;
+        if (!e.shiftKey) keys.shift = false;
+        if (e.code === 'Space') keys.space = false;
+      });
+
+      // 마우스 클릭 발사
+      window.addEventListener('mousedown', (e) => {
+        if (e.button === 0 && isGameRunning) {
+          shootBullet();
+        }
+      });
+
+      // 버튼 인터랙션
+      document.getElementById('btn-camera').addEventListener('click', toggleCamera);
+      document.getElementById('btn-time').addEventListener('click', cycleTimeOfDay);
+      document.getElementById('btn-audio').addEventListener('click', () => {
+        const enabled = audioMgr.toggleAudio();
+        document.getElementById('btn-audio').textContent = enabled ? '🔊 소리 켜짐' : '🔇 소리 꺼짐';
+      });
+
+      // 기체 선택 버튼
+      document.querySelectorAll('.plane-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.plane-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          selectedPlaneType = btn.dataset.plane;
+          buildAirplane(selectedPlaneType);
+        });
+      });
+
+      // 게임 시작 버튼
+      document.getElementById('btn-start-game').addEventListener('click', () => {
+        audioMgr.init();
+        document.getElementById('main-modal').style.display = 'none';
+        isGameRunning = true;
+        flight.startTime = performance.now();
+      });
+
+      // 모바일 터치 컨트롤
+      setupTouchControls();
+    }
+
+    function toggleCamera() {
+      cameraMode = (cameraMode + 1) % 3;
+      const modes = ['3인칭 (C)', '1인칭 콕핏 (C)', '시네마틱 (C)'];
+      document.getElementById('btn-camera').textContent = `🎥 시점: ${modes[cameraMode]}`;
+    }
+
+    // 모바일 터치 패드 바인딩
+    function setupTouchControls() {
+      const stickZone = document.getElementById('touch-stick');
+      const knob = document.getElementById('touch-knob');
+      let touchId = null;
+      let startX = 0, startY = 0;
+
+      stickZone.addEventListener('touchstart', (e) => {
+        const touch = e.changedTouches[0];
+        touchId = touch.identifier;
+        startX = touch.clientX;
+        startY = touch.clientY;
+      });
+
+      stickZone.addEventListener('touchmove', (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const touch = e.changedTouches[i];
+          if (touch.identifier === touchId) {
+            const dx = touch.clientX - startX;
+            const dy = touch.clientY - startY;
+            const dist = Math.min(45, Math.hypot(dx, dy));
+            const angle = Math.atan2(dy, dx);
+
+            knob.style.transform = `translate(calc(-50% + ${Math.cos(angle) * dist}px), calc(-50% + ${Math.sin(angle) * dist}px))`;
+
+            // 입력 매핑
+            keys.a = dx < -15;
+            keys.d = dx > 15;
+            keys.w = dy < -15;
+            keys.s = dy > 15;
+          }
+        }
+      });
+
+      const resetStick = () => {
+        touchId = null;
+        knob.style.transform = 'translate(-50%, -50%)';
+        keys.w = keys.s = keys.a = keys.d = false;
+      };
+
+      stickZone.addEventListener('touchend', resetStick);
+      stickZone.addEventListener('touchcancel', resetStick);
+
+      // 모바일 발사 / 부스터 / 시점 버튼
+      const btnFire = document.getElementById('btn-touch-fire');
+      btnFire.addEventListener('touchstart', (e) => { e.preventDefault(); shootBullet(); });
+
+      const btnBoost = document.getElementById('btn-touch-boost');
+      btnBoost.addEventListener('touchstart', (e) => { e.preventDefault(); flight.isBoosting = true; });
+      btnBoost.addEventListener('touchend', () => { flight.isBoosting = false; });
+
+      const btnCam = document.getElementById('btn-touch-cam');
+      btnCam.addEventListener('touchstart', (e) => { e.preventDefault(); toggleCamera(); });
+    }
+
+    // --- 메인 애니메이션 루프 ---
+    let lastTime = 0;
+    function animate(time) {
+      requestAnimationFrame(animate);
+
+      const dt = Math.min(0.08, (time - lastTime) / 1000) || 0.016;
+      lastTime = time;
+
+      if (isGameRunning) {
+        // 비행 물리 계산
+        updateFlightPhysics(dt);
+
+        // 무기 및 표적 충돌
+        updateBullets(dt);
+
+        // 링 통과 검사
+        updateRings();
+
+        // 파티클 업데이트
+        updateParticles(dt);
+
+        // HUD 및 계기판 갱신
+        updateHUD();
+      }
+
+      // 카메라 추적
+      updateCamera();
+
+      // 바다 잔물결 찰랑임 효과
+      if (oceanMesh) {
+        oceanMesh.position.y = Math.sin(time * 0.001) * 0.5;
+      }
+
+      // 구름 천천히 이동
+      clouds.forEach(c => {
+        c.position.x += dt * 5;
+        if (c.position.x > CONFIG.worldSize / 2) c.position.x = -CONFIG.worldSize / 2;
+      });
+
+      // 렌더링
+      renderer.render(scene, camera);
+    }
+
+    // 윈도우 로드 완료 후 실행
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
