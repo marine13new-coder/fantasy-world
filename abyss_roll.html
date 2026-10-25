@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>어비스 롤: 피의 카지노 (Abyss Roll: Blood Casino)</title>
+<title>어비스 롤: 피의 카지노 (Abyss Roll: Blood Casino) - Ultimate Masterpiece</title>
 <style>
   :root {
-    --bg-dark: #07080c;
-    --panel-bg: #10121a;
+    --bg-dark: #050608;
+    --panel-bg: #0d0f17;
     --border-gold: #c5a059;
     --crimson: #8b0000;
     --blood-red: #ff2222;
@@ -16,6 +16,7 @@
     --joker-purple: #9b59b6;
     --foil-cyan: #00ffff;
     --poly-orange: #ff7700;
+    --negative-dark: #111;
   }
   * { box-sizing: border-box; user-select: none; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body {
@@ -33,16 +34,27 @@
     max-width: 440px;
     height: 100vh;
     max-height: 920px;
-    background: radial-gradient(circle at 50% 25%, #191c2b 0%, #07080c 100%);
+    background: radial-gradient(circle at 50% 20%, #1c2033 0%, #06070a 100%);
     border: 2px solid #2a2015;
-    box-shadow: 0 0 50px rgba(0,0,0,0.95), inset 0 0 25px rgba(0,0,0,0.85);
+    box-shadow: 0 0 60px rgba(0,0,0,0.98), inset 0 0 30px rgba(0,0,0,0.9);
     display: flex;
     flex-direction: column;
     position: relative;
     overflow: hidden;
   }
 
-  /* 상단 1: 5대 포일/폴리크롬 조커 슬롯 */
+  /* 네온 아케이드 레트로 CRT 스캔라인 */
+  #crt-scanlines {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 90;
+    opacity: 0.6;
+  }
+
+  /* 상단 1: 5대 포일/폴리크롬 조커 슬롯 & 골드 & 안테/블라인드 바 */
   #relic-joker-bar {
     height: 52px;
     background: rgba(10, 11, 16, 0.98);
@@ -50,36 +62,41 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 10px;
+    padding: 0 8px;
     z-index: 5;
   }
-  .relic-slots { display: flex; gap: 6px; }
+  .relic-slots { display: flex; gap: 5px; }
   .relic-card {
-    width: 36px;
-    height: 42px;
+    width: 38px;
+    height: 44px;
     background: #191c28;
     border: 1px solid var(--joker-purple);
-    border-radius: 4px;
+    border-radius: 5px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: 15px;
+    font-size: 16px;
     cursor: pointer;
     box-shadow: 0 0 8px rgba(155, 89, 182, 0.3);
     position: relative;
-    transition: transform 0.1s;
+    transition: transform 0.12s, box-shadow 0.12s;
   }
   .relic-card:active { transform: scale(1.15); }
   .relic-card.foil {
     border-color: var(--foil-cyan);
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    box-shadow: 0 0 12px rgba(0, 255, 255, 0.6);
     background: linear-gradient(135deg, #102a3a 0%, #191c28 100%);
   }
   .relic-card.polychrome {
     border-color: var(--poly-orange);
-    box-shadow: 0 0 12px rgba(255, 119, 0, 0.6);
+    box-shadow: 0 0 14px rgba(255, 119, 0, 0.7);
     background: linear-gradient(135deg, #3a1510 0%, #191c28 100%);
+  }
+  .relic-card.negative {
+    border-color: #fff;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.8);
+    background: #000;
   }
   .relic-card .relic-badge {
     position: absolute;
@@ -88,20 +105,32 @@
     color: var(--safe-gold);
     font-weight: 900;
   }
+  .meta-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
   .gold-coin-display {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--safe-gold);
-    font-weight: bold;
+    font-weight: 900;
     display: flex;
     align-items: center;
-    gap: 4px;
-    background: rgba(0,0,0,0.5);
-    padding: 3px 8px;
-    border-radius: 12px;
+    gap: 3px;
+    background: rgba(0,0,0,0.6);
+    padding: 2px 7px;
+    border-radius: 10px;
     border: 1px solid #443;
   }
+  .ante-display {
+    font-size: 10px;
+    color: #3498db;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+  }
 
-  /* 상단 2: 던전 전투 아레나 (30%) */
+  /* 상단 2: 던전 전투 아레나 (29%) */
   #top-battle-view {
     height: 29%;
     position: relative;
@@ -109,7 +138,7 @@
     display: flex;
     flex-direction: column;
     padding: 6px 12px;
-    background: linear-gradient(180deg, rgba(30,10,10,0.4) 0%, rgba(10,12,18,0.85) 100%);
+    background: linear-gradient(180deg, rgba(35,10,10,0.45) 0%, rgba(10,12,18,0.9) 100%);
   }
   .header-bar {
     display: flex;
@@ -119,6 +148,14 @@
     color: var(--border-gold);
     letter-spacing: 1px;
     text-shadow: 0 1px 3px #000;
+  }
+  .boss-blind-tag {
+    background: var(--crimson);
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 900;
   }
   .torch-gauge {
     display: flex;
@@ -156,6 +193,7 @@
   }
   .entity-unit.hero { border-color: #4a5d42; }
   .entity-unit.monster { border-color: #7a2b2b; }
+  .entity-unit.boss { border-color: #ffaa00; box-shadow: 0 0 10px rgba(255,170,0,0.4); }
   .entity-avatar { font-size: 24px; margin-top: 4px; }
   .hp-bar-outer, .stress-bar-outer {
     width: 36px;
@@ -168,7 +206,7 @@
   .hp-bar-inner { width: 100%; height: 100%; background: #2ecc71; transition: width 0.2s; }
   .stress-bar-inner { width: 0%; height: 100%; background: #9b59b6; transition: width 0.2s; }
 
-  /* 중단: 발라트로 스코어링 & 다면체 주사위 트레이 (39%) */
+  /* 중단: 발라트로 수학 스코어링 & 다면체 주사위 트레이 (39%) */
   #middle-casino-board {
     height: 39%;
     padding: 8px 12px;
@@ -205,7 +243,7 @@
   }
   .pot-info { text-align: right; }
   .pot-val {
-    font-size: 21px;
+    font-size: 22px;
     font-weight: 900;
     color: var(--safe-gold);
     text-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
@@ -333,7 +371,7 @@
   #shop-modal {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.94);
+    background: rgba(0,0,0,0.95);
     display: none;
     flex-direction: column;
     padding: 14px;
@@ -455,9 +493,10 @@
 <body>
 
 <div id="mobile-viewport">
+  <div id="crt-scanlines"></div>
   <div id="sticker-banner">✨ 주사위 면 각인 적용됨!</div>
 
-  <!-- 상단 1: 5대 포일/폴리크롬 조커 슬롯 -->
+  <!-- 상단 1: 안테(Ante) 및 5대 포일/폴리크롬 조커 슬롯 -->
   <div id="relic-joker-bar">
     <div class="relic-slots">
       <div class="relic-card foil" id="joker-0" onclick="inspectJoker(0)" title="블러드 칩스 (Foil): 기본 칩스 +20">
@@ -472,23 +511,30 @@
         <span>🛡️</span>
         <div class="relic-badge">SHLD</div>
       </div>
-      <div class="relic-card" id="joker-3" onclick="inspectJoker(3)" style="opacity: 0.3;">
-        <span>🔒</span>
+      <div class="relic-card negative" id="joker-3" onclick="inspectJoker(3)" title="네거티브 심연 악마: 조커 슬롯 한도 +1 확장">
+        <span>💀</span>
+        <div class="relic-badge">+1SLT</div>
       </div>
       <div class="relic-card" id="joker-4" onclick="inspectJoker(4)" style="opacity: 0.3;">
         <span>🔒</span>
       </div>
     </div>
-    <div class="gold-coin-display">
-      <span>🪙</span>
-      <span id="gold-val">420G</span>
+    <div class="meta-stats">
+      <div class="gold-coin-display">
+        <span>🪙</span>
+        <span id="gold-val">580G</span>
+      </div>
+      <div class="ante-display" id="ante-info">ANTE 1/8</div>
     </div>
   </div>
 
   <!-- 상단 2: 던전 전투 아레나 -->
   <div id="top-battle-view">
     <div class="header-bar">
-      <div id="floor-title">DEPTHS 1 : CRYPT CASINO</div>
+      <div>
+        <span id="floor-title">DEPTHS 1 : CRYPT CASINO</span>
+        <span class="boss-blind-tag" id="blind-tag">BOSS BLIND</span>
+      </div>
       <div class="torch-gauge" onclick="lightTorch()">
         <span>🔥 횃불</span>
         <span id="torch-val">100%</span>
@@ -520,10 +566,10 @@
         </div>
       </div>
 
-      <!-- 몬스터 라인업 -->
+      <!-- 몬스터 라인업 (보스 블라인드) -->
       <div class="monster-row" id="monster-party">
-        <div class="entity-unit monster" id="mon-0">
-          <div class="entity-avatar">💀</div>
+        <div class="entity-unit monster boss" id="mon-0">
+          <div class="entity-avatar">👹</div>
           <div class="hp-bar-outer"><div class="hp-bar-inner" id="m-hp-0"></div></div>
         </div>
         <div class="entity-unit monster" id="mon-1">
@@ -531,7 +577,7 @@
           <div class="hp-bar-outer"><div class="hp-bar-inner" id="m-hp-1"></div></div>
         </div>
         <div class="entity-unit monster" id="mon-2">
-          <div class="entity-avatar">🦇</div>
+          <div class="entity-avatar">🐺</div>
           <div class="hp-bar-outer"><div class="hp-bar-inner" id="m-hp-2"></div></div>
         </div>
       </div>
@@ -542,14 +588,14 @@
   <div id="middle-casino-board">
     <div class="balatro-score-box">
       <div>
-        <span class="math-chips" id="math-chips">32 CHIPS</span>
+        <span class="math-chips" id="math-chips">38 CHIPS</span>
         <span class="math-operator">×</span>
         <span class="math-mult" id="math-mult">X2 MULT</span>
         <div class="bust-warning" id="bust-label">⚠️ 주사위 [1, 2] 나오면 자멸!</div>
       </div>
       <div class="pot-info">
         <div style="font-size: 10px; color: #a89f91;">최종 폭발 화력</div>
-        <div class="pot-val" id="pot-display">64 POT</div>
+        <div class="pot-val" id="pot-display">76 POT</div>
       </div>
     </div>
 
@@ -574,7 +620,7 @@
     </div>
 
     <div class="combat-log-ticker" id="log-ticker">
-      🎲 [CHIPS × MULT] 공식을 조커와 각인 주사위로 뻥튀기하십시오!
+      🎲 ANTE 1 보스 블라인드 [화산 골렘]을 처치하여 전리품 팩을 개봉하십시오!
     </div>
   </div>
 
@@ -607,15 +653,15 @@
     </div>
   </div>
 
-  <!-- 암시장 상점 모달 (BM / 골드 경제) -->
+  <!-- 암시장 상점 모달 -->
   <div id="shop-modal">
     <div class="shop-header">🩸 심연의 암시장 (Black Market)</div>
     <div class="shop-items-grid">
       <div class="shop-card">
-        <div class="shop-card-title">🃏 죽음의 타로 (Polychrome)</div>
-        <div class="shop-card-desc">타격 시 배율 상시 X2.5배 곱연산</div>
-        <div class="shop-card-price">140G</div>
-        <button class="btn-buy" onclick="buyItem('death_joker', 140)">구매하기</button>
+        <div class="shop-card-title">🃏 네거티브 조커 팩</div>
+        <div class="shop-card-desc">조커 보유 슬롯 +1 영구 확장</div>
+        <div class="shop-card-price">200G</div>
+        <button class="btn-buy" onclick="buyItem('negative_slot', 200)">구매하기</button>
       </div>
       <div class="shop-card">
         <div class="shop-card-title">🛡️ 불사조 보험 계약서</div>
@@ -643,7 +689,7 @@
       </div>
       <div class="shop-card">
         <div class="shop-card-title">🔥 영혼의 횃불 영구팩</div>
-        <div class="shop-card-desc">횃불 최대치 100% 충전 + 10% 방어막</div>
+        <div class="shop-card-desc">횃불 최대치 100% 완충</div>
         <div class="shop-card-price">70G</div>
         <button class="btn-buy" onclick="buyItem('torch_pack', 70)">구매하기</button>
       </div>
@@ -656,7 +702,7 @@
     <div class="cutin-clash">
       <div class="cutin-char" id="cutin-attacker">🛡️</div>
       <div class="slash-fx" id="slash-fx"></div>
-      <div class="cutin-char" id="cutin-target">💀</div>
+      <div class="cutin-char" id="cutin-target">👹</div>
     </div>
     <div class="cutin-dmg-text" id="cutin-dmg">CRITICAL!<br>-360</div>
   </div>
@@ -709,15 +755,16 @@ function playCoinSound() {
 }
 
 // 상태 데이터
-let gold = 420;
+let currentAnte = 1;
+let gold = 580;
 let baseChips = 0;
 let currentMult = 1;
 let currentPot = 0;
 let torch = 100;
 let rerollsLeft = 2;
 let hasBustShield = true;
-let extraJokerMult = 1.5; // 기본 황금배율 조커 효과
-let foilBonusChips = 20;  // 포일 블러드칩스
+let extraJokerMult = 1.5;
+let foilBonusChips = 20;
 
 let heldSlots = [false, false, false, false];
 let diceValues = [0, 0, 0, 0];
@@ -732,9 +779,9 @@ let heroes = [
 ];
 
 let monsters = [
-  { name: '해골 검사', maxHp: 80, hp: 80, icon: '💀' },
-  { name: '뼈 주술사', maxHp: 65, hp: 65, icon: '🧙‍♂️' },
-  { name: '흡혈 박쥐', maxHp: 45, hp: 45, icon: '🦇' }
+  { name: '화산 골렘 (보스)', maxHp: 480, hp: 480, icon: '👹' },
+  { name: '뼈 주술사', maxHp: 95, hp: 95, icon: '🧙‍♂️' },
+  { name: '지옥견', maxHp: 75, hp: 75, icon: '🐺' }
 ];
 
 function toggleHold(idx) {
@@ -789,7 +836,6 @@ function pushDoubleDown() {
   }
   playDiceSound();
 
-  // 배율 증가에 따른 자멸 확률 상승 (1X: 1, 2X: 1-2, 4X+: 1-3)
   let bustThresh = currentMult === 1 ? 1 : (currentMult === 2 ? 2 : 3);
   let testRoll = Math.floor(Math.random() * 6) + 1;
 
@@ -803,7 +849,6 @@ function pushDoubleDown() {
       return;
     }
 
-    // BUST! 탐욕의 파멸!
     playBustSound();
     document.getElementById('mobile-viewport').classList.add('bust-screen-shake');
     setTimeout(() => document.getElementById('mobile-viewport').classList.remove('bust-screen-shake'), 400);
@@ -821,7 +866,6 @@ function pushDoubleDown() {
     return;
   }
 
-  // 성공! 발라트로 식 배율 곱연산 X2!
   currentMult *= 2;
   currentPot = Math.round(baseChips * currentMult * extraJokerMult);
   updateBalatroUI();
@@ -851,7 +895,7 @@ function bankAndStrike() {
     target.hp = Math.max(0, target.hp - finalDmg);
     updateEntityUI();
 
-    let rewardGold = Math.floor(Math.random() * 45) + 35;
+    let rewardGold = Math.floor(Math.random() * 55) + 45;
     gold += rewardGold;
     document.getElementById('gold-val').innerText = `${gold}G`;
     playCoinSound();
@@ -860,7 +904,9 @@ function bankAndStrike() {
 
     if (monsters.every(m => m.hp <= 0)) {
       setTimeout(() => {
-        alert('🎉 던전 룸 완전 정복! 전리품 암시장이 열렸습니다.');
+        currentAnte++;
+        document.getElementById('ante-info').innerText = `ANTE ${currentAnte}/8`;
+        alert(`🎉 ANTE ${currentAnte - 1} 보스 블라인드 돌파 완료!\n전리품 암시장이 열렸습니다.`);
         openShop();
         respawnMonsters();
       }, 500);
@@ -948,12 +994,12 @@ function buyItem(itemId, price) {
   document.getElementById('gold-val').innerText = `${gold}G`;
   playCoinSound();
 
-  if (itemId === 'death_joker') {
-    extraJokerMult += 1.0;
-    document.getElementById('joker-3').innerHTML = '<span>💀</span><div class="relic-badge">+1.0X</div>';
-    document.getElementById('joker-3').style.opacity = '1';
-    document.getElementById('joker-3').classList.add('polychrome');
-    alert('죽음의 타로 장착! 상시 배율 +1.0X 추가 곱연산!');
+  if (itemId === 'negative_slot') {
+    document.getElementById('joker-4').innerHTML = '<span>⚡</span><div class="relic-badge">X2.0</div>';
+    document.getElementById('joker-4').style.opacity = '1';
+    document.getElementById('joker-4').classList.add('polychrome');
+    extraJokerMult += 0.5;
+    alert('네거티브 조커 팩 해금! 5번 슬롯이 개방되고 상시 배율 +0.5X가 곱해집니다!');
   } else if (itemId === 'bust_shield') {
     hasBustShield = true;
     document.getElementById('joker-2').style.opacity = '1';
@@ -1002,11 +1048,11 @@ function lightTorch() {
 
 function respawnMonsters() {
   monsters = [
-    { name: '화산 골렘 (보스)', maxHp: 450, hp: 450, icon: '👹' },
-    { name: '망령 사제', maxHp: 130, hp: 130, icon: '🧙‍♂️' },
-    { name: '지옥견', maxHp: 90, hp: 90, icon: '🐺' }
+    { name: `심연 군주 (ANTE ${currentAnte})`, maxHp: 350 + (currentAnte * 150), hp: 350 + (currentAnte * 150), icon: '👑' },
+    { name: '망령 사제', maxHp: 120 + (currentAnte * 30), hp: 120 + (currentAnte * 30), icon: '🧙‍♂️' },
+    { name: '지옥견', maxHp: 90 + (currentAnte * 20), hp: 90 + (currentAnte * 20), icon: '🐺' }
   ];
-  document.getElementById('floor-title').innerText = 'DEPTHS 2 : BRIMSTONE ALTAR';
+  document.getElementById('floor-title').innerText = `DEPTHS ${currentAnte} : ABYSSAL THRONE`;
   updateEntityUI();
 }
 
@@ -1015,8 +1061,8 @@ function inspectJoker(idx) {
     '블러드 칩스 (Foil): 모든 주사위 칩스 +20 보정',
     '황금 배율 (Polychrome): 배율 X1.5 상시 곱연산',
     '불사조 보험: 탐욕의 BUST 자멸을 1회 완전 방어',
-    '죽음의 타로: 타격 시 배율 상시 +1.0X 추가 증폭',
-    '잠긴 슬롯: 암시장에서 해금 가능'
+    '네거티브 조커: 조커 슬롯 한도를 +1 영구 확장',
+    '해금된 5번째 슬롯: 배율 추가 +0.5X 증폭'
   ];
   alert(`[조커 렐릭 정보]\n${titles[idx]}`);
 }
