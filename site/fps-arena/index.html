@@ -471,6 +471,47 @@ canvas#c{display:block;width:100vw;height:100vh}
   pointer-events:none;z-index:27;
 }
 
+
+/* [P] 로파이 카세트 워크맨 HUD */
+#walkman-hud{
+  position:absolute;bottom:22px;left:560px;
+  background:rgba(12,18,26,0.92);border:1px solid #c084fc;
+  padding:8px 14px;border-radius:4px;font-size:11px;font-weight:800;
+  color:#e9d5ff;display:flex;align-items:center;gap:6px;pointer-events:none;
+}
+#walkman-dot{width:7px;height:7px;border-radius:50%;background:#475569;display:inline-block}
+#walkman-dot.playing{background:#c084fc;box-shadow:0 0 8px #c084fc}
+
+/* 차탄 불량 (Jam) 경고 배너 */
+#jam-banner{
+  position:absolute;top:48%;left:50%;transform:translate(-50%,-50%);
+  background:rgba(220,38,38,0.95);border:2px solid #fecaca;
+  color:#fff;padding:10px 24px;border-radius:6px;font-size:14px;font-weight:900;
+  letter-spacing:1px;box-shadow:0 0 30px rgba(239,68,68,0.8);
+  display:none;pointer-events:none;z-index:44;
+}
+
+
+/* 방향성 피격 위협 인디케이터 (Threat Arc) */
+#threat-indicator{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:260px;height:260px;pointer-events:none;display:none;z-index:35;
+}
+.threat-arrow{
+  position:absolute;top:50%;left:50%;width:0;height:0;
+  border-left:14px solid transparent;border-right:14px solid transparent;
+  border-bottom:28px solid #ef4444;filter:drop-shadow(0 0 10px #ef4444);
+  transform-origin:center 120px;
+}
+
+/* 무기 숙련도 & 헤드샷 트래커 */
+#mastery-badge{
+  position:absolute;bottom:84px;right:22px;
+  background:rgba(10,16,24,0.92);border:1px solid #3b82f6;
+  padding:4px 12px;border-radius:4px;font-size:11px;font-weight:800;
+  color:#93c5fd;display:flex;align-items:center;gap:6px;pointer-events:none;
+}
+
 #ch-canvas{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;width:160px;height:160px;z-index:40}
 #hit-indicator{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .15s;z-index:30}
 #arcade-btn{position:absolute;top:16px;right:22px;font-size:12px;color:#ece8e1;background:var(--rpg-panel);padding:7px 16px;border-radius:4px;border:1px solid var(--rpg-border);pointer-events:auto;cursor:pointer;text-decoration:none}
@@ -781,6 +822,14 @@ canvas#c{display:block;width:100vw;height:100vh}
  
  <div id="raid-timer-box">⏱️ TIME REMAINING: <span id="raid-time">19:45</span></div>
  <div id="plate-indicator">🛡️ [K] 방탄판: <b id="plate-count" style="color:#fff">3</b>개</div>
+
+ 
+ <div id="walkman-hud"><span id="walkman-dot"></span> 📼 [P] 워크맨: <span id="walkman-txt">OFF</span></div>
+ <div id="jam-banner">⚠️ [차탄 불량] [J] 키를 눌러 노리쇠를 후퇴 장전하여 탄피를 배출하십시오!</div>
+
+ 
+ <div id="threat-indicator"><div class="threat-arrow" id="threat-arrow"></div></div>
+ <div id="mastery-badge">🎯 헤드샷 정밀도: <span id="hs-rate">0%</span> (<span id="hs-count">0</span>회)</div>
 
  <canvas id="ch-canvas" width="160" height="160"></canvas>
  <div id="hit-indicator"></div>
@@ -1309,6 +1358,37 @@ function buildFPSGun() {
 }
 const GUN_MESH = buildFPSGun();
 
+
+// ==========================================
+// 3-C. 물리적 탄피 배출(Brass Casing Ejection) 시스템
+// ==========================================
+const brassMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.3, metalness: 0.9 });
+const activeCasings = [];
+
+function ejectBrassCasing() {
+  const mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.05, 8), brassMat);
+  const muzWorld = new THREE.Vector3(0.24, -0.18, -0.42).applyMatrix4(camera.matrixWorld);
+  mesh.position.copy(muzWorld);
+  mesh.castShadow = true;
+  scene.add(mesh);
+
+  // 우측 상방으로 튀어나가는 물리 속도
+  const right = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, P.yaw, 0));
+  const up = new THREE.Vector3(0, 1, 0);
+  const forward = new THREE.Vector3(0, 0, -1).applyEuler(new THREE.Euler(0, P.yaw, 0));
+
+  const vx = right.x * (1.8 + Math.random() * 0.8) + forward.x * -0.4;
+  const vy = 1.4 + Math.random() * 0.8;
+  const vz = right.z * (1.8 + Math.random() * 0.8) + forward.z * -0.4;
+
+  activeCasings.push({
+    mesh, x: muzWorld.x, y: muzWorld.y, z: muzWorld.z,
+    vx, vy, vz,
+    rotX: Math.random() * 10, rotY: Math.random() * 10,
+    bounces: 0, life: 6.0
+  });
+}
+
 // ==========================================
 // 4. 인간형 스켈레톤 애니메이션 적 AI (Scav & Boss)
 // ==========================================
@@ -1503,6 +1583,16 @@ function updateWeatherAndAirdrop(dt) {
     weatherTimer = 0;
     currentWeatherMode = (currentWeatherMode + 1) % 3;
     banner(`🌤️ 환경 변화: ${weatherNames[currentWeatherMode]}`);
+  }
+
+  
+  // 비 내릴 시 지면 수면 반사율 극대화 (Wet Surface Specular Shader)
+  if (currentWeatherMode === 2) {
+    terrain.material.roughness = THREE.MathUtils.lerp(terrain.material.roughness, 0.22, dt * 0.8);
+    terrain.material.metalness = THREE.MathUtils.lerp(terrain.material.metalness, 0.75, dt * 0.8);
+  } else {
+    terrain.material.roughness = THREE.MathUtils.lerp(terrain.material.roughness, 0.85, dt * 0.8);
+    terrain.material.metalness = THREE.MathUtils.lerp(terrain.material.metalness, 0.1, dt * 0.8);
   }
 
   // 날씨 색상 보간
@@ -2168,6 +2258,22 @@ function triggerBotRagdoll(bot) {
   }, 30000);
 }
 
+
+let threatArcTimer = 0;
+let totalShotsFired = 0;
+let totalHeadshots = 0;
+
+function triggerThreatArc(fromX, fromZ) {
+  const dx = fromX - P.x, dz = fromZ - P.z;
+  const threatAngle = Math.atan2(dx, dz) - P.yaw;
+  const deg = threatAngle * (180 / Math.PI);
+  const arrow = document.getElementById('threat-arrow');
+  if (arrow) {
+    arrow.style.transform = `translate(-50%, -100%) rotate(${deg}deg)`;
+  }
+  threatArcTimer = 1.4;
+}
+
 // ==========================================
 // 5. RPG 대미지 팝업 & 격발 로직
 // ==========================================
@@ -2188,9 +2294,22 @@ function spawnDmgPop(x, y, z, val, crit=false) {
 const raycaster = new THREE.Raycaster();
 function shoot() {
   if (raidOver || P.cool > 0 || P.reloading > 0 || isModalOpen()) return;
+  if (P.isJammed) {
+    SND.dryFire();
+    banner('⚠️ [격발 불량] [J] 키를 눌러 불량 탄피를 배출하십시오!');
+    return;
+  }
+  // 1.5% 확률로 약실 불량(Jam) 발생
+  if (Math.random() < 0.015 && P.ammo[P.wep] > 2) {
+    P.isJammed = true;
+    SND.dryFire();
+    document.getElementById('jam-banner').style.display = 'block';
+    return;
+  }
   const w = WEAPONS[P.wep];
   if (P.ammo[P.wep] <= 0) { reload(); return; }
   P.ammo[P.wep]--; P.cool = w.cd;
+  ejectBrassCasing();
 
   if (P.wep === 0) SND.m4Shot();
   else if (P.wep === 1) SND.akShot();
@@ -2236,7 +2355,15 @@ function shoot() {
         let dmg = Math.round((w.dmg * (1 + P.dmgBonus)) * (isHead ? 2.2 : 1.0));
         bot.hp -= dmg;
 
-        if (isHead) { SND.headshot(); if (P.wep === 2) { bulletTimeTimer = 0.45; SND.bulletTimeIn(); } } else SND.hitMarker();
+        if (isHead) {
+          SND.headshot();
+          totalHeadshots++;
+          if (P.wep === 2) { bulletTimeTimer = 0.45; SND.bulletTimeIn(); }
+        }
+        totalShotsFired++;
+        const hsRate = Math.round((totalHeadshots / Math.max(1, totalShotsFired)) * 100);
+        const rateEl = document.getElementById('hs-rate'); if (rateEl) rateEl.textContent = `${hsRate}%`;
+        const countEl = document.getElementById('hs-count'); if (countEl) countEl.textContent = totalHeadshots; else SND.hitMarker();
         spawnDmgPop(endPt.x, endPt.y + 0.3, endPt.z, dmg, isHead);
 
         if (P.vampLevel > 0) P.shield = Math.min(P.shieldMax, P.shield + 10 * P.vampLevel);
@@ -2451,6 +2578,31 @@ function insertArmorPlate() {
   SND.plateInsert();
   banner('🛡️ [세라믹 방탄판 교체 중] 흉부 캐리어 방탄판 삽입...');
   document.getElementById('plate-count').textContent = P.armorPlates;
+}
+
+
+const LOFI_MELODY = [261.6, 293.7, 329.6, 392.0, 440.0, 523.3, 440.0, 392.0, 329.6, 293.7];
+
+function toggleWalkman() {
+  P.walkmanOn = !P.walkmanOn;
+  SND.tapeClick();
+  const dot = document.getElementById('walkman-dot');
+  const txt = document.getElementById('walkman-txt');
+  if (dot) dot.classList.toggle('playing', P.walkmanOn);
+  if (txt) txt.textContent = P.walkmanOn ? 'PLAYING (Lofi Chill)' : 'OFF';
+  banner(`📼 [카세트 테이프] 로파이 사운드트랙: ${P.walkmanOn ? 'ON' : 'OFF'}`);
+}
+
+function clearWeaponJam() {
+  if (!P.isJammed) {
+    SND.rackBolt();
+    banner('노리쇠 후퇴 전진: 정상 작동 확인');
+    return;
+  }
+  P.isJammed = false;
+  SND.rackBolt();
+  document.getElementById('jam-banner').style.display = 'none';
+  banner('🔧 [불량 해결] 탄피 배출 완료! 사격 준비 완료');
 }
 
 // ==========================================
@@ -3120,6 +3272,59 @@ function update(dt) {
     }
   }
 
+  
+  // 로파이 카세트 테이프 음악 연주
+  if (P.walkmanOn) {
+    P.walkmanTimer += dt;
+    if (P.walkmanTimer >= 0.75) {
+      P.walkmanTimer = 0;
+      P.lofiIdx = (P.lofiIdx + 1) % LOFI_MELODY.length;
+      if (typeof audio !== 'undefined' && AC && AC.state === 'running') {
+        SND.lofiNote(LOFI_MELODY[P.lofiIdx]);
+      }
+    }
+  }
+
+  
+  // 물리 탄피 궤적 시뮬레이션 및 바닥 튕김
+  for (let i = activeCasings.length - 1; i >= 0; i--) {
+    const cs = activeCasings[i];
+    cs.life -= dt;
+    cs.x += cs.vx * dt; cs.z += cs.vz * dt;
+    cs.y += cs.vy * dt; cs.vy -= 14 * dt;
+    cs.rotX += dt * 18; cs.rotY += dt * 12;
+
+    if (cs.y <= 0.03) {
+      cs.y = 0.03;
+      if (cs.bounces < 2) {
+        cs.bounces++;
+        cs.vy = -cs.vy * 0.45;
+        cs.vx *= 0.6; cs.vz *= 0.6;
+        if (Math.random() < 0.6) SND.brassClink();
+      } else {
+        cs.vy = 0; cs.vx = 0; cs.vz = 0;
+      }
+    }
+    cs.mesh.position.set(cs.x, cs.y, cs.z);
+    cs.mesh.rotation.set(cs.rotX, cs.rotY, 0);
+
+    if (cs.life <= 0) {
+      scene.remove(cs.mesh);
+      activeCasings.splice(i, 1);
+    }
+  }
+
+  // 피격 위협 방향 아크 인디케이터 페이드아웃
+  if (threatArcTimer > 0) {
+    threatArcTimer -= dt;
+    const ti = document.getElementById('threat-indicator');
+    if (ti) {
+      ti.style.display = 'block';
+      ti.style.opacity = Math.min(1, threatArcTimer * 2);
+      if (threatArcTimer <= 0) ti.style.display = 'none';
+    }
+  }
+
   // 이동
   const baseSpd = (keys.shift && !P.crouching ? 6.5 : P.crouching ? 2.6 : 4.2) * (1 + P.speedBonus) * dt;
   const fw = (keys.w ? 1 : 0) - (keys.s ? 1 : 0), st = (keys.d ? 1 : 0) - (keys.a ? 1 : 0);
@@ -3221,7 +3426,7 @@ function update(dt) {
         const aimOffset = (Math.random() - 0.5) * 1.5;
         addTracer(b.x, 1.2, b.z, P.x + aimOffset, 1.2, P.z + aimOffset, 0xff9922);
 
-        if (Math.abs(aimOffset) < 0.65) applyDamageToPlayer(b.isBoss ? 26 : 16);
+        if (Math.abs(aimOffset) < 0.65) { applyDamageToPlayer(b.isBoss ? 26 : 16); triggerThreatArc(b.x, b.z); }
       }
     }
   });
