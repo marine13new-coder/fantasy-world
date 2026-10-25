@@ -16,6 +16,7 @@ namespace SeoulSurvival
             foreach(var table in game.balance.loot)if(table.facility==facility)foreach(var item in table.items)survival.Add(item.item,item.count);
             if(careful){survival.Add(ResourceKind.Scrap,2);survival.Add(facility==Facility.Police?ResourceKind.GunParts:ResourceKind.Electronics,1);var bonus=game.balance.carefulDistrictBonus[RealWorldMapManager.DistrictKind(RealWorldMapManager.ChunkAt(transform.position))].item;survival.Add(bonus.item,bonus.count);}
             Opened=true; survival.Looted.Add(persistentId); game.Atmosphere.Play(SoundKind.Loot,transform.position,careful?0:game.balance.pursuit.quickSearchNoise);
+            if(careful && game.Journey)game.Journey.DiscoverClue(facility);
             if(!careful && game.Journey)game.Journey.ChangeAlert(game.balance.pursuit.quickSearchAlert);
             if(game.Campaign){game.Campaign.RecordReliefLoot(facility);game.Campaign.SaveNow();}
             foreach(var renderer in GetComponentsInChildren<Renderer>())renderer.sharedMaterial=WorldFactory.Material(Color.gray);

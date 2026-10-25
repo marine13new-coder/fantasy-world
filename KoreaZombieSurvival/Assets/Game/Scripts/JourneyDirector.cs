@@ -30,6 +30,7 @@ namespace SeoulSurvival
         GameBootstrap game;bool persistence;string from="노원역",to="잠실역";Vector3 target;float total,nextEncounter;
         int resolvedEvents,pendingEvent=-1;float alert,nextReunionWave;
         public int ResolvedEvents=>resolvedEvents;
+        public int CluesFound {get;private set;}
         public float Alert=>alert;
         public int PendingEvent=>pendingEvent;
         public string ChapterTitle {get {int chapter=0;for(int i=0;i<game.balance.journeyEvents.Length;i++)if((resolvedEvents & (1<<i))!=0)chapter++;return game.balance.journey.chapterTitles[Mathf.Min(chapter,3)];}}
@@ -106,6 +107,16 @@ namespace SeoulSurvival
             catch(Exception e){Debug.LogWarning("Journey save: "+e.Message);Status="여정 저장 실패 · 현재 플레이는 계속됩니다.";}
         }
         public void RestoreEvents(int mask,float pressure){resolvedEvents=mask;alert=pressure;pendingEvent=-1;}
+        public void RestoreClues(int count){CluesFound=Mathf.Clamp(count,0,3);}
+        public static bool CanDiscoverClue(float progress,int found,Facility facility,JourneyTuning tuning)=>found>=0 && found<tuning.clueProgress.Length && progress>=tuning.clueProgress[found] && (facility==Facility.Police || facility==Facility.School || facility==Facility.Office);
+        public bool DiscoverClue(Facility facility)
+        {
+            if(!Ready || Plan.fromName==Plan.toName || !CanDiscoverClue(Progress,CluesFound,facility,game.balance.journey))return false;
+            CluesFound++;ChangeAlert(-.03f);
+            string source=facility==Facility.Police?"봉쇄 기록":facility==Facility.School?"대피 명단":"통신 로그";
+            Status=$"{source}에서 약속 장소의 무전 단서 발견 · {CluesFound}/3";
+            return true;
+        }
         public void ChangeAlert(float delta){alert=Mathf.Clamp(alert+delta,-.3f,.7f);}
         public void RestoreReunion(bool active,float seconds){ReunionDefense=active && !Reached;ReunionRemaining=ReunionDefense?Mathf.Clamp(seconds,0,game.balance.journey.reunionHoldSeconds):0;nextReunionWave=Time.time+3;}
         public static int NextEvent(float progress,int mask,JourneyEventData[] events)
@@ -150,7 +161,7 @@ namespace SeoulSurvival
             Progress=total<1?1:Mathf.Clamp01(1-RemainingMetres/total);
             if(game.Running && !Reached && pendingEvent<0)pendingEvent=NextEvent(Progress,resolvedEvents,game.balance.journeyEvents);
             if(game.Running && !Reached && !ReunionDefense && RemainingMetres<60 && pendingEvent<0 && resolvedEvents==(1<<game.balance.journeyEvents.Length)-1)
-            {ReunionDefense=true;ReunionRemaining=game.balance.journey.reunionHoldSeconds;nextReunionWave=Time.time+3;Status="약속 장소 방어 시작 · 가까이에서 버티세요.";game.Atmosphere.Play(SoundKind.Siren,target,80);game.Campaign.SaveNow();}
+            {ReunionDefense=true;ReunionRemaining=game.balance.journey.reunionHoldSeconds-CluesFound*game.balance.journey.clueHoldReductionSeconds;nextReunionWave=Time.time+3;Status="약속 장소 방어 시작 · 가까이에서 버티세요.";game.Atmosphere.Play(SoundKind.Siren,target,80);game.Campaign.SaveNow();}
             if(ReunionDefense){TickReunion();return;}
             if(!game.Running || Reached || pendingEvent>=0 || Time.time<nextEncounter)return;
             nextEncounter=Time.time+EncounterDelay(Progress,game.balance.journey);
@@ -207,7 +218,8 @@ namespace SeoulSurvival
                 string pursuit=alert>=.35f?"추격 심각":alert>=.1f?"추격 상승":alert<-.05f?"추격 낮음":"추격 보통";
                 GUI.Label(new Rect(panel.x,49,panel.width,24),$"{danger} · {heading}쪽 {RemainingMetres/1000:0.0}km · {Progress*100:0}% · {pursuit}",title);
                 GUI.color=new Color(.35f,.9f,.72f);GUI.DrawTexture(new Rect(panel.x,94,panel.width*Progress,3),Texture2D.whiteTexture);GUI.color=old;
-                if(ReunionDefense)GUI.Box(new Rect(w/2-240,110,480,65),$"약속 장소 방어 {ReunionRemaining:0}초 · {game.balance.journey.reunionRadius:0}m 안에서 버티세요");
+                GUI.Label(new Rect(panel.x,100,panel.width,24),CluesFound>=3?$"무전 단서 3/3 · 약속 장소 방어 {CluesFound*game.balance.journey.clueHoldReductionSeconds:0}초 단축":$"무전 단서 {CluesFound}/3 · 경찰·학교·업무 V 수색 · {game.balance.journey.clueProgress[CluesFound]*100:0}% 이후",title);
+                if(ReunionDefense)GUI.Box(new Rect(w/2-240,130,480,65),$"약속 장소 방어 {ReunionRemaining:0}초 · {game.balance.journey.reunionRadius:0}m 안에서 버티세요");
                 if(Reached)GUI.Box(new Rect(w/2-260,h/2-75,520,150),"재회 성공\n당신은 약속 장소까지 살아서 도착했습니다.\n계속 탐색하며 다음 이야기를 준비할 수 있습니다.");
                 if(pendingEvent>=0 && !Reached)
                 {

@@ -1,0 +1,173 @@
+{
+  "heroes": [
+    {
+      "id": "hero_wanderer",
+      "name": "Wanderer",
+      "preferredRank": 2,
+      "baseHp": 55,
+      "baseDmg": 12,
+      "gothicLore": "A wandering soul bound by a cursed compass, seeking the lost city of the dead. His whip is a tether to the living world, and his steel is etched with runes of penance."
+    },
+    {
+      "id": "hero_black_knight",
+      "name": "Black Knight",
+      "preferredRank": 1,
+      "baseHp": 75,
+      "baseDmg": 10,
+      "gothicLore": "The last of the Order of the Iron Cross, his armor fused to his flesh by the blood oath. He fights not for glory, but to atone for the betrayal of his kin."
+    },
+    {
+      "id": "hero_berserker",
+      "name": "Berserker",
+      "preferredRank": 4,
+      "baseHp": 65,
+      "baseDmg": 18,
+      "gothicLore": "A former gladiator who drank from the Chalice of Fury, his mind fractured by the screams of the damned. He is a vessel of pure, unadulterated rage."
+    },
+    {
+      "id": "hero_hunter",
+      "name": "Hunter",
+      "preferredRank": 3,
+      "baseHp": 50,
+      "baseDmg": 15,
+      "gothicLore": "A silent tracker who hears the whispers of the forest spirits. Her bow is crafted from the rib of a leviathan, and her arrows are dipped in the tears of weeping willows."
+    }
+  ],
+  "monsters": [
+    {
+      "id": "mon_gravekeeper",
+      "name": "Gravekeeper",
+      "rank": 1,
+      "baseHp": 40,
+      "baseDmg": 8,
+      "stressDmg": 10,
+      "isBoss": false
+    },
+    {
+      "id": "mon_bone_shaman",
+      "name": "Bone Shaman",
+      "rank": 2,
+      "baseHp": 35,
+      "baseDmg": 6,
+      "stressDmg": 18,
+      "isBoss": false
+    },
+    {
+      "id": "mon_wraith",
+      "name": "Wraith",
+      "rank": 2,
+      "baseHp": 30,
+      "baseDmg": 12,
+      "stressDmg": 25,
+      "isBoss": false
+    },
+    {
+      "id": "mon_ghoul",
+      "name": "Ghoul",
+      "rank": 1,
+      "baseHp": 45,
+      "baseDmg": 10,
+      "stressDmg": 15,
+      "isBoss": false
+    },
+    {
+      "id": "mon_volcano_golem",
+      "name": "Volcano Golem Boss",
+      "rank": 4,
+      "baseHp": 150,
+      "baseDmg": 20,
+      "stressDmg": 30,
+      "isBoss": true
+    },
+    {
+      "id": "mon_coffin_troll",
+      "name": "Coffin Troll",
+      "rank": 2,
+      "baseHp": 60,
+      "baseDmg": 12,
+      "stressDmg": 10,
+      "isBoss": false
+    },
+    {
+      "id": "mon_soul_reaper",
+      "name": "Soul Reaper",
+      "rank": 3,
+      "baseHp": 50,
+      "baseDmg": 15,
+      "stressDmg": 20,
+      "isBoss": false
+    },
+    {
+      "id": "mon_blood_moth",
+      "name": "Blood Moth",
+      "rank": 1,
+      "baseHp": 25,
+      "baseDmg": 5,
+      "stressDmg": 12,
+      "isBoss": false
+    },
+    {
+      "id": "mon_stone_gargoyle",
+      "name": "Stone Gargoyle",
+      "rank": 2,
+      "baseHp": 70,
+      "baseDmg": 14,
+      "stressDmg": 8,
+      "isBoss": false
+    },
+    {
+      "id": "mon_necromancer",
+      "name": "Necromancer",
+      "rank": 3,
+      "baseHp": 45,
+      "baseDmg": 10,
+      "stressDmg": 22,
+      "isBoss": false
+    },
+    {
+      "id": "mon_shade_wolf",
+      "name": "Shade Wolf",
+      "rank": 2,
+      "baseHp": 40,
+      "baseDmg": 13,
+      "stressDmg": 15,
+      "isBoss": false
+    },
+    {
+      "id": "mon_cursed_priest",
+      "name": "Cursed Priest",
+      "rank": 3,
+      "baseHp": 55,
+      "baseDmg": 11,
+      "stressDmg": 18,
+      "isBoss": false
+    },
+    {
+      "id": "mon_abyssal_spider",
+      "name": "Abyssal Spider",
+      "rank": 3,
+      "baseHp": 50,
+      "baseDmg": 14,
+      "stressDmg": 20,
+      "isBoss": false
+    },
+    {
+      "id": "mon_iron_golem",
+      "name": "Iron Golem",
+      "rank": 4,
+      "baseHp": 120,
+      "baseDmg": 18,
+      "stressDmg": 15,
+      "isBoss": false
+    },
+    {
+      "id": "mon_lord_of_the_underdark",
+      "name": "Lord of the Underdark",
+      "rank": 5,
+      "baseHp": 200,
+      "baseDmg": 25,
+      "stressDmg": 40,
+      "isBoss": true
+    }
+  ]
+}

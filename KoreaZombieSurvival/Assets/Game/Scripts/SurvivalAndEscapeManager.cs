@@ -62,7 +62,7 @@ namespace SeoulSurvival
             Searching=true;var start=game.Player.transform.position;float health=game.Player.Health;float duration=game.balance.carefulSearchSeconds;
             game.Player.SetAction(PlayerState.Interact,duration);game.Atmosphere.Play(SoundKind.Reload,start,game.balance.pursuit.carefulSearchNoise);message="정밀 분해 중 · 피격 시 중단";
             float elapsed=0;while(elapsed<duration){if(!box || !game.Running || game.Player.Health<health || Vector3.Distance(start,game.Player.transform.position)>.5f){Searching=false;yield break;}elapsed+=Time.deltaTime;yield return null;}
-            if(box && box.TryOpen(true))message="정밀 분해 완료 · 추가 부품 / 추격 증가 없음";Searching=false;
+            if(box && box.TryOpen(true))message="정밀 분해 완료 · 추가 부품 / 동네 소음은 소폭 남음";Searching=false;
         }
         public void ContinueCampaign(){Victory=false;Defending=false;CraftingOpen=false;if(helicopter)Destroy(helicopter);message="다음 지역 구호 작전 · 물자를 준비하세요.";}
         public void RestoreCompleted(bool completed){Victory=completed;Defending=false;}
