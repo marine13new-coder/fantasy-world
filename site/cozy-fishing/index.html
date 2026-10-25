@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>코지 픽셀 낚시터 (Cozy Pixel Fishing) - Desktop & Web Playable</title>
+<style>
+  :root {
+    --cozy-sky-top: #1a1a2e;
+    --cozy-sky-mid: #16213e;
+    --cozy-sky-bot: #0f3460;
+    --water-top: #2b5876;
+    --water-bot: #1e3c72;
+    --gold: #f6c90e;
+    --panel-bg: rgba(22, 33, 62, 0.95);
+    --border-color: #e94560;
+    --text-main: #f5f5f5;
+    --text-dim: #a2a8d3;
+  }
+  * { box-sizing: border-box; user-select: none; margin: 0; padding: 0; }
+  body {
+    background: #0f111a;
+    color: var(--text-main);
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  #game-wrap {
+    position: relative;
+    width: 1000px;
+    height: 640px;
+    background: #000;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 30px rgba(233, 69, 96, 0.25);
+    border: 3px solid #233142;
+  }
+  canvas#cozyCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+  }
+  /* HUD overlay */
+  .hud {
+    position: absolute;
+    top: 16px;
+    left: 20px;
+    right: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .hud-badge {
+    pointer-events: auto;
+    background: rgba(15, 20, 35, 0.85);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-radius: 30px;
+    padding: 8px 18px;
+    font-size: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  }
+  .hud-badge .gold { color: #ffd166; font-size: 17px; }
+  .hud-buttons {
+    display: flex;
+    gap: 12px;
+    pointer-events: auto;
+  }
+  .btn {
+    background: linear-gradient(135deg, #e94560, #d1304b);
+    color: #fff;
+    border: none;
+    padding: 9px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(233, 69, 96, 0.4);
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(233, 69, 96, 0.6);
+  }
+  .btn.secondary {
+    background: rgba(30, 41, 67, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .btn.secondary:hover {
+    background: rgba(45, 60, 95, 0.95);
+    border-color: #ffd166;
+  }
+
+  /* Mini-game overlay */
+  #reeling-panel {
+    display: none;
+    position: absolute;
+    right: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 90px;
+    height: 380px;
+    background: rgba(10, 15, 28, 0.9);
+    border: 3px solid #ffd166;
+    border-radius: 45px;
+    padding: 12px 0;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.7), 0 0 20px rgba(255, 209, 102, 0.3);
+    z-index: 20;
+    touch-action: none;
+  }
+  #reeling-track {
+    position: relative;
+    width: 32px;
+    height: 320px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    margin: 0 auto;
+    overflow: hidden;
+  }
+  #safe-zone {
+    position: absolute;
+    width: 100%;
+    background: linear-gradient(180deg, rgba(74, 222, 128, 0.65), rgba(34, 197, 94, 0.85));
+    border-top: 2px solid #86efac;
+    border-bottom: 2px solid #86efac;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.6);
+    bottom: 0;
+  }
+  #fish-marker {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    left: 3px;
+    font-size: 20px;
+    line-height: 26px;
+    text-align: center;
+    bottom: 0;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+    transition: bottom 0.05s ease-out;
+  }
+  #progress-bar-wrap {
+    position: absolute;
+    right: 12px;
+    top: 18px;
+    bottom: 18px;
+    width: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  #progress-bar {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: linear-gradient(0deg, #38ef7d, #11998e);
+    border-radius: 4px;
+    transition: height 0.05s linear;
+  }
+  #reeling-guide {
+    position: absolute;
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffd166;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+  }
+
+  /* Modals */
+  .modal-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 8, 18, 0.85);
+    backdrop-filter: blur(6px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal {
+    width: 840px;
+    max-height: 560px;
+    background: linear-gradient(145deg, #16213e, #0f172a);
+    border: 2px solid #334155;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.9);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .modal-head h2 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #f1f5f9;
+  }
+  .close-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 26px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px 8px;
+  }
+  .close-btn:hover { color: #fff; }
+  .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 0;
+    margin-right: -8px;
+    padding-right: 8px;
+  }
+
+  /* Dex Grid */
+  .dex-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+  }
+  .dex-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px 10px;
+    text-align: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  .dex-card:hover {
+    transform: translateY(-3px);
+    border-color: #ffd166;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .dex-card.locked {
+    opacity: 0.45;
+    filter: grayscale(1);
+    cursor: default;
+  }
+  .dex-card .fish-icon {
+    font-size: 32px;
+    margin-bottom: 6px;
+  }
+  .dex-card .fish-name {
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dex-card .fish-rarity {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-top: 4px;
+    display: inline-block;
+  }
+
+  /* Shop List */
+  .shop-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .shop-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 16px 20px;
+  }
+  .shop-info h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffd166;
+    margin-bottom: 4px;
+  }
+  .shop-info p {
+    font-size: 13px;
+    color: #94a3b8;
+  }
+  .shop-action {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .shop-level {
+    font-size: 14px;
+    font-weight: 700;
+    color: #38bdf8;
+  }
+
+  /* Catch Celebration Toast */
+  #catch-card {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    width: 360px;
+    background: linear-gradient(145deg, #1e293b, #0f172a);
+    border: 3px solid #ffd166;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 40px rgba(255, 209, 102, 0.4);
+    text-align: center;
+    z-index: 50;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  #catch-card.show {
+    display: block;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  #catch-card .rarity-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+  #catch-card .fish-display {
+    font-size: 64px;
+    margin: 8px 0;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.6));
+    animation: float 2s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  #catch-card h3 {
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+  #catch-card .sub {
+    font-size: 13px;
+    color: #94a3b8;
+    margin-bottom: 14px;
+  }
+  #catch-card .stats {
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-around;
+    font-size: 14px;
+  }
+  #catch-card .stats b { color: #ffd166; }
+  #catch-card .desc {
+    font-size: 13px;
+    color: #cbd5e1;
+    line-height: 1.5;
+    margin-bottom: 18px;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 10px;
+    border-radius: 8px;
+  }
+  .rarity-Common { background: #475569; color: #f8fafc; }
+  .rarity-Uncommon { background: #166534; color: #bbf7d0; }
+  .rarity-Rare { background: #1e40af; color: #bfdbfe; }
+  .rarity-Epic { background: #6b21a8; color: #e9d5ff; }
+  .rarity-Legendary { background: #854d0e; color: #fef08a; border: 1px solid #ffd166; }
+
+  /* State hint bubble */
+  #state-bubble {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.85);
+    border: 2px solid rgba(255, 209, 102, 0.4);
+    border-radius: 20px;
+    padding: 10px 24px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffd166;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    pointer-events: none;
+    z-index: 10;
+  }
+</style>
+</head>
+<body>
+
+<div id="game-wrap">
+  <canvas id="cozyCanvas" width="1000" height="640"></canvas>
+
+  <div class="hud">
+    <div class="hud-badge">
+      <span>🪙</span>
+      <span class="gold" id="gold-display">100 G</span>
+      <span style="color:rgba(255,255,255,0.2)">|</span>
+      <span>📖 <span id="dex-count">0</span> / 50</span>
+    </div>
+
+    <div class="hud-buttons">
+      <button class="btn secondary" id="btn-sound">🔊 사운드 ON</button>
+      <button class="btn secondary" id="btn-dex">📖 물고기 도감</button>
+      <button class="btn" id="btn-shop">🛒 낚시 상점</button>
+    </div>
+  </div>
+
+  <div id="state-bubble">클릭하여 낚싯대를 던지세요 (Click to Cast)</div>
+
+  <!-- Reeling Mini-Game Bar -->
+  <div id="reeling-panel">
+    <div id="reeling-track">
+      <div id="safe-zone"></div>
+      <div id="fish-marker">🐟</div>
+    </div>
+    <div id="progress-bar-wrap">
+      <div id="progress-bar"></div>
+    </div>
+    <div id="reeling-guide">꾹 눌러 릴 감기</div>
+  </div>
+
+  <!-- Catch Card -->
+  <div id="catch-card">
+    <span class="rarity-badge" id="c-rarity">COMMON</span>
+    <div class="fish-display" id="c-icon">🐟</div>
+    <h3 id="c-name">벚꽃 송사리</h3>
+    <div class="sub" id="c-enname">Cherry Blossom Minnow</div>
+    <div class="stats">
+      <div>길이: <b id="c-len">8.4 cm</b></div>
+      <div>판매가: <b id="c-price">+25 G</b></div>
+    </div>
+    <div class="desc" id="c-desc">설명 텍스트가 여기에 표시됩니다.</div>
+    <button class="btn" id="btn-catch-ok" style="width:100%; justify-content:center;">확인 (OK)</button>
+  </div>
+
+  <!-- FishDex Modal -->
+  <div class="modal-overlay" id="modal-dex">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>📖 코지 픽셀 낚시 도감 (<span id="modal-dex-count">0</span> / 50)</h2>
+        <button class="close-btn" data-close="modal-dex">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="dex-grid" id="dex-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shop Modal -->
+  <div class="modal-overlay" id="modal-shop">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>🛒 낚싯대 & 미끼 업그레이드 상점</h2>
+        <button class="close-btn" data-close="modal-shop">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="shop-list" id="shop-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Raw Databases injected from StreamingAssets
+const FISH_DATABASE = [{"id": 1, "name": "벚꽃 송사리", "english_name": "Cherry Blossom Minnow", "rarity": "Common", "catch_probability": 0.42, "base_price": 25, "min_length_cm": 5.0, "max_length_cm": 12.0, "difficulty": 0.25, "color_hex": "#FFC0CB", "description": "봄바람에 흩날리는 벚꽃잎이 물속에서 춤추는 작은 송사리. 처음 낚시를 시작할 때 가장 먼저 만나는 친구입니다."}, {"id": 2, "name": "민트 고등어", "english_name": "Mint Mackerel", "rarity": "Common", "catch_probability": 0.41, "base_price": 30, "min_length_cm": 15.0, "max_length_cm": 25.0, "difficulty": 0.3, "color_hex": "#98FB98", "description": "시원한 민트색 비늘이 햇살을 받아 반짝입니다. 심신을 차분하게 만들어주는 평온한 물고기."}, {"id": 3, "name": "꿀방울 미꾸라지", "english_name": "Honeydrop Loach", "rarity": "Common", "catch_probability": 0.4, "base_price": 22, "min_length_cm": 8.0, "max_length_cm": 15.0, "difficulty": 0.22, "color_hex": "#FFD700", "description": "몸체에서 은은한 꿀 향기가 뿜어져 나오는 미꾸라지. 달콤한 꿈을 꾸게 해준다는 전설이 있습니다."}, {"id": 4, "name": "구름 해파리", "english_name": "Cloud Jellyfish", "rarity": "Common", "catch_probability": 0.43, "base_price": 28, "min_length_cm": 10.0, "max_length_cm": 20.0, "difficulty": 0.28, "color_hex": "#F0F8FF", "description": "하얀 구름처럼 보송보송한 몸체를 가진 해파리. 만지면 천천히 사라지는 착한 피조물입니다."}, {"id": 5, "name": "뚱뚱복어", "english_name": "Chubby Pufferfish", "rarity": "Common", "catch_probability": 0.45, "base_price": 35, "min_length_cm": 12.0, "max_length_cm": 18.0, "difficulty": 0.35, "color_hex": "#FFA500", "description": "무서워하는 척하지만 사실은 매우 귀여운 복어. 볼에 뽕뽕 치마를 입은 것처럼 보이는 친구."}, {"id": 6, "name": "이슬 머금은 피라미", "english_name": "Dewdrop Piranha", "rarity": "Common", "catch_probability": 0.39, "base_price": 24, "min_length_cm": 6.0, "max_length_cm": 10.0, "difficulty": 0.26, "color_hex": "#E0FFFF", "description": "아침 이슬을 머금고 반짝이는 작은 피라미. 날카로운 이를 숨기고 정직하게 살아갑니다."}, {"id": 7, "name": "솜사탕 해마", "english_name": "Cotton Candy Seahorse", "rarity": "Common", "catch_probability": 0.44, "base_price": 40, "min_length_cm": 8.0, "max_length_cm": 14.0, "difficulty": 0.32, "color_hex": "#FFB6C1", "description": "분홍빛 솜사탕 같은 색감을 가진 해마. 꼬리를 흔들며 천천히 헤엄치는 모습이 사랑스럽습니다."}, {"id": 8, "name": "호롱불 아귀", "english_name": "Lantern Cod", "rarity": "Common", "catch_probability": 0.38, "base_price": 55, "min_length_cm": 20.0, "max_length_cm": 30.0, "difficulty": 0.4, "color_hex": "#FF7F50", "description": "두꺼비 등불처럼 따뜻한 빛을 내는 아귀. 어두운 깊은 곳에서 길을 잃은 물고기들을 도와줍니다."}, {"id": 9, "name": "노을빛 금붕어", "english_name": "Sunset Goldfish", "rarity": "Common", "catch_probability": 0.42, "base_price": 38, "min_length_cm": 10.0, "max_length_cm": 16.0, "difficulty": 0.29, "color_hex": "#FF8C00", "description": "저녁 노을의 색을 입고 있는 금붕어. 하루의 마무리를 함께해 주는 편안한 동반자."}, {"id": 10, "name": "크림빵 가자미", "english_name": "Cream Bread Flatfish", "rarity": "Common", "catch_probability": 0.41, "base_price": 45, "min_length_cm": 18.0, "max_length_cm": 28.0, "difficulty": 0.38, "color_hex": "#F5DEB3", "description": "부드러운 크림빵 색을 한 가자미. 모래 위에서 잠들어 있는 것처럼 평온한 분위기를 풍깁니다."}, {"id": 11, "name": "레몬 비늘 참기름", "english_name": "Lemon Scale Sardine", "rarity": "Common", "catch_probability": 0.46, "base_price": 20, "min_length_cm": 10.0, "max_length_cm": 15.0, "difficulty": 0.2, "color_hex": "#FFFF00", "description": "신선한 레몬 향이 나는 작은 고등어. 아침을 깨우는 상큼한 에너지의 상징입니다."}, {"id": 12, "name": "고구마 메기", "english_name": "Sweet Potato Catfish", "rarity": "Common", "catch_probability": 0.39, "base_price": 50, "min_length_cm": 25.0, "max_length_cm": 40.0, "difficulty": 0.36, "color_hex": "#D2691E", "description": "고구마 껍질 같은 갈색을 한 메기. 따뜻한 봄날 물속에서 느긋하게 시간을 보냅니다."}, {"id": 13, "name": "우유빛 갈치", "english_name": "Milk Cod", "rarity": "Common", "catch_probability": 0.4, "base_price": 60, "min_length_cm": 30.0, "max_length_cm": 50.0, "difficulty": 0.42, "color_hex": "#FFFFF0", "description": "우유를 마신 것처럼 하얀 몸체의 갈치. 순백의 아름다움을 가진 야간 활동형 물고기."}, {"id": 14, "name": "초코 젤리 문어", "english_name": "Chocolate Jelly Octopus", "rarity": "Common", "catch_probability": 0.38, "base_price": 58, "min_length_cm": 15.0, "max_length_cm": 25.0, "difficulty": 0.45, "color_hex": "#8B4513", "description": "달콤한 초코 젤리 색을 한 작은 문어. 팔을 흔들어 인사하는 무언의 친밀감을 보여줍니다."}, {"id": 15, "name": "바닐라 아이스크림 붕어", "english_name": "Vanilla Ice Cream Koi", "rarity": "Common", "catch_probability": 0.43, "base_price": 32, "min_length_cm": 8.0, "max_length_cm": 14.0, "difficulty": 0.27, "color_hex": "#FAEBD7", "description": "바닐라 아이스크림처럼 부드러운 색감의 붕어. 여름날의 시원함을 물속에서 전합니다."}, {"id": 16, "name": "라벤더 가재", "english_name": "Lavender Crayfish", "rarity": "Uncommon", "catch_probability": 0.31, "base_price": 75, "min_length_cm": 10.0, "max_length_cm": 18.0, "difficulty": 0.4, "color_hex": "#E6E6FA", "description": "라벤더 꽃잎 같은 보라색을 가진 가재. 은은한 향기를 내뿜으며 수초 사이를 기어갑니다."}, {"id": 17, "name": "딸기 젤리 문어", "english_name": "Strawberry Jelly Octopus", "rarity": "Uncommon", "catch_probability": 0.3, "base_price": 80, "min_length_cm": 15.0, "max_length_cm": 25.0, "difficulty": 0.42, "color_hex": "#FF69B4", "description": "달콤한 딸기 젤리 색을 한 문어. 사랑스러운 외모와 달리 의외로 힘이 강합니다."}, {"id": 18, "name": "메이플 시럽 잉어", "english_name": "Maple Syrup Carp", "rarity": "Uncommon", "catch_probability": 0.29, "base_price": 90, "min_length_cm": 30.0, "max_length_cm": 45.0, "difficulty": 0.45, "color_hex": "#C19A6B", "description": "메이플 시럽의 진한 갈색을 띤 잉어. 단풍이 드는 계절에 가장 활발하게 헤엄칩니다."}, {"id": 19, "name": "푸딩 카피바라 물고기", "english_name": "Pudding Capybara Fish", "rarity": "Uncommon", "catch_probability": 0.32, "base_price": 85, "min_length_cm": 20.0, "max_length_cm": 35.0, "difficulty": 0.38, "color_hex": "#DEB887", "description": "카피바라처럼 둥글고 부드러운 몸체의 물고기. 항상 차분한 표정으로 주변을 살핍니다."}, {"id": 20, "name": "말차 스콘 붕어", "english_name": "Matcha Scone Koi", "rarity": "Uncommon", "catch_probability": 0.31, "base_price": 78, "min_length_cm": 10.0, "max_length_cm": 18.0, "difficulty": 0.41, "color_hex": "#8FBC8F", "description": "말차 티의 청록색을 가진 붕어. 차 한 잔의 여유로운 시간을 선사하는 평화로운 존재."}, {"id": 21, "name": "로즈마리 새우", "english_name": "Rosemary Shrimp", "rarity": "Uncommon", "catch_probability": 0.3, "base_price": 70, "min_length_cm": 5.0, "max_length_cm": 10.0, "difficulty": 0.36, "color_hex": "#9ACD32", "description": "허브 향이 나는 작은 새우. 요리사의 꿈을 품고 있는 듯한 진지한 눈빛이 특징입니다."}, {"id": 22, "name": "캐러멜 갈치", "english_name": "Caramel Cod", "rarity": "Uncommon", "catch_probability": 0.28, "base_price": 120, "min_length_cm": 35.0, "max_length_cm": 55.0, "difficulty": 0.5, "color_hex": "#A0522D", "description": "바삭한 캐러멜 색을 한 갈치. 달콤한 빛을 내며 밤새도록 수면을 누빈다고 전해집니다."}, {"id": 23, "name": "코코넛 고래상어", "english_name": "Coconut Shark", "rarity": "Uncommon", "catch_probability": 0.31, "base_price": 110, "min_length_cm": 100.0, "max_length_cm": 150.0, "difficulty": 0.48, "color_hex": "#F5F5DC", "description": "코코넛 밀크 같은 하얀 배를 가진 작은 고래상어. 실제로는 매우 온순한 성격입니다."}, {"id": 24, "name": "블랙베리 가자미", "english_name": "Blackberry Flatfish", "rarity": "Uncommon", "catch_probability": 0.29, "base_price": 95, "min_length_cm": 20.0, "max_length_cm": 30.0, "difficulty": 0.44, "color_hex": "#301934", "description": "검은 베리처럼 짙은 보라색을 띤 가자미. 밤에만 모습을 드러내는 신비로운 물고기."}, {"id": 25, "name": "피스타치오 해마", "english_name": "Pistachio Seahorse", "rarity": "Uncommon", "catch_probability": 0.33, "base_price": 82, "min_length_cm": 12.0, "max_length_cm": 20.0, "difficulty": 0.4, "color_hex": "#93C572", "description": "우유빛 피스타치오 색을 한 해마. 꼬리를 말아 들고 조용히 뿌리를 내리고 있습니다."}, {"id": 26, "name": "아몬드 크루아상 문어", "english_name": "Almond Croissant Octopus", "rarity": "Uncommon", "catch_probability": 0.27, "base_price": 130, "min_length_cm": 20.0, "max_length_cm": 30.0, "difficulty": 0.52, "color_hex": "#D2A679", "description": "바삭한 크루아상 색을 한 문어. 아침 햇살이 비칠 때 가장 아름다운 빛을 냅니다."}, {"id": 27, "name": "설탕 입힌 메기", "english_name": "Sugar Coated Catfish", "rarity": "Uncommon", "catch_probability": 0.3, "base_price": 100, "min_length_cm": 30.0, "max_length_cm": 45.0, "difficulty": 0.46, "color_hex": "#FAF0E6", "description": "몸을 감싼 점액이 설탕처럼 반짝이는 메기. 달콤한 광채가 어둠 속에서도 빛납니다."}, {"id": 28, "name": "허니콤 잉어", "english_name": "Honeycomb Carp", "rarity": "Uncommon", "catch_probability": 0.29, "base_price": 140, "min_length_cm": 40.0, "max_length_cm": 60.0, "difficulty": 0.54, "color_hex": "#FFC125", "description": "밀랍으로 만든 벌집 패턴의 비늘을 가진 잉어. 단단하고 견고한 체구를 자랑합니다."}, {"id": 29, "name": "라즈베리 젤리 새우", "english_name": "Raspberry Jelly Shrimp", "rarity": "Uncommon", "catch_probability": 0.32, "base_price": 72, "min_length_cm": 8.0, "max_length_cm": 15.0, "difficulty": 0.39, "color_hex": "#E0115F", "description": "생강색 라즈베리 젤리 색을 한 새우. 빨간빛이 물속에서 파동을 일으키며 춤춥니다."}, {"id": 30, "name": "바닐라 빈 가재", "english_name": "Vanilla Bean Crayfish", "rarity": "Uncommon", "catch_probability": 0.31, "base_price": 88, "min_length_cm": 12.0, "max_length_cm": 20.0, "difficulty": 0.43, "color_hex": "#F5F5DC", "description": "바닐라 빈의 은은한 향이 나는 가재. 깊은 호수의 맑은 물에서만 서식합니다."}, {"id": 31, "name": "은하수 고래", "english_name": "Galaxy Whale", "rarity": "Rare", "catch_probability": 0.19, "base_price": 200, "min_length_cm": 200.0, "max_length_cm": 300.0, "difficulty": 0.6, "color_hex": "#4B0082", "description": "몸체에 은하수가 흐르는 거대한 고래. 꿈속에서나 볼 수 있을 것 같은 환상적인 존재."}, {"id": 32, "name": "달콤 가오리", "english_name": "Sweet Ray", "rarity": "Rare", "catch_probability": 0.18, "base_price": 220, "min_length_cm": 50.0, "max_length_cm": 80.0, "difficulty": 0.62, "color_hex": "#FFDAB9", "description": "단단한 껍질이 달콤한 사탕처럼 반짝이는 가오리. 모래바람을 타는 듯한 자유롭게 헤엄칩니다."}, {"id": 33, "name": "별빛 잉어", "english_name": "Starlight Carp", "rarity": "Rare", "catch_probability": 0.17, "base_price": 350, "min_length_cm": 40.0, "max_length_cm": 65.0, "difficulty": 0.7, "color_hex": "#FFE66D", "description": "밤하늘의 은하수가 수면에 내려앉았을 때만 나타나는 환상의 물고기. 지느러미에서 따스한 별빛 조각이 반짝입니다."}, {"id": 34, "name": "구름 솜사탕 문어", "english_name": "Cloud Cotton Candy Octopus", "rarity": "Rare", "catch_probability": 0.18, "base_price": 190, "min_length_cm": 25.0, "max_length_cm": 40.0, "difficulty": 0.55, "color_hex": "#FFF0F5", "description": "하얀 구름과 솜사탕이 결합된 듯한 문어. 만지면 부드럽게 녹아 사라지는 착각을 불러일으킵니다."}, {"id": 35, "name": "비눗방울 해마", "english_name": "Soap Bubble Seahorse", "rarity": "Rare", "catch_probability": 0.19, "base_price": 180, "min_length_cm": 15.0, "max_length_cm": 25.0, "difficulty": 0.52, "color_hex": "#87CEFA", "description": "투명한 비눗방울처럼 맑고 빛나는 해마. 햇살을 받으면 무지개 색으로 변합니다."}, {"id": 36, "name": "노을빛 금붕어 왕", "english_name": "Sunset Goldfish King", "rarity": "Rare", "catch_probability": 0.16, "base_price": 300, "min_length_cm": 15.0, "max_length_cm": 25.0, "difficulty": 0.68, "color_hex": "#FF4500", "description": "노을빛을 머금은 가장 아름다운 금붕어. 작은 몸집에도 불구하고 왕의 자존심을 지니고 있습니다."}, {"id": 37, "name": "은하수 고래 새끼", "english_name": "Galaxy Whale Cub", "rarity": "Rare", "catch_probability": 0.2, "base_price": 250, "min_length_cm": 100.0, "max_length_cm": 150.0, "difficulty": 0.65, "color_hex": "#9370DB", "description": "은하수 고래의 어린 개체. 호기심이 많아 낚싯밥에 자주 걸리는 순수한 얼굴을 하고 있습니다."}, {"id": 38, "name": "달빛 문어", "english_name": "Moonlight Octopus", "rarity": "Rare", "catch_probability": 0.17, "base_price": 280, "min_length_cm": 30.0, "max_length_cm": 50.0, "difficulty": 0.72, "color_hex": "#C0C0C0", "description": "밤에만 은은한 달빛을 내뿜는 문어. 어둠 속에서 길을 잃은 낚시꾼을 도와준다고 합니다."}, {"id": 39, "name": "별자리 가자미", "english_name": "Constellation Flatfish", "rarity": "Rare", "catch_probability": 0.18, "base_price": 210, "min_length_cm": 25.0, "max_length_cm": 40.0, "difficulty": 0.58, "color_hex": "#191970", "description": "몸체에 별자리 무늬가 새겨진 가자미. 밤하늘을 올려다보며 별의 이야기를 들려줍니다."}, {"id": 40, "name": "꿈의 해파리", "english_name": "Dream Jellyfish", "rarity": "Rare", "catch_probability": 0.19, "base_price": 195, "min_length_cm": 20.0, "max_length_cm": 35.0, "difficulty": 0.56, "color_hex": "#E6E6FA", "description": "꿈속의 기억을 머금고 있는 해파리. 만지면 잊고 싶던 행복한 기억이 떠오릅니다."}, {"id": 41, "name": "은하수 고래 부부", "english_name": "Galaxy Whale Couple", "rarity": "Epic", "catch_probability": 0.09, "base_price": 450, "min_length_cm": 250.0, "max_length_cm": 350.0, "difficulty": 0.75, "color_hex": "#483D8B", "description": "항상 함께 헤엄치는 은하수 고래 부부. 그들의 등 위에서 별빛이 쏟아져 내립니다."}, {"id": 42, "name": "영혼의 등불 가오리", "english_name": "Soul Lantern Ray", "rarity": "Epic", "catch_probability": 0.08, "base_price": 500, "min_length_cm": 60.0, "max_length_cm": 90.0, "difficulty": 0.78, "color_hex": "#00FFFF", "description": "영혼을 비추는 등불 같은 가오리. 깊은 심해에서 희망의 빛을 전하는 수호자입니다."}, {"id": 43, "name": "지혜의 잉어", "english_name": "Wisdom Carp", "rarity": "Epic", "catch_probability": 0.09, "base_price": 600, "min_length_cm": 50.0, "max_length_cm": 80.0, "difficulty": 0.8, "color_hex": "#FFD700", "description": "천 년을 살았다는 전설의 잉어. 눈가에 주름을 무늬처럼 갖고 있으며, 지혜로운 눈빛을 지닙니다."}, {"id": 44, "name": "우주 먼지 문어", "english_name": "Cosmic Dust Octopus", "rarity": "Epic", "catch_probability": 0.08, "base_price": 550, "min_length_cm": 40.0, "max_length_cm": 60.0, "difficulty": 0.82, "color_hex": "#000000", "description": "우주의 먼지처럼 검은색과 은색이 섞인 문어. 팔 끝에서 작은 블랙홀이 생기는 괴상한 능력자."}, {"id": 45, "name": "시간의 흐름 해마", "english_name": "Time Flow Seahorse", "rarity": "Epic", "catch_probability": 0.09, "base_price": 480, "min_length_cm": 20.0, "max_length_cm": 30.0, "difficulty": 0.76, "color_hex": "#DAA520", "description": "시간의 흐름을 느리게 만드는 해마. 그 근처에서 잠시 멈추면 영원한 순간을 경험할 수 있습니다."}, {"id": 46, "name": "영혼의 고래", "english_name": "Soul Whale", "rarity": "Epic", "catch_probability": 0.08, "base_price": 800, "min_length_cm": 300.0, "max_length_cm": 400.0, "difficulty": 0.85, "color_hex": "#F0F8FF", "description": "이 세계의 모든 영혼이 모여드는 거대한 고래. 그 숨결이 바다의 파도를 만듭니다."}, {"id": 47, "name": "창세의 빛 잉어", "english_name": "Genesis Light Carp", "rarity": "Legendary", "catch_probability": 0.03, "base_price": 1500, "min_length_cm": 60.0, "max_length_cm": 100.0, "difficulty": 0.95, "color_hex": "#FFFFFF", "description": "세계가 창조되었을 때의 첫 빛을 머금은 잉어. 만지면 모든 심연의 어둠이 걷혀 나갑니다."}, {"id": 48, "name": "은하수의 왕 고래", "english_name": "Galaxy King Whale", "rarity": "Legendary", "catch_probability": 0.02, "base_price": 2500, "min_length_cm": 400.0, "max_length_cm": 500.0, "difficulty": 1.0, "color_hex": "#000080", "description": "은하수 전체를 지배하는 전설의 고래. 그 등 위에서 우주의 역사를 볼 수 있다는 전설."}, {"id": 49, "name": "영혼의 등불 가오리 왕", "english_name": "Soul Lantern Ray King", "rarity": "Legendary", "catch_probability": 0.03, "base_price": 1800, "min_length_cm": 80.0, "max_length_cm": 120.0, "difficulty": 0.9, "color_hex": "#00CED1", "description": "모든 영혼의 등불을 조율하는 가오리 왕. 그의 빛은 죽은 자들의 영혼을安息하게 합니다."}, {"id": 50, "name": "시간의 흐름 해마 왕", "english_name": "Time Flow Seahorse King", "rarity": "Legendary", "catch_probability": 0.03, "base_price": 2000, "min_length_cm": 30.0, "max_length_cm": 50.0, "difficulty": 0.92, "color_hex": "#B8860B", "description": "시간의 흐름을 지배하는 해마 왕. 그의 꼬리가 휘날리는 방향에 따라 과거와 미래가 바뀝니다."}];
+const ECONOMY_DATA = {"version": "1.0", "starting_gold": 100, "base_wait_min_sec": 3.0, "base_wait_max_sec": 7.0, "base_safe_zone_size": 0.28, "base_reel_fill_duration": 3.0, "upgrades": [{"id": "bite_speed", "name": "포근한 깃털 찌", "description": "물고기가 찌를 발견하는 시간이 단축됩니다. (입질 대기시간 감소)", "max_level": 5, "base_cost": 50, "cost_multiplier": 1.8, "effect_per_level": 0.6}, {"id": "safe_zone", "name": "유연한 대나무 낚싯대", "description": "릴링 미니게임의 초록색 안전 구역이 넓어집니다.", "max_level": 5, "base_cost": 80, "cost_multiplier": 2.0, "effect_per_level": 0.05}, {"id": "reel_power", "name": "정밀 황동 릴", "description": "릴을 감는 속도가 빨라져 더 쉽게 물고기를 제압합니다.", "max_level": 5, "base_cost": 120, "cost_multiplier": 2.2, "effect_per_level": 0.15}, {"id": "rare_luck", "name": "별빛 발광 미끼", "description": "희귀(Rare) 이상 등급의 물고기가 나타날 확률이 증가합니다.", "max_level": 5, "base_cost": 200, "cost_multiplier": 2.5, "effect_per_level": 0.08}, {"id": "cat_companion", "name": "동행 고양이 '모찌'", "description": "창을 내려놓아도 곁에서 자동으로 물고기를 낚아 올리는 든든한 파트너입니다.", "max_level": 3, "base_cost": 500, "cost_multiplier": 3.0, "effect_per_level": 1.0}]};
+
+// ASMR Web Audio Procedural Sound Engine
+class CozySoundEngine {
+  constructor() {
+    this.ctx = null;
+    this.enabled = true;
+    this.ambientGain = null;
+    this.reelOsc = null;
+    this.reelGain = null;
+  }
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AudioCtx();
+      this.startAmbient();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  }
+  toggle() {
+    this.enabled = !this.enabled;
+    if (this.ambientGain) {
+      this.ambientGain.gain.setValueAtTime(this.enabled ? 0.08 : 0, this.ctx ? this.ctx.currentTime : 0);
+    }
+    return this.enabled;
+  }
+  startAmbient() {
+    if (!this.ctx) return;
+    // Ambient gentle water wave lap (filtered noise)
+    const bufferSize = this.ctx.sampleRate * 2;
+    const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = Math.random() * 2 - 1;
+    }
+    const whiteNoise = this.ctx.createBufferSource();
+    whiteNoise.buffer = noiseBuffer;
+    whiteNoise.loop = true;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 350;
+
+    // LFO for swaying waves
+    const lfo = this.ctx.createOscillator();
+    lfo.frequency.value = 0.15; // slow ocean breath
+    const lfoGain = this.ctx.createGain();
+    lfoGain.gain.value = 150;
+    lfo.connect(filter.frequency);
+    lfo.start();
+
+    this.ambientGain = this.ctx.createGain();
+    this.ambientGain.gain.value = this.enabled ? 0.08 : 0;
+
+    whiteNoise.connect(filter);
+    filter.connect(this.ambientGain);
+    this.ambientGain.connect(this.ctx.destination);
+    whiteNoise.start();
+  }
+  playPlop() {
+    if (!this.enabled) return;
+    this.init();
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(650, now);
+    osc.frequency.exponentialRampToValueAtTime(140, now + 0.18);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.2);
+  }
+  playBiteAlert() {
+    if (!this.enabled) return;
+    this.init();
+    const now = this.ctx.currentTime;
+    // Cheerful high ding
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(880, now);
+    osc.frequency.setValueAtTime(1320, now + 0.08);
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.35);
+  }
+  startReelSound() {
+    if (!this.enabled || this.reelOsc) return;
+    this.init();
+    const now = this.ctx.currentTime;
+    this.reelOsc = this.ctx.createOscillator();
+    this.reelGain = this.ctx.createGain();
+    this.reelOsc.type = 'sawtooth';
+    this.reelOsc.frequency.setValueAtTime(60, now);
+    this.reelGain.gain.setValueAtTime(0.04, now);
+    this.reelOsc.connect(this.reelGain);
+    this.reelGain.connect(this.ctx.destination);
+    this.reelOsc.start(now);
+  }
+  stopReelSound() {
+    if (this.reelOsc) {
+      try { this.reelOsc.stop(); } catch(e){}
+      this.reelOsc = null;
+      this.reelGain = null;
+    }
+  }
+  playCatchFanfare(rarity) {
+    if (!this.enabled) return;
+    this.init();
+    const now = this.ctx.currentTime;
+    const notes = rarity === 'Legendary' ? [523.25, 659.25, 783.99, 1046.50, 1318.51] : [440, 554.37, 659.25, 880];
+    notes.forEach((freq, i) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const t = now + i * 0.09;
+      gain.gain.setValueAtTime(0.25, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.45);
+    });
+  }
+}
+
+// Game State & Systems
+const sound = new CozySoundEngine();
+
+const FSM = {
+  IDLE: 'IDLE',
+  CASTING: 'CASTING',
+  WAITING: 'WAITING',
+  BITING: 'BITING',
+  REELING: 'REELING',
+  CATCH: 'CATCH'
+};
+
+const state = {
+  fsm: FSM.IDLE,
+  gold: 100,
+  upgrades: {
+    bite_speed: 0,
+    safe_zone: 0,
+    reel_power: 0,
+    rare_luck: 0,
+    cat_companion: 0
+  },
+  dex: {}, // id -> { count, maxLen }
+  currentFish: null,
+  // Cast Animation
+  castProgress: 0,
+  bobber: { x: 280, y: 390, targetX: 620, targetY: 420, vy: 0 },
+  // Timing
+  waitTimer: 0,
+  biteTimer: 0,
+  // Reeling Mini-Game (0 to 1)
+  fishPos: 0.5,
+  fishTargetPos: 0.5,
+  fishSpeed: 0.8,
+  fishNextMoveTimer: 0,
+  safePos: 0.2, // bottom of safe zone
+  safeHeight: 0.28,
+  catchProgress: 0.35, // 0 to 1
+  isReelingDown: false,
+  // Visuals
+  waterOffset: 0,
+  ripples: [],
+  bubbles: [],
+  splashes: [],
+  particles: []
+};
+
+// Load Local Storage
+const saved = localStorage.getItem('cozy_fishing_save');
+if (saved) {
+  try {
+    const parsed = JSON.parse(saved);
+    state.gold = parsed.gold ?? 100;
+    state.upgrades = parsed.upgrades ?? state.upgrades;
+    state.dex = parsed.dex ?? {};
+  } catch(e){}
+}
+
+function saveGame() {
+  localStorage.setItem('cozy_fishing_save', JSON.stringify({
+    gold: state.gold,
+    upgrades: state.upgrades,
+    dex: state.dex
+  }));
+  updateHud();
+}
+
+function updateHud() {
+  document.getElementById('gold-display').textContent = state.gold.toLocaleString() + ' G';
+  const caughtCount = Object.keys(state.dex).length;
+  document.getElementById('dex-count').textContent = caughtCount;
+  document.getElementById('modal-dex-count').textContent = caughtCount;
+}
+
+// Canvas & Rendering
+const canvas = document.getElementById('cozyCanvas');
+const ctx = canvas.getContext('2d');
+
+function addRipple(x, y, maxR = 25) {
+  state.ripples.push({ x, y, r: 2, maxR, alpha: 0.8 });
+}
+
+function addBubble(x, y) {
+  state.bubbles.push({ x: x + (Math.random()*16 - 8), y, vy: 0.8 + Math.random()*0.8, r: 2 + Math.random()*2, alpha: 0.9 });
+}
+
+function addSplash(x, y) {
+  for(let i=0; i<12; i++) {
+    const angle = (Math.PI / 6) * i;
+    const speed = 1.5 + Math.random() * 2.5;
+    state.splashes.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 1.5,
+      r: 2.5,
+      alpha: 1.0
+    });
+  }
+}
+
+// Core FSM Transitions
+function startCasting() {
+  sound.init();
+  state.fsm = FSM.CASTING;
+  state.castProgress = 0;
+  state.bobber.x = 240;
+  state.bobber.y = 360;
+  state.bobber.targetX = 580 + (Math.random() * 120 - 60);
+  state.bobber.targetY = 410 + (Math.random() * 40 - 20);
+  document.getElementById('state-bubble').textContent = "찌를 던지는 중... (Casting Line)";
+}
+
+function onBobberLanded() {
+  state.fsm = FSM.WAITING;
+  sound.playPlop();
+  addSplash(state.bobber.targetX, state.bobber.targetY);
+  addRipple(state.bobber.targetX, state.bobber.targetY, 40);
+  // Calculate wait duration based on upgrade
+  const waitMod = Math.max(0.3, 1.0 - state.upgrades.bite_speed * 0.15);
+  state.waitTimer = (ECONOMY_DATA.base_wait_min_sec + Math.random() * (ECONOMY_DATA.base_wait_max_sec - ECONOMY_DATA.base_wait_min_sec)) * waitMod;
+  document.getElementById('state-bubble').textContent = "물고기를 기다리는 중... (Waiting for Bites)";
+}
+
+function triggerBite() {
+  state.fsm = FSM.BITING;
+  sound.playBiteAlert();
+  state.biteTimer = 0.55; // 0.55s hit-stop window to click!
+  addSplash(state.bobber.targetX, state.bobber.targetY);
+  addRipple(state.bobber.targetX, state.bobber.targetY, 35);
+  document.getElementById('state-bubble').textContent = "❗ 입질이다! 지금 클릭하여 낚아채세요! (HIT!)";
+}
+
+function startReeling() {
+  state.fsm = FSM.REELING;
+  document.getElementById('reeling-panel').style.display = 'block';
+  document.getElementById('state-bubble').textContent = "릴링 미니게임! 초록 영역 안에 물고기를 맞추세요!";
+
+  // Pick fish
+  state.currentFish = selectRandomFish();
+  state.fishPos = 0.5;
+  state.fishTargetPos = 0.5;
+  state.catchProgress = 0.35;
+  state.safePos = 0.2;
+  // Upgrade effect: safe zone width
+  state.safeHeight = Math.min(0.55, ECONOMY_DATA.base_safe_zone_size + state.upgrades.safe_zone * 0.05);
+
+  const safeEl = document.getElementById('safe-zone');
+  safeEl.style.height = (state.safeHeight * 100) + '%';
+}
+
+function selectRandomFish() {
+  const luckBonus = state.upgrades.rare_luck * 0.06;
+  const roll = Math.random();
+  let candidateRarity = 'Common';
+  if (roll < 0.04 + luckBonus * 0.5) candidateRarity = 'Legendary';
+  else if (roll < 0.13 + luckBonus * 0.8) candidateRarity = 'Epic';
+  else if (roll < 0.32 + luckBonus) candidateRarity = 'Rare';
+  else if (roll < 0.65) candidateRarity = 'Uncommon';
+  else candidateRarity = 'Common';
+
+  const matches = FISH_DATABASE.filter(f => f.rarity === candidateRarity);
+  if (matches.length > 0) {
+    return matches[Math.floor(Math.random() * matches.length)];
+  }
+  return FISH_DATABASE[Math.floor(Math.random() * FISH_DATABASE.length)];
+}
+
+function finishReel(success) {
+  sound.stopReelSound();
+  document.getElementById('reeling-panel').style.display = 'none';
+
+  if (success && state.currentFish) {
+    state.fsm = FSM.CATCH;
+    const fish = state.currentFish;
+    sound.playCatchFanfare(fish.rarity);
+
+    // Calculate length
+    const len = (fish.min_length_cm + Math.random() * (fish.max_length_cm - fish.min_length_cm)).toFixed(1);
+    const price = Math.round(fish.base_price * (1 + (parseFloat(len) - fish.min_length_cm) / (fish.max_length_cm || 1) * 0.5));
+
+    // Update gold and dex
+    state.gold += price;
+    if (!state.dex[fish.id]) {
+      state.dex[fish.id] = { count: 0, maxLen: 0 };
+    }
+    state.dex[fish.id].count += 1;
+    state.dex[fish.id].maxLen = Math.max(state.dex[fish.id].maxLen, parseFloat(len));
+    saveGame();
+
+    // Show Catch Card
+    const card = document.getElementById('catch-card');
+    document.getElementById('c-rarity').textContent = fish.rarity;
+    document.getElementById('c-rarity').className = 'rarity-badge rarity-' + fish.rarity;
+    document.getElementById('c-icon').textContent = getFishEmoji(fish.rarity);
+    document.getElementById('c-name').textContent = fish.name;
+    document.getElementById('c-enname').textContent = fish.english_name;
+    document.getElementById('c-len').textContent = len + ' cm';
+    document.getElementById('c-price').textContent = '+' + price + ' G';
+    document.getElementById('c-desc').textContent = fish.description;
+    card.classList.add('show');
+
+    document.getElementById('state-bubble').textContent = `🎉 축하합니다! ${fish.name} 획득!`;
+  } else {
+    state.fsm = FSM.IDLE;
+    document.getElementById('state-bubble').textContent = "물고기를 놓쳤습니다... 다시 던져보세요.";
+  }
+}
+
+function getFishEmoji(rarity) {
+  switch(rarity) {
+    case 'Legendary': return '✨🐉';
+    case 'Epic': return '🔮🐠';
+    case 'Rare': return '💎🐡';
+    case 'Uncommon': return '🌿🐟';
+    default: return '🐟';
+  }
+}
+
+// Input Handling
+window.addEventListener('mousedown', (e) => {
+  if (e.target.closest('.hud') || e.target.closest('.modal-overlay') || e.target.closest('#catch-card')) return;
+
+  if (state.fsm === FSM.IDLE) {
+    startCasting();
+  } else if (state.fsm === FSM.BITING) {
+    startReeling();
+  } else if (state.fsm === FSM.REELING) {
+    state.isReelingDown = true;
+    sound.startReelSound();
+  }
+});
+
+window.addEventListener('mouseup', () => {
+  if (state.fsm === FSM.REELING) {
+    state.isReelingDown = false;
+    sound.stopReelSound();
+  }
+});
+
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'Space') {
+    e.preventDefault();
+    if (state.fsm === FSM.IDLE) startCasting();
+    else if (state.fsm === FSM.BITING) startReeling();
+    else if (state.fsm === FSM.REELING) {
+      state.isReelingDown = true;
+      sound.startReelSound();
+    }
+  }
+});
+
+window.addEventListener('keyup', (e) => {
+  if (e.code === 'Space' && state.fsm === FSM.REELING) {
+    state.isReelingDown = false;
+    sound.stopReelSound();
+  }
+});
+
+document.getElementById('btn-catch-ok').addEventListener('click', () => {
+  document.getElementById('catch-card').classList.remove('show');
+  state.fsm = FSM.IDLE;
+  document.getElementById('state-bubble').textContent = "클릭하여 낚싯대를 던지세요 (Click to Cast)";
+});
+
+// Auto-fisher Companion (Cat 'Mochi')
+let autoFishTimer = 0;
+function updateAutoFisher(dt) {
+  if (state.upgrades.cat_companion > 0 && state.fsm === FSM.IDLE) {
+    autoFishTimer += dt;
+    if (autoFishTimer >= (12 - state.upgrades.cat_companion * 3)) {
+      autoFishTimer = 0;
+      const fish = selectRandomFish();
+      const len = (fish.min_length_cm + Math.random() * (fish.max_length_cm - fish.min_length_cm)).toFixed(1);
+      const price = Math.round(fish.base_price * 0.7);
+      state.gold += price;
+      if (!state.dex[fish.id]) state.dex[fish.id] = { count: 0, maxLen: 0 };
+      state.dex[fish.id].count += 1;
+      state.dex[fish.id].maxLen = Math.max(state.dex[fish.id].maxLen, parseFloat(len));
+      saveGame();
+      document.getElementById('state-bubble').textContent = `🐱 모찌가 ${fish.name} (+${price} G)를 자동으로 낚아왔습니다!`;
+    }
+  }
+}
+
+// Game Loop
+let lastTime = performance.now();
+function loop(now) {
+  const dt = Math.min(0.1, (now - lastTime) / 1000);
+  lastTime = now;
+
+  update(dt);
+  render();
+
+  requestAnimationFrame(loop);
+}
+
+function update(dt) {
+  state.waterOffset += dt * 1.5;
+  updateAutoFisher(dt);
+
+  // FSM Update
+  if (state.fsm === FSM.CASTING) {
+    state.castProgress += dt * 1.8;
+    const p = Math.min(1, state.castProgress);
+    const startX = 240, startY = 360;
+    state.bobber.x = startX + (state.bobber.targetX - startX) * p;
+    // Parabolic arc
+    const arcHeight = 120;
+    state.bobber.y = startY + (state.bobber.targetY - startY) * p - Math.sin(p * Math.PI) * arcHeight;
+
+    if (state.castProgress >= 1) {
+      onBobberLanded();
+    }
+  } else if (state.fsm === FSM.WAITING) {
+    state.waitTimer -= dt;
+    // Subtle ripples
+    if (Math.random() < 0.05) addRipple(state.bobber.targetX, state.bobber.targetY, 18);
+    if (Math.random() < 0.04) addBubble(state.bobber.targetX, state.bobber.targetY);
+
+    if (state.waitTimer <= 0) {
+      triggerBite();
+    }
+  } else if (state.fsm === FSM.BITING) {
+    state.biteTimer -= dt;
+    if (Math.random() < 0.4) addRipple(state.bobber.targetX, state.bobber.targetY, 28);
+    if (state.biteTimer <= 0) {
+      // Missed bite
+      state.fsm = FSM.IDLE;
+      document.getElementById('state-bubble').textContent = "물고기가 미끼를 먹고 도망쳤습니다! (Missed)";
+    }
+  } else if (state.fsm === FSM.REELING) {
+    // Safe Zone physics
+    const reelPower = 1.0 + state.upgrades.reel_power * 0.2;
+    if (state.isReelingDown) {
+      state.safePos = Math.min(1.0 - state.safeHeight, state.safePos + 0.9 * reelPower * dt);
+    } else {
+      state.safePos = Math.max(0, state.safePos - 0.75 * dt); // gravity
+    }
+
+    // Fish AI Movement
+    state.fishNextMoveTimer -= dt;
+    if (state.fishNextMoveTimer <= 0) {
+      state.fishNextMoveTimer = 0.4 + Math.random() * 0.8;
+      state.fishTargetPos = Math.max(0.05, Math.min(0.95, Math.random()));
+      state.fishSpeed = 0.6 + (state.currentFish ? state.currentFish.difficulty : 0.4) * 1.5;
+    }
+    state.fishPos += (state.fishTargetPos - state.fishPos) * state.fishSpeed * dt * 2.5;
+
+    // Mini-game Progress
+    const inZone = (state.fishPos >= state.safePos && state.fishPos <= state.safePos + state.safeHeight);
+    if (inZone) {
+      state.catchProgress = Math.min(1.0, state.catchProgress + 0.28 * reelPower * dt);
+    } else {
+      state.catchProgress = Math.max(0, state.catchProgress - 0.22 * dt);
+    }
+
+    // Update DOM mini-game
+    document.getElementById('safe-zone').style.bottom = (state.safePos * 100) + '%';
+    document.getElementById('fish-marker').style.bottom = (state.fishPos * 100) + '%';
+    document.getElementById('progress-bar').style.height = (state.catchProgress * 100) + '%';
+
+    if (state.catchProgress >= 1.0) {
+      finishReel(true);
+    } else if (state.catchProgress <= 0.0) {
+      finishReel(false);
+    }
+  }
+
+  // Update Particles
+  for (let i = state.ripples.length - 1; i >= 0; i--) {
+    const r = state.ripples[i];
+    r.r += dt * 25;
+    r.alpha -= dt * 1.2;
+    if (r.alpha <= 0) state.ripples.splice(i, 1);
+  }
+  for (let i = state.bubbles.length - 1; i >= 0; i--) {
+    const b = state.bubbles[i];
+    b.y -= b.vy;
+    b.alpha -= dt * 0.8;
+    if (b.alpha <= 0) state.bubbles.splice(i, 1);
+  }
+  for (let i = state.splashes.length - 1; i >= 0; i--) {
+    const s = state.splashes[i];
+    s.x += s.vx;
+    s.y += s.vy;
+    s.vy += 4.5 * dt; // gravity
+    s.alpha -= dt * 2.0;
+    if (s.alpha <= 0) state.splashes.splice(i, 1);
+  }
+}
+
+// Drawing
+function render() {
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  // Sky Gradient (Sunset/Twilight)
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, 380);
+  skyGrad.addColorStop(0, '#101328');
+  skyGrad.addColorStop(0.5, '#2b2353');
+  skyGrad.addColorStop(0.85, '#843b62');
+  skyGrad.addColorStop(1, '#f67280');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, w, 380);
+
+  // Stars & Moon
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  for (let i = 0; i < 35; i++) {
+    const sx = (i * 12347) % w;
+    const sy = (i * 8761) % 220;
+    ctx.fillRect(sx, sy, 2, 2);
+  }
+  // Gentle Moon
+  ctx.fillStyle = '#fce38a';
+  ctx.beginPath();
+  ctx.arc(860, 100, 32, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Distant mountain silhouettes
+  ctx.fillStyle = '#22193b';
+  ctx.beginPath();
+  ctx.moveTo(0, 380);
+  ctx.lineTo(120, 290);
+  ctx.lineTo(260, 340);
+  ctx.lineTo(440, 260);
+  ctx.lineTo(600, 330);
+  ctx.lineTo(760, 270);
+  ctx.lineTo(920, 350);
+  ctx.lineTo(1000, 320);
+  ctx.lineTo(1000, 380);
+  ctx.closePath();
+  ctx.fill();
+
+  // Cozy Water (Pastel Gradient with sine ripples)
+  const waterGrad = ctx.createLinearGradient(0, 380, 0, h);
+  waterGrad.addColorStop(0, '#355c7d');
+  waterGrad.addColorStop(0.3, '#2a446c');
+  waterGrad.addColorStop(0.7, '#1b2a47');
+  waterGrad.addColorStop(1, '#0e1828');
+  ctx.fillStyle = waterGrad;
+  ctx.fillRect(0, 380, w, h - 380);
+
+  // Gentle Water Highlight Waves
+  ctx.strokeStyle = 'rgba(246, 114, 128, 0.25)';
+  ctx.lineWidth = 2;
+  for (let row = 0; row < 7; row++) {
+    const yBase = 395 + row * 34;
+    ctx.beginPath();
+    for (let x = 0; x <= w; x += 20) {
+      const yOffset = Math.sin(x * 0.015 + state.waterOffset + row * 1.2) * (3 + row * 0.6);
+      if (x === 0) ctx.moveTo(x, yBase + yOffset);
+      else ctx.lineTo(x, yBase + yOffset);
+    }
+    ctx.stroke();
+  }
+
+  // Draw Ripples
+  for (const r of state.ripples) {
+    ctx.strokeStyle = `rgba(255, 255, 255, ${r.alpha * 0.5})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(r.x, r.y, r.r, r.r * 0.4, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Draw Bubbles
+  for (const b of state.bubbles) {
+    ctx.fillStyle = `rgba(255, 255, 255, ${b.alpha * 0.4})`;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Draw Splashes
+  for (const s of state.splashes) {
+    ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Wooden Pier / Dock on the left
+  ctx.fillStyle = '#4a2f1b';
+  ctx.fillRect(0, 350, 180, 290);
+  ctx.fillStyle = '#5c3a21';
+  ctx.fillRect(0, 340, 190, 16);
+  // Dock Pilings
+  ctx.fillStyle = '#311e11';
+  ctx.fillRect(40, 356, 16, 284);
+  ctx.fillRect(130, 356, 18, 284);
+  // Pier Wood Planks Lines
+  ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+  for (let i = 0; i < 190; i += 22) {
+    ctx.beginPath();
+    ctx.moveTo(i, 340);
+    ctx.lineTo(i, 356);
+    ctx.stroke();
+  }
+
+  // Fisherman Character (Pixel Silhouette style)
+  drawFisherman(110, 340);
+
+  // Fishing Rod & Line
+  const rodBaseX = 142, rodBaseY = 300;
+  const rodTipX = 220, rodTipY = 240;
+  ctx.strokeStyle = '#c5a059';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.moveTo(rodBaseX, rodBaseY);
+  ctx.lineTo(rodTipX, rodTipY);
+  ctx.stroke();
+
+  // Bobber Position
+  let bx = state.bobber.targetX, by = state.bobber.targetY;
+  if (state.fsm === FSM.CASTING) {
+    bx = state.bobber.x;
+    by = state.bobber.y;
+  } else if (state.fsm === FSM.WAITING || state.fsm === FSM.BITING || state.fsm === FSM.REELING) {
+    const bobOffset = (state.fsm === FSM.BITING) ? 8 : Math.sin(state.waterOffset * 3) * 3;
+    by += bobOffset;
+  }
+
+  // Draw Line
+  if (state.fsm !== FSM.IDLE && state.fsm !== FSM.CATCH) {
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(rodTipX, rodTipY);
+    // Slight sag curve
+    const sag = (state.fsm === FSM.REELING) ? 10 : 25;
+    ctx.quadraticCurveTo((rodTipX + bx)/2, (rodTipY + by)/2 + sag, bx, by);
+    ctx.stroke();
+
+    // Draw Bobber (Red/White float)
+    ctx.fillStyle = '#e94560';
+    ctx.beginPath();
+    ctx.arc(bx, by - 4, 6, Math.PI, 0); // top red
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(bx, by - 4, 6, 0, Math.PI); // bottom white
+    ctx.fill();
+    // Bobber stick
+    ctx.strokeStyle = '#ffd166';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(bx, by - 14);
+    ctx.lineTo(bx, by - 4);
+    ctx.stroke();
+  }
+
+  // Exclamation Mark on Biting
+  if (state.fsm === FSM.BITING) {
+    ctx.save();
+    ctx.font = 'bold 36px sans-serif';
+    ctx.fillStyle = '#ffd166';
+    ctx.shadowColor = '#e94560';
+    ctx.shadowBlur = 15;
+    ctx.fillText('❗', 120, 220 + Math.sin(state.waterOffset * 15) * 5);
+    ctx.restore();
+  }
+
+  // Companion Cat 'Mochi' on Pier
+  if (state.upgrades.cat_companion > 0) {
+    drawCat(45, 340);
+  }
+}
+
+function drawFisherman(x, y) {
+  // Cozy Stool
+  ctx.fillStyle = '#6b4f3a';
+  ctx.fillRect(x - 16, y - 18, 32, 6);
+  ctx.fillRect(x - 12, y - 12, 4, 12);
+  ctx.fillRect(x + 8, y - 12, 4, 12);
+
+  // Legs & Body
+  ctx.fillStyle = '#223249'; // blue pants
+  ctx.fillRect(x - 6, y - 22, 16, 12);
+  ctx.fillStyle = '#f67280'; // warm sweater
+  ctx.fillRect(x - 10, y - 52, 22, 30);
+
+  // Fisherman Hat & Head
+  ctx.fillStyle = '#ffd3b6'; // face
+  ctx.beginPath();
+  ctx.arc(x + 2, y - 60, 9, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#f8b195'; // bucket hat
+  ctx.fillRect(x - 12, y - 72, 28, 6);
+  ctx.fillRect(x - 7, y - 79, 18, 8);
+}
+
+function drawCat(x, y) {
+  ctx.fillStyle = '#f8fafc'; // white cat
+  ctx.beginPath();
+  ctx.ellipse(x, y - 10, 12, 9, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Cat Head & Ears
+  ctx.beginPath();
+  ctx.arc(x + 10, y - 16, 7, 0, Math.PI * 2);
+  ctx.fill();
+  // Ears
+  ctx.beginPath();
+  ctx.moveTo(x + 6, y - 22);
+  ctx.lineTo(x + 9, y - 28);
+  ctx.lineTo(x + 12, y - 22);
+  ctx.closePath();
+  ctx.fill();
+  // Calico spot
+  ctx.fillStyle = '#f97316';
+  ctx.beginPath();
+  ctx.arc(x - 2, y - 12, 4, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// Modals Setup
+document.getElementById('btn-sound').addEventListener('click', (e) => {
+  const on = sound.toggle();
+  e.target.textContent = on ? '🔊 사운드 ON' : '🔇 사운드 OFF';
+});
+
+document.getElementById('btn-dex').addEventListener('click', () => {
+  renderDexGrid();
+  document.getElementById('modal-dex').style.display = 'flex';
+});
+
+document.getElementById('btn-shop').addEventListener('click', () => {
+  renderShopList();
+  document.getElementById('modal-shop').style.display = 'flex';
+});
+
+document.querySelectorAll('.close-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    const id = e.target.getAttribute('data-close');
+    document.getElementById(id).style.display = 'none';
+  });
+});
+
+function renderDexGrid() {
+  const grid = document.getElementById('dex-grid');
+  grid.innerHTML = '';
+  FISH_DATABASE.forEach(f => {
+    const caught = state.dex[f.id];
+    const card = document.createElement('div');
+    card.className = 'dex-card ' + (caught ? '' : 'locked');
+    card.innerHTML = `
+      <div class="fish-icon">${caught ? getFishEmoji(f.rarity) : '❓'}</div>
+      <div class="fish-name">${caught ? f.name : '???'}</div>
+      <div class="fish-rarity rarity-${f.rarity}">${f.rarity}</div>
+      <div style="font-size:11px; color:#94a3b8; margin-top:4px;">
+        ${caught ? `최대 ${caught.maxLen}cm (${caught.count}마리)` : '미발견'}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderShopList() {
+  const list = document.getElementById('shop-list');
+  list.innerHTML = '';
+  ECONOMY_DATA.upgrades.forEach(u => {
+    const curLvl = state.upgrades[u.id] || 0;
+    const isMax = curLvl >= u.max_level;
+    const cost = Math.round(u.base_cost * Math.pow(u.cost_multiplier, curLvl));
+
+    const item = document.createElement('div');
+    item.className = 'shop-item';
+    item.innerHTML = `
+      <div class="shop-info">
+        <h3>${u.name}</h3>
+        <p>${u.description}</p>
+      </div>
+      <div class="shop-action">
+        <span class="shop-level">Lv. ${curLvl} / ${u.max_level}</span>
+        <button class="btn ${isMax ? 'secondary' : ''}" ${isMax || state.gold < cost ? 'disabled' : ''} data-id="${u.id}" data-cost="${cost}">
+          ${isMax ? '최대 레벨 (MAX)' : `${cost} G 구매`}
+        </button>
+      </div>
+    `;
+    const btn = item.querySelector('button');
+    if (!isMax && state.gold >= cost) {
+      btn.addEventListener('click', () => {
+        state.gold -= cost;
+        state.upgrades[u.id] = curLvl + 1;
+        saveGame();
+        renderShopList();
+      });
+    }
+    list.appendChild(item);
+  });
+}
+
+// Initialize
+updateHud();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

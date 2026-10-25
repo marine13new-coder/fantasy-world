@@ -1,364 +1,776 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <title>AI Game Arcade - 전체 게임 갤러리 포털</title>
-  <style>
-    :root {
-      --bg: #070a14;
-      --card: #101728;
-      --line: #1f2b48;
-      --ink: #eef2fb;
-      --sub: #8a96b3;
-      --accent: #00f0ff;
-      --accent-pink: #ff007f;
-      --accent-gold: #ffb703;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: 'Pretendard', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      line-height: 1.6;
-    }
-    .wrap {
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 50px 24px 80px;
-    }
-    .eyebrow {
-      color: var(--accent);
-      font-weight: 800;
-      letter-spacing: .2em;
-      font-size: .85rem;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    h1 {
-      font-size: clamp(2.4rem, 5vw, 3.4rem);
-      margin: .1em 0;
-      letter-spacing: -.02em;
-      background: linear-gradient(45deg, #00f0ff, #ff007f, #ffb703);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      font-weight: 900;
-    }
-    p.lead {
-      color: var(--sub);
-      margin: 0 0 35px;
-      font-size: 1.15rem;
-    }
-    .stats-bar {
-      display: flex;
-      gap: 20px;
-      margin-bottom: 35px;
-      background: rgba(16, 23, 40, 0.7);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 14px 20px;
-      flex-wrap: wrap;
-    }
-    .stat-badge {
-      font-size: 0.95rem;
-      color: var(--sub);
-    }
-    .stat-badge strong {
-      color: #fff;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 28px;
-    }
-    .card {
-      background: var(--card);
-      border: 2px solid var(--line);
-      border-radius: 18px;
-      overflow: hidden;
-      color: inherit;
-      text-decoration: none;
-      transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
-    .card:hover {
-      transform: translateY(-8px);
-      border-color: var(--accent);
-      box-shadow: 0 16px 36px rgba(0, 240, 255, 0.25);
-    }
-    .card-badge-new {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      background: #ff0055;
-      color: #fff;
-      font-size: 0.75rem;
-      font-weight: 800;
-      padding: 4px 10px;
-      border-radius: 20px;
-      letter-spacing: 1px;
-      box-shadow: 0 4px 12px rgba(255, 0, 85, 0.4);
-      z-index: 2;
-    }
-    .thumb {
-      aspect-ratio: 16/10;
-      background: #03050a;
-      display: grid;
-      place-items: center;
-      overflow: hidden;
-      border-bottom: 1px solid var(--line);
-      position: relative;
-    }
-    .thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .meta {
-      padding: 22px;
-      display: flex;
-      flex-direction: column;
-      flex-grow: 1;
-      justify-content: space-between;
-    }
-    .meta h2 {
-      margin: 0 0 8px 0;
-      font-size: 1.35rem;
-      font-weight: 800;
-      color: #fff;
-    }
-    .meta p {
-      color: var(--sub);
-      font-size: 0.92rem;
-      margin-bottom: 16px;
-      line-height: 1.5;
-    }
-    .tags {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
-    .tag {
-      font-size: 0.78rem;
-      background: rgba(255, 255, 255, 0.06);
-      padding: 3px 8px;
-      border-radius: 6px;
-      color: #c5d2e8;
-    }
-    .score {
-      color: var(--accent);
-      font-size: .88rem;
-      font-weight: 700;
-      background: rgba(0,240,255,0.1);
-      padding: 6px 12px;
-      border-radius: 8px;
-      border: 1px solid rgba(0,240,255,0.3);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      width: fit-content;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Game Arcade Hub - 14 Games Showcase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07090e;
+    --card: #0d121d;
+    --card-hover: #121927;
+    --line: #1c2638;
+    --ink: #f1f5f9;
+    --sub: #94a3b8;
+    --accent: #00f0ff;
+    --neon-pink: #ff007f;
+    --gold: #ffd166;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+    padding-bottom: 80px;
+  }
+  /* Header Banner */
+  .hero {
+    background: radial-gradient(circle at 50% 10%, #17243c 0%, #07090e 75%);
+    border-bottom: 1px solid var(--line);
+    padding: 60px 24px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 200px;
+    background: radial-gradient(ellipse, rgba(0, 240, 255, 0.15), transparent 70%);
+    pointer-events: none;
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 240, 255, 0.1);
+    color: var(--accent);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  h1 {
+    font-size: clamp(2.4rem, 5vw, 3.8rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, #00f0ff 0%, #ff007f 60%, #ffd166 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 12px;
+  }
+  p.lead {
+    color: var(--sub);
+    max-width: 680px;
+    margin: 0 auto 24px;
+    font-size: 1.12rem;
+  }
+  .unity-safe-notice {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: #6ee7b7;
+    padding: 8px 18px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  /* Filter & Controls */
+  .controls-bar {
+    max-width: 1280px;
+    margin: 30px auto 35px;
+    padding: 0 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .tab-btn {
+    background: #0d131f;
+    border: 1px solid var(--line);
+    color: var(--sub);
+    padding: 9px 18px;
+    border-radius: 12px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .tab-btn:hover {
+    border-color: var(--accent);
+    color: var(--ink);
+  }
+  .tab-btn.active {
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(255, 0, 127, 0.2));
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
+  }
+  .search-box {
+    position: relative;
+    min-width: 280px;
+  }
+  .search-box input {
+    width: 100%;
+    background: #0d131f;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 16px 10px 38px;
+    color: #fff;
+    font-size: 0.92rem;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+  .search-box input:focus {
+    border-color: var(--accent);
+  }
+  .search-box span {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    opacity: 0.6;
+  }
+
+  /* Grid Layout */
+  .wrap {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(370px, 1fr));
+    gap: 26px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+    position: relative;
+  }
+  .card:hover {
+    transform: translateY(-8px);
+    border-color: var(--accent);
+    box-shadow: 0 16px 36px rgba(0, 240, 255, 0.2);
+  }
+  .thumb-wrap {
+    position: relative;
+    aspect-ratio: 16/10;
+    background: #04060a;
+    overflow: hidden;
+    border-bottom: 1px solid var(--line);
+  }
+  .thumb {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  .card:hover .thumb img {
+    transform: scale(1.04);
+  }
+  .no-thumb-icon {
+    font-size: 60px;
+  }
+  .session-badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    background: rgba(0, 0, 0, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffd166;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 8px;
+    backdrop-filter: blur(6px);
+  }
+  .category-pill {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(13, 18, 29, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #e2e8f0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 8px;
+    backdrop-filter: blur(6px);
+  }
+
+  /* Card Meta */
+  .meta {
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  .genre-tag {
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 6px;
+  }
+  .meta h2 {
+    font-size: 1.32rem;
+    font-weight: 800;
+    line-height: 1.3;
+    margin-bottom: 4px;
+    color: #fff;
+  }
+  .sub-title {
+    font-size: 0.86rem;
+    color: #64748b;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 12px;
+  }
+  .desc {
+    font-size: 0.92rem;
+    color: var(--sub);
+    line-height: 1.55;
+    margin-bottom: 16px;
+    flex: 1;
+  }
+  .tech-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .tech-pill, .platform-pill {
+    font-size: 0.76rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 3px 8px;
+    color: #cbd5e1;
+  }
+  .platform-pill {
+    border-color: rgba(0, 240, 255, 0.25);
+    color: #38bdf8;
+  }
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+  .score-badge {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--gold);
+    background: rgba(255, 209, 102, 0.1);
+    border: 1px solid rgba(255, 209, 102, 0.25);
+    padding: 4px 10px;
+    border-radius: 8px;
+  }
+  .play-btn {
+    background: linear-gradient(135deg, #00f0ff, #0099ff);
+    color: #000;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 800;
+    padding: 7px 18px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+  }
+  .play-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0, 240, 255, 0.5);
+  }
+</style>
 </head>
 <body>
-<div class="wrap">
-  <div class="eyebrow">Interactive 3D & 2D Arcade Portal</div>
-  <h1>🎮 AI Game Arcade Gallery</h1>
-  <p class="lead">제작된 모든 웹 게임들을 언제든 한곳에서 클릭 한 번으로 플레이할 수 있는 통합 게임 아케이드입니다.</p>
 
-  <div class="stats-bar">
-    <div class="stat-badge">🎯 등록된 게임: <strong>8개</strong></div>
-    <div class="stat-badge">🕹️ 장르: <strong>정통 3D 추리 수사극 (페인스크릭 스타일), 1인칭 3D 심리 호러, 오디오 미스터리, 3D 비행 시뮬레이터, 3D 물리 인형뽑기, 오픈월드 샌드박스, 액션 서바이벌</strong></div>
-    <div class="stat-badge">⚡ 플랫폼: <strong>웹 브라우저 무설치 즉시 실행</strong></div>
+<header class="hero">
+  <div class="eyebrow">⚡ Unified Arcade Testbed · 14 Projects</div>
+  <h1>AI Arcade Showcase</h1>
+  <p class="lead">세션 01부터 14까지 제작된 모든 게임을 하나의 포털에서 직접 플레이하고 테스트하세요.</p>
+  <div class="unity-safe-notice">
+    <span>🛡️ 유니티 개발 환경 격리 보호 완료</span>
+    <span style="opacity:0.6">|</span>
+    <span>웹 단독 런처 구동으로 유니티 에셋 및 씬 파일에 무간섭</span>
   </div>
+</header>
 
-  <div class="grid">
-    <!-- 0. 송백리 살인사건 : 묻혀버린 진실 1997 (신규 플래그십 정통 3D 추리 어드벤처) -->
-    <a class="card" href="songbaek-killings/index.html" style="border: 2px solid #eab308; box-shadow: 0 0 25px rgba(234, 179, 8, 0.25);">
-      <span class="card-badge-new" style="background: linear-gradient(135deg, #eab308, #b45309); color: #000; font-weight: 900; box-shadow:0 4px 14px rgba(234,179,8,0.6);">★ 스팀 출시급 플래그십 3D 추리 🔍📁🩸</span>
-      <div class="thumb" style="background: radial-gradient(circle at center, #1c1917 0%, #0c0a09 70%, #000000 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border-bottom: 1px solid #78350f;">
-        <span style="font-size: 3.8rem; filter: drop-shadow(0 0 16px rgba(234, 179, 8, 0.8));">🔍📌📼</span>
-        <span style="color: #fde047; font-family: 'Pretendard', sans-serif; font-weight: 900; font-size: 1.05rem; text-shadow: 0 0 10px rgba(253,224,71,0.6); letter-spacing: 1px;">3시간 분량 정통 수사 추리 & 4중 대반전</span>
-      </div>
-      <div class="meta">
-        <div>
-          <h2 style="color: #fef08a; text-shadow: 0 0 12px rgba(254, 240, 138, 0.5);">송백리 살인사건 : 묻혀버린 진실 1997</h2>
-          <p>1997년 폭우가 쏟아지는 버려진 대저택, 24세 재벌가 상속녀 살인사건의 진실. 3D 단서 회전 검사, UV 형광 혈흔 반응, 음성 도청 테이프 재생, 그리고 붉은 실 추리 코크보드핀보드까지 탑재된 《페인스크릭 킬링스》 스타일의 정통 추리 수작!</p>
-          <div class="tags">
-            <span class="tag" style="color: #fde047; background: rgba(234, 179, 8, 0.18); font-weight:700;">#페인스크릭 킬링스 스타일</span>
-            <span class="tag" style="color: #38bdf8; background: rgba(56, 189, 248, 0.15);">#3D 단서조사 & UV등</span>
-            <span class="tag" style="color: #f43f5e; background: rgba(244, 63, 94, 0.15);">#코크보드 붉은실 연결</span>
-            <span class="tag" style="color: #a78bfa; background: rgba(167, 139, 250, 0.15);">#음성 도청 테이프</span>
-            <span class="tag" style="color: #4ade80; background: rgba(74, 222, 128, 0.15);">#스팀 출시급 완성도</span>
-          </div>
-        </div>
-        <span class="score" style="border-color:#eab308; color:#fde047; background:rgba(234,179,8,0.2); font-weight:800;">
-          🕵️‍♂️ 사건 현장 수색 개시 (PLAY)
-        </span>
-      </div>
-    </a>
-
-    <!-- 1. 은하아파트 13동 : 심야 순찰 (신규 1인칭 3D 심리 서바이벌 호러) -->
-    <a class="card" href="apartment-13/index.html">
-      <span class="card-badge-new" style="background:#ff1133; box-shadow:0 4px 14px rgba(255,17,51,0.6);">HOT NEW 1인칭 3D 공포 🏢🔦🩸</span>
-      <div class="thumb" style="background: radial-gradient(circle at center, #1f0b0e 0%, #080d12 70%, #020305 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border-bottom: 1px solid #4a151b;">
-        <span style="font-size: 3.8rem; filter: drop-shadow(0 0 14px rgba(255, 30, 50, 0.7));">🏢🔦👻</span>
-        <span style="color: #ffcc44; font-family: 'Noto Sans KR', sans-serif; font-weight: 800; font-size: 1.05rem; text-shadow: 0 0 8px rgba(255,204,68,0.5); letter-spacing: 1px;">Full 3D 1인칭 심리 서바이벌 호러</span>
-      </div>
-      <div class="meta">
-        <div>
-          <h2 style="color: #ff3344; text-shadow: 0 0 10px rgba(255, 51, 68, 0.4);">은하아파트 13동 : 심야 순찰</h2>
-          <p>비 내리는 자정의 낡은 복도식 아파트, 기괴한 수칙서를 들고 시작된 야간 순찰. 깜빡이는 센서등, 캐비닛 숨기, 그리고 25년 전 화재 참사의 충격적인 대반전! (3시간 분량, 3종 멀티 엔딩)</p>
-          <div class="tags">
-            <span class="tag" style="color: #ff7788; background: rgba(255, 50, 80, 0.15);">#1인칭 3D 호러</span>
-            <span class="tag" style="color: #ffdd66; background: rgba(255, 220, 100, 0.15);">#손전등 & 은신</span>
-            <span class="tag">#한국형 아파트 괴담</span>
-            <span class="tag">#경악의 대반전</span>
-          </div>
-        </div>
-        <span class="score" style="border-color:#ff2233; color:#ff2233; background:rgba(255,34,51,0.18);">
-          🔦 심야 순찰 시작하기 (PLAY)
-        </span>
-      </div>
-    </a>
-
-    <!-- 1. 아카이브 1999 : 잔향의 병동 (신규 3시간 반전 공포 게임) -->
-    <a class="card" href="archive-1999/index.html">
-      <span class="card-badge-new" style="background:#dc2626; box-shadow:0 4px 14px rgba(220,38,38,0.5);">NEW 공포 스릴러 📻🩸</span>
-      <div class="thumb" style="background: radial-gradient(circle at center, #1b090c 0%, #080b09 70%, #000000 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border-bottom: 1px solid #3b1115;">
-        <span style="font-size: 3.8rem; filter: drop-shadow(0 0 12px rgba(255, 50, 70, 0.6));">📼📻🩸</span>
-        <span style="color: #33ff66; font-family: monospace; font-weight: 800; font-size: 1.05rem; text-shadow: 0 0 8px rgba(51,255,102,0.6); letter-spacing: 1px;">EVP 3D 입체음향 심리 호러</span>
-      </div>
-      <div class="meta">
-        <div>
-          <h2 style="color: #ff4d5a; text-shadow: 0 0 10px rgba(255, 77, 90, 0.4);">아카이브 1999: 잔향의 병동</h2>
-          <p>1999년 폭설 속 지하 작업실, 20년 전 불탄 정신병원의 릴 테이프를 복원하며 마주하는 숨겨진 목소리와 충격적인 반전! (3시간 분량, 멀티 엔딩 3종 탑재)</p>
-          <div class="tags">
-            <span class="tag" style="color: #ff8899; background: rgba(255, 50, 80, 0.1);">#심리 호러</span>
-            <span class="tag" style="color: #66ff99; background: rgba(50, 255, 100, 0.1);">#Web Audio 입체음향</span>
-            <span class="tag">#주파수 튜닝 퍼즐</span>
-            <span class="tag">#다중 반전</span>
-          </div>
-        </div>
-        <span class="score" style="border-color:#ff3344; color:#ff3344; background:rgba(255,51,68,0.15);">
-          🎧 테이프 복원 시작 (PLAY)
-        </span>
-      </div>
-    </a>
-
-    <!-- 1. 스카이 에이스 3D (신규 비행기 게임) -->
-    <a class="card" href="flight-3d/index.html">
-      <span class="card-badge-new">HOT 🔥</span>
-      <div class="thumb" style="background: linear-gradient(135deg, #0284c7, #0f172a, #10b981); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
-        <span style="font-size: 4rem;">✈️☁️💥</span>
-        <span style="color: #38bdf8; font-weight: 800; font-size: 1.1rem; text-shadow: 0 0 10px rgba(56,189,248,0.5);">3D 항공 비행 시뮬레이터</span>
-      </div>
-      <div class="meta">
-        <div>
-          <h2>스카이 에이스 3D (Sky Ace 3D)</h2>
-          <p>푸른 하늘을 가르는 창공의 비행기 조종 게임! 골드 링 레이싱, 공중 표적 격추, 1인칭/3인칭 시점 및 시간대 변경 지원.</p>
-          <div class="tags">
-            <span class="tag">#3D Three.js</span>
-            <span class="tag">#비행 시뮬레이션</span>
-            <span class="tag">#자체 신스 사운드</span>
-          </div>
-        </div>
-        <span class="score" style="border-color:#00d2ff; color:#00d2ff; background:rgba(0,210,255,0.15);">
-          ✈️ 비행 시작하기 (PLAY)
-        </span>
-      </div>
-    </a>
-
-    <!-- 2. 3D 리얼 아케이드 인형뽑기 -->
-    <a class="card" href="claw-machine/index.html">
-      <span class="card-badge-new">POPULAR ⭐</span>
-      <div class="thumb" style="background:linear-gradient(135deg,#ff2a7a,#240046,#00f0ff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
-        <span style="font-size:3.8rem;">🧸🕹️✨</span>
-        <span style="color:#ffe600;font-weight:800;font-size:1.1rem; text-shadow: 0 0 10px rgba(255,230,0,0.5);">3D 리얼 아케이드 인형뽑기</span>
-      </div>
-      <div class="meta">
-        <div>
-          <h2>CLAW MASTER 3000</h2>
-          <p>오락실 2버튼 크레인 조작과 실시간 물리 엔진을 적용하여 진짜 인형을 뽑는 듯한 손맛을 자랑하는 3D 인형뽑기 머신.</p>
-          <div class="tags">
-            <span class="tag">#물리 엔진</span>
-            <span class="tag">#오락실 감성</span>
-            <span class="tag">#인형 콜렉션</span>
-          </div>
-        </div>
-        <span class="score" style="border-color:#ff2a7a;color:#ff2a7a;background:rgba(255,42,122,0.15);">
-          🕹️ 크레인 조작하기 (PLAY)
-        </span>
-      </div>
-    </a>
-
-    <!-- 3. 판타지 오픈월드 시뮬레이션 -->
-    <a class="card" href="fantasy_world/index.html">
-      <div class="thumb" style="background:linear-gradient(135deg,#0f172a,#1e3a8a,#14532d);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
-        <span style="font-size:3.6rem;">👑🗺️⚔️</span>
-        <span style="color:#fde047;font-weight:800;font-size:1.0rem;">오픈월드 판타지 생태계 시뮬레이션</span>
-      </div>
-      <div class="meta">
-        <div>
-          <h2>아테리아 대륙 연대기</h2>
-          <p>대륙의 문명과 도시, 국가 간의 무역, 영웅 탐험, 몬스터 생태계가 실시간으로 자율 작동하는 오픈월드 샌드박스 대서사시.</p>
-          <div class="tags">
-            <span class="tag">#오픈월드</span>
-            <span class="tag">#경제/무역 시스템</span>
-            <span class="tag">#실시간 시뮬레이션</span>
-          </div>
-        </div>
-        <span class="score" style="border-color:#fde047;color:#fde047;background:rgba(253,224,71,0.15);">
-          👑 대륙 탐험하기 (PLAY)
-        </span>
-      </div>
-    </a>
-
-    <!-- 4. CHRONO BLADE -->
-    <a class="card" href="chrono-blade/index.html">
-      <div class="thumb">
-        <img src="chrono-blade/thumb.png" alt="CHRONO BLADE" onerror="this.parentElement.innerHTML='<div style=\'font-size:3.5rem;\'>⏳⚔️⚡</div>'">
-      </div>
-      <div class="meta">
-        <div>
-          <h2>CHRONO BLADE: Time Slicer</h2>
-          <p>시간을 느리게 흐르게 하며 날아오는 탄환을 베어넘기는 고속 타임 슬라이싱 아케이드 액션 게임.</p>
-          <div class="tags">
-            <span class="tag">#슬로모션</span>
-            <span class="tag">#아케이드 액션</span>
-            <span class="tag">#패링 & 콤보</span>
-          </div>
-        </div>
-        <span class="score">⚔️ 배틀 시작 (PLAY)</span>
-      </div>
-    </a>
-
-    <!-- 5. NEON SURVIVOR -->
-    <a class="card" href="neon-survivor/index.html">
-      <div class="thumb">
-        <img src="neon-survivor/thumb.png" alt="NEON SURVIVOR" onerror="this.parentElement.innerHTML='<div style=\'font-size:3.5rem;\'>👾🔫⚡</div>'">
-      </div>
-      <div class="meta">
-        <div>
-          <h2>NEON SURVIVOR</h2>
-          <p>사방에서 몰려오는 네온 사이버 드론들을 격파하고 스킬을 조합하여 생존하는 탑다운 로그라이크 서바이벌.</p>
-          <div class="tags">
-            <span class="tag">#서바이벌</span>
-            <span class="tag">#로그라이크</span>
-            <span class="tag">#네온 그래픽</span>
-          </div>
-        </div>
-        <span class="score">👾 생존 시작 (PLAY)</span>
-      </div>
-    </a>
+<div class="controls-bar">
+  <div class="tabs">
+    <button class="tab-btn active" data-filter="all">전체보기 (14)</button>
+    <button class="tab-btn" data-filter="action">아케이드/액션 (5)</button>
+    <button class="tab-btn" data-filter="rpg">RPG/로그라이크 (3)</button>
+    <button class="tab-btn" data-filter="horror">공포/미스터리 (3)</button>
+    <button class="tab-btn" data-filter="strategy">전략/시뮬레이션 (1)</button>
+    <button class="tab-btn" data-filter="cozy">코지/힐링 (1)</button>
+  </div>
+  <div class="search-box">
+    <span>🔍</span>
+    <input type="text" id="searchInput" placeholder="게임 이름, 장르, 세션 번호 검색...">
   </div>
 </div>
+
+<main class="wrap">
+  <div class="grid" id="gameGrid">
+    
+      <div class="card" data-category="action" data-search="neon survivor top-down cyber survivor 탑다운 뱀서라이크 01">
+        <div class="thumb-wrap">
+          <div class="thumb">
+            <img src="neon-survivor/thumb.png" alt="NEON SURVIVOR">
+          </div>
+          <div class="session-badge">#01</div>
+          <div class="category-pill">아케이드/액션</div>
+        </div>
+        <div class="meta">
+          <div class="genre-tag" style="color:#00f0ff">탑다운 뱀서라이크</div>
+          <h2>NEON SURVIVOR</h2>
+          <div class="sub-title">Top-Down Cyber Survivor</div>
+          <p class="desc">네온 사이버틱 전장에서 몰려오는 사이버 바이러스를 레이저와 광역 스킬로 섬멸하는 탑다운 서바이벌.</p>
+          <div class="tech-row">
+            <span class="tech-pill">Canvas 2D · WebAudio</span>
+            <span class="platform-pill">Web HTML5</span>
+          </div>
+          <div class="card-footer">
+            <div class="score-badge">비전 98 · 재미 94</div>
+            <a class="play-btn" href="neon-survivor/index.html" target="_blank">
+              <span>플레이</span> 🎮
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="card" data-category="action" data-search="chrono blade time slicer casual arcade 타임 슬라이서 02">
+        <div class="thumb-wrap">
+          <div class="thumb">
+            <img src="chrono-blade/thumb.png" alt="CHRONO BLADE">
+          </div>
+          <div class="session-badge">#02</div>
+          <div class="category-pill">아케이드/액션</div>
+        </div>
+        <div class="meta">
+          <div class="genre-tag" style="color:#ff007f">타임 슬라이서</div>
+          <h2>CHRONO BLADE</h2>
+          <div class="sub-title">Time Slicer Casual Arcade</div>
+          <p class="desc">터치/드래그 시 시간이 슬로우모션으로 흐르며 광속의 궤적으로 적들을 절단하는 타임 슬라이서 액션.</p>
+          <div class="tech-row">
+            <span class="tech-pill">Canvas 2D · Procedural Slice</span>
+            <span class="platform-pill">Web HTML5</span>
+          </div>
+          <div class="card-footer">
+            <div class="score-badge">비전 98 · 재미 95</div>
+            <a class="play-btn" href="chrono-blade/index.html" target="_blank">
+              <span>플레이</span> 🎮
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="card" data-category="action" data-search="감스트 상동호수공원 질주 gamst lake park run hd 탑다운 질주 러너 03">
+        <div class="thumb-wrap">
+          <div class="thumb">
+            <img src="gamst-lake-park/thumb.png" alt="감스트 상동호수공원 질주">
+          </div>
+          <div class="session-badge">#03</div>
+          <div class="category-pill">아케이드/액션</div>
+        </div>
+        <div class="meta">
+          <div class="genre-tag" style="color:#ff7700">탑다운 질주 러너</div>
+          <h2>감스트 상동호수공원 질주</h2>
+          <div class="sub-title">Gamst Lake Park Run HD</div>
+          <p class="desc">자전거를 탄 감스트가 상동호수공원의 장애물과 비둘기를 피하며 특유의 찰진 보이스로 질주하는 러너 게임.</p>
+          <div class="tech-row">
+            <span class="tech-pill">Canvas 2D · Sprite Animation</span>
+            <span class="platform-pill">Web HTML5</span>
+          </div>
+          <div class="card-footer">
+            <div class="score-badge">비전 96 · 재미 96</div>
+            <a class="play-btn" href="gamst-lake-park/index.html" target="_blank">
+              <span>플레이</span> 🎮
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="card" data-category="strategy" data-search="아키텍츠 fc architects football club online 피파풍 축구 스쿼드 매니저 04">
+        <div class="thumb-wrap">
+          <div class="thumb">
+            <img src="architecture-fc/thumb.png" alt="아키텍츠 FC">
+          </div>
+          <div class="session-badge">#04</div>
+          <div class="category-pill">전략/시뮬레이션</div>
+        </div>
+        <div class="meta">
+          <div class="genre-tag" style="color:#1e5fad">피파풍 축구 스쿼드 매니저</div>
+          <h2>아키텍츠 FC</h2>
+          <div class="sub-title">Architects Football Club Online</div>
+          <p class="desc">르 코르뷔지에, 자하 하디드 등 전설적 건축가들이 감독이 되어 랜드마크 건물을 선수로 스쿼드를 짜 대결하는 축구 시뮬레이션.</p>
+          <div class="tech-row">
+            <span class="tech-pill">2D Tactical Pitch AI · Audio API</span>
+            <span class="platform-pill">Web HTML5</span>
+          </div>
+          <div class="card-footer">
+            <div class="score-badge">비전 99 · 재미 97</div>
+            <a class="play-btn" href="architecture-fc/index.html" target="_blank">
+              <span>플레이</span> 🎮
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="card" data-category="action" data-search="claw master 3000 3d physical crane arcade 3d 물리 인형뽑기 05">
+        <div class="thumb-wrap">
+          <div class="thumb">
+            <img src="claw-machine/thumb.png" alt="CLAW MASTER 3000">
+          </div>
+          <div class="session-badge">#05</div>
+          <div class="category-pill">아케이드/액션</div>
+        </div>
+        <div class="meta">
+          <div class="genre-tag" style="color:#eab308">3D 물리 인형뽑기</div>
+          <h2>CLAW MASTER 3000</h2>
+          <div class="sub-title">3D Physical Crane Arcade</div>
+          <p class="desc">실제 오락실 감성의 집게 장력과 흔들림, 물리 충돌을 정밀하게 구현한 풀 3D 크레인 인형뽑기 게임.</p>
+          <div class="tech-row">
+            <span class="tech-pill">Three.js · Cannon Physics</span>
+            <span class="platform-pill">Web HTML5</span>
+          </div>
+          <div class="card-footer">
+            <div class="score-badge">비전 96 · 재미 92</div>
+            <a class="play-btn" href="claw-machine/index.html" target="_blank">
+              <span>플레이</span> 🎮
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="card" data-category="action" data-search="스카이 에이스 3d sky ace 3d flight simulator 3d 공중전 시뮬레이션 06">
+        <div class="thumb-wrap">
+          <div class="thumb">
+            <img src="flight-3d/thumb.png" alt="스카이 에이스 3D">
+          </div>
+          <div class="session-badge">#06</div>
+          <div class="category-pill">아케이드/액션</div>
+        </div>
+        <div class="meta">
+          <div class="genre-tag" style="color:#38bdf8">3D 공중전 시뮬레이션</div>
+          <h2>스카이 에이스 3D</h2>
+          <div class="sub-title">Sky Ace 3D Flight Simulator</div>
+          <p class="desc">푸른 창공을 비행하며 적기를 록온 미사일과 발칸포로 격추하는 박진감 넘치는 3D 비행 도그파이트 시뮬레이터.</p>
+          <div class="tech-row">
+            <span class="tech-pill">Three.js · 6-DOF Flight Math</span>
+            <span class="platform-pill">Web HTML5</span>
+          </div>
+          <div class="card-footer">
+            <div class="score-badge">비전 98 · 재미 95</div>
+            <a class="play-btn" href="flight-3d/index.html" target="_blank">
+              <span>플레이</span> 🎮
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="card" data-category="rpg" data-search="아테리아 대륙 연대기 chronicles of artheria rpg 판타지 오픈월드 rpg 07">
+        <div class="thumb-wrap">
+          <div class="thumb">
+            <img src="fantasy_world/thumb.png" alt="아테리아 대륙 연대기">
+          </div>
+          <div class="session-badge">#07</div>
+          <div class="category-pill">RPG/로그라이크</div>
+        </div>
+        <div class="meta">
+          <div class="genre-tag" style="color:#8b5cf6">판타지 오픈월드 RPG</div>
+          <h2>아테리아 대륙 연대기</h2>
+          <div class="sub-title">Chronicles of Artheria RPG</div>
+          <p class="desc">절차적으로 생성되는 방대한 픽셀 월드, 다양한 마을 건축과 퀘스트, 던전 탐험을 제공하는 판타지 샌드박스 RPG.</p>
+          <div class="tech-row">
+            <span class="tech-pill">Modular Procedural Engine</span>
+            <span class="platform-pill">Web HTML5</span>
+          </div>
+          <div class="card-footer">
+            <div class="score-badge">비전 97 · 재미 95</div>
+            <a class="play-btn" href="fantasy_world/index.html" target="_blank">
+              <span>플레이</span> 🎮
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="card" data-category="horror" data-search="송백리 살인사건 1997 the songbaek killings mystery 미스터리 반전 추리 08">
+        <div class="thumb-wrap">
+          <div class="thumb">
+            <img src="songbaek-killings/thumb.png" alt="송백리 살인사건 1997">
+          </div>
+          <div class="session-badge">#08</div>
+          <div class="category-pill">공포/미스터리</div>
+        </div>
+        <div class="meta">
+          <div class="genre-tag" style="color:#b91c1c">미스터리 반전 추리</div>
+          <h2>송백리 살인사건 1997</h2>
+          <div class="sub-title">The Songbaek Killings Mystery</div>
+          <p class="desc">1997년 고립된 시골 마을 송백리에서 벌어진 충격적인 연쇄 의문사. 단서를 조합해 진범의 거짓말을 깨부수는 추리물.</p>
+          <div class="tech-row">
+            <span class="tech-pill">Dynamic Narrative State Tree</span>
+            <span class="platform-pill">Web HTML5</span>
+          </div>
+          <div class="card-footer">
+            <div class="score-badge">비전 100 · 재미 100</div>
+            <a class="play-btn" href="songbaek-killings/index.html" target="_blank">
+              <span>플레이</span> 🎮
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="card" data-category="horror" data-search="은하아파트 13동 apartment 13: midnight patrol 청각 기반 심야 순찰 공포 09">
+        <div class="thumb-wrap">
+          <div class="thumb">
+            <img src="apartment-13/thumb.png" alt="은하아파트 13동">
+          </div>
+          <div class="session-badge">#09</div>
+          <div class="category-pill">공포/미스터리</div>
+        </div>
+        <div class="meta">
+          <div class="genre-tag" style="color:#475569">청각 기반 심야 순찰 공포</div>
+          <h2>은하아파트 13동</h2>
+          <div class="sub-title">Apartment 13: Midnight Patrol</div>
+          <p class="desc">새벽 2시, 불 꺼진 복도식 아파트를 순찰하며 계단 밑에서 들려오는 발소리와 기괴한 잡음을 피해 생환하는 사운드 호러.</p>
+          <div class="tech-row">
+            <span class="tech-pill">Binaural Spatial Sound · CRT Shader</span>
+            <span class="platform-pill">Web HTML5</span>
+          </div>
+          <div class="card-footer">
+            <div class="score-badge">비전 100 · 재미 99</div>
+            <a class="play-btn" href="apartment-13/index.html" target="_blank">
+              <span>플레이</span> 🎮
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="card" data-category="horror" data-search="아카이브 1999: 잔향의 병동 archive 1999: retro 3d horror 레트로 3d 단서 공포 10">
+        <div class="thumb-wrap">
+          <div class="thumb">
+            <img src="archive-1999/thumb.png" alt="아카이브 1999: 잔향의 병동">
+          </div>
+          <div class="session-badge">#10</div>
+          <div class="category-pill">공포/미스터리</div>
+        </div>
+        <div class="meta">
+          <div class="genre-tag" style="color:#059669">레트로 3D 단서 공포</div>
+          <h2>아카이브 1999: 잔향의 병동</h2>
+          <div class="sub-title">Archive 1999: Retro 3D Horror</div>
+          <p class="desc">90년대 PS1 풍 로우폴리 3D 폐병원. 터미널의 암호 파일과 CCTV 잔향을 조사하며 폐쇄 구역의 진실을 파헤치는 공포.</p>
+          <div class="tech-row">
+            <span class="tech-pill">Three.js · PS1 Retro Shaders</span>
+            <span class="platform-pill">Web HTML5</span>
+          </div>
+          <div class="card-footer">
+            <div class="score-badge">비전 99 · 재미 96</div>
+            <a class="play-btn" href="archive-1999/index.html" target="_blank">
+              <span>플레이</span> 🎮
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="card" data-category="action" data-search="valo-lite 3d fps fast-paced arena tactical shooter three.js 1인칭 아레나 fps 11">
+        <div class="thumb-wrap">
+          <div class="thumb">
+            <img src="fps-arena/thumb.png" alt="VALO-LITE 3D FPS">
+          </div>
+          <div class="session-badge">#11</div>
+          <div class="category-pill">아케이드/액션</div>
+        </div>
+        <div class="meta">
+          <div class="genre-tag" style="color:#ff4655">Three.js 1인칭 아레나 FPS</div>
+          <h2>VALO-LITE 3D FPS</h2>
+          <div class="sub-title">Fast-Paced Arena Tactical Shooter</div>
+          <p class="desc">제트 대시와 세이지 힐 스킬을 갖춘 1인칭 택티컬 아레나 슈터. 웨이브마다 몰려오는 적 봇을 정밀 에임으로 사살하라.</p>
+          <div class="tech-row">
+            <span class="tech-pill">Three.js · PointerLock · Bot AI</span>
+            <span class="platform-pill">Web HTML5</span>
+          </div>
+          <div class="card-footer">
+            <div class="score-badge">비전 97 · 재미 94</div>
+            <a class="play-btn" href="fps-arena/index.html" target="_blank">
+              <span>플레이</span> 🎮
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="card" data-category="rpg" data-search="어비스 롤: 피의 카지노 abyss roll: blood casino 2.0 발라트로풍 주사위 로그라이크 12">
+        <div class="thumb-wrap">
+          <div class="thumb">
+            <img src="abyss-roll/thumb.png" alt="어비스 롤: 피의 카지노">
+          </div>
+          <div class="session-badge">#12</div>
+          <div class="category-pill">RPG/로그라이크</div>
+        </div>
+        <div class="meta">
+          <div class="genre-tag" style="color:#dc2626">발라트로풍 주사위 로그라이크</div>
+          <h2>어비스 롤: 피의 카지노</h2>
+          <div class="sub-title">Abyss Roll: Blood Casino 2.0</div>
+          <p class="desc">[Chips x Mult] 폭발적 시너지, 5개 조커 슬롯, 보스 블라인드 디버프와 타로 부스터 팩을 결합한 다크 판타지 주사위 겜블 로그라이크.</p>
+          <div class="tech-row">
+            <span class="tech-pill">Balatro-Math · Polychrome FX</span>
+            <span class="platform-pill">Web · Unity · Android APK</span>
+          </div>
+          <div class="card-footer">
+            <div class="score-badge">비전 100 · 재미 99</div>
+            <a class="play-btn" href="abyss-roll/index.html" target="_blank">
+              <span>플레이</span> 🎮
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="card" data-category="rpg" data-search="심리스 오픈월드 픽셀 rpg seamless open-world pixel rpg 200직업 & 거대 드래곤 레이드 13">
+        <div class="thumb-wrap">
+          <div class="thumb">
+            <img src="seamless-pixel-rpg/thumb.png" alt="심리스 오픈월드 픽셀 RPG">
+          </div>
+          <div class="session-badge">#13</div>
+          <div class="category-pill">RPG/로그라이크</div>
+        </div>
+        <div class="meta">
+          <div class="genre-tag" style="color:#d97706">200직업 & 거대 드래곤 레이드</div>
+          <h2>심리스 오픈월드 픽셀 RPG</h2>
+          <div class="sub-title">Seamless Open-World Pixel RPG</div>
+          <p class="desc">200종 직업과 용병 파티 전술 AI, 화면 절반을 채우는 거대 드래곤 장판 레이드 및 영지 재건을 담은 스팀 퀄리티 심리스 픽셀 RPG.</p>
+          <div class="tech-row">
+            <span class="tech-pill">HD-2D · Boss Telegraph · Weather Synergy</span>
+            <span class="platform-pill">Web · Unity 2D (Isolated)</span>
+          </div>
+          <div class="card-footer">
+            <div class="score-badge">비전 99 · 재미 98</div>
+            <a class="play-btn" href="seamless-pixel-rpg/index.html" target="_blank">
+              <span>플레이</span> 🎮
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="card" data-category="cozy" data-search="코지 픽셀 낚시터 cozy pixel fishing & asmr 50종 도감 & asmr 텐션 릴링 14">
+        <div class="thumb-wrap">
+          <div class="thumb">
+            <img src="cozy-fishing/thumb.png" alt="코지 픽셀 낚시터">
+          </div>
+          <div class="session-badge">#14</div>
+          <div class="category-pill">코지/힐링</div>
+        </div>
+        <div class="meta">
+          <div class="genre-tag" style="color:#f67280">50종 도감 & ASMR 텐션 릴링</div>
+          <h2>코지 픽셀 낚시터</h2>
+          <div class="sub-title">Cozy Pixel Fishing &amp; ASMR</div>
+          <p class="desc">파스텔 노을빛 수면에서 즐기는 ASMR 릴링 낚시. 50종 따스한 물고기 도감과 낚싯대 업그레이드, 동행 고양이 모찌의 방치형 낚시 루프.</p>
+          <div class="tech-row">
+            <span class="tech-pill">Procedural Wave · WebAudio ASMR · 6-Step FSM</span>
+            <span class="platform-pill">Web · Unity Overlay (Isolated)</span>
+          </div>
+          <div class="card-footer">
+            <div class="score-badge">비전 100 · 재미 98</div>
+            <a class="play-btn" href="cozy-fishing/index.html" target="_blank">
+              <span>플레이</span> 🎮
+            </a>
+          </div>
+        </div>
+      </div>
+    
+  </div>
+</main>
+
+<script>
+// Tab Filtering
+const tabs = document.querySelectorAll('.tab-btn');
+const cards = document.querySelectorAll('.card');
+const searchInput = document.getElementById('searchInput');
+
+let currentFilter = 'all';
+let searchQuery = '';
+
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    tabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentFilter = tab.getAttribute('data-filter');
+    filterCards();
+  });
+});
+
+searchInput.addEventListener('input', (e) => {
+  searchQuery = e.target.value.toLowerCase().trim();
+  filterCards();
+});
+
+function filterCards() {
+  cards.forEach(card => {
+    const category = card.getAttribute('data-category');
+    const searchData = card.getAttribute('data-search');
+
+    const matchesCategory = (currentFilter === 'all' || category === currentFilter);
+    const matchesSearch = (!searchQuery || searchData.includes(searchQuery));
+
+    if (matchesCategory && matchesSearch) {
+      card.style.display = 'flex';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+</script>
+
 </body>
 </html>
