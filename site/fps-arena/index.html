@@ -3,19 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>ESCAPE FROM TARKOV : EXTRACTION ZONE (이스케이프 프롬 타르코프 오픈월드)</title>
+<title>ESCAPE FROM TARKOV : EXTRACTION ZONE (타르코프 하드코어 오픈월드 2.0)</title>
 <style>
 :root{
   --eft-green:#3bb346;
   --eft-gold:#c8a45d;
   --eft-red:#e03e3e;
-  --eft-dark:#0a0d10;
-  --eft-panel:rgba(14,18,24,0.94);
-  --eft-border:#2a3644;
+  --eft-dark:#080b0f;
+  --eft-panel:rgba(12,16,22,0.95);
+  --eft-border:#222d3b;
   --eft-cyan:#22d3ee;
+  --eft-nvg:#10ff70;
 }
 *{box-sizing:border-box}
-body{margin:0;background:#06080b;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;color:#ece8e1;user-select:none}
+body{margin:0;background:#05070a;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;color:#ece8e1;user-select:none}
 canvas#c{display:block;width:100vw;height:100vh}
 #ui{position:fixed;inset:0;pointer-events:none}
 
@@ -27,7 +28,7 @@ canvas#c{display:block;width:100vw;height:100vh}
   padding:6px 28px;border-radius:4px;box-shadow:0 8px 30px rgba(0,0,0,0.85);
 }
 #compass-bar{
-  width:280px;height:24px;background:#10151c;border:1px solid #1f2a36;border-radius:3px;
+  width:280px;height:24px;background:#0d1218;border:1px solid #1a232f;border-radius:3px;
   position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;
 }
 #compass-strip{
@@ -49,7 +50,7 @@ canvas#c{display:block;width:100vw;height:100vh}
 .health-title span{font-size:11px;color:#8ba2b5;font-weight:800;letter-spacing:1px}
 #hp-total{font-size:24px;font-weight:900;color:#fff}
 .part-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
-.part-box{background:#111720;padding:4px 8px;border-radius:3px;border:1px solid #1b2533;font-size:11px;display:flex;justify-content:space-between}
+.part-box{background:#0e141c;padding:4px 8px;border-radius:3px;border:1px solid #182230;font-size:11px;display:flex;justify-content:space-between}
 .part-box.damaged{border-color:var(--eft-gold);color:var(--eft-gold)}
 .part-box.destroyed{border-color:var(--eft-red);color:var(--eft-red);background:rgba(224,62,62,0.12)}
 #debuff-bar{display:flex;gap:6px;margin-top:8px}
@@ -57,6 +58,7 @@ canvas#c{display:block;width:100vw;height:100vh}
 .tag-bleed{background:#7a1a1a;color:#ff9999;border:1px solid #ff4444}
 .tag-pain{background:#634b12;color:#ffdf88;border:1px solid #e5b869}
 .tag-painkiller{background:#124823;color:#88ffaa;border:1px solid #22c55e}
+.tag-nvg{background:#0b3a1a;color:#70ff9a;border:1px solid #10ff70}
 
 /* 우하단 무기 & 탄약 & 무게 */
 #hud-weapon{
@@ -69,21 +71,22 @@ canvas#c{display:block;width:100vw;height:100vh}
 #weapon-title{font-size:15px;color:var(--eft-gold);font-weight:900;letter-spacing:1px;margin-top:4px}
 #caliber-mode{font-size:11px;color:#8ba2b5;margin-top:2px}
 #weight-tag{font-size:11px;color:#a0b0be;margin-top:6px;font-weight:700}
+#stance-tag{font-size:11px;color:var(--eft-cyan);margin-top:2px;font-weight:800}
 
-/* 중앙 하단 빠른 슬롯 */
+/* 중앙 하단 전술 핫키 */
 #quick-slots{
   position:absolute;bottom:24px;left:50%;transform:translateX(-50%);
-  display:flex;gap:6px;
+  display:flex;gap:5px;
 }
 .q-box{
-  background:var(--eft-panel);border:1px solid var(--eft-border);padding:8px 10px;
-  border-radius:4px;text-align:center;min-width:64px;font-size:11px;
+  background:var(--eft-panel);border:1px solid var(--eft-border);padding:6px 9px;
+  border-radius:4px;text-align:center;min-width:58px;font-size:10.5px;
   box-shadow:0 4px 14px rgba(0,0,0,0.6);
 }
 .q-box.active{border-color:var(--eft-gold);background:rgba(200,164,93,0.18)}
-.q-box b{display:block;font-size:12px;color:var(--eft-cyan);margin-bottom:2px}
+.q-box b{display:block;font-size:11.5px;color:var(--eft-cyan);margin-bottom:2px}
 
-/* 인터랙션 프롬프트 (Loot / Open / Extract) */
+/* 인터랙션 프롬프트 */
 #interact-prompt{
   position:absolute;top:58%;left:50%;transform:translate(-50%,-50%);
   background:rgba(12,16,22,0.92);border:1px solid var(--eft-gold);padding:8px 20px;
@@ -102,10 +105,30 @@ canvas#c{display:block;width:100vw;height:100vh}
 #extract-banner h2{margin:0 0 4px;font-size:24px;color:var(--eft-green);letter-spacing:2px}
 #extract-banner p{margin:0;font-size:14px;color:#bfe8c4}
 
-/* 타르코프 전리품 인벤토리 모달 [Tab] */
+/* 야간투시경 (NVG) 오버레이 필터 */
+#nvg-overlay{
+  position:fixed;inset:0;pointer-events:none;display:none;z-index:32;
+  background:radial-gradient(circle at center, rgba(16,255,112,0.22) 20%, rgba(5,60,25,0.7) 70%, #021206 95%);
+  mix-blend-mode:screen;
+}
+#nvg-overlay::after{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 2px, transparent 2px, transparent 4px);
+}
+
+/* 저격 스코프 오버레이 */
+#scope-overlay{
+  position:fixed;inset:0;pointer-events:none;display:none;z-index:35;
+  background:radial-gradient(circle at center, transparent 32%, rgba(0,0,0,0.96) 38%, #000 70%);
+}
+#scope-overlay::before,#scope-overlay::after{content:'';position:absolute;background:rgba(200,164,93,0.85)}
+#scope-overlay::before{top:0;bottom:0;left:50%;width:1.5px}
+#scope-overlay::after{left:0;right:0;top:50%;height:1.5px}
+
+/* 타르코프 전술 배낭 인벤토리 모달 [Tab] */
 #inventory-modal{
   position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:880px;height:540px;background:rgba(10,14,18,0.97);border:2px solid var(--eft-border);
+  width:900px;height:550px;background:rgba(10,14,18,0.97);border:2px solid var(--eft-border);
   border-radius:6px;box-shadow:0 20px 60px rgba(0,0,0,0.95);
   display:none;z-index:90;backdrop-filter:blur(10px);pointer-events:auto;
   flex-direction:column;
@@ -132,6 +155,18 @@ canvas#c{display:block;width:100vw;height:100vh}
 .rarity-rare{background:#582f6e;color:#d2a8ff}
 .rarity-val{background:#634b12;color:#ffd700}
 
+/* 상인 & 암시장 거래소 모달 [B] */
+#trader-modal{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:920px;height:560px;background:rgba(8,11,16,0.98);border:2px solid var(--eft-gold);
+  border-radius:6px;box-shadow:0 25px 70px rgba(0,0,0,0.95);
+  display:none;z-index:95;backdrop-filter:blur(10px);pointer-events:auto;
+  flex-direction:column;
+}
+.trader-tabs{display:flex;border-bottom:1px solid var(--eft-border);background:#101620}
+.trader-tab{padding:12px 24px;cursor:pointer;font-weight:700;font-size:13px;color:#8ba2b5;border-bottom:2px solid transparent}
+.trader-tab.active{color:var(--eft-gold);border-bottom-color:var(--eft-gold);background:#151d2a}
+
 /* 레이드 정산 결과 화면 */
 #result-modal{
   position:fixed;inset:0;background:rgba(6,9,13,0.97);display:none;
@@ -153,15 +188,9 @@ canvas#c{display:block;width:100vw;height:100vh}
 }
 .btn-eft:hover{background:#dfbe78}
 
-/* 미니맵 및 조준선 */
 #minimap{position:absolute;top:16px;left:16px;width:160px;height:160px;background:rgba(10,14,20,0.92);border:1px solid #233142;border-radius:4px}
 #ch-canvas{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;width:160px;height:160px;z-index:40}
-#scope-overlay{position:fixed;inset:0;pointer-events:none;display:none;background:radial-gradient(circle at center, transparent 32%, rgba(0,0,0,0.95) 38%, #000 70%);z-index:35}
-#scope-overlay::before,#scope-overlay::after{content:'';position:absolute;background:rgba(200,164,93,0.85)}
-#scope-overlay::before{top:0;bottom:0;left:50%;width:1.5px}
-#scope-overlay::after{left:0;right:0;top:50%;height:1.5px}
 #hit-indicator{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .15s;z-index:30}
-#flash-overlay{position:fixed;inset:0;background:#fff;pointer-events:none;opacity:0;z-index:80}
 #arcade-btn{position:absolute;top:16px;left:190px;font-size:12px;color:#ece8e1;background:var(--eft-panel);padding:7px 16px;border-radius:4px;border:1px solid var(--eft-border);pointer-events:auto;cursor:pointer;text-decoration:none}
 #arcade-btn:hover{background:var(--eft-gold);color:#000}
 #feed{position:absolute;top:70px;right:24px;display:flex;flex-direction:column;gap:6px;align-items:flex-end}
@@ -181,7 +210,7 @@ canvas#c{display:block;width:100vw;height:100vh}
   </div>
   <div>
    <div id="raid-timer">15:00</div>
-   <div id="raid-status">CUSTOMS · RAID LIVE</div>
+   <div id="raid-status">CUSTOMS INDUSTRIAL FIELD</div>
   </div>
  </div>
 
@@ -208,7 +237,8 @@ canvas#c{display:block;width:100vw;height:100vh}
   <div id="debuff-bar">
    <span class="debuff-tag tag-painkiller" id="tag-painkiller" style="display:none">진통제 활성</span>
    <span class="debuff-tag tag-bleed" id="tag-bleed" style="display:none">출혈 지속 중 (-HP)</span>
-   <span class="debuff-tag tag-limp" id="tag-limp" style="display:none">다리 골절 (절뚝거림)</span>
+   <span class="debuff-tag tag-pain" id="tag-limp" style="display:none">다리 골절 (절뚝거림)</span>
+   <span class="debuff-tag tag-nvg" id="tag-nvg" style="display:none">NVG 나이트비전 ON</span>
   </div>
  </div>
 
@@ -218,22 +248,26 @@ canvas#c{display:block;width:100vw;height:100vh}
   <div class="q-box" id="q-3"><b>[3] SV-98</b>7.62 스나이퍼</div>
   <div class="q-box" id="q-4"><b>[4] IFAK</b>지혈/응급킷</div>
   <div class="q-box" id="q-5"><b>[5] 진통제</b>골절 통증 완화</div>
-  <div class="q-box"><b>[Tab]</b>전술 배낭</div>
-  <div class="q-box"><b>[T]</b>전술 라이트</div>
-  <div class="q-box"><b>[G]</b>F-1 수류탄</div>
-  <div class="q-box"><b>[R]</b>탄창 교체</div>
+  <div class="q-box"><b>[Q/E]</b>좌우 린</div>
+  <div class="q-box"><b>[C]</b>앉기/은폐</div>
+  <div class="q-box"><b>[N]</b>야간투시경</div>
+  <div class="q-box"><b>[B]</b>전술상인</div>
+  <div class="q-box"><b>[Tab]</b>전술배낭</div>
+  <div class="q-box"><b>[T]</b>라이트</div>
+  <div class="q-box"><b>[R]</b>탄창교체</div>
  </div>
 
  <div id="hud-weapon">
   <div id="caliber-mode">5.56x45MM M855A1 · 전자동</div>
   <div id="ammo-display">30 / 90</div>
   <div id="weapon-title">COLT M4A1 CUSTOM</div>
+  <div id="stance-tag">서서쏴 [기본 자세]</div>
   <div id="weight-tag">🎒 배낭 중량: 14.2 kg (적정)</div>
  </div>
 
  <canvas id="ch-canvas" width="160" height="160"></canvas>
+ <div id="nvg-overlay"></div>
  <div id="scope-overlay"></div>
- <div id="flash-overlay"></div>
  <div id="hit-indicator"></div>
 
  <!-- 타르코프 전술 배낭 인벤토리 모달 [Tab] -->
@@ -256,12 +290,29 @@ canvas#c{display:block;width:100vw;height:100vh}
   </div>
  </div>
 
+ <!-- 상인 & 은신처 모달 [B] -->
+ <div id="trader-modal">
+  <div class="inv-header">
+   <h3>🏛️ PRAPOR & PEACEKEEPER 전술 상인 거래소</h3>
+   <div style="font-size:13px;color:var(--eft-gold)">보유 자산: <b id="trader-wallet">₽ 250,000</b></div>
+  </div>
+  <div class="trader-tabs">
+   <div class="trader-tab active" onclick="switchTraderTab('buy')">전술 장비 구매 (Shop)</div>
+   <div class="trader-tab" onclick="switchTraderTab('sell')">전리품 일괄 매각 (Sell All Valuables)</div>
+  </div>
+  <div class="inv-body">
+   <div class="inv-panel" id="trader-shop-panel">
+    <div class="loot-grid" id="trader-items-grid"></div>
+   </div>
+  </div>
+ </div>
+
  <!-- 레이드 정산 결과 모달 -->
  <div id="result-modal">
   <h1 id="res-status-title">SURVIVED</h1>
   <div class="res-card">
    <div class="res-row"><span>레이드 작전지</span><span>CUSTOMS INDUSTRIAL OUTPOST</span></div>
-   <div class="res-row"><span>처치한 스캐브 (Kills)</span><b id="res-kills">0</b></div>
+   <div class="res-row"><span>처치한 적 (Kills)</span><b id="res-kills">0</b></div>
    <div class="res-row"><span>파밍한 아이템 수</span><b id="res-items">0</b></div>
    <div class="res-row"><span>탈출 지점</span><b id="res-exfil">ZB-014 BUNKER</b></div>
    <div class="res-row"><span>총 획득 루블 (Total RUB)</span><b id="res-rub">₽ 0</b></div>
@@ -276,7 +327,7 @@ canvas#c{display:block;width:100vw;height:100vh}
 
 <script>
 // ==========================================
-// 1. 하드코어 타르코프 ASMR 오디오 신시사이저
+// 1. 하드코어 타르코프 3D 공간 음향 & 심장박동 & NVG 신스
 // ==========================================
 let AC = null;
 function audio() {
@@ -322,24 +373,29 @@ const SND = {
   hitMarker() { tone(1600, 1000, 0.04, 0.4, 'square'); },
   headshot() { tone(2500, 1700, 0.08, 0.65, 'square'); tone(3400, 2200, 0.1, 0.5, 'sine', 0.02); },
   footstep(x, z, self) {
-    const v = self ? 0.09 : 0.08 * distPan(x, z).vol;
-    noise(0.04, v, 500);
+    const v = self ? (P.crouching ? 0.03 : 0.09) : 0.08 * distPan(x, z).vol;
+    noise(0.04, v, P.crouching ? 350 : 500);
   },
-  scavVoice(type='spotted') {
-    tone(220, 180, 0.18, 0.45, 'sawtooth');
-    tone(180, 130, 0.2, 0.4, 'sawtooth', 0.15);
+  nvgToggle(on) {
+    tone(3200, on ? 4800 : 1600, 0.18, 0.4, 'sine');
+    noise(0.08, 0.2, 5000, 'highpass');
   },
+  heartbeat() {
+    tone(75, 45, 0.12, 0.55, 'sine');
+    tone(60, 40, 0.14, 0.45, 'sine', 0.12);
+  },
+  buyCash() { tone(800, 1600, 0.08, 0.35, 'triangle'); tone(1200, 1800, 0.06, 0.3, 'square', 0.05); },
   extractTick() { tone(880, 880, 0.05, 0.3, 'sine'); },
   extractDone() { tone(440, 880, 0.4, 0.6, 'triangle'); tone(880, 1320, 0.5, 0.5, 'sine', 0.2); }
 };
 
 // ==========================================
-// 2. 오픈월드 타르코프 맵 & 건축물 & 탈출 지점
+// 2. 오픈월드 타르코프 맵 & 비밀 금고방(Marked Room)
 // ==========================================
-const MAP_SIZE = 80;
+const MAP_SIZE = 90;
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x5a6977);
-scene.fog = new THREE.FogExp2(0x5a6977, 0.012);
+scene.background = new THREE.Color(0x35404d);
+scene.fog = new THREE.FogExp2(0x35404d, 0.014);
 
 const cv = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true });
@@ -352,8 +408,8 @@ const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 14
 camera.rotation.order = 'YXZ';
 scene.add(camera);
 
-scene.add(new THREE.HemisphereLight(0xe8edf2, 0x3d474e, 0.8));
-const sunLight = new THREE.DirectionalLight(0xfff6e5, 1.2);
+scene.add(new THREE.HemisphereLight(0xdde5ed, 0x2a333d, 0.75));
+const sunLight = new THREE.DirectionalLight(0xffecd0, 1.15);
 sunLight.position.set(45, 60, 40);
 sunLight.castShadow = true;
 sunLight.shadow.mapSize.width = 1024;
@@ -362,7 +418,7 @@ sunLight.shadow.camera.left = -50; sunLight.shadow.camera.right = 50;
 sunLight.shadow.camera.top = 50; sunLight.shadow.camera.bottom = -50;
 scene.add(sunLight);
 
-const flashLight = new THREE.SpotLight(0xfffaea, 0, 35, Math.PI / 7, 0.3, 1.2);
+const flashLight = new THREE.SpotLight(0xfffaea, 0, 40, Math.PI / 6.5, 0.3, 1.2);
 camera.add(flashLight);
 flashLight.position.set(0.2, -0.2, 0);
 flashLight.target.position.set(0, 0, -5);
@@ -374,13 +430,13 @@ function makeCanvasTex(fn) {
   t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
 }
 const groundTex = makeCanvasTex(g => {
-  g.fillStyle = '#343c33'; g.fillRect(0,0,256,256);
+  g.fillStyle = '#2d352c'; g.fillRect(0,0,256,256);
   for (let i = 0; i < 700; i++) {
-    g.fillStyle = Math.random() > 0.5 ? '#2b332a' : '#3f473e';
+    g.fillStyle = Math.random() > 0.5 ? '#242b23' : '#384236';
     g.fillRect(Math.random() * 256, Math.random() * 256, 4, 4);
   }
 });
-groundTex.repeat.set(40, 40);
+groundTex.repeat.set(45, 45);
 
 const terrain = new THREE.Mesh(new THREE.PlaneGeometry(MAP_SIZE, MAP_SIZE), new THREE.MeshLambertMaterial({ map: groundTex }));
 terrain.rotation.x = -Math.PI / 2; terrain.position.set(0, 0, 0);
@@ -389,24 +445,21 @@ terrain.receiveShadow = true; scene.add(terrain);
 const wallMeshes = [];
 const lootContainers = [];
 const exfilPoints = [
-  { name: 'ZB-014 BUNKERS (지하 벙커)', x: -30, z: -30, rad: 5, col: 0x3bb346 },
-  { name: 'RAILWAY GATE (철도 게이트)', x: 30, z: 30, rad: 5.5, col: 0x3bb346 }
+  { name: 'ZB-014 BUNKERS (지하 벙커)', x: -32, z: -32, rad: 5.5, col: 0x3bb346 },
+  { name: 'RAILWAY GATE (철도 게이트)', x: 32, z: 32, rad: 6.0, col: 0x3bb346 },
+  { name: 'BOAT EXTRACT (보트 탈출구)', x: -32, z: 28, rad: 5.0, col: 0x3bb346 }
 ];
 
 exfilPoints.forEach(ep => {
   const smokePillar = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.6, 2.2, 12, 12),
-    new THREE.MeshBasicMaterial({ color: ep.col, transparent: true, opacity: 0.35 })
+    new THREE.CylinderGeometry(0.6, 2.4, 14, 12),
+    new THREE.MeshBasicMaterial({ color: ep.col, transparent: true, opacity: 0.38 })
   );
-  smokePillar.position.set(ep.x, 6, ep.z);
+  smokePillar.position.set(ep.x, 7, ep.z);
   scene.add(smokePillar);
-
-  const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.4, 8), new THREE.MeshLambertMaterial({ color: 0x228833 }));
-  beacon.position.set(ep.x, 0.2, ep.z);
-  scene.add(beacon);
 });
 
-function createBuilding(x, z, w, h, d, color=0x5c646c) {
+function createBuilding(x, z, w, h, d, color=0x555d66) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshLambertMaterial({ color }));
   m.position.set(x, h / 2, z);
   m.castShadow = true; m.receiveShadow = true;
@@ -414,91 +467,97 @@ function createBuilding(x, z, w, h, d, color=0x5c646c) {
   return m;
 }
 
-createBuilding(-15, 0, 16, 6, 20, 0x48525a);
-createBuilding(10, -10, 8, 2.5, 4, 0x5a6352);
-createBuilding(14, -10, 6, 1.2, 1.5, 0x8a7a60);
-createBuilding(0, 22, 4, 8, 4, 0x3a4249);
-createBuilding(5, 5, 3, 2.8, 7, 0x8b3a3a);
-createBuilding(-6, 15, 3, 2.8, 7, 0x2e547a);
-createBuilding(20, 18, 5, 2.2, 4, 0x52483d);
+createBuilding(-16, 0, 18, 6.5, 22, 0x454d55);
+createBuilding(-20, 2, 6, 4, 6, 0x2d343b);
+createBuilding(12, -12, 8, 2.5, 4, 0x5a6352);
+createBuilding(0, 24, 4.5, 9, 4.5, 0x384048);
+createBuilding(6, 6, 3, 2.8, 7.5, 0x883434);
+createBuilding(-7, 16, 3, 2.8, 7.5, 0x2b4f73);
+createBuilding(22, 20, 5, 2.2, 4, 0x4e4438);
 
-for (let i = 0; i < 45; i++) {
-  const tx = (Math.random() - 0.5) * 70, tz = (Math.random() - 0.5) * 70;
-  if (Math.hypot(tx, tz) < 10) continue;
+for (let i = 0; i < 55; i++) {
+  const tx = (Math.random() - 0.5) * 80, tz = (Math.random() - 0.5) * 80;
+  if (Math.hypot(tx, tz) < 12) continue;
   const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 3, 6), new THREE.MeshLambertMaterial({ color: 0x3e2c1e }));
   trunk.position.set(tx, 1.5, tz); trunk.castShadow = true;
-  const leaves = new THREE.Mesh(new THREE.ConeGeometry(2.2, 5, 6), new THREE.MeshLambertMaterial({ color: 0x1e3322 }));
+  const leaves = new THREE.Mesh(new THREE.ConeGeometry(2.2, 5.2, 6), new THREE.MeshLambertMaterial({ color: 0x1d3020 }));
   leaves.position.set(tx, 4.5, tz); leaves.castShadow = true;
   scene.add(trunk, leaves);
   wallMeshes.push(trunk);
 }
 
 // ==========================================
-// 3. 타르코프 파밍 아이템 데이터 & 상자 스폰
+// 3. 타르코프 파밍 전리품 & 상점 시스템
 // ==========================================
 const LOOT_POOL = [
   { id: 'gpu', name: 'RTX 4090 GPU 그래픽카드', val: 780000, rarity: 'rarity-val', cat: 'val' },
   { id: 'btc', name: '실물 비트코인 0.2 BTC', val: 950000, rarity: 'rarity-val', cat: 'val' },
   { id: 'goldchain', name: '순금 목걸이 (Gold Chain)', val: 120000, rarity: 'rarity-rare', cat: 'val' },
   { id: 'ifak', name: 'IFAK 전술 구급킷', val: 38000, rarity: 'rarity-med', cat: 'med', effect: 'heal' },
-  { id: 'salewa', name: 'Salewa 대형 응급키트', val: 52000, rarity: 'rarity-med', cat: 'med', effect: 'heal' },
+  { id: 'salewa', name: 'Salewa 대형 응급키트', val: 55000, rarity: 'rarity-med', cat: 'med', effect: 'heal' },
   { id: 'bandage', name: '멸균 군용 붕대 (지혈제)', val: 12000, rarity: 'rarity-med', cat: 'med', effect: 'bleed' },
   { id: 'painkiller', name: 'Analgin 전술 진통제', val: 24000, rarity: 'rarity-med', cat: 'med', effect: 'pain' },
+  { id: 'morphine', name: '모르핀 자동주사기', val: 42000, rarity: 'rarity-med', cat: 'med', effect: 'pain' },
   { id: 'm855a1', name: '5.56 철갑탄 M855A1 60발', val: 68000, rarity: 'rarity-rare', cat: 'ammo' },
   { id: 'bt_ammo', name: '5.45 BT 예광철갑탄 60발', val: 58000, rarity: 'rarity-rare', cat: 'ammo' },
-  { id: 'suppressor', name: '소음기 (Silencer Co)', val: 145000, rarity: 'rarity-rare', cat: 'mod' },
+  { id: 'drum_mag', name: '60발 대용량 드럼 탄창', val: 89000, rarity: 'rarity-rare', cat: 'mod' },
   { id: 'rubles', name: '루블 지폐다발 (50,000 RUB)', val: 50000, rarity: 'rarity-val', cat: 'val' }
 ];
 
-function spawnLootCrate(x, z, label='무기 상자') {
+function spawnLootCrate(x, z, label='무기 상자', isMarked=false) {
   const root = new THREE.Group();
-  const box = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.65, 0.8), new THREE.MeshLambertMaterial({ color: 0x414f3b }));
+  const box = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.65, 0.8), new THREE.MeshLambertMaterial({ color: isMarked ? 0x7c388a : 0x414f3b }));
   box.castShadow = true; box.receiveShadow = true;
   root.add(box);
   root.position.set(x, 0.33, z);
   scene.add(root);
 
   const items = [];
-  const cnt = 2 + (Math.random() * 2) | 0;
+  const cnt = isMarked ? 4 : 2 + (Math.random() * 2) | 0;
   for (let i = 0; i < cnt; i++) {
-    items.push(LOOT_POOL[(Math.random() * LOOT_POOL.length) | 0]);
+    items.push(isMarked ? LOOT_POOL[i % 3] : LOOT_POOL[(Math.random() * LOOT_POOL.length) | 0]);
   }
-  lootContainers.push({ group: root, x, z, label, items, searched: false });
+  lootContainers.push({ group: root, x, z, label, items });
 }
 
+spawnLootCrate(-20, 2, '⭐ 전설의 마크방 비밀 금고', true);
 spawnLootCrate(-14, 2, '군용 무기 상자');
 spawnLootCrate(-12, -4, '의료용 구급 보관함');
-spawnLootCrate(11, -9, '검문소 탄약 상자');
-spawnLootCrate(0, 22, '저격탑 전리품 가방');
-spawnLootCrate(19, 17, '산업단지 목재 상자');
-spawnLootCrate(6, 4, '버려진 더플백');
+spawnLootCrate(13, -11, '검문소 탄약 상자');
+spawnLootCrate(0, 24, '저격탑 전리품 가방');
+spawnLootCrate(21, 19, '산업단지 목재 상자');
+spawnLootCrate(7, 5, '버려진 더플백');
 
 // ==========================================
-// 4. 플레이어 상태 & 신체 부위별 체력 시스템
+// 4. 플레이어 상태 & 린(Lean) & 앉기 시스템
 // ==========================================
 let P = {
-  x: 0, y: 0, z: -25, vy: 0, yaw: 0, pitch: 0,
+  x: 0, y: 0, z: -28, vy: 0, yaw: 0, pitch: 0,
   hpTotal: 440,
   parts: { head: 35, thorax: 85, stomach: 70, arms: 120, legs: 130 },
   bleeding: false,
   painkillerTimer: 0,
-  limp: false,
   wep: 0,
   ammo: [30, 30, 10],
   reserve: [90, 90, 30],
+  walletRub: 250000,
   backpack: [
     LOOT_POOL[3],
     LOOT_POOL[6]
   ],
-  reloading: 0, reloadDur: 1.4, cool: 0, recoil: 0, bob: 0, swayX: 0, swayY: 0, hurt: 0,
+  reloading: 0, cool: 0, recoil: 0, bob: 0, swayX: 0, swayY: 0,
+  leanAngle: 0, targetLean: 0,
+  crouching: false,
   zoomed: false, stepAcc: 0,
-  flashlightOn: false
+  flashlightOn: false,
+  nvgOn: false,
+  heartbeatAcc: 0
 };
 
 const WEAPONS = [
-  { name: 'COLT M4A1 CUSTOM', mag: 30, dmg: 48, cd: 0.09, recoil: 0.016, mode: '5.56x45MM NATO · 전자동' },
-  { name: 'KALASHNIKOV AK-74M', mag: 30, dmg: 56, cd: 0.11, recoil: 0.024, mode: '5.45x39MM BT · 강력 반동' },
-  { name: 'IZHMASH SV-98 SNIPER', mag: 10, dmg: 145, cd: 1.3, recoil: 0.08, zoom: true, mode: '7.62x54R · 볼트액션 저격' }
+  { name: 'COLT M4A1 CUSTOM', mag: 30, dmg: 48, cd: 0.09, recoil: 0.016, mode: '5.56x45MM NATO · 소음기 연사' },
+  { name: 'KALASHNIKOV AK-74M', mag: 30, dmg: 56, cd: 0.11, recoil: 0.024, mode: '5.45x39MM BT · 묵직한 반동' },
+  { name: 'IZHMASH SV-98 SNIPER', mag: 10, dmg: 145, cd: 1.3, recoil: 0.08, zoom: true, mode: '7.62x54R · 1방 관통 저격' }
 ];
 
 const gunRoot = new THREE.Group();
@@ -523,7 +582,7 @@ function buildFPSGun() {
 const GUN_MESH = buildFPSGun();
 
 // ==========================================
-// 5. 스캐브(Scav) AI & 레이더 보스 스폰
+// 5. 스캐브 순찰대 & 보스 글루하르(Glukhar)
 // ==========================================
 let scavs = [], tracers = [], particles = [], casings = [], keys = {};
 let locked = false, raidTime = 900, raidOver = false, killsCount = 0;
@@ -531,9 +590,9 @@ let extractTimer = 0, currentExfil = null;
 
 function makeScavMesh(isBoss=false) {
   const root = new THREE.Group();
-  const jacketMat = new THREE.MeshLambertMaterial({ color: isBoss ? 0x282e38 : 0x5a4838 });
-  const skinMat = new THREE.MeshLambertMaterial({ color: 0xc99e7b });
-  const gearMat = new THREE.MeshLambertMaterial({ color: 0x181c18 });
+  const jacketMat = new THREE.MeshLambertMaterial({ color: isBoss ? 0x22262e : 0x544434 });
+  const skinMat = new THREE.MeshLambertMaterial({ color: 0xc89d79 });
+  const gearMat = new THREE.MeshLambertMaterial({ color: 0x151815 });
 
   const body = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.7, 0.28), jacketMat);
   body.position.y = 1.1; body.castShadow = true; root.add(body);
@@ -558,24 +617,24 @@ function spawnScav(x, z, isBoss=false) {
   const mesh = makeScavMesh(isBoss);
   mesh.position.set(x, 0, z); scene.add(mesh);
   scavs.push({
-    mesh, x, z, hp: isBoss ? 160 : 85, isBoss,
-    cd: 1.0 + Math.random(), fireT: 0, st: Math.random() * 6,
-    lx: x, lz: z, loot: [LOOT_POOL[0], LOOT_POOL[7]]
+    mesh, x, z, hp: isBoss ? 180 : 85, isBoss,
+    cd: 1.0 + Math.random(), fireT: 0, st: Math.random() * 6
   });
 }
 
-spawnScav(-10, 4, false);
-spawnScav(8, -8, false);
-spawnScav(2, 18, true);
-spawnScav(-22, -10, false);
-spawnScav(18, 12, false);
+spawnScav(-12, 5, false);
+spawnScav(10, -9, false);
+spawnScav(1, 20, true);
+spawnScav(-22, -12, false);
+spawnScav(19, 14, false);
+spawnScav(-18, 1, true);
 
 // ==========================================
-// 6. 사격 & 루팅 & 피격 & 의약품 시스템
+// 6. 사격 & 피격 & 인터랙션 루프
 // ==========================================
 const raycaster = new THREE.Raycaster();
 function shoot() {
-  if (raidOver || P.cool > 0 || P.reloading > 0 || document.getElementById('inventory-modal').style.display === 'flex') return;
+  if (raidOver || P.cool > 0 || P.reloading > 0 || isModalOpen()) return;
   const w = WEAPONS[P.wep];
   if (P.ammo[P.wep] <= 0) { reload(); return; }
   P.ammo[P.wep]--; P.cool = w.cd;
@@ -592,16 +651,17 @@ function shoot() {
   cMesh.position.copy(pos); scene.add(cMesh);
   casings.push({ m: cMesh, vx: Math.cos(P.yaw) * 2.5, vy: 2.5, vz: -Math.sin(P.yaw) * 2.5, life: 2 });
 
-  P.recoil = Math.min(0.25, P.recoil + w.recoil);
-  P.pitch = Math.min(1.35, P.pitch + w.recoil * 0.4);
+  const recoilMult = P.crouching ? 0.5 : 1.0;
+  P.recoil = Math.min(0.25, P.recoil + w.recoil * recoilMult);
+  P.pitch = Math.min(1.35, P.pitch + w.recoil * 0.4 * recoilMult);
 
-  raycaster.setFromCamera({ x: (Math.random() - 0.5) * (P.recoil * 0.15), y: (Math.random() - 0.5) * (P.recoil * 0.15) }, camera);
+  raycaster.setFromCamera({ x: (Math.random() - 0.5) * (P.recoil * 0.12), y: (Math.random() - 0.5) * (P.recoil * 0.12) }, camera);
   const targets = [...wallMeshes];
   scavs.forEach(s => s.mesh.traverse(c => { if (c.isMesh) targets.push(c); }));
   const hits = raycaster.intersectObjects(targets, false);
 
   const muzWorld = new THREE.Vector3(0.22, -0.19, -1.0).applyMatrix4(camera.matrixWorld);
-  let endPt = raycaster.ray.at(65, new THREE.Vector3());
+  let endPt = raycaster.ray.at(70, new THREE.Vector3());
 
   if (hits.length) {
     endPt = hits[0].point;
@@ -649,6 +709,11 @@ function reload() {
   updateHUD();
 }
 
+function isModalOpen() {
+  return document.getElementById('inventory-modal').style.display === 'flex' ||
+         document.getElementById('trader-modal').style.display === 'flex';
+}
+
 function useMedicalItem(item) {
   if (item.effect === 'heal') {
     P.parts.head = Math.min(35, P.parts.head + 25);
@@ -664,9 +729,9 @@ function useMedicalItem(item) {
     SND.medUse();
     banner('지혈 붕대 적용 (출혈 정지)');
   } else if (item.effect === 'pain') {
-    P.painkillerTimer = 45;
+    P.painkillerTimer = 50;
     SND.painkillerPill();
-    banner('진통제 복용 (45초간 통증/골절 무시)');
+    banner('진통제 투약 (50초간 통증/골절 무시)');
   }
   const idx = P.backpack.indexOf(item);
   if (idx !== -1) P.backpack.splice(idx, 1);
@@ -675,17 +740,94 @@ function useMedicalItem(item) {
 }
 
 // ==========================================
-// 7. 인벤토리 UI & 루팅 상호작용
+// 7. 상인(Traders) & 암시장 거래소 로직
+// ==========================================
+const SHOP_ITEMS = [
+  { item: LOOT_POOL[3], price: 38000 },
+  { item: LOOT_POOL[4], price: 55000 },
+  { item: LOOT_POOL[6], price: 24000 },
+  { item: LOOT_POOL[7], price: 42000 },
+  { item: LOOT_POOL[8], price: 68000 },
+  { item: LOOT_POOL[10], price: 89000 }
+];
+
+function toggleTrader() {
+  const tm = document.getElementById('trader-modal');
+  if (tm.style.display === 'flex') {
+    tm.style.display = 'none'; cv.requestPointerLock();
+  } else {
+    tm.style.display = 'flex'; document.exitPointerLock();
+    renderTraderShop();
+  }
+}
+
+function renderTraderShop() {
+  document.getElementById('trader-wallet').textContent = `₽ ${P.walletRub.toLocaleString()}`;
+  const grid = document.getElementById('trader-items-grid');
+  grid.innerHTML = '';
+  SHOP_ITEMS.forEach(({ item, price }) => {
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    card.innerHTML = `
+      <span class="rarity ${item.rarity}">${item.cat.toUpperCase()}</span>
+      <b>${item.name}</b>
+      <div class="val">₽ ${price.toLocaleString()}</div>
+      <div style="font-size:10px;color:var(--eft-gold);margin-top:5px">[클릭하여 구매]</div>
+    `;
+    card.onclick = () => {
+      if (P.walletRub >= price) {
+        P.walletRub -= price;
+        P.backpack.push(item);
+        SND.buyCash();
+        banner(`${item.name} 구매 완료!`);
+        renderTraderShop();
+        updateHUD();
+      } else {
+        banner('루블이 부족합니다!');
+      }
+    };
+    grid.appendChild(card);
+  });
+}
+
+function switchTraderTab(type) {
+  const tabs = document.querySelectorAll('.trader-tab');
+  tabs[0].classList.toggle('active', type === 'buy');
+  tabs[1].classList.toggle('active', type === 'sell');
+
+  if (type === 'sell') {
+    let totalGain = 0;
+    for (let i = P.backpack.length - 1; i >= 0; i--) {
+      if (P.backpack[i].cat === 'val') {
+        totalGain += P.backpack[i].val;
+        P.backpack.splice(i, 1);
+      }
+    }
+    if (totalGain > 0) {
+      P.walletRub += totalGain;
+      SND.buyCash();
+      banner(`귀중품 매각 완료 (+₽ ${totalGain.toLocaleString()})`);
+    } else {
+      banner('매각할 귀중품이 없습니다.');
+    }
+    renderTraderShop();
+  } else {
+    renderTraderShop();
+  }
+}
+
+// ==========================================
+// 8. 게임 루프 & 린(Lean) & 심장박동 & 나이트비전
 // ==========================================
 let activeContainer = null;
 function checkInteractions() {
   activeContainer = null;
   const promptEl = document.getElementById('interact-prompt');
   for (const c of lootContainers) {
-    if (Math.hypot(c.x - P.x, c.z - P.z) < 2.4) {
+    if (Math.hypot(c.x - P.x, c.z - P.z) < 2.5) {
       activeContainer = c;
       promptEl.style.display = 'block';
-      document.getElementById('prompt-txt').textContent = `${c.label} 열기/수색`;
+      document.getElementById('prompt-txt').textContent = `${c.label} 수색하기`;
       return;
     }
   }
@@ -703,11 +845,10 @@ function openContainer() {
 function renderInventory() {
   const bgGrid = document.getElementById('backpack-grid');
   const boxGrid = document.getElementById('loot-container-grid');
-  bgGrid.innerHTML = '';
-  boxGrid.innerHTML = '';
+  bgGrid.innerHTML = ''; boxGrid.innerHTML = '';
 
   let totalRub = 0;
-  P.backpack.forEach((item, idx) => {
+  P.backpack.forEach(item => {
     totalRub += item.val;
     const card = document.createElement('div');
     card.className = 'item-card';
@@ -746,9 +887,6 @@ function renderInventory() {
   document.getElementById('inv-total-val').textContent = `₽ ${totalRub.toLocaleString()}`;
 }
 
-// ==========================================
-// 8. 게임 루프 & 탈출(Extraction) 시스템
-// ==========================================
 let indicatorAlpha = 0;
 function update(dt) {
   if (raidOver) return;
@@ -757,13 +895,21 @@ function update(dt) {
   const mins = ((raidTime / 60) | 0).toString().padStart(2, '0');
   const secs = ((raidTime % 60) | 0).toString().padStart(2, '0');
   document.getElementById('raid-timer').textContent = `${mins}:${secs}`;
-  if (raidTime <= 0) finishRaid(false, 'MIA (실종/시간초과)');
+  if (raidTime <= 0) finishRaid(false, 'MIA (시간초과 실종)');
 
   P.cool = Math.max(0, P.cool - dt);
-  P.recoil = Math.max(0, P.recoil - dt * 0.6);
+  P.recoil = Math.max(0, P.recoil - dt * 0.65);
   P.painkillerTimer = Math.max(0, P.painkillerTimer - dt);
   indicatorAlpha = Math.max(0, indicatorAlpha - dt * 2.8);
   document.getElementById('hit-indicator').style.opacity = indicatorAlpha;
+
+  if (P.parts.thorax < 30 || P.parts.head < 15) {
+    P.heartbeatAcc += dt;
+    if (P.heartbeatAcc > 0.8) {
+      P.heartbeatAcc = 0;
+      SND.heartbeat();
+    }
+  }
 
   if (P.bleeding) {
     P.parts.thorax -= dt * 1.5;
@@ -781,11 +927,15 @@ function update(dt) {
     }
   }
 
+  P.targetLean = (keys.q ? -0.25 : 0) + (keys.e ? 0.25 : 0);
+  P.leanAngle += (P.targetLean - P.leanAngle) * 0.2;
+  camera.rotation.z = -P.leanAngle;
+
   let deg = ((P.yaw * 180 / Math.PI) % 360 + 360) % 360;
   document.getElementById('compass-strip').style.transform = `translateX(${-deg * 2.2}px)`;
 
   const isLimping = P.parts.legs <= 0 && P.painkillerTimer <= 0;
-  const moveSpd = (isLimping ? 1.8 : (keys.shift ? 6.2 : 3.8)) * dt;
+  const moveSpd = (isLimping ? 1.8 : (keys.shift && !P.crouching ? 6.2 : P.crouching ? 2.4 : 3.8)) * dt;
   const fw = (keys.w ? 1 : 0) - (keys.s ? 1 : 0), st = (keys.d ? 1 : 0) - (keys.a ? 1 : 0);
   const len = Math.hypot(fw, st) || 1;
   const vx = (-Math.sin(P.yaw) * (fw / len) + Math.cos(P.yaw) * (st / len)) * moveSpd;
@@ -796,9 +946,11 @@ function update(dt) {
   const pm = Math.hypot(vx, vz);
   if (pm > 0.001) {
     P.bob += pm * 5.0; P.stepAcc += pm;
-    if (P.stepAcc > 2.0) { P.stepAcc = 0; SND.footstep(P.x, P.z, true); }
+    if (P.stepAcc > (P.crouching ? 3.0 : 2.0)) { P.stepAcc = 0; SND.footstep(P.x, P.z, true); }
   }
-  camera.position.set(P.x, 1.55 + P.y + Math.sin(P.bob * 2) * 0.03, P.z);
+
+  const eyeH = P.crouching ? 0.95 : 1.55;
+  camera.position.set(P.x + Math.sin(P.yaw + Math.PI/2) * (P.leanAngle * 0.8), eyeH + P.y + Math.sin(P.bob * 2) * 0.03, P.z + Math.cos(P.yaw + Math.PI/2) * (P.leanAngle * 0.8));
 
   gunRoot.position.set(Math.cos(P.bob) * 0.012 + P.swayX, Math.abs(Math.sin(P.bob)) * 0.014 + P.swayY, P.recoil * 1.2);
   gunRoot.rotation.set(P.recoil * 1.4, 0, 0);
@@ -812,9 +964,7 @@ function update(dt) {
       document.getElementById('extract-banner').style.display = 'block';
       document.getElementById('extract-time').textContent = Math.max(0, 7.0 - extractTimer).toFixed(1);
       if (Math.random() < 0.05) SND.extractTick();
-      if (extractTimer >= 7.0) {
-        finishRaid(true, ep.name);
-      }
+      if (extractTimer >= 7.0) finishRaid(true, ep.name);
       break;
     }
   }
@@ -831,7 +981,7 @@ function update(dt) {
     s.fireT = Math.max(0, s.fireT - dt);
     s.mesh.userData.eFlash.visible = s.fireT > 0;
 
-    if (d < 34) {
+    if (d < 35) {
       s.mesh.rotation.y = Math.atan2(dx, dz);
       if (s.cd <= 0) {
         s.cd = s.isBoss ? 0.75 : 1.4;
@@ -843,10 +993,7 @@ function update(dt) {
         addTracer(s.x, 1.2, s.z, endAimX, 1.2, endAimZ, 0xffa022);
 
         if (Math.hypot(endAimX - P.x, endAimZ - P.z) < 1.0) SND.whizCrack();
-
-        if (Math.hypot(endAimX - P.x, endAimZ - P.z) < 0.6) {
-          applyDamageToPlayer(s.isBoss ? 42 : 26);
-        }
+        if (Math.hypot(endAimX - P.x, endAimZ - P.z) < 0.6) applyDamageToPlayer(s.isBoss ? 44 : 26);
       }
     }
   });
@@ -866,9 +1013,7 @@ function applyDamageToPlayer(dmg) {
   P.parts[targetPart] = Math.max(0, P.parts[targetPart] - dmg);
 
   if (Math.random() < 0.35) P.bleeding = true;
-  if (P.parts.head <= 0 || P.parts.thorax <= 0) {
-    finishRaid(false, 'KIA (전투 중 전사)');
-  }
+  if (P.parts.head <= 0 || P.parts.thorax <= 0) finishRaid(false, 'KIA (전투 중 전사)');
 
   const deg = (Math.random() * 360) | 0;
   document.getElementById('hit-indicator').style.background = `radial-gradient(circle at center, transparent 65%, rgba(220,30,30,0.6) 80%), conic-gradient(from ${deg}deg at 50% 50%, rgba(220,20,30,.85) 0deg, transparent 45deg, transparent 315deg, rgba(220,20,30,.85) 360deg)`;
@@ -900,9 +1045,6 @@ function restartRaid() {
   location.reload();
 }
 
-// ==========================================
-// 9. HUD 업데이트 & 입력 리스너
-// ==========================================
 function updateHUD() {
   const hpSum = P.parts.head + P.parts.thorax + P.parts.stomach + P.parts.arms + P.parts.legs;
   document.getElementById('hp-total').textContent = `${Math.round(hpSum)} / 440`;
@@ -915,11 +1057,13 @@ function updateHUD() {
   document.getElementById('tag-bleed').style.display = P.bleeding ? 'inline-block' : 'none';
   document.getElementById('tag-painkiller').style.display = P.painkillerTimer > 0 ? 'inline-block' : 'none';
   document.getElementById('tag-limp').style.display = (P.parts.legs <= 0 && P.painkillerTimer <= 0) ? 'inline-block' : 'none';
+  document.getElementById('tag-nvg').style.display = P.nvgOn ? 'inline-block' : 'none';
 
   const w = WEAPONS[P.wep];
   document.getElementById('ammo-display').textContent = P.reloading > 0 ? 'RELOADING' : `${P.ammo[P.wep]} / ${P.reserve[P.wep]}`;
   document.getElementById('weapon-title').textContent = w.name;
   document.getElementById('caliber-mode').textContent = w.mode;
+  document.getElementById('stance-tag').textContent = P.crouching ? '앉아서 쏴 [반동 50% 감소]' : '서서쏴 [기본 자세]';
 }
 
 function selectWeapon(idx) {
@@ -938,6 +1082,14 @@ addEventListener('keydown', e => {
   if (k === '3') selectWeapon(2);
   if (k === '4') { const ifak = P.backpack.find(i => i.effect === 'heal'); if (ifak) useMedicalItem(ifak); }
   if (k === '5') { const pk = P.backpack.find(i => i.effect === 'pain'); if (pk) useMedicalItem(pk); }
+  if (k === 'c') { P.crouching = !P.crouching; updateHUD(); }
+  if (k === 'n') {
+    P.nvgOn = !P.nvgOn;
+    document.getElementById('nvg-overlay').style.display = P.nvgOn ? 'block' : 'none';
+    SND.nvgToggle(P.nvgOn);
+    updateHUD();
+  }
+  if (k === 'b') toggleTrader();
   if (k === 'f') { if (activeContainer) openContainer(); }
   if (k === 't') {
     P.flashlightOn = !P.flashlightOn;
@@ -967,9 +1119,12 @@ addEventListener('mousemove', e => {
 addEventListener('mousedown', e => {
   if (e.button === 0) {
     if (locked) shoot();
-    else if (document.getElementById('inventory-modal').style.display !== 'flex') cv.requestPointerLock();
+    else if (!isModalOpen()) cv.requestPointerLock();
   }
-  if (e.button === 2) { P.zoomed = !P.zoomed; }
+  if (e.button === 2) {
+    P.zoomed = !P.zoomed;
+    document.getElementById('scope-overlay').style.display = P.zoomed && P.wep === 2 ? 'block' : 'none';
+  }
 });
 addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === cv; });
@@ -985,7 +1140,7 @@ function drawMinimap() {
   const s = 160 / MAP_SIZE;
   const cx = 80, cy = 80;
 
-  mm.fillStyle = '#263327';
+  mm.fillStyle = '#1c241e';
   mm.fillRect(0, 0, 160, 160);
 
   exfilPoints.forEach(ep => {
@@ -996,8 +1151,8 @@ function drawMinimap() {
 
   lootContainers.forEach(c => {
     const bx = cx + (c.x - P.x) * s, bz = cy + (c.z - P.z) * s;
-    mm.fillStyle = '#c8a45d';
-    mm.fillRect(bx - 2, bz - 2, 4, 4);
+    mm.fillStyle = c.label.includes('마크방') ? '#d2a8ff' : '#c8a45d';
+    mm.fillRect(bx - 2.5, bz - 2.5, 5, 5);
   });
 
   scavs.forEach(sc => {
@@ -1028,8 +1183,9 @@ const chCanvas = document.getElementById('ch-canvas');
 const cg = chCanvas.getContext('2d');
 function drawCrosshair() {
   cg.clearRect(0, 0, 160, 160);
+  if (P.zoomed && P.wep === 2) return;
   const cx = 80, cy = 80;
-  const gap = 5 + P.recoil * 80;
+  const gap = (P.crouching ? 3 : 5) + P.recoil * 80;
   cg.strokeStyle = '#c8a45d'; cg.lineWidth = 1.5;
   cg.beginPath();
   cg.moveTo(cx - gap - 6, cy); cg.lineTo(cx - gap, cy);
@@ -1050,7 +1206,7 @@ let last = performance.now();
 })(last);
 
 updateHUD();
-banner('타르코프 익스트랙션 레이드 개시 (탈출구를 찾아 생환하십시오)');
+banner('타르코프 하드코어 레이드 2.0 (Q/E 린 피킹 · C 앉기 · N 야간투시경 · B 상인)');
 </script>
 </body>
 </html>
