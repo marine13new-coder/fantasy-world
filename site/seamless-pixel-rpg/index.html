@@ -406,6 +406,100 @@
     from { transform: translateX(-100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
   }
+
+  /* DMC Style Rank & Combo Badge */
+  #styleComboBadge {
+    position: fixed;
+    top: 75px;
+    right: 20px;
+    display: none;
+    flex-direction: column;
+    align-items: flex-end;
+    pointer-events: none;
+    z-index: 95;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.85));
+    transition: transform 0.08s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .style-rank-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .style-rank-letter {
+    font-size: 48px;
+    font-weight: 900;
+    line-height: 1;
+    font-family: 'Impact', 'Arial Black', sans-serif;
+    text-shadow: 0 0 16px currentColor, 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
+    transform-origin: center right;
+  }
+  .style-info-col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  .style-rank-title {
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .style-combo-count {
+    font-size: 16px;
+    font-weight: 800;
+    color: #ffd700;
+    text-shadow: 1px 1px 2px #000;
+  }
+  .style-meter-bg {
+    width: 140px;
+    height: 7px;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .style-meter-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 3px;
+    transition: width 0.1s ease-out;
+  }
+
+  /* Coliseum Wave Banner */
+  #coliseumBanner {
+    position: fixed;
+    top: 24%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 105;
+    opacity: 0;
+    transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  #coliseumBanner.active {
+    display: flex;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.0);
+  }
+  .coliseum-title {
+    font-size: 28px;
+    font-weight: 900;
+    color: #ffd700;
+    text-shadow: 0 0 20px #ff9f1a, 2px 2px 0 #000;
+    letter-spacing: 2px;
+  }
+  .coliseum-subtitle {
+    font-size: 14px;
+    color: #ffffff;
+    text-shadow: 1px 1px 4px #000;
+    margin-top: 4px;
+  }
+
 </style>
 </head>
 <body>
@@ -519,6 +613,10 @@
     <button class="rpg-btn" onclick="toggleBountyModal()">📜 길드 의뢰 [B]</button>
     <button class="rpg-btn" onclick="toggleRuneModal()">💎 룬 각인 [G]</button>
     <button class="rpg-btn" onclick="toggleHallOfFameModal()">🏆 기록의 전당</button>
+    <button class="rpg-btn" onclick="toggleEnchantModal()" style="border-color:#ff4757; color:#ff6b81;">🔥 인챈트 [V]</button>
+    <button class="rpg-btn" onclick="toggleColiseum()" style="border-color:#ffd700; color:#ffd700;">⚔️ 투기장 [C]</button>
+    <button class="rpg-btn" onclick="toggleAquariumModal()" style="border-color:#00d2d3; color:#00d2d3;">🐠 수족관 [T]</button>
+    <button class="rpg-btn" onclick="togglePetEvolutionModal()" style="border-color:#e056fd; color:#e056fd;">🐱 펫 진화 [P]</button>
     <button class="rpg-btn" onclick="toggleAudio()">🎵 BGM 사운드 토글</button>
   </div>
 
@@ -538,6 +636,7 @@
       <button class="modal-tab-btn" id="tabBtnStats" onclick="switchInvTab('stats')">능력치 분배</button>
       <button class="modal-tab-btn" id="tabBtnPet" onclick="switchInvTab('pet')">동행 펫 보육원</button>
       <button class="modal-tab-btn" id="tabBtnBoons" onclick="switchInvTab('boons')">차원의 축복</button>
+      <button class="modal-tab-btn" id="tabBtnTransmute" onclick="switchInvTab('transmute')">유물 합성 공방</button>
     </div>
 
     <!-- Tab 1: Equipment & Backpack (6-Piece Equipment System with QoL Sort & Scrap) -->
@@ -649,6 +748,15 @@
       </div>
     </div>
 
+        <!-- Tab 6: Relic Transmutation -->
+    <div id="invTabTransmute" style="display:none;">
+      <div style="font-size:11px; color:#bdc3c7; margin-bottom:8px;">배낭의 불필요한 유물 3개를 합성하여 상위 등급의 세트 유물로 승급하십시오.</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; background:#16120c; border:1px solid #5a4427; border-radius:4px; padding:8px 12px; margin-bottom:10px;">
+        <span style="font-size:11px;">선택된 합성 재료: <b id="transmuteSelectedCount" style="color:#ffd700;">0 / 3</b></span>
+        <button class="rpg-btn" style="color:#ffd700; border-color:#ffd700;" onclick="executeTransmutation()">✨ 유물 초월 합성 (100G)</button>
+      </div>
+      <div id="transmuteBackpackList" style="max-height:150px; overflow-y:auto; background:#120e09; border:1px solid #3d2d1a; border-radius:3px; padding:6px; font-size:10.5px;"></div>
+    </div>
     <!-- Tab 5: Boons -->
     <div id="invTabBoons" style="display:none;">
       <div style="font-size:11px; color:#aaa; margin-bottom:8px;">차원 균열을 돌파하며 획득한 영구 축복 목록입니다.</div>
@@ -715,6 +823,117 @@
         <b id="hofFishCount" style="color:#00d2d3;">0</b>
       </div>
     </div>
+  </div>
+
+    
+  <!-- DMC Style Rank & Combo Badge -->
+  <div id="styleComboBadge">
+    <div class="style-rank-container">
+      <div class="style-info-col">
+        <span id="styleRankTitle" class="style-rank-title" style="color:#95a5a6;">DISMAL</span>
+        <span id="styleComboCount" class="style-combo-count">🔥 0 HITS</span>
+      </div>
+      <div id="styleRankLetter" class="style-rank-letter" style="color:#95a5a6;">D</div>
+    </div>
+    <div class="style-meter-bg">
+      <div id="styleMeterFill" class="style-meter-fill" style="background:#95a5a6;"></div>
+    </div>
+  </div>
+
+  <!-- Coliseum Wave Announcement Banner -->
+  <div id="coliseumBanner">
+    <div id="coliseumMainTitle" class="coliseum-title">⚔️ COLISEUM TRIAL ⚔️</div>
+    <div id="coliseumSubTitle" class="coliseum-subtitle">제 1 시련: 저주받은 미노타우로스 군단</div>
+  </div>
+
+  <!-- Blacksmith Elemental Enchantment Forge Modal [V] -->
+  <div id="enchantModal" class="game-modal" style="max-width:540px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <span style="font-weight:bold; color:#ff4757; font-size:14px;">🔥 대장간: 4대 원소 무기 인챈트 [V]</span>
+      <button class="rpg-btn" style="padding:2px 8px;" onclick="toggleEnchantModal()">✕</button>
+    </div>
+    <div style="font-size:11px; color:#bdc3c7; margin-bottom:12px;">
+      무기에 고대 원소의 마력을 주입합니다. 공격 시 화려한 참격 검기와 원소 파괴 효과가 발동합니다.
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+      <div class="rpg-card" style="border:1px solid #ff4757; padding:10px; border-radius:4px; cursor:pointer; background:rgba(255,71,87,0.08);" onclick="selectEnchantment('flame')">
+        <div style="font-weight:bold; color:#ff4757; font-size:12px; margin-bottom:4px;">🔥 화염 폭발 (Flame Burst)</div>
+        <div style="font-size:10px; color:#ddd; line-height:1.4;">타격 시 65 광역 화염 폭발 & 4초간 화상. 처치 시 연쇄 유폭!</div>
+        <div style="margin-top:6px; font-size:10px; color:#ffd700;" id="enchantFlameStatus">장착하기</div>
+      </div>
+      <div class="rpg-card" style="border:1px solid #00d2d3; padding:10px; border-radius:4px; cursor:pointer; background:rgba(0,210,211,0.08);" onclick="selectEnchantment('frost')">
+        <div style="font-weight:bold; color:#00d2d3; font-size:12px; margin-bottom:4px;">❄️ 빙결 한기 (Frostbite)</div>
+        <div style="font-size:10px; color:#ddd; line-height:1.4;">적 이동/공격 45% 감속 & 18% 완전 빙결. 빙결 파괴 시 6방향 파편!</div>
+        <div style="margin-top:6px; font-size:10px; color:#ffd700;" id="enchantFrostStatus">장착하기</div>
+      </div>
+      <div class="rpg-card" style="border:1px solid #feca57; padding:10px; border-radius:4px; cursor:pointer; background:rgba(254,202,87,0.08);" onclick="selectEnchantment('thunder')">
+        <div style="font-weight:bold; color:#feca57; font-size:12px; margin-bottom:4px;">⚡ 연쇄 번개 (Chain Lightning)</div>
+        <div style="font-size:10px; color:#ddd; line-height:1.4;">주변 최대 3명의 적에게 번개 호 방전 (50% 피해 & 0.3초 경직)!</div>
+        <div style="margin-top:6px; font-size:10px; color:#ffd700;" id="enchantThunderStatus">장착하기</div>
+      </div>
+      <div class="rpg-card" style="border:1px solid #ff6b6b; padding:10px; border-radius:4px; cursor:pointer; background:rgba(255,107,107,0.08);" onclick="selectEnchantment('vampire')">
+        <div style="font-weight:bold; color:#ff6b6b; font-size:12px; margin-bottom:4px;">🩸 혈기 흡수 (Blood Curse)</div>
+        <div style="font-size:10px; color:#ddd; line-height:1.4;">가한 피해의 8% 생명력 회복 & 유도 혈기 구체 생성!</div>
+        <div style="margin-top:6px; font-size:10px; color:#ffd700;" id="enchantVampireStatus">장착하기</div>
+      </div>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:11px;">현재 인챈트: <b id="currentEnchantName" style="color:#ffd700;">없음</b></span>
+      <button class="rpg-btn" style="border-color:#95a5a6; color:#95a5a6;" onclick="selectEnchantment('none')">인챈트 해제</button>
+    </div>
+  </div>
+
+  <!-- Pet Mochi Friendship & Evolution Modal [P] -->
+  <div id="petEvolutionModal" class="game-modal" style="max-width:500px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <span style="font-weight:bold; color:#e056fd; font-size:14px;">🐱 동행 펫 모찌: 애정도 & 영수 진화 [P]</span>
+      <button class="rpg-btn" style="padding:2px 8px;" onclick="togglePetEvolutionModal()">✕</button>
+    </div>
+    <div style="display:flex; align-items:center; gap:16px; margin-bottom:14px; background:rgba(224,86,253,0.08); padding:12px; border-radius:6px; border:1px solid rgba(224,86,253,0.3);">
+      <div style="font-size:40px;" id="petEvolutionIcon">🐱</div>
+      <div style="flex:1;">
+        <div style="font-weight:bold; color:#e056fd; font-size:13px;" id="petEvolutionName">아기 고양이 모찌 (Lv.1)</div>
+        <div style="font-size:11px; color:#ffd700; margin-top:2px;" id="petEvolutionPerk">효과: 아이템 및 골드 자동 수집, 3.5초마다 냥냥 펀치!</div>
+        <div style="font-size:10px; color:#bdc3c7; margin-top:4px;">호수에서 낚은 생선을 먹여 애정도를 올리고 신수로 진화시키세요!</div>
+      </div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
+        <span>애정도 경험치</span>
+        <span id="petExpText" style="color:#ffd700;">0 / 100 EXP</span>
+      </div>
+      <div style="width:100%; height:8px; background:#111; border:1px solid #444; border-radius:4px; overflow:hidden;">
+        <div id="petExpFill" style="height:100%; width:0%; background:#e056fd; transition:width 0.2s;"></div>
+      </div>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <button class="rpg-btn" style="border-color:#00d2d3; color:#00d2d3;" onclick="feedMochiFish()">🐟 생선 간식 주기 (호수 물고기 1마리 소모)</button>
+      <span style="font-size:10px; color:#888;">최대 5단계 신수 진화</span>
+    </div>
+  </div>
+
+  <!-- Trophy Aquarium Modal [T] -->
+  <div id="aquariumModal" class="game-modal" style="max-width:520px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <span style="font-weight:bold; color:#00d2d3; font-size:13px;">🐠 나만의 픽셀 수족관 [T] (AFK 골드 채굴)</span>
+      <button class="rpg-btn" style="padding:2px 8px;" onclick="toggleAquariumModal()">✕</button>
+    </div>
+    <div style="font-size:11px; color:#bdc3c7; margin-bottom:8px;">호수에서 낚은 물고기들이 평화롭게 유영하며 지속적으로 골드를 생산합니다.</div>
+    <canvas id="aquariumCanvas" width="480" height="150" style="background:#0a192f; border:2px solid #00d2d3; border-radius:4px; width:100%; height:150px; display:block; margin-bottom:10px;"></canvas>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:11px;">수족관 총 수익률: <b id="aquariumIncomeRate" style="color:#ffd700;">초당 0 G</b></span>
+      <button class="rpg-btn" style="color:#ffd700; border-color:#ffd700;" onclick="feedAquariumFish()">🍞 먹이 주기 (10G)</button>
+    </div>
+  </div>
+
+  <!-- Wandering Goblin Merchant Pip Modal -->
+  <div id="merchantModal" class="game-modal" style="max-width:480px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <span style="font-weight:bold; color:#f39c12; font-size:13px;">🎒 신비한 방랑 고블린 상인 핍</span>
+      <button class="rpg-btn" style="padding:2px 8px;" onclick="closeMerchantModal()">✕</button>
+    </div>
+    <div style="font-size:11px; color:#bdc3c7; margin-bottom:12px;">키키큭! 대륙 구석구석을 누비며 모은 귀한 물건들이라네. 원하는 게 있나?</div>
+    <div id="merchantItemList" style="display:flex; flex-direction:column; gap:8px;"></div>
   </div>
 
   <!-- Town NPC Dialogue Modal -->
@@ -801,7 +1020,7 @@ function toggleAudio() {
   if (audioEnabled) {
     startProceduralBGM();
     addDamageText(player.x, player.y - 30, "🎵 BGM 활성화", false, '#2ecc71');
-  } else {
+    } else {
     stopProceduralBGM();
     addDamageText(player.x, player.y - 30, "🔇 BGM 음소거", false, '#e74c3c');
   }
@@ -832,6 +1051,83 @@ function stopProceduralBGM() {
 }
 
 const SoundEngine = {
+
+  playComboChirp: function(step = 1) {
+    if (!audioEnabled || !audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      const baseFreq = 440 * Math.pow(1.059463, Math.min(24, step));
+      osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, audioCtx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.08);
+    } catch(e) {}
+  },
+  playStyleRankFanfare: function() {
+    if (!audioEnabled || !audioCtx) return;
+    try {
+      const chord = [587.33, 739.99, 880.00, 1174.66];
+      chord.forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.05);
+        gain.gain.setValueAtTime(0.18, audioCtx.currentTime + idx * 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.05 + 0.45);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + idx * 0.05);
+        osc.stop(audioCtx.currentTime + idx * 0.05 + 0.45);
+      });
+    } catch(e) {}
+  },
+  playShockwaveBass: function() {
+    if (!audioEnabled || !audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(140, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(28, audioCtx.currentTime + 0.35);
+      gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.35);
+    } catch(e) {}
+  },
+  playFreezeShatter: function() {
+    if (!audioEnabled || !audioCtx) return;
+    try {
+      [1800, 2400, 3200].forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.03);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime + i * 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i * 0.03 + 0.2);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + i * 0.03); osc.stop(audioCtx.currentTime + i * 0.03 + 0.2);
+      });
+    } catch(e) {}
+  },
+  playCatPounce: function() {
+    if (!audioEnabled || !audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(850, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1400, audioCtx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+    } catch(e) {}
+  },
+
   playSlash: function(freq = 280) {
     if (!audioEnabled || !audioCtx) return;
     try {
@@ -1111,6 +1407,49 @@ let player = {
   skills: JSON.parse(JSON.stringify(CLASSES_DEF['paladin'].skills))
 };
 
+
+// Bullet Time & Perfect Dodge
+let bulletTimeTimer = 0;
+let bulletTimeGuaranteedCrit = false;
+
+// 3 Ancient Gear Sets
+const GEAR_SETS = {
+  guardian: { id: 'guardian', name: '빛의 수호자', color: '#ffd700', twoPiece: '최대 HP +350 & 방어력 +15%', fourPiece: '소용돌이 반경 +60% & 3단 참격 시 3연속 검풍' },
+  nightstalker: { id: 'nightstalker', name: '밤의 그림자', color: '#e056fd', twoPiece: '이동속도 +35 & 치명타 +15%', fourPiece: '그림자 암습 시 폭발 분신 2개 & 처치 시 대시 쿨 초기화' },
+  archon: { id: 'archon', name: '태초의 현자', color: '#00d2d3', twoPiece: '스킬 쿨타임 -25%', fourPiece: '메테오 반경 +50% & 메테오 2연속 투하' }
+};
+let activeSetBonuses = { guardian2: false, guardian4: false, nightstalker2: false, nightstalker4: false, archon2: false, archon4: false };
+
+// Aquarium Trophies & AFK Gold Farm
+let aquariumFishList = [];
+let aquariumTickTimer = 5.0;
+
+// Boss & Elite Danger Telegraphs
+let dangerTelegraphs = [];
+
+
+// Secret Catacomb Sub-Dungeon & Cursed Champions
+const catacombDoorPos = { x: -280, y: -180 };
+let catacombMonsters = [];
+let catacombBoss = {
+  x: 0, y: -120,
+  hp: 8500, maxHP: 8500,
+  speed: 85, isBoss: true,
+  attackTimer: 2.0, walkTimer: 0,
+  squashX: 1, squashY: 1, hitFlashTimer: 0,
+  name: "👑 고대 미라 군주 람세스"
+};
+
+// Lightning bolts for Thunderstorm
+let lightningStrikes = [];
+
+// Transmutation selected indices
+let transmutingSlots = [];
+
+// World Interactive Landmarks
+const goblinMerchant = { x: -80, y: -260, name: "방랑 상인 핍" };
+const wishingFountain = { x: 0, y: -90, name: "행운의 분수대" };
+
 let activePetType = 'ignis';
 let petCompanion = { x: 30, y: 70, vx: 0, vy: 0, attackTimer: 0 };
 
@@ -1188,6 +1527,76 @@ let groundDecals = []; // frost ground & fiery lava puddles
 let currentWeather = 'Clear';
 let weatherTimer = 35;
 let weatherParticles = [];
+
+
+// ==========================================
+// ⚔️ DMC COMBAT STYLE & COMBO ENGINE
+// ==========================================
+let comboHits = 0;
+let comboDecayTimer = 0;
+let stylePoints = 0;
+let styleRankIdx = 0;
+let styleScaleAnim = 1.0;
+const STYLE_RANKS = [
+  { rank: 'D', title: 'DISMAL', color: '#95a5a6', min: 0 },
+  { rank: 'C', title: 'CRAZY', color: '#2ecc71', min: 180 },
+  { rank: 'B', title: 'BADASS', color: '#3498db', min: 450 },
+  { rank: 'A', title: 'APOCALYPTIC', color: '#9b59b6', min: 900 },
+  { rank: 'S', title: 'SAVAGE', color: '#f1c40f', min: 1600 },
+  { rank: 'SS', title: 'SICK SKILLS', color: '#e67e22', min: 2600 },
+  { rank: 'SSS', title: "SMOKIN' SEXY STYLE!", color: '#ff4757', min: 4000 }
+];
+
+// ==========================================
+// 🔥 4-ELEMENT WEAPON ENCHANTMENTS
+// ==========================================
+let activeEnchantment = 'none'; // 'none', 'flame', 'frost', 'thunder', 'vampire'
+let activeLightningArcs = []; // { x1, y1, x2, y2, timer }
+let activeBloodOrbs = []; // { x, y, targetX, targetY, healAmt }
+let activeSlashArcs = []; // { x, y, angle, radius, color, timer, maxTimer }
+let activeShockwaves = []; // { x, y, r, maxR, color, width, timer }
+let skyLightningBolts = []; // { points, timer, maxTimer }
+
+// ==========================================
+// 🏟️ COLISEUM OF CHAMPIONS
+// ==========================================
+let coliseumWave = 0;
+let coliseumMonsters = [];
+let coliseumMedals = 0;
+let coliseumBannerTimer = 0;
+let coliseumBoss = null;
+
+// ==========================================
+// 🐱 PET MOCHI EVOLUTION & COMBAT
+// ==========================================
+let petFriendshipExp = 0;
+let petFriendshipLevel = 1;
+let petPounceTimer = 2.0;
+let petSnackTimer = 8.0;
+let droppedSnacks = []; // { x, y, timer, healAmt }
+const PET_EVOLUTIONS = [
+  { level: 1, name: '아기 고양이 모찌', title: '초보 동행자', perk: '아이템 및 골드 자동 수집, 3.5초마다 냥냥 펀치!', icon: '🐱' },
+  { level: 2, name: '낚시 명인 모찌', title: '호수의 강태공', perk: '낚시 입질 25% 가속 & 골드 획득량 +15%', icon: '🎣' },
+  { level: 3, name: '그림자 닌자 모찌', title: '어둠의 권법가', perk: '냥냥 펀치 치명타율 +12% & 분신 공격', icon: '🥷' },
+  { level: 4, name: '황금 신수 백호', title: '영험한 수호신', perk: '전체 스탯 +25% & 포효 광역 스턴 충격파', icon: '🐯' },
+  { level: 5, name: '은하수 성수 모찌', title: '우주의 별빛냥', perk: '전체 스탯 +40% & 60초마다 보석 1개 자동 생성', icon: '✨' }
+];
+
+// ==========================================
+// 🌊 SHIMMERING WATER CAUSTICS & SWIMMING KOI
+// ==========================================
+let swimmingKoiFish = [
+  { x: 230, y: -40, vx: 0.6, vy: 0.2, angle: 0.3, color: '#ff6b4a', size: 14, tailTimer: 0 },
+  { x: 270, y: 30, vx: -0.5, vy: 0.3, angle: 2.2, color: '#f1f2f6', size: 16, tailTimer: 1.5 },
+  { x: 290, y: -90, vx: 0.4, vy: -0.4, angle: 4.1, color: '#ffa502', size: 13, tailTimer: 3.0 },
+  { x: 240, y: 110, vx: -0.6, vy: -0.2, angle: 3.4, color: '#ff4757', size: 15, tailTimer: 0.8 }
+];
+let waterLilies = [
+  { x: 215, y: -70, r: 8, hasFlower: true },
+  { x: 260, y: 70, r: 10, hasFlower: false },
+  { x: 310, y: -30, r: 9, hasFlower: true },
+  { x: 280, y: 140, r: 7, hasFlower: false }
+];
 
 // Dynamic Day / Night Lighting System (180s full day cycle)
 let dayCycleTimer = 45;
@@ -1281,6 +1690,18 @@ function spawnWorld() {
     { id: 4, type: "necro", name: "언데드 네크로맨서", col: 4, row: 4, x: 230, y: -40, hp: 950, maxHP: 950, speed: 75, isElite: true, attackTimer: 0, walkTimer: 0, summonTimer: 5.0, squashX: 1, squashY: 1, hitFlashTimer: 0 },
     { id: 5, type: "slime", name: "독성 슬라임", col: 25, row: 6, x: -70, y: 220, hp: 420, maxHP: 420, speed: 85, isElite: false, attackTimer: 0, walkTimer: 0, squashX: 1, squashY: 1, hitFlashTimer: 0 }
   ];
+
+    // Add Cursed Champions with dynamic affixes
+  fieldMonsters.push({
+    id: 991, type: "warrior", name: "🔥 [화염 폭발] 저주받은 해골", affix: "volatile",
+    col: 29, row: 6, x: -190, y: 150, hp: 950, maxHP: 950, speed: 105, isElite: true,
+    attackTimer: 0, walkTimer: 0, squashX: 1, squashY: 1, hitFlashTimer: 0
+  });
+  fieldMonsters.push({
+    id: 992, type: "archer", name: "❄️ [빙결 감옥] 저주받은 저격수", affix: "frostbound",
+    col: 27, row: 6, x: 120, y: 190, hp: 800, maxHP: 800, speed: 125, isElite: true,
+    attackTimer: 0, walkTimer: 0, aimTimer: 0, squashX: 1, squashY: 1, hitFlashTimer: 0
+  });
 
   destructibleProps = [
     { id: 1, type: "crate", x: -95, y: -45, hp: 1 },
@@ -1376,9 +1797,64 @@ function selectClassJob(classId, notify = true) {
 }
 
 function recalculateStats() {
+    // Ascension Aura beneath feet
+  const auraRot = performance.now() * 0.0015;
+  ctx.save();
+  ctx.rotate(auraRot);
+  ctx.strokeStyle = currentClassId === 'paladin' ? 'rgba(255, 215, 0, 0.45)' : (currentClassId === 'rogue' ? 'rgba(224, 86, 253, 0.45)' : 'rgba(0, 210, 211, 0.45)');
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(0, 16, 24, 0, Math.PI * 2);
+  ctx.stroke();
+  for (let g = 0; g < 4; g++) {
+    const ga = (Math.PI / 2) * g;
+    ctx.fillRect(Math.cos(ga) * 24 - 1.5, 16 + Math.sin(ga) * 24 - 1.5, 3, 3);
+  }
+  ctx.restore();
+
+  // Level 5+ Wings / Ascension Orbs
+  if (player.level >= 5) {
+    ctx.save();
+    const wingFlap = Math.sin(performance.now() * 0.006) * 4;
+    if (currentClassId === 'paladin') {
+      ctx.fillStyle = 'rgba(255, 215, 0, 0.55)';
+      ctx.beginPath();
+      ctx.moveTo(-6, -14); ctx.lineTo(-24 - wingFlap, -30); ctx.lineTo(-18, -6); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(6, -14); ctx.lineTo(24 + wingFlap, -30); ctx.lineTo(18, -6); ctx.fill();
+    } else if (currentClassId === 'rogue') {
+      ctx.fillStyle = 'rgba(155, 89, 182, 0.55)';
+      ctx.beginPath();
+      ctx.moveTo(-6, -12); ctx.lineTo(-22 - wingFlap, -24); ctx.lineTo(-14, -4); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(6, -12); ctx.lineTo(22 + wingFlap, -24); ctx.lineTo(14, -4); ctx.fill();
+      } else {
+      for (let o = 0; o < 3; o++) {
+        const oAngle = performance.now() * 0.004 + (Math.PI * 2 / 3) * o;
+        const ox = Math.cos(oAngle) * 22;
+        const oy = -14 + Math.sin(oAngle) * 10;
+        ctx.fillStyle = '#00d2d3';
+        ctx.beginPath(); ctx.arc(ox, oy, 3.5, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
   const cDef = CLASSES_DEF[currentClassId] || CLASSES_DEF['paladin'];
   let hpBonus = (inventory.equipped.armor ? (inventory.equipped.armor.hp || 0) : 0);
   if (equipmentSockets.armor === 'emerald') hpBonus += 250;
+
+  // Calculate Ancient Gear Set Bonuses
+  let setCounts = { guardian: 0, nightstalker: 0, archon: 0 };
+  Object.values(inventory.equipped).forEach(eq => {
+    if (eq && eq.set) setCounts[eq.set] = (setCounts[eq.set] || 0) + 1;
+  });
+  if (setCounts.guardian >= 2) hpBonus += 350;
+  activeSetBonuses = {
+    guardian2: setCounts.guardian >= 2, guardian4: setCounts.guardian >= 4,
+    nightstalker2: setCounts.nightstalker >= 2, nightstalker4: setCounts.nightstalker >= 4,
+    archon2: setCounts.archon >= 2, archon4: setCounts.archon >= 4
+  };
 
   player.maxHP = Math.round(((cDef.baseHP || 1000) + player.vit * 40 + hpBonus) * (cDef.id === 'paladin' ? 1.3 : 1.0));
   if (playerBuffs.wellFedTimer > 0) player.maxHP = Math.round(player.maxHP * 1.2);
@@ -1386,6 +1862,7 @@ function recalculateStats() {
   let spd = (160 + player.agi * 1.5) * (cDef.speedMod || 1.0);
   if (inventory.equipped.boots && inventory.equipped.boots.spd) spd += inventory.equipped.boots.spd;
   if (equipmentSockets.boots === 'topaz') spd += 20;
+  if (setCounts.nightstalker >= 2) spd += 35;
   if (playerBuffs.swiftnessTimer > 0) spd *= 1.5;
   if (activeBoons['windrunner']) spd *= 1.3;
   if (activePetType === 'fenrir') spd *= 1.15;
@@ -1395,6 +1872,7 @@ function recalculateStats() {
   let crit = (cDef.critBonus || 0.10) + player.agi * 0.005;
   if (inventory.equipped.ring && inventory.equipped.ring.crit) crit += inventory.equipped.ring.crit;
   if (equipmentSockets.ring === 'ruby') crit += 0.08;
+  if (setCounts.nightstalker >= 2) crit += 0.15;
   if (currentWeather === 'CherryBlossom') crit += 0.15;
   player.critChance = crit;
 
@@ -1522,27 +2000,30 @@ function spawnEquipmentDrop(x, y, forceRarity = null) {
 
   const types = ['weapon', 'armor', 'helmet', 'boots', 'ring', 'amulet'];
   const t = types[Math.floor(Math.random() * types.length)];
-  let item = { type: t, rarity: selectedRarity.name, color: selectedRarity.color };
+  const sets = ['guardian', 'nightstalker', 'archon'];
+  const chosenSet = sets[Math.floor(Math.random() * sets.length)];
+  const setNames = { guardian: '빛의 수호자', nightstalker: '밤의 그림자', archon: '태초의 현자' };
+  let item = { type: t, rarity: selectedRarity.name, color: selectedRarity.color, set: chosenSet };
 
   if (t === 'weapon') {
     const atkVal = Math.round(30 * selectedRarity.bonus + Math.random() * 15);
-    item.name = selectedRarity.name.toUpperCase() + " 명검 (+" + atkVal + " ATK)";
+    item.name = "[" + setNames[chosenSet] + "] " + selectedRarity.name.toUpperCase() + " 명검 (+" + atkVal + " ATK)";
     item.atk = atkVal;
   } else if (t === 'armor') {
     const hpVal = Math.round(150 * selectedRarity.bonus + Math.random() * 50);
-    item.name = selectedRarity.name.toUpperCase() + " 수호 흉갑 (+" + hpVal + " HP)";
+    item.name = "[" + setNames[chosenSet] + "] " + selectedRarity.name.toUpperCase() + " 수호 흉갑 (+" + hpVal + " HP)";
     item.hp = hpVal;
   } else if (t === 'helmet') {
-    item.name = selectedRarity.name.toUpperCase() + " 지혜의 투구 (-15% 쿨감)";
+    item.name = "[" + setNames[chosenSet] + "] " + selectedRarity.name.toUpperCase() + " 지혜의 투구 (-15% 쿨감)";
     item.cdReduction = 0.15;
   } else if (t === 'boots') {
-    item.name = selectedRarity.name.toUpperCase() + " 신속의 장화 (+25 이속)";
+    item.name = "[" + setNames[chosenSet] + "] " + selectedRarity.name.toUpperCase() + " 신속의 장화 (+25 이속)";
     item.spd = 25;
   } else if (t === 'ring') {
-    item.name = selectedRarity.name.toUpperCase() + " 치명의 루비 반지 (+12% 치명타)";
+    item.name = "[" + setNames[chosenSet] + "] " + selectedRarity.name.toUpperCase() + " 치명의 루비 반지 (+12% 치명타)";
     item.crit = 0.12;
-  } else {
-    item.name = selectedRarity.name.toUpperCase() + " 용기의 펜던트 (+5% 패링)";
+    } else {
+    item.name = "[" + setNames[chosenSet] + "] " + selectedRarity.name.toUpperCase() + " 용기의 펜던트 (+5% 패링)";
     item.parryBonus = 5;
   }
 
@@ -1566,7 +2047,7 @@ window.addEventListener('keydown', e => {
     e.preventDefault();
     if (fishingState.isFishing && fishingState.hasBite) {
       catchFishSuccess();
-    } else {
+      } else {
       triggerDodgeRoll();
     }
   }
@@ -1574,6 +2055,10 @@ window.addEventListener('keydown', e => {
   if (e.key.toLowerCase() === 'i') { e.preventDefault(); toggleInventoryModal(); }
   if (e.key.toLowerCase() === 'b') { e.preventDefault(); toggleBountyModal(); }
   if (e.key.toLowerCase() === 'g') { e.preventDefault(); toggleRuneModal(); }
+  if (e.key.toLowerCase() === 't') { e.preventDefault(); toggleAquariumModal(); }
+  if (e.key.toLowerCase() === 'v') { e.preventDefault(); toggleEnchantModal(); }
+  if (e.key.toLowerCase() === 'c') { e.preventDefault(); toggleColiseum(); }
+  if (e.key.toLowerCase() === 'p') { e.preventDefault(); togglePetEvolutionModal(); }
   if (e.key.toLowerCase() === 'p') { e.preventDefault(); togglePetSanctuaryQuick(); }
   if (e.key.toLowerCase() === 'f') { e.preventDefault(); handleContextFKey(); }
   if (e.key.toLowerCase() === 'q') castSkill(1);
@@ -1599,7 +2084,7 @@ canvas.addEventListener('mousedown', e => {
   if (e.button === 0) {
     if (fishingState.isFishing && fishingState.hasBite) {
       catchFishSuccess();
-    } else {
+      } else {
       castSkill(0);
     }
   }
@@ -1614,6 +2099,21 @@ function togglePetSanctuaryQuick() {
 // Dual Context F Key: Check NPC Talk -> Check Fishing -> Check Chests -> Check Campfire -> Check Portals -> Otherwise Parry!
 function handleContextFKey() {
   if (currentZone === "OpenWorld") {
+        // Check Secret Catacomb Entrance
+    if (Math.hypot(player.x - catacombDoorPos.x, player.y - catacombDoorPos.y) < 60) {
+      interactCatacombs();
+      return;
+    }
+    // Check Wishing Fountain
+    if (Math.hypot(player.x - wishingFountain.x, player.y - wishingFountain.y) < 55) {
+      tossCoinIntoFountain();
+      return;
+    }
+    // Check Goblin Merchant Pip
+    if (Math.hypot(player.x - goblinMerchant.x, player.y - goblinMerchant.y) < 60) {
+      openMerchantModal();
+      return;
+    }
     // Check Fishing at Lake Dock
     const dockDist = Math.hypot(player.x - lakeDockPos.x, player.y - lakeDockPos.y);
     if (dockDist < 60) {
@@ -1648,6 +2148,11 @@ function handleContextFKey() {
       interactMagma();
       return;
     }
+    } else if (currentZone === "AncientCatacombs") {
+    if (Math.hypot(player.x, player.y - 180) <= 140) {
+      interactCatacombs();
+      return;
+    }
   } else {
     if (Math.hypot(player.x, player.y - (-160)) <= 150) {
       interactRift();
@@ -1663,7 +2168,7 @@ function toggleLakeFishing() {
     fishingState.isFishing = false;
     fishingState.hasBite = false;
     addDamageText(player.x, player.y - 30, "낚시를 종료했습니다.", false, '#bdc3c7');
-  } else {
+    } else {
     fishingState.isFishing = true;
     fishingState.bobberX = lakeDockPos.x + 35;
     fishingState.bobberY = lakeDockPos.y - 20;
@@ -1711,6 +2216,13 @@ function catchFishSuccess() {
 
   if (caught.isChest) {
     spawnEquipmentDrop(player.x, player.y);
+    } else {
+    aquariumFishList.push({
+      name: caught.name, icon: caught.icon, color: caught.color,
+      goldRate: caught.gold >= 100 ? 15 : (caught.gold >= 50 ? 6 : 2),
+      x: Math.random() * 420, y: 25 + Math.random() * 85,
+      vx: (Math.random() > 0.5 ? 1 : -1) * (18 + Math.random() * 22)
+    });
   }
 
   addDamageText(player.x, player.y - 35, caught.icon + " [" + caught.name + "] 낚음! (+" + caught.gold + "G)", true, caught.color);
@@ -1748,7 +2260,7 @@ function openTreasureChest(chest) {
       x: chest.x, y: chest.y, hp: 1200, maxHP: 1200, speed: 130, isElite: true,
       attackTimer: 0, walkTimer: 0, squashX: 1, squashY: 1, hitFlashTimer: 0
     });
-  } else {
+    } else {
     SoundEngine.playChestFanfare();
     doShake(8);
     flashScreen('#ffd700', 0.35);
@@ -1774,6 +2286,41 @@ function triggerDodgeRoll() {
   player.squashX = 1.45;
   player.squashY = 0.65;
 
+  // Perfect Dodge & Bullet Time Check
+  let isJustDodge = false;
+  const currentList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : (currentZone === "MagmaAbyss" ? magmaMonsters : catacombMonsters));
+  currentList.forEach(m => {
+    if (m.hp > 0 && Math.hypot(m.x - player.x, m.y - player.y) < 75 && m.attackTimer >= 0.7) {
+      isJustDodge = true;
+    }
+  });
+  activeProjectiles.forEach(p => {
+    if (p.isEnemy && Math.hypot(p.x - player.x, p.y - player.y) < 60) {
+      isJustDodge = true;
+    }
+  });
+  dangerTelegraphs.forEach(t => {
+    if (Math.hypot(t.x - player.x, t.y - player.y) < t.radius + 10) {
+      isJustDodge = true;
+    }
+  });
+
+  if (isJustDodge) {
+    bulletTimeTimer = 0.8;
+    bulletTimeGuaranteedCrit = true;
+    dashCooldown = 0.35;
+    SoundEngine.playParryChime();
+    flashScreen('#00d2d3', 0.45);
+    doShake(10);
+    addDamageText(player.x, player.y - 40, "⚡ PERFECT DODGE! [BULLET TIME]", true, '#00d2d3');
+    for (let i = 0; i < 6; i++) {
+      playerAfterimages.push({
+        x: player.x, y: player.y, alpha: 0.85 - i * 0.1,
+        color: ['#00d2d3', '#ffd32a', '#e056fd', '#2ecc71'][i % 4]
+      });
+    }
+  }
+
   let mx = 0, my = 0;
   if (keys['w'] || keys['arrowup']) my -= 1;
   if (keys['s'] || keys['arrowdown']) my += 1;
@@ -1784,7 +2331,7 @@ function triggerDodgeRoll() {
     const angle = Math.atan2(mousePos.y - canvas.height / 2, mousePos.x - canvas.width / 2);
     mx = Math.cos(angle);
     my = Math.sin(angle);
-  } else {
+    } else {
     const len = Math.hypot(mx, my);
     mx /= len; my /= len;
   }
@@ -1890,7 +2437,7 @@ function castSkill(index) {
           color: WEAPON_COLORS[inventory.weaponLevel || 0]
         });
         doShake(5);
-      } else {
+        } else {
         checkMeleeHitCone(player.x, player.y, aimDir, 75, dmg);
       }
     } else if (index === 1) {
@@ -2058,7 +2605,16 @@ function executeSunstrikePillar(tx, ty, totalBaseDmg, berserkMultiplier) {
 }
 
 function checkMeleeHitCone(px, py, angle, range, damage) {
-  const currentList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : magmaMonsters);
+  // Spawn Glowing Crescent Energy Slash Arc
+  const slashColor = activeEnchantment === 'flame' ? '#ff4757' : (activeEnchantment === 'frost' ? '#00d2d3' : (activeEnchantment === 'thunder' ? '#feca57' : (activeEnchantment === 'vampire' ? '#ff6b6b' : (currentClassId === 'paladin' ? '#ffd700' : (currentClassId === 'rogue' ? '#2ed573' : '#a55eea')))));
+  activeSlashArcs.push({
+    x: px, y: py,
+    angle: angle,
+    radius: range,
+    color: slashColor,
+    timer: 0.14, maxTimer: 0.14
+  });
+  const currentList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : (currentZone === "MagmaAbyss" ? magmaMonsters : catacombMonsters));
 
   if (currentZone === "OpenWorld") {
     if (Math.hypot(px - trainingDummy.x, py - trainingDummy.y) <= range + 20) {
@@ -2094,7 +2650,7 @@ function checkMeleeHitCone(px, py, angle, range, damage) {
 }
 
 function checkAreaHit(x, y, radius, damage) {
-  const currentList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : magmaMonsters);
+  const currentList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : (currentZone === "MagmaAbyss" ? magmaMonsters : catacombMonsters));
   if (currentZone === "OpenWorld" && Math.hypot(x - trainingDummy.x, y - trainingDummy.y) <= radius) {
     hitEntity(trainingDummy, damage, true);
   }
@@ -2108,8 +2664,111 @@ function checkAreaHit(x, y, radius, damage) {
   }
 }
 
+
+function registerCombatHit(target, isCrit, finalDamage) {
+  // 1. Combo & Style Accumulation
+  comboHits++;
+  comboDecayTimer = 3.5;
+  const pts = Math.round(finalDamage * (isCrit ? 1.8 : 1.0) * 0.15) + 15;
+  stylePoints += pts;
+
+  // Determine Style Rank
+  let newRankIdx = 0;
+  for (let i = STYLE_RANKS.length - 1; i >= 0; i--) {
+    if (stylePoints >= STYLE_RANKS[i].min) {
+      newRankIdx = i;
+      break;
+    }
+  }
+  if (newRankIdx > styleRankIdx) {
+    styleRankIdx = newRankIdx;
+    styleScaleAnim = 1.6;
+    SoundEngine.playStyleRankFanfare();
+    flashScreen(STYLE_RANKS[styleRankIdx].color, 0.25);
+    addDamageText(player.x, player.y - 65, "🔥 RANK UP: [" + STYLE_RANKS[styleRankIdx].rank + "] " + STYLE_RANKS[styleRankIdx].title + "!", true, STYLE_RANKS[styleRankIdx].color);
+  } else {
+    SoundEngine.playComboChirp(comboHits);
+    styleScaleAnim = Math.min(1.4, styleScaleAnim + 0.1);
+  }
+
+  // 2. Shockwave on Critical Hits
+  if (isCrit) {
+    activeShockwaves.push({
+      x: target.x, y: target.y,
+      r: 8, maxR: 65,
+      color: STYLE_RANKS[styleRankIdx].color,
+      width: 4, timer: 0.25, maxTimer: 0.25
+    });
+    SoundEngine.playShockwaveBass();
+  }
+
+  // 3. Elemental Weapon Imbue Effects
+  if (activeEnchantment === 'flame') {
+    // 65 AoE Fire Explosion + Burn
+    checkAreaHit(target.x, target.y, 80, 65);
+    target.burnTimer = 4.0;
+    activeShockwaves.push({ x: target.x, y: target.y, r: 6, maxR: 50, color: '#ff4757', width: 3, timer: 0.2, maxTimer: 0.2 });
+    for (let i = 0; i < 8; i++) {
+      pixelShards.push({
+        x: target.x, y: target.y,
+        vx: (Math.random() - 0.5) * 160, vy: (Math.random() - 0.5) * 160 - 30,
+        color: '#ff4757', life: 0.45, maxLife: 0.45, size: 3
+      });
+    }
+  } else if (activeEnchantment === 'frost') {
+    // 45% Slow & 18% Freeze Solid
+    target.slowTimer = 3.0;
+    if (Math.random() < 0.18 && !target.isFrozen) {
+      target.isFrozen = true;
+      target.freezeTimer = 2.0;
+      SoundEngine.playFreezeShatter();
+      addDamageText(target.x, target.y - 45, "❄️ 완전 빙결!", true, '#00d2d3');
+      // Spawn 6 piercing ice shards
+      for (let a = 0; a < 6; a++) {
+        const rad = (Math.PI * 2 / 6) * a;
+        activeProjectiles.push({
+          x: target.x, y: target.y,
+          vx: Math.cos(rad) * 220, vy: Math.sin(rad) * 220,
+          radius: 4, damage: 55, color: '#00d2d3', life: 0.6, isPlayer: true
+        });
+      }
+    }
+  } else if (activeEnchantment === 'thunder') {
+    // Chain Lightning to up to 3 nearby enemies
+    const list = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "Coliseum" ? coliseumMonsters : (currentZone === "RiftDungeon" ? riftMonsters : magmaMonsters));
+    let jumps = 0;
+    list.forEach(other => {
+      if (other !== target && other.hp > 0 && jumps < 3) {
+        const d = Math.hypot(other.x - target.x, other.y - target.y);
+        if (d <= 140) {
+          activeLightningArcs.push({ x1: target.x, y1: target.y, x2: other.x, y2: other.y, timer: 0.18 });
+          other.hp -= Math.round(finalDamage * 0.5);
+          other.hitFlashTimer = 0.15;
+          addDamageText(other.x, other.y - 20, "⚡ " + Math.round(finalDamage * 0.5), false, '#feca57');
+          jumps++;
+        }
+      }
+    });
+  } else if (activeEnchantment === 'vampire') {
+    // 8% Life Steal with homing blood soul orbs
+    const healVal = Math.max(12, Math.round(finalDamage * 0.08));
+    activeBloodOrbs.push({
+      x: target.x, y: target.y,
+      healAmt: healVal, timer: 0.5
+    });
+  }
+}
+
 function hitEntity(entity, damage, isDummy = false) {
   let isCrit = Math.random() < player.critChance;
+  if (bulletTimeGuaranteedCrit) {
+    isCrit = true;
+    damage = Math.round(damage * 2.0);
+    bulletTimeGuaranteedCrit = false;
+    addDamageText(player.x, player.y - 50, "💥 TIME WARP PUNISH! x2.0", true, '#ffd700');
+    SoundEngine.playSlash(650);
+    doShake(10);
+  }
   let finalDamage = Math.round(damage * (isCrit ? 1.85 : 1.0));
 
   if (activeBoons['chain_lightning'] && Math.random() < 0.3) {
@@ -2123,6 +2782,7 @@ function hitEntity(entity, damage, isDummy = false) {
     addDamageText(player.x, player.y - 30, "+" + healAmt + " 흡혈", false, '#e74c3c');
   }
 
+  registerCombatHit(entity, isCrit, finalDamage);
   entity.hp -= finalDamage;
   entity.hitFlashTimer = 0.16;
   entity.squashX = 1.35;
@@ -2161,6 +2821,20 @@ function onMonsterKilled(m) {
     if (quests[0].current >= quests[0].target) quests[0].completed = true;
   }
   triggerAchievement('first_blood');
+  // Cursed Champion Affix Explosion & Cursed Chest drop
+  if (m.affix === 'volatile') {
+    SoundEngine.playThunder();
+    flashScreen('#ff4757', 0.4);
+    doShake(14);
+    checkAreaHit(m.x, m.y, 110, 150);
+    addDamageText(m.x, m.y - 45, "💥 화염 유폭!", true, '#ff4757');
+  }
+  if (m.isElite) {
+    droppedLoot.push({ x: m.x + 8, y: m.y, type: "gem", val: 2 });
+    spawnEquipmentDrop(m.x, m.y, Math.random() < 0.35 ? 'legendary' : 'epic');
+    addDamageText(m.x, m.y - 50, "👑 저주받은 챔피언 처치! 보석 2개 & 세트 유물!", true, '#ffd700');
+  }
+
 
   const baseGold = (activeBoons['golden_harvest'] ? 50 : 25) + Math.round(Math.random() * 20);
   const baseXP = 35 + Math.round(Math.random() * 25);
@@ -2243,7 +2917,7 @@ function interactRift() {
     spawnRiftWave();
     addDamageText(0, 0, "🌀 무한의 차원 균열 진입!", true, '#e056fd');
     document.getElementById('zoneIndicatorText').innerText = "🌀 무한의 차원 균열 (Wave " + riftWaveLevel + ")";
-  } else {
+    } else {
     currentZone = "OpenWorld";
     player.x = 210; player.y = -20;
     addDamageText(player.x, player.y - 30, "☀️ 오픈월드 귀환", true, '#ffd700');
@@ -2258,7 +2932,7 @@ function interactMagma() {
     spawnMagmaWave();
     addDamageText(0, 0, "🌋 용암 심연 진입!", true, '#ff4757');
     document.getElementById('zoneIndicatorText').innerText = "🌋 용암 심연";
-  } else {
+    } else {
     currentZone = "OpenWorld";
     player.x = 340; player.y = 190;
     addDamageText(player.x, player.y - 30, "☀️ 오픈월드 귀환", true, '#ffd700');
@@ -2309,8 +2983,187 @@ function spawnMagmaWave() {
 let lastTime = performance.now();
 
 function update(dt) {
+
+  // Update Combo & Style Decay
+  if (comboDecayTimer > 0) {
+    comboDecayTimer -= dt;
+    if (comboDecayTimer <= 0) {
+      comboHits = 0;
+      stylePoints = Math.max(0, stylePoints - 250);
+      for (let i = STYLE_RANKS.length - 1; i >= 0; i--) {
+        if (stylePoints >= STYLE_RANKS[i].min) {
+          styleRankIdx = i;
+          break;
+        }
+      }
+    }
+  }
+  if (styleScaleAnim > 1.0) {
+    styleScaleAnim = Math.max(1.0, styleScaleAnim - dt * 2.5);
+  }
+
+  // Update Shockwaves
+  for (let i = activeShockwaves.length - 1; i >= 0; i--) {
+    const sw = activeShockwaves[i];
+    sw.timer -= dt;
+    const progress = 1 - (sw.timer / sw.maxTimer);
+    sw.r = 8 + progress * (sw.maxR - 8);
+    if (sw.timer <= 0) activeShockwaves.splice(i, 1);
+  }
+
+  // Update Slash Arcs
+  for (let i = activeSlashArcs.length - 1; i >= 0; i--) {
+    const sa = activeSlashArcs[i];
+    sa.timer -= dt;
+    if (sa.timer <= 0) activeSlashArcs.splice(i, 1);
+  }
+
+  // Update Lightning Arcs
+  for (let i = activeLightningArcs.length - 1; i >= 0; i--) {
+    activeLightningArcs[i].timer -= dt;
+    if (activeLightningArcs[i].timer <= 0) activeLightningArcs.splice(i, 1);
+  }
+
+  // Update Blood Soul Orbs
+  for (let i = activeBloodOrbs.length - 1; i >= 0; i--) {
+    const bo = activeBloodOrbs[i];
+    const dx = player.x - bo.x;
+    const dy = player.y - bo.y;
+    bo.x += dx * dt * 7.0;
+    bo.y += dy * dt * 7.0;
+    bo.timer -= dt;
+    if (Math.hypot(dx, dy) < 22 || bo.timer <= 0) {
+      player.hp = Math.min(player.maxHP, player.hp + bo.healAmt);
+      addDamageText(player.x, player.y - 30, "+" + bo.healAmt + " 혈기 회복", false, '#ff6b6b');
+      activeBloodOrbs.splice(i, 1);
+    }
+  }
+
+  // Update Swimming Koi Fish in Cozy Lake
+  swimmingKoiFish.forEach(koi => {
+    koi.tailTimer += dt * 5.0;
+    koi.x += koi.vx * 35 * dt;
+    koi.y += koi.vy * 35 * dt;
+    // Keep in lake bounds (wx: 190 to 340, wy: -160 to 180)
+    if (koi.x < 205 || koi.x > 325) { koi.vx *= -1; koi.angle = Math.atan2(koi.vy, koi.vx); }
+    if (koi.y < -145 || koi.y > 165) { koi.vy *= -1; koi.angle = Math.atan2(koi.vy, koi.vx); }
+    // Avoid player if player is swimming/near
+    const distToPlayer = Math.hypot(koi.x - player.x, koi.y - player.y);
+    if (distToPlayer < 75) {
+      const fleeAngle = Math.atan2(koi.y - player.y, koi.x - player.x);
+      koi.vx = Math.cos(fleeAngle) * 1.5;
+      koi.vy = Math.sin(fleeAngle) * 1.5;
+      koi.angle = fleeAngle;
+    }
+  });
+
+  // Update Mochi Pet Active Combat AI
+  petPounceTimer -= dt;
+  petSnackTimer -= dt;
+  if (petPounceTimer <= 0) {
+    petPounceTimer = 3.5;
+    const monsterList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "Coliseum" ? coliseumMonsters : (currentZone === "RiftDungeon" ? riftMonsters : magmaMonsters));
+    let nearestM = null;
+    let nearDist = 200;
+    monsterList.forEach(m => {
+      if (m.hp > 0) {
+        const d = Math.hypot(m.x - player.x, m.y - player.y);
+        if (d < nearDist) { nearDist = d; nearestM = m; }
+      }
+    });
+    if (nearestM) {
+      SoundEngine.playCatPounce();
+      const pounceDmg = 200 + petFriendshipLevel * 45;
+      nearestM.hp -= pounceDmg;
+      nearestM.hitFlashTimer = 0.2;
+      addDamageText(nearestM.x, nearestM.y - 35, "🐾 모찌 냥냥 펀치! " + pounceDmg, true, '#e056fd');
+      doShake(5);
+      if (petFriendshipLevel >= 4) {
+        // Holy Roar Stun
+        nearestM.stunTimer = 1.5;
+        addDamageText(nearestM.x, nearestM.y - 55, "🐯 신수의 포효! (기절)", true, '#ffd700');
+      }
+    }
+  }
+
+  // Pet Fish Snack Toss
+  if (petSnackTimer <= 0) {
+    petSnackTimer = 12.0;
+    droppedSnacks.push({
+      x: player.x + (Math.random() - 0.5) * 60,
+      y: player.y + (Math.random() - 0.5) * 60,
+      timer: 10.0,
+      healAmt: 250 + petFriendshipLevel * 50
+    });
+    SoundEngine.playCatPounce();
+    addDamageText(player.x, player.y - 40, "🐟 모찌의 생선 응원 간식!", false, '#00d2d3');
+  }
+
+  // Update Dropped Fish Snacks
+  for (let i = droppedSnacks.length - 1; i >= 0; i--) {
+    const sn = droppedSnacks[i];
+    sn.timer -= dt;
+    if (Math.hypot(player.x - sn.x, player.y - sn.y) < 32) {
+      player.hp = Math.min(player.maxHP, player.hp + sn.healAmt);
+      playerBuffs.swiftnessTimer = 5.0;
+      recalculateStats();
+      SoundEngine.playLoot();
+      addDamageText(player.x, player.y - 30, "✨ +" + sn.healAmt + " HP & 신속 버프!", true, '#2ecc71');
+      droppedSnacks.splice(i, 1);
+    } else if (sn.timer <= 0) {
+      droppedSnacks.splice(i, 1);
+    }
+  }
+
+  // Coliseum Banner Timer
+  if (coliseumBannerTimer > 0) {
+    coliseumBannerTimer -= dt;
+    if (coliseumBannerTimer <= 0) {
+      document.getElementById('coliseumBanner').classList.remove('active');
+    }
+  }
+
+  // Coliseum Waves Loop
+  if (currentZone === "Coliseum") {
+    let aliveCount = 0;
+    coliseumMonsters.forEach(m => { if (m.hp > 0) aliveCount++; });
+    if (aliveCount === 0 && coliseumWave < 5) {
+      advanceColiseumWave();
+    }
+  }
+
   screenShake = Math.max(0, screenShake - dt * 25);
   flashAlpha = Math.max(0, flashAlpha - dt * 2.0);
+
+  // Bullet Time Slow-Mo
+  if (bulletTimeTimer > 0) {
+    bulletTimeTimer = Math.max(0, bulletTimeTimer - dt);
+  }
+  const gameTimeScale = bulletTimeTimer > 0 ? 0.32 : 1.0;
+
+  // Danger Telegraphs Countdown
+  dangerTelegraphs.forEach(t => {
+    t.timer -= dt * gameTimeScale;
+    if (t.timer <= 0 && !t.detonated) {
+      t.detonated = true;
+      if (t.onDetonate) t.onDetonate();
+    }
+  });
+  dangerTelegraphs = dangerTelegraphs.filter(t => !t.detonated);
+
+  // Aquarium AFK Gold Production
+  aquariumTickTimer -= dt;
+  if (aquariumTickTimer <= 0) {
+    aquariumTickTimer = 5.0;
+    if (aquariumFishList.length > 0) {
+      let afkSum = 0;
+      aquariumFishList.forEach(f => afkSum += f.goldRate);
+      inventory.gold += afkSum;
+      addDamageText(lakeDockPos.x + 35, lakeDockPos.y - 45, "🐟 수족관 AFK: +" + afkSum + "G", false, '#ffd700');
+      saveGame();
+      updateHUD();
+    }
+  }
 
   // Cinematic Timer
   if (cinematicState.active) {
@@ -2415,7 +3268,7 @@ function update(dt) {
         addDamageText(fishingState.bobberX, fishingState.bobberY - 20, "❗ 입질! [Space/F] 클릭!", true, '#ffd700');
         doShake(3);
       }
-    } else {
+      } else {
       fishingState.biteWindow -= dt;
       if (fishingState.biteWindow <= 0) {
         fishingState.isFishing = false;
@@ -2472,7 +3325,7 @@ function update(dt) {
   if (currentZone === "OpenWorld" && Math.hypot(player.x - trainingDummy.x, player.y - trainingDummy.y) < 160) {
     dpsMeter.style.display = 'inline';
     dpsMeter.innerText = "🎯 더미 DPS: " + trainingDummy.currentDPS;
-  } else {
+    } else {
     dpsMeter.style.display = 'none';
   }
 
@@ -2503,7 +3356,7 @@ function update(dt) {
       if (Math.sin(player.walkTimer) > 0.75 && Math.random() < 0.3) {
         footstepDust.push({ x: player.x + (Math.random() - 0.5) * 6, y: player.y + 14, vx: -mx * 25, vy: -15, life: 0.35 });
       }
-    } else {
+      } else {
       player.lean = 0;
     }
   }
@@ -2548,7 +3401,7 @@ function update(dt) {
         addDamageText(player.x, player.y - 25, "가시 함정!", false, '#ff4757');
         doShake(2);
       }
-      const currentList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : magmaMonsters);
+      const currentList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : (currentZone === "MagmaAbyss" ? magmaMonsters : catacombMonsters));
       currentList.forEach(m => {
         if (m.hp > 0 && Math.hypot(m.x - trap.x, m.y - trap.y) <= trapRadius + 14) {
           m.hp -= 260 * dt;
@@ -2560,7 +3413,7 @@ function update(dt) {
   });
 
   // Monsters AI
-  const currentMonsterList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : magmaMonsters);
+  const currentMonsterList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : (currentZone === "MagmaAbyss" ? magmaMonsters : catacombMonsters));
   currentMonsterList.forEach(m => {
     if (m.hp <= 0) return;
     if (m.hitFlashTimer > 0) m.hitFlashTimer -= dt;
@@ -2606,7 +3459,7 @@ function update(dt) {
         m.x += Math.cos(ang) * m.speed * dt;
         m.y += Math.sin(ang) * m.speed * dt;
       }
-    } else {
+      } else {
       if (dist < 340 && dist > 26) {
         const ang = Math.atan2(player.y - m.y, player.x - m.x);
         m.x += Math.cos(ang) * m.speed * dt;
@@ -2675,14 +3528,14 @@ function update(dt) {
         p.life = 0;
         if (parryTimer > 0) {
           onParrySuccess(null);
-        } else {
+          } else {
           player.hp = Math.max(0, player.hp - p.damage);
           addDamageText(player.x, player.y - 25, "-" + p.damage, true, '#ff4757');
           flashScreen('#ff4757', 0.2);
           doShake(5);
         }
       }
-    } else {
+      } else {
       checkAreaHit(p.x, p.y, p.radius + 8, p.damage);
     }
   });
@@ -2754,7 +3607,7 @@ function updateCompanionPet(dt) {
   petCompanion.attackTimer = (petCompanion.attackTimer || 0) + dt;
   if (petCompanion.attackTimer >= 2.5) {
     petCompanion.attackTimer = 0;
-    const currentList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : magmaMonsters);
+    const currentList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : (currentZone === "MagmaAbyss" ? magmaMonsters : catacombMonsters));
     let nearestMonster = null;
     let minDist = 180;
     currentList.forEach(m => {
@@ -2816,7 +3669,7 @@ function updateBossBahamut(dt) {
     document.getElementById('bossNameTitle').innerText = "🔥 화염 군주 바하무트 (Phase " + bossState.phase + (bossState.isEnraged ? " - ENRAGED" : "") + ")";
     document.getElementById('bossHPText').innerText = Math.max(0, bossState.hp) + " / " + bossState.maxHP;
     document.getElementById('bossHPFill').style.width = Math.max(0, hpRatio * 100) + '%';
-  } else {
+    } else {
     banner.style.display = 'none';
   }
 
@@ -2878,16 +3731,152 @@ function render() {
           } else if (isTownPlaza) {
             const seed = Math.abs((tx * 31 + ty * 17) % 10);
             drawAtlasTile(ctx, seed < 2 ? 1 : 0, 0, wx, wy, TILE_W, TILE_W);
-          } else {
+            } else {
             const seed = Math.abs((tx * 43 + ty * 19) % 10);
             drawAtlasTile(ctx, seed < 3 ? 6 : 5, 0, wx, wy, TILE_W, TILE_W);
           }
-        } else {
+          } else {
           ctx.fillStyle = ((tx + ty) % 2 === 0) ? '#141822' : '#0e111a';
           ctx.fillRect(wx, wy, TILE_W, TILE_W);
         }
       }
     }
+
+    
+    // Procedural Shimmering Water Caustics & Swimming Koi
+    if (currentZone === "OpenWorld") {
+      const cTime = performance.now() * 0.002;
+      ctx.save();
+      // Shimmering caustics grid
+      ctx.strokeStyle = 'rgba(120, 240, 255, 0.22)';
+      ctx.lineWidth = 1.5;
+      for (let cx = 195; cx <= 335; cx += 22) {
+        ctx.beginPath();
+        for (let cy = -155; cy <= 175; cy += 12) {
+          const waveOff = Math.sin(cTime + cy * 0.08) * 4;
+          if (cy === -155) ctx.moveTo(cx + waveOff, cy);
+          else ctx.lineTo(cx + waveOff, cy);
+        }
+        ctx.stroke();
+      }
+
+      // Swimming Koi Fish Silhouettes
+      swimmingKoiFish.forEach(koi => {
+        ctx.save();
+        ctx.translate(koi.x, koi.y);
+        ctx.rotate(koi.angle);
+        // Fish Body
+        ctx.fillStyle = koi.color;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, koi.size, koi.size * 0.45, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Swishing Fish Tail
+        const tailWag = Math.sin(koi.tailTimer) * 0.35;
+        ctx.beginPath();
+        ctx.moveTo(-koi.size + 2, 0);
+        ctx.lineTo(-koi.size - 6, -5 + tailWag * 8);
+        ctx.lineTo(-koi.size - 6, 5 + tailWag * 8);
+        ctx.closePath();
+        ctx.fillStyle = koi.color;
+        ctx.fill();
+        // White dorsal accent
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.beginPath();
+        ctx.ellipse(2, 0, koi.size * 0.4, 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+
+      // Water Lilies
+      waterLilies.forEach(lily => {
+        const bob = Math.sin(cTime + lily.x) * 2;
+        ctx.fillStyle = '#27ae60';
+        ctx.beginPath();
+        ctx.arc(lily.x, lily.y + bob, lily.r, 0.2, Math.PI * 1.85);
+        ctx.fill();
+        if (lily.hasFlower) {
+          ctx.fillStyle = '#ff9ff3';
+          ctx.beginPath();
+          ctx.arc(lily.x + 1, lily.y + bob, lily.r * 0.45, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+      ctx.restore();
+    }
+
+    // Render Dropped Mochi Fish Snacks
+    droppedSnacks.forEach(sn => {
+      const bob = Math.sin(performance.now() * 0.006 + sn.x) * 4;
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 210, 211, 0.35)';
+      ctx.beginPath();
+      ctx.arc(sn.x, sn.y + bob, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.font = '16px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('🐟', sn.x, sn.y + bob + 6);
+      ctx.restore();
+    });
+
+    // Render Radial Shockwaves
+    activeShockwaves.forEach(sw => {
+      ctx.save();
+      const alpha = sw.timer / sw.maxTimer;
+      ctx.strokeStyle = sw.color;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = sw.width;
+      ctx.beginPath();
+      ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    // Render Chain Lightning Arcs
+    activeLightningArcs.forEach(la => {
+      ctx.save();
+      ctx.strokeStyle = '#feca57';
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = '#ffd32a';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.moveTo(la.x1, la.y1);
+      // Zigzag midpoint
+      const mx = (la.x1 + la.x2) / 2 + (Math.random() - 0.5) * 24;
+      const my = (la.y1 + la.y2) / 2 + (Math.random() - 0.5) * 24;
+      ctx.lineTo(mx, my);
+      ctx.lineTo(la.x2, la.y2);
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    // Render Blood Soul Orbs
+    activeBloodOrbs.forEach(bo => {
+      ctx.save();
+      ctx.fillStyle = '#ff4757';
+      ctx.shadowColor = '#ff6b81';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.arc(bo.x, bo.y, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // Render Energy Slash Crescent Blade Arcs
+    activeSlashArcs.forEach(sa => {
+      ctx.save();
+      ctx.translate(sa.x, sa.y);
+      ctx.rotate(sa.angle);
+      const alpha = sa.timer / sa.maxTimer;
+      ctx.strokeStyle = sa.color;
+      ctx.shadowColor = sa.color;
+      ctx.shadowBlur = 12;
+      ctx.lineWidth = 4;
+      ctx.globalAlpha = alpha;
+      ctx.beginPath();
+      ctx.arc(0, 0, sa.radius, -0.9, 0.9);
+      ctx.stroke();
+      ctx.restore();
+    });
 
     // Lake Water Shoreline Foam Ripple (Animated Sine Wave)
     const foamTime = performance.now() * 0.003;
@@ -3047,6 +4036,30 @@ function render() {
     ctx.fillStyle = '#ff4757'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
     ctx.fillText("🌋 용암 심연 [F]", magmaPortal.x, magmaPortal.y - 52);
 
+    } else if (currentZone === "AncientCatacombs") {
+    // Ancient Catacombs Room
+    ctx.fillStyle = '#0a0806';
+    ctx.fillRect(camera.x - canvas.width, camera.y - canvas.height, canvas.width * 2, canvas.height * 2);
+
+    ctx.fillStyle = '#1c150c';
+    ctx.beginPath(); ctx.ellipse(0, 0, 560, 360, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#c5a059'; ctx.lineWidth = 4; ctx.stroke();
+
+    // Catacomb Pillars
+    [-180, 180].forEach(px => {
+      [-100, 100].forEach(py => {
+        ctx.fillStyle = '#2d2214'; ctx.fillRect(px - 14, py - 20, 28, 40);
+        ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1.5; ctx.strokeRect(px - 14, py - 20, 28, 40);
+      });
+    });
+
+    // Return to OpenWorld Portal
+    ctx.fillStyle = 'rgba(241, 196, 15, 0.4)';
+    ctx.beginPath(); ctx.arc(0, 180, 36, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
+    ctx.fillText("☀️ 지상 탈출구 [F]", 0, 230);
+
   } else if (currentZone === "RiftDungeon") {
     ctx.fillStyle = '#06050e';
     ctx.fillRect(camera.x - canvas.width, camera.y - canvas.height, canvas.width * 2, canvas.height * 2);
@@ -3061,7 +4074,7 @@ function render() {
     ctx.fillStyle = '#2ed573'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
     ctx.fillText("🌀 오픈월드 귀환 [F]", 0, -210);
 
-  } else {
+    } else {
     ctx.fillStyle = '#180404';
     ctx.fillRect(camera.x - canvas.width, camera.y - canvas.height, canvas.width * 2, canvas.height * 2);
 
@@ -3084,7 +4097,7 @@ function render() {
       ctx.strokeStyle = '#00d2d3';
       ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    } else {
+      } else {
       ctx.fillStyle = 'rgba(231, 76, 60, 0.45)';
       ctx.strokeStyle = '#ff4757';
       ctx.lineWidth = 3;
@@ -3134,7 +4147,7 @@ function render() {
       ctx.fillRect(-half, -half, trap.width, trap.height);
       ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 2;
       ctx.strokeRect(-half, -half, trap.width, trap.height);
-    } else {
+      } else {
       ctx.fillStyle = '#2d3436';
       ctx.fillRect(-half, -half, trap.width, trap.height);
       ctx.fillStyle = '#ecf0f1';
@@ -3188,7 +4201,7 @@ function render() {
   });
 
   // 9. Roaming Monsters with Squash & Hit Flash
-  const currentMonsterList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : magmaMonsters);
+  const currentMonsterList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : (currentZone === "MagmaAbyss" ? magmaMonsters : catacombMonsters));
   currentMonsterList.forEach(m => {
     if (m.hp <= 0) return;
     const bounce = Math.sin((m.walkTimer || 0) * 1.5) * 2;
@@ -3268,7 +4281,50 @@ function render() {
     ctx.globalAlpha = a.alpha;
     ctx.fillStyle = a.color;
     ctx.beginPath(); ctx.ellipse(a.x, a.y + 14, 16, 6, 0, 0, Math.PI * 2); ctx.fill();
-    const cDef = CLASSES_DEF[currentClassId] || CLASSES_DEF['paladin'];
+      // Ascension Aura beneath feet
+  const auraRot = performance.now() * 0.0015;
+  ctx.save();
+  ctx.rotate(auraRot);
+  ctx.strokeStyle = currentClassId === 'paladin' ? 'rgba(255, 215, 0, 0.45)' : (currentClassId === 'rogue' ? 'rgba(224, 86, 253, 0.45)' : 'rgba(0, 210, 211, 0.45)');
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(0, 16, 24, 0, Math.PI * 2);
+  ctx.stroke();
+  for (let g = 0; g < 4; g++) {
+    const ga = (Math.PI / 2) * g;
+    ctx.fillRect(Math.cos(ga) * 24 - 1.5, 16 + Math.sin(ga) * 24 - 1.5, 3, 3);
+  }
+  ctx.restore();
+
+  // Level 5+ Wings / Ascension Orbs
+  if (player.level >= 5) {
+    ctx.save();
+    const wingFlap = Math.sin(performance.now() * 0.006) * 4;
+    if (currentClassId === 'paladin') {
+      ctx.fillStyle = 'rgba(255, 215, 0, 0.55)';
+      ctx.beginPath();
+      ctx.moveTo(-6, -14); ctx.lineTo(-24 - wingFlap, -30); ctx.lineTo(-18, -6); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(6, -14); ctx.lineTo(24 + wingFlap, -30); ctx.lineTo(18, -6); ctx.fill();
+    } else if (currentClassId === 'rogue') {
+      ctx.fillStyle = 'rgba(155, 89, 182, 0.55)';
+      ctx.beginPath();
+      ctx.moveTo(-6, -12); ctx.lineTo(-22 - wingFlap, -24); ctx.lineTo(-14, -4); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(6, -12); ctx.lineTo(22 + wingFlap, -24); ctx.lineTo(14, -4); ctx.fill();
+      } else {
+      for (let o = 0; o < 3; o++) {
+        const oAngle = performance.now() * 0.004 + (Math.PI * 2 / 3) * o;
+        const ox = Math.cos(oAngle) * 22;
+        const oy = -14 + Math.sin(oAngle) * 10;
+        ctx.fillStyle = '#00d2d3';
+        ctx.beginPath(); ctx.arc(ox, oy, 3.5, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  const cDef = CLASSES_DEF[currentClassId] || CLASSES_DEF['paladin'];
     drawAtlasSprite(ctx, cDef.col, cDef.row, a.x - 21, a.y - 28, 42, 42, false);
     ctx.restore();
   });
@@ -3283,6 +4339,49 @@ function render() {
 
   ctx.fillStyle = 'rgba(0,0,0,0.5)';
   ctx.beginPath(); ctx.ellipse(0, 16, 16, 6, 0, 0, Math.PI * 2); ctx.fill();
+
+    // Ascension Aura beneath feet
+  const auraRot = performance.now() * 0.0015;
+  ctx.save();
+  ctx.rotate(auraRot);
+  ctx.strokeStyle = currentClassId === 'paladin' ? 'rgba(255, 215, 0, 0.45)' : (currentClassId === 'rogue' ? 'rgba(224, 86, 253, 0.45)' : 'rgba(0, 210, 211, 0.45)');
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(0, 16, 24, 0, Math.PI * 2);
+  ctx.stroke();
+  for (let g = 0; g < 4; g++) {
+    const ga = (Math.PI / 2) * g;
+    ctx.fillRect(Math.cos(ga) * 24 - 1.5, 16 + Math.sin(ga) * 24 - 1.5, 3, 3);
+  }
+  ctx.restore();
+
+  // Level 5+ Wings / Ascension Orbs
+  if (player.level >= 5) {
+    ctx.save();
+    const wingFlap = Math.sin(performance.now() * 0.006) * 4;
+    if (currentClassId === 'paladin') {
+      ctx.fillStyle = 'rgba(255, 215, 0, 0.55)';
+      ctx.beginPath();
+      ctx.moveTo(-6, -14); ctx.lineTo(-24 - wingFlap, -30); ctx.lineTo(-18, -6); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(6, -14); ctx.lineTo(24 + wingFlap, -30); ctx.lineTo(18, -6); ctx.fill();
+    } else if (currentClassId === 'rogue') {
+      ctx.fillStyle = 'rgba(155, 89, 182, 0.55)';
+      ctx.beginPath();
+      ctx.moveTo(-6, -12); ctx.lineTo(-22 - wingFlap, -24); ctx.lineTo(-14, -4); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(6, -12); ctx.lineTo(22 + wingFlap, -24); ctx.lineTo(14, -4); ctx.fill();
+      } else {
+      for (let o = 0; o < 3; o++) {
+        const oAngle = performance.now() * 0.004 + (Math.PI * 2 / 3) * o;
+        const ox = Math.cos(oAngle) * 22;
+        const oy = -14 + Math.sin(oAngle) * 10;
+        ctx.fillStyle = '#00d2d3';
+        ctx.beginPath(); ctx.arc(ox, oy, 3.5, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
 
   const cDef = CLASSES_DEF[currentClassId] || CLASSES_DEF['paladin'];
   const pBounce = player.hp <= 0 ? 0 : Math.sin(player.walkTimer) * 2;
@@ -3304,7 +4403,7 @@ function render() {
     ctx.beginPath();
     ctx.arc(0, 0, 36, -0.7, 0.7);
     ctx.stroke();
-  } else {
+    } else {
     const wx = facingLeft ? -22 : 6;
     const wy = -14 + pBounce;
     drawAtlasSprite(ctx, weaponCol, 14, wx, wy, 20, 20, facingLeft);
@@ -3358,7 +4457,7 @@ function render() {
       ctx.moveTo(p.x, p.y);
       ctx.lineTo(p.x - 4, p.y + 10);
       ctx.stroke();
-    } else {
+      } else {
       ctx.fillStyle = 'rgba(255, 182, 193, 0.85)';
       ctx.beginPath();
       ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
@@ -3395,10 +4494,34 @@ function render() {
       ambientDarkness = 0.25;
       ambientColor = 'rgba(15, 10, 30, 0.35)'; // Dawn
     }
+    } else if (currentZone === "AncientCatacombs") {
+    // Ancient Catacombs Room
+    ctx.fillStyle = '#0a0806';
+    ctx.fillRect(camera.x - canvas.width, camera.y - canvas.height, canvas.width * 2, canvas.height * 2);
+
+    ctx.fillStyle = '#1c150c';
+    ctx.beginPath(); ctx.ellipse(0, 0, 560, 360, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#c5a059'; ctx.lineWidth = 4; ctx.stroke();
+
+    // Catacomb Pillars
+    [-180, 180].forEach(px => {
+      [-100, 100].forEach(py => {
+        ctx.fillStyle = '#2d2214'; ctx.fillRect(px - 14, py - 20, 28, 40);
+        ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1.5; ctx.strokeRect(px - 14, py - 20, 28, 40);
+      });
+    });
+
+    // Return to OpenWorld Portal
+    ctx.fillStyle = 'rgba(241, 196, 15, 0.4)';
+    ctx.beginPath(); ctx.arc(0, 180, 36, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
+    ctx.fillText("☀️ 지상 탈출구 [F]", 0, 230);
+
   } else if (currentZone === "RiftDungeon") {
     ambientDarkness = 0.82;
     ambientColor = 'rgba(10, 5, 22, 0.82)'; // Void violet
-  } else {
+    } else {
     ambientDarkness = 0.75;
     ambientColor = 'rgba(24, 4, 6, 0.75)'; // Smoky magma
   }
@@ -3524,7 +4647,7 @@ function drawMiniMap(ctx) {
     ctx.beginPath(); ctx.arc(bx, by, 5, 0, Math.PI * 2); ctx.fill();
   }
 
-  const currentList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : magmaMonsters);
+  const currentList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : (currentZone === "MagmaAbyss" ? magmaMonsters : catacombMonsters));
   currentList.forEach(m => {
     if (m.hp > 0) {
       const mx = centerMapX + (m.x - player.x) * worldScale;
@@ -3559,6 +4682,7 @@ function updateHUD() {
   if (quests[2]) document.getElementById('quest3Text').innerText = quests[2].title + ": " + quests[2].current + " / " + quests[2].target;
 
   // Skill Icons & CDs
+
   const cDef = CLASSES_DEF[currentClassId] || CLASSES_DEF['paladin'];
   document.getElementById('skill0Icon').innerText = cDef.skills[0].icon;
   document.getElementById('skill1Icon').innerText = cDef.skills[1].icon;
@@ -3570,6 +4694,28 @@ function updateHUD() {
   updateCooldownUI('skill3CD', player.skills[3].cdRemaining);
   updateCooldownUI('dashCD', dashCooldown);
   updateCooldownUI('parryCD', parryCooldown);
+
+  // Update Dynamic Style Rank & Combo Badge
+  const styleBadge = document.getElementById('styleComboBadge');
+  if (styleBadge) {
+    if (comboHits > 0) {
+      styleBadge.style.display = 'flex';
+      const rankObj = STYLE_RANKS[styleRankIdx];
+      document.getElementById('styleRankLetter').innerText = rankObj.rank;
+      document.getElementById('styleRankLetter').style.color = rankObj.color;
+      document.getElementById('styleRankLetter').style.transform = "scale(" + styleScaleAnim + ")";
+      document.getElementById('styleRankTitle').innerText = rankObj.title;
+      document.getElementById('styleRankTitle').style.color = rankObj.color;
+      document.getElementById('styleComboCount').innerText = "🔥 " + comboHits + " HITS";
+      const nextMin = styleRankIdx < STYLE_RANKS.length - 1 ? STYLE_RANKS[styleRankIdx + 1].min : (rankObj.min + 1000);
+      const range = nextMin - rankObj.min;
+      const progress = Math.min(100, Math.max(0, Math.round(((stylePoints - rankObj.min) / range) * 100)));
+      document.getElementById('styleMeterFill').style.width = progress + '%';
+      document.getElementById('styleMeterFill').style.background = rankObj.color;
+    } else {
+      styleBadge.style.display = 'none';
+    }
+  }
 }
 
 function updateCooldownUI(id, cd) {
@@ -3577,7 +4723,7 @@ function updateCooldownUI(id, cd) {
   if (cd > 0) {
     el.style.display = 'flex';
     el.innerText = cd.toFixed(1);
-  } else {
+    } else {
     el.style.display = 'none';
   }
 }
@@ -3586,7 +4732,7 @@ function toggleInventoryModal() {
   const modal = document.getElementById('inventoryModal');
   if (modal.style.display === 'block') {
     modal.style.display = 'none';
-  } else {
+    } else {
     modal.style.display = 'block';
     renderEquipUI();
     renderBackpackUI();
@@ -3733,7 +4879,7 @@ function toggleBountyModal() {
   const modal = document.getElementById('bountyModal');
   if (modal.style.display === 'block') {
     modal.style.display = 'none';
-  } else {
+    } else {
     modal.style.display = 'block';
     renderBountiesListUI();
   }
@@ -3764,7 +4910,7 @@ function renderBountiesListUI() {
       claimBtn.innerText = '수령';
       claimBtn.onclick = () => claimBounty(b.id);
       actionDiv.appendChild(claimBtn);
-    } else {
+      } else {
       actionDiv.innerHTML = '<span style="color:#aaa; font-size:10px;">진행중</span>';
     }
     card.appendChild(actionDiv);
@@ -3808,7 +4954,7 @@ function toggleRuneModal() {
   const modal = document.getElementById('runeModal');
   if (modal.style.display === 'block') {
     modal.style.display = 'none';
-  } else {
+    } else {
     modal.style.display = 'block';
     renderRuneModalUI();
   }
@@ -3847,7 +4993,7 @@ function renderRuneModalUI() {
       btn.innerText = '해제';
       btn.onclick = () => unsocketGem(slot);
       actionDiv.appendChild(btn);
-    } else {
+      } else {
       const gemDefs = [
         { type: 'ruby', label: '루비' },
         { type: 'sapphire', label: '사파' },
@@ -3899,7 +5045,7 @@ function toggleHallOfFameModal() {
   const modal = document.getElementById('hallOfFameModal');
   if (modal.style.display === 'block') {
     modal.style.display = 'none';
-  } else {
+    } else {
     modal.style.display = 'block';
     document.getElementById('hofMaxDPS').innerText = hallOfFame.maxDummyDPS + " DPS";
     document.getElementById('hofMaxWave').innerText = "Wave " + hallOfFame.riftMaxWave;
@@ -3978,7 +5124,7 @@ function openNPCModal(npcId) {
       closeNPCModal();
     };
     actionContainer.appendChild(bskBtn);
-  } else {
+    } else {
     textEl.innerHTML = "에델가르드 성채에 어서 오게나.<br>북쪽 분화구에는 고대 화염 군주 바하무트가 잠들어 있고, 동쪽 호수에서는 평화롭게 낚시를 즐길 수 있다네.<br>또한 보라색 균열을 통해 심연의 시련에 도전할 수 있지.";
   }
 
@@ -3992,6 +5138,465 @@ function closeNPCModal() {
 // ==========================================
 // 🚀 9. MAIN GAME LOOP
 // ==========================================
+
+// ==========================================
+// ⛲ 10. FOUNTAIN, MERCHANT & AQUARIUM
+// ==========================================
+function tossCoinIntoFountain() {
+  if (inventory.gold < 20) {
+    addDamageText(wishingFountain.x, wishingFountain.y - 30, "골드가 부족합니다 (20G 필요)!", false, '#e74c3c');
+    return;
+  }
+  inventory.gold -= 20;
+  SoundEngine.playLoot();
+  flashScreen('#ffd700', 0.25);
+  doShake(3);
+
+  const roll = Math.random();
+  if (roll < 0.15) {
+    inventory.gems += 2;
+    addDamageText(wishingFountain.x, wishingFountain.y - 35, "✨ 대박! 분수대에서 보석 2개 발견!", true, '#00d2d3');
+  } else if (roll < 0.35) {
+    spawnEquipmentDrop(wishingFountain.x, wishingFountain.y, 'epic');
+    addDamageText(wishingFountain.x, wishingFountain.y - 35, "🎁 고대 분수대에서 에픽 유물 발견!", true, '#9b59b6');
+  } else if (roll < 0.65) {
+    playerBuffs.swiftnessTimer = 60;
+    recalculateStats();
+    addDamageText(wishingFountain.x, wishingFountain.y - 35, "💨 바람의 가호! 이동속도 +50% (60s)", true, '#2ecc71');
+    } else {
+    playerBuffs.wellFedTimer = 60;
+    recalculateStats();
+    addDamageText(wishingFountain.x, wishingFountain.y - 35, "🍲 치유의 분수수! 체력 재생 활성화", true, '#ffd700');
+  }
+  saveGame();
+  updateHUD();
+}
+
+function openMerchantModal() {
+  const modal = document.getElementById('merchantModal');
+  const list = document.getElementById('merchantItemList');
+  list.innerHTML = '';
+
+  const items = [
+    { id: 'egg', name: '🎁 신비한 고대 유물 알', desc: '100% 에픽 또는 전설 세트 장비 즉시 부화', cost: 300, icon: '🥚' },
+    { id: 'titan', name: '🧪 타이탄의 불로초 비약', desc: '180초간 모든 공격력 +50% & 이동속도 +30%', cost: 150, icon: '🧪' },
+    { id: 'keystone', name: '🌀 심연의 고대 차원석', desc: '심연의 균열을 즉시 Wave 5로 건너뛰어 군주와 결전', cost: 250, icon: '🌀' }
+  ];
+
+  items.forEach(it => {
+    const row = document.createElement('div');
+    row.style.cssText = 'background:#16120c; border:1px solid #5a4427; border-radius:4px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center;';
+    row.innerHTML =
+      '<div>' +
+        '<div style="font-weight:bold; color:#ffd700;">' + it.icon + ' ' + it.name + '</div>' +
+        '<div style="font-size:10px; color:#aaa;">' + it.desc + ' | 가격: <b style="color:#f1c40f;">' + it.cost + 'G</b></div>' +
+      '</div>';
+
+    const buyBtn = document.createElement('button');
+    buyBtn.className = 'rpg-btn';
+    buyBtn.style.color = '#ffd700';
+    buyBtn.innerText = '구매';
+    buyBtn.onclick = () => buyMerchantItem(it);
+    row.appendChild(buyBtn);
+
+    list.appendChild(row);
+  });
+
+  modal.style.display = 'block';
+}
+
+function closeMerchantModal() {
+  document.getElementById('merchantModal').style.display = 'none';
+}
+
+function buyMerchantItem(it) {
+  if (inventory.gold < it.cost) {
+    addDamageText(player.x, player.y - 30, "골드가 부족합니다!", false, '#e74c3c');
+    return;
+  }
+  inventory.gold -= it.cost;
+  SoundEngine.playChestFanfare();
+  flashScreen('#ffd700', 0.35);
+
+  if (it.id === 'egg') {
+    spawnEquipmentDrop(player.x, player.y, Math.random() < 0.4 ? 'legendary' : 'epic');
+    addDamageText(player.x, player.y - 35, "🐣 고대 유물 부화 완료!", true, '#ffd700');
+  } else if (it.id === 'titan') {
+    playerBuffs.berserkTimer = 180;
+    playerBuffs.swiftnessTimer = 180;
+    recalculateStats();
+    addDamageText(player.x, player.y - 35, "💪 타이탄의 비약 활성화 (180s)!", true, '#ff4757');
+  } else if (it.id === 'keystone') {
+    riftWaveLevel = Math.max(riftWaveLevel, 5);
+    addDamageText(player.x, player.y - 35, "🌀 차원석 각성! 균열 Wave 5 개방!", true, '#e056fd');
+  }
+  saveGame();
+  updateHUD();
+}
+
+
+// ==========================================
+// ⚔️ COLISEUM TRIAL & ENCHANTMENT CONTROLLERS
+// ==========================================
+function toggleEnchantModal() {
+  const m = document.getElementById('enchantModal');
+  if (m.style.display === 'block') {
+    m.style.display = 'none';
+  } else {
+    m.style.display = 'block';
+    updateEnchantUI();
+  }
+}
+
+function selectEnchantment(type) {
+  activeEnchantment = type;
+  const names = {
+    none: '없음',
+    flame: '🔥 화염 폭발 (Flame Burst)',
+    frost: '❄️ 빙결 한기 (Frostbite)',
+    thunder: '⚡ 연쇄 번개 (Chain Lightning)',
+    vampire: '🩸 혈기 흡수 (Blood Curse)'
+  };
+  document.getElementById('currentEnchantName').innerText = names[type];
+  updateEnchantUI();
+  SoundEngine.playSlash(500);
+  addDamageText(player.x, player.y - 40, "✨ 인챈트 장착: " + names[type], true, '#ffd700');
+}
+
+function updateEnchantUI() {
+  ['flame', 'frost', 'thunder', 'vampire'].forEach(k => {
+    const el = document.getElementById('enchant' + k.charAt(0).toUpperCase() + k.slice(1) + 'Status');
+    if (el) {
+      el.innerText = activeEnchantment === k ? '✅ 장착 중' : '장착하기';
+      el.style.color = activeEnchantment === k ? '#2ecc71' : '#ffd700';
+    }
+  });
+}
+
+function toggleColiseum() {
+  if (currentZone !== "Coliseum") {
+    currentZone = "Coliseum";
+    player.x = 0; player.y = 80;
+    coliseumWave = 0;
+    coliseumMonsters = [];
+    document.getElementById('zoneIndicatorText').innerText = "🏟️ 고대 투기장";
+    showColiseumBanner("⚔️ 고대 투기장 입장 ⚔️", "5대 영광의 시련을 완수하고 챔피언에 등극하라!");
+    advanceColiseumWave();
+  } else {
+    currentZone = "OpenWorld";
+    player.x = 0; player.y = 0;
+    document.getElementById('zoneIndicatorText').innerText = "🗺️ 영웅의 성채";
+    addDamageText(player.x, player.y - 30, "☀️ 성채 복귀", true, '#ffd700');
+  }
+  updateHUD();
+}
+
+function showColiseumBanner(main, sub) {
+  const b = document.getElementById('coliseumBanner');
+  document.getElementById('coliseumMainTitle').innerText = main;
+  document.getElementById('coliseumSubTitle').innerText = sub;
+  b.classList.add('active');
+  coliseumBannerTimer = 3.5;
+  SoundEngine.playColiseumCheer();
+}
+
+SoundEngine.playColiseumCheer = function() {
+  if (!audioEnabled || !audioCtx) return;
+  try {
+    const freqs = [330, 440, 554.37, 659.25, 880];
+    freqs.forEach((f, idx) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(f, audioCtx.currentTime + idx * 0.08);
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime + idx * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.08 + 0.5);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(audioCtx.currentTime + idx * 0.08);
+      osc.stop(audioCtx.currentTime + idx * 0.08 + 0.5);
+    });
+  } catch(e) {}
+};
+
+function advanceColiseumWave() {
+  coliseumWave++;
+  coliseumMonsters = [];
+  if (coliseumWave === 1) {
+    showColiseumBanner("⚔️ 제 1 시련 ⚔️", "저주받은 미노타우로스 군단 격퇴");
+    coliseumMonsters.push(
+      { id: 701, type: "warrior", name: "저주받은 미노타우로스 1", col: 29, row: 6, x: -140, y: -60, hp: 1200, maxHP: 1200, speed: 100, isElite: true, attackTimer: 0, walkTimer: 0, squashX: 1, squashY: 1, hitFlashTimer: 0 },
+      { id: 702, type: "warrior", name: "저주받은 미노타우로스 2", col: 29, row: 6, x: 140, y: -60, hp: 1200, maxHP: 1200, speed: 100, isElite: true, attackTimer: 0, walkTimer: 0, squashX: 1, squashY: 1, hitFlashTimer: 0 }
+    );
+  } else if (coliseumWave === 2) {
+    showColiseumBanner("⚔️ 제 2 시련 ⚔️", "그림자 암살자 팬텀 부대 격퇴");
+    coliseumMonsters.push(
+      { id: 703, type: "archer", name: "그림자 팬텀 저격수", col: 27, row: 6, x: -120, y: 120, hp: 950, maxHP: 950, speed: 135, isElite: true, attackTimer: 0, walkTimer: 0, aimTimer: 0, squashX: 1, squashY: 1, hitFlashTimer: 0 },
+      { id: 704, type: "archer", name: "그림자 팬텀 암살자", col: 27, row: 6, x: 120, y: 120, hp: 950, maxHP: 950, speed: 135, isElite: true, attackTimer: 0, walkTimer: 0, aimTimer: 0, squashX: 1, squashY: 1, hitFlashTimer: 0 }
+    );
+  } else if (coliseumWave === 3) {
+    showColiseumBanner("⚔️ 제 3 시련 ⚔️", "쌍둥이 마그마 드레이크 토벌");
+    coliseumMonsters.push(
+      { id: 705, type: "necro", name: "화염의 드레이크 군주", col: 4, row: 4, x: 0, y: -100, hp: 2200, maxHP: 2200, speed: 90, isElite: true, attackTimer: 0, walkTimer: 0, summonTimer: 4.0, squashX: 1, squashY: 1, hitFlashTimer: 0 }
+    );
+  } else if (coliseumWave === 4) {
+    showColiseumBanner("⚔️ 제 4 시련 ⚔️", "고대 대강령술사 말라코르의 영혼 갈취");
+    coliseumMonsters.push(
+      { id: 706, type: "necro", name: "대강령술사 말라코르", col: 4, row: 4, x: -80, y: -40, hp: 2800, maxHP: 2800, speed: 95, isElite: true, attackTimer: 0, walkTimer: 0, summonTimer: 3.0, squashX: 1, squashY: 1, hitFlashTimer: 0 }
+    );
+  } else if (coliseumWave === 5) {
+    showColiseumBanner("👑 최종 결전: 그랜드 챔피언 👑", "불멸의 아레스 더 언브로큰 등장!");
+    coliseumMonsters.push(
+      { id: 799, type: "elite", name: "불멸의 챔피언 아레스", col: 29, row: 6, x: 0, y: -70, hp: 5000, maxHP: 5000, speed: 120, isElite: true, attackTimer: 0, walkTimer: 0, squashX: 1.4, squashY: 1.4, hitFlashTimer: 0 }
+    );
+  } else {
+    // VICTORY
+    showColiseumBanner("🏆 투기장 전설 등극! 🏆", "영광의 메달 100개 & 보석 5개 획득!");
+    inventory.gold += 3000;
+    inventory.gems += 5;
+    coliseumMedals += 100;
+    SoundEngine.playAchievementFanfare();
+    flashScreen('#ffd700', 0.5);
+    doShake(15);
+    currentZone = "OpenWorld";
+    player.x = 0; player.y = 0;
+  }
+}
+
+function togglePetEvolutionModal() {
+  const m = document.getElementById('petEvolutionModal');
+  if (m.style.display === 'block') {
+    m.style.display = 'none';
+  } else {
+    m.style.display = 'block';
+    updatePetEvolutionUI();
+  }
+}
+
+function updatePetEvolutionUI() {
+  const cur = PET_EVOLUTIONS[Math.min(petFriendshipLevel - 1, PET_EVOLUTIONS.length - 1)];
+  document.getElementById('petEvolutionIcon').innerText = cur.icon;
+  document.getElementById('petEvolutionName').innerText = cur.name + " (Lv." + petFriendshipLevel + ")";
+  document.getElementById('petEvolutionPerk').innerText = "효과: " + cur.perk;
+  const maxExp = petFriendshipLevel * 100;
+  document.getElementById('petExpText').innerText = petFriendshipExp + " / " + maxExp + " EXP";
+  document.getElementById('petExpFill').style.width = Math.min(100, Math.round((petFriendshipExp / maxExp) * 100)) + "%";
+}
+
+function feedMochiFish() {
+  if (hallOfFame.fishCaught <= 0) {
+    addDamageText(player.x, player.y - 30, "호수에서 낚은 물고기가 없습니다!", false, '#e74c3c');
+    return;
+  }
+  hallOfFame.fishCaught--;
+  petFriendshipExp += 35;
+  const maxExp = petFriendshipLevel * 100;
+  SoundEngine.playCatPounce();
+  if (petFriendshipExp >= maxExp && petFriendshipLevel < 5) {
+    petFriendshipExp -= maxExp;
+    petFriendshipLevel++;
+    SoundEngine.playLevelUp();
+    flashScreen('#e056fd', 0.4);
+    doShake(10);
+    addDamageText(player.x, player.y - 50, "🎉 모찌 영수 진화: Lv." + petFriendshipLevel + " 달성!", true, '#e056fd');
+    recalculateStats();
+  } else {
+    addDamageText(player.x, player.y - 30, "🐱 냠냠! 애정도 +35 EXP", false, '#2ecc71');
+  }
+  updatePetEvolutionUI();
+  updateHUD();
+}
+
+function toggleAquariumModal() {
+  const modal = document.getElementById('aquariumModal');
+  if (modal.style.display === 'block') {
+    modal.style.display = 'none';
+    } else {
+    modal.style.display = 'block';
+    let totalRate = 0;
+    aquariumFishList.forEach(f => totalRate += f.goldRate);
+    document.getElementById('aquariumIncomeRate').innerText = "5초당 +" + totalRate + " G";
+    renderAquariumCanvas();
+  }
+}
+
+function feedAquariumFish() {
+  if (inventory.gold < 10) {
+    addDamageText(player.x, player.y - 30, "골드가 부족합니다 (10G 필요)!", false, '#e74c3c');
+    return;
+  }
+  inventory.gold -= 10;
+  gainXP(100);
+  SoundEngine.playLoot();
+  SoundEngine.playWaterSplash();
+  flashScreen('#00d2d3', 0.2);
+  addDamageText(player.x, player.y - 35, "🍞 물고기 먹이 주기 완료! (+100 XP)", true, '#00d2d3');
+  aquariumFishList.forEach(f => {
+    f.vx = -f.vx * 1.5;
+  });
+  renderAquariumCanvas();
+  saveGame();
+  updateHUD();
+}
+
+function renderAquariumCanvas() {
+  const aqCanvas = document.getElementById('aquariumCanvas');
+  if (!aqCanvas) return;
+  const aqCtx = aqCanvas.getContext('2d');
+  aqCtx.fillStyle = '#06101e';
+  aqCtx.fillRect(0, 0, aqCanvas.width, aqCanvas.height);
+
+  // Seaweed & Bubbles
+  aqCtx.fillStyle = '#10ac84';
+  for (let sx = 20; sx < aqCanvas.width; sx += 50) {
+    const swSway = Math.sin(performance.now() * 0.003 + sx) * 6;
+    aqCtx.fillRect(sx + swSway, aqCanvas.height - 40, 4, 40);
+  }
+
+  // Draw Swimming Fish
+  aquariumFishList.forEach(f => {
+    f.x += f.vx * 0.016;
+    if (f.x < 15) { f.x = 15; f.vx = Math.abs(f.vx); }
+    if (f.x > aqCanvas.width - 25) { f.x = aqCanvas.width - 25; f.vx = -Math.abs(f.vx); }
+
+    const bob = Math.sin(performance.now() * 0.005 + f.x) * 4;
+    aqCtx.save();
+    aqCtx.translate(f.x, f.y + bob);
+    if (f.vx < 0) aqCtx.scale(-1, 1);
+    aqCtx.font = '20px serif';
+    aqCtx.textAlign = 'center';
+    aqCtx.fillText(f.icon, 0, 0);
+    aqCtx.restore();
+  });
+}
+
+
+// ==========================================
+// 🪦 11. CATACOMBS & RELIC TRANSMUTATION
+// ==========================================
+function interactCatacombs() {
+  if (currentZone === "OpenWorld") {
+    if (inventory.gems < 1) {
+      addDamageText(catacombDoorPos.x, catacombDoorPos.y - 40, "입장하려면 보석 1개가 필요합니다!", false, '#e74c3c');
+      return;
+    }
+    inventory.gems--;
+    currentZone = "AncientCatacombs";
+    player.x = 0; player.y = 120;
+    spawnCatacombMonsters();
+    SoundEngine.playDoorRumble();
+    flashScreen('#c5a059', 0.5);
+    doShake(12);
+    addDamageText(0, 0, "🪦 잊혀진 고대 카타콤 진입!", true, '#ffd700');
+    document.getElementById('zoneIndicatorText').innerText = "🪦 고대 카타콤";
+    } else {
+    currentZone = "OpenWorld";
+    player.x = catacombDoorPos.x; player.y = catacombDoorPos.y + 35;
+    addDamageText(player.x, player.y - 30, "☀️ 지상 성채 귀환", true, '#ffd700');
+    document.getElementById('zoneIndicatorText').innerText = "🗺️ 영웅의 성채";
+  }
+  updateHUD();
+}
+
+function spawnCatacombMonsters() {
+  catacombMonsters = [
+    { id: 801, name: "고대 무덤 수호병", col: 29, row: 6, x: -120, y: -40, hp: 950, maxHP: 950, speed: 90, isElite: true, attackTimer: 0, walkTimer: 0, squashX: 1, squashY: 1, hitFlashTimer: 0 },
+    { id: 802, name: "독침 풍뎅이 떼", col: 25, row: 6, x: 120, y: -40, hp: 650, maxHP: 650, speed: 130, isElite: false, attackTimer: 0, walkTimer: 0, squashX: 1, squashY: 1, hitFlashTimer: 0 },
+    catacombBoss
+  ];
+}
+
+// Transmutation UI
+function renderTransmuteUI() {
+  const list = document.getElementById('transmuteBackpackList');
+  if (!list) return;
+  list.innerHTML = '';
+  document.getElementById('transmuteSelectedCount').innerText = transmutingSlots.length + " / 3";
+
+  if (inventory.backpack.length === 0) {
+    list.innerHTML = '<div style="color:#666; text-align:center; padding:10px;">합성할 배낭 유물이 없습니다.</div>';
+    return;
+  }
+
+  inventory.backpack.forEach((item, idx) => {
+    const isSel = transmutingSlots.includes(idx);
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:4px 8px; border-bottom:1px solid #23190e; background:' + (isSel ? '#3d2d1a' : 'transparent') + ';';
+    row.innerHTML =
+      '<div>' +
+        '<span style="color:' + item.color + '; font-weight:bold;">' + item.name + '</span>' +
+        '<span style="color:#aaa; font-size:9.5px; margin-left:6px;">[' + item.rarity.toUpperCase() + ']</span>' +
+      '</div>';
+
+    const selBtn = document.createElement('button');
+    selBtn.className = 'rpg-btn';
+    selBtn.style.padding = '2px 8px';
+    selBtn.style.fontSize = '9px';
+    selBtn.innerText = isSel ? '해제' : '선택';
+    selBtn.onclick = () => toggleTransmuteSelect(idx);
+    row.appendChild(selBtn);
+
+    list.appendChild(row);
+  });
+}
+
+function toggleTransmuteSelect(idx) {
+  const pos = transmutingSlots.indexOf(idx);
+  if (pos !== -1) {
+    transmutingSlots.splice(pos, 1);
+    } else {
+    if (transmutingSlots.length >= 3) {
+      addDamageText(player.x, player.y - 30, "최대 3개까지만 선택할 수 있습니다!", false, '#e74c3c');
+      return;
+    }
+    transmutingSlots.push(idx);
+  }
+  renderTransmuteUI();
+}
+
+function executeTransmutation() {
+  if (transmutingSlots.length < 3) {
+    addDamageText(player.x, player.y - 30, "합성하려면 유물 3개를 선택하십시오!", false, '#e74c3c');
+    return;
+  }
+  if (inventory.gold < 100) {
+    addDamageText(player.x, player.y - 30, "골드가 부족합니다 (100G 필요)!", false, '#e74c3c');
+    return;
+  }
+  inventory.gold -= 100;
+
+  // Remove chosen relics (sort desc to remove safely)
+  transmutingSlots.sort((a, b) => b - a);
+  transmutingSlots.forEach(i => inventory.backpack.splice(i, 1));
+  transmutingSlots = [];
+
+  // Spawn guaranteed Epic or Legendary Set Relic!
+  SoundEngine.playAchievementFanfare();
+  flashScreen('#ffd700', 0.5);
+  doShake(14);
+  spawnEquipmentDrop(player.x, player.y, Math.random() < 0.4 ? 'legendary' : 'epic');
+  addDamageText(player.x, player.y - 45, "✨ 유물 초월 합성 대성공!", true, '#ffd700');
+
+  saveGame();
+  renderBackpackUI();
+  renderTransmuteUI();
+  updateHUD();
+}
+
+SoundEngine.playDoorRumble = function() {
+  if (!audioEnabled || !audioCtx) return;
+  try {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(60, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(25, audioCtx.currentTime + 0.9);
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.9);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.9);
+  } catch(e) {}
+};
+
 function gameLoop(now) {
   const dt = Math.min(0.1, (now - lastTime) / 1000);
   lastTime = now;
