@@ -171,18 +171,18 @@ GAMES = [
     {
         "session": "11",
         "slug": "fps-arena",
-        "title": "타르코프 익스트랙션: 오픈월드",
-        "sub_title": "ESCAPE FROM TARKOV : EXTRACTION ZONE",
+        "title": "아웃포스트 서바이버: 오픈월드 RPG",
+        "sub_title": "OUTPOST SURVIVOR : OPEN WORLD RPG",
         "category": "action",
         "category_name": "아케이드/액션",
-        "genre": "오픈월드 하드코어 익스트랙션 슈터",
+        "genre": "오픈월드 전술 RPG 파밍 슈터",
         "platform": "Web HTML5",
-        "tech": "Three.js · Procedural Tarkov World & Looting Engine",
+        "tech": "Three.js · Dynamic Quest & RPG Skill Engine",
         "score": 100,
         "fun": 99,
-        "desc": "오픈월드 전장, 상자 및 적 시체 실시간 전리품 파밍, 부위별 신체 체력 및 골절/출혈 시스템, 스캐브 AI 교전 및 연막 탈출구(Exfil) 생환 하드코어 FPS.",
-        "icon": "🎒",
-        "theme_color": "#c8a45d"
+        "desc": "안전 기지 스폰, 배그풍 보급 투하 및 보스 레이드, RPG 스킬 트리/레벨업, 자동 재생 실드 및 대미지 팝업의 완성도 높은 오픈월드 파밍 슈터.",
+        "icon": "⚡",
+        "theme_color": "#00f0ff"
     },
     {
         "session": "12",

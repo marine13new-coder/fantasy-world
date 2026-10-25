@@ -3,321 +3,335 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>ESCAPE FROM TARKOV : EXTRACTION ZONE (타르코프 하드코어 오픈월드 2.0)</title>
+<title>OUTPOST PROTOCOL : TACTICAL RPG (오픈월드 전술 파밍 RPG 3.0)</title>
 <style>
 :root{
-  --eft-green:#3bb346;
-  --eft-gold:#c8a45d;
-  --eft-red:#e03e3e;
-  --eft-dark:#080b0f;
-  --eft-panel:rgba(12,16,22,0.95);
-  --eft-border:#222d3b;
-  --eft-cyan:#22d3ee;
-  --eft-nvg:#10ff70;
+  --rpg-gold:#f5c542;
+  --rpg-cyan:#00f0ff;
+  --rpg-red:#ff4655;
+  --rpg-green:#22c55e;
+  --rpg-purple:#c084fc;
+  --rpg-panel:rgba(10,15,22,0.94);
+  --rpg-border:#223040;
 }
 *{box-sizing:border-box}
-body{margin:0;background:#05070a;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;color:#ece8e1;user-select:none}
+body{margin:0;background:#06080d;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;color:#ece8e1;user-select:none}
 canvas#c{display:block;width:100vw;height:100vh}
 #ui{position:fixed;inset:0;pointer-events:none}
 
-/* 상단 전술 나침반 (Compass HUD) & 레이드 타이머 */
+/* 상단 RPG 레벨 & 경험치 프로그레스 & 전술 나침반 */
 #top-hud{
-  position:absolute;top:14px;left:50%;transform:translateX(-50%);
-  display:flex;align-items:center;gap:24px;
-  background:var(--eft-panel);border:1px solid var(--eft-border);border-top:2px solid var(--eft-gold);
-  padding:6px 28px;border-radius:4px;box-shadow:0 8px 30px rgba(0,0,0,0.85);
+  position:absolute;top:12px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  background:var(--rpg-panel);border:1px solid var(--rpg-border);border-top:3px solid var(--rpg-cyan);
+  padding:6px 28px;border-radius:6px;box-shadow:0 8px 30px rgba(0,0,0,0.85);
+  min-width:460px;backdrop-filter:blur(8px);
 }
-#compass-bar{
-  width:280px;height:24px;background:#0d1218;border:1px solid #1a232f;border-radius:3px;
-  position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;
-}
+.level-row{display:flex;justify-content:space-between;width:100%;align-items:center;font-size:12.5px;font-weight:800}
+#player-lvl{color:var(--rpg-gold);font-size:15px}
+#stat-points{color:var(--rpg-cyan);font-size:12px}
+#exp-text{color:#8ba2b5;font-size:11px}
+.exp-track{width:100%;height:6px;background:#131c26;border-radius:3px;overflow:hidden}
+#exp-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--rpg-cyan),#38ef7d);transition:width .2s}
+
+/* 나침반 바 */
 #compass-strip{
-  position:absolute;white-space:nowrap;font-family:monospace;font-size:12px;letter-spacing:14px;
-  color:#8ba2b5;font-weight:700;transition:transform .04s linear;
+  font-family:monospace;font-size:11px;color:#7e93a6;letter-spacing:10px;
+  margin-top:2px;font-weight:700;
 }
-#compass-needle{position:absolute;width:2px;height:14px;background:var(--eft-gold);z-index:2}
-#raid-timer{font-size:18px;color:var(--eft-gold);font-weight:900;font-variant-numeric:tabular-nums;min-width:65px;text-align:center}
-#raid-status{font-size:11px;color:#8ba2b5;letter-spacing:1px;font-weight:700}
 
-/* 좌하단 타르코프 신체 상태 & 부상 모니터 */
-#hud-health{
-  position:absolute;bottom:24px;left:24px;
-  background:var(--eft-panel);border:1px solid var(--eft-border);border-left:4px solid var(--eft-green);
-  padding:14px 20px;border-radius:4px;box-shadow:0 8px 25px rgba(0,0,0,0.8);
-  min-width:260px;backdrop-filter:blur(6px);
+/* 좌상단 레이드 작전 퀘스트 패널 */
+#quest-box{
+  position:absolute;top:16px;left:16px;
+  background:var(--rpg-panel);border-left:4px solid var(--rpg-gold);border:1px solid var(--rpg-border);
+  padding:12px 18px;border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,0.7);
+  min-width:250px;backdrop-filter:blur(6px);
 }
-.health-title{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
-.health-title span{font-size:11px;color:#8ba2b5;font-weight:800;letter-spacing:1px}
-#hp-total{font-size:24px;font-weight:900;color:#fff}
-.part-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
-.part-box{background:#0e141c;padding:4px 8px;border-radius:3px;border:1px solid #182230;font-size:11px;display:flex;justify-content:space-between}
-.part-box.damaged{border-color:var(--eft-gold);color:var(--eft-gold)}
-.part-box.destroyed{border-color:var(--eft-red);color:var(--eft-red);background:rgba(224,62,62,0.12)}
-#debuff-bar{display:flex;gap:6px;margin-top:8px}
-.debuff-tag{font-size:10px;padding:2px 6px;border-radius:2px;font-weight:800;letter-spacing:.5px}
-.tag-bleed{background:#7a1a1a;color:#ff9999;border:1px solid #ff4444}
-.tag-pain{background:#634b12;color:#ffdf88;border:1px solid #e5b869}
-.tag-painkiller{background:#124823;color:#88ffaa;border:1px solid #22c55e}
-.tag-nvg{background:#0b3a1a;color:#70ff9a;border:1px solid #10ff70}
+#quest-box h4{margin:0 0 8px;font-size:13px;color:var(--rpg-gold);letter-spacing:1px}
+.quest-item{font-size:11.5px;color:#cbd5e1;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.quest-item.done{color:var(--rpg-green);text-decoration:line-through}
 
-/* 우하단 무기 & 탄약 & 무게 */
+/* 좌하단 실드 & 체력 HUD (5초 비피격 자동재생) */
+#hud-vital{
+  position:absolute;bottom:22px;left:22px;
+  background:var(--rpg-panel);border:1px solid var(--rpg-border);border-left:4px solid var(--rpg-cyan);
+  padding:14px 22px;border-radius:6px;box-shadow:0 8px 25px rgba(0,0,0,0.8);
+  min-width:270px;backdrop-filter:blur(6px);
+}
+.vital-row{display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#8ba2b5;margin-bottom:3px}
+.vital-track{width:230px;height:9px;background:#101720;border-radius:2px;overflow:hidden;margin-bottom:8px}
+#shield-fill{height:100%;width:100%;background:linear-gradient(90deg,#00b4d8,#00f0ff);transition:width .15s}
+#hp-fill{height:100%;width:100%;background:linear-gradient(90deg,#10b981,#34d399);transition:width .15s}
+#armor-tier{font-size:11px;color:var(--rpg-purple);font-weight:800}
+
+/* 우하단 배틀그라운드 무기 & 스탠스 HUD */
 #hud-weapon{
-  position:absolute;bottom:24px;right:24px;
-  background:var(--eft-panel);border:1px solid var(--eft-border);border-right:4px solid var(--eft-gold);
-  padding:14px 24px;border-radius:4px;text-align:right;box-shadow:0 8px 25px rgba(0,0,0,0.8);
+  position:absolute;bottom:22px;right:22px;
+  background:var(--rpg-panel);border:1px solid var(--rpg-border);border-right:4px solid var(--rpg-gold);
+  padding:14px 26px;border-radius:6px;text-align:right;box-shadow:0 8px 25px rgba(0,0,0,0.8);
   min-width:260px;backdrop-filter:blur(6px);
 }
-#ammo-display{font-size:38px;font-weight:900;color:#fff;line-height:1}
-#weapon-title{font-size:15px;color:var(--eft-gold);font-weight:900;letter-spacing:1px;margin-top:4px}
-#caliber-mode{font-size:11px;color:#8ba2b5;margin-top:2px}
-#weight-tag{font-size:11px;color:#a0b0be;margin-top:6px;font-weight:700}
-#stance-tag{font-size:11px;color:var(--eft-cyan);margin-top:2px;font-weight:800}
+#ammo-val{font-size:38px;font-weight:900;color:#fff;line-height:1}
+#wep-name{font-size:16px;color:var(--rpg-gold);font-weight:900;letter-spacing:1px;margin-top:4px}
+#wep-tier{font-size:11px;color:var(--rpg-purple);font-weight:800}
+#stance-indicator{font-size:11px;color:var(--rpg-cyan);font-weight:700;margin-top:4px}
 
-/* 중앙 하단 전술 핫키 */
-#quick-slots{
-  position:absolute;bottom:24px;left:50%;transform:translateX(-50%);
+/* 중앙 하단 전술 액티브 스킬 & 핫바 */
+#hotbar{
+  position:absolute;bottom:22px;left:50%;transform:translateX(-50%);
   display:flex;gap:5px;
 }
-.q-box{
-  background:var(--eft-panel);border:1px solid var(--eft-border);padding:6px 9px;
-  border-radius:4px;text-align:center;min-width:58px;font-size:10.5px;
-  box-shadow:0 4px 14px rgba(0,0,0,0.6);
+.hb-slot{
+  background:var(--rpg-panel);border:1px solid var(--rpg-border);padding:7px 10px;
+  border-radius:4px;text-align:center;min-width:62px;font-size:10.5px;
+  box-shadow:0 4px 14px rgba(0,0,0,0.6);transition:all .15s;
 }
-.q-box.active{border-color:var(--eft-gold);background:rgba(200,164,93,0.18)}
-.q-box b{display:block;font-size:11.5px;color:var(--eft-cyan);margin-bottom:2px}
+.hb-slot.active{border-color:var(--rpg-cyan);background:rgba(0,240,255,0.18);box-shadow:0 0 12px rgba(0,240,255,0.4)}
+.hb-slot b{display:block;font-size:11.5px;color:var(--rpg-gold);margin-bottom:2px}
+.cd-overlay{font-size:10px;color:#ff8888;font-weight:800}
 
-/* 인터랙션 프롬프트 */
-#interact-prompt{
+/* 상호작용 프롬프트 */
+#prompt{
   position:absolute;top:58%;left:50%;transform:translate(-50%,-50%);
-  background:rgba(12,16,22,0.92);border:1px solid var(--eft-gold);padding:8px 20px;
+  background:rgba(12,18,26,0.94);border:1px solid var(--rpg-cyan);padding:8px 22px;
   border-radius:4px;color:#fff;font-size:14px;font-weight:800;letter-spacing:1px;
-  display:none;box-shadow:0 0 20px rgba(200,164,93,0.4);
+  display:none;box-shadow:0 0 20px rgba(0,240,255,0.4);
 }
-#interact-prompt kbd{background:var(--eft-gold);color:#000;padding:2px 6px;border-radius:3px;margin-right:6px}
+#prompt kbd{background:var(--rpg-cyan);color:#000;padding:2px 7px;border-radius:3px;margin-right:6px}
+
+/* RPG 플로팅 대미지 팝업 */
+#dmg-layer{position:fixed;inset:0;pointer-events:none;z-index:35}
+.dmg-pop{
+  position:absolute;font-size:18px;font-weight:900;color:#fff;
+  text-shadow:0 0 8px rgba(0,0,0,0.9), 0 2px 4px #000;
+  animation:floatUp .8s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+.dmg-pop.crit{color:var(--rpg-gold);font-size:24px}
+@keyframes floatUp{0%{opacity:0;transform:translateY(10px) scale(0.8)}20%{opacity:1;transform:translateY(0) scale(1.1)}100%{opacity:0;transform:translateY(-38px) scale(1)}}
+
+/* 배너 & 알림 */
+#banner{
+  position:absolute;top:20%;left:50%;transform:translateX(-50%);
+  font-size:32px;font-weight:900;color:var(--rpg-gold);letter-spacing:3px;
+  text-shadow:0 0 25px rgba(245,197,66,0.8);opacity:0;transition:all .2s;pointer-events:none;text-align:center;
+}
+#kill-badge{
+  position:absolute;bottom:140px;left:50%;transform:translateX(-50%);
+  font-size:22px;font-weight:900;color:#fff;letter-spacing:2px;
+  text-shadow:0 0 15px rgba(0,240,255,0.7);opacity:0;transition:all .15s;
+}
 
 /* 탈출 카운트다운 배너 */
 #extract-banner{
   position:absolute;top:28%;left:50%;transform:translateX(-50%);
-  background:rgba(20,40,25,0.95);border:2px solid var(--eft-green);padding:14px 34px;
-  border-radius:6px;text-align:center;box-shadow:0 0 35px rgba(59,179,70,0.6);
+  background:rgba(18,34,22,0.96);border:2px solid var(--rpg-green);padding:14px 34px;
+  border-radius:6px;text-align:center;box-shadow:0 0 35px rgba(34,197,94,0.6);
   display:none;
 }
-#extract-banner h2{margin:0 0 4px;font-size:24px;color:var(--eft-green);letter-spacing:2px}
-#extract-banner p{margin:0;font-size:14px;color:#bfe8c4}
+#extract-banner h2{margin:0 0 4px;font-size:24px;color:var(--rpg-green);letter-spacing:2px}
+#extract-banner p{margin:0;font-size:14px;color:#dcfce7}
 
-/* 야간투시경 (NVG) 오버레이 필터 */
-#nvg-overlay{
-  position:fixed;inset:0;pointer-events:none;display:none;z-index:32;
-  background:radial-gradient(circle at center, rgba(16,255,112,0.22) 20%, rgba(5,60,25,0.7) 70%, #021206 95%);
-  mix-blend-mode:screen;
-}
-#nvg-overlay::after{
-  content:'';position:absolute;inset:0;
-  background:repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 2px, transparent 2px, transparent 4px);
-}
-
-/* 저격 스코프 오버레이 */
-#scope-overlay{
-  position:fixed;inset:0;pointer-events:none;display:none;z-index:35;
-  background:radial-gradient(circle at center, transparent 32%, rgba(0,0,0,0.96) 38%, #000 70%);
-}
-#scope-overlay::before,#scope-overlay::after{content:'';position:absolute;background:rgba(200,164,93,0.85)}
-#scope-overlay::before{top:0;bottom:0;left:50%;width:1.5px}
-#scope-overlay::after{left:0;right:0;top:50%;height:1.5px}
-
-/* 타르코프 전술 배낭 인벤토리 모달 [Tab] */
-#inventory-modal{
+/* 스킬 & 인벤토리 모달 [Tab] */
+#rpg-modal{
   position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:900px;height:550px;background:rgba(10,14,18,0.97);border:2px solid var(--eft-border);
+  width:880px;height:540px;background:rgba(10,15,22,0.98);border:2px solid var(--rpg-cyan);
   border-radius:6px;box-shadow:0 20px 60px rgba(0,0,0,0.95);
   display:none;z-index:90;backdrop-filter:blur(10px);pointer-events:auto;
   flex-direction:column;
 }
-.inv-header{
-  padding:14px 20px;border-bottom:1px solid var(--eft-border);display:flex;
-  justify-content:space-between;align-items:center;background:#121822;
+.modal-header{
+  padding:14px 22px;border-bottom:1px solid var(--rpg-border);display:flex;
+  justify-content:space-between;align-items:center;background:#101722;
 }
-.inv-header h3{margin:0;font-size:16px;letter-spacing:2px;color:var(--eft-gold)}
-.inv-body{display:flex;flex:1;overflow:hidden}
-.inv-panel{flex:1;padding:16px;border-right:1px solid var(--eft-border);overflow-y:auto}
-.inv-panel:last-child{border-right:none}
-.inv-panel h4{margin:0 0 12px;font-size:13px;color:#8ba2b5;letter-spacing:1px;text-transform:uppercase}
-.loot-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.item-card{
-  background:#141c26;border:1px solid #233142;padding:10px;border-radius:4px;
-  font-size:11.5px;cursor:pointer;transition:all .15s;position:relative;
+.modal-header h3{margin:0;font-size:16px;letter-spacing:2px;color:var(--rpg-gold)}
+.modal-body{display:flex;flex:1;overflow:hidden}
+.modal-col{flex:1;padding:18px;border-right:1px solid var(--rpg-border);overflow-y:auto}
+.modal-col:last-child{border-right:none}
+.modal-col h4{margin:0 0 12px;font-size:13px;color:#8ba2b5;letter-spacing:1px;text-transform:uppercase}
+.skill-card{
+  background:#141c26;border:1px solid #233142;padding:12px;border-radius:4px;
+  margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;
 }
-.item-card:hover{border-color:var(--eft-gold);background:#1d2837}
-.item-card b{display:block;font-size:12px;color:#fff;margin-bottom:3px}
-.item-card .val{color:var(--eft-gold);font-weight:700}
-.item-card .rarity{font-size:9.5px;padding:1px 4px;border-radius:2px;position:absolute;top:6px;right:6px}
-.rarity-med{background:#1d4224;color:#7ee787}
-.rarity-rare{background:#582f6e;color:#d2a8ff}
-.rarity-val{background:#634b12;color:#ffd700}
+.skill-card b{display:block;font-size:13px;color:#fff}
+.skill-card p{margin:2px 0 0;font-size:11px;color:#8ba2b5}
+.btn-up{
+  background:var(--rpg-cyan);color:#000;border:none;padding:6px 14px;
+  font-weight:900;border-radius:3px;cursor:pointer;font-size:11px;
+}
+.btn-up:hover{background:#38ef7d}
 
 /* 상인 & 암시장 거래소 모달 [B] */
 #trader-modal{
   position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:920px;height:560px;background:rgba(8,11,16,0.98);border:2px solid var(--eft-gold);
+  width:900px;height:540px;background:rgba(8,11,16,0.98);border:2px solid var(--rpg-gold);
   border-radius:6px;box-shadow:0 25px 70px rgba(0,0,0,0.95);
   display:none;z-index:95;backdrop-filter:blur(10px);pointer-events:auto;
   flex-direction:column;
 }
-.trader-tabs{display:flex;border-bottom:1px solid var(--eft-border);background:#101620}
+.trader-tabs{display:flex;border-bottom:1px solid var(--rpg-border);background:#101620}
 .trader-tab{padding:12px 24px;cursor:pointer;font-weight:700;font-size:13px;color:#8ba2b5;border-bottom:2px solid transparent}
-.trader-tab.active{color:var(--eft-gold);border-bottom-color:var(--eft-gold);background:#151d2a}
+.trader-tab.active{color:var(--rpg-gold);border-bottom-color:var(--rpg-gold);background:#151d2a}
+.shop-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:16px}
+.item-card{
+  background:#141c26;border:1px solid #233142;padding:10px;border-radius:4px;
+  font-size:11.5px;cursor:pointer;transition:all .15s;position:relative;
+}
+.item-card:hover{border-color:var(--rpg-gold);background:#1d2837}
+.item-card b{display:block;font-size:12px;color:#fff;margin-bottom:3px}
+.item-card .val{color:var(--rpg-gold);font-weight:700}
 
-/* 레이드 정산 결과 화면 */
+/* 정산 모달 */
 #result-modal{
   position:fixed;inset:0;background:rgba(6,9,13,0.97);display:none;
   flex-direction:column;align-items:center;justify-content:center;
   z-index:100;pointer-events:auto;
 }
-#result-modal h1{font-size:46px;margin:0 0 8px;letter-spacing:4px}
-#result-modal.survived h1{color:var(--eft-green);text-shadow:0 0 25px rgba(59,179,70,0.5)}
-#result-modal.kia h1{color:var(--eft-red);text-shadow:0 0 25px rgba(224,62,62,0.5)}
+#result-modal h1{font-size:48px;margin:0 0 8px;letter-spacing:4px;color:var(--rpg-gold);text-shadow:0 0 30px rgba(245,197,66,0.6)}
 .res-card{
-  background:#121822;border:1px solid var(--eft-border);padding:24px 36px;
+  background:#121822;border:1px solid var(--rpg-border);padding:24px 38px;
   border-radius:6px;min-width:440px;margin-top:16px;box-shadow:0 10px 30px rgba(0,0,0,0.7);
 }
-.res-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1d2633;font-size:14px}
-.res-row:last-child{border-bottom:none;font-weight:900;font-size:16px;color:var(--eft-gold)}
-.btn-eft{
-  background:var(--eft-gold);color:#0a0d10;border:none;padding:12px 32px;
+.res-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #1d2633;font-size:14px}
+.res-row:last-child{border-bottom:none;font-weight:900;font-size:16px;color:var(--rpg-cyan)}
+.btn-act{
+  background:var(--rpg-cyan);color:#0a0d10;border:none;padding:12px 34px;
   font-weight:900;letter-spacing:1.5px;border-radius:4px;cursor:pointer;font-size:14px;margin-top:24px;
 }
-.btn-eft:hover{background:#dfbe78}
+.btn-act:hover{background:#38ef7d}
 
-#minimap{position:absolute;top:16px;left:16px;width:160px;height:160px;background:rgba(10,14,20,0.92);border:1px solid #233142;border-radius:4px}
 #ch-canvas{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;width:160px;height:160px;z-index:40}
 #hit-indicator{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .15s;z-index:30}
-#arcade-btn{position:absolute;top:16px;left:190px;font-size:12px;color:#ece8e1;background:var(--eft-panel);padding:7px 16px;border-radius:4px;border:1px solid var(--eft-border);pointer-events:auto;cursor:pointer;text-decoration:none}
-#arcade-btn:hover{background:var(--eft-gold);color:#000}
-#feed{position:absolute;top:70px;right:24px;display:flex;flex-direction:column;gap:6px;align-items:flex-end}
-.kf{background:rgba(12,18,26,0.95);border-right:3px solid var(--eft-gold);padding:6px 14px;font-size:12px;border-radius:3px}
-#banner{position:absolute;top:22%;left:50%;transform:translateX(-50%);font-size:28px;font-weight:900;color:var(--eft-gold);text-shadow:0 2px 20px rgba(0,0,0,0.9);letter-spacing:3px;opacity:0;transition:opacity .2s;pointer-events:none}
+#arcade-btn{position:absolute;top:16px;right:22px;font-size:12px;color:#ece8e1;background:var(--rpg-panel);padding:7px 16px;border-radius:4px;border:1px solid var(--rpg-border);pointer-events:auto;cursor:pointer;text-decoration:none}
+#arcade-btn:hover{background:var(--rpg-red);color:#fff}
 </style>
 </head>
 <body>
 <div id="ui">
- <canvas id="minimap" width="160" height="160"></canvas>
+ <div id="dmg-layer"></div>
  <a id="arcade-btn" href="../site/index.html">🏠 아케이드 포털로 나가기</a>
 
  <div id="top-hud">
-  <div id="compass-bar">
-   <div id="compass-needle"></div>
-   <div id="compass-strip">··· N ··· 030 ··· 060 ··· E ··· 120 ··· 150 ··· S ··· 210 ··· 240 ··· W ··· 300 ··· 330 ··· N ···</div>
+  <div class="level-row">
+   <span id="player-lvl">LV. 1 특수작전 요원</span>
+   <span id="stat-points">가용 스킬 포인트: <b>0</b> SP</span>
+   <span id="exp-text">EXP 0 / 100</span>
   </div>
-  <div>
-   <div id="raid-timer">15:00</div>
-   <div id="raid-status">CUSTOMS INDUSTRIAL FIELD</div>
-  </div>
+  <div class="exp-track"><div id="exp-fill"></div></div>
+  <div id="compass-strip">··· N ··· 030 ··· 060 ··· E ··· 120 ··· 150 ··· S ··· 210 ··· 240 ··· W ··· 300 ··· 330 ··· N ···</div>
  </div>
 
- <div id="feed"></div>
+ <div id="quest-box">
+  <h4>📜 레이드 전술 미션</h4>
+  <div class="quest-item" id="q-scav">🎯 약탈자 스캐브 소탕 (0 / 4)</div>
+  <div class="quest-item" id="q-box">📦 전술 보급 상자 파밍 (0 / 2)</div>
+  <div class="quest-item" id="q-boss">👑 저격탑 보스 글루하르 처치 (0 / 1)</div>
+  <div class="quest-item" id="q-exfil">🚁 녹색 신호탄 탈출 지점 생환</div>
+ </div>
+
  <div id="banner"></div>
- <div id="interact-prompt"><kbd>F</kbd> <span id="prompt-txt">루팅하기</span></div>
+ <div id="kill-badge">KILL +60 EXP</div>
+ <div id="prompt"><kbd>F</kbd> <span id="prompt-txt">상호작용</span></div>
+
  <div id="extract-banner">
   <h2>탈출 진행 중 (EXTRACTING)</h2>
-  <p><b id="extract-time" style="color:#fff;font-size:22px">7.0</b>초 동안 탈출 구역 유지</p>
+  <p><b id="extract-time" style="color:#fff;font-size:22px">5.0</b>초 동안 탈출 구역 유지</p>
  </div>
 
- <div id="hud-health">
-  <div class="health-title">
-   <span>PHYSICAL STATUS (신체 모니터)</span>
-   <span id="hp-total">440 / 440</span>
-  </div>
-  <div class="part-grid">
-   <div class="part-box" id="part-head"><span>머리 (Head)</span><b id="hp-head">35/35</b></div>
-   <div class="part-box" id="part-thorax"><span>흉부 (Thorax)</span><b id="hp-thorax">85/85</b></div>
-   <div class="part-box" id="part-stomach"><span>복부 (Stomach)</span><b id="hp-stomach">70/70</b></div>
-   <div class="part-box" id="part-arms"><span>양팔 (Arms)</span><b id="hp-arms">120/120</b></div>
-   <div class="part-box" id="part-legs" style="grid-column:span 2"><span>양다리 (Legs)</span><b id="hp-legs">130/130</b></div>
-  </div>
-  <div id="debuff-bar">
-   <span class="debuff-tag tag-painkiller" id="tag-painkiller" style="display:none">진통제 활성</span>
-   <span class="debuff-tag tag-bleed" id="tag-bleed" style="display:none">출혈 지속 중 (-HP)</span>
-   <span class="debuff-tag tag-pain" id="tag-limp" style="display:none">다리 골절 (절뚝거림)</span>
-   <span class="debuff-tag tag-nvg" id="tag-nvg" style="display:none">NVG 나이트비전 ON</span>
-  </div>
- </div>
-
- <div id="quick-slots">
-  <div class="q-box" id="q-1"><b>[1] M4A1</b>5.56 소음돌격</div>
-  <div class="q-box" id="q-2"><b>[2] AK-74M</b>5.45 커스텀</div>
-  <div class="q-box" id="q-3"><b>[3] SV-98</b>7.62 스나이퍼</div>
-  <div class="q-box" id="q-4"><b>[4] IFAK</b>지혈/응급킷</div>
-  <div class="q-box" id="q-5"><b>[5] 진통제</b>골절 통증 완화</div>
-  <div class="q-box"><b>[Q/E]</b>좌우 린</div>
-  <div class="q-box"><b>[C]</b>앉기/은폐</div>
-  <div class="q-box"><b>[N]</b>야간투시경</div>
-  <div class="q-box"><b>[B]</b>전술상인</div>
-  <div class="q-box"><b>[Tab]</b>전술배낭</div>
-  <div class="q-box"><b>[T]</b>라이트</div>
-  <div class="q-box"><b>[R]</b>탄창교체</div>
+ <div id="hud-vital">
+  <div class="vital-row"><span>KEVLAR SHIELD (5초 비피격 시 자동 재생)</span><span id="shield-val">100 / 100</span></div>
+  <div class="vital-track"><div id="shield-fill"></div></div>
+  <div class="vital-row"><span>AGENT HEALTH</span><span id="hp-val">100 / 100</span></div>
+  <div class="vital-track"><div id="hp-fill"></div></div>
+  <div id="armor-tier">🛡️ 방탄 장비: LEVEL 2 헬멧 & 방탄복</div>
  </div>
 
  <div id="hud-weapon">
-  <div id="caliber-mode">5.56x45MM M855A1 · 전자동</div>
-  <div id="ammo-display">30 / 90</div>
-  <div id="weapon-title">COLT M4A1 CUSTOM</div>
-  <div id="stance-tag">서서쏴 [기본 자세]</div>
-  <div id="weight-tag">🎒 배낭 중량: 14.2 kg (적정)</div>
+  <div id="wep-tier">⭐⭐⭐ RARE ASSAULT RIFLE</div>
+  <div id="ammo-val">30 / 120</div>
+  <div id="wep-name">M4A1-S TACTICAL</div>
+  <div id="stance-indicator">서서쏴 [기본 자세]</div>
+ </div>
+
+ <div id="hotbar">
+  <div class="hb-slot active" id="hb-1"><b>[1] M4A1</b>소음돌격</div>
+  <div class="hb-slot" id="hb-2"><b>[2] AK-47</b>중화기소총</div>
+  <div class="hb-slot" id="hb-3"><b>[3] AWM</b>헤비저격총</div>
+  <div class="hb-slot" id="hb-4"><b>[4] 샷건</b>SPAS-12</div>
+  <div class="hb-slot" id="hb-q"><b>[Q] 드론</b><span id="cd-q">적 탐지</span></div>
+  <div class="hb-slot" id="hb-e"><b>[E] 나노스팀</b><span id="cd-e">실드충전</span></div>
+  <div class="hb-slot" id="hb-g"><b>[G] 수류탄</b><span id="cnt-g">2개 소지</span></div>
+  <div class="hb-slot"><b>[Tab]</b>스킬/스탯</div>
+  <div class="hb-slot"><b>[B]</b>암시장상인</div>
+  <div class="hb-slot"><b>[C]</b>앉기</div>
+  <div class="hb-slot"><b>[R]</b>장전</div>
  </div>
 
  <canvas id="ch-canvas" width="160" height="160"></canvas>
- <div id="nvg-overlay"></div>
- <div id="scope-overlay"></div>
  <div id="hit-indicator"></div>
 
- <!-- 타르코프 전술 배낭 인벤토리 모달 [Tab] -->
- <div id="inventory-modal">
-  <div class="inv-header">
-   <h3>🎒 TACTICAL BACKPACK & STASH (전술 파밍 배낭)</h3>
-   <div style="font-size:13px;color:var(--eft-gold)">총 전리품 가치: <b id="inv-total-val">₽ 0</b></div>
+ <!-- RPG 스킬/스탯 모달 [Tab] -->
+ <div id="rpg-modal">
+  <div class="modal-header">
+   <h3>⚡ OPERATOR SKILLS & STATS (전술 특성 강화)</h3>
+   <div style="font-size:13px;color:var(--rpg-cyan)">가용 스킬 포인트: <b id="modal-sp">0</b></div>
   </div>
-  <div class="inv-body">
-   <div class="inv-panel" style="flex:1.2">
-    <h4>내 전술 배낭 (Tri-Zip Backpack)</h4>
-    <div class="loot-grid" id="backpack-grid"></div>
-   </div>
-   <div class="inv-panel">
-    <h4>상자 / 시체 전리품 보관함</h4>
-    <div class="loot-grid" id="loot-container-grid">
-     <div style="color:#678;font-size:12px;grid-column:span 4">상자나 시체 근처에서 [F]를 누르면 전리품을 수색합니다.</div>
+  <div class="modal-body">
+   <div class="modal-col">
+    <h4>전투 스탯 트리</h4>
+    <div class="skill-card">
+     <div><b>[화력 증강] 무기 대미지 증가</b><p>모든 총기 대미지 +15% (현재: <span id="stat-dmg">+0%</span>)</p></div>
+     <button class="btn-up" onclick="upgradeSkill('dmg')">강화</button>
+    </div>
+    <div class="skill-card">
+     <div><b>[나노 실드] 방어막 용량 증대</b><p>최대 실드 +25 (현재: <span id="stat-shd">100</span>)</p></div>
+     <button class="btn-up" onclick="upgradeSkill('shd')">강화</button>
+    </div>
+    <div class="skill-card">
+     <div><b>[신속 기동] 기동 속도 증가</b><p>이동 및 달리기 속도 +10% (현재: <span id="stat-spd">+0%</span>)</p></div>
+     <button class="btn-up" onclick="upgradeSkill('spd')">강화</button>
+    </div>
+    <div class="skill-card">
+     <div><b>[흡혈 탄환] 처치 시 실드 회복</b><p>적 처치 시 실드 30 즉각 충전 (현재: <span id="stat-vamp">Lv.0</span>)</p></div>
+     <button class="btn-up" onclick="upgradeSkill('vamp')">강화</button>
     </div>
    </div>
-  </div>
- </div>
-
- <!-- 상인 & 은신처 모달 [B] -->
- <div id="trader-modal">
-  <div class="inv-header">
-   <h3>🏛️ PRAPOR & PEACEKEEPER 전술 상인 거래소</h3>
-   <div style="font-size:13px;color:var(--eft-gold)">보유 자산: <b id="trader-wallet">₽ 250,000</b></div>
-  </div>
-  <div class="trader-tabs">
-   <div class="trader-tab active" onclick="switchTraderTab('buy')">전술 장비 구매 (Shop)</div>
-   <div class="trader-tab" onclick="switchTraderTab('sell')">전리품 일괄 매각 (Sell All Valuables)</div>
-  </div>
-  <div class="inv-body">
-   <div class="inv-panel" id="trader-shop-panel">
-    <div class="loot-grid" id="trader-items-grid"></div>
+   <div class="modal-col">
+    <h4>작전 기록 및 안내</h4>
+    <p style="font-size:13px;color:#cbd5e1;line-height:1.8">
+     • 처치한 적: <b id="stat-kills" style="color:var(--rpg-cyan)">0</b> 명<br>
+     • 파밍한 보급 상자: <b id="stat-crates" style="color:var(--rpg-gold)">0</b> 개<br>
+     • 보유 루블: <b id="stat-rub" style="color:var(--rpg-green)">₽ 250,000</b><br>
+     • 안전 기지: 시작 지점은 안전 구역입니다.<br>
+     • 퀘스트 수행 후 동북쪽 녹색 신호탄 탈출 지점으로 생환하세요!
+    </p>
    </div>
   </div>
  </div>
 
- <!-- 레이드 정산 결과 모달 -->
- <div id="result-modal">
-  <h1 id="res-status-title">SURVIVED</h1>
-  <div class="res-card">
-   <div class="res-row"><span>레이드 작전지</span><span>CUSTOMS INDUSTRIAL OUTPOST</span></div>
-   <div class="res-row"><span>처치한 적 (Kills)</span><b id="res-kills">0</b></div>
-   <div class="res-row"><span>파밍한 아이템 수</span><b id="res-items">0</b></div>
-   <div class="res-row"><span>탈출 지점</span><b id="res-exfil">ZB-014 BUNKER</b></div>
-   <div class="res-row"><span>총 획득 루블 (Total RUB)</span><b id="res-rub">₽ 0</b></div>
+ <!-- 암시장 상인 모달 [B] -->
+ <div id="trader-modal">
+  <div class="modal-header">
+   <h3>🏛️ PRAPOR & PEACEKEEPER 전술 상인 거래소</h3>
+   <div style="font-size:13px;color:var(--rpg-gold)">보유 자산: <b id="trader-wallet">₽ 250,000</b></div>
   </div>
-  <button class="btn-eft" onclick="restartRaid()">은신처(Hideout) 복귀 / 재배치</button>
+  <div class="trader-tabs">
+   <div class="trader-tab active" onclick="switchTraderTab('buy')">장비 및 탄약 구매</div>
+   <div class="trader-tab" onclick="switchTraderTab('sell')">전리품 일괄 매각 (Sell All Valuables)</div>
+  </div>
+  <div class="shop-grid" id="trader-items-grid"></div>
+ </div>
+
+ <!-- 승리 / 탈출 정산 결과 모달 -->
+ <div id="result-modal">
+  <h1 id="res-title">MISSION COMPLETED</h1>
+  <div class="res-card">
+   <div class="res-row"><span>작전 결과</span><b id="res-sub" style="color:var(--rpg-green)">생환 성공 (SURVIVED)</b></div>
+   <div class="res-row"><span>달성 레벨</span><b id="res-lvl">LV. 1</b></div>
+   <div class="res-row"><span>처치한 적</span><b id="res-kills">0 명</b></div>
+   <div class="res-row"><span>획득한 총 경험치</span><b id="res-exp">+0 EXP</b></div>
+   <div class="res-row"><span>보상 레이팅</span><b style="color:var(--rpg-gold)">⭐⭐⭐⭐⭐ S RANK</b></div>
+  </div>
+  <button class="btn-act" onclick="location.reload()">새로운 작전 시작 (재배치)</button>
  </div>
 </div>
 <canvas id="c"></canvas>
@@ -327,7 +341,7 @@ canvas#c{display:block;width:100vw;height:100vh}
 
 <script>
 // ==========================================
-// 1. 하드코어 타르코프 3D 공간 음향 & 심장박동 & NVG 신스
+// 1. 프로급 하이브리드 오디오 신시사이저 (Audio Synthesis)
 // ==========================================
 let AC = null;
 function audio() {
@@ -351,287 +365,303 @@ function tone(f0, f1, dur, vol, type='sine', delay=0) {
   g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
   o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0 + dur);
 }
-function distPan(x, z) {
-  const dx = x - P.x, dz = z - P.z, d = Math.hypot(dx, dz);
-  const v = Math.max(0.02, 1 - d / 55);
-  return { vol: v, pan: Math.max(-1, Math.min(1, (dx * Math.cos(P.yaw) - dz * Math.sin(P.yaw)) / Math.max(3, d))) };
-}
 
 const SND = {
-  m4Shot() { noise(0.18, 0.7, 1800, 'lowpass'); tone(170, 35, 0.14, 0.6, 'sawtooth'); noise(0.09, 0.35, 3600, 'bandpass', 0.015); },
-  akShot() { noise(0.24, 0.85, 1250, 'lowpass'); tone(135, 25, 0.2, 0.8, 'sawtooth'); noise(0.11, 0.45, 2500, 'bandpass', 0.02); },
-  sniperShot() { noise(0.55, 1.15, 1100, 'lowpass'); tone(90, 20, 0.55, 0.95, 'sawtooth'); tone(40, 15, 0.7, 0.6, 'sine'); },
-  scavGun(x, z) {
-    const dp = distPan(x, z);
-    noise(0.16, 0.55 * dp.vol, 1400, 'lowpass'); tone(150, 35, 0.12, 0.45 * dp.vol, 'sawtooth');
-  },
-  whizCrack() { tone(2900, 1400, 0.04, 0.45, 'sine'); noise(0.05, 0.38, 4200, 'highpass'); },
-  lootZip() { tone(400, 650, 0.12, 0.25, 'triangle'); noise(0.12, 0.25, 2200, 'bandpass'); },
-  lootPickup() { tone(700, 1100, 0.06, 0.3, 'sine'); },
-  medUse() { tone(350, 480, 0.25, 0.28, 'sine'); noise(0.2, 0.15, 900); },
-  painkillerPill() { tone(900, 1400, 0.08, 0.35, 'square'); tone(1200, 800, 0.08, 0.3, 'triangle', 0.08); },
-  hitMarker() { tone(1600, 1000, 0.04, 0.4, 'square'); },
-  headshot() { tone(2500, 1700, 0.08, 0.65, 'square'); tone(3400, 2200, 0.1, 0.5, 'sine', 0.02); },
-  footstep(x, z, self) {
-    const v = self ? (P.crouching ? 0.03 : 0.09) : 0.08 * distPan(x, z).vol;
-    noise(0.04, v, P.crouching ? 350 : 500);
-  },
-  nvgToggle(on) {
-    tone(3200, on ? 4800 : 1600, 0.18, 0.4, 'sine');
-    noise(0.08, 0.2, 5000, 'highpass');
-  },
-  heartbeat() {
-    tone(75, 45, 0.12, 0.55, 'sine');
-    tone(60, 40, 0.14, 0.45, 'sine', 0.12);
-  },
-  buyCash() { tone(800, 1600, 0.08, 0.35, 'triangle'); tone(1200, 1800, 0.06, 0.3, 'square', 0.05); },
-  extractTick() { tone(880, 880, 0.05, 0.3, 'sine'); },
-  extractDone() { tone(440, 880, 0.4, 0.6, 'triangle'); tone(880, 1320, 0.5, 0.5, 'sine', 0.2); }
+  m4Shot() { noise(0.16, 0.65, 1900, 'lowpass'); tone(180, 40, 0.14, 0.55, 'sawtooth'); },
+  akShot() { noise(0.22, 0.8, 1300, 'lowpass'); tone(140, 25, 0.2, 0.75, 'sawtooth'); },
+  sniperShot() { noise(0.48, 1.05, 1050, 'lowpass'); tone(90, 20, 0.5, 0.95, 'sawtooth'); },
+  shotgunShot() { noise(0.3, 0.9, 1200, 'lowpass'); tone(110, 25, 0.25, 0.8, 'sawtooth'); },
+  scavGun() { noise(0.14, 0.4, 1500, 'lowpass'); tone(160, 35, 0.12, 0.35, 'sawtooth'); },
+  hitMarker() { tone(1500, 950, 0.045, 0.35, 'square'); },
+  headshot() { tone(2400, 1600, 0.08, 0.6, 'square'); tone(3200, 2100, 0.08, 0.5, 'sine', 0.02); },
+  shieldRegen() { tone(400, 800, 0.2, 0.25, 'sine'); },
+  lvlUp() { tone(523, 659, 0.15, 0.5, 'triangle'); tone(659, 784, 0.15, 0.5, 'triangle', 0.12); tone(784, 1046, 0.3, 0.6, 'triangle', 0.24); },
+  lootBox() { tone(600, 900, 0.1, 0.35, 'sine'); tone(900, 1200, 0.12, 0.35, 'sine', 0.08); },
+  footstep(self) { noise(0.04, self ? 0.08 : 0.05, 550); },
+  dronePulse() { tone(350, 1400, 0.4, 0.5, 'sine'); noise(0.3, 0.3, 3000, 'bandpass'); },
+  stimHeal() { tone(600, 1200, 0.2, 0.4, 'triangle'); tone(1200, 1800, 0.25, 0.35, 'sine', 0.1); },
+  grenadeThrow() { tone(300, 150, 0.1, 0.3, 'sine'); },
+  grenadeBoom() { noise(0.7, 1.1, 650, 'lowpass'); tone(100, 20, 0.6, 0.9, 'sawtooth'); },
+  winFanfare() { tone(440, 554, 0.2, 0.6, 'triangle'); tone(554, 659, 0.2, 0.6, 'triangle', 0.18); tone(659, 880, 0.5, 0.7, 'triangle', 0.36); }
 };
 
 // ==========================================
-// 2. 오픈월드 타르코프 맵 & 비밀 금고방(Marked Room)
+// 2. 오픈월드 전장 & 개선된 자연광 조명 시스템
 // ==========================================
-const MAP_SIZE = 90;
+const MAP_SIZE = 110;
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x35404d);
-scene.fog = new THREE.FogExp2(0x35404d, 0.014);
+scene.background = new THREE.Color(0x6e8396);
+scene.fog = new THREE.FogExp2(0x6e8396, 0.011);
 
 const cv = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true });
+const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' });
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(2, devicePixelRatio));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 140);
+const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 160);
 camera.rotation.order = 'YXZ';
 scene.add(camera);
 
-scene.add(new THREE.HemisphereLight(0xdde5ed, 0x2a333d, 0.75));
-const sunLight = new THREE.DirectionalLight(0xffecd0, 1.15);
-sunLight.position.set(45, 60, 40);
+// 개선된 부드러운 햇빛 & 앰비언트 라이트 (그림자 뭉개짐/깨짐 해결)
+scene.add(new THREE.HemisphereLight(0xdde9f5, 0x3d4740, 0.9));
+const sunLight = new THREE.DirectionalLight(0xfff8ee, 1.25);
+sunLight.position.set(45, 75, 40);
 sunLight.castShadow = true;
-sunLight.shadow.mapSize.width = 1024;
-sunLight.shadow.mapSize.height = 1024;
-sunLight.shadow.camera.left = -50; sunLight.shadow.camera.right = 50;
-sunLight.shadow.camera.top = 50; sunLight.shadow.camera.bottom = -50;
+sunLight.shadow.mapSize.width = 2048;
+sunLight.shadow.mapSize.height = 2048;
+sunLight.shadow.bias = -0.0006;
+sunLight.shadow.camera.near = 0.5;
+sunLight.shadow.camera.far = 160;
+const d = 55;
+sunLight.shadow.camera.left = -d; sunLight.shadow.camera.right = d;
+sunLight.shadow.camera.top = d; sunLight.shadow.camera.bottom = -d;
 scene.add(sunLight);
 
-const flashLight = new THREE.SpotLight(0xfffaea, 0, 40, Math.PI / 6.5, 0.3, 1.2);
-camera.add(flashLight);
-flashLight.position.set(0.2, -0.2, 0);
-flashLight.target.position.set(0, 0, -5);
-camera.add(flashLight.target);
+// 동적 총구 화염 & 폭발 조명
+const dynamicLight = new THREE.PointLight(0xffdd77, 0, 15);
+scene.add(dynamicLight);
 
+// 바닥 텍스처 (PBR MeshStandardMaterial)
 function makeCanvasTex(fn) {
   const c = document.createElement('canvas'); c.width = c.height = 256;
   fn(c.getContext('2d')); const t = new THREE.CanvasTexture(c);
   t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
 }
 const groundTex = makeCanvasTex(g => {
-  g.fillStyle = '#2d352c'; g.fillRect(0,0,256,256);
-  for (let i = 0; i < 700; i++) {
-    g.fillStyle = Math.random() > 0.5 ? '#242b23' : '#384236';
+  g.fillStyle = '#3a443b'; g.fillRect(0,0,256,256);
+  for (let i = 0; i < 800; i++) {
+    g.fillStyle = Math.random() > 0.5 ? '#303831' : '#455046';
     g.fillRect(Math.random() * 256, Math.random() * 256, 4, 4);
   }
 });
-groundTex.repeat.set(45, 45);
+groundTex.repeat.set(50, 50);
 
-const terrain = new THREE.Mesh(new THREE.PlaneGeometry(MAP_SIZE, MAP_SIZE), new THREE.MeshLambertMaterial({ map: groundTex }));
+const terrain = new THREE.Mesh(
+  new THREE.PlaneGeometry(MAP_SIZE, MAP_SIZE),
+  new THREE.MeshStandardMaterial({ map: groundTex, roughness: 0.85, metalness: 0.1 })
+);
 terrain.rotation.x = -Math.PI / 2; terrain.position.set(0, 0, 0);
 terrain.receiveShadow = true; scene.add(terrain);
 
 const wallMeshes = [];
-const lootContainers = [];
-const exfilPoints = [
-  { name: 'ZB-014 BUNKERS (지하 벙커)', x: -32, z: -32, rad: 5.5, col: 0x3bb346 },
-  { name: 'RAILWAY GATE (철도 게이트)', x: 32, z: 32, rad: 6.0, col: 0x3bb346 },
-  { name: 'BOAT EXTRACT (보트 탈출구)', x: -32, z: 28, rad: 5.0, col: 0x3bb346 }
-];
+const lootCrates = [];
+const exfilZone = { x: 38, z: 38, rad: 6.5 };
 
-exfilPoints.forEach(ep => {
-  const smokePillar = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.6, 2.4, 14, 12),
-    new THREE.MeshBasicMaterial({ color: ep.col, transparent: true, opacity: 0.38 })
+// 탈출 신호탄 연막 기둥
+const exfilSmoke = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.8, 2.6, 18, 12),
+  new THREE.MeshBasicMaterial({ color: 0x22c55e, transparent: true, opacity: 0.38 })
+);
+exfilSmoke.position.set(exfilZone.x, 9, exfilZone.z);
+scene.add(exfilSmoke);
+
+function createPBRBox(x, z, w, h, d, color=0x55606d) {
+  const m = new THREE.Mesh(
+    new THREE.BoxGeometry(w, h, d),
+    new THREE.MeshStandardMaterial({ color, roughness: 0.7, metalness: 0.2 })
   );
-  smokePillar.position.set(ep.x, 7, ep.z);
-  scene.add(smokePillar);
-});
-
-function createBuilding(x, z, w, h, d, color=0x555d66) {
-  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshLambertMaterial({ color }));
   m.position.set(x, h / 2, z);
   m.castShadow = true; m.receiveShadow = true;
   scene.add(m); wallMeshes.push(m);
   return m;
 }
 
-createBuilding(-16, 0, 18, 6.5, 22, 0x454d55);
-createBuilding(-20, 2, 6, 4, 6, 0x2d343b);
-createBuilding(12, -12, 8, 2.5, 4, 0x5a6352);
-createBuilding(0, 24, 4.5, 9, 4.5, 0x384048);
-createBuilding(6, 6, 3, 2.8, 7.5, 0x883434);
-createBuilding(-7, 16, 3, 2.8, 7.5, 0x2b4f73);
-createBuilding(22, 20, 5, 2.2, 4, 0x4e4438);
+// 1. 플레이어 안전 기지 (Safe Outpost Base - x:0, z:-34)
+createPBRBox(0, -34, 12, 3.2, 12, 0x414b54);
+const safeBeacon = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 6, 8), new THREE.MeshBasicMaterial({ color: 0x00f0ff }));
+safeBeacon.position.set(0, 3.0, -34); scene.add(safeBeacon);
 
+// 2. 적 군사 레이더 기지 (중앙)
+createPBRBox(-14, 0, 18, 7, 22, 0x38414b);
+createPBRBox(16, -9, 9, 3.4, 7, 0x515d4c); // 검문소
+createPBRBox(0, 24, 5.5, 11, 5.5, 0x303942); // 보스 감시탑
+
+// 3. 배그풍 보급 투하 상자 (Airdrop Care Package)
+function spawnAirdrop(x, z) {
+  const root = new THREE.Group();
+  const box = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.3, 1.8), new THREE.MeshStandardMaterial({ color: 0xba2525, roughness: 0.6 }));
+  const top = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.25, 1.85), new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.5 }));
+  top.position.y = 0.7;
+  const smoke = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 1.4, 12, 8), new THREE.MeshBasicMaterial({ color: 0xff3b30, transparent: true, opacity: 0.45 }));
+  smoke.position.y = 6.5;
+  root.add(box, top, smoke);
+  root.position.set(x, 0.65, z);
+  box.castShadow = true; scene.add(root);
+  lootCrates.push({ group: root, x, z, isAirdrop: true, opened: false });
+}
+spawnAirdrop(-10, 20);
+
+// 일반 파밍 상자들
+function spawnCrate(x, z, label='보급 상자') {
+  const m = new THREE.Mesh(
+    new THREE.BoxGeometry(1.2, 0.7, 0.9),
+    new THREE.MeshStandardMaterial({ color: 0xd4a037, roughness: 0.6, metalness: 0.3 })
+  );
+  m.position.set(x, 0.35, z); m.castShadow = true; scene.add(m);
+  lootCrates.push({ group: m, x, z, isAirdrop: false, opened: false, label });
+}
+spawnCrate(-12, -2, '전술 무기 상자');
+spawnCrate(15, -8, '의료 구급 상자');
+spawnCrate(0, 24, '저격탑 보물 상자');
+spawnCrate(22, 16, '군용 탄약 상자');
+
+// 자연 침엽수림
 for (let i = 0; i < 55; i++) {
-  const tx = (Math.random() - 0.5) * 80, tz = (Math.random() - 0.5) * 80;
-  if (Math.hypot(tx, tz) < 12) continue;
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 3, 6), new THREE.MeshLambertMaterial({ color: 0x3e2c1e }));
-  trunk.position.set(tx, 1.5, tz); trunk.castShadow = true;
-  const leaves = new THREE.Mesh(new THREE.ConeGeometry(2.2, 5.2, 6), new THREE.MeshLambertMaterial({ color: 0x1d3020 }));
-  leaves.position.set(tx, 4.5, tz); leaves.castShadow = true;
+  const tx = (Math.random() - 0.5) * 90, tz = (Math.random() - 0.5) * 90;
+  if (Math.hypot(tx, tz + 34) < 14) continue; // 스폰존 비움
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 3.2, 6), new THREE.MeshStandardMaterial({ color: 0x3d2b1f, roughness: 0.9 }));
+  trunk.position.set(tx, 1.6, tz); trunk.castShadow = true;
+  const leaves = new THREE.Mesh(new THREE.ConeGeometry(2.3, 5.5, 6), new THREE.MeshStandardMaterial({ color: 0x1b3121, roughness: 0.8 }));
+  leaves.position.set(tx, 4.8, tz); leaves.castShadow = true;
   scene.add(trunk, leaves);
   wallMeshes.push(trunk);
 }
 
 // ==========================================
-// 3. 타르코프 파밍 전리품 & 상점 시스템
-// ==========================================
-const LOOT_POOL = [
-  { id: 'gpu', name: 'RTX 4090 GPU 그래픽카드', val: 780000, rarity: 'rarity-val', cat: 'val' },
-  { id: 'btc', name: '실물 비트코인 0.2 BTC', val: 950000, rarity: 'rarity-val', cat: 'val' },
-  { id: 'goldchain', name: '순금 목걸이 (Gold Chain)', val: 120000, rarity: 'rarity-rare', cat: 'val' },
-  { id: 'ifak', name: 'IFAK 전술 구급킷', val: 38000, rarity: 'rarity-med', cat: 'med', effect: 'heal' },
-  { id: 'salewa', name: 'Salewa 대형 응급키트', val: 55000, rarity: 'rarity-med', cat: 'med', effect: 'heal' },
-  { id: 'bandage', name: '멸균 군용 붕대 (지혈제)', val: 12000, rarity: 'rarity-med', cat: 'med', effect: 'bleed' },
-  { id: 'painkiller', name: 'Analgin 전술 진통제', val: 24000, rarity: 'rarity-med', cat: 'med', effect: 'pain' },
-  { id: 'morphine', name: '모르핀 자동주사기', val: 42000, rarity: 'rarity-med', cat: 'med', effect: 'pain' },
-  { id: 'm855a1', name: '5.56 철갑탄 M855A1 60발', val: 68000, rarity: 'rarity-rare', cat: 'ammo' },
-  { id: 'bt_ammo', name: '5.45 BT 예광철갑탄 60발', val: 58000, rarity: 'rarity-rare', cat: 'ammo' },
-  { id: 'drum_mag', name: '60발 대용량 드럼 탄창', val: 89000, rarity: 'rarity-rare', cat: 'mod' },
-  { id: 'rubles', name: '루블 지폐다발 (50,000 RUB)', val: 50000, rarity: 'rarity-val', cat: 'val' }
-];
-
-function spawnLootCrate(x, z, label='무기 상자', isMarked=false) {
-  const root = new THREE.Group();
-  const box = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.65, 0.8), new THREE.MeshLambertMaterial({ color: isMarked ? 0x7c388a : 0x414f3b }));
-  box.castShadow = true; box.receiveShadow = true;
-  root.add(box);
-  root.position.set(x, 0.33, z);
-  scene.add(root);
-
-  const items = [];
-  const cnt = isMarked ? 4 : 2 + (Math.random() * 2) | 0;
-  for (let i = 0; i < cnt; i++) {
-    items.push(isMarked ? LOOT_POOL[i % 3] : LOOT_POOL[(Math.random() * LOOT_POOL.length) | 0]);
-  }
-  lootContainers.push({ group: root, x, z, label, items });
-}
-
-spawnLootCrate(-20, 2, '⭐ 전설의 마크방 비밀 금고', true);
-spawnLootCrate(-14, 2, '군용 무기 상자');
-spawnLootCrate(-12, -4, '의료용 구급 보관함');
-spawnLootCrate(13, -11, '검문소 탄약 상자');
-spawnLootCrate(0, 24, '저격탑 전리품 가방');
-spawnLootCrate(21, 19, '산업단지 목재 상자');
-spawnLootCrate(7, 5, '버려진 더플백');
-
-// ==========================================
-// 4. 플레이어 상태 & 린(Lean) & 앉기 시스템
+// 3. 고품질 1인칭 현대 무기 & 모션 리그
 // ==========================================
 let P = {
-  x: 0, y: 0, z: -28, vy: 0, yaw: 0, pitch: 0,
-  hpTotal: 440,
-  parts: { head: 35, thorax: 85, stomach: 70, arms: 120, legs: 130 },
-  bleeding: false,
-  painkillerTimer: 0,
-  wep: 0,
-  ammo: [30, 30, 10],
-  reserve: [90, 90, 30],
+  x: 0, y: 0, z: -34, vy: 0, yaw: 0, pitch: 0,
+  hp: 100, hpMax: 100,
+  shield: 100, shieldMax: 100,
+  shieldRegenTimer: 0,
+  level: 1, exp: 0, expNext: 100,
+  skillPoints: 0,
   walletRub: 250000,
-  backpack: [
-    LOOT_POOL[3],
-    LOOT_POOL[6]
-  ],
+  dmgBonus: 0, speedBonus: 0, vampLevel: 0,
+  wep: 0,
+  ammo: [30, 30, 5, 8],
+  reserve: [120, 120, 25, 32],
+  grenades: 2,
+  droneCd: 0, stimCd: 0,
   reloading: 0, cool: 0, recoil: 0, bob: 0, swayX: 0, swayY: 0,
-  leanAngle: 0, targetLean: 0,
-  crouching: false,
-  zoomed: false, stepAcc: 0,
-  flashlightOn: false,
-  nvgOn: false,
-  heartbeatAcc: 0
+  crouching: false, stepAcc: 0,
+  kills: 0, cratesOpened: 0, bossKilled: false
 };
 
 const WEAPONS = [
-  { name: 'COLT M4A1 CUSTOM', mag: 30, dmg: 48, cd: 0.09, recoil: 0.016, mode: '5.56x45MM NATO · 소음기 연사' },
-  { name: 'KALASHNIKOV AK-74M', mag: 30, dmg: 56, cd: 0.11, recoil: 0.024, mode: '5.45x39MM BT · 묵직한 반동' },
-  { name: 'IZHMASH SV-98 SNIPER', mag: 10, dmg: 145, cd: 1.3, recoil: 0.08, zoom: true, mode: '7.62x54R · 1방 관통 저격' }
+  { name: 'M4A1-S TACTICAL RIFLE', mag: 30, dmg: 44, cd: 0.095, recoil: 0.016, tier: '⭐⭐⭐ RARE 돌격소총', desc: '5.56MM NATO · 소음기 연사' },
+  { name: 'AK-47 ASSAULT RIFLE', mag: 30, dmg: 55, cd: 0.11, recoil: 0.024, tier: '⭐⭐⭐⭐ EPIC 돌격소총', desc: '7.62MM · 묵직한 펀치력' },
+  { name: 'AWM HEAVY SNIPER', mag: 5, dmg: 165, cd: 1.25, recoil: 0.08, tier: '⭐⭐⭐⭐⭐ LEGENDARY 저격총', desc: '.300 WIN · 1방 관통' },
+  { name: 'SPAS-12 COMBAT SHOTGUN', mag: 8, dmg: 28, cd: 0.65, recoil: 0.065, tier: '⭐⭐⭐ RARE 전술산탄총', desc: '12-GAUGE · 8발 펠릿' }
 ];
 
 const gunRoot = new THREE.Group();
 camera.add(gunRoot);
 function buildFPSGun() {
   const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.1, 0.42), new THREE.MeshLambertMaterial({ color: 0x1f2429 }));
+  const steelMat = new THREE.MeshStandardMaterial({ color: 0x1b1f24, roughness: 0.4, metalness: 0.8 });
+  const polyMat = new THREE.MeshStandardMaterial({ color: 0x2d343b, roughness: 0.7, metalness: 0.2 });
+
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.1, 0.42), steelMat);
   body.position.set(0, 0, -0.44); g.add(body);
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.35, 8), new THREE.MeshLambertMaterial({ color: 0x15181b }));
-  barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0.01, -0.85); g.add(barrel);
-  const mag = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.2, 0.075), new THREE.MeshLambertMaterial({ color: 0x2b3138 }));
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.38, 8), steelMat);
+  barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0.01, -0.86); g.add(barrel);
+  const mag = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.2, 0.075), polyMat);
   mag.position.set(0, -0.12, -0.45); g.add(mag);
-  const scope = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.1), new THREE.MeshLambertMaterial({ color: 0x15181b }));
-  scope.position.set(0, 0.08, -0.48); g.add(scope);
+
+  // 홀로그래픽 도트 사이트
+  const sight = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.09), steelMat);
+  sight.position.set(0, 0.08, -0.48); g.add(sight);
+  const reticle = new THREE.Mesh(new THREE.SphereGeometry(0.006, 6, 6), new THREE.MeshBasicMaterial({ color: 0x00f0ff }));
+  reticle.position.set(0, 0.08, -0.52); g.add(reticle);
+
   g.position.set(0.22, -0.2, 0);
 
   const flash = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.25, 6), new THREE.MeshBasicMaterial({ color: 0xffe277 }));
-  flash.rotation.x = -Math.PI / 2; flash.position.set(0.22, -0.19, -1.15); flash.visible = false;
+  flash.rotation.x = -Math.PI / 2; flash.position.set(0.22, -0.19, -1.18); flash.visible = false;
   gunRoot.add(g, flash);
   return { g, mag, flash };
 }
 const GUN_MESH = buildFPSGun();
 
 // ==========================================
-// 5. 스캐브 순찰대 & 보스 글루하르(Glukhar)
+// 4. 인간형 스켈레톤 애니메이션 적 AI (Scav & Boss)
 // ==========================================
-let scavs = [], tracers = [], particles = [], casings = [], keys = {};
-let locked = false, raidTime = 900, raidOver = false, killsCount = 0;
-let extractTimer = 0, currentExfil = null;
+let bots = [], tracers = [], particles = [], casings = [], thrownGrenades = [], keys = {};
+let locked = false, raidOver = false, extractTimer = 0;
 
-function makeScavMesh(isBoss=false) {
+function makeAnimatedSoldierMesh(isBoss=false) {
   const root = new THREE.Group();
-  const jacketMat = new THREE.MeshLambertMaterial({ color: isBoss ? 0x22262e : 0x544434 });
-  const skinMat = new THREE.MeshLambertMaterial({ color: 0xc89d79 });
-  const gearMat = new THREE.MeshLambertMaterial({ color: 0x151815 });
+  const camoMat = new THREE.MeshStandardMaterial({ color: isBoss ? 0x6e2c1e : 0x394539, roughness: 0.7 });
+  const vestMat = new THREE.MeshStandardMaterial({ color: 0x1c221c, roughness: 0.8 });
+  const skinMat = new THREE.MeshStandardMaterial({ color: 0xd2a47e, roughness: 0.6 });
 
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.7, 0.28), jacketMat);
-  body.position.y = 1.1; body.castShadow = true; root.add(body);
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.32, 0.28), skinMat);
-  head.position.y = 1.62; head.castShadow = true; head.userData.isHead = true; root.add(head);
+  // 다리 관절
+  const legL = new THREE.Group(); legL.position.set(-0.14, 0.76, 0);
+  const legLM = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.76, 0.17), camoMat); legLM.position.y = -0.38; legLM.castShadow = true; legL.add(legLM);
 
-  if (isBoss) {
-    const helmet = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.18, 0.32), gearMat);
-    helmet.position.y = 1.72; helmet.userData.isHead = true; root.add(helmet);
-  }
-  const gun = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.09, 0.55), gearMat);
-  gun.position.set(0.25, 1.2, 0.35); root.add(gun);
+  const legR = new THREE.Group(); legR.position.set(0.14, 0.76, 0);
+  const legRM = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.76, 0.17), camoMat); legRM.position.y = -0.38; legRM.castShadow = true; legR.add(legRM);
 
-  const eFlash = new THREE.Mesh(new THREE.SphereGeometry(0.18, 6, 6), new THREE.MeshBasicMaterial({ color: 0xffbb22 }));
-  eFlash.position.set(0.25, 1.2, 0.65); eFlash.visible = false; root.add(eFlash);
+  // 상체 & 헬멧
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.66, 0.28), camoMat); torso.position.y = 1.1; torso.castShadow = true;
+  const vest = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.48, 0.3), vestMat); vest.position.y = 1.12; vest.castShadow = true;
 
-  root.userData = { eFlash, isBoss };
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.3, 0.28), skinMat); head.position.y = 1.62; head.castShadow = true; head.userData.isHead = true;
+  const helmet = new THREE.Mesh(new THREE.BoxGeometry(0.33, 0.18, 0.33), new THREE.MeshStandardMaterial({ color: isBoss ? 0xf5c542 : 0x1b201a, metalness: 0.3 }));
+  helmet.position.y = 1.72; helmet.userData.isHead = true;
+
+  // 팔 관절
+  const armL = new THREE.Group(); armL.position.set(-0.3, 1.35, 0);
+  const armLM = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.54, 0.13), camoMat); armLM.position.y = -0.24; armL.add(armLM);
+
+  const armR = new THREE.Group(); armR.position.set(0.3, 1.35, 0);
+  const armRM = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.52, 0.13), camoMat); armRM.position.y = -0.15; armRM.rotation.x = -1.1; armR.add(armRM);
+  const gun = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.1, 0.55), vestMat); gun.position.set(0, -0.15, 0.36); armR.add(gun);
+
+  const eFlash = new THREE.Mesh(new THREE.SphereGeometry(0.16, 6, 6), new THREE.MeshBasicMaterial({ color: 0xffaa00 }));
+  eFlash.position.set(0, -0.15, 0.68); eFlash.visible = false; armR.add(eFlash);
+
+  // RPG 체력바
+  const hpBg = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.1), new THREE.MeshBasicMaterial({ color: 0x0f172a, side: THREE.DoubleSide }));
+  hpBg.position.set(0, 2.1, 0);
+  const hpBar = new THREE.Mesh(new THREE.PlaneGeometry(0.78, 0.08), new THREE.MeshBasicMaterial({ color: isBoss ? 0xf5c542 : 0xef4444, side: THREE.DoubleSide }));
+  hpBar.position.set(0, 2.1, 0.001);
+  root.add(hpBg, hpBar);
+
+  root.add(legL, legR, torso, vest, head, helmet, armL, armR);
+  root.userData = { legL, legR, armL, armR, eFlash, isBoss, hpBar, head };
   return root;
 }
 
-function spawnScav(x, z, isBoss=false) {
-  const mesh = makeScavMesh(isBoss);
+function spawnBot(x, z, isBoss=false) {
+  const mesh = makeAnimatedSoldierMesh(isBoss);
   mesh.position.set(x, 0, z); scene.add(mesh);
-  scavs.push({
-    mesh, x, z, hp: isBoss ? 180 : 85, isBoss,
-    cd: 1.0 + Math.random(), fireT: 0, st: Math.random() * 6
+  bots.push({
+    mesh, x, z,
+    hp: isBoss ? 350 : 100, maxHp: isBoss ? 350 : 100,
+    isBoss, cd: 1.2 + Math.random(),
+    walkCycle: Math.random() * 6,
+    aggro: false, fireT: 0
   });
 }
 
-spawnScav(-12, 5, false);
-spawnScav(10, -9, false);
-spawnScav(1, 20, true);
-spawnScav(-22, -12, false);
-spawnScav(19, 14, false);
-spawnScav(-18, 1, true);
+spawnBot(-12, 4, false);
+spawnBot(14, -7, false);
+spawnBot(0, 24, true); // 저격탑 보스
+spawnBot(-22, -10, false);
+spawnBot(18, 14, false);
 
 // ==========================================
-// 6. 사격 & 피격 & 인터랙션 루프
+// 5. RPG 대미지 팝업 & 격발 로직
 // ==========================================
+function spawnDmgPop(x, y, z, val, crit=false) {
+  const v = new THREE.Vector3(x, y, z);
+  v.project(camera);
+  const sx = (v.x * 0.5 + 0.5) * innerWidth;
+  const sy = (-(v.y * 0.5) + 0.5) * innerHeight;
+
+  const d = document.createElement('div');
+  d.className = 'dmg-pop' + (crit ? ' crit' : '');
+  d.textContent = crit ? `CRIT! -${val}` : `-${val}`;
+  d.style.left = `${sx}px`; d.style.top = `${sy}px`;
+  document.getElementById('dmg-layer').appendChild(d);
+  setTimeout(() => d.remove(), 800);
+}
+
 const raycaster = new THREE.Raycaster();
 function shoot() {
   if (raidOver || P.cool > 0 || P.reloading > 0 || isModalOpen()) return;
@@ -641,51 +671,60 @@ function shoot() {
 
   if (P.wep === 0) SND.m4Shot();
   else if (P.wep === 1) SND.akShot();
-  else SND.sniperShot();
+  else if (P.wep === 2) SND.sniperShot();
+  else SND.shotgunShot();
 
   GUN_MESH.flash.visible = true;
-  setTimeout(() => GUN_MESH.flash.visible = false, 45);
-
-  const cMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.05, 6), new THREE.MeshLambertMaterial({ color: 0xd4af37 }));
-  const pos = new THREE.Vector3(0.25, -0.16, -0.6).applyMatrix4(camera.matrixWorld);
-  cMesh.position.copy(pos); scene.add(cMesh);
-  casings.push({ m: cMesh, vx: Math.cos(P.yaw) * 2.5, vy: 2.5, vz: -Math.sin(P.yaw) * 2.5, life: 2 });
-
-  const recoilMult = P.crouching ? 0.5 : 1.0;
-  P.recoil = Math.min(0.25, P.recoil + w.recoil * recoilMult);
-  P.pitch = Math.min(1.35, P.pitch + w.recoil * 0.4 * recoilMult);
-
-  raycaster.setFromCamera({ x: (Math.random() - 0.5) * (P.recoil * 0.12), y: (Math.random() - 0.5) * (P.recoil * 0.12) }, camera);
-  const targets = [...wallMeshes];
-  scavs.forEach(s => s.mesh.traverse(c => { if (c.isMesh) targets.push(c); }));
-  const hits = raycaster.intersectObjects(targets, false);
-
+  dynamicLight.intensity = 2.5;
   const muzWorld = new THREE.Vector3(0.22, -0.19, -1.0).applyMatrix4(camera.matrixWorld);
-  let endPt = raycaster.ray.at(70, new THREE.Vector3());
+  dynamicLight.position.copy(muzWorld);
+  setTimeout(() => { GUN_MESH.flash.visible = false; dynamicLight.intensity = 0; }, 45);
 
-  if (hits.length) {
-    endPt = hits[0].point;
-    const obj = hits[0].object;
-    const scav = scavs.find(s => { let f = false; s.mesh.traverse(c => { if (c === obj) f = true; }); return f; });
-    if (scav) {
-      const isHead = !!obj.userData.isHead;
-      const dmg = isHead ? w.dmg * 2.5 : w.dmg;
-      scav.hp -= dmg;
-      if (isHead) SND.headshot(); else SND.hitMarker();
-      addSparks(endPt.x, endPt.y, endPt.z, isHead ? 0xff3b30 : 0xffaa00, 8);
+  const recoilMult = P.crouching ? 0.45 : 1.0;
+  P.recoil = Math.min(0.25, P.recoil + w.recoil * recoilMult);
+  P.pitch = Math.min(1.35, P.pitch + w.recoil * 0.35 * recoilMult);
 
-      if (scav.hp <= 0) {
-        killsCount++;
-        scene.remove(scav.mesh);
-        scavs.splice(scavs.indexOf(scav), 1);
-        spawnLootCrate(scav.x, scav.z, scav.isBoss ? '💀 보스 레이더 시체' : '💀 스캐브 시체');
-        addFeed('Operator', scav.isBoss ? 'Scav Raider Boss' : 'Scav', w.name);
+  const pellets = P.wep === 3 ? 8 : 1;
+  for (let p = 0; p < pellets; p++) {
+    const spread = (P.wep === 3 ? 0.05 : 0.005) + P.recoil * 0.08;
+    raycaster.setFromCamera({ x: (Math.random() - 0.5) * spread, y: (Math.random() - 0.5) * spread }, camera);
+    const targets = [...wallMeshes];
+    bots.forEach(b => b.mesh.traverse(c => { if (c.isMesh) targets.push(c); }));
+    const hits = raycaster.intersectObjects(targets, false);
+
+    let endPt = raycaster.ray.at(75, new THREE.Vector3());
+    if (hits.length) {
+      endPt = hits[0].point;
+      const obj = hits[0].object;
+      const bot = bots.find(b => { let f = false; b.mesh.traverse(c => { if (c === obj) f = true; }); return f; });
+
+      if (bot) {
+        const isHead = !!obj.userData.isHead;
+        let dmg = Math.round((w.dmg * (1 + P.dmgBonus)) * (isHead ? 2.2 : 1.0));
+        bot.hp -= dmg;
+
+        if (isHead) SND.headshot(); else SND.hitMarker();
+        spawnDmgPop(endPt.x, endPt.y + 0.3, endPt.z, dmg, isHead);
+
+        if (P.vampLevel > 0) P.shield = Math.min(P.shieldMax, P.shield + 10 * P.vampLevel);
+
+        const ratio = Math.max(0, bot.hp / bot.maxHp);
+        bot.mesh.userData.hpBar.scale.set(ratio, 1, 1);
+        bot.mesh.userData.hpBar.position.x = -(1 - ratio) * 0.39;
+
+        if (bot.hp <= 0) {
+          P.kills++;
+          scene.remove(bot.mesh);
+          bots.splice(bots.indexOf(bot), 1);
+          if (bot.isBoss) P.bossKilled = true;
+          addExp(bot.isBoss ? 250 : 60);
+          showKillBadge(bot.isBoss ? '👑 보스 글루하르 사살! (+250 EXP)' : '적 제압 완료 (+60 EXP)');
+          updateQuests();
+        }
       }
-    } else {
-      addSparks(endPt.x, endPt.y, endPt.z, 0xb0b8b8, 4);
     }
+    addTracer(muzWorld.x, muzWorld.y, muzWorld.z, endPt.x, endPt.y, endPt.z, 0xffd066);
   }
-  addTracer(muzWorld.x, muzWorld.y, muzWorld.z, endPt.x, endPt.y, endPt.z, 0xffd066);
   updateHUD();
 }
 
@@ -694,61 +733,135 @@ function addTracer(x0, y0, z0, x1, y1, z1, col) {
   const m = new THREE.Line(g, new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.9 }));
   scene.add(m); tracers.push({ m, t: 0.07 });
 }
-function addSparks(x, y, z, col, n=6) {
-  for (let i = 0; i < n; i++) {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.05), new THREE.MeshBasicMaterial({ color: col }));
-    m.position.set(x, y, z); scene.add(m);
-    particles.push({ m, vx: (Math.random() - 0.5) * 5, vy: Math.random() * 4, vz: (Math.random() - 0.5) * 5, t: 0.3 });
-  }
-}
 
 function reload() {
   const w = WEAPONS[P.wep];
   if (P.reloading > 0 || P.ammo[P.wep] === w.mag || P.reserve[P.wep] <= 0) return;
-  P.reloading = 1.4;
+  P.reloading = 1.3;
   updateHUD();
 }
 
 function isModalOpen() {
-  return document.getElementById('inventory-modal').style.display === 'flex' ||
+  return document.getElementById('rpg-modal').style.display === 'flex' ||
          document.getElementById('trader-modal').style.display === 'flex';
 }
 
-function useMedicalItem(item) {
-  if (item.effect === 'heal') {
-    P.parts.head = Math.min(35, P.parts.head + 25);
-    P.parts.thorax = Math.min(85, P.parts.thorax + 50);
-    P.parts.stomach = Math.min(70, P.parts.stomach + 40);
-    P.parts.arms = Math.min(120, P.parts.arms + 60);
-    P.parts.legs = Math.min(130, P.parts.legs + 60);
-    P.bleeding = false;
-    SND.medUse();
-    banner('치료 완료 (+HP 복구 & 지혈)');
-  } else if (item.effect === 'bleed') {
-    P.bleeding = false;
-    SND.medUse();
-    banner('지혈 붕대 적용 (출혈 정지)');
-  } else if (item.effect === 'pain') {
-    P.painkillerTimer = 50;
-    SND.painkillerPill();
-    banner('진통제 투약 (50초간 통증/골절 무시)');
-  }
-  const idx = P.backpack.indexOf(item);
-  if (idx !== -1) P.backpack.splice(idx, 1);
-  renderInventory();
+// ==========================================
+// 6. 전술 액티브 스킬 (드론 Q / 나노스팀 E / 수류탄 G)
+// ==========================================
+function activateReconDrone() {
+  if (P.droneCd > 0) return;
+  P.droneCd = 16;
+  SND.dronePulse();
+  banner('📡 전술 정찰 드론 펄스 전개! (적 위치 하이라이트)');
+  bots.forEach(b => {
+    b.mesh.userData.hpBar.material.color.setHex(0x00f0ff);
+    setTimeout(() => b.mesh.userData.hpBar.material.color.setHex(b.isBoss ? 0xf5c542 : 0xef4444), 8000);
+  });
+}
+
+function activateNanoStim() {
+  if (P.stimCd > 0) return;
+  P.stimCd = 14;
+  P.shield = Math.min(P.shieldMax, P.shield + 50);
+  P.hp = Math.min(P.hpMax, P.hp + 20);
+  SND.stimHeal();
+  banner('💉 나노 스팀 주입! (실드 +50 회복 & 질주 가속)');
   updateHUD();
 }
 
+function throwGrenade() {
+  if (P.grenades <= 0) { banner('수류탄이 없습니다.'); return; }
+  P.grenades--;
+  SND.grenadeThrow();
+  const vx = -Math.sin(P.yaw) * 16, vz = -Math.cos(P.yaw) * 16;
+  const m = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), new THREE.MeshStandardMaterial({ color: 0x334433 }));
+  m.position.set(P.x, 1.4, P.z); scene.add(m);
+  thrownGrenades.push({ m, x: P.x, y: 1.4, z: P.z, vx, vy: 5, vz, life: 1.5 });
+  banner('💥 세열 수류탄 투척!');
+  updateHUD();
+}
+
+function explodeGrenade(g) {
+  scene.remove(g.m);
+  SND.grenadeBoom();
+  dynamicLight.intensity = 4.0;
+  dynamicLight.position.set(g.x, g.y + 0.5, g.z);
+  setTimeout(() => dynamicLight.intensity = 0, 150);
+
+  // 주변 광역 대미지
+  bots.forEach(b => {
+    const d = Math.hypot(b.x - g.x, b.z - g.z);
+    if (d < 7) {
+      const dmg = Math.round((1 - d / 7) * 220);
+      b.hp -= dmg;
+      spawnDmgPop(b.x, 1.5, b.z, dmg, true);
+      if (b.hp <= 0) {
+        P.kills++;
+        scene.remove(b.mesh);
+        bots.splice(bots.indexOf(b), 1);
+        if (b.isBoss) P.bossKilled = true;
+        addExp(b.isBoss ? 250 : 60);
+        showKillBadge('수류탄 폭사 제압!');
+        updateQuests();
+      }
+    }
+  });
+}
+
 // ==========================================
-// 7. 상인(Traders) & 암시장 거래소 로직
+// 7. RPG 레벨업 & 퀘스트 & 상점 시스템
 // ==========================================
+function addExp(amount) {
+  P.exp += amount;
+  if (P.exp >= P.expNext) {
+    P.exp -= P.expNext;
+    P.level++;
+    P.expNext = Math.round(P.expNext * 1.4);
+    P.skillPoints++;
+    P.hp = P.hpMax; P.shield = P.shieldMax;
+    SND.lvlUp();
+    banner(`⭐ LEVEL UP! [LV. ${P.level}] 도달 (+1 SP)`);
+    saveProgress();
+  }
+  updateHUD();
+}
+
+function upgradeSkill(type) {
+  if (P.skillPoints <= 0) return;
+  P.skillPoints--;
+  if (type === 'dmg') P.dmgBonus += 0.15;
+  else if (type === 'shd') { P.shieldMax += 25; P.shield += 25; }
+  else if (type === 'spd') P.speedBonus += 0.1;
+  else if (type === 'vamp') P.vampLevel += 1;
+
+  SND.lvlUp();
+  updateHUD();
+  renderSkillModal();
+  saveProgress();
+}
+
+function updateQuests() {
+  const qScav = document.getElementById('q-scav');
+  const qBox = document.getElementById('q-box');
+  const qBoss = document.getElementById('q-boss');
+
+  qScav.textContent = `🎯 약탈자 스캐브 소탕 (${Math.min(4, P.kills)} / 4)`;
+  if (P.kills >= 4) qScav.classList.add('done');
+
+  qBox.textContent = `📦 전술 보급 상자 파밍 (${Math.min(2, P.cratesOpened)} / 2)`;
+  if (P.cratesOpened >= 2) qBox.classList.add('done');
+
+  qBoss.textContent = `👑 저격탑 보스 글루하르 처치 (${P.bossKilled ? 1 : 0} / 1)`;
+  if (P.bossKilled) qBoss.classList.add('done');
+}
+
+// 암시장 상점
 const SHOP_ITEMS = [
-  { item: LOOT_POOL[3], price: 38000 },
-  { item: LOOT_POOL[4], price: 55000 },
-  { item: LOOT_POOL[6], price: 24000 },
-  { item: LOOT_POOL[7], price: 42000 },
-  { item: LOOT_POOL[8], price: 68000 },
-  { item: LOOT_POOL[10], price: 89000 }
+  { name: 'M4A1 탄약 90발', price: 15000, buy: () => P.reserve[0] += 90 },
+  { name: 'AWM 철갑탄 15발', price: 35000, buy: () => P.reserve[2] += 15 },
+  { name: '세열 수류탄 2개', price: 20000, buy: () => P.grenades += 2 },
+  { name: '나노 실드 확장키트', price: 60000, buy: () => { P.shieldMax += 25; P.shield = P.shieldMax; } }
 ];
 
 function toggleTrader() {
@@ -765,21 +878,20 @@ function renderTraderShop() {
   document.getElementById('trader-wallet').textContent = `₽ ${P.walletRub.toLocaleString()}`;
   const grid = document.getElementById('trader-items-grid');
   grid.innerHTML = '';
-  SHOP_ITEMS.forEach(({ item, price }) => {
+  SHOP_ITEMS.forEach(it => {
     const card = document.createElement('div');
     card.className = 'item-card';
     card.innerHTML = `
-      <span class="rarity ${item.rarity}">${item.cat.toUpperCase()}</span>
-      <b>${item.name}</b>
-      <div class="val">₽ ${price.toLocaleString()}</div>
-      <div style="font-size:10px;color:var(--eft-gold);margin-top:5px">[클릭하여 구매]</div>
+      <b>${it.name}</b>
+      <div class="val">₽ ${it.price.toLocaleString()}</div>
+      <div style="font-size:10px;color:var(--rpg-cyan);margin-top:4px">[클릭하여 구매]</div>
     `;
     card.onclick = () => {
-      if (P.walletRub >= price) {
-        P.walletRub -= price;
-        P.backpack.push(item);
-        SND.buyCash();
-        banner(`${item.name} 구매 완료!`);
+      if (P.walletRub >= it.price) {
+        P.walletRub -= it.price;
+        it.buy();
+        SND.lootBox();
+        banner(`${it.name} 구매 완료!`);
         renderTraderShop();
         updateHUD();
       } else {
@@ -794,126 +906,99 @@ function switchTraderTab(type) {
   const tabs = document.querySelectorAll('.trader-tab');
   tabs[0].classList.toggle('active', type === 'buy');
   tabs[1].classList.toggle('active', type === 'sell');
-
   if (type === 'sell') {
-    let totalGain = 0;
-    for (let i = P.backpack.length - 1; i >= 0; i--) {
-      if (P.backpack[i].cat === 'val') {
-        totalGain += P.backpack[i].val;
-        P.backpack.splice(i, 1);
-      }
-    }
-    if (totalGain > 0) {
-      P.walletRub += totalGain;
-      SND.buyCash();
-      banner(`귀중품 매각 완료 (+₽ ${totalGain.toLocaleString()})`);
-    } else {
-      banner('매각할 귀중품이 없습니다.');
-    }
+    // 전리품 일괄 매각
+    P.walletRub += 120000;
+    SND.lootBox();
+    banner('파밍 전리품 일괄 매각 완료 (+₽ 120,000)');
     renderTraderShop();
   } else {
     renderTraderShop();
   }
 }
 
+function saveProgress() {
+  localStorage.setItem('eft_rpg_save', JSON.stringify({
+    level: P.level, exp: P.exp, expNext: P.expNext,
+    sp: P.skillPoints, rub: P.walletRub,
+    dmg: P.dmgBonus, shd: P.shieldMax, spd: P.speedBonus, vamp: P.vampLevel
+  }));
+}
+function loadProgress() {
+  const s = localStorage.getItem('eft_rpg_save');
+  if (s) {
+    try {
+      const d = JSON.parse(s);
+      P.level = d.level || 1; P.exp = d.exp || 0; P.expNext = d.expNext || 100;
+      P.skillPoints = d.sp || 0; P.walletRub = d.rub || 250000;
+      P.dmgBonus = d.dmg || 0; P.shieldMax = d.shd || 100; P.shield = P.shieldMax;
+      P.speedBonus = d.spd || 0; P.vampLevel = d.vamp || 0;
+    } catch(e){}
+  }
+}
+loadProgress();
+
 // ==========================================
-// 8. 게임 루프 & 린(Lean) & 심장박동 & 나이트비전
+// 8. 게임 루프 & 애니메이션 & 상호작용
 // ==========================================
-let activeContainer = null;
+let activeCrate = null;
 function checkInteractions() {
-  activeContainer = null;
-  const promptEl = document.getElementById('interact-prompt');
-  for (const c of lootContainers) {
-    if (Math.hypot(c.x - P.x, c.z - P.z) < 2.5) {
-      activeContainer = c;
+  activeCrate = null;
+  const promptEl = document.getElementById('prompt');
+  for (const c of lootCrates) {
+    if (!c.opened && Math.hypot(c.x - P.x, c.z - P.z) < 2.5) {
+      activeCrate = c;
       promptEl.style.display = 'block';
-      document.getElementById('prompt-txt').textContent = `${c.label} 수색하기`;
+      document.getElementById('prompt-txt').textContent = c.isAirdrop ? '전설 보급 투하 회수' : `${c.label} 열기`;
       return;
     }
   }
   promptEl.style.display = 'none';
 }
 
-function openContainer() {
-  if (!activeContainer) return;
-  SND.lootZip();
-  document.getElementById('inventory-modal').style.display = 'flex';
-  document.exitPointerLock();
-  renderInventory();
-}
+function openCrate() {
+  if (!activeCrate) return;
+  activeCrate.opened = true;
+  P.cratesOpened++;
+  SND.lootBox();
 
-function renderInventory() {
-  const bgGrid = document.getElementById('backpack-grid');
-  const boxGrid = document.getElementById('loot-container-grid');
-  bgGrid.innerHTML = ''; boxGrid.innerHTML = '';
-
-  let totalRub = 0;
-  P.backpack.forEach(item => {
-    totalRub += item.val;
-    const card = document.createElement('div');
-    card.className = 'item-card';
-    card.innerHTML = `
-      <span class="rarity ${item.rarity}">${item.cat.toUpperCase()}</span>
-      <b>${item.name}</b>
-      <div class="val">₽ ${item.val.toLocaleString()}</div>
-      <div style="font-size:10px;color:#8ba2b5;margin-top:4px">${item.effect ? '[클릭하여 사용]' : '[보관 중]'}</div>
-    `;
-    card.onclick = () => { if (item.effect) useMedicalItem(item); };
-    bgGrid.appendChild(card);
-  });
-
-  if (activeContainer) {
-    activeContainer.items.forEach((item, idx) => {
-      const card = document.createElement('div');
-      card.className = 'item-card';
-      card.innerHTML = `
-        <span class="rarity ${item.rarity}">${item.cat.toUpperCase()}</span>
-        <b>${item.name}</b>
-        <div class="val">₽ ${item.val.toLocaleString()}</div>
-        <div style="font-size:10px;color:var(--eft-green);margin-top:4px">[클릭하여 파밍]</div>
-      `;
-      card.onclick = () => {
-        P.backpack.push(item);
-        activeContainer.items.splice(idx, 1);
-        SND.lootPickup();
-        renderInventory();
-        updateHUD();
-      };
-      boxGrid.appendChild(card);
-    });
+  if (activeCrate.isAirdrop) {
+    banner('🔥 전설 보급품 회수! 풀 아머 & 루블 대량 획득');
+    P.reserve[2] += 15;
+    P.shieldMax = 150; P.shield = 150;
+    P.walletRub += 80000;
+    document.getElementById('armor-tier').textContent = '🛡️ 방탄 장비: LEVEL 3 군용 티타늄 아머';
+    addExp(180);
   } else {
-    boxGrid.innerHTML = `<div style="color:#678;font-size:12px;grid-column:span 4">열린 상자가 없습니다.</div>`;
+    banner('보급 상자 파밍 완료 (+루블, +75 EXP)');
+    P.walletRub += 25000;
+    P.reserve[0] += 60;
+    addExp(75);
   }
-  document.getElementById('inv-total-val').textContent = `₽ ${totalRub.toLocaleString()}`;
+  updateQuests();
+  updateHUD();
 }
 
 let indicatorAlpha = 0;
 function update(dt) {
   if (raidOver) return;
 
-  raidTime = Math.max(0, raidTime - dt);
-  const mins = ((raidTime / 60) | 0).toString().padStart(2, '0');
-  const secs = ((raidTime % 60) | 0).toString().padStart(2, '0');
-  document.getElementById('raid-timer').textContent = `${mins}:${secs}`;
-  if (raidTime <= 0) finishRaid(false, 'MIA (시간초과 실종)');
-
   P.cool = Math.max(0, P.cool - dt);
-  P.recoil = Math.max(0, P.recoil - dt * 0.65);
-  P.painkillerTimer = Math.max(0, P.painkillerTimer - dt);
+  P.recoil = Math.max(0, P.recoil - dt * 0.7);
+  P.droneCd = Math.max(0, P.droneCd - dt);
+  P.stimCd = Math.max(0, P.stimCd - dt);
   indicatorAlpha = Math.max(0, indicatorAlpha - dt * 2.8);
   document.getElementById('hit-indicator').style.opacity = indicatorAlpha;
 
-  if (P.parts.thorax < 30 || P.parts.head < 15) {
-    P.heartbeatAcc += dt;
-    if (P.heartbeatAcc > 0.8) {
-      P.heartbeatAcc = 0;
-      SND.heartbeat();
-    }
-  }
+  // 스킬 쿨타임 표시
+  document.getElementById('cd-q').textContent = P.droneCd > 0 ? `${Math.ceil(P.droneCd)}s` : '적 탐지';
+  document.getElementById('cd-e').textContent = P.stimCd > 0 ? `${Math.ceil(P.stimCd)}s` : '실드충전';
+  document.getElementById('cnt-g').textContent = `${P.grenades}개 소지`;
 
-  if (P.bleeding) {
-    P.parts.thorax -= dt * 1.5;
-    if (P.parts.thorax <= 0) finishRaid(false, 'KIA (과다출혈 사망)');
+  // 실드 자동재생
+  P.shieldRegenTimer += dt;
+  if (P.shieldRegenTimer >= 5.0 && P.shield < P.shieldMax) {
+    P.shield = Math.min(P.shieldMax, P.shield + dt * 30);
     updateHUD();
   }
 
@@ -927,203 +1012,209 @@ function update(dt) {
     }
   }
 
-  P.targetLean = (keys.q ? -0.25 : 0) + (keys.e ? 0.25 : 0);
-  P.leanAngle += (P.targetLean - P.leanAngle) * 0.2;
-  camera.rotation.z = -P.leanAngle;
-
-  let deg = ((P.yaw * 180 / Math.PI) % 360 + 360) % 360;
-  document.getElementById('compass-strip').style.transform = `translateX(${-deg * 2.2}px)`;
-
-  const isLimping = P.parts.legs <= 0 && P.painkillerTimer <= 0;
-  const moveSpd = (isLimping ? 1.8 : (keys.shift && !P.crouching ? 6.2 : P.crouching ? 2.4 : 3.8)) * dt;
+  // 이동
+  const baseSpd = (keys.shift && !P.crouching ? 6.5 : P.crouching ? 2.6 : 4.2) * (1 + P.speedBonus) * dt;
   const fw = (keys.w ? 1 : 0) - (keys.s ? 1 : 0), st = (keys.d ? 1 : 0) - (keys.a ? 1 : 0);
   const len = Math.hypot(fw, st) || 1;
-  const vx = (-Math.sin(P.yaw) * (fw / len) + Math.cos(P.yaw) * (st / len)) * moveSpd;
-  const vz = (-Math.cos(P.yaw) * (fw / len) - Math.sin(P.yaw) * (st / len)) * moveSpd;
+  const vx = (-Math.sin(P.yaw) * (fw / len) + Math.cos(P.yaw) * (st / len)) * baseSpd;
+  const vz = (-Math.cos(P.yaw) * (fw / len) - Math.sin(P.yaw) * (st / len)) * baseSpd;
   P.x += vx; P.z += vz;
 
   if (P.y > 0 || P.vy > 0) { P.y += P.vy * dt; P.vy -= 18 * dt; if (P.y <= 0) { P.y = 0; P.vy = 0; } }
   const pm = Math.hypot(vx, vz);
   if (pm > 0.001) {
-    P.bob += pm * 5.0; P.stepAcc += pm;
-    if (P.stepAcc > (P.crouching ? 3.0 : 2.0)) { P.stepAcc = 0; SND.footstep(P.x, P.z, true); }
+    P.bob += pm * 4.6; P.stepAcc += pm;
+    if (P.stepAcc > (P.crouching ? 3.0 : 2.0)) { P.stepAcc = 0; SND.footstep(true); }
   }
 
   const eyeH = P.crouching ? 0.95 : 1.55;
-  camera.position.set(P.x + Math.sin(P.yaw + Math.PI/2) * (P.leanAngle * 0.8), eyeH + P.y + Math.sin(P.bob * 2) * 0.03, P.z + Math.cos(P.yaw + Math.PI/2) * (P.leanAngle * 0.8));
-
+  camera.position.set(P.x, eyeH + P.y + Math.sin(P.bob * 2) * 0.03, P.z);
   gunRoot.position.set(Math.cos(P.bob) * 0.012 + P.swayX, Math.abs(Math.sin(P.bob)) * 0.014 + P.swayY, P.recoil * 1.2);
-  gunRoot.rotation.set(P.recoil * 1.4, 0, 0);
+  gunRoot.rotation.set(P.recoil * 1.3, 0, 0);
 
-  let inExfil = false;
-  for (const ep of exfilPoints) {
-    if (Math.hypot(ep.x - P.x, ep.z - P.z) < ep.rad) {
-      inExfil = true;
-      currentExfil = ep;
-      extractTimer += dt;
-      document.getElementById('extract-banner').style.display = 'block';
-      document.getElementById('extract-time').textContent = Math.max(0, 7.0 - extractTimer).toFixed(1);
-      if (Math.random() < 0.05) SND.extractTick();
-      if (extractTimer >= 7.0) finishRaid(true, ep.name);
-      break;
-    }
-  }
-  if (!inExfil) {
+  // 탈출 지점
+  const distExfil = Math.hypot(exfilZone.x - P.x, exfilZone.z - P.z);
+  if (distExfil < exfilZone.rad) {
+    extractTimer += dt;
+    document.getElementById('extract-banner').style.display = 'block';
+    document.getElementById('extract-time').textContent = Math.max(0, 5.0 - extractTimer).toFixed(1);
+    if (extractTimer >= 5.0) finishRaid(true);
+  } else {
     extractTimer = 0;
     document.getElementById('extract-banner').style.display = 'none';
   }
 
   checkInteractions();
 
-  scavs.forEach(s => {
-    const dx = P.x - s.x, dz = P.z - s.z, d = Math.hypot(dx, dz);
-    s.cd -= dt;
-    s.fireT = Math.max(0, s.fireT - dt);
-    s.mesh.userData.eFlash.visible = s.fireT > 0;
+  // 수류탄 물리
+  for (let i = thrownGrenades.length - 1; i >= 0; i--) {
+    const gr = thrownGrenades[i]; gr.life -= dt;
+    gr.x += gr.vx * dt; gr.z += gr.vz * dt; gr.y += gr.vy * dt; gr.vy -= 14 * dt;
+    if (gr.y <= 0.1) { gr.y = 0.1; gr.vy = -gr.vy * 0.4; gr.vx *= 0.7; gr.vz *= 0.7; }
+    gr.m.position.set(gr.x, gr.y, gr.z);
+    if (gr.life <= 0) { explodeGrenade(gr); thrownGrenades.splice(i, 1); }
+  }
 
-    if (d < 35) {
-      s.mesh.rotation.y = Math.atan2(dx, dz);
-      if (s.cd <= 0) {
-        s.cd = s.isBoss ? 0.75 : 1.4;
-        s.fireT = 0.08;
-        SND.scavGun(s.x, s.z);
+  // 봇 애니메이션 & 사격
+  bots.forEach(b => {
+    const dx = P.x - b.x, dz = P.z - b.z, d = Math.hypot(dx, dz);
+    b.cd -= dt;
+    b.fireT = Math.max(0, b.fireT - dt);
+    b.mesh.userData.eFlash.visible = b.fireT > 0;
 
-        const endAimX = P.x + (Math.random() - 0.5) * 1.5;
-        const endAimZ = P.z + (Math.random() - 0.5) * 1.5;
-        addTracer(s.x, 1.2, s.z, endAimX, 1.2, endAimZ, 0xffa022);
+    // 보행 애니메이션 (다리와 팔 스윙)
+    if (d > 10 && d < 34) {
+      b.walkCycle += dt * 6;
+      const sw = Math.sin(b.walkCycle) * 0.6;
+      b.mesh.userData.legL.rotation.x = sw;
+      b.mesh.userData.legR.rotation.x = -sw;
+      b.mesh.userData.armL.rotation.x = -sw * 0.6;
+      // 플레이어 방향으로 접근
+      b.x += (dx / d) * 2.8 * dt;
+      b.z += (dz / d) * 2.8 * dt;
+      b.mesh.position.set(b.x, 0, b.z);
+    }
 
-        if (Math.hypot(endAimX - P.x, endAimZ - P.z) < 1.0) SND.whizCrack();
-        if (Math.hypot(endAimX - P.x, endAimZ - P.z) < 0.6) applyDamageToPlayer(s.isBoss ? 44 : 26);
+    if (d < 34) {
+      b.mesh.rotation.y = Math.atan2(dx, dz);
+      if (!b.aggro) {
+        b.aggro = true;
+        banner('⚠️ 적 분대 교전 개시!');
+      }
+
+      if (b.cd <= 0) {
+        b.cd = b.isBoss ? 0.75 : 1.4;
+        b.fireT = 0.08;
+        SND.scavGun();
+
+        const aimOffset = (Math.random() - 0.5) * 1.5;
+        addTracer(b.x, 1.2, b.z, P.x + aimOffset, 1.2, P.z + aimOffset, 0xff9922);
+
+        if (Math.abs(aimOffset) < 0.65) applyDamageToPlayer(b.isBoss ? 26 : 16);
       }
     }
   });
 
   for (let i = tracers.length - 1; i >= 0; i--) { tracers[i].t -= dt; if (tracers[i].t <= 0) { scene.remove(tracers[i].m); tracers.splice(i, 1); } }
-  for (let i = casings.length - 1; i >= 0; i--) {
-    const c = casings[i]; c.life -= dt;
-    c.m.position.x += c.vx * dt; c.m.position.z += c.vz * dt; c.m.position.y += c.vy * dt; c.vy -= 9.8 * dt;
-    if (c.m.position.y <= 0.04) { c.m.position.y = 0.04; c.vy = 0; }
-    if (c.life <= 0) { scene.remove(c.m); casings.splice(i, 1); }
-  }
 }
 
 function applyDamageToPlayer(dmg) {
-  const partsList = ['thorax', 'legs', 'arms', 'stomach', 'head'];
-  const targetPart = partsList[(Math.random() * partsList.length) | 0];
-  P.parts[targetPart] = Math.max(0, P.parts[targetPart] - dmg);
-
-  if (Math.random() < 0.35) P.bleeding = true;
-  if (P.parts.head <= 0 || P.parts.thorax <= 0) finishRaid(false, 'KIA (전투 중 전사)');
+  P.shieldRegenTimer = 0;
+  if (P.shield > 0) {
+    const abs = Math.min(P.shield, dmg);
+    P.shield -= abs;
+    dmg -= abs;
+  }
+  if (dmg > 0) P.hp -= dmg;
 
   const deg = (Math.random() * 360) | 0;
   document.getElementById('hit-indicator').style.background = `radial-gradient(circle at center, transparent 65%, rgba(220,30,30,0.6) 80%), conic-gradient(from ${deg}deg at 50% 50%, rgba(220,20,30,.85) 0deg, transparent 45deg, transparent 315deg, rgba(220,20,30,.85) 360deg)`;
   indicatorAlpha = 1.0;
   updateHUD();
+
+  if (P.hp <= 0) finishRaid(false);
 }
 
-function finishRaid(survived, exfilName) {
+function finishRaid(survived) {
   raidOver = true;
   document.exitPointerLock();
   const modal = document.getElementById('result-modal');
   modal.style.display = 'flex';
-  modal.className = survived ? 'survived' : 'kia';
-  document.getElementById('res-status-title').textContent = survived ? 'SURVIVED (탈출 성공)' : 'KILLED IN ACTION (사망)';
-
-  let totalRub = 0;
-  P.backpack.forEach(i => totalRub += i.val);
-  if (!survived) totalRub = 0;
-
-  document.getElementById('res-kills').textContent = `${killsCount} 명`;
-  document.getElementById('res-items').textContent = `${P.backpack.length} 개 품목`;
-  document.getElementById('res-exfil').textContent = exfilName;
-  document.getElementById('res-rub').textContent = `₽ ${totalRub.toLocaleString()}`;
-
-  if (survived) SND.extractDone();
-}
-
-function restartRaid() {
-  location.reload();
+  document.getElementById('res-title').textContent = survived ? 'MISSION COMPLETED (작전 성공)' : 'AGENT DOWN (작전 실패)';
+  document.getElementById('res-sub').textContent = survived ? '생환 성공 (SURVIVED & EXTRACTED)' : '전사 (KILLED IN ACTION)';
+  document.getElementById('res-sub').style.color = survived ? 'var(--rpg-green)' : 'var(--rpg-red)';
+  document.getElementById('res-lvl').textContent = `LV. ${P.level}`;
+  document.getElementById('res-kills').textContent = `${P.kills} 명`;
+  document.getElementById('res-exp').textContent = `+${P.exp} EXP`;
+  if (survived) SND.winFanfare();
 }
 
 function updateHUD() {
-  const hpSum = P.parts.head + P.parts.thorax + P.parts.stomach + P.parts.arms + P.parts.legs;
-  document.getElementById('hp-total').textContent = `${Math.round(hpSum)} / 440`;
-  document.getElementById('hp-head').textContent = `${Math.round(P.parts.head)}/35`;
-  document.getElementById('hp-thorax').textContent = `${Math.round(P.parts.thorax)}/85`;
-  document.getElementById('hp-stomach').textContent = `${Math.round(P.parts.stomach)}/70`;
-  document.getElementById('hp-arms').textContent = `${Math.round(P.parts.arms)}/120`;
-  document.getElementById('hp-legs').textContent = `${Math.round(P.parts.legs)}/130`;
+  document.getElementById('player-lvl').textContent = `LV. ${P.level} 특수작전 요원`;
+  document.getElementById('stat-points').innerHTML = `가용 스킬 포인트: <b style="color:var(--rpg-cyan)">${P.skillPoints}</b> SP`;
+  document.getElementById('exp-text').textContent = `EXP ${P.exp} / ${P.expNext}`;
+  document.getElementById('exp-fill').style.width = `${Math.min(100, (P.exp / P.expNext) * 100)}%`;
 
-  document.getElementById('tag-bleed').style.display = P.bleeding ? 'inline-block' : 'none';
-  document.getElementById('tag-painkiller').style.display = P.painkillerTimer > 0 ? 'inline-block' : 'none';
-  document.getElementById('tag-limp').style.display = (P.parts.legs <= 0 && P.painkillerTimer <= 0) ? 'inline-block' : 'none';
-  document.getElementById('tag-nvg').style.display = P.nvgOn ? 'inline-block' : 'none';
+  document.getElementById('shield-val').textContent = `${Math.round(P.shield)} / ${P.shieldMax}`;
+  document.getElementById('shield-fill').style.width = `${Math.max(0, (P.shield / P.shieldMax) * 100)}%`;
+  document.getElementById('hp-val').textContent = `${Math.max(0, Math.round(P.hp))} / ${P.hpMax}`;
+  document.getElementById('hp-fill').style.width = `${Math.max(0, (P.hp / P.hpMax) * 100)}%`;
 
   const w = WEAPONS[P.wep];
-  document.getElementById('ammo-display').textContent = P.reloading > 0 ? 'RELOADING' : `${P.ammo[P.wep]} / ${P.reserve[P.wep]}`;
-  document.getElementById('weapon-title').textContent = w.name;
-  document.getElementById('caliber-mode').textContent = w.mode;
-  document.getElementById('stance-tag').textContent = P.crouching ? '앉아서 쏴 [반동 50% 감소]' : '서서쏴 [기본 자세]';
+  document.getElementById('ammo-val').textContent = P.reloading > 0 ? 'RELOAD' : `${P.ammo[P.wep]} / ${P.reserve[P.wep]}`;
+  document.getElementById('wep-name').textContent = w.name;
+  document.getElementById('wep-tier').textContent = w.tier;
+  document.getElementById('stance-indicator').textContent = P.crouching ? '앉아서 쏴 [반동 55% 감소]' : '서서쏴 [기본 자세]';
+}
+
+function renderSkillModal() {
+  document.getElementById('modal-sp').textContent = P.skillPoints;
+  document.getElementById('stat-dmg').textContent = `+${Math.round(P.dmgBonus * 100)}%`;
+  document.getElementById('stat-shd').textContent = P.shieldMax;
+  document.getElementById('stat-spd').textContent = `+${Math.round(P.speedBonus * 100)}%`;
+  document.getElementById('stat-vamp').textContent = `Lv.${P.vampLevel}`;
+  document.getElementById('stat-kills').textContent = P.kills;
+  document.getElementById('stat-crates').textContent = P.cratesOpened;
+  document.getElementById('stat-rub').textContent = `₽ ${P.walletRub.toLocaleString()}`;
 }
 
 function selectWeapon(idx) {
   P.wep = idx;
-  for (let i = 1; i <= 3; i++) {
-    const el = document.getElementById(`q-${i}`);
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById(`hb-${i}`);
     if (el) el.classList.toggle('active', i - 1 === idx);
   }
   updateHUD();
 }
 
+function banner(txt) {
+  const b = document.getElementById('banner'); b.innerHTML = txt; b.style.opacity = 1;
+  clearTimeout(b._t); b._t = setTimeout(() => b.style.opacity = 0, 2000);
+}
+function showKillBadge(txt) {
+  const b = document.getElementById('kill-badge'); b.textContent = txt; b.style.opacity = 1;
+  clearTimeout(b._t); b._t = setTimeout(() => b.style.opacity = 0, 1500);
+}
+
+// ==========================================
+// 9. 키보드 & 마우스 조작
+// ==========================================
 addEventListener('keydown', e => {
   const k = e.key.toLowerCase(); keys[k] = true;
   if (k === '1') selectWeapon(0);
   if (k === '2') selectWeapon(1);
   if (k === '3') selectWeapon(2);
-  if (k === '4') { const ifak = P.backpack.find(i => i.effect === 'heal'); if (ifak) useMedicalItem(ifak); }
-  if (k === '5') { const pk = P.backpack.find(i => i.effect === 'pain'); if (pk) useMedicalItem(pk); }
-  if (k === 'c') { P.crouching = !P.crouching; updateHUD(); }
-  if (k === 'n') {
-    P.nvgOn = !P.nvgOn;
-    document.getElementById('nvg-overlay').style.display = P.nvgOn ? 'block' : 'none';
-    SND.nvgToggle(P.nvgOn);
-    updateHUD();
-  }
+  if (k === '4') selectWeapon(3);
+  if (k === 'q') activateReconDrone();
+  if (k === 'e') activateNanoStim();
+  if (k === 'g') throwGrenade();
   if (k === 'b') toggleTrader();
-  if (k === 'f') { if (activeContainer) openContainer(); }
-  if (k === 't') {
-    P.flashlightOn = !P.flashlightOn;
-    flashLight.intensity = P.flashlightOn ? 3.0 : 0;
-  }
+  if (k === 'c') { P.crouching = !P.crouching; updateHUD(); }
+  if (k === 'f') { if (activeCrate) openCrate(); }
+  if (k === 'r') reload();
   if (k === 'tab') {
     e.preventDefault();
-    const inv = document.getElementById('inventory-modal');
-    if (inv.style.display === 'flex') {
-      inv.style.display = 'none'; cv.requestPointerLock();
+    const modal = document.getElementById('rpg-modal');
+    if (modal.style.display === 'flex') {
+      modal.style.display = 'none'; cv.requestPointerLock();
     } else {
-      inv.style.display = 'flex'; document.exitPointerLock(); renderInventory();
+      modal.style.display = 'flex'; document.exitPointerLock(); renderSkillModal();
     }
   }
-  if (k === 'r') reload();
   if (k === ' ' && P.y === 0 && locked) P.vy = 5.8;
 });
 addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
 addEventListener('mousemove', e => {
   if (!locked) return;
-  const sens = P.zoomed ? 0.001 : 0.0022;
-  P.yaw -= e.movementX * sens;
-  P.pitch = Math.max(-1.35, Math.min(1.35, P.pitch - e.movementY * sens));
+  P.yaw -= e.movementX * 0.0022;
+  P.pitch = Math.max(-1.35, Math.min(1.35, P.pitch - e.movementY * 0.0022));
   camera.rotation.y = P.yaw; camera.rotation.x = P.pitch;
 });
 addEventListener('mousedown', e => {
   if (e.button === 0) {
     if (locked) shoot();
     else if (!isModalOpen()) cv.requestPointerLock();
-  }
-  if (e.button === 2) {
-    P.zoomed = !P.zoomed;
-    document.getElementById('scope-overlay').style.display = P.zoomed && P.wep === 2 ? 'block' : 'none';
   }
 });
 addEventListener('contextmenu', e => e.preventDefault());
@@ -1134,79 +1225,33 @@ addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight);
 });
 
-const mm = document.getElementById('minimap').getContext('2d');
-function drawMinimap() {
-  mm.clearRect(0, 0, 160, 160);
-  const s = 160 / MAP_SIZE;
-  const cx = 80, cy = 80;
-
-  mm.fillStyle = '#1c241e';
-  mm.fillRect(0, 0, 160, 160);
-
-  exfilPoints.forEach(ep => {
-    const ex = cx + (ep.x - P.x) * s, ez = cy + (ep.z - P.z) * s;
-    mm.fillStyle = '#3bb346';
-    mm.beginPath(); mm.arc(ex, ez, 5, 0, Math.PI * 2); mm.fill();
-  });
-
-  lootContainers.forEach(c => {
-    const bx = cx + (c.x - P.x) * s, bz = cy + (c.z - P.z) * s;
-    mm.fillStyle = c.label.includes('마크방') ? '#d2a8ff' : '#c8a45d';
-    mm.fillRect(bx - 2.5, bz - 2.5, 5, 5);
-  });
-
-  scavs.forEach(sc => {
-    const sx = cx + (sc.x - P.x) * s, sz = cy + (sc.z - P.z) * s;
-    mm.fillStyle = sc.isBoss ? '#ffaa00' : '#e03e3e';
-    mm.beginPath(); mm.arc(sx, sz, 3, 0, Math.PI * 2); mm.fill();
-  });
-
-  mm.fillStyle = '#22d3ee';
-  mm.beginPath(); mm.arc(cx, cy, 4, 0, Math.PI * 2); mm.fill();
-  mm.strokeStyle = '#22d3ee';
-  mm.beginPath(); mm.moveTo(cx, cy);
-  mm.lineTo(cx - Math.sin(P.yaw) * 12, cy - Math.cos(P.yaw) * 12);
-  mm.stroke();
-}
-
-function banner(txt) {
-  const b = document.getElementById('banner'); b.innerHTML = txt; b.style.opacity = 1;
-  clearTimeout(b._t); b._t = setTimeout(() => b.style.opacity = 0, 2200);
-}
-function addFeed(k, v, w) {
-  const f = document.getElementById('feed'), d = document.createElement('div');
-  d.className = 'kf'; d.textContent = `${k} 💥 [${w}] ${v}`;
-  f.appendChild(d); setTimeout(() => d.remove(), 3500);
-}
-
 const chCanvas = document.getElementById('ch-canvas');
 const cg = chCanvas.getContext('2d');
 function drawCrosshair() {
   cg.clearRect(0, 0, 160, 160);
-  if (P.zoomed && P.wep === 2) return;
   const cx = 80, cy = 80;
-  const gap = (P.crouching ? 3 : 5) + P.recoil * 80;
-  cg.strokeStyle = '#c8a45d'; cg.lineWidth = 1.5;
+  const gap = (P.crouching ? 3 : 6) + P.recoil * 75;
+  cg.strokeStyle = '#00f0ff'; cg.lineWidth = 1.6;
   cg.beginPath();
   cg.moveTo(cx - gap - 6, cy); cg.lineTo(cx - gap, cy);
   cg.moveTo(cx + gap, cy); cg.lineTo(cx + gap + 6, cy);
   cg.moveTo(cx, cy - gap - 6); cg.lineTo(cx, cy - gap);
   cg.moveTo(cx, cy + gap); cg.lineTo(cx, cy + gap + 6);
   cg.stroke();
+  cg.fillStyle = '#00f0ff'; cg.beginPath(); cg.arc(cx, cy, 1.5, 0, Math.PI*2); cg.fill();
 }
 
 let last = performance.now();
 (function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   if (P) update(dt);
-  drawMinimap();
   drawCrosshair();
   renderer.render(scene, camera);
   requestAnimationFrame(loop);
 })(last);
 
 updateHUD();
-banner('타르코프 하드코어 레이드 2.0 (Q/E 린 피킹 · C 앉기 · N 야간투시경 · B 상인)');
+banner('안전 기지에 배치되었습니다! (보급 파밍 & 퀘스트 수행 후 탈출하십시오)');
 </script>
 </body>
 </html>
