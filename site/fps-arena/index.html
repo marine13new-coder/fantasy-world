@@ -512,10 +512,55 @@ canvas#c{display:block;width:100vw;height:100vh}
   color:#93c5fd;display:flex;align-items:center;gap:6px;pointer-events:none;
 }
 
+
+/* 킬스트릭 배너 (Double / Triple / Rampage) */
+#killstreak-banner{
+  position:absolute;top:18%;left:50%;transform:translateX(-50%);
+  font-size:28px;font-weight:900;letter-spacing:3px;color:#facc15;
+  text-shadow:0 0 25px rgba(250,204,21,0.8), 0 2px 4px #000;
+  opacity:0;transition:all .18s;pointer-events:none;z-index:36;text-align:center;
+}
+
 #ch-canvas{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;width:160px;height:160px;z-index:40}
 #hit-indicator{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .15s;z-index:30}
 #arcade-btn{position:absolute;top:16px;right:22px;font-size:12px;color:#ece8e1;background:var(--rpg-panel);padding:7px 16px;border-radius:4px;border:1px solid var(--rpg-border);pointer-events:auto;cursor:pointer;text-decoration:none}
 #arcade-btn:hover{background:var(--rpg-red);color:#fff}
+
+    /* === AAA GRAPHICS & HUD EXTENSIONS === */
+    #nvg-overlay {
+      position: absolute; inset: 0; pointer-events: none; z-index: 48; display: none;
+      background: radial-gradient(circle at center, rgba(16, 255, 60, 0.18), rgba(2, 45, 12, 0.72) 85%),
+                  repeating-linear-gradient(rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0, 30, 0, 0.38) 3px);
+      box-shadow: inset 0 0 120px rgba(0,0,0,0.9);
+      mix-blend-mode: screen;
+    }
+    #breath-indicator {
+      position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%);
+      font-size: 11px; font-weight: 800; color: #38ef7d; letter-spacing: 2px;
+      background: rgba(4, 20, 10, 0.75); border: 1px solid #38ef7d;
+      padding: 3px 12px; border-radius: 12px; display: none; pointer-events: none; z-index: 42;
+    }
+    .hud-badge-row {
+      display: flex; gap: 6px; margin-top: 5px; flex-wrap: wrap;
+    }
+    .hud-badge {
+      font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;
+      background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255,255,255,0.15);
+      color: #94a3b8; letter-spacing: 0.5px;
+    }
+    .hud-badge.active-gold {
+      border-color: #f59e0b; color: #fbbf24; background: rgba(245, 158, 11, 0.15);
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.35);
+    }
+    .hud-badge.active-cyan {
+      border-color: #00f0ff; color: #00f0ff; background: rgba(0, 240, 255, 0.15);
+      box-shadow: 0 0 8px rgba(0, 240, 255, 0.35);
+    }
+    .hud-badge.active-green {
+      border-color: #22c55e; color: #4ade80; background: rgba(34, 197, 94, 0.15);
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.35);
+    }
+
 </style>
 </head>
 <body>
@@ -524,6 +569,10 @@ canvas#c{display:block;width:100vw;height:100vh}
  
  
  <div id="thermal-overlay"></div>
+
+<div id="nvg-overlay"></div>
+<div id="breath-indicator">🫁 BREATH HELD (조준 안정화)</div>
+
  <div id="thermal-badge">FLIR THERMAL IR VISION [ON]</div>
 
  <!-- 2인 코옵 멀티플레이 모달 -->
@@ -659,6 +708,13 @@ canvas#c{display:block;width:100vw;height:100vh}
   <div id="ammo-val">30 / 120</div>
   <div id="wep-name">M4A1-S TACTICAL</div>
   <div id="stance-indicator">서서쏴 [기본 자세]</div>
+  <div class="hud-badge-row">
+    <div id="badge-firemode" class="hud-badge active-cyan">[X] 연발 (AUTO)</div>
+    <div id="badge-ammo" class="hud-badge">[U] FMJ 표준탄</div>
+    <div id="badge-nvg" class="hud-badge">[N] NVG 야간경</div>
+    <div id="badge-camo" class="hud-badge">[K] 기본 도색</div>
+    <div id="badge-light" class="hud-badge">[L] 전술 조명</div>
+  </div>
  </div>
 
  <div id="hotbar">
@@ -831,6 +887,9 @@ canvas#c{display:block;width:100vw;height:100vh}
  <div id="threat-indicator"><div class="threat-arrow" id="threat-arrow"></div></div>
  <div id="mastery-badge">🎯 헤드샷 정밀도: <span id="hs-rate">0%</span> (<span id="hs-count">0</span>회)</div>
 
+ 
+ <div id="killstreak-banner">🔥 DOUBLE KILL</div>
+
  <canvas id="ch-canvas" width="160" height="160"></canvas>
  <div id="hit-indicator"></div>
 
@@ -989,6 +1048,16 @@ function tone(f0, f1, dur, vol, type='sine', delay=0) {
 }
 
 const SND = {
+    nvgClick() { tone(2800, 3200, 0.08, 0.25, 'sine'); tone(3200, 3200, 0.25, 0.12, 'triangle', 0.08); },
+    fireModeClick() { tone(1800, 1100, 0.035, 0.35, 'triangle'); noise(0.025, 0.25, 2400); },
+    flashlightClick() { noise(0.02, 0.25, 3800); tone(1500, 900, 0.025, 0.25, 'sine'); },
+    breathHold() { noise(0.35, 0.14, 280, 'lowpass'); tone(85, 75, 0.4, 0.12, 'sine'); },
+    inspectClick() { tone(900, 1400, 0.06, 0.2, 'triangle'); noise(0.04, 0.2, 1800); },
+    killaRoar() { noise(0.9, 1.2, 220, 'lowpass'); tone(130, 35, 0.8, 0.95, 'sawtooth'); },
+    footstepConcrete(self) { noise(0.035, self ? 0.09 : 0.05, 1200, 'lowpass'); tone(120, 60, 0.02, 0.05, 'triangle'); },
+    footstepDirt(self) { noise(0.045, self ? 0.08 : 0.045, 650, 'lowpass'); },
+    footstepMetal(self) { tone(850, 420, 0.04, self ? 0.14 : 0.08, 'triangle'); noise(0.03, 0.08, 2200, 'bandpass'); },
+    footstepWater(self) { noise(0.06, self ? 0.12 : 0.07, 1800, 'bandpass'); tone(350, 150, 0.05, 0.1, 'sine'); },
         planeHum() { noise(2.5, 0.45, 120, 'lowpass'); tone(80, 75, 2.5, 0.4, 'sine'); },
   thunder() { noise(1.4, 0.9, 220, 'lowpass'); tone(60, 20, 1.2, 0.8, 'sawtooth'); },
         slideSound() { noise(0.35, 0.45, 800, 'bandpass'); tone(150, 60, 0.25, 0.3, 'sine'); },
@@ -1024,10 +1093,10 @@ const SND = {
 // ==========================================
 // 2. 오픈월드 전장 & 개선된 자연광 조명 시스템
 // ==========================================
-const MAP_SIZE = 110;
+const MAP_SIZE = 260;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x6e8396);
-scene.fog = new THREE.FogExp2(0x6e8396, 0.011);
+scene.fog = new THREE.FogExp2(0x6e8396, 0.0052);
 
 const cv = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' });
@@ -1036,28 +1105,37 @@ renderer.setPixelRatio(Math.min(2, devicePixelRatio));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 160);
+const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 340);
 camera.rotation.order = 'YXZ';
 scene.add(camera);
 
-// 개선된 부드러운 햇빛 & 앰비언트 라이트 (그림자 뭉개짐/깨짐 해결)
-scene.add(new THREE.HemisphereLight(0xdde9f5, 0x3d4740, 0.9));
-const sunLight = new THREE.DirectionalLight(0xfff8ee, 1.25);
-sunLight.position.set(45, 75, 40);
+// 개선된 부드러운 햇빛 & 앰비언트 라이트 (260m 전체 균등 그림자)
+scene.add(new THREE.HemisphereLight(0xdde9f5, 0x3d4740, 0.95));
+const sunLight = new THREE.DirectionalLight(0xfff8ee, 1.35);
+sunLight.position.set(65, 110, 60);
 sunLight.castShadow = true;
 sunLight.shadow.mapSize.width = 2048;
 sunLight.shadow.mapSize.height = 2048;
-sunLight.shadow.bias = -0.0006;
+sunLight.shadow.bias = -0.0005;
 sunLight.shadow.camera.near = 0.5;
-sunLight.shadow.camera.far = 160;
-const d = 55;
+sunLight.shadow.camera.far = 340;
+const d = 125;
 sunLight.shadow.camera.left = -d; sunLight.shadow.camera.right = d;
 sunLight.shadow.camera.top = d; sunLight.shadow.camera.bottom = -d;
 scene.add(sunLight);
 
 // 동적 총구 화염 & 폭발 조명
-const dynamicLight = new THREE.PointLight(0xffdd77, 0, 15);
+const dynamicLight = new THREE.PointLight(0xffdd77, 0, 16);
 scene.add(dynamicLight);
+
+// 전술 조명 (슈어파이어 웨폰 라이트 [L])
+const tacticalSpotlight = new THREE.SpotLight(0xffffff, 0, 52, 0.42, 0.55, 1.2);
+tacticalSpotlight.position.set(0.2, -0.15, -0.2);
+camera.add(tacticalSpotlight);
+const tacticalTarget = new THREE.Object3D();
+tacticalTarget.position.set(0, 0, -25);
+camera.add(tacticalTarget);
+tacticalSpotlight.target = tacticalTarget;
 
 // 바닥 텍스처 (PBR MeshStandardMaterial)
 function makeCanvasTex(fn) {
@@ -1066,13 +1144,13 @@ function makeCanvasTex(fn) {
   t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
 }
 const groundTex = makeCanvasTex(g => {
-  g.fillStyle = '#3a443b'; g.fillRect(0,0,256,256);
-  for (let i = 0; i < 800; i++) {
-    g.fillStyle = Math.random() > 0.5 ? '#303831' : '#455046';
+  g.fillStyle = '#384339'; g.fillRect(0,0,256,256);
+  for (let i = 0; i < 900; i++) {
+    g.fillStyle = Math.random() > 0.5 ? '#2c332d' : '#434e44';
     g.fillRect(Math.random() * 256, Math.random() * 256, 4, 4);
   }
 });
-groundTex.repeat.set(50, 50);
+groundTex.repeat.set(110, 110);
 
 const terrain = new THREE.Mesh(
   new THREE.PlaneGeometry(MAP_SIZE, MAP_SIZE),
@@ -1083,16 +1161,15 @@ terrain.receiveShadow = true; scene.add(terrain);
 
 const wallMeshes = [];
 const lootCrates = [];
-const exfilZone = { x: 38, z: 38, rad: 6.5 };
+const exfilZone = { x: 0, z: 95, rad: 8.5 };
 
-// 탈출 신호탄 연막 기둥
+// 탈출 신호탄 연막 기둥 (해안 등대 헬리패드)
 const exfilSmoke = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.8, 2.6, 18, 12),
-  new THREE.MeshBasicMaterial({ color: 0x22c55e, transparent: true, opacity: 0.38 })
+  new THREE.CylinderGeometry(0.8, 2.8, 22, 12),
+  new THREE.MeshBasicMaterial({ color: 0x22c55e, transparent: true, opacity: 0.4 })
 );
-exfilSmoke.position.set(exfilZone.x, 9, exfilZone.z);
+exfilSmoke.position.set(exfilZone.x, 11, exfilZone.z);
 scene.add(exfilSmoke);
-
 
 // ==========================================
 // 1-B. 완전 무결 2D AABB 충돌체 & 시선(LOS) 판정 시스템
@@ -1107,8 +1184,8 @@ function addBoxCollider(x, z, w, d) {
 }
 
 function checkCollision(x, z, radius = 0.45) {
-  // 맵 외곽 경계 (-52m ~ +52m)
-  if (x < -52 || x > 52 || z < -52 || z > 52) return true;
+  // 맵 외곽 경계 (-125m ~ +125m)
+  if (x < -125 || x > 125 || z < -125 || z > 125) return true;
 
   for (let i = 0; i < colliders.length; i++) {
     const c = colliders[i];
@@ -1121,8 +1198,8 @@ function checkCollision(x, z, radius = 0.45) {
 }
 
 function isPlayerInSafeZone(x, z) {
-  // 안전 기지 벙커 구역 내부
-  return (x >= -7.5 && x <= 7.5 && z >= -42 && z <= -26);
+  // 안전 기지 벙커 구역 내부 (FOB Alpha)
+  return (x >= -9.0 && x <= 9.0 && z >= -94.0 && z <= -74.0);
 }
 
 // 장애물 가림(LOS) 레이캐스트 판정 (벽 뒤 사격 완전 차단)
@@ -1154,41 +1231,133 @@ function createPBRBox(x, z, w, h, d, color=0x55606d) {
   return m;
 }
 
-// 1. 플레이어 안전 기지 (실제 내부 진입 가능한 3D 안전 벙커 & 출입문)
-// 후면 벽
-createPBRBox(0, -40, 14, 4.0, 1.2, 0x36414a);
-// 좌측 벽
-createPBRBox(-6.5, -34, 1.2, 4.0, 12, 0x36414a);
-// 우측 벽
-createPBRBox(6.5, -34, 1.2, 4.0, 12, 0x36414a);
-// 전면 좌측 벽
-createPBRBox(-4.5, -28, 4.2, 4.0, 1.2, 0x36414a);
-// 전면 우측 벽
-createPBRBox(4.5, -28, 4.2, 4.0, 1.2, 0x36414a);
-// 출입구 앞 방호 모래주머니
-createPBRBox(-2.6, -26.5, 2.2, 1.1, 0.8, 0x7c6947);
-createPBRBox(2.6, -26.5, 2.2, 1.1, 0.8, 0x7c6947);
+// ==========================================
+// 8대 섹터 오픈월드 건축 시스템
+// ==========================================
+
+// [섹터 1] 안전 기지 FOB Alpha 벙커 & 출입문 (0, -84)
+createPBRBox(0, -92, 16, 4.2, 1.2, 0x36414a); // 후면 벽
+createPBRBox(-7.5, -84, 1.2, 4.2, 16, 0x36414a); // 좌측 벽
+createPBRBox(7.5, -84, 1.2, 4.2, 16, 0x36414a); // 우측 벽
+createPBRBox(-5.2, -76, 5.0, 4.2, 1.2, 0x36414a); // 전면 좌측
+createPBRBox(5.2, -76, 5.0, 4.2, 1.2, 0x36414a); // 전면 우측 (중앙 5.4m 출입구)
+createPBRBox(-3.2, -74.5, 2.4, 1.1, 0.8, 0x7c6947); // 방호 모래주머니
+createPBRBox(3.2, -74.5, 2.4, 1.1, 0.8, 0x7c6947);
 
 // 벙커 지붕
 const bunkerRoof = new THREE.Mesh(
-  new THREE.BoxGeometry(15, 0.6, 13.5),
+  new THREE.BoxGeometry(16.5, 0.6, 17.5),
   new THREE.MeshStandardMaterial({ color: 0x222b33, roughness: 0.8 })
 );
-bunkerRoof.position.set(0, 4.2, -34);
+bunkerRoof.position.set(0, 4.3, -84);
 bunkerRoof.castShadow = true; bunkerRoof.receiveShadow = true;
 scene.add(bunkerRoof); wallMeshes.push(bunkerRoof);
 
 // 안전 구역 발광 비콘 & 벙커 내부 조명
-const safeBeacon = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 6, 8), new THREE.MeshBasicMaterial({ color: 0x00f0ff }));
-safeBeacon.position.set(0, 3.0, -34); scene.add(safeBeacon);
+const safeBeacon = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 6, 8), new THREE.MeshBasicMaterial({ color: 0x00f0ff }));
+safeBeacon.position.set(0, 3.2, -84); scene.add(safeBeacon);
+const bunkerLight = new THREE.PointLight(0xa5f3fc, 1.9, 18);
+bunkerLight.position.set(0, 3.4, -84); scene.add(bunkerLight);
 
-const bunkerLight = new THREE.PointLight(0xa5f3fc, 1.8, 16);
-bunkerLight.position.set(0, 3.2, -34); scene.add(bunkerLight);
+// [섹터 1 내부] 3D 암시장 상인 프라포르 (Trader Prapor) & 작전 책상
+const traderDesk = createPBRBox(0, -88.5, 3.8, 0.9, 1.4, 0x453424);
+const traderRadio = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.45, 0.5), new THREE.MeshStandardMaterial({ color: 0x2f3e2b, roughness: 0.5 }));
+traderRadio.position.set(-1.1, 1.15, -88.5); scene.add(traderRadio);
+const traderRadioLight = new THREE.PointLight(0x22c55e, 0.8, 2);
+traderRadioLight.position.set(-1.1, 1.45, -88.5); scene.add(traderRadioLight);
 
-// 2. 적 군사 레이더 기지 (중앙)
-createPBRBox(-14, 0, 18, 7, 22, 0x38414b);
-createPBRBox(16, -9, 9, 3.4, 7, 0x515d4c); // 검문소
-createPBRBox(0, 24, 5.5, 11, 5.5, 0x303942); // 보스 감시탑
+const traderLamp = new THREE.PointLight(0xfef08a, 1.8, 8);
+traderLamp.position.set(1.1, 1.8, -88.5); scene.add(traderLamp);
+
+// 프라포르 3D 캐릭터 모델
+const traderGroup = new THREE.Group();
+const tBody = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 0.95, 8), new THREE.MeshStandardMaterial({ color: 0x3d4a36, roughness: 0.7 }));
+tBody.position.y = 1.05;
+const tHead = new THREE.Mesh(new THREE.SphereGeometry(0.2, 10, 10), new THREE.MeshStandardMaterial({ color: 0xd2a47e, roughness: 0.6 }));
+tHead.position.y = 1.68;
+const tCap = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.1, 8), new THREE.MeshStandardMaterial({ color: 0x1e2630, roughness: 0.8 }));
+tCap.position.y = 1.8;
+traderGroup.add(tBody, tHead, tCap);
+traderGroup.position.set(0, 0, -89.4);
+scene.add(traderGroup);
+
+// [섹터 2] 컨테이너 야적장 (-65, -15) - 12개 20ft/40ft 컨테이너 미로
+const contColors = [0x1e3a8a, 0x991b1b, 0x365314, 0xd97706, 0x374151];
+createPBRBox(-60, -25, 4.5, 3.2, 12, contColors[0]);
+createPBRBox(-72, -25, 4.5, 3.2, 12, contColors[1]);
+createPBRBox(-66, -10, 12, 3.2, 4.5, contColors[2]);
+createPBRBox(-75, -5, 4.5, 3.2, 12, contColors[3]);
+createPBRBox(-55, -8, 4.5, 3.2, 12, contColors[4]);
+createPBRBox(-66, 6, 12, 3.2, 4.5, contColors[0]);
+createPBRBox(-60, -25, 4.5, 3.2, 12, contColors[1]); // 2단 적재
+createPBRBox(-75, -5, 4.5, 3.2, 12, contColors[2]);
+// 대형 16m 갠트리 크레인
+createPBRBox(-66, -15, 1.2, 15, 1.2, 0xeab308);
+createPBRBox(-66, 0, 1.2, 15, 1.2, 0xeab308);
+createPBRBox(-66, -7.5, 2.0, 1.2, 18, 0xeab308);
+
+// [섹터 3] 중앙 레이더 요새 (Radar Citadel Fortress) (0, 15)
+createPBRBox(0, 15, 24, 8.5, 22, 0x272e38); // 본관 요새
+createPBRBox(-16, 5, 4.5, 11, 4.5, 0x1f2937); // 감시탑 1
+createPBRBox(16, 5, 4.5, 11, 4.5, 0x1f2937); // 감시탑 2
+createPBRBox(-16, 25, 4.5, 11, 4.5, 0x1f2937); // 감시탑 3
+createPBRBox(16, 25, 4.5, 11, 4.5, 0x1f2937); // 감시탑 4
+// 요새 옥상 대형 18m 회전 레이더 디쉬
+const radarRoot = new THREE.Group();
+const radarPost = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 4, 8), new THREE.MeshStandardMaterial({ color: 0x475569 }));
+radarPost.position.y = 2;
+const radarDish = new THREE.Mesh(new THREE.SphereGeometry(3.5, 12, 6, 0, Math.PI * 2, 0, Math.PI * 0.45), new THREE.MeshStandardMaterial({ color: 0x94a3b8, side: THREE.DoubleSide }));
+radarDish.position.y = 4.2; radarDish.rotation.x = Math.PI * 0.7;
+radarRoot.add(radarPost, radarDish);
+radarRoot.position.set(0, 8.5, 15); scene.add(radarRoot);
+
+// [섹터 4] 추락한 C-130 허큘리스 수송기 잔해 (65, -30)
+createPBRBox(65, -30, 6.8, 5.0, 26, 0x64748b); // 관통 가능한 동체 박스
+createPBRBox(80, -32, 22, 0.8, 6.5, 0x475569); // 우측 날개 잔해
+createPBRBox(50, -28, 18, 0.8, 6.5, 0x475569); // 좌측 부러진 날개
+createPBRBox(72, -32, 2.4, 2.4, 4.5, 0x1e293b); // 엔진 나셀 Wreck
+const fireLight = new THREE.PointLight(0xf97316, 2.2, 14);
+fireLight.position.set(72, 2.2, -32); scene.add(fireLight);
+
+// [섹터 5] 해안 주유소 & 편의점 스토어 (-70, 55)
+createPBRBox(-70, 55, 16, 0.7, 12, 0x334155); // 주유 캐노피
+createPBRBox(-75, 52, 1.0, 4.2, 1.0, 0x64748b); // 캐노피 기둥들
+createPBRBox(-65, 52, 1.0, 4.2, 1.0, 0x64748b);
+createPBRBox(-75, 58, 1.0, 4.2, 1.0, 0x64748b);
+createPBRBox(-65, 58, 1.0, 4.2, 1.0, 0x64748b);
+createPBRBox(-70, 55, 3.5, 1.6, 1.2, 0xd97706); // 주유기 펌프
+createPBRBox(-70, 72, 18, 4.6, 14, 0x475569); // 편의점 본 건물
+
+// [섹터 6] 철도역 & 화물 열차 디포 (60, 45)
+createPBRBox(60, 32, 4.4, 5.4, 15, 0x1e293b); // 디젤 기관차 엔진
+createPBRBox(60, 49, 4.2, 4.4, 14, 0x78350f); // 오픈 화물 박스카 1
+createPBRBox(60, 65, 4.2, 4.4, 14, 0x1e3a8a); // 오픈 화물 박스카 2
+createPBRBox(60, 81, 4.2, 4.4, 14, 0x15803d); // 오픈 화물 박스카 3
+
+// [섹터 7] 지하 바이오 연구소 진입 참호 (40, 85)
+createPBRBox(36, 85, 1.2, 3.5, 14, 0x334155); // 참호 벽 좌
+createPBRBox(44, 85, 1.2, 3.5, 14, 0x334155); // 참호 벽 우
+createPBRBox(40, 91, 7.0, 4.2, 1.4, 0x713f12); // 헤비 방호 셔터 문
+const labSiren = new THREE.PointLight(0xef4444, 2.0, 10);
+labSiren.position.set(40, 3.2, 89); scene.add(labSiren);
+
+// [섹터 8] 해안 등대 & 탈출 헬리패드 (0, 95)
+createPBRBox(0, 108, 6.0, 24, 6.0, 0xe2e8f0); // 24m 등대 타워
+const lighthouseLight = new THREE.SpotLight(0xfffbeb, 3.5, 90, 0.35, 0.2);
+lighthouseLight.position.set(0, 23, 108); scene.add(lighthouseLight);
+const lighthouseTarget = new THREE.Object3D();
+scene.add(lighthouseTarget); lighthouseLight.target = lighthouseTarget;
+
+// 헬리패드 콘크리트 베이스
+createPBRBox(0, 95, 17, 0.3, 17, 0x334155);
+// 대기 중인 탈출 수송 헬기 (Mi-24)
+const heliRoot = new THREE.Group();
+const heliBody = new THREE.Mesh(new THREE.BoxGeometry(3.6, 2.8, 11), new THREE.MeshStandardMaterial({ color: 0x22364a, roughness: 0.6 }));
+heliBody.position.y = 2.0;
+const rotorMesh = new THREE.Mesh(new THREE.BoxGeometry(16, 0.08, 0.7), new THREE.MeshBasicMaterial({ color: 0x0f172a }));
+rotorMesh.position.y = 3.8;
+heliRoot.add(heliBody, rotorMesh);
+heliRoot.position.set(0, 0, 95); scene.add(heliRoot);
 
 // 3. 배그풍 보급 투하 상자 (Airdrop Care Package)
 function spawnAirdrop(x, z) {
@@ -1203,9 +1372,10 @@ function spawnAirdrop(x, z) {
   box.castShadow = true; scene.add(root);
   lootCrates.push({ group: root, x, z, isAirdrop: true, opened: false });
 }
-spawnAirdrop(-10, 20);
+spawnAirdrop(0, 15); // 요새 중앙 보급
+spawnAirdrop(-65, -15); // 컨테이너 야적장 보급
 
-// 일반 파밍 상자들
+// 일반 파밍 상자들 (8대 섹터 배치)
 function spawnCrate(x, z, label='보급 상자') {
   const m = new THREE.Mesh(
     new THREE.BoxGeometry(1.2, 0.7, 0.9),
@@ -1214,28 +1384,31 @@ function spawnCrate(x, z, label='보급 상자') {
   m.position.set(x, 0.35, z); m.castShadow = true; scene.add(m);
   lootCrates.push({ group: m, x, z, isAirdrop: false, opened: false, label });
 }
-spawnCrate(-12, -2, '전술 무기 상자');
-spawnCrate(15, -8, '의료 구급 상자');
-spawnCrate(0, 24, '저격탑 보물 상자');
-spawnCrate(22, 16, '군용 탄약 상자');
+spawnCrate(0, -82, '안전기지 보급 상자');
+spawnCrate(-64, -18, '야적장 공구함');
+spawnCrate(65, -30, 'C-130 블랙박스 키트');
+spawnCrate(-70, 72, '주유소 편의점 금고');
+spawnCrate(60, 49, '화물 열차 군용 화물');
+spawnCrate(40, 88, '바이오 실험실 기밀 상자');
+spawnCrate(0, 15, '요새 사령부 기밀 서류함');
 
-// 자연 침엽수림
-for (let i = 0; i < 55; i++) {
-  const tx = (Math.random() - 0.5) * 90, tz = (Math.random() - 0.5) * 90;
-  if (Math.hypot(tx, tz + 34) < 14) continue; // 스폰존 비움
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 3.2, 6), new THREE.MeshStandardMaterial({ color: 0x3d2b1f, roughness: 0.9 }));
-  trunk.position.set(tx, 1.6, tz); trunk.castShadow = true;
-  const leaves = new THREE.Mesh(new THREE.ConeGeometry(2.3, 5.5, 6), new THREE.MeshStandardMaterial({ color: 0x1b3121, roughness: 0.8 }));
-  leaves.position.set(tx, 4.8, tz); leaves.castShadow = true;
+// 260m 오픈월드 자연 침엽수림 (140그루)
+for (let i = 0; i < 140; i++) {
+  const tx = (Math.random() - 0.5) * 230, tz = (Math.random() - 0.5) * 230;
+  if (Math.hypot(tx, tz - (-84)) < 16) continue; // FOB 스폰존 제외
+  if (Math.hypot(tx, tz - 15) < 20) continue; // 요새 제외
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.35, 3.6, 6), new THREE.MeshStandardMaterial({ color: 0x3d2b1f, roughness: 0.9 }));
+  trunk.position.set(tx, 1.8, tz); trunk.castShadow = true;
+  const leaves = new THREE.Mesh(new THREE.ConeGeometry(2.6, 6.2, 6), new THREE.MeshStandardMaterial({ color: 0x1b3121, roughness: 0.8 }));
+  leaves.position.set(tx, 5.4, tz); leaves.castShadow = true;
   scene.add(trunk, leaves);
   wallMeshes.push(trunk);
 }
-
 // ==========================================
 // 3. 고품질 1인칭 현대 무기 & 모션 리그
 // ==========================================
 let P = {
-  x: 0, y: 0, z: -34, vy: 0, yaw: 0, pitch: 0,
+  x: 0, y: 0, z: -83, vy: 0, yaw: 0, pitch: 0,
   hp: 100, hpMax: 100,
   shield: 100, shieldMax: 100,
   shieldRegenTimer: 0,
@@ -1249,8 +1422,21 @@ let P = {
   grenades: 2,
   droneCd: 0, stimCd: 0,
   reloading: 0, cool: 0, recoil: 0, bob: 0, swayX: 0, swayY: 0,
-  crouching: false, isADS: false, isThermal: false, stepAcc: 0, attachments: { suppressor: false, foregrip: false, extMag: false, thermal: false },
-  kills: 0, cratesOpened: 0, bossKilled: false
+  crouching: false, isADS: false, isThermal: false, stepAcc: 0,
+  attachments: { suppressor: false, foregrip: false, extMag: false, thermal: false },
+  kills: 0, cratesOpened: 0, bossKilled: false,
+  // === AAA TACTICAL EXPANSION FIELDS ===
+  fireMode: 0, // 0: Auto, 1: 3-Round Burst, 2: Semi-Auto
+  burstRemaining: 0,
+  burstCooldown: 0,
+  isAPAmmo: false, // 7N39 Igolnik Armor Piercing Ammo
+  nvgActive: false, // Night Vision Goggles
+  flashlightActive: false, // Tactical Weapon Light
+  camoSkin: 0, // 0: Default, 1: Blackout, 2: Desert, 3: Arctic, 4: Gold
+  isHoldingBreath: false,
+  leaning: 0, // -1: Left, 0: Center, 1: Right
+  leanAngle: 0,
+  leanOffset: 0
 };
 
 const WEAPONS = [
@@ -1356,6 +1542,32 @@ function buildFPSGun() {
   gunRoot.add(g, flash);
   return { g, wepSubGroups, flash, laserLine, laserDot };
 }
+
+// ==========================================
+// 3-B. 무기 위장 도색 & 건스미스 커스텀 시스템
+// ==========================================
+const CAMO_PRESETS = [
+  { name: '공장 기본 (Standard Matte)', color: 0x181f26, metalness: 0.85, roughness: 0.35 },
+  { name: '특수작전 블랙아웃 (Blackout)', color: 0x0a0c10, metalness: 0.95, roughness: 0.2 },
+  { name: '사막 타이거 (Desert Camo)', color: 0xc29b62, metalness: 0.4, roughness: 0.55 },
+  { name: '극지 프로스트 (Arctic Hex)', color: 0xdbeafe, metalness: 0.55, roughness: 0.35 },
+  { name: '사이버 다마스커스 (Cyber Gold)', color: 0xf59e0b, metalness: 0.92, roughness: 0.22 }
+];
+
+function applyCamoToWeapons(skinIdx) {
+  if (!GUN_MESH || !GUN_MESH.g) return;
+  const p = CAMO_PRESETS[skinIdx % CAMO_PRESETS.length];
+  GUN_MESH.g.traverse(child => {
+    if (child.isMesh && child.material && !child.userData.isArm) {
+      if (child.material.color && child.material.roughness !== undefined) {
+        child.material.color.setHex(p.color);
+        child.material.metalness = p.metalness;
+        child.material.roughness = p.roughness;
+        child.material.needsUpdate = true;
+      }
+    }
+  });
+}
 const GUN_MESH = buildFPSGun();
 
 
@@ -1389,6 +1601,49 @@ function ejectBrassCasing() {
   });
 }
 
+
+// ==========================================
+// 3-D. 전술 컴뱃 나이프 [V] 근접 처형 시스템
+// ==========================================
+const combatKnife = new THREE.Group();
+const knifeBlade = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.28, 0.012), new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9, roughness: 0.2 }));
+knifeBlade.position.set(0, 0.14, 0);
+const knifeHilt = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.14, 0.025), new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.8 }));
+knifeHilt.position.set(0, -0.05, 0);
+combatKnife.add(knifeBlade, knifeHilt);
+combatKnife.position.set(0.25, -0.22, -0.42);
+combatKnife.visible = false;
+gunRoot.add(combatKnife);
+
+let knifeSwingTimer = 0;
+
+function performKnifeSlash() {
+  if (knifeSwingTimer > 0 || raidOver || inVehicle) return;
+  knifeSwingTimer = 0.32;
+  combatKnife.visible = true;
+  GUN_MESH.wepSubGroups[P.wep].visible = false;
+  SND.knifeSlash();
+
+  // 전방 2.8m 적 타격
+  bots.forEach(b => {
+    const d = Math.hypot(b.x - P.x, b.z - P.z);
+    if (d < 3.0) {
+      b.hp -= 90;
+      SND.hitMarker(); SND.bloodImpact();
+      spawnDmgPop(b.x, 1.4, b.z, 'KNIFE -90', true);
+      if (b.hp <= 0) {
+        P.kills++;
+        triggerBotRagdoll(b);
+        if (b.isBoss) P.bossKilled = true;
+        addExp(b.isBoss ? 250 : 80);
+        showKillBadge('🗡️ 전술 단검 제압! (+80 EXP)');
+        registerKillStreak();
+        updateQuests();
+      }
+    }
+  });
+}
+
 // ==========================================
 // 4. 인간형 스켈레톤 애니메이션 적 AI (Scav & Boss)
 // ==========================================
@@ -1396,69 +1651,126 @@ let activePing = null;
 let bots = [], tracers = [], particles = [], casings = [], thrownGrenades = [], keys = {};
 let locked = false, raidOver = false, extractTimer = 0;
 
-function makeAnimatedSoldierMesh(isBoss=false) {
+function makeAnimatedSoldierMesh(type = 'scav') {
+  const isKilla = (type === 'killa');
+  const isRaider = (type === 'raider');
   const root = new THREE.Group();
-  const camoMat = new THREE.MeshStandardMaterial({ color: isBoss ? 0x6e2c1e : 0x394539, roughness: 0.7 });
-  const vestMat = new THREE.MeshStandardMaterial({ color: 0x1c221c, roughness: 0.8 });
+
+  const suitColor = isKilla ? 0x111827 : isRaider ? 0x1e293b : 0x3d4a36;
+  const suitMat = new THREE.MeshStandardMaterial({ color: suitColor, roughness: 0.7 });
+  const vestColor = isKilla ? 0x3f3f46 : isRaider ? 0x0f172a : 0x27272a;
+  const vestMat = new THREE.MeshStandardMaterial({ color: vestColor, roughness: 0.75, metalness: isKilla ? 0.45 : 0.1 });
   const skinMat = new THREE.MeshStandardMaterial({ color: 0xd2a47e, roughness: 0.6 });
 
   // 다리 관절
   const legL = new THREE.Group(); legL.position.set(-0.14, 0.76, 0);
-  const legLM = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.76, 0.17), camoMat); legLM.position.y = -0.38; legLM.castShadow = true; legL.add(legLM);
-
+  const legLM = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.76, 0.17), suitMat); legLM.position.y = -0.38; legLM.castShadow = true; legL.add(legLM);
   const legR = new THREE.Group(); legR.position.set(0.14, 0.76, 0);
-  const legRM = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.76, 0.17), camoMat); legRM.position.y = -0.38; legRM.castShadow = true; legR.add(legRM);
+  const legRM = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.76, 0.17), suitMat); legRM.position.y = -0.38; legRM.castShadow = true; legR.add(legRM);
+
+  if (isKilla) {
+    const stripeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const s1 = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.7, 0.18), stripeMat); s1.position.set(-0.08, -0.38, 0); legL.add(s1);
+    const s2 = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.7, 0.18), stripeMat); s2.position.set(0.08, -0.38, 0); legR.add(s2);
+  }
 
   // 상체 & 헬멧
-  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.66, 0.28), camoMat); torso.position.y = 1.1; torso.castShadow = true;
-  const vest = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.48, 0.3), vestMat); vest.position.y = 1.12; vest.castShadow = true;
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.68, 0.3), suitMat); torso.position.y = 1.1; torso.castShadow = true;
+  const vest = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.52, 0.34), vestMat); vest.position.y = 1.12; vest.castShadow = true;
 
   const head = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.3, 0.28), skinMat); head.position.y = 1.62; head.castShadow = true; head.userData.isHead = true;
-  const helmet = new THREE.Mesh(new THREE.BoxGeometry(0.33, 0.18, 0.33), new THREE.MeshStandardMaterial({ color: isBoss ? 0xf5c542 : 0x1b201a, metalness: 0.3 }));
-  helmet.position.y = 1.72; helmet.userData.isHead = true;
+  
+  let helmet;
+  if (isKilla) {
+    helmet = new THREE.Group();
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.21, 10, 8), new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.6, roughness: 0.3 }));
+    dome.position.y = 1.66;
+    const faceShield = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.24, 0.08), new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.2 }));
+    faceShield.position.set(0, 1.62, 0.14);
+    const eyeSlit = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.03, 0.02), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+    eyeSlit.position.set(0, 1.64, 0.185);
+    helmet.add(dome, faceShield, eyeSlit);
+    helmet.userData.isHead = true;
+  } else {
+    helmet = new THREE.Mesh(new THREE.BoxGeometry(0.33, 0.18, 0.33), new THREE.MeshStandardMaterial({ color: isRaider ? 0x0f172a : 0x22364a, metalness: 0.3 }));
+    helmet.position.y = 1.72; helmet.userData.isHead = true;
+  }
 
   // 팔 관절
-  const armL = new THREE.Group(); armL.position.set(-0.3, 1.35, 0);
-  const armLM = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.54, 0.13), camoMat); armLM.position.y = -0.24; armL.add(armLM);
+  const armL = new THREE.Group(); armL.position.set(-0.32, 1.35, 0);
+  const armLM = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.54, 0.14), suitMat); armLM.position.y = -0.24; armL.add(armLM);
 
-  const armR = new THREE.Group(); armR.position.set(0.3, 1.35, 0);
-  const armRM = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.52, 0.13), camoMat); armRM.position.y = -0.15; armRM.rotation.x = -1.1; armR.add(armRM);
-  const gun = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.1, 0.55), vestMat); gun.position.set(0, -0.15, 0.36); armR.add(gun);
+  const armR = new THREE.Group(); armR.position.set(0.32, 1.35, 0);
+  const armRM = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.52, 0.14), suitMat); armRM.position.y = -0.15; armRM.rotation.x = -1.1; armR.add(armRM);
 
-  const eFlash = new THREE.Mesh(new THREE.SphereGeometry(0.16, 6, 6), new THREE.MeshBasicMaterial({ color: 0xffaa00 }));
-  eFlash.position.set(0, -0.15, 0.68); eFlash.visible = false; armR.add(eFlash);
+  const gun = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, isKilla ? 0.72 : 0.55), vestMat);
+  gun.position.set(0, -0.15, isKilla ? 0.44 : 0.36); armR.add(gun);
+  if (isKilla) {
+    const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.1, 10), new THREE.MeshStandardMaterial({ color: 0x09090b, metalness: 0.8 }));
+    drum.rotation.x = Math.PI / 2; drum.position.set(0, -0.22, 0.35); armR.add(drum);
+  }
 
-  // RPG 체력바
-  const hpBg = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.1), new THREE.MeshBasicMaterial({ color: 0x0f172a, side: THREE.DoubleSide }));
-  hpBg.position.set(0, 2.1, 0);
-  const hpBar = new THREE.Mesh(new THREE.PlaneGeometry(0.78, 0.08), new THREE.MeshBasicMaterial({ color: isBoss ? 0xf5c542 : 0xef4444, side: THREE.DoubleSide }));
-  hpBar.position.set(0, 2.1, 0.001);
-  root.add(hpBg, hpBar);
+  const eFlash = new THREE.Mesh(new THREE.SphereGeometry(isKilla ? 0.24 : 0.16, 6, 6), new THREE.MeshBasicMaterial({ color: 0xffaa00 }));
+  eFlash.position.set(0, -0.15, isKilla ? 0.82 : 0.68); eFlash.visible = false;
+  armR.add(eFlash);
 
-  root.add(legL, legR, torso, vest, head, helmet, armL, armR);
-  root.userData = { legL, legR, armL, armR, eFlash, isBoss, hpBar, head };
+  // 상단 플로팅 HP 게이지
+  const hpBarBg = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.08), new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide }));
+  hpBarBg.position.set(0, 2.15, 0);
+  const hpBar = new THREE.Mesh(new THREE.PlaneGeometry(0.78, 0.06), new THREE.MeshBasicMaterial({ color: isKilla ? 0xf59e0b : isRaider ? 0xef4444 : 0x22c55e, side: THREE.DoubleSide }));
+  hpBar.position.set(0, 2.15, 0.01);
+
+  root.add(legL, legR, torso, vest, head, helmet, armL, armR, hpBarBg, hpBar);
+  root.userData = { legL, legR, armL, armR, eFlash, isBoss: isKilla, isKilla, hpBar, head };
   return root;
 }
 
-function spawnBot(x, z, isBoss=false) {
-  const mesh = makeAnimatedSoldierMesh(isBoss);
+function spawnBot(x, z, type='scav') {
+  const isKilla = (type === 'killa');
+  const isRaider = (type === 'raider');
+  const maxHp = isKilla ? 850 : isRaider ? 180 : 90;
+  const mesh = makeAnimatedSoldierMesh(type);
   mesh.position.set(x, 0, z); scene.add(mesh);
   bots.push({
     mesh, x, z,
-    hp: isBoss ? 350 : 100, maxHp: isBoss ? 350 : 100,
-    isBoss, cd: 1.2 + Math.random(),
+    hp: maxHp, maxHp,
+    type, isBoss: isKilla,
+    isKilla,
+    cd: isKilla ? 0.45 : isRaider ? 0.9 : 1.4,
     walkCycle: Math.random() * 6,
     aggro: false, fireT: 0
   });
 }
 
-spawnBot(-12, 4, false);
-spawnBot(14, -7, false);
-spawnBot(0, 24, true); // 저격탑 보스
-spawnBot(-22, -10, false);
-spawnBot(18, 14, false);
+// [섹터 3] 레이더 요새 중앙 슈퍼 보스 킬라 & 호위 레이더
+spawnBot(0, 15, 'killa');
+spawnBot(-8, 12, 'raider');
+spawnBot(8, 12, 'raider');
+spawnBot(0, 24, 'raider');
 
+// [섹터 2] 컨테이너 야적장 (-65, -15)
+spawnBot(-62, -22, 'scav');
+spawnBot(-70, -10, 'scav');
+spawnBot(-58, -5, 'raider');
 
+// [섹터 4] C-130 수송기 잔해 (65, -30)
+spawnBot(62, -34, 'scav');
+spawnBot(70, -26, 'raider');
+spawnBot(54, -28, 'scav');
+
+// [섹터 5] 해안 주유소 (-70, 55)
+spawnBot(-68, 52, 'scav');
+spawnBot(-72, 68, 'raider');
+spawnBot(-62, 58, 'scav');
+
+// [섹터 6] 화물 열차 디포 (60, 45)
+spawnBot(60, 36, 'scav');
+spawnBot(60, 56, 'raider');
+spawnBot(60, 75, 'scav');
+
+// [섹터 7] 지하 바이오 연구소 참호 (40, 85)
+spawnBot(38, 82, 'raider');
+spawnBot(42, 86, 'raider');
 // ==========================================
 // 4-B. 전술 지원 AI 분대원 (Alpha-1 동행 요원)
 // ==========================================
@@ -1726,9 +2038,9 @@ function buildTacticalBuggy() {
     wheels.push(w);
   });
 
-  root.position.set(8, 0, -30);
+  root.position.set(8, 0, -73);
   scene.add(root);
-  return { root, wheels, hlL, hlR, x: 8, z: -30, yaw: 0 };
+  return { root, wheels, hlL, hlR, x: 8, z: -73, yaw: 0 };
 }
 const BUGGY = buildTacticalBuggy();
 
@@ -2140,11 +2452,11 @@ function renderSatMap() {
   for (let x = 0; x < w; x += 40) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
   for (let y = 0; y < h; y += 40) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
 
-  // 월드 좌표 변환 (-55m ~ +55m -> 0 ~ w, 0 ~ h)
+  // 월드 좌표 변환 (-130m ~ +130m -> 0 ~ w, 0 ~ h)
   const toScreen = (wx, wz) => {
     return {
-      sx: ((wx + 55) / 110) * w,
-      sy: ((wz + 55) / 110) * h
+      sx: ((wx + 130) / 260) * w,
+      sy: ((wz + 130) / 260) * h
     };
   };
 
@@ -2274,6 +2586,38 @@ function triggerThreatArc(fromX, fromZ) {
   threatArcTimer = 1.4;
 }
 
+
+let recentKillCount = 0;
+let lastKillTime = 0;
+
+function registerKillStreak() {
+  const now = performance.now();
+  if (now - lastKillTime < 4500) {
+    recentKillCount++;
+  } else {
+    recentKillCount = 1;
+  }
+  lastKillTime = now;
+
+  const b = document.getElementById('killstreak-banner');
+  if (recentKillCount === 2) {
+    b.textContent = '🔥 DOUBLE KILL! (더블 킬)';
+    b.style.opacity = '1';
+    SND.streakChime(1);
+    setTimeout(() => b.style.opacity = '0', 1600);
+  } else if (recentKillCount === 3) {
+    b.textContent = '⚡ TRIPLE KILL! (트리플 킬)';
+    b.style.opacity = '1';
+    SND.streakChime(2);
+    setTimeout(() => b.style.opacity = '0', 1800);
+  } else if (recentKillCount >= 4) {
+    b.textContent = `💀 RAMPAGE! (${recentKillCount}연쇄 제압)`;
+    b.style.opacity = '1';
+    SND.streakChime(3);
+    setTimeout(() => b.style.opacity = '0', 2000);
+  }
+}
+
 // ==========================================
 // 5. RPG 대미지 팝업 & 격발 로직
 // ==========================================
@@ -2296,11 +2640,11 @@ function shoot() {
   if (raidOver || P.cool > 0 || P.reloading > 0 || isModalOpen()) return;
   if (P.isJammed) {
     SND.dryFire();
-    banner('⚠️ [격발 불량] [J] 키를 눌러 불량 탄피를 배출하십시오!');
+    banner('⚠️ [격발 불량] [J] 키를 눌러 노리쇠를 후퇴 고정하고 탄피를 배출하십시오!');
     return;
   }
-  // 1.5% 확률로 약실 불량(Jam) 발생
-  if (Math.random() < 0.015 && P.ammo[P.wep] > 2) {
+  // 1.2% 확률로 약실 불량(Jam) 발생
+  if (Math.random() < 0.012 && P.ammo[P.wep] > 2) {
     P.isJammed = true;
     SND.dryFire();
     document.getElementById('jam-banner').style.display = 'block';
@@ -2311,49 +2655,66 @@ function shoot() {
   P.ammo[P.wep]--; P.cool = w.cd;
   ejectBrassCasing();
 
+  // 점사(Burst) 모드 처리: 3발 중 나머지 2발 연쇄 큐잉
+  if (P.fireMode === 1 && P.burstRemaining === 0) {
+    P.burstRemaining = 2;
+    P.burstCooldown = 0.07;
+  }
+
   if (P.wep === 0) SND.m4Shot();
   else if (P.wep === 1) SND.akShot();
   else if (P.wep === 2) SND.sniperShot();
   else SND.shotgunShot();
 
   GUN_MESH.flash.visible = true;
-  dynamicLight.intensity = 2.5;
+  dynamicLight.intensity = 2.6;
   const muzWorld = new THREE.Vector3(0.22, -0.19, -1.0).applyMatrix4(camera.matrixWorld);
   dynamicLight.position.copy(muzWorld);
   setTimeout(() => { GUN_MESH.flash.visible = false; dynamicLight.intensity = 0; }, 45);
 
-  const recoilMult = (P.crouching ? 0.45 : 1.0) * (P.attachments.foregrip ? 0.5 : 1.0);
+  const recoilMult = (P.crouching ? 0.45 : 1.0) * (P.attachments.foregrip ? 0.5 : 1.0) * (P.isHoldingBreath ? 0.4 : 1.0);
   P.recoil = Math.min(0.25, P.recoil + w.recoil * recoilMult);
   P.pitch = Math.min(1.35, P.pitch + w.recoil * 0.35 * recoilMult);
 
   const pellets = P.wep === 3 ? 8 : 1;
   for (let p = 0; p < pellets; p++) {
-    const spread = (P.wep === 3 ? 0.05 : 0.005) + P.recoil * 0.08;
+    const spread = ((P.wep === 3 ? 0.05 : 0.004) + P.recoil * 0.07) * (P.isHoldingBreath ? 0.3 : 1.0);
     raycaster.setFromCamera({ x: (Math.random() - 0.5) * spread, y: (Math.random() - 0.5) * spread }, camera);
     const targets = [...wallMeshes];
     bots.forEach(b => b.mesh.traverse(c => { if (c.isMesh) targets.push(c); }));
     const hits = raycaster.intersectObjects(targets, false);
 
-    let endPt = raycaster.ray.at(75, new THREE.Vector3());
+    let endPt = raycaster.ray.at(120, new THREE.Vector3());
+    const baseDmg = Math.round((w.dmg * (1 + P.dmgBonus)) * (P.isAPAmmo ? 1.4 : 1.0));
+
     if (hits.length) {
       endPt = hits[0].point;
       const obj = hits[0].object;
       const bot = bots.find(b => { let f = false; b.mesh.traverse(c => { if (c === obj) f = true; }); return f; });
 
-      
-      // 폭발성 유류 드럼통 피격 판정
+      // 폭발성 유류 드럼통 피격 판정 (baseDmg 정상 적용)
       if (obj.userData && obj.userData.isBarrel) {
         const bRef = obj.userData.barrelRef;
-        bRef.hp -= dmg;
+        bRef.hp -= baseDmg;
         SND.hitMarker();
-        spawnDmgPop(endPt.x, endPt.y + 0.3, endPt.z, dmg, false);
+        spawnDmgPop(endPt.x, endPt.y + 0.3, endPt.z, baseDmg, false);
         if (bRef.hp <= 0) explodeBarrel(bRef);
       }
 
       if (bot) {
         const isHead = !!obj.userData.isHead;
-        let dmg = Math.round((w.dmg * (1 + P.dmgBonus)) * (isHead ? 2.2 : 1.0));
-        bot.hp -= dmg;
+        let finalDmg = Math.round(baseDmg * (isHead ? 2.4 : 1.0));
+
+        // 슈퍼 보스 킬라(KILLA) 중장갑 내구도 판정
+        if (bot.isKilla) {
+          if (!P.isAPAmmo) {
+            finalDmg = Math.round(finalDmg * 0.55); // 비철갑탄 45% 흡수
+          } else {
+            finalDmg = Math.round(finalDmg * 1.35); // 7N39 철갑탄 관통 분쇄
+          }
+        }
+
+        bot.hp -= finalDmg;
 
         if (isHead) {
           SND.headshot();
@@ -2364,7 +2725,7 @@ function shoot() {
         const hsRate = Math.round((totalHeadshots / Math.max(1, totalShotsFired)) * 100);
         const rateEl = document.getElementById('hs-rate'); if (rateEl) rateEl.textContent = `${hsRate}%`;
         const countEl = document.getElementById('hs-count'); if (countEl) countEl.textContent = totalHeadshots; else SND.hitMarker();
-        spawnDmgPop(endPt.x, endPt.y + 0.3, endPt.z, dmg, isHead);
+        spawnDmgPop(endPt.x, endPt.y + 0.3, endPt.z, finalDmg, isHead);
 
         if (P.vampLevel > 0) P.shield = Math.min(P.shieldMax, P.shield + 10 * P.vampLevel);
 
@@ -2375,18 +2736,25 @@ function shoot() {
         if (bot.hp <= 0) {
           P.kills++;
           triggerBotRagdoll(bot);
-          if (bot.isBoss) P.bossKilled = true;
-          addExp(bot.isBoss ? 250 : 60);
-          showKillBadge(bot.isBoss ? '👑 보스 글루하르 사살! (+250 EXP)' : '적 제압 완료 (+60 EXP)');
+          if (bot.isKilla) {
+            P.bossKilled = true;
+            P.walletRub += 150000;
+            addExp(500);
+            showKillBadge('👑 [보스 제압] 킬라(KILLA) 사살! (+500 EXP, +₽150,000)');
+            banner('🏆 [전설의 전리품] 킬라의 골든 스타 밤 & 군용 탈출 카드를 획득했습니다!');
+          } else {
+            addExp(bot.isBoss ? 250 : 60);
+            showKillBadge(bot.isBoss ? '👑 보스 처치 (+250 EXP)' : '적 제압 완료 (+60 EXP)');
+          }
           updateQuests();
         }
       }
     }
-    addTracer(muzWorld.x, muzWorld.y, muzWorld.z, endPt.x, endPt.y, endPt.z, 0xffd066);
+    const tracerColor = P.isAPAmmo ? 0xffea00 : 0xffd066;
+    addTracer(muzWorld.x, muzWorld.y, muzWorld.z, endPt.x, endPt.y, endPt.z, tracerColor);
   }
   updateHUD();
 }
-
 function addTracer(x0, y0, z0, x1, y1, z1, col) {
   const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x0, y0, z0), new THREE.Vector3(x1, y1, z1)]);
   const m = new THREE.Line(g, new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.9 }));
@@ -2416,6 +2784,7 @@ function reload() {
   const w = WEAPONS[P.wep];
   if (P.reloading > 0 || P.ammo[P.wep] === w.mag || P.reserve[P.wep] <= 0) return;
   P.reloading = 1.3;
+  SND.magDrop();
   updateHUD();
 }
 
@@ -3325,6 +3694,18 @@ function update(dt) {
     }
   }
 
+  
+  // 전술 단검 스윙 애니메이션
+  if (knifeSwingTimer > 0) {
+    knifeSwingTimer -= dt;
+    combatKnife.rotation.z = Math.sin((0.32 - knifeSwingTimer) * 16) * 1.8;
+    combatKnife.position.x = 0.25 - Math.sin((0.32 - knifeSwingTimer) * 16) * 0.4;
+    if (knifeSwingTimer <= 0) {
+      combatKnife.visible = false;
+      GUN_MESH.wepSubGroups[P.wep].visible = true;
+    }
+  }
+
   // 이동
   const baseSpd = (keys.shift && !P.crouching ? 6.5 : P.crouching ? 2.6 : 4.2) * (1 + P.speedBonus) * dt;
   const fw = (keys.w ? 1 : 0) - (keys.s ? 1 : 0), st = (keys.d ? 1 : 0) - (keys.a ? 1 : 0);
@@ -3339,8 +3720,8 @@ function update(dt) {
   if (!checkCollision(P.x, P.z + vz, 0.45)) {
     P.z += vz;
   }
-  P.x = Math.max(-52, Math.min(52, P.x));
-  P.z = Math.max(-52, Math.min(52, P.z));
+  P.x = Math.max(-125, Math.min(125, P.x));
+  P.z = Math.max(-125, Math.min(125, P.z));
 
   // 안전 구역 실시간 체크 및 HUD 표시
   const inSafe = isPlayerInSafeZone(P.x, P.z);
@@ -3351,13 +3732,62 @@ function update(dt) {
   const pm = Math.hypot(vx, vz);
   if (pm > 0.001) {
     P.bob += pm * 4.6; P.stepAcc += pm;
-    if (P.stepAcc > (P.crouching ? 3.0 : 2.0)) { P.stepAcc = 0; SND.footstep(true); }
+    if (P.stepAcc > (P.crouching ? 3.0 : 2.0)) {
+      P.stepAcc = 0;
+      if (isPlayerInSafeZone(P.x, P.z) || (P.x >= 55 && P.x <= 65 && P.z >= 20 && P.z <= 90)) {
+        SND.footstepMetal(true);
+      } else if (Math.hypot(P.x - (-70), P.z - 55) < 22 || Math.hypot(P.x, P.z - 95) < 16) {
+        SND.footstepConcrete(true);
+      } else if (currentWeatherMode === 2) {
+        SND.footstepWater(true);
+      } else {
+        SND.footstepDirt(true);
+      }
+    }
   }
 
+  // 전술 코너 피킹 & 린(Leaning) 부드러운 보간
+  const targetLean = P.leaning * 0.16;
+  const targetLeanX = P.leaning * 0.38;
+  P.leanAngle = THREE.MathUtils.lerp(P.leanAngle, targetLean, dt * 14);
+  P.leanOffset = THREE.MathUtils.lerp(P.leanOffset, targetLeanX, dt * 14);
+  camera.rotation.z = P.leanAngle;
+
+  if (P.isHoldingBreath) { P.swayX = 0; P.swayY = 0; }
+
   const eyeH = slideTimer > 0 ? 0.65 : P.crouching ? 0.95 : 1.55;
-  camera.position.set(P.x, eyeH + P.y + Math.sin(P.bob * 2) * 0.03, P.z);
+  const camX = P.x + Math.cos(P.yaw) * P.leanOffset;
+  const camZ = P.z - Math.sin(P.yaw) * P.leanOffset;
+  camera.position.set(camX, eyeH + P.y + Math.sin(P.bob * 2) * 0.03, camZ);
   gunRoot.position.set(Math.cos(P.bob) * 0.012 + P.swayX, Math.abs(Math.sin(P.bob)) * 0.014 + P.swayY, P.recoil * 1.2);
   gunRoot.rotation.set(P.recoil * 1.3, 0, 0);
+
+  // 3점사 연쇄 발사 처리
+  if (P.burstRemaining > 0) {
+    P.burstCooldown -= dt;
+    if (P.burstCooldown <= 0) {
+      P.burstCooldown = 0.07;
+      P.burstRemaining--;
+      shoot();
+    }
+  }
+
+  // 상인 프라포르 근접 상호작용 체크
+  if (isPlayerInSafeZone(P.x, P.z) && Math.hypot(P.x, P.z - (-88.5)) < 3.8) {
+    const promptEl = document.getElementById('prompt');
+    if (promptEl && !activeCrate && !inVehicle) {
+      promptEl.style.display = 'block';
+      document.getElementById('prompt-txt').textContent = '[B] 암시장 상인 프라포르와 거래하기';
+    }
+  }
+
+  // 환경 기믹 애니메이션 (레이더 디쉬, 헬기 로터, 등대 비콘)
+  if (typeof radarRoot !== 'undefined') radarRoot.rotation.y += dt * 0.9;
+  if (typeof rotorMesh !== 'undefined') rotorMesh.rotation.y += dt * 26;
+  if (typeof lighthouseLight !== 'undefined') {
+    const lAngle = performance.now() * 0.0014;
+    lighthouseTarget.position.set(Math.sin(lAngle) * 55, 0, 108 + Math.cos(lAngle) * 55);
+  }
 
   // 탈출 지점
   const distExfil = Math.hypot(exfilZone.x - P.x, exfilZone.z - P.z);
@@ -3483,6 +3913,32 @@ function updateHUD() {
   document.getElementById('wep-name').textContent = w.name;
   document.getElementById('wep-tier').textContent = w.tier;
   document.getElementById('stance-indicator').textContent = P.crouching ? '앉아서 쏴 [반동 55% 감소]' : '서서쏴 [기본 자세]';
+
+  // 무기 전술 뱃지 갱신
+  const bFm = document.getElementById('badge-firemode');
+  if (bFm) {
+    bFm.textContent = `[X] ` + (P.fireMode === 0 ? '연발 (AUTO)' : P.fireMode === 1 ? '3점사 (BURST)' : '단발 (SEMI)');
+    bFm.className = 'hud-badge ' + (P.fireMode === 0 ? 'active-cyan' : P.fireMode === 1 ? 'active-gold' : '');
+  }
+  const bAmmo = document.getElementById('badge-ammo');
+  if (bAmmo) {
+    bAmmo.textContent = `[U] ` + (P.isAPAmmo ? '7N39 철갑탄 (AP)' : 'FMJ 표준탄');
+    bAmmo.className = 'hud-badge ' + (P.isAPAmmo ? 'active-gold' : '');
+  }
+  const bNvg = document.getElementById('badge-nvg');
+  if (bNvg) {
+    bNvg.textContent = `[N] ` + (P.nvgActive ? 'NVG ON' : 'NVG OFF');
+    bNvg.className = 'hud-badge ' + (P.nvgActive ? 'active-green' : '');
+  }
+  const bCamo = document.getElementById('badge-camo');
+  if (bCamo && CAMO_PRESETS) {
+    bCamo.textContent = `[K] ` + CAMO_PRESETS[P.camoSkin].name.split(' ')[0];
+  }
+  const bLight = document.getElementById('badge-light');
+  if (bLight) {
+    bLight.textContent = `[L] ` + (P.flashlightActive ? '라이트 ON' : '라이트 OFF');
+    bLight.className = 'hud-badge ' + (P.flashlightActive ? 'active-cyan' : '');
+  }
 }
 
 function renderSkillModal() {
@@ -3527,12 +3983,49 @@ addEventListener('keydown', e => {
   if (k === '3') selectWeapon(2);
   if (k === '4') selectWeapon(3);
   if (k === '5') deploySentryTurret();
+  if (k === '6') activateReconDrone();
   if (k === 'q') P.leaning = -1;
   if (k === 'e') P.leaning = 1;
-  if (k === '6') activateReconDrone();
+  if (k === 'x') {
+    P.fireMode = (P.fireMode + 1) % 3;
+    SND.fireModeClick();
+    const fNames = ['연발 (AUTO)', '3점사 (BURST)', '단발 (SEMI)'];
+    banner(`🔄 사격 모드 전환: [${fNames[P.fireMode]}]`);
+    updateHUD();
+  }
+  if (k === 'u') {
+    P.isAPAmmo = !P.isAPAmmo;
+    SND.fireModeClick();
+    banner(P.isAPAmmo ? '🛡️ [탄약 교체] 7N39 이골닉 철갑탄 (AP) 장전! (관통력 +40%)' : '📦 [탄약 교체] 5.56 표준 FMJ 탄약 장전');
+    updateHUD();
+  }
+  if (k === 'n') {
+    P.nvgActive = !P.nvgActive;
+    SND.nvgClick();
+    const nvgEl = document.getElementById('nvg-overlay');
+    if (nvgEl) nvgEl.style.display = P.nvgActive ? 'block' : 'none';
+    banner(P.nvgActive ? '🟢 [야간투시경 NVG 가동] 광증폭 튜브 활성화' : '⚫ [야간투시경 NVG 해제]');
+    updateHUD();
+  }
+  if (k === 'l') {
+    P.flashlightActive = !P.flashlightActive;
+    SND.flashlightClick();
+    if (typeof tacticalSpotlight !== 'undefined') tacticalSpotlight.intensity = P.flashlightActive ? 3.5 : 0;
+    banner(P.flashlightActive ? '🔦 [전술 라이트 점등] 슈어파이어 라이트' : '🔦 [전술 라이트 소등]');
+    updateHUD();
+  }
+  if (k === 'k') {
+    P.camoSkin = (P.camoSkin + 1) % CAMO_PRESETS.length;
+    applyCamoToWeapons(P.camoSkin);
+    try { localStorage.setItem('fps_camo_skin', P.camoSkin); } catch(err){}
+    SND.inspectClick();
+    banner(`🎨 무기 도색 변경: ${CAMO_PRESETS[P.camoSkin].name}`);
+    updateHUD();
+  }
+  if (k === 'h') activateNanoStim();
+  if (k === 'j') clearWeaponJam();
   if (k === 'y') inspectWeapon();
-  if (k === 'k') insertArmorPlate();
-  if (k === 'e') activateNanoStim();
+  if (k === 'v') performKnifeSlash();
   if (k === 'g') throwGrenade();
   if (k === 'b') toggleTrader();
   if (k === 'c') { P.crouching = !P.crouching; updateHUD(); }
@@ -3540,6 +4033,16 @@ addEventListener('keydown', e => {
     if (inVehicle) exitBuggy();
     else if (Math.hypot(BUGGY.x - P.x, BUGGY.z - P.z) < 3.2) enterBuggy();
     else if (activeCrate) openCrate();
+    else if (isPlayerInSafeZone(P.x, P.z) && Math.hypot(P.x, P.z - (-88.5)) < 3.8) toggleTrader();
+  }
+  if (k === 'alt') {
+    e.preventDefault();
+    if (P.isADS && !P.isHoldingBreath) {
+      P.isHoldingBreath = true;
+      SND.breathHold();
+      const bi = document.getElementById('breath-indicator');
+      if (bi) bi.style.display = 'block';
+    }
   }
   if (k === 'escape') {
     if (inMainMenu) return;
@@ -3574,8 +4077,12 @@ addEventListener('keyup', e => {
   const k = e.key.toLowerCase();
   keys[k] = false;
   if (k === 'q' || k === 'e') P.leaning = 0;
+  if (k === 'alt') {
+    P.isHoldingBreath = false;
+    const bi = document.getElementById('breath-indicator');
+    if (bi) bi.style.display = 'none';
+  }
 });
-
 addEventListener('mousemove', e => {
   if (!locked) return;
   P.yaw -= e.movementX * 0.0022 * mouseSensitivity;
@@ -3617,7 +4124,7 @@ function drawMinimap(dt) {
   if (!mg) return;
   minimapSweep += dt * 3.5;
   const cw = 160, ch = 160, cx = 80, cy = 80, rad = 78;
-  const scale = 1.8; // 월드 1m = 1.8px (약 45m 반경 가시)
+  const scale = 0.85; // 월드 1m = 0.85px (260m 오픈월드 가시)
 
   mg.clearRect(0, 0, cw, ch);
   mg.save();
@@ -3645,7 +4152,7 @@ function drawMinimap(dt) {
   mg.rotate(P.yaw);
 
   // 1. 전초 기지 안전 구역 (청록색)
-  const safeDx = (0 - P.x) * scale, safeDz = (-34 - P.z) * scale;
+  const safeDx = (0 - P.x) * scale, safeDz = (-84 - P.z) * scale;
   mg.fillStyle = 'rgba(0, 240, 255, 0.25)';
   mg.fillRect(safeDx - 11, safeDz - 11, 22, 22);
   mg.strokeStyle = '#00f0ff';
