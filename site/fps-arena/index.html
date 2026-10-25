@@ -437,6 +437,40 @@ canvas#c{display:block;width:100vw;height:100vh}
   pointer-events:none;display:none;z-index:32;
 }
 
+
+/* 탈코프 신체 부위 상태 인형 (Body Status Doll) */
+#body-doll{
+  position:absolute;bottom:148px;left:274px;
+  background:rgba(8,12,18,0.92);border:1px solid var(--rpg-border);
+  padding:6px 12px;border-radius:4px;display:flex;flex-direction:column;align-items:center;
+  box-shadow:0 4px 15px rgba(0,0,0,0.7);pointer-events:none;z-index:26;
+}
+.doll-title{font-size:9.5px;font-weight:900;color:#64748b;letter-spacing:1px;margin-bottom:4px}
+.doll-svg{width:38px;height:52px}
+
+/* 무기 검사 HUD 알림 */
+#inspect-hint{
+  position:absolute;bottom:120px;right:22px;
+  font-size:11px;color:#94a3b8;background:rgba(10,15,22,0.85);
+  padding:3px 10px;border-radius:3px;border:1px solid #1e293b;pointer-events:none;
+}
+
+
+/* 방탄판 교체 [K] 및 레이드 시계 HUD */
+#plate-indicator{
+  position:absolute;bottom:22px;left:420px;
+  background:var(--rpg-panel);border:1px solid var(--rpg-border);
+  padding:8px 14px;border-radius:4px;font-size:11px;font-weight:800;
+  color:#f5c542;display:flex;align-items:center;gap:6px;pointer-events:none;
+}
+#raid-timer-box{
+  position:absolute;top:16px;left:50%;transform:translateX(-50%);
+  font-family:monospace;font-size:14px;font-weight:900;letter-spacing:2px;
+  color:#f87171;background:rgba(12,18,26,0.95);border:1px solid #ef4444;
+  padding:4px 16px;border-radius:4px;box-shadow:0 0 15px rgba(239,68,68,0.4);
+  pointer-events:none;z-index:27;
+}
+
 #ch-canvas{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;width:160px;height:160px;z-index:40}
 #hit-indicator{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .15s;z-index:30}
 #arcade-btn{position:absolute;top:16px;right:22px;font-size:12px;color:#ece8e1;background:var(--rpg-panel);padding:7px 16px;border-radius:4px;border:1px solid var(--rpg-border);pointer-events:auto;cursor:pointer;text-decoration:none}
@@ -551,6 +585,25 @@ canvas#c{display:block;width:100vw;height:100vh}
   </div>
  </div>
  <div id="radio-sub">📻 [Alpha-1] 대위님, 엄호 준비 완료되었습니다. 함께 이동하시죠.</div>
+
+ 
+ <div id="body-doll">
+  <div class="doll-title">BODY STATUS</div>
+  <svg class="doll-svg" viewBox="0 0 40 60">
+   <!-- Head -->
+   <circle cx="20" cy="8" r="6" id="doll-head" fill="#22c55e"/>
+   <!-- Torso -->
+   <rect x="13" y="16" width="14" height="20" rx="2" id="doll-torso" fill="#22c55e"/>
+   <!-- Left Arm -->
+   <rect x="5" y="16" width="6" height="18" rx="2" id="doll-arm-l" fill="#22c55e"/>
+   <!-- Right Arm -->
+   <rect x="29" y="16" width="6" height="18" rx="2" id="doll-arm-r" fill="#22c55e"/>
+   <!-- Left Leg -->
+   <rect x="13" y="38" width="6" height="20" rx="2" id="doll-leg-l" fill="#22c55e"/>
+   <!-- Right Leg -->
+   <rect x="21" y="38" width="6" height="20" rx="2" id="doll-leg-r" fill="#22c55e"/>
+  </svg>
+ </div>
 
  <div id="hud-vital">
   <div class="vital-row"><span>KEVLAR SHIELD (5초 비피격 시 자동 재생)</span><span id="shield-val">100 / 100</span></div>
@@ -724,6 +777,10 @@ canvas#c{display:block;width:100vw;height:100vh}
 
  
  <div id="light-indicator"><span id="light-dot"></span> [L] 전술 라이트</div>
+
+ 
+ <div id="raid-timer-box">⏱️ TIME REMAINING: <span id="raid-time">19:45</span></div>
+ <div id="plate-indicator">🛡️ [K] 방탄판: <b id="plate-count" style="color:#fff">3</b>개</div>
 
  <canvas id="ch-canvas" width="160" height="160"></canvas>
  <div id="hit-indicator"></div>
@@ -1218,6 +1275,34 @@ function buildFPSGun() {
 
   const laserDot = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 6), new THREE.MeshBasicMaterial({ color: 0x00ff88 }));
   scene.add(laserDot);
+
+  
+  // 1인칭 전술 장갑 및 오퍼레이터 손 모델링 (Tactical Gloves Rig)
+  const gloveMat = new THREE.MeshStandardMaterial({ color: 0x1e2631, roughness: 0.8, metalness: 0.1 });
+  const sleeveMat = new THREE.MeshStandardMaterial({ color: 0x2e3846, roughness: 0.7 });
+  const knuckleMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.4, metalness: 0.6 });
+
+  // 좌측 손 (포어엔드/핸드가드 파지)
+  const leftArmGroup = new THREE.Group();
+  const leftSleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 0.35, 8), sleeveMat);
+  leftSleeve.rotation.x = 0.85; leftSleeve.position.set(-0.16, -0.18, -0.32);
+  const leftHand = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.065, 0.11), gloveMat);
+  leftHand.position.set(-0.08, -0.09, -0.52); leftHand.rotation.set(0.3, 0.4, -0.5);
+  const leftKnuckles = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.02, 0.08), knuckleMat);
+  leftKnuckles.position.set(0, 0.035, 0); leftHand.add(leftKnuckles);
+  leftArmGroup.add(leftSleeve, leftHand);
+  g.add(leftArmGroup);
+
+  // 우측 손 (피스톨 그립 및 방아쇠 파지)
+  const rightArmGroup = new THREE.Group();
+  const rightSleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 0.38, 8), sleeveMat);
+  rightSleeve.rotation.x = 0.45; rightSleeve.position.set(0.08, -0.22, -0.15);
+  const rightHand = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.08, 0.095), gloveMat);
+  rightHand.position.set(0.03, -0.12, -0.36); rightHand.rotation.set(-0.2, -0.1, 0.15);
+  const rightKnuckles = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.02, 0.075), knuckleMat);
+  rightKnuckles.position.set(0, 0.042, 0); rightHand.add(rightKnuckles);
+  rightArmGroup.add(rightSleeve, rightHand);
+  g.add(rightArmGroup);
 
   gunRoot.add(g, flash);
   return { g, wepSubGroups, flash, laserLine, laserDot };
@@ -2058,6 +2143,31 @@ if (satCanvas) {
   };
 }
 
+
+function triggerBotRagdoll(bot) {
+  // 쓰러짐 랙돌 물리 애니메이션 (즉시 삭제 대신 자연스러운 전사 연출)
+  SND.enemyShout();
+  bot.isDead = true;
+  bot.mesh.remove(bot.mesh.userData.hpBar.parent); // 체력바 제거
+  
+  // 몸통 90도 쓰러짐 및 사지 이완
+  bot.mesh.rotation.x = Math.PI / 2;
+  bot.mesh.position.y = 0.25;
+  bot.mesh.userData.legL.rotation.z = 0.4;
+  bot.mesh.userData.legR.rotation.z = -0.4;
+  bot.mesh.userData.armL.rotation.x = -1.2;
+
+  // 바닥에 전리품 탄약 상자 드롭
+  spawnCrate(bot.x, bot.z, '노획한 적군 군용 탄약 상자');
+  
+  // 30초 후 잔해 정리
+  setTimeout(() => {
+    scene.remove(bot.mesh);
+    const idx = bots.indexOf(bot);
+    if (idx !== -1) bots.splice(idx, 1);
+  }, 30000);
+}
+
 // ==========================================
 // 5. RPG 대미지 팝업 & 격발 로직
 // ==========================================
@@ -2137,8 +2247,7 @@ function shoot() {
 
         if (bot.hp <= 0) {
           P.kills++;
-          scene.remove(bot.mesh);
-          bots.splice(bots.indexOf(bot), 1);
+          triggerBotRagdoll(bot);
           if (bot.isBoss) P.bossKilled = true;
           addExp(bot.isBoss ? 250 : 60);
           showKillBadge(bot.isBoss ? '👑 보스 글루하르 사살! (+250 EXP)' : '적 제압 완료 (+60 EXP)');
@@ -2323,6 +2432,25 @@ function deploySentryTurret() {
   activeSentry = { root, head, x: root.position.x, z: root.position.z, cd: 0, life: 35 };
   SND.connectBeep();
   banner('🤖 [자동 센트리 터렛] 방어 포탑이 설치되었습니다! (적 자동 탐색 사격)');
+}
+
+
+function inspectWeapon() {
+  if (P.inspectTimer > 0 || raidOver || inVehicle) return;
+  P.inspectTimer = 2.0;
+  SND.weaponInspect();
+  banner('🔍 [무기 정밀 검사] 총기 리시버 및 챔버 잔탄 점검');
+}
+
+
+function insertArmorPlate() {
+  if (P.armorPlates <= 0) { banner('사용 가능한 예비 방탄판이 없습니다.'); return; }
+  if (P.plateReplacing > 0 || raidOver || inVehicle) return;
+  P.plateReplacing = 2.0;
+  P.armorPlates--;
+  SND.plateInsert();
+  banner('🛡️ [세라믹 방탄판 교체 중] 흉부 캐리어 방탄판 삽입...');
+  document.getElementById('plate-count').textContent = P.armorPlates;
 }
 
 // ==========================================
@@ -2918,6 +3046,80 @@ function update(dt) {
     }
   }
 
+  
+  // Q/E 택티컬 피킹(Leaning) 15도 기울기 및 카메라 롤
+  const targetRoll = P.leaning * -0.22;
+  P.roll += (targetRoll - P.roll) * Math.min(1, dt * 14);
+  camera.rotation.z = P.roll;
+  const leanOffset = P.leaning * -0.38;
+  camera.position.x += Math.cos(P.yaw) * leanOffset * dt * 8;
+  camera.position.z += Math.sin(P.yaw) * leanOffset * dt * 8;
+
+  // [Y] 무기 검사 3D 틸트 및 챔버 확인 애니메이션
+  if (P.inspectTimer > 0) {
+    P.inspectTimer -= dt;
+    const t = 2.0 - P.inspectTimer;
+    if (t < 0.9) {
+      GUN_MESH.g.rotation.z = Math.sin((t / 0.9) * Math.PI) * 0.65;
+      GUN_MESH.g.rotation.y = Math.sin((t / 0.9) * Math.PI) * 0.45;
+    } else if (t < 1.7) {
+      GUN_MESH.g.rotation.z = -Math.sin(((t - 0.9) / 0.8) * Math.PI) * 0.45;
+      GUN_MESH.g.rotation.y = -Math.sin(((t - 0.9) / 0.8) * Math.PI) * 0.35;
+    } else {
+      GUN_MESH.g.rotation.z = 0; GUN_MESH.g.rotation.y = 0;
+    }
+  }
+
+  // 실시간 전술 나침반 (Heading 방위각 표시)
+  let degHeading = Math.round((-P.yaw * (180 / Math.PI)) % 360);
+  if (degHeading < 0) degHeading += 360;
+  const compassEl = document.getElementById('compass-strip');
+  if (compassEl) {
+    const card = degHeading >= 338 || degHeading < 23 ? 'NORTH (북)' :
+                 degHeading >= 23 && degHeading < 68 ? 'NE (북동)' :
+                 degHeading >= 68 && degHeading < 113 ? 'EAST (동)' :
+                 degHeading >= 113 && degHeading < 158 ? 'SE (남동)' :
+                 degHeading >= 158 && degHeading < 203 ? 'SOUTH (남)' :
+                 degHeading >= 203 && degHeading < 248 ? 'SW (남서)' :
+                 degHeading >= 248 && degHeading < 293 ? 'WEST (서)' : 'NW (북서)';
+    compassEl.textContent = `··· [ ${degHeading.toString().padStart(3,'0')}° ${card} ] ··· EXFIL BEARING: 045° NE ···`;
+  }
+
+  // 신체 부위 상태 인형 색상 갱신 (HP 손상도에 따른 녹색->주황->적색)
+  const hpRatio = P.hp / P.hpMax;
+  const dollCol = hpRatio > 0.65 ? '#22c55e' : hpRatio > 0.3 ? '#f59e0b' : '#ef4444';
+  const dHead = document.getElementById('doll-head'); if (dHead) dHead.setAttribute('fill', dollCol);
+  const dTorso = document.getElementById('doll-torso'); if (dTorso) dTorso.setAttribute('fill', dollCol);
+  const dArmL = document.getElementById('doll-arm-l'); if (dArmL) dArmL.setAttribute('fill', dollCol);
+  const dArmR = document.getElementById('doll-arm-r'); if (dArmR) dArmR.setAttribute('fill', dollCol);
+  const dLegL = document.getElementById('doll-leg-l'); if (dLegL) dLegL.setAttribute('fill', dollCol);
+  const dLegR = document.getElementById('doll-leg-r'); if (dLegR) dLegR.setAttribute('fill', dollCol);
+
+  
+  // 풍력 발전 터빈 블레이드 회전
+  if (windTurbineBlades) {
+    windTurbineBlades.rotation.z += dt * 1.6;
+  }
+
+  // 레이드 제한 시간 카운트다운 (20분)
+  P.raidSeconds = Math.max(0, P.raidSeconds - dt);
+  const min = Math.floor(P.raidSeconds / 60);
+  const sec = Math.floor(P.raidSeconds % 60);
+  const timerEl = document.getElementById('raid-time');
+  if (timerEl) timerEl.textContent = `${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+  if (P.raidSeconds <= 0 && !raidOver) finishRaid(false);
+
+  // 방탄판 교체 완료 처리
+  if (P.plateReplacing > 0) {
+    P.plateReplacing -= dt;
+    GUN_MESH.g.position.y = -0.38; // 총기 아래로 내림 모션
+    if (P.plateReplacing <= 0) {
+      P.shield = P.shieldMax;
+      banner('🛡️ 방탄판 장착 완료! 아머 내구도 100% 완전 회복');
+      updateHUD();
+    }
+  }
+
   // 이동
   const baseSpd = (keys.shift && !P.crouching ? 6.5 : P.crouching ? 2.6 : 4.2) * (1 + P.speedBonus) * dt;
   const fw = (keys.w ? 1 : 0) - (keys.s ? 1 : 0), st = (keys.d ? 1 : 0) - (keys.a ? 1 : 0);
@@ -3120,7 +3322,11 @@ addEventListener('keydown', e => {
   if (k === '3') selectWeapon(2);
   if (k === '4') selectWeapon(3);
   if (k === '5') deploySentryTurret();
-  if (k === 'q') activateReconDrone();
+  if (k === 'q') P.leaning = -1;
+  if (k === 'e') P.leaning = 1;
+  if (k === '6') activateReconDrone();
+  if (k === 'y') inspectWeapon();
+  if (k === 'k') insertArmorPlate();
   if (k === 'e') activateNanoStim();
   if (k === 'g') throwGrenade();
   if (k === 'b') toggleTrader();
@@ -3159,7 +3365,11 @@ addEventListener('keydown', e => {
   }
   if (k === ' ' && P.y === 0 && locked) P.vy = 5.8;
 });
-addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+addEventListener('keyup', e => {
+  const k = e.key.toLowerCase();
+  keys[k] = false;
+  if (k === 'q' || k === 'e') P.leaning = 0;
+});
 
 addEventListener('mousemove', e => {
   if (!locked) return;

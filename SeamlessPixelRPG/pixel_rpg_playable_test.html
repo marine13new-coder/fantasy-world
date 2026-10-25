@@ -616,6 +616,8 @@
     <button class="rpg-btn" onclick="toggleEnchantModal()" style="border-color:#ff4757; color:#ff6b81;">🔥 인챈트 [V]</button>
     <button class="rpg-btn" onclick="toggleColiseum()" style="border-color:#ffd700; color:#ffd700;">⚔️ 투기장 [C]</button>
     <button class="rpg-btn" onclick="toggleAquariumModal()" style="border-color:#00d2d3; color:#00d2d3;">🐠 수족관 [T]</button>
+    <button class="rpg-btn" id="autoFishNavBtn" onclick="toggleAutoFishing()" style="border-color:#3498db; color:#3498db;">🎣 자동 낚시 [Z]</button>
+    <button class="rpg-btn" onclick="toggleHarborTradeModal()" style="border-color:#f39c12; color:#f39c12;">⚓ 항구 무역 [N]</button>
     <button class="rpg-btn" onclick="togglePetEvolutionModal()" style="border-color:#e056fd; color:#e056fd;">🐱 펫 진화 [P]</button>
     <button class="rpg-btn" onclick="toggleAudio()">🎵 BGM 사운드 토글</button>
   </div>
@@ -923,6 +925,23 @@
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <span style="font-size:11px;">수족관 총 수익률: <b id="aquariumIncomeRate" style="color:#ffd700;">초당 0 G</b></span>
       <button class="rpg-btn" style="color:#ffd700; border-color:#ffd700;" onclick="feedAquariumFish()">🍞 먹이 주기 (10G)</button>
+    </div>
+  </div>
+
+  
+  <!-- Harbor Daily Trade Modal [N] -->
+  <div id="harborTradeModal" class="game-modal" style="max-width:520px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <span style="font-weight:bold; color:#f39c12; font-size:14px;">⚓ 코지 항구 무역선: 캡틴 모건의 일일 교역소 [N]</span>
+      <button class="rpg-btn" style="padding:2px 8px;" onclick="toggleHarborTradeModal()">✕</button>
+    </div>
+    <div style="font-size:11px; color:#bdc3c7; margin-bottom:14px;">
+      대륙 각지에서 모인 상단이 항구에 정박했습니다. 호수에서 낚은 어획물과 토벌 전리품을 납품하여 막대한 골드와 보석을 획득하세요!
+    </div>
+    <div id="tradeContractList" style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;"></div>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:11px; color:#ffd700;">항구 정박 시간: 24시간 상시 운영</span>
+      <button class="rpg-btn" style="border-color:#2ecc71; color:#2ecc71;" onclick="toggleAutoFishing()">🎣 AFK 자동 낚시 전환 [Z]</button>
     </div>
   </div>
 
@@ -1529,6 +1548,44 @@ let weatherTimer = 35;
 let weatherParticles = [];
 
 
+
+// ==========================================
+// 🌲 PROCEDURAL TREES & ATMOSPHERIC PARTICLES
+// ==========================================
+const worldTrees = [
+  { x: -140, y: -160, type: 'oak', size: 38, swaySpeed: 2.2 },
+  { x: -90, y: -190, type: 'pine', size: 42, swaySpeed: 1.8 },
+  { x: 120, y: -170, type: 'cherry', size: 36, swaySpeed: 2.5 },
+  { x: 160, y: -200, type: 'cherry', size: 40, swaySpeed: 2.3 },
+  { x: -280, y: 70, type: 'oak', size: 44, swaySpeed: 2.0 },
+  { x: -260, y: 130, type: 'pine', size: 38, swaySpeed: 1.9 },
+  { x: -80, y: 210, type: 'cherry', size: 35, swaySpeed: 2.4 },
+  { x: 80, y: 210, type: 'oak', size: 40, swaySpeed: 2.1 }
+];
+let chimneySmokeParticles = []; // { x, y, vx, vy, size, alpha, maxLife, life }
+let driftingLeafParticles = []; // { x, y, vx, vy, color, rot, rotSpeed, life }
+let lighthouseAngle = 0; // Sweeping beacon light
+
+// ==========================================
+// 🎣 COZY AFK AUTO-FISHING ([Z])
+// ==========================================
+let autoFishingEnabled = false;
+let autoFishTimer = 5.0;
+
+// ==========================================
+// ⚓ HARBOR DAILY TRADE CONTRACTS ([N])
+// ==========================================
+let harborTradeContracts = [
+  { id: 'contract_fish', title: '항구 식당 비단잉어 납품', reqType: 'fish', reqAmt: 2, rewardGold: 600, rewardGems: 1, completed: false },
+  { id: 'contract_gems', title: '왕실 보석 세공소 납품', reqType: 'gems', reqAmt: 1, rewardGold: 1200, rewardGems: 0, completed: false },
+  { id: 'contract_kills', title: '해골 기사 토벌 증표', reqType: 'kills', reqAmt: 5, rewardGold: 850, rewardGems: 2, completed: false }
+];
+
+// Player attack lunge & recoil physics
+player.attackLunge = 0;
+player.lungeDirX = 0;
+player.lungeDirY = 0;
+
 // ==========================================
 // ⚔️ DMC COMBAT STYLE & COMBO ENGINE
 // ==========================================
@@ -2059,6 +2116,8 @@ window.addEventListener('keydown', e => {
   if (e.key.toLowerCase() === 'v') { e.preventDefault(); toggleEnchantModal(); }
   if (e.key.toLowerCase() === 'c') { e.preventDefault(); toggleColiseum(); }
   if (e.key.toLowerCase() === 'p') { e.preventDefault(); togglePetEvolutionModal(); }
+  if (e.key.toLowerCase() === 'z') { e.preventDefault(); toggleAutoFishing(); }
+  if (e.key.toLowerCase() === 'n') { e.preventDefault(); toggleHarborTradeModal(); }
   if (e.key.toLowerCase() === 'p') { e.preventDefault(); togglePetSanctuaryQuick(); }
   if (e.key.toLowerCase() === 'f') { e.preventDefault(); handleContextFKey(); }
   if (e.key.toLowerCase() === 'q') castSkill(1);
@@ -2607,6 +2666,12 @@ function executeSunstrikePillar(tx, ty, totalBaseDmg, berserkMultiplier) {
 function checkMeleeHitCone(px, py, angle, range, damage) {
   // Spawn Glowing Crescent Energy Slash Arc
   const slashColor = activeEnchantment === 'flame' ? '#ff4757' : (activeEnchantment === 'frost' ? '#00d2d3' : (activeEnchantment === 'thunder' ? '#feca57' : (activeEnchantment === 'vampire' ? '#ff6b6b' : (currentClassId === 'paladin' ? '#ffd700' : (currentClassId === 'rogue' ? '#2ed573' : '#a55eea')))));
+  // Trigger Attack Lunge Momentum
+  const aimAngle = angle;
+  player.attackLunge = 12.0;
+  player.lungeDirX = Math.cos(aimAngle);
+  player.lungeDirY = Math.sin(aimAngle);
+  
   activeSlashArcs.push({
     x: px, y: py,
     angle: angle,
@@ -2983,6 +3048,82 @@ function spawnMagmaWave() {
 let lastTime = performance.now();
 
 function update(dt) {
+
+  // Decay Attack Lunge Momentum
+  if (player.attackLunge > 0) {
+    player.x += player.lungeDirX * player.attackLunge * dt * 25.0;
+    player.y += player.lungeDirY * player.attackLunge * dt * 25.0;
+    player.attackLunge = Math.max(0, player.attackLunge - dt * 60.0);
+  }
+
+  // Rotating Lighthouse Beacon (20s rotation)
+  lighthouseAngle = (lighthouseAngle + dt * 0.35) % (Math.PI * 2);
+
+  // Chimney Smoke Generator (Forge at -220, -50 & Guildhall at 0, -150)
+  if (Math.random() < 0.25) {
+    chimneySmokeParticles.push({
+      x: -220 + (Math.random() - 0.5) * 8,
+      y: -60,
+      vx: (Math.random() - 0.5) * 12 + 6,
+      vy: -25 - Math.random() * 20,
+      size: 4 + Math.random() * 4,
+      alpha: 0.65,
+      life: 1.8, maxLife: 1.8
+    });
+  }
+  for (let i = chimneySmokeParticles.length - 1; i >= 0; i--) {
+    const sp = chimneySmokeParticles[i];
+    sp.x += sp.vx * dt;
+    sp.y += sp.vy * dt;
+    sp.size += dt * 4;
+    sp.life -= dt;
+    sp.alpha = (sp.life / sp.maxLife) * 0.65;
+    if (sp.life <= 0) chimneySmokeParticles.splice(i, 1);
+  }
+
+  // Drifting Leaves Generator from Trees
+  if (Math.random() < 0.2) {
+    const tr = worldTrees[Math.floor(Math.random() * worldTrees.length)];
+    const leafColor = tr.type === 'cherry' ? '#ff9ff3' : (tr.type === 'pine' ? '#2ed573' : '#e67e22');
+    driftingLeafParticles.push({
+      x: tr.x + (Math.random() - 0.5) * 30,
+      y: tr.y - 20,
+      vx: 30 + Math.random() * 25,
+      vy: 15 + Math.random() * 20,
+      color: leafColor,
+      rot: Math.random() * Math.PI,
+      rotSpeed: (Math.random() - 0.5) * 4,
+      life: 3.5, maxLife: 3.5
+    });
+  }
+  for (let i = driftingLeafParticles.length - 1; i >= 0; i--) {
+    const lp = driftingLeafParticles[i];
+    lp.x += lp.vx * dt;
+    lp.y += lp.vy * dt;
+    lp.rot += lp.rotSpeed * dt;
+    lp.life -= dt;
+    if (lp.life <= 0) driftingLeafParticles.splice(i, 1);
+  }
+
+  // Cozy AFK Auto-Fishing Logic ([Z])
+  if (autoFishingEnabled) {
+    const dockD = Math.hypot(player.x - lakeDockPos.x, player.y - lakeDockPos.y);
+    if (dockD < 85) {
+      autoFishTimer -= dt;
+      if (autoFishTimer <= 0) {
+        autoFishTimer = 5.5 + Math.random() * 2.0;
+        catchFishSuccess();
+        SoundEngine.playWaterSplash();
+        addDamageText(player.x, player.y - 45, "🎣 AFK 낚시 성공! (+어획)", true, '#00d2d3');
+      }
+    } else {
+      autoFishingEnabled = false;
+      const b = document.getElementById('autoFishNavBtn');
+      if (b) { b.innerText = "🎣 자동 낚시 [Z]"; b.style.color = "#3498db"; }
+      addDamageText(player.x, player.y - 30, "부두에서 멀어져 자동 낚시가 해제되었습니다.", false, '#e74c3c');
+    }
+  }
+
 
   // Update Combo & Style Decay
   if (comboDecayTimer > 0) {
@@ -3906,6 +4047,208 @@ function render() {
     ctx.fillText("룬 대장간", 0, -42);
     ctx.restore();
 
+    
+    // ==========================================
+    // 🏰 DETAILED BUILDINGS & TOWN DISTRICTS
+    // ==========================================
+    if (currentZone === "OpenWorld") {
+      // 1. Blacksmith Forge Workshop (-220, -20)
+      ctx.save();
+      ctx.translate(-220, -20);
+      // Soft Ground Contact Shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.beginPath(); ctx.ellipse(0, 24, 48, 18, 0, 0, Math.PI * 2); ctx.fill();
+      // Stone Walls
+      ctx.fillStyle = '#2d3436'; ctx.fillRect(-42, -32, 84, 56);
+      ctx.fillStyle = '#636e72'; ctx.fillRect(-38, -28, 76, 50);
+      // Wood Timber Framing
+      ctx.fillStyle = '#533519';
+      ctx.fillRect(-42, -32, 6, 56); ctx.fillRect(36, -32, 6, 56);
+      ctx.fillRect(-42, -4, 84, 5);
+      // Tiled Roof with Overhang
+      ctx.fillStyle = '#b33939'; ctx.fillRect(-46, -42, 92, 12);
+      ctx.fillStyle = '#c0392b'; ctx.fillRect(-44, -40, 88, 8);
+      // Chimney & Animated Hearth Fire
+      ctx.fillStyle = '#1e272e'; ctx.fillRect(20, -52, 14, 18);
+      const forgeFlame = Math.sin(performance.now() * 0.015) * 3;
+      ctx.fillStyle = '#ff4757'; ctx.fillRect(-22, 6 + forgeFlame, 18, 14);
+      ctx.fillStyle = '#ffd32a'; ctx.fillRect(-18, 10 + forgeFlame, 10, 8);
+      // Anvil with sparkling strikes
+      drawAtlasTile(ctx, 10, 8, 12, 4, 26, 26);
+      // Signboard
+      ctx.fillStyle = '#ffd700'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center';
+      ctx.fillText("⚔️ 룬 대장간", 0, -48);
+      ctx.restore();
+
+      // 2. Alchemist Herbal Laboratory (-170, 75)
+      ctx.save();
+      ctx.translate(-170, 75);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+      ctx.beginPath(); ctx.ellipse(0, 22, 44, 16, 0, 0, Math.PI * 2); ctx.fill();
+      // Timber Cottage Walls
+      ctx.fillStyle = '#4b382a'; ctx.fillRect(-36, -28, 72, 48);
+      ctx.fillStyle = '#785b40'; ctx.fillRect(-32, -24, 64, 42);
+      // Thatched Straw Roof
+      ctx.fillStyle = '#c5a059'; ctx.fillRect(-40, -38, 80, 12);
+      ctx.fillStyle = '#dfb15b'; ctx.fillRect(-38, -36, 76, 8);
+      // Glowing Window (Soft green magic glow)
+      ctx.fillStyle = '#00d2d3'; ctx.fillRect(-16, -12, 14, 14);
+      ctx.fillStyle = 'rgba(0, 210, 211, 0.35)'; ctx.fillRect(-20, -16, 22, 22);
+      // Bubbling Cauldron with purple steam
+      ctx.fillStyle = '#1e272e'; ctx.beginPath(); ctx.arc(20, 10, 10, 0, Math.PI * 2); ctx.fill();
+      const caulSteam = Math.sin(performance.now() * 0.01) * 3;
+      ctx.fillStyle = '#e056fd'; ctx.beginPath(); ctx.arc(20, 4 + caulSteam, 6, 0, Math.PI * 2); ctx.fill();
+      // Signboard
+      ctx.fillStyle = '#00d2d3'; ctx.font = 'bold 9.5px monospace'; ctx.textAlign = 'center';
+      ctx.fillText("🧪 연금술소", 0, -44);
+      ctx.restore();
+
+      // 3. Adventurer's Guild Hall & Town Plaza (0, -120)
+      ctx.save();
+      ctx.translate(0, -120);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.48)';
+      ctx.beginPath(); ctx.ellipse(0, 28, 64, 22, 0, 0, Math.PI * 2); ctx.fill();
+      // Grand Brick Structure
+      ctx.fillStyle = '#2f3542'; ctx.fillRect(-54, -40, 108, 68);
+      ctx.fillStyle = '#57606f'; ctx.fillRect(-50, -36, 100, 62);
+      // Arch Double Doors
+      ctx.fillStyle = '#3a2717'; ctx.fillRect(-14, 2, 28, 24);
+      ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1.5; ctx.strokeRect(-14, 2, 28, 24);
+      // Clock Tower & Royal Banner
+      ctx.fillStyle = '#747d8c'; ctx.fillRect(-18, -60, 36, 22);
+      ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(0, -48, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#e74c3c'; ctx.fillRect(-44, -20, 8, 26); ctx.fillRect(36, -20, 8, 26);
+      ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center';
+      ctx.fillText("🏰 모험가 길드 본부", 0, -68);
+      ctx.restore();
+
+      // 4. Cozy Harbor Pier & Ocean Lighthouse (320, -180)
+      ctx.save();
+      ctx.translate(320, -180);
+      // Towering Round Lighthouse
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.beginPath(); ctx.ellipse(0, 24, 30, 12, 0, 0, Math.PI * 2); ctx.fill();
+      // White & Red Striped Tower
+      ctx.fillStyle = '#dfe4ea'; ctx.fillRect(-16, -70, 32, 90);
+      ctx.fillStyle = '#ff4757'; ctx.fillRect(-16, -50, 32, 16); ctx.fillRect(-16, -20, 32, 16);
+      // Lantern Room
+      ctx.fillStyle = '#ffd32a'; ctx.fillRect(-12, -84, 24, 16);
+      ctx.fillStyle = '#2f3542'; ctx.fillRect(-14, -88, 28, 6);
+      // Sweeping Rotating Beacon Light Beam at Night/Dusk
+      const dayRatio = dayCycleTimer / DAY_CYCLE_LENGTH;
+      if (dayRatio >= 0.45) {
+        ctx.save();
+        ctx.translate(0, -76);
+        ctx.rotate(lighthouseAngle);
+        const beamGrad = ctx.createRadialGradient(0, 0, 5, 240, 0, 260);
+        beamGrad.addColorStop(0, 'rgba(255, 242, 0, 0.7)');
+        beamGrad.addColorStop(0.35, 'rgba(255, 215, 0, 0.35)');
+        beamGrad.addColorStop(1, 'rgba(255, 215, 0, 0.0)');
+        ctx.fillStyle = beamGrad;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, 260, -0.22, 0.22);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.fillStyle = '#ffd700'; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
+      ctx.fillText("등대 관측소", 0, -94);
+      ctx.restore();
+
+      // Moored Wooden Sailing Sloop at Lake Dock (190, 80)
+      ctx.save();
+      ctx.translate(210, 80);
+      const boatBob = Math.sin(performance.now() * 0.003) * 3;
+      ctx.translate(0, boatBob);
+      // Boat Hull
+      ctx.fillStyle = '#593b1d';
+      ctx.beginPath();
+      ctx.moveTo(-24, 0); ctx.lineTo(24, 0); ctx.lineTo(16, 12); ctx.lineTo(-18, 12); ctx.closePath();
+      ctx.fill();
+      // Mast & Sail
+      ctx.strokeStyle = '#3a2510'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -26); ctx.stroke();
+      ctx.fillStyle = 'rgba(240, 240, 240, 0.85)';
+      ctx.beginPath(); ctx.moveTo(0, -24); ctx.lineTo(14, -12); ctx.lineTo(0, -6); ctx.closePath(); ctx.fill();
+      // Mast Lantern
+      ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(0, -26, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+
+    // Render Procedural Trees with Swaying Foliage
+    if (currentZone === "OpenWorld") {
+      const treeTime = performance.now() * 0.001;
+      worldTrees.forEach(tr => {
+        ctx.save();
+        ctx.translate(tr.x, tr.y);
+        // Contact Shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.38)';
+        ctx.beginPath(); ctx.ellipse(0, 10, tr.size * 0.55, 8, 0, 0, Math.PI * 2); ctx.fill();
+        // Trunk
+        ctx.fillStyle = '#4a3319'; ctx.fillRect(-5, -6, 10, 16);
+        // Foliage with Wind Sway
+        const sway = Math.sin(treeTime * tr.swaySpeed + tr.x) * 3;
+        ctx.translate(sway, 0);
+        if (tr.type === 'cherry') {
+          ctx.fillStyle = '#ff7675'; ctx.beginPath(); ctx.arc(0, -22, tr.size * 0.5, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#fd79a8'; ctx.beginPath(); ctx.arc(-6, -26, tr.size * 0.42, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#fab1a0'; ctx.beginPath(); ctx.arc(8, -20, tr.size * 0.35, 0, Math.PI * 2); ctx.fill();
+        } else if (tr.type === 'pine') {
+          ctx.fillStyle = '#1b4332';
+          ctx.beginPath(); ctx.moveTo(0, -38); ctx.lineTo(-18, -14); ctx.lineTo(18, -14); ctx.closePath(); ctx.fill();
+          ctx.beginPath(); ctx.moveTo(0, -26); ctx.lineTo(-22, -4); ctx.lineTo(22, -4); ctx.closePath(); ctx.fill();
+        } else {
+          ctx.fillStyle = '#2d6a4f'; ctx.beginPath(); ctx.arc(0, -22, tr.size * 0.52, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#40916c'; ctx.beginPath(); ctx.arc(-8, -24, tr.size * 0.4, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#52b788'; ctx.beginPath(); ctx.arc(8, -18, tr.size * 0.36, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.restore();
+      });
+    }
+
+    // Render Chimney Smoke Particles
+    chimneySmokeParticles.forEach(sp => {
+      ctx.save();
+      ctx.fillStyle = "rgba(180, 185, 190, " + sp.alpha + ")";
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // Render Drifting Leaves Particles
+    driftingLeafParticles.forEach(lp => {
+      ctx.save();
+      ctx.translate(lp.x, lp.y);
+      ctx.rotate(lp.rot);
+      ctx.fillStyle = lp.color;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 4, 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // ==========================================
+    // ✨ RADIANT SKY LOOT BEAMS FOR DROPPED ITEMS
+    // ==========================================
+    droppedLoot.forEach(g => {
+      if (g.type === "gem" || g.type === "equip") {
+        ctx.save();
+        const beamColor = g.type === "gem" ? 'rgba(0, 210, 211, 0.35)' : (g.rarity === 'legendary' ? 'rgba(243, 156, 18, 0.45)' : 'rgba(155, 89, 182, 0.35)');
+        const grad = ctx.createLinearGradient(g.x, g.y, g.x, g.y - 180);
+        grad.addColorStop(0, beamColor);
+        grad.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(g.x - 6, g.y - 180, 12, 180);
+        // Twinkling stars
+        const starPulse = (performance.now() * 0.005 + g.x) % 1;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(g.x - 2, g.y - 40 - starPulse * 120, 4, 4);
+        ctx.restore();
+      }
+    });
+
     // Central Campfire with Cooking Prompt
     ctx.save();
     ctx.translate(campfirePos.x, campfirePos.y);
@@ -4281,50 +4624,7 @@ function render() {
     ctx.globalAlpha = a.alpha;
     ctx.fillStyle = a.color;
     ctx.beginPath(); ctx.ellipse(a.x, a.y + 14, 16, 6, 0, 0, Math.PI * 2); ctx.fill();
-      // Ascension Aura beneath feet
-  const auraRot = performance.now() * 0.0015;
-  ctx.save();
-  ctx.rotate(auraRot);
-  ctx.strokeStyle = currentClassId === 'paladin' ? 'rgba(255, 215, 0, 0.45)' : (currentClassId === 'rogue' ? 'rgba(224, 86, 253, 0.45)' : 'rgba(0, 210, 211, 0.45)');
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.arc(0, 16, 24, 0, Math.PI * 2);
-  ctx.stroke();
-  for (let g = 0; g < 4; g++) {
-    const ga = (Math.PI / 2) * g;
-    ctx.fillRect(Math.cos(ga) * 24 - 1.5, 16 + Math.sin(ga) * 24 - 1.5, 3, 3);
-  }
-  ctx.restore();
-
-  // Level 5+ Wings / Ascension Orbs
-  if (player.level >= 5) {
-    ctx.save();
-    const wingFlap = Math.sin(performance.now() * 0.006) * 4;
-    if (currentClassId === 'paladin') {
-      ctx.fillStyle = 'rgba(255, 215, 0, 0.55)';
-      ctx.beginPath();
-      ctx.moveTo(-6, -14); ctx.lineTo(-24 - wingFlap, -30); ctx.lineTo(-18, -6); ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(6, -14); ctx.lineTo(24 + wingFlap, -30); ctx.lineTo(18, -6); ctx.fill();
-    } else if (currentClassId === 'rogue') {
-      ctx.fillStyle = 'rgba(155, 89, 182, 0.55)';
-      ctx.beginPath();
-      ctx.moveTo(-6, -12); ctx.lineTo(-22 - wingFlap, -24); ctx.lineTo(-14, -4); ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(6, -12); ctx.lineTo(22 + wingFlap, -24); ctx.lineTo(14, -4); ctx.fill();
-      } else {
-      for (let o = 0; o < 3; o++) {
-        const oAngle = performance.now() * 0.004 + (Math.PI * 2 / 3) * o;
-        const ox = Math.cos(oAngle) * 22;
-        const oy = -14 + Math.sin(oAngle) * 10;
-        ctx.fillStyle = '#00d2d3';
-        ctx.beginPath(); ctx.arc(ox, oy, 3.5, 0, Math.PI * 2); ctx.fill();
-      }
-    }
-    ctx.restore();
-  }
-
-  const cDef = CLASSES_DEF[currentClassId] || CLASSES_DEF['paladin'];
+    const cDef = CLASSES_DEF[currentClassId] || CLASSES_DEF['paladin'];
     drawAtlasSprite(ctx, cDef.col, cDef.row, a.x - 21, a.y - 28, 42, 42, false);
     ctx.restore();
   });
@@ -5238,6 +5538,92 @@ function buyMerchantItem(it) {
 // ==========================================
 // ⚔️ COLISEUM TRIAL & ENCHANTMENT CONTROLLERS
 // ==========================================
+
+// ==========================================
+// ⚓ HARBOR TRADE & AUTO-FISHING CONTROLLERS
+// ==========================================
+function toggleAutoFishing() {
+  const dockDist = Math.hypot(player.x - lakeDockPos.x, player.y - lakeDockPos.y);
+  if (dockDist > 90) {
+    addDamageText(player.x, player.y - 30, "호수 부두 근처에서만 자동 낚시를 시작할 수 있습니다!", false, '#e74c3c');
+    return;
+  }
+  autoFishingEnabled = !autoFishingEnabled;
+  const b = document.getElementById('autoFishNavBtn');
+  if (autoFishingEnabled) {
+    if (b) { b.innerText = "⏹️ 자동 낚시 중지"; b.style.color = "#2ecc71"; }
+    SoundEngine.playWaterSplash();
+    addDamageText(player.x, player.y - 45, "🎣 AFK 자동 낚시 시작! (모찌가 낚시를 대신합니다)", true, '#2ecc71');
+  } else {
+    if (b) { b.innerText = "🎣 자동 낚시 [Z]"; b.style.color = "#3498db"; }
+    addDamageText(player.x, player.y - 30, "자동 낚시가 종료되었습니다.", false, '#ffd700');
+  }
+}
+
+function toggleHarborTradeModal() {
+  const m = document.getElementById('harborTradeModal');
+  if (m.style.display === 'block') {
+    m.style.display = 'none';
+  } else {
+    m.style.display = 'block';
+    renderHarborTradeUI();
+  }
+}
+
+function renderHarborTradeUI() {
+  const list = document.getElementById('tradeContractList');
+  if (!list) return;
+  list.innerHTML = '';
+  harborTradeContracts.forEach((c, idx) => {
+    const card = document.createElement('div');
+    card.className = 'rpg-card';
+    card.style.cssText = "border:1px solid #f39c12; padding:10px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; background:rgba(243,156,18,0.08);";
+    
+    let canFulfill = false;
+    if (c.reqType === 'fish' && hallOfFame.fishCaught >= c.reqAmt) canFulfill = true;
+    else if (c.reqType === 'gems' && inventory.gems >= c.reqAmt) canFulfill = true;
+    else if (c.reqType === 'kills' && hallOfFame.totalKills >= c.reqAmt) canFulfill = true;
+
+    card.innerHTML = '<div>' +
+      '<div style="font-weight:bold; color:#f39c12; font-size:12px;">' + c.title + '</div>' +
+      '<div style="font-size:11px; color:#ddd; margin-top:3px;">납품 요구: ' + c.reqAmt + '개 (' + c.reqType.toUpperCase() + ') | 보상: <b style="color:#ffd700;">+' + c.rewardGold + ' G</b>, <b style="color:#00d2d3;">+' + c.rewardGems + ' 보석</b></div>' +
+      '</div><div>' +
+      (c.completed ? '<span style="color:#2ecc71; font-weight:bold; font-size:11px;">완료됨</span>' : 
+      ('<button class="rpg-btn" style="border-color:' + (canFulfill ? '#2ecc71' : '#666') + '; color:' + (canFulfill ? '#2ecc71' : '#888') + ';" onclick="fulfillTradeContract(' + idx + ')">납품하기</button>')) +
+      '</div>';
+    list.appendChild(card);
+  });
+}
+
+function fulfillTradeContract(idx) {
+  const c = harborTradeContracts[idx];
+  if (!c || c.completed) return;
+
+  if (c.reqType === 'fish') {
+    if (hallOfFame.fishCaught < c.reqAmt) {
+      addDamageText(player.x, player.y - 30, "어획물이 부족합니다!", false, '#e74c3c');
+      return;
+    }
+    hallOfFame.fishCaught -= c.reqAmt;
+  } else if (c.reqType === 'gems') {
+    if (inventory.gems < c.reqAmt) {
+      addDamageText(player.x, player.y - 30, "보석이 부족합니다!", false, '#e74c3c');
+      return;
+    }
+    inventory.gems -= c.reqAmt;
+  }
+
+  c.completed = true;
+  inventory.gold += c.rewardGold;
+  inventory.gems += c.rewardGems;
+  SoundEngine.playChestFanfare();
+  flashScreen('#ffd700', 0.35);
+  addDamageText(player.x, player.y - 45, "🎉 교역 납품 완료! +" + c.rewardGold + "G & +" + c.rewardGems + "보석", true, '#ffd700');
+  saveGame();
+  updateHUD();
+  renderHarborTradeUI();
+}
+
 function toggleEnchantModal() {
   const m = document.getElementById('enchantModal');
   if (m.style.display === 'block') {
