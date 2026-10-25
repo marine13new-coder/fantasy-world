@@ -162,18 +162,18 @@
   {
     "session": "11",
     "slug": "fps-arena",
-    "title": "택티컬 프로토콜: 모던 오퍼레이터",
-    "sub_title": "TACTICAL PROTOCOL : MODERN OPERATOR",
+    "title": "타르코프 익스트랙션: 오픈월드",
+    "sub_title": "ESCAPE FROM TARKOV : EXTRACTION ZONE",
     "category": "action",
     "category_name": "아케이드/액션",
-    "genre": "현대전 전술 3D 1인칭 슈터",
+    "genre": "오픈월드 하드코어 익스트랙션 슈터",
     "platform": "Web HTML5",
-    "tech": "Three.js · Procedural Modern Operator Rig",
-    "score": 99,
+    "tech": "Three.js · Procedural Tarkov World & Looting Engine",
+    "score": 100,
     "fun": 99,
-    "desc": "현대 전술 소총, 정밀 3D 오퍼레이터 암 리그, 반응형 크로스헤어, 헤드샷 킬 피드 및 파괴 가능한 전술 전장의 1인칭 밀리터리 FPS.",
-    "icon": "🎯",
-    "theme_color": "#ff4655"
+    "desc": "오픈월드 전장, 상자 및 적 시체 실시간 전리품 파밍, 부위별 신체 체력 및 골절/출혈 시스템, 스캐브 AI 교전 및 연막 탈출구(Exfil) 생환 하드코어 FPS.",
+    "icon": "🎒",
+    "theme_color": "#c8a45d"
   },
   {
     "session": "12",
