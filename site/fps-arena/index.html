@@ -3097,7 +3097,7 @@ function update(dt) {
 
   
   // 풍력 발전 터빈 블레이드 회전
-  if (windTurbineBlades) {
+  if (typeof windTurbineBlades !== 'undefined' && windTurbineBlades) {
     windTurbineBlades.rotation.z += dt * 1.6;
   }
 
