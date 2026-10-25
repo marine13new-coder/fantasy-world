@@ -1,0 +1,1780 @@
+# -*- coding: utf-8 -*-
+"""
+Abyss Roll: Blood Casino - Complete Commercial Roguelike Web Client Generator
+Generates a standalone, dependency-free 9:16 mobile casino roguelike.
+"""
+
+HTML_CONTENT = """<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>어비스 롤: 피의 카지노 (Abyss Roll: Blood Casino) - Commercial 2.0</title>
+<style>
+  :root {
+    --bg-dark: #050608;
+    --panel-bg: #0d0f17;
+    --border-gold: #c5a059;
+    --crimson: #8b0000;
+    --blood-red: #ff2222;
+    --bone-white: #e2dcc8;
+    --safe-gold: #ffd700;
+    --joker-purple: #9b59b6;
+    --foil-cyan: #00ffff;
+    --poly-orange: #ff7700;
+    --fever-glow: #ff3300;
+    --neon-blue: #00bfff;
+    --neon-green: #2ecc71;
+  }
+  * { box-sizing: border-box; user-select: none; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    background-color: var(--bg-dark);
+    color: var(--bone-white);
+    font-family: 'Cinzel', 'Noto Serif KR', serif, -apple-system, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  #mobile-viewport {
+    width: 100vw;
+    max-width: 440px;
+    height: 100vh;
+    max-height: 920px;
+    background: radial-gradient(circle at 50% 20%, #1c2033 0%, #06070a 100%);
+    border: 2px solid #2a2015;
+    box-shadow: 0 0 60px rgba(0,0,0,0.98), inset 0 0 30px rgba(0,0,0,0.9);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* 네온 아케이드 레트로 CRT 스캔라인 */
+  #crt-scanlines {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 90;
+    opacity: 0.45;
+    transition: opacity 0.3s;
+  }
+
+  /* 상단 내비바 & 설정 바 */
+  #top-utility-bar {
+    height: 28px;
+    background: #090b10;
+    border-bottom: 1px solid #221c15;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    font-size: 11px;
+    color: #887a6b;
+    z-index: 10;
+  }
+  .util-btn {
+    background: #151822;
+    border: 1px solid #332d22;
+    color: var(--bone-white);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    cursor: pointer;
+  }
+  .util-btn:active { background: #252b3d; }
+
+  /* 조커 렐릭 슬롯 & 골드 & 안테 바 */
+  #relic-joker-bar {
+    height: 52px;
+    background: rgba(10, 11, 16, 0.98);
+    border-bottom: 1px solid #33291d;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+    z-index: 5;
+  }
+  .relic-slots { display: flex; gap: 5px; }
+  .relic-card {
+    width: 38px;
+    height: 44px;
+    background: #191c28;
+    border: 1px solid var(--joker-purple);
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(155, 89, 182, 0.3);
+    position: relative;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+  .relic-card:active { transform: scale(1.15); }
+  .relic-card.foil {
+    border-color: var(--foil-cyan);
+    box-shadow: 0 0 12px rgba(0, 255, 255, 0.6);
+    background: linear-gradient(135deg, #102a3a 0%, #191c28 100%);
+  }
+  .relic-card.polychrome {
+    border-color: var(--poly-orange);
+    box-shadow: 0 0 14px rgba(255, 119, 0, 0.7);
+    background: linear-gradient(135deg, #3a1510 0%, #191c28 100%);
+  }
+  .relic-card.negative {
+    border-color: #fff;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.8);
+    background: #000;
+  }
+  .relic-card .relic-badge {
+    position: absolute;
+    bottom: 1px;
+    font-size: 8px;
+    color: var(--safe-gold);
+    font-weight: 900;
+  }
+  .meta-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+  .gold-coin-display {
+    font-size: 12px;
+    color: var(--safe-gold);
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(0,0,0,0.6);
+    padding: 2px 7px;
+    border-radius: 10px;
+    border: 1px solid #443;
+  }
+  .ante-display {
+    font-size: 10px;
+    color: #3498db;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+  }
+
+  /* 던전 전투 아레나 (28%) */
+  #top-battle-view {
+    height: 27%;
+    position: relative;
+    border-bottom: 2px solid #2d261e;
+    display: flex;
+    flex-direction: column;
+    padding: 4px 10px;
+    background: linear-gradient(180deg, rgba(35,10,10,0.45) 0%, rgba(10,12,18,0.9) 100%);
+  }
+  .header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--border-gold);
+    letter-spacing: 1px;
+    text-shadow: 0 1px 3px #000;
+    margin-bottom: 2px;
+  }
+  .boss-blind-tag {
+    background: rgba(139, 0, 0, 0.85);
+    color: #ffcccc;
+    border: 1px solid #ff4444;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-size: 9px;
+    font-weight: 900;
+    margin-left: 5px;
+  }
+  .torch-gauge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: #ffd700;
+    background: rgba(0,0,0,0.5);
+    padding: 2px 6px;
+    border-radius: 10px;
+    border: 1px solid #665;
+    cursor: pointer;
+  }
+  .stage-arena {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+  }
+  .party-row, .monster-row {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+  }
+  .entity-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    width: 60px;
+  }
+  .entity-avatar {
+    font-size: 26px;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.9));
+    transition: transform 0.15s;
+  }
+  .entity-unit.boss .entity-avatar {
+    font-size: 34px;
+    filter: drop-shadow(0 0 10px rgba(255, 34, 34, 0.8));
+    animation: bossFloat 2s infinite ease-in-out alternate;
+  }
+  @keyframes bossFloat {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-4px); }
+  }
+  .entity-name {
+    font-size: 9px;
+    color: #bbb;
+    white-space: nowrap;
+  }
+  .hp-bar-outer {
+    width: 48px;
+    height: 5px;
+    background: #2a1111;
+    border: 1px solid #4a1515;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .hp-bar-inner {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #ff2222, #8b0000);
+    transition: width 0.3s ease-out;
+  }
+  .stress-bar-outer {
+    width: 48px;
+    height: 3px;
+    background: #111a2a;
+    border: 1px solid #1c2b44;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .stress-bar-inner {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #3498db, #9b59b6);
+    transition: width 0.3s ease-out;
+  }
+
+  /* 중단: 발라트로 수학 스코어링 & 족보 & 주사위 트레이 (40%) */
+  #middle-casino-board {
+    height: 40%;
+    background: radial-gradient(circle at 50% 50%, #151a29 0%, #080a10 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 6px 10px;
+    position: relative;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+    transition: background 0.3s;
+  }
+  #middle-casino-board.fever-mode {
+    background: radial-gradient(circle at 50% 50%, #4a1200 0%, #150502 100%);
+    box-shadow: inset 0 0 35px rgba(255, 68, 0, 0.8);
+  }
+
+  /* 포커 족보 뱃지 (Full House, Flush, Yahtzee 등) */
+  .poker-hand-badge {
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid var(--border-gold);
+    border-radius: 12px;
+    padding: 3px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 0 10px rgba(197, 160, 89, 0.25);
+  }
+  .hand-title {
+    font-size: 11px;
+    color: var(--safe-gold);
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .hand-level {
+    font-size: 9px;
+    background: #8b0000;
+    color: #fff;
+    padding: 1px 4px;
+    border-radius: 4px;
+  }
+  .hand-bonus-val {
+    font-size: 10px;
+    color: var(--bone-white);
+  }
+
+  /* 발라트로 수식 박스 (CHIPS x MULT = POT) */
+  .balatro-score-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(5, 7, 12, 0.85);
+    border: 1px solid #332d22;
+    border-radius: 8px;
+    padding: 6px 10px;
+  }
+  .math-chips {
+    font-size: 17px;
+    color: var(--neon-blue);
+    font-weight: 900;
+    text-shadow: 0 0 10px rgba(0, 191, 255, 0.7);
+  }
+  .math-operator {
+    font-size: 16px;
+    color: #887a6b;
+    margin: 0 4px;
+  }
+  .math-mult {
+    font-size: 17px;
+    color: var(--blood-red);
+    font-weight: 900;
+    text-shadow: 0 0 10px rgba(255, 34, 34, 0.7);
+  }
+  .pot-info {
+    text-align: right;
+  }
+  .pot-val {
+    font-size: 20px;
+    color: var(--safe-gold);
+    font-weight: 900;
+    text-shadow: 0 0 14px rgba(255, 215, 0, 0.8);
+    transition: transform 0.15s;
+  }
+  .bust-warning {
+    font-size: 9px;
+    color: #e74c3c;
+    margin-top: 1px;
+  }
+
+  /* 주사위 트레이 (4-5 슬롯) */
+  .dice-tray {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 4px 0;
+  }
+  .dice-slot {
+    width: 68px;
+    height: 74px;
+    background: linear-gradient(145deg, #1f2537, #0e121d);
+    border: 2px solid #3d3526;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.1);
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  }
+  .dice-slot:active { transform: scale(0.94); }
+  .dice-slot.held {
+    border-color: var(--safe-gold);
+    box-shadow: 0 0 14px rgba(255, 215, 0, 0.7), inset 0 0 8px rgba(255, 215, 0, 0.3);
+    background: linear-gradient(145deg, #2b2b1a, #151508);
+  }
+  .dice-slot.held::after {
+    content: "HOLD";
+    position: absolute;
+    top: -6px;
+    background: var(--safe-gold);
+    color: #000;
+    font-size: 8px;
+    font-weight: 900;
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  .dice-slot.cursed {
+    border-color: #ff0055;
+    box-shadow: 0 0 14px rgba(255, 0, 85, 0.8);
+    background: linear-gradient(145deg, #3a0010, #150005);
+  }
+  .dice-slot.cursed::after {
+    content: "봉인";
+    position: absolute;
+    top: -6px;
+    background: #ff0055;
+    color: #fff;
+    font-size: 8px;
+    font-weight: 900;
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  .dice-value {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--bone-white);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+    transition: transform 0.2s;
+  }
+  .dice-slot.rolling .dice-value {
+    animation: diceSpin 0.35s ease-in-out infinite;
+  }
+  @keyframes diceSpin {
+    0% { transform: rotate(0deg) scale(0.8); opacity: 0.5; }
+    50% { transform: rotate(180deg) scale(1.1); opacity: 1; }
+    100% { transform: rotate(360deg) scale(0.8); opacity: 0.5; }
+  }
+  .dice-type-tag {
+    font-size: 8px;
+    color: #999;
+    margin-top: 2px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .dice-sticker-icon {
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    font-size: 10px;
+  }
+
+  .combat-log-ticker {
+    background: rgba(0, 0, 0, 0.6);
+    border-left: 3px solid var(--border-gold);
+    padding: 4px 8px;
+    font-size: 10px;
+    color: #c0b8ac;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* 하단: 원핸드 컨트롤러 (29%) */
+  #bottom-tactics-bar {
+    height: 29%;
+    background: #090a10;
+    border-top: 1px solid #2d261e;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  .gamble-actions-row {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+  }
+  .btn-gamble-push {
+    flex: 1.1;
+    background: linear-gradient(135deg, #8b0000 0%, #4a0000 100%);
+    border: 2px solid #ff4444;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 900;
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(139, 0, 0, 0.6);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .btn-gamble-push:active {
+    transform: scale(0.97);
+    box-shadow: 0 0 20px rgba(255, 34, 34, 0.9);
+  }
+  .btn-gamble-bank {
+    flex: 1;
+    background: linear-gradient(135deg, #c5a059 0%, #7d6534 100%);
+    border: 2px solid var(--safe-gold);
+    border-radius: 8px;
+    color: #000;
+    font-weight: 900;
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(197, 160, 89, 0.5);
+    transition: transform 0.1s;
+  }
+  .btn-gamble-bank:active {
+    transform: scale(0.97);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.9);
+  }
+  .sub-actions-row {
+    display: flex;
+    gap: 6px;
+    height: 40px;
+  }
+  .tactics-btn {
+    flex: 1;
+    background: #191c28;
+    border: 1px solid #3a3224;
+    border-radius: 6px;
+    color: var(--bone-white);
+    font-size: 11px;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .tactics-btn:active { background: #282e42; }
+
+  /* 모달 공통 스타일 */
+  .game-modal {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(4, 5, 8, 0.95);
+    z-index: 200;
+    display: none;
+    flex-direction: column;
+    padding: 16px;
+    backdrop-filter: blur(4px);
+    overflow-y: auto;
+  }
+  .modal-header {
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--safe-gold);
+    text-align: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #332d22;
+  }
+  .modal-close-btn {
+    margin-top: 12px;
+    background: #2a2015;
+    border: 1px solid var(--border-gold);
+    color: var(--bone-white);
+    padding: 10px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+  }
+
+  /* 상점 상품 리스트 */
+  .shop-items-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .shop-card {
+    background: #111420;
+    border: 1px solid #332b20;
+    border-radius: 6px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .shop-card-title { font-size: 11px; font-weight: bold; color: var(--safe-gold); }
+  .shop-card-desc { font-size: 9px; color: #a09789; margin: 4px 0; }
+  .shop-card-price { font-size: 11px; color: #ffd700; font-weight: 900; margin-bottom: 6px; }
+  .btn-buy {
+    background: #8b0000;
+    border: 1px solid #ff4444;
+    color: #fff;
+    padding: 5px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  /* 부스터 팩 개봉 카드 3선택 컨테이너 */
+  .booster-pack-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .pack-choice-card {
+    background: linear-gradient(135deg, #1c2033, #0f121d);
+    border: 2px solid var(--safe-gold);
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .pack-choice-card:active {
+    transform: scale(0.98);
+    border-color: #fff;
+  }
+  .pack-card-info h4 { font-size: 12px; color: var(--safe-gold); margin-bottom: 2px; }
+  .pack-card-info p { font-size: 10px; color: #ccc; }
+
+  /* 타격 컷인 오버레이 */
+  #cutin-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 150;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    pointer-events: none;
+  }
+  .cutin-clash {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    position: relative;
+  }
+  .cutin-char { font-size: 70px; filter: drop-shadow(0 0 15px rgba(255, 34, 34, 0.9)); }
+  .slash-fx {
+    position: absolute;
+    width: 260px;
+    height: 6px;
+    background: linear-gradient(90deg, transparent, #fff, var(--blood-red), transparent);
+    transform: rotate(-35deg) scaleX(0);
+    transition: transform 0.12s ease-out;
+    box-shadow: 0 0 25px var(--blood-red);
+  }
+  .cutin-dmg-text {
+    font-size: 38px;
+    font-weight: 900;
+    color: var(--safe-gold);
+    text-shadow: 0 0 20px #ff2222;
+    margin-top: 15px;
+    text-align: center;
+    transform: scale(0.5);
+    transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  /* 777 피버 & 안내 배너 */
+  #fever-banner {
+    position: absolute;
+    top: 45%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
+    background: linear-gradient(135deg, #ff5500 0%, #aa0000 100%);
+    color: #fff;
+    padding: 14px 22px;
+    border-radius: 12px;
+    border: 3px solid var(--safe-gold);
+    font-size: 24px;
+    font-weight: 900;
+    text-align: center;
+    box-shadow: 0 0 35px rgba(255, 85, 0, 0.9);
+    display: none;
+    z-index: 280;
+    animation: pulse 0.5s infinite alternate;
+  }
+  @keyframes pulse {
+    0% { transform: translate(-50%, -50%) scale(0.95); }
+    100% { transform: translate(-50%, -50%) scale(1.08); }
+  }
+  #sticker-banner {
+    position: absolute;
+    top: 36px; left: 50%; transform: translateX(-50%);
+    background: rgba(197, 160, 89, 0.95);
+    color: #000;
+    padding: 5px 12px;
+    border-radius: 16px;
+    font-size: 10px;
+    font-weight: 900;
+    box-shadow: 0 0 15px rgba(255,215,0,0.8);
+    display: none;
+    z-index: 300;
+  }
+
+  /* 코인 샤워 파티클 */
+  #coin-rain-container {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 250;
+    overflow: hidden;
+  }
+  .gold-coin-particle {
+    position: absolute;
+    font-size: 20px;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    0% { transform: translateY(-30px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(920px) rotate(720deg); opacity: 0; }
+  }
+
+  /* 진동 화면 효과 */
+  .bust-screen-shake {
+    animation: shake 0.35s cubic-bezier(.36,.07,.19,.97) both;
+  }
+  @keyframes shake {
+    10%, 90% { transform: translate3d(-3px, 0, 0); }
+    20%, 80% { transform: translate3d(5px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+    40%, 60% { transform: translate3d(6px, 0, 0); }
+  }
+</style>
+</head>
+<body>
+
+<div id="mobile-viewport">
+  <div id="crt-scanlines"></div>
+  <div id="coin-rain-container"></div>
+  <div id="sticker-banner">✨ 알림</div>
+  <div id="fever-banner">🎰 777 FEVER! 🎰<br><span style="font-size: 14px; color: var(--safe-gold);">배율 X5.0 즉시 폭발!</span></div>
+
+  <!-- 최상단 유틸리티 & 설정 바 -->
+  <div id="top-utility-bar">
+    <div>⚔️ ABYSS ROLL v2.0</div>
+    <div style="display: flex; gap: 4px;">
+      <button class="util-btn" id="btn-audio" onclick="toggleAudio()">🔊 소리 ON</button>
+      <button class="util-btn" id="btn-speed" onclick="toggleSpeed()">⚡ 1X</button>
+      <button class="util-btn" onclick="openHallOfFame()">🏆 명예의 전당</button>
+    </div>
+  </div>
+
+  <!-- 상단 1: 5대 포일/폴리크롬 조커 슬롯 & 골드 & 안테 바 -->
+  <div id="relic-joker-bar">
+    <div class="relic-slots">
+      <div class="relic-card foil" id="joker-0" onclick="inspectJoker(0)" title="블러드 칩스: +30 Chips">
+        <span>🩸</span>
+        <div class="relic-badge">+30</div>
+      </div>
+      <div class="relic-card polychrome" id="joker-1" onclick="inspectJoker(1)" title="황금 배율: X1.5 Mult">
+        <span>👑</span>
+        <div class="relic-badge">X1.5</div>
+      </div>
+      <div class="relic-card" id="joker-2" onclick="inspectJoker(2)" title="불사조 보험: 자멸 1회 무효">
+        <span>🛡️</span>
+        <div class="relic-badge">SHLD</div>
+      </div>
+      <div class="relic-card negative" id="joker-3" onclick="inspectJoker(3)" title="네거티브 심연 악마: 조커 슬롯 확장">
+        <span>💀</span>
+        <div class="relic-badge">+1SLT</div>
+      </div>
+      <div class="relic-card" id="joker-4" onclick="inspectJoker(4)" style="opacity: 0.3;">
+        <span>🔒</span>
+      </div>
+    </div>
+    <div class="meta-stats">
+      <div class="gold-coin-display">
+        <span>🪙</span>
+        <span id="gold-val">750G</span>
+      </div>
+      <div class="ante-display" id="ante-info">ANTE 1/8</div>
+    </div>
+  </div>
+
+  <!-- 상단 2: 던전 전투 아레나 -->
+  <div id="top-battle-view">
+    <div class="header-bar">
+      <div>
+        <span id="floor-title">DEPTHS 1 : CRYPT CASINO</span>
+        <span class="boss-blind-tag" id="blind-tag">보스: 화염 골렘</span>
+      </div>
+      <div class="torch-gauge" onclick="lightTorch()">
+        <span>🔥 횃불</span>
+        <span id="torch-val">100%</span>
+      </div>
+    </div>
+
+    <div class="stage-arena">
+      <!-- 4인 아군 파티 -->
+      <div class="party-row" id="hero-party">
+        <div class="entity-unit hero" id="hero-0">
+          <div class="entity-avatar">🛡️</div>
+          <div class="entity-name">성기사</div>
+          <div class="hp-bar-outer"><div class="hp-bar-inner" id="h-hp-0"></div></div>
+          <div class="stress-bar-outer"><div class="stress-bar-inner" id="h-st-0"></div></div>
+        </div>
+        <div class="entity-unit hero" id="hero-1">
+          <div class="entity-avatar">🪓</div>
+          <div class="entity-name">야만용사</div>
+          <div class="hp-bar-outer"><div class="hp-bar-inner" id="h-hp-1"></div></div>
+          <div class="stress-bar-outer"><div class="stress-bar-inner" id="h-st-1"></div></div>
+        </div>
+        <div class="entity-unit hero" id="hero-2">
+          <div class="entity-avatar">🏹</div>
+          <div class="entity-name">노상강도</div>
+          <div class="hp-bar-outer"><div class="hp-bar-inner" id="h-hp-2"></div></div>
+          <div class="stress-bar-outer"><div class="stress-bar-inner" id="h-st-2"></div></div>
+        </div>
+        <div class="entity-unit hero" id="hero-3">
+          <div class="entity-avatar">🔮</div>
+          <div class="entity-name">신비학자</div>
+          <div class="hp-bar-outer"><div class="hp-bar-inner" id="h-hp-3"></div></div>
+          <div class="stress-bar-outer"><div class="stress-bar-inner" id="h-st-3"></div></div>
+        </div>
+      </div>
+
+      <!-- 보스 블라인드 몬스터 라인업 -->
+      <div class="monster-row" id="monster-party">
+        <div class="entity-unit monster boss" id="mon-0">
+          <div class="entity-avatar" id="boss-avatar">👹</div>
+          <div class="entity-name" id="boss-name">화염 골렘</div>
+          <div class="hp-bar-outer"><div class="hp-bar-inner" id="m-hp-0"></div></div>
+        </div>
+        <div class="entity-unit monster" id="mon-1">
+          <div class="entity-avatar">🧙‍♂️</div>
+          <div class="entity-name">망령 사제</div>
+          <div class="hp-bar-outer"><div class="hp-bar-inner" id="m-hp-1"></div></div>
+        </div>
+        <div class="entity-unit monster" id="mon-2">
+          <div class="entity-avatar">🐺</div>
+          <div class="entity-name">지옥견</div>
+          <div class="hp-bar-outer"><div class="hp-bar-inner" id="m-hp-2"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 중단: 발라트로 수학 스코어링 & 족보 & 주사위 트레이 -->
+  <div id="middle-casino-board">
+    <!-- 발라트로 족보 뱃지 -->
+    <div class="poker-hand-badge" id="hand-badge">
+      <div class="hand-title">
+        <span id="hand-name">원 페어</span>
+        <span class="hand-level" id="hand-lvl">Lv.1</span>
+      </div>
+      <div class="hand-bonus-val" id="hand-stats">+10 CHIPS × 1.5 MULT</div>
+    </div>
+
+    <!-- 발라트로 수식 디스플레이 -->
+    <div class="balatro-score-box">
+      <div>
+        <span class="math-chips" id="math-chips">38 CHIPS</span>
+        <span class="math-operator">×</span>
+        <span class="math-mult" id="math-mult">X2 MULT</span>
+        <div class="bust-warning" id="bust-label">⚠️ 주사위 [1, 2] 나오면 자멸!</div>
+      </div>
+      <div class="pot-info">
+        <div style="font-size: 9px; color: #a89f91;">현재 화력 POT</div>
+        <div class="pot-val" id="pot-display">76 POT</div>
+      </div>
+    </div>
+
+    <!-- 주사위 4개 트레이 -->
+    <div class="dice-tray">
+      <div class="dice-slot" id="slot-0" onclick="toggleHold(0)">
+        <div class="dice-value" id="dval-0">-</div>
+        <div class="dice-type-tag" id="dtag-0">D6 뼈 (흡혈)</div>
+        <div class="dice-sticker-icon" id="dsticker-0">🩸</div>
+      </div>
+      <div class="dice-slot" id="slot-1" onclick="toggleHold(1)">
+        <div class="dice-value" id="dval-1">-</div>
+        <div class="dice-type-tag" id="dtag-1">D6 뼈 (스턴)</div>
+        <div class="dice-sticker-icon" id="dsticker-1">⚡</div>
+      </div>
+      <div class="dice-slot" id="slot-2" onclick="toggleHold(2)">
+        <div class="dice-value" id="dval-2">-</div>
+        <div class="dice-type-tag" id="dtag-2">D8 황동</div>
+        <div class="dice-sticker-icon" id="dsticker-2"></div>
+      </div>
+      <div class="dice-slot" id="slot-3" onclick="toggleHold(3)">
+        <div class="dice-value" id="dval-3">-</div>
+        <div class="dice-type-tag" id="dtag-3">D20 황금</div>
+        <div class="dice-sticker-icon" id="dsticker-3">⭐</div>
+      </div>
+    </div>
+
+    <div class="combat-log-ticker" id="log-ticker">
+      🎲 ANTE 1 보스 블라인드 [화염 골렘] 등장! 주사위를 던져 배율을 증폭하세요!
+    </div>
+  </div>
+
+  <!-- 하단: 원핸드 컨트롤러 -->
+  <div id="bottom-tactics-bar">
+    <div class="gamble-actions-row">
+      <button class="btn-gamble-push" id="btn-push" onclick="pushDoubleDown()">
+        <span>🔥 묻고 더블로! (X2 MULT)</span>
+        <span style="font-size: 10px; font-weight: normal; opacity: 0.9;">배율 2배 곱연산 & 자멸 리스크</span>
+      </button>
+      <button class="btn-gamble-bank" id="btn-bank" onclick="bankAndStrike()">
+        <span>💰 멈추고 타격!</span>
+        <span style="font-size: 10px; font-weight: normal; opacity: 0.9;">현재 화력 전액 일격 발사</span>
+      </button>
+    </div>
+
+    <div class="sub-actions-row">
+      <button class="tactics-btn" onclick="initialRoll()">
+        <span>🎲 주사위 투척</span>
+      </button>
+      <button class="tactics-btn" onclick="rerollUnlocked()">
+        <span>🔄 리롤 (<span id="reroll-count">2</span>)</span>
+      </button>
+      <button class="tactics-btn" onclick="openShop()">
+        <span>🛒 암시장 상점</span>
+      </button>
+      <button class="tactics-btn" onclick="openPackModal('celestial')">
+        <span>🪐 천체 팩</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 암시장 상점 모달 -->
+  <div class="game-modal" id="shop-modal">
+    <div class="modal-header">🩸 심연의 암시장 (Black Market)</div>
+    <div class="shop-items-grid">
+      <div class="shop-card">
+        <div class="shop-card-title">🃏 광대 조커 팩</div>
+        <div class="shop-card-desc">3장의 조커 렐릭 중 1개 선택 획득</div>
+        <div class="shop-card-price">140G</div>
+        <button class="btn-buy" onclick="buyItem('buffoon_pack', 140)">개봉하기</button>
+      </div>
+      <div class="shop-card">
+        <div class="shop-card-title">🪐 천체 행성 팩</div>
+        <div class="shop-card-desc">포커 족보 칩스/배율 영구 레벨업</div>
+        <div class="shop-card-price">110G</div>
+        <button class="btn-buy" onclick="buyItem('celestial_pack', 110)">개봉하기</button>
+      </div>
+      <div class="shop-card">
+        <div class="shop-card-title">🛡️ 불사조 보험 계약</div>
+        <div class="shop-card-desc">자멸(BUST) 1회 완전 무효 방어</div>
+        <div class="shop-card-price">100G</div>
+        <button class="btn-buy" onclick="buyItem('bust_shield', 100)">구매하기</button>
+      </div>
+      <div class="shop-card">
+        <div class="shop-card-title">✨ D20 황금 주사위</div>
+        <div class="shop-card-desc">2번 슬롯을 20면체 황금 주사위로 승급</div>
+        <div class="shop-card-price">150G</div>
+        <button class="btn-buy" onclick="buyItem('upgrade_d20', 150)">구매하기</button>
+      </div>
+      <div class="shop-card">
+        <div class="shop-card-title">🩸 피의 성배 (리롤 +3)</div>
+        <div class="shop-card-desc">전투 중 무료 리롤 3회 충전</div>
+        <div class="shop-card-price">80G</div>
+        <button class="btn-buy" onclick="buyItem('extra_rerolls', 80)">구매하기</button>
+      </div>
+      <div class="shop-card">
+        <div class="shop-card-title">⚡ 번개 스턴 스티커</div>
+        <div class="shop-card-desc">주사위에 확정 기절 스티커 각인</div>
+        <div class="shop-card-price">90G</div>
+        <button class="btn-buy" onclick="buyItem('stun_sticker', 90)">구매하기</button>
+      </div>
+    </div>
+    <div class="modal-close-btn" onclick="closeShop()">던전으로 복귀</div>
+  </div>
+
+  <!-- 부스터 팩 선택 모달 -->
+  <div class="game-modal" id="pack-modal">
+    <div class="modal-header" id="pack-modal-title">🃏 부스터 팩 개봉</div>
+    <div style="font-size: 11px; text-align: center; color: #a89f91; margin-bottom: 8px;">획득할 카드를 1장 선택하세요</div>
+    <div class="booster-pack-cards" id="pack-cards-container">
+      <!-- 동적 주입 -->
+    </div>
+    <div class="modal-close-btn" onclick="closePackModal()">건너뛰기</div>
+  </div>
+
+  <!-- 명예의 전당 (Leaderboard) 모달 -->
+  <div class="game-modal" id="hall-of-fame-modal">
+    <div class="modal-header">🏆 심연의 명예의 전당</div>
+    <div style="font-size: 11px; color: #bbb; line-height: 1.6; margin-bottom: 12px;" id="hall-stats">
+      <!-- 동적 주입 -->
+    </div>
+    <div class="modal-close-btn" onclick="closeHallOfFame()">닫기</div>
+  </div>
+
+  <!-- 승리 / 게임 오버 모달 -->
+  <div class="game-modal" id="endgame-modal">
+    <div class="modal-header" id="endgame-title">🏆 ANTE 8 클리어! 심연 정복!</div>
+    <div style="font-size: 12px; color: #ccc; line-height: 1.8; margin-bottom: 15px; text-align: center;" id="endgame-desc">
+      축하합니다! 당신은 피의 카지노 모든 심연 보스를 격파했습니다!
+    </div>
+    <button class="btn-gamble-push" style="height: 48px; width: 100%; margin-bottom: 8px;" onclick="enterEndlessMode()">
+      🔥 무한 심연 모드 (Endless) 계속하기
+    </button>
+    <button class="btn-gamble-bank" style="height: 44px; width: 100%;" onclick="restartNewRun()">
+      🔄 새로운 런 시작하기
+    </button>
+  </div>
+
+  <!-- 타격 컷인 오버레이 -->
+  <div id="cutin-overlay">
+    <div class="cutin-clash">
+      <div class="cutin-char" id="cutin-attacker">🛡️</div>
+      <div class="slash-fx" id="slash-fx"></div>
+      <div class="cutin-char" id="cutin-target">👹</div>
+    </div>
+    <div class="cutin-dmg-text" id="cutin-dmg">CRITICAL!<br>-360</div>
+  </div>
+</div>
+
+<script>
+// Web Audio 신디사이저 엔진 & BGM 오실레이터
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let actx = null;
+let isAudioMuted = false;
+let gameSpeed = 1.0;
+let bgmOsc1 = null, bgmOsc2 = null, bgmGain = null;
+
+function initAudio() {
+  if (!actx) {
+    actx = new AudioCtx();
+    startProceduralBgm();
+  }
+  if (actx.state === 'suspended') {
+    actx.resume();
+  }
+}
+
+function startProceduralBgm() {
+  if (!actx || bgmOsc1) return;
+  try {
+    bgmGain = actx.createGain();
+    bgmGain.gain.setValueAtTime(isAudioMuted ? 0 : 0.04, actx.currentTime);
+    bgmGain.connect(actx.destination);
+
+    // D minor drone: D2 (73.42Hz) & A2 (110Hz)
+    bgmOsc1 = actx.createOscillator();
+    bgmOsc1.type = 'triangle';
+    bgmOsc1.frequency.setValueAtTime(73.42, actx.currentTime);
+    bgmOsc1.connect(bgmGain);
+    bgmOsc1.start();
+
+    bgmOsc2 = actx.createOscillator();
+    bgmOsc2.type = 'sine';
+    bgmOsc2.frequency.setValueAtTime(110.0, actx.currentTime);
+    bgmOsc2.connect(bgmGain);
+    bgmOsc2.start();
+  } catch(e) {}
+}
+
+function playTone(freq, duration, type = 'sine', vol = 0.4) {
+  if (isAudioMuted) return;
+  initAudio();
+  try {
+    const osc = actx.createOscillator();
+    const gain = actx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, actx.currentTime);
+    gain.gain.setValueAtTime(vol, actx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + (duration / gameSpeed));
+    osc.connect(gain);
+    gain.connect(actx.destination);
+    osc.start();
+    osc.stop(actx.currentTime + (duration / gameSpeed));
+  } catch(e) {}
+}
+
+function playDiceSound() {
+  playTone(520, 0.07, 'triangle', 0.35);
+  setTimeout(() => playTone(680, 0.08, 'triangle', 0.35), 40 / gameSpeed);
+}
+
+function playHeavySlashSound() {
+  initAudio();
+  if (isAudioMuted) return;
+  try {
+    const osc = actx.createOscillator();
+    const gain = actx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(150, actx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(40, actx.currentTime + (0.28 / gameSpeed));
+    gain.gain.setValueAtTime(0.6, actx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + (0.28 / gameSpeed));
+    osc.connect(gain);
+    gain.connect(actx.destination);
+    osc.start();
+    osc.stop(actx.currentTime + (0.28 / gameSpeed));
+  } catch(e) {}
+}
+
+function playBustSound() {
+  playTone(180, 0.45, 'sawtooth', 0.6);
+  setTimeout(() => playTone(120, 0.5, 'square', 0.5), 100 / gameSpeed);
+}
+
+function playCoinSound() {
+  playTone(987, 0.1, 'sine', 0.4);
+  setTimeout(() => playTone(1318, 0.15, 'sine', 0.4), 80 / gameSpeed);
+}
+
+function playFeverFanfare() {
+  [523, 659, 783, 1046, 1318].forEach((f, idx) => {
+    setTimeout(() => playTone(f, 0.15, 'triangle', 0.5), (idx * 90) / gameSpeed);
+  });
+}
+
+function toggleAudio() {
+  initAudio();
+  isAudioMuted = !isAudioMuted;
+  document.getElementById('btn-audio').innerText = isAudioMuted ? '🔇 소리 OFF' : '🔊 소리 ON';
+  if (bgmGain) {
+    bgmGain.gain.setValueAtTime(isAudioMuted ? 0 : 0.04, actx.currentTime);
+  }
+}
+
+function toggleSpeed() {
+  if (gameSpeed === 1.0) {
+    gameSpeed = 2.0;
+    document.getElementById('btn-speed').innerText = '⚡ 2X';
+  } else {
+    gameSpeed = 1.0;
+    document.getElementById('btn-speed').innerText = '⚡ 1X';
+  }
+}
+
+// ----------------------------------------------------
+// 게임 상태 & 발라트로 수학 모델
+// ----------------------------------------------------
+let gold = 750;
+let currentAnte = 1;
+let rerollsLeft = 2;
+let torch = 100;
+let handsLeft = 4; // 바늘 군주 기믹 등에서 사용
+let maxSinglePot = 0;
+let totalDamageDealt = 0;
+
+let baseChips = 0;
+let currentMult = 1;
+let currentPot = 0;
+let extraJokerMult = 1.5; // 황금 조커
+let foilBonusChips = 30;  // 블러드 칩스
+let hasBustShield = true;  // 불사조 보험
+let cursedSlotIndex = 0;   // 보스 저주 슬롯
+
+let diceSides = [6, 6, 8, 20];
+let diceValues = [3, 4, 5, 12];
+let heldSlots = [false, false, false, false];
+let diceStickers = ['흡혈', '스턴', '', '황금'];
+
+// 발라트로 포커 족보 레벨 & 기본 스탯
+const handBook = {
+  '야추 (5 of a Kind)': { lvl: 1, baseChips: 100, baseMult: 8, chipGrowth: 30, multGrowth: 2 },
+  '포카드 (4 of a Kind)': { lvl: 1, baseChips: 70, baseMult: 6, chipGrowth: 25, multGrowth: 1.5 },
+  '풀하우스 (Full House)': { lvl: 1, baseChips: 50, baseMult: 5, chipGrowth: 20, multGrowth: 1 },
+  '스트레이트 (Straight)': { lvl: 1, baseChips: 40, baseMult: 4, chipGrowth: 15, multGrowth: 1 },
+  '트리플 (3 of a Kind)': { lvl: 1, baseChips: 30, baseMult: 3, chipGrowth: 12, multGrowth: 0.8 },
+  '투 페어 (Two Pair)': { lvl: 1, baseChips: 20, baseMult: 2, chipGrowth: 10, multGrowth: 0.5 },
+  '원 페어 (One Pair)': { lvl: 1, baseChips: 12, baseMult: 1.5, chipGrowth: 8, multGrowth: 0.4 },
+  '하이 다이스 (High Die)': { lvl: 1, baseChips: 8, baseMult: 1.0, chipGrowth: 5, multGrowth: 0.2 }
+};
+let currentDetectedHand = '하이 다이스 (High Die)';
+
+// 파티 & 보스 블라인드 정의 (Ante 1 to 8)
+const BOSS_BLINDS = [
+  { ante: 1, name: '화염 골렘', icon: '👹', hp: 350, desc: '주사위 1개 봉인' },
+  { ante: 2, name: '갈고리 사냥꾼', icon: '🪝', hp: 600, desc: '리롤 시 주사위 1개 버림' },
+  { ante: 3, name: '바늘 군주', icon: '🪡', hp: 900, desc: '단 2회의 기회만 허용' },
+  { ante: 4, name: '성벽 거수', icon: '🗿', hp: 1600, desc: '초고체력 벽돌 몬스터' },
+  { ante: 5, name: '감시자의 눈', icon: '👁️', hp: 2400, desc: '이전 족보 재사용 불가' },
+  { ante: 6, name: '부패의 손', icon: '🖐️', hp: 3500, desc: '족보 레벨 다운그레이드' },
+  { ante: 7, name: '탐욕의 황소', icon: '🐂', hp: 5000, desc: '자멸 시 골드 50% 강탈' },
+  { ante: 8, name: '심연의 지배자', icon: '👑', hp: 8000, desc: '최종 결전! 모든 저주 복합' }
+];
+
+let heroes = [
+  { name: '성기사', maxHp: 130, hp: 130, stress: 0, icon: '🛡️' },
+  { name: '야만용사', maxHp: 110, hp: 110, stress: 15, icon: '🪓' },
+  { name: '노상강도', maxHp: 95, hp: 95, stress: 10, icon: '🏹' },
+  { name: '신비학자', maxHp: 85, hp: 85, stress: 5, icon: '🔮' }
+];
+
+let monsters = [];
+
+// ----------------------------------------------------
+// 포커 족보 판정 알고리즘 (Balatro Poker Engine)
+// ----------------------------------------------------
+function evaluateDiceHand(values) {
+  const counts = {};
+  values.forEach(v => counts[v] = (counts[v] || 0) + 1);
+  const freq = Object.values(counts).sort((a, b) => b - a);
+
+  // 스트레이트 판별 (정렬 후 연속 여부)
+  const sortedUniq = Array.from(new Set(values)).sort((a, b) => a - b);
+  let isStraight = false;
+  if (sortedUniq.length >= 4) {
+    if (sortedUniq[3] - sortedUniq[0] === 3) isStraight = true;
+  }
+
+  if (freq[0] >= 5) return '야추 (5 of a Kind)';
+  if (freq[0] === 4) return '포카드 (4 of a Kind)';
+  if (freq[0] === 3 && freq[1] >= 2) return '풀하우스 (Full House)';
+  if (isStraight) return '스트레이트 (Straight)';
+  if (freq[0] === 3) return '트리플 (3 of a Kind)';
+  if (freq[0] === 2 && freq[1] === 2) return '투 페어 (Two Pair)';
+  if (freq[0] === 2) return '원 페어 (One Pair)';
+  return '하이 다이스 (High Die)';
+}
+
+// ----------------------------------------------------
+// 전투 및 주사위 루프
+// ----------------------------------------------------
+function initialRoll() {
+  initAudio();
+  playDiceSound();
+
+  // 주사위 회전 연출
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById(`slot-${i}`);
+    el.classList.add('rolling');
+    setTimeout(() => el.classList.remove('rolling'), 350 / gameSpeed);
+  }
+
+  let luckyCount = 0;
+  for (let i = 0; i < 4; i++) {
+    diceValues[i] = Math.floor(Math.random() * diceSides[i]) + 1;
+    document.getElementById(`dval-${i}`).innerText = diceValues[i];
+    if (diceValues[i] >= 7) luckyCount++;
+  }
+
+  currentDetectedHand = evaluateDiceHand(diceValues);
+  applyHandScore();
+
+  if (luckyCount >= 2) {
+    triggerFeverTime();
+  } else {
+    setLog(`🎲 [${currentDetectedHand}] 감지! 화력: ${currentPot} POT! 묻고 더블로!`);
+  }
+}
+
+function applyHandScore() {
+  const handData = handBook[currentDetectedHand];
+  const handChips = handData.baseChips + ((handData.lvl - 1) * handData.chipGrowth);
+  const handMult = handData.baseMult + ((handData.lvl - 1) * handData.multGrowth);
+
+  let diceSum = diceValues.reduce((a, b) => a + b, 0);
+  baseChips = diceSum + handChips + foilBonusChips;
+  currentMult = Math.round(handMult * 10) / 10;
+  currentPot = Math.round(baseChips * currentMult * extraJokerMult);
+
+  document.getElementById('hand-name').innerText = currentDetectedHand;
+  document.getElementById('hand-lvl').innerText = `Lv.${handData.lvl}`;
+  document.getElementById('hand-stats').innerText = `+${handChips} CHIPS × ${handMult.toFixed(1)} MULT`;
+  updateBalatroUI();
+}
+
+function toggleHold(idx) {
+  initAudio();
+  if (idx === cursedSlotIndex) {
+    setLog('⚠️ 보스의 저주로 인해 이 주사위 슬롯은 잠겨 있습니다!');
+    return;
+  }
+  heldSlots[idx] = !heldSlots[idx];
+  const el = document.getElementById(`slot-${idx}`);
+  if (heldSlots[idx]) {
+    el.classList.add('held');
+  } else {
+    el.classList.remove('held');
+  }
+  playTone(440, 0.05, 'sine', 0.2);
+}
+
+function rerollUnlocked() {
+  initAudio();
+  if (rerollsLeft <= 0) {
+    setLog('⚠️ 남은 리롤 횟수가 없습니다!');
+    return;
+  }
+  rerollsLeft--;
+  document.getElementById('reroll-count').innerText = rerollsLeft;
+  playDiceSound();
+
+  // Ante 2 '갈고리 사냥꾼' 기믹: 리롤할 때마다 무작위 1개 주사위 값 1로 추락
+  if (currentAnte === 2) {
+    const unheld = [0, 1, 2, 3].filter(i => !heldSlots[i]);
+    if (unheld.length > 0) {
+      const dropIdx = unheld[Math.floor(Math.random() * unheld.length)];
+      diceValues[dropIdx] = 1;
+      setLog(`🪝 [갈고리 저주!] ${dropIdx+1}번 주사위가 1로 파괴되었습니다!`);
+    }
+  }
+
+  for (let i = 0; i < 4; i++) {
+    if (!heldSlots[i] && i !== cursedSlotIndex) {
+      diceValues[i] = Math.floor(Math.random() * diceSides[i]) + 1;
+      document.getElementById(`dval-${i}`).innerText = diceValues[i];
+    }
+  }
+
+  currentDetectedHand = evaluateDiceHand(diceValues);
+  applyHandScore();
+  setLog(`🔄 리롤 완료! 족보: [${currentDetectedHand}] -> 화력 ${currentPot} POT`);
+}
+
+function pushDoubleDown() {
+  initAudio();
+  if (baseChips <= 0) {
+    initialRoll();
+    return;
+  }
+  playDiceSound();
+
+  // 묻고 더블로 리스크: 배율이 올라갈수록 자멸 주사위 확률 증가
+  let bustThresh = currentMult <= 2 ? 1 : (currentMult <= 5 ? 2 : 3);
+  let testRoll = Math.floor(Math.random() * 6) + 1;
+
+  if (testRoll <= bustThresh) {
+    if (hasBustShield) {
+      hasBustShield = false;
+      document.getElementById('joker-2').style.opacity = '0.3';
+      playCoinSound();
+      showBanner('🛡️ 불사조 보험 발동! BUST 1회 완전 방어!');
+      setLog(`🛡️ [보험 발동!] 주사위 [${testRoll}] 자멸을 불사조 쉴드가 흡수했습니다!`);
+      return;
+    }
+
+    playBustSound();
+    document.getElementById('mobile-viewport').classList.add('bust-screen-shake');
+    setTimeout(() => document.getElementById('mobile-viewport').classList.remove('bust-screen-shake'), 400);
+
+    // Ante 7 탐욕의 황소 기믹
+    if (currentAnte === 7) {
+      let lostGold = Math.floor(gold * 0.5);
+      gold -= lostGold;
+      document.getElementById('gold-val').innerText = `${gold}G`;
+      setLog(`🐂 [황소 저주!] BUST로 골드 ${lostGold}G를 강탈당했습니다!`);
+    }
+
+    setLog(`💀 [BUST!] 주사위 [${testRoll}] 자멸! ${currentPot} POT 전액 소멸! 파티 스트레스 폭증!`);
+    baseChips = 0;
+    currentMult = 1;
+    currentPot = 0;
+    updateBalatroUI();
+
+    heroes.forEach((h, i) => {
+      h.stress = Math.min(100, h.stress + 25);
+      document.getElementById(`h-st-${i}`).style.width = `${h.stress}%`;
+    });
+    return;
+  }
+
+  currentMult *= 2;
+  currentPot = Math.round(baseChips * currentMult * extraJokerMult);
+  if (currentPot > maxSinglePot) maxSinglePot = currentPot;
+
+  updateBalatroUI();
+  playCoinSound();
+  setLog(`🔥 [X2 MULT 돌파!] 주사위 [${testRoll}] 안착! 배율 ${currentMult}X! 화력: ${currentPot} POT!`);
+}
+
+function bankAndStrike() {
+  initAudio();
+  if (currentPot <= 0) {
+    setLog('⚠️ 발사할 화력이 없습니다. 먼저 주사위를 굴리세요!');
+    return;
+  }
+
+  let finalDmg = currentPot;
+  let multSnapshot = currentMult;
+  totalDamageDealt += finalDmg;
+
+  baseChips = 0;
+  currentMult = 1;
+  currentPot = 0;
+  updateBalatroUI();
+
+  let target = monsters.find(m => m.hp > 0);
+  if (!target) return;
+
+  triggerCutIn('🛡️', target.icon, finalDmg, multSnapshot >= 4, () => {
+    target.hp = Math.max(0, target.hp - finalDmg);
+    updateEntityUI();
+
+    let rewardGold = Math.floor(Math.random() * 50) + 50;
+    gold += rewardGold;
+    document.getElementById('gold-val').innerText = `${gold}G`;
+    playCoinSound();
+    spawnCoinShower();
+
+    setLog(`⚔️ ${multSnapshot}배수 발라트로 화력! ${target.name}에게 ${finalDmg} 피해! (+${rewardGold}G 획득)`);
+
+    // 모든 몬스터 소탕 체크
+    if (monsters.every(m => m.hp <= 0)) {
+      setTimeout(() => {
+        if (currentAnte >= 8) {
+          triggerVictoryScreen();
+        } else {
+          currentAnte++;
+          document.getElementById('ante-info').innerText = `ANTE ${currentAnte}/8`;
+          alert(`🎉 ANTE ${currentAnte - 1} 보스 블라인드 돌파 완료!\n전리품 암시장이 열렸습니다.`);
+          openShop();
+          respawnMonsters();
+        }
+      }, 500 / gameSpeed);
+    } else {
+      setTimeout(enemyTurn, 600 / gameSpeed);
+    }
+  });
+}
+
+function enemyTurn() {
+  let aliveMonsters = monsters.filter(m => m.hp > 0);
+  if (aliveMonsters.length === 0) return;
+
+  let attacker = aliveMonsters[Math.floor(Math.random() * aliveMonsters.length)];
+  let aliveHeroes = heroes.filter(h => h.hp > 0);
+  if (aliveHeroes.length === 0) {
+    triggerGameOver();
+    return;
+  }
+
+  let targetHero = aliveHeroes[Math.floor(Math.random() * aliveHeroes.length)];
+  let dmg = Math.floor(Math.random() * 20) + 12 + (currentAnte * 3);
+  targetHero.hp = Math.max(0, targetHero.hp - dmg);
+  targetHero.stress = Math.min(100, targetHero.stress + 10);
+  playHeavySlashSound();
+  updateEntityUI();
+
+  // 보스 턴에 저주 슬롯 무작위 변경
+  cursedSlotIndex = Math.floor(Math.random() * 4);
+  applyBossCurseVisual();
+
+  setLog(`🩸 ${attacker.name}의 반격! ${targetHero.name}에게 ${dmg} 피해! (주사위 ${cursedSlotIndex+1}번 봉인)`);
+  torch = Math.max(0, torch - 5);
+  document.getElementById('torch-val').innerText = `${torch}%`;
+
+  if (heroes.every(h => h.hp <= 0)) {
+    triggerGameOver();
+  }
+}
+
+function applyBossCurseVisual() {
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById(`slot-${i}`);
+    if (i === cursedSlotIndex) {
+      el.classList.add('cursed');
+      heldSlots[i] = false;
+      el.classList.remove('held');
+    } else {
+      el.classList.remove('cursed');
+    }
+  }
+}
+
+function triggerFeverTime() {
+  playFeverFanfare();
+  const banner = document.getElementById('fever-banner');
+  banner.style.display = 'block';
+  document.getElementById('middle-casino-board').classList.add('fever-mode');
+
+  currentMult *= 5; // 즉시 5배 폭발
+  currentPot = Math.round(baseChips * currentMult * extraJokerMult);
+  if (currentPot > maxSinglePot) maxSinglePot = currentPot;
+  updateBalatroUI();
+  setLog(`🎰 [777 FEVER!] 럭키 주사위 폭발! 배율 X5.0 즉시 뻥튀기! 화력: ${currentPot} POT!`);
+
+  setTimeout(() => {
+    banner.style.display = 'none';
+    document.getElementById('middle-casino-board').classList.remove('fever-mode');
+  }, 2200 / gameSpeed);
+}
+
+function triggerCutIn(attackerIcon, targetIcon, dmg, isCrit, cb) {
+  playHeavySlashSound();
+  const overlay = document.getElementById('cutin-overlay');
+  const cutinDmg = document.getElementById('cutin-dmg');
+  const slash = document.getElementById('slash-fx');
+
+  document.getElementById('cutin-attacker').innerText = attackerIcon;
+  document.getElementById('cutin-target').innerText = targetIcon;
+  cutinDmg.innerHTML = isCrit ? `🔥 잭팟 치명타!<br>-${dmg}` : `-${dmg}`;
+
+  overlay.style.display = 'flex';
+  setTimeout(() => slash.style.transform = 'rotate(-35deg) scaleX(1)', 50 / gameSpeed);
+  setTimeout(() => cutinDmg.style.transform = 'scale(1.2)', 100 / gameSpeed);
+
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    slash.style.transform = 'rotate(-35deg) scaleX(0)';
+    cutinDmg.style.transform = 'scale(0.5)';
+    cb();
+  }, 650 / gameSpeed);
+}
+
+function updateBalatroUI() {
+  document.getElementById('math-chips').innerText = `${baseChips} CHIPS`;
+  document.getElementById('math-mult').innerText = `X${currentMult} MULT`;
+  document.getElementById('pot-display').innerText = `${currentPot} POT`;
+
+  let bustThresh = currentMult <= 2 ? 1 : (currentMult <= 5 ? 2 : 3);
+  document.getElementById('bust-label').innerText = `⚠️ 주사위 [1 ~ ${bustThresh}] 나오면 자멸!`;
+}
+
+function updateEntityUI() {
+  heroes.forEach((h, i) => {
+    document.getElementById(`h-hp-${i}`).style.width = `${(h.hp / h.maxHp) * 100}%`;
+    document.getElementById(`h-st-${i}`).style.width = `${h.stress}%`;
+  });
+  monsters.forEach((m, i) => {
+    const el = document.getElementById(`m-hp-${i}`);
+    if (el) el.style.width = `${Math.max(0, (m.hp / m.maxHp) * 100)}%`;
+  });
+}
+
+// ----------------------------------------------------
+// 상점 및 부스터 팩 시스템
+// ----------------------------------------------------
+function openShop() {
+  initAudio();
+  document.getElementById('shop-modal').style.display = 'flex';
+  playCoinSound();
+}
+
+function closeShop() {
+  document.getElementById('shop-modal').style.display = 'none';
+}
+
+function buyItem(itemId, price) {
+  if (gold < price) {
+    alert('골드가 부족합니다!');
+    return;
+  }
+  gold -= price;
+  document.getElementById('gold-val').innerText = `${gold}G`;
+  playCoinSound();
+
+  if (itemId === 'buffoon_pack') {
+    closeShop();
+    openPackModal('buffoon');
+  } else if (itemId === 'celestial_pack') {
+    closeShop();
+    openPackModal('celestial');
+  } else if (itemId === 'bust_shield') {
+    hasBustShield = true;
+    document.getElementById('joker-2').style.opacity = '1';
+    alert('불사조 보험 계약 체결! 다음 BUST 자멸을 1회 방어합니다!');
+  } else if (itemId === 'upgrade_d20') {
+    diceSides[2] = 20;
+    document.getElementById('dtag-2').innerText = 'D20 황금';
+    alert('2번 주사위가 20면체 황금 주사위로 승급되었습니다!');
+  } else if (itemId === 'extra_rerolls') {
+    rerollsLeft += 3;
+    document.getElementById('reroll-count').innerText = rerollsLeft;
+    alert('무료 리롤 3회가 충전되었습니다!');
+  } else if (itemId === 'stun_sticker') {
+    diceStickers[1] = '스턴';
+    document.getElementById('dsticker-1').innerText = '⚡';
+    showBanner('⚡ 2번 주사위에 기절 스티커 각인 완료!');
+  }
+}
+
+// 부스터 팩 개봉 모달 (Buffoon & Celestial)
+function openPackModal(type) {
+  initAudio();
+  const modal = document.getElementById('pack-modal');
+  const title = document.getElementById('pack-modal-title');
+  const container = document.getElementById('pack-cards-container');
+  container.innerHTML = '';
+
+  if (type === 'buffoon') {
+    title.innerText = '🃏 광대 조커 팩 개봉';
+    const jokers = [
+      { name: '탐욕의 황금 주사위', desc: '주사위를 굴릴 때마다 +25G 획득', fn: () => { extraJokerMult += 0.3; showBanner('💰 탐욕의 조커 장착 (+0.3X 배율)'); } },
+      { name: '피의 계약서', desc: '기본 칩스 +40 영구 보정', fn: () => { foilBonusChips += 40; showBanner('🩸 피의 계약 장착 (+40 칩스)'); } },
+      { name: '심연의 복제경', desc: '5번째 조커 슬롯 개방 및 상시 1.5X 배율', fn: () => {
+        document.getElementById('joker-4').innerHTML = '<span>⚡</span><div class="relic-badge">X1.5</div>';
+        document.getElementById('joker-4').style.opacity = '1';
+        extraJokerMult += 0.5;
+        showBanner('⚡ 5번째 조커 슬롯 개방!');
+      }}
+    ];
+    jokers.forEach(j => {
+      const card = document.createElement('div');
+      card.className = 'pack-choice-card';
+      card.innerHTML = `<div class="pack-card-info"><h4>${j.name}</h4><p>${j.desc}</p></div><button class="btn-buy" style="padding:6px 12px;">선택</button>`;
+      card.onclick = () => { j.fn(); closePackModal(); playFeverFanfare(); };
+      container.appendChild(card);
+    });
+  } else {
+    title.innerText = '🪐 천체 행성 팩 개봉';
+    const planets = [
+      { name: '화성 (Mars)', hand: '포카드 (4 of a Kind)', desc: '포카드 레벨업 (+25 칩스, +1.5 배율)' },
+      { name: '목성 (Jupiter)', hand: '풀하우스 (Full House)', desc: '풀하우스 레벨업 (+20 칩스, +1.0 배율)' },
+      { name: '해왕성 (Neptune)', hand: '스트레이트 (Straight)', desc: '스트레이트 레벨업 (+15 칩스, +1.0 배율)' }
+    ];
+    planets.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'pack-choice-card';
+      card.innerHTML = `<div class="pack-card-info"><h4>${p.name}</h4><p>${p.desc}</p></div><button class="btn-buy" style="padding:6px 12px;">선택</button>`;
+      card.onclick = () => {
+        handBook[p.hand].lvl++;
+        showBanner(`🪐 ${p.name} 흡수! [${p.hand}] Lv.${handBook[p.hand].lvl} 달성!`);
+        applyHandScore();
+        closePackModal();
+        playFeverFanfare();
+      };
+      container.appendChild(card);
+    });
+  }
+
+  modal.style.display = 'flex';
+  playFeverFanfare();
+}
+
+function closePackModal() {
+  document.getElementById('pack-modal').style.display = 'none';
+}
+
+// ----------------------------------------------------
+// 던전 층 및 몬스터 리스폰
+// ----------------------------------------------------
+function respawnMonsters() {
+  const bossData = BOSS_BLINDS[Math.min(currentAnte - 1, BOSS_BLINDS.length - 1)];
+  document.getElementById('boss-avatar').innerText = bossData.icon;
+  document.getElementById('boss-name').innerText = bossData.name;
+  document.getElementById('blind-tag').innerText = `보스: ${bossData.name} (${bossData.desc})`;
+  document.getElementById('floor-title').innerText = `DEPTHS ${currentAnte} : ABYSS CASINO`;
+
+  monsters = [
+    { name: `${bossData.name} (ANTE ${currentAnte})`, maxHp: bossData.hp, hp: bossData.hp, icon: bossData.icon },
+    { name: '망령 사제', maxHp: 120 + (currentAnte * 40), hp: 120 + (currentAnte * 40), icon: '🧙‍♂️' },
+    { name: '지옥견', maxHp: 90 + (currentAnte * 30), hp: 90 + (currentAnte * 30), icon: '🐺' }
+  ];
+  rerollsLeft = 2;
+  document.getElementById('reroll-count').innerText = rerollsLeft;
+  updateEntityUI();
+}
+
+// ----------------------------------------------------
+// 엔딩 및 명예의 전당 (LocalStorage)
+// ----------------------------------------------------
+function triggerVictoryScreen() {
+  playFeverFanfare();
+  spawnCoinShower();
+  saveRunRecord(true);
+  const modal = document.getElementById('endgame-modal');
+  document.getElementById('endgame-title').innerText = '🏆 ANTE 8 클리어! 심연 정복!';
+  document.getElementById('endgame-desc').innerHTML = `
+    위대한 승리자여! 당신은 8대 심연의 보스 블라인드를 전부 파괴했습니다!<br><br>
+    🪙 최종 골드: <b>${gold}G</b><br>
+    💥 단일 최대 POT: <b>${maxSinglePot} POT</b><br>
+    ⚔️ 총 누적 타격: <b>${totalDamageDealt} 피해</b>
+  `;
+  modal.style.display = 'flex';
+}
+
+function triggerGameOver() {
+  playBustSound();
+  saveRunRecord(false);
+  const modal = document.getElementById('endgame-modal');
+  document.getElementById('endgame-title').innerText = '💀 파티 전멸! 심연에 굴복하다';
+  document.getElementById('endgame-desc').innerHTML = `
+    모든 영웅이 쓰러져 카지노의 제물이 되었습니다.<br><br>
+    도달한 심연: <b>ANTE ${currentAnte}/8</b><br>
+    단일 최대 POT: <b>${maxSinglePot} POT</b>
+  `;
+  modal.style.display = 'flex';
+}
+
+function enterEndlessMode() {
+  document.getElementById('endgame-modal').style.display = 'none';
+  currentAnte++;
+  document.getElementById('ante-info').innerText = `ANTE ${currentAnte} (ENDLESS)`;
+  respawnMonsters();
+  setLog('🔥 [무한 심연 모드] 한계에 도전하세요! 몬스터 체력이 기하급수적으로 폭증합니다!');
+}
+
+function restartNewRun() {
+  location.reload();
+}
+
+function saveRunRecord(isVictory) {
+  try {
+    let history = JSON.parse(localStorage.getItem('abyss_roll_history') || '[]');
+    history.push({
+      date: new Date().toLocaleDateString(),
+      ante: currentAnte,
+      maxPot: maxSinglePot,
+      gold: gold,
+      result: isVictory ? '승리 (ANTE 8+)' : '패배'
+    });
+    localStorage.setItem('abyss_roll_history', JSON.stringify(history.slice(-10)));
+  } catch(e) {}
+}
+
+function openHallOfFame() {
+  initAudio();
+  const modal = document.getElementById('hall-of-fame-modal');
+  const container = document.getElementById('hall-stats');
+  let history = [];
+  try {
+    history = JSON.parse(localStorage.getItem('abyss_roll_history') || '[]');
+  } catch(e) {}
+
+  let html = `<b>최고 기록 및 최근 런 기록:</b><br>`;
+  if (history.length === 0) {
+    html += '<p style="color:#777; margin-top:8px;">아직 기록된 런이 없습니다. 첫 플레이를 완료하세요!</p>';
+  } else {
+    history.reverse().forEach((r, idx) => {
+      html += `<div style="background:#151824; padding:6px; margin:4px 0; border-radius:4px; font-size:10px;">
+        #${idx+1} [${r.date}] - <b>${r.result}</b> | 도달: ANTE ${r.ante} | 최대 화력: ${r.maxPot} POT | 골드: ${r.gold}G
+      </div>`;
+    });
+  }
+  container.innerHTML = html;
+  modal.style.display = 'flex';
+}
+
+function closeHallOfFame() {
+  document.getElementById('hall-of-fame-modal').style.display = 'none';
+}
+
+function inspectJoker(idx) {
+  const titles = [
+    '블러드 칩스 (Foil): 모든 주사위 기본 칩스 +30 영구 보정',
+    '황금 배율 (Polychrome): 상시 화력 배율 X1.5 곱연산 적용',
+    '불사조 보험: 탐욕의 BUST 자멸을 1회 완전 무효화',
+    '네거티브 심연 악마: 조커 슬롯 한도를 영구 +1 확장',
+    '해금된 5번째 슬롯: 광대 조커 팩에서 추가 조커 장착 가능'
+  ];
+  alert(`[조커 렐릭 정보]\n${titles[idx]}`);
+}
+
+function lightTorch() {
+  torch = Math.min(100, torch + 25);
+  document.getElementById('torch-val').innerText = `${torch}%`;
+  setLog('🔥 횃불을 밝혀 칠흑의 어둠을 몰아냅니다.');
+}
+
+function spawnCoinShower() {
+  const container = document.getElementById('coin-rain-container');
+  for (let i = 0; i < 15; i++) {
+    const coin = document.createElement('div');
+    coin.className = 'gold-coin-particle';
+    coin.innerText = '🪙';
+    coin.style.left = `${Math.random() * 90}%`;
+    coin.style.animationDuration = `${0.8 + Math.random() * 0.8}s`;
+    container.appendChild(coin);
+    setTimeout(() => coin.remove(), 1600);
+  }
+}
+
+function showBanner(text) {
+  const b = document.getElementById('sticker-banner');
+  b.innerText = text;
+  b.style.display = 'block';
+  setTimeout(() => b.style.display = 'none', 1800);
+}
+
+function setLog(msg) {
+  document.getElementById('log-ticker').innerText = msg;
+}
+
+// 게임 시작 초기화
+respawnMonsters();
+initialRoll();
+updateEntityUI();
+</script>
+</body>
+</html>
+"""
+
+with open(r'c:\Users\임종서\Desktop\auto gnimag\abyss_roll.html', 'w', encoding='utf-8') as f:
+    f.write(HTML_CONTENT)
+
+print("abyss_roll.html generated successfully!")
