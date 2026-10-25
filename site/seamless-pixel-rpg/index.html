@@ -116,7 +116,8 @@
     <div style="font-size: 11px; font-weight: bold; color: #c5a059; margin-top: 6px;">ACTIVE SKILLS (Weather Synergized):</div>
     <div id="skillSlotList"></div>
     <div style="font-size: 11px; margin-top:5px; display:flex; justify-content:space-between; border-top:1px dashed #3a2e1d; padding-top:4px;">
-      <span>💨 <strong id="dashStatusText" style="color:#2ed573;">[Space] 회피 가능</strong></span>
+      <span>💨 <strong id="dashStatusText" style="color:#2ed573;">[Space] 회피</strong></span>
+      <span>🛡️ <strong id="parryStatusText" style="color:#ffd700;">[우클릭/F] 패링</strong></span>
       <span>🧪 <strong id="potionCountText" style="color:#2ed573;">[H] 물약: 3/3</strong></span>
     </div>
     <div class="btn-row" style="margin-top:6px;">
@@ -257,6 +258,47 @@ function initAudio() {
 }
 
 const SoundEngine = {
+  playParry: function() {
+    if (!audioEnabled || !audioCtx) return;
+    const osc1 = audioCtx.createOscillator();
+    const osc2 = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc1.type = 'sine'; osc2.type = 'triangle';
+    osc1.frequency.setValueAtTime(1480, audioCtx.currentTime);
+    osc1.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.35);
+    osc2.frequency.setValueAtTime(2960, audioCtx.currentTime);
+    osc2.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.35);
+    gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+    osc1.connect(gain); osc2.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc1.start(); osc1.stop(audioCtx.currentTime + 0.35);
+    osc2.start(); osc2.stop(audioCtx.currentTime + 0.35);
+  },
+  playSwordWave: function() {
+    if (!audioEnabled || !audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(520, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.22);
+    gain.gain.setValueAtTime(0.24, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.22);
+  },
+  playDestruct: function() {
+    if (!audioEnabled || !audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(140, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.16);
+    gain.gain.setValueAtTime(0.28, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.16);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.16);
+  },
   playSlash: function() {
     if (!audioEnabled || !audioCtx) return;
     const osc = audioCtx.createOscillator();
@@ -489,6 +531,76 @@ let player = {
 };
 
 let footstepDust = [];
+
+// 🛡️ Perfect Parry & Counter System
+let parryTimer = 0;
+let parryCooldown = 0;
+
+function triggerPlayerParry() {
+  if (player.isDead || parryCooldown > 0) return;
+  parryTimer = 0.22;
+  parryCooldown = 0.75;
+  SoundEngine.playSlash();
+  addDamageText(player.x, player.y - 20, "🛡️ 패링 가드!", false, '#ffd700');
+}
+
+// ⚡ Crescent Sword Wave / Aura Projectiles
+let activeSwordWaves = [];
+function spawnSwordAuraWave(x, y, dx, dy, color, damage) {
+  SoundEngine.playSwordWave();
+  activeSwordWaves.push({
+    x: x,
+    y: y,
+    vx: dx * 460,
+    vy: dy * 460,
+    angle: Math.atan2(dy, dx),
+    color: color,
+    damage: Math.floor(damage),
+    life: 0.55,
+    maxLife: 0.55,
+    radius: 34,
+    pierced: new Set()
+  });
+}
+
+// 📦 Destructible Environment Props
+let destructibleProps = [
+  { id: 1, type: "crate", x: -90, y: -45, hp: 1 },
+  { id: 2, type: "crate", x: -115, y: -25, hp: 1 },
+  { id: 3, type: "barrel", x: -70, y: 70, hp: 1 },
+  { id: 4, type: "barrel", x: 130, y: -30, hp: 1 },
+  { id: 5, type: "crate", x: 150, y: 110, hp: 1 },
+  { id: 6, type: "barrel", x: 80, y: 140, hp: 1 },
+  { id: 7, type: "crate", x: -140, y: 130, hp: 1 }
+];
+let woodDebris = [];
+
+function breakProp(p) {
+  if (p.hp <= 0) return;
+  p.hp = 0;
+  SoundEngine.playDestruct();
+  doShake(6);
+  for (let i = 0; i < 7; i++) {
+    const ang = Math.random() * Math.PI * 2;
+    const spd = Math.random() * 140 + 70;
+    woodDebris.push({
+      x: p.x,
+      y: p.y,
+      vx: Math.cos(ang) * spd,
+      vy: Math.sin(ang) * spd,
+      rot: Math.random() * 6,
+      vrot: (Math.random() - 0.5) * 12,
+      life: 0.5,
+      maxLife: 0.5,
+      color: Math.random() > 0.5 ? '#834c24' : '#593215',
+      size: Math.random() * 4 + 3
+    });
+  }
+  const rand = Math.random();
+  if (rand < 0.65) spawnLootGem(p.x, p.y, "gold");
+  else if (rand < 0.85) spawnLootGem(p.x, p.y, "potion");
+  else spawnLootGem(p.x, p.y, "gem");
+}
 function spawnFootstepDust(x, y, pvx, pvy) {
   for (let i = 0; i < 2; i++) {
     footstepDust.push({
@@ -624,7 +736,15 @@ window.addEventListener('keydown', e => {
   if (e.key === '[') { e.preventDefault(); prevClass(); }
   if (e.code === 'Space') { e.preventDefault(); triggerDodgeRoll(); }
   if (e.key.toLowerCase() === 'h') { e.preventDefault(); useHealthPotion(); }
-  if (e.key.toLowerCase() === 'f') { e.preventDefault(); interactRift(); }
+  if (e.key.toLowerCase() === 'f') {
+    e.preventDefault();
+    const distToPortal = currentZone === "OpenWorld" ? Math.hypot(player.x - riftPortal.x, player.y - riftPortal.y) : Math.hypot(player.x, player.y - (-170));
+    if (distToPortal <= 160) {
+      interactRift();
+    } else {
+      triggerPlayerParry();
+    }
+  }
   if (e.key.toLowerCase() === 'q') castPlayerSkill(1);
   if (e.key.toLowerCase() === 'e') castPlayerSkill(2);
   if (e.key.toLowerCase() === 'r') castPlayerSkill(3);
@@ -640,9 +760,14 @@ canvas.addEventListener('mousemove', e => {
   mousePos.x = (e.clientX - rect.left) * scaleX;
   mousePos.y = (e.clientY - rect.top) * scaleY;
 });
+canvas.addEventListener('contextmenu', e => { e.preventDefault(); });
 canvas.addEventListener('mousedown', e => {
   initAudio();
-  if (e.button === 0) castPlayerSkill(0);
+  if (e.button === 0) {
+    castPlayerSkill(0);
+  } else if (e.button === 2) {
+    triggerPlayerParry();
+  }
 });
 
 // Mobile & Tablet Touch Support
@@ -1091,6 +1216,37 @@ function damagePlayer(damage, attackerName = "Boss") {
     spawnShards(player.x, player.y, '#00ffff', 4);
     return;
   }
+
+  // 🛡️ Perfect Parry Check
+  if (parryTimer > 0) {
+    parryTimer = 0;
+    SoundEngine.playParry();
+    doHitStop(0.18);
+    doShake(16);
+    flashScreen('#ffd700', 0.65);
+    spawnShards(player.x, player.y, '#ffd700', 30);
+    addDamageText(player.x, player.y - 32, "⚡ PERFECT PARRY!", true, '#ffd700');
+
+    // Retaliation Counter-Wave (350% critical damage & 1.5s stun)
+    const currentList = currentZone === "OpenWorld" ? fieldMonsters : riftMonsters;
+    currentList.forEach(m => {
+      if (m.hp > 0 && Math.hypot(m.x - player.x, m.y - player.y) < 145) {
+        const counterDmg = Math.floor((player.skills[0] ? player.skills[0].damage : 150) * 3.5);
+        m.hp -= counterDmg;
+        m.hitFlashTimer = 0.3;
+        m.attackTimer = 1.8; // Stunned
+        addDamageText(m.x, m.y - 18, "COUNTER " + counterDmg + "!", true, '#ff3838');
+        spawnShards(m.x, m.y, '#ff4757', 15);
+      }
+    });
+    if (currentZone === "OpenWorld" && bossState.hp > 0 && Math.hypot(bossState.x - player.x, bossState.y - player.y) < 220) {
+      const counterDmg = Math.floor((player.skills[0] ? player.skills[0].damage : 150) * 3.2);
+      bossState.hp -= counterDmg;
+      addDamageText(bossState.x, bossState.y - 40, "COUNTER " + counterDmg + "!", true, '#ff3838');
+      spawnShards(bossState.x, bossState.y, '#ffd700', 25);
+    }
+    return;
+  }
   if (holyShieldTimer > 0) {
     damage = Math.round(damage * 0.35); // 65% barrier reduction!
     spawnShards(player.x, player.y, '#ffd700', 8);
@@ -1211,6 +1367,22 @@ function castPlayerSkill(slotIdx) {
       spawnScorchFissure(player.x, player.y, dirX / len, dirY / len, 95, 14);
       addDamageText(player.x, player.y - 24, "CRUSH FINISHER!", true, '#ff3838');
     }
+
+    // Unleash Crescent Sword Aura Wave
+    if (comboStep === 2 || (inventory.weaponLevel || 0) >= 1) {
+      const auraDmg = sk.damage * (comboStep === 2 ? 2.2 : 1.1) * (1 + (inventory.weaponLevel || 0) * 0.25);
+      spawnSwordAuraWave(player.x, player.y, dirX / len, dirY / len, WEAPON_COLORS[inventory.weaponLevel || 0], auraDmg);
+    }
+
+    // Smash destructible crates near player
+    if (currentZone === "OpenWorld") {
+      destructibleProps.forEach(p => {
+        if (p.hp > 0 && Math.hypot(p.x - player.x, p.y - player.y) < 55) {
+          breakProp(p);
+        }
+      });
+    }
+
     comboStep = (comboStep + 1) % 3;
   } else {
     player.attackSwingTimer = 0.22;
@@ -1653,10 +1825,78 @@ function gameLoop(now) {
     }
   });
 
-  // Tactical & Combo Timers
+  // Tactical, Parry & Combo Timers
   comboTimer = Math.max(0, comboTimer - dt);
   holyShieldTimer = Math.max(0, holyShieldTimer - dt);
   mercenaryBuffTimer = Math.max(0, mercenaryBuffTimer - dt);
+  if (parryTimer > 0) parryTimer -= dt;
+  if (parryCooldown > 0) parryCooldown -= dt;
+
+  // Boss Phase 2 Enrage Check
+  if (currentZone === "OpenWorld" && bossState.hp > 0 && bossState.hp < bossState.maxHP * 0.5 && !bossState.isEnraged) {
+    bossState.isEnraged = true;
+    SoundEngine.playDragonRoar();
+    flashScreen('#ff0055', 0.85);
+    doShake(24);
+    addDamageText(bossState.x, bossState.y - 70, "🔥 PHASE II: ENRAGED!", true, '#ff0055');
+  }
+
+  // Update Crescent Sword Waves
+  activeSwordWaves.forEach(sw => {
+    sw.x += sw.vx * dt;
+    sw.y += sw.vy * dt;
+    sw.life -= dt;
+
+    if (Math.random() < 0.45) {
+      pixelShards.push({
+        x: sw.x + (Math.random() - 0.5) * 18,
+        y: sw.y + (Math.random() - 0.5) * 18,
+        vx: (Math.random() - 0.5) * 40,
+        vy: (Math.random() - 0.5) * 40,
+        size: 3,
+        life: 0.25,
+        color: sw.color
+      });
+    }
+
+    const currentList = currentZone === "OpenWorld" ? fieldMonsters : riftMonsters;
+    currentList.forEach(m => {
+      if (m.hp > 0 && !sw.pierced.has(m.id) && Math.hypot(sw.x - m.x, sw.y - m.y) < (m.isBoss ? 55 : 30)) {
+        sw.pierced.add(m.id);
+        m.hp -= sw.damage;
+        m.hitFlashTimer = 0.22;
+        addDamageText(m.x, m.y - 15, sw.damage, true, sw.color);
+        spawnShards(m.x, m.y, sw.color, 10);
+        SoundEngine.playHitCrunch(true);
+      }
+    });
+
+    if (currentZone === "OpenWorld" && bossState.hp > 0 && !sw.pierced.has('boss') && Math.hypot(sw.x - bossState.x, sw.y - bossState.y) < 90) {
+      sw.pierced.add('boss');
+      bossState.hp -= sw.damage;
+      addDamageText(bossState.x, bossState.y - 20, sw.damage, true, sw.color);
+      spawnShards(sw.x, sw.y, sw.color, 12);
+      SoundEngine.playHitCrunch(true);
+    }
+
+    if (currentZone === "OpenWorld") {
+      destructibleProps.forEach(p => {
+        if (p.hp > 0 && Math.hypot(sw.x - p.x, sw.y - p.y) < 28) {
+          breakProp(p);
+        }
+      });
+    }
+  });
+  activeSwordWaves = activeSwordWaves.filter(sw => sw.life > 0);
+
+  // Update Wood Debris
+  woodDebris.forEach(d => {
+    d.x += d.vx * dt;
+    d.y += d.vy * dt;
+    d.rot += d.vrot * dt;
+    d.life -= dt;
+  });
+  woodDebris = woodDebris.filter(d => d.life > 0);
 
   // Water Ripples Animation
   waterRipples.forEach(r => {
@@ -2287,6 +2527,28 @@ function render() {
       ctx.stroke();
     });
 
+    // Destructible Props (Crates & Barrels)
+    destructibleProps.forEach(p => {
+      if (p.hp <= 0) return;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.beginPath(); ctx.ellipse(p.x, p.y + 12, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
+      if (p.type === "crate") {
+        drawAtlasTile(ctx, 10, 8, p.x - 16, p.y - 16, 32, 32);
+      } else {
+        drawAtlasTile(ctx, 9, 8, p.x - 16, p.y - 16, 32, 32);
+      }
+    });
+
+    // Flying Wood Debris
+    woodDebris.forEach(d => {
+      ctx.save();
+      ctx.translate(d.x, d.y);
+      ctx.rotate(d.rot);
+      ctx.fillStyle = d.color;
+      ctx.fillRect(-d.size / 2, -d.size / 2, d.size, d.size);
+      ctx.restore();
+    });
+
     // 1.7. 🏛️ Gothic Ruin Monoliths
     ruinPillars.forEach(p => {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
@@ -2650,6 +2912,55 @@ function render() {
     ctx.restore();
   }
 
+  // Golden Parry Stance Barrier
+  if (parryTimer > 0) {
+    ctx.save();
+    const parryPulse = Math.sin(performance.now() * 0.02) * 5;
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, 42 + parryPulse, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.25)';
+    ctx.fill();
+
+    for (let r = 0; r < 4; r++) {
+      const a = (performance.now() * 0.005) + (r * Math.PI / 2);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(player.x + Math.cos(a) * 32, player.y + Math.sin(a) * 32);
+      ctx.lineTo(player.x + Math.cos(a) * (48 + parryPulse), player.y + Math.sin(a) * (48 + parryPulse));
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // Crescent Sword Waves
+  activeSwordWaves.forEach(sw => {
+    ctx.save();
+    ctx.translate(sw.x, sw.y);
+    ctx.rotate(sw.angle);
+
+    const alpha = Math.min(1.0, sw.life / 0.15);
+    ctx.globalAlpha = alpha;
+
+    ctx.strokeStyle = sw.color;
+    ctx.lineWidth = 7;
+    ctx.beginPath();
+    ctx.arc(0, 0, sw.radius, -0.9, 0.9);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, sw.radius - 2, -0.8, 0.8);
+    ctx.stroke();
+
+    ctx.restore();
+  });
+
   // 11. Projectiles, Shards, Floating Numbers
   activeProjectiles.forEach(p => {
     ctx.fillStyle = p.color;
@@ -2760,7 +3071,106 @@ function render() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.globalAlpha = 1.0;
   }
+
+  // Draw Tactical MiniMap HUD
+  drawMiniMap(ctx);
 }
+function drawMiniMap(ctx) {
+  const mapSize = 120;
+  const mapX = canvas.width - mapSize - 16;
+  const mapY = 16;
+  const centerMapX = mapX + mapSize / 2;
+  const centerMapY = mapY + mapSize / 2;
+  const radarRadius = mapSize / 2;
+  const worldScale = 0.085;
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(7, 10, 16, 0.85)';
+  ctx.beginPath();
+  ctx.arc(centerMapX, centerMapY, radarRadius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#ffd700';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(255, 215, 0, 0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(centerMapX, centerMapY, radarRadius * 0.5, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(centerMapX, centerMapY, radarRadius - 2, 0, Math.PI * 2);
+  ctx.clip();
+
+  const sweepAngle = (performance.now() * 0.002) % (Math.PI * 2);
+  ctx.strokeStyle = 'rgba(46, 204, 113, 0.35)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(centerMapX, centerMapY);
+  ctx.lineTo(centerMapX + Math.cos(sweepAngle) * radarRadius, centerMapY + Math.sin(sweepAngle) * radarRadius);
+  ctx.stroke();
+
+  if (currentZone === "OpenWorld") {
+    ruinPillars.forEach(p => {
+      const rx = centerMapX + (p.x - player.x) * worldScale;
+      const ry = centerMapY + (p.y - player.y) * worldScale;
+      ctx.fillStyle = '#ffd32a';
+      ctx.fillRect(rx - 2, ry - 2, 4, 4);
+    });
+    const px = centerMapX + (riftPortal.x - player.x) * worldScale;
+    const py = centerMapY + (riftPortal.y - player.y) * worldScale;
+    ctx.fillStyle = '#e056fd';
+    ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill();
+
+    if (bossState.hp > 0) {
+      const bx = centerMapX + (bossState.x - player.x) * worldScale;
+      const by = centerMapY + (bossState.y - player.y) * worldScale;
+      ctx.fillStyle = Math.floor(performance.now() * 0.005) % 2 === 0 ? '#ff3838' : '#ffffff';
+      ctx.beginPath(); ctx.arc(bx, by, 5, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  const monList = currentZone === "OpenWorld" ? fieldMonsters : riftMonsters;
+  monList.forEach(m => {
+    if (m.hp > 0) {
+      const mx = centerMapX + (m.x - player.x) * worldScale;
+      const my = centerMapY + (m.y - player.y) * worldScale;
+      ctx.fillStyle = m.isBoss ? '#e056fd' : '#ff4757';
+      ctx.beginPath(); ctx.arc(mx, my, m.isBoss ? 4 : 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+  });
+
+  mercenaries.forEach(m => {
+    if (m.hp > 0) {
+      const mx = centerMapX + (m.x - player.x) * worldScale;
+      const my = centerMapY + (m.y - player.y) * worldScale;
+      ctx.fillStyle = '#00d2d3';
+      ctx.beginPath(); ctx.arc(mx, my, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+  });
+
+  ctx.fillStyle = '#2ed573';
+  ctx.beginPath(); ctx.arc(centerMapX, centerMapY, 3.5, 0, Math.PI * 2); ctx.fill();
+
+  const aimDir = Math.atan2(mousePos.y - canvas.height / 2, mousePos.x - canvas.width / 2);
+  ctx.strokeStyle = '#2ed573';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(centerMapX, centerMapY);
+  ctx.lineTo(centerMapX + Math.cos(aimDir) * 9, centerMapY + Math.sin(aimDir) * 9);
+  ctx.stroke();
+
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = '#ffd700';
+  ctx.font = 'bold 9px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText("RADAR [N]", centerMapX, mapY + mapSize + 12);
+  ctx.restore();
+}
+
 
 function updateHUD() {
   document.getElementById('playerClassName').innerText = '👑 CLASS: ' + playerClass.className;
@@ -2818,11 +3228,22 @@ function updateHUD() {
   const dashEl = document.getElementById('dashStatusText');
   if (dashEl) {
     if (dashCooldown <= 0) {
-      dashEl.innerText = "[Space] 회피 가능";
+      dashEl.innerText = "[Space] 회피";
       dashEl.style.color = "#2ed573";
     } else {
       dashEl.innerText = "[Space] (" + dashCooldown.toFixed(1) + "s)";
       dashEl.style.color = "#ff4757";
+    }
+  }
+
+  const parryEl = document.getElementById('parryStatusText');
+  if (parryEl) {
+    if (parryCooldown <= 0) {
+      parryEl.innerText = "[우클릭/F] 패링 준비";
+      parryEl.style.color = "#ffd700";
+    } else {
+      parryEl.innerText = "[우클릭/F] (" + parryCooldown.toFixed(1) + "s)";
+      parryEl.style.color = "#ff4757";
     }
   }
 
