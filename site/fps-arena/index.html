@@ -2852,9 +2852,10 @@ function update(dt) {
 
   
   // 수풀 바람에 살랑거림 애니메이션
+  const curTime = performance.now();
   windBushes.forEach(b => {
-    b.mesh.rotation.z = Math.sin(now * 0.003 + b.phase) * 0.06;
-    b.mesh.rotation.x = Math.cos(now * 0.002 + b.phase) * 0.04;
+    b.mesh.rotation.z = Math.sin(curTime * 0.003 + b.phase) * 0.06;
+    b.mesh.rotation.x = Math.cos(curTime * 0.002 + b.phase) * 0.04;
   });
 
   // 정찰 드론 비행 조작
