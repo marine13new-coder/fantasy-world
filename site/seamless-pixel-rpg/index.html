@@ -194,6 +194,35 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
 
+// ==========================================
+// 🎨 REAL INDIE SPRITESHEET ATLAS & ANIMATIONS
+// ==========================================
+const spriteSheet = new Image();
+spriteSheet.src = 'Assets/Art/Sprites/roguelikeSheet_transparent.png';
+let spriteSheetLoaded = false;
+spriteSheet.onload = () => { spriteSheetLoaded = true; };
+
+const heroIdleImg = new Image();
+heroIdleImg.src = 'Assets/Art/Sprites/Hero/hero_idle.png';
+let heroIdleLoaded = false;
+heroIdleImg.onload = () => { heroIdleLoaded = true; };
+
+const heroWalkImg = new Image();
+heroWalkImg.src = 'Assets/Art/Sprites/Hero/hero_walk.png';
+let heroWalkLoaded = false;
+heroWalkImg.onload = () => { heroWalkLoaded = true; };
+
+const heroAttackImg = new Image();
+heroAttackImg.src = 'Assets/Art/Sprites/Hero/hero_attack.png';
+let heroAttackLoaded = false;
+heroAttackImg.onload = () => { heroAttackLoaded = true; };
+
+function drawAtlasTile(ctx, col, row, dx, dy, dw = 32, dh = 32) {
+  if (spriteSheetLoaded) {
+    ctx.drawImage(spriteSheet, col * 17, row * 17, 16, 16, dx, dy, dw, dh);
+  }
+}
+
 const skillMap = {};
 SKILLDATA.forEach(s => skillMap[s.id] = s);
 
@@ -1660,35 +1689,92 @@ function gameLoop(now) {
 function drawPixelHero(ctx, x, y, walkTimer, swingTimer, aimAngle) {
   ctx.save();
   ctx.translate(x, y);
-  ctx.scale(player.squashX, player.squashY);
 
-  if (player.isDead) {
-    ctx.rotate(Math.PI / 2); // Fallen to the ground
-    ctx.globalAlpha = 0.75;
+  const facingLeft = Math.cos(aimAngle) < 0;
+  if (facingLeft) {
+    ctx.scale(-1, 1);
   }
 
-  const bounce = player.isDead ? 0 : Math.sin(walkTimer) * 3;
-  const legOffset = player.isDead ? 0 : Math.sin(walkTimer) * 4;
+  if (player.isDead) {
+    ctx.rotate(facingLeft ? -Math.PI / 2 : Math.PI / 2);
+    ctx.globalAlpha = 0.65;
+  }
 
   // 1. Soft Dynamic Drop Shadow
   ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
   ctx.beginPath();
-  ctx.ellipse(0, 18, 18, 7, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 20, 20, 8, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // 2. Animated Flowing Red Cape (3-layer shading)
+  let renderedSprite = false;
+
+  // Frame-by-Frame Animated Sprite Sheets
+  if (swingTimer > 0 && heroAttackLoaded) {
+    const totalFrames = 10;
+    const progress = Math.min(0.99, (0.34 - swingTimer) / 0.34);
+    const frameIdx = Math.floor(progress * totalFrames);
+    const size = 84;
+    ctx.drawImage(heroAttackImg, frameIdx * 256, 0, 256, 256, -size / 2, -size / 2 - 12, size, size);
+    renderedSprite = true;
+  } else if (walkTimer > 0 && heroWalkLoaded) {
+    const totalFrames = 8;
+    const frameIdx = Math.floor(walkTimer * 0.9) % totalFrames;
+    const size = 84;
+    ctx.drawImage(heroWalkImg, frameIdx * 256, 0, 256, 256, -size / 2, -size / 2 - 12, size, size);
+    renderedSprite = true;
+  } else if (heroIdleLoaded) {
+    const totalFrames = 10;
+    const frameIdx = Math.floor(performance.now() * 0.007) % totalFrames;
+    const size = 84;
+    ctx.drawImage(heroIdleImg, frameIdx * 256, 0, 256, 256, -size / 2, -size / 2 - 12, size, size);
+    renderedSprite = true;
+  }
+
+  // Weapon Glow Arc & Runic Trail
+  const wpColor = WEAPON_COLORS[inventory.weaponLevel || 0];
+  if (swingTimer > 0) {
+    const swingProgress = Math.min(1.0, swingTimer / 0.18);
+    ctx.save();
+    ctx.strokeStyle = wpColor;
+    ctx.lineWidth = 9;
+    ctx.beginPath();
+    ctx.arc(12, 0, 48, -0.85, 0.85);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 3.0;
+    ctx.beginPath();
+    ctx.arc(12, 0, 46, -0.75, 0.75);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  if (!renderedSprite) {
+    drawProceduralKnightFallback(ctx, walkTimer, swingTimer, aimAngle);
+  }
+
+  ctx.restore();
+}
+
+function drawProceduralKnightFallback(ctx, walkTimer, swingTimer, aimAngle) {
+  ctx.save();
+  ctx.scale(player.squashX, player.squashY);
+
+  const bounce = player.isDead ? 0 : Math.sin(walkTimer) * 3;
+  const legOffset = player.isDead ? 0 : Math.sin(walkTimer) * 4;
+
+  // Animated Flowing Red Cape
   ctx.fillStyle = '#5c0915';
   ctx.fillRect(-13, -6 + bounce, 26, 22);
   ctx.fillStyle = '#9e1424';
   ctx.fillRect(-11, -4 + bounce, 22, 20);
   ctx.fillStyle = '#d63031';
   ctx.fillRect(-9, 0 + bounce, 18, 16);
-  // Cape wave edge
   const capeWave = Math.sin(walkTimer * 1.5) * 3;
   ctx.fillStyle = '#ff7675';
   ctx.fillRect(-9 + capeWave, 14 + bounce, 18, 3);
 
-  // 3. Knight Legs & Steel Sabatons (Boots)
+  // Knight Legs & Sabatons
   ctx.fillStyle = '#1e272e';
   ctx.fillRect(-8 - legOffset, 8 + bounce, 6, 12);
   ctx.fillRect(2 + legOffset, 8 + bounce, 6, 12);
@@ -1696,77 +1782,47 @@ function drawPixelHero(ctx, x, y, walkTimer, swingTimer, aimAngle) {
   ctx.fillRect(-9 - legOffset, 16 + bounce, 8, 5);
   ctx.fillRect(1 + legOffset, 16 + bounce, 8, 5);
 
-  // 4. Steel Cuirass (Breastplate) with Gold Filigree
+  // Steel Cuirass with Gold Filigree
   ctx.fillStyle = '#2f3542';
   ctx.fillRect(-9, -14 + bounce, 18, 22);
   ctx.fillStyle = '#57606f';
   ctx.fillRect(-7, -12 + bounce, 14, 18);
   ctx.fillStyle = '#747d8c';
   ctx.fillRect(-5, -10 + bounce, 10, 8);
-  // Golden Crest / Trim
   ctx.fillStyle = '#ffd32a';
   ctx.fillRect(-3, -8 + bounce, 6, 12);
   ctx.fillRect(-6, -4 + bounce, 12, 3);
 
-  // 5. Great Helm (Helmet) with Plume & Cyan Visor Glow
+  // Great Helm with Plume & Cyan Visor
   ctx.fillStyle = '#1e272e';
   ctx.fillRect(-8, -28 + bounce, 16, 15);
   ctx.fillStyle = '#57606f';
   ctx.fillRect(-6, -26 + bounce, 12, 11);
   ctx.fillStyle = '#a4b0be';
   ctx.fillRect(-5, -24 + bounce, 10, 3);
-  // Visor Slit Glowing Cyan
   const visorPulse = 0.8 + Math.sin(performance.now() * 0.006) * 0.2;
   ctx.fillStyle = 'rgba(0, 230, 240, ' + visorPulse + ')';
   ctx.fillRect(-5, -20 + bounce, 10, 3);
-  // Crimson Feathered Plume
   ctx.fillStyle = '#c0392b';
   ctx.fillRect(-2, -34 + bounce, 4, 7);
   ctx.fillStyle = '#e74c3c';
   ctx.fillRect(-1, -36 + bounce, 2, 4);
 
-  // 6. Two-Handed Claymore / Greatsword (Aimed at Mouse)
+  // Claymore
   ctx.save();
   ctx.rotate(aimAngle);
-
   const wpColor = WEAPON_COLORS[inventory.weaponLevel || 0];
-
-  // Claymore Blade & Crossguard
   ctx.fillStyle = '#dcdde1';
   ctx.fillRect(12, -3, 34, 6);
   ctx.fillStyle = '#f5f6fa';
   ctx.fillRect(16, -2, 28, 4);
-  // Golden Pommel & Crossguard
   ctx.fillStyle = '#e1b12c';
   ctx.fillRect(10, -9, 4, 18);
   ctx.fillRect(6, -2, 4, 4);
-  // Runic Fuller Glow (Color scales with weapon enhancement tier!)
   ctx.fillStyle = wpColor;
   ctx.fillRect(20, -1, 18, 2);
-
-  // Weapon Glow aura
-  ctx.fillStyle = wpColor;
-  ctx.globalAlpha = 0.35;
-  ctx.fillRect(14, -4, 32, 8);
-  ctx.globalAlpha = 1.0;
-
-  // Slash Arc Visual & Sparks
-  if (swingTimer > 0) {
-    const swingProgress = Math.min(1.0, swingTimer / 0.18);
-    ctx.strokeStyle = wpColor;
-    ctx.lineWidth = 9;
-    ctx.beginPath();
-    ctx.arc(0, 0, 52, -0.85, 0.85);
-    ctx.stroke();
-
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 3.0;
-    ctx.beginPath();
-    ctx.arc(0, 0, 50, -0.75, 0.75);
-    ctx.stroke();
-  }
-
   ctx.restore();
+
   ctx.restore();
 }
 
@@ -1786,6 +1842,28 @@ function drawPixelMercenary(ctx, m) {
   ctx.beginPath();
   ctx.ellipse(0, 16, 15, 6, 0, 0, Math.PI * 2);
   ctx.fill();
+
+  if (spriteSheetLoaded) {
+    let col = 0, row = 4;
+    if (m.role === "Tank") { col = 0; row = 4; }
+    else if (m.role === "Healer") { col = 2; row = 4; }
+    else { col = 3; row = 4; }
+
+    const size = 36;
+    ctx.drawImage(spriteSheet, col * 17, row * 17, 16, 16, -size / 2, -size / 2 - 8 + bounce, size, size);
+  } else {
+    drawProceduralMercenaryFallback(ctx, m, bounce);
+  }
+
+  ctx.fillStyle = m.hp <= 0 ? '#ff4757' : '#fff';
+  ctx.font = 'bold 10px monospace';
+  ctx.textAlign = 'center';
+  const label = m.hp <= 0 ? "⚠️ DOWNED (" + Math.max(0, Math.ceil(7.0 - (m.downedTimer || 0))) + "s)" : m.role;
+  ctx.fillText(label, 0, -34);
+  ctx.restore();
+}
+
+function drawProceduralMercenaryFallback(ctx, m, bounce) {
 
   if (m.role === "Tank") {
     // Paladin: Emerald & Gold Bulwark Plate
@@ -2230,10 +2308,72 @@ function render() {
     ctx.textAlign = 'center';
     ctx.fillText("🌀 오픈월드 귀환 성소 [F]", 0, -220);
   }
-  ctx.fillStyle = '#ff7979';
-  ctx.font = 'bold 11px monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText("🌀 차원 균열 (Rift Portal)", riftPortal.x, riftPortal.y - 56);
+
+  // 3.5. Draw Roaming Mobs / Rift Chimera Boss
+  const activeMons = currentZone === "OpenWorld" ? fieldMonsters : riftMonsters;
+  activeMons.forEach(mon => {
+    if (mon.hp <= 0) return;
+    ctx.save();
+    ctx.translate(mon.x, mon.y);
+
+    // Drop Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.beginPath();
+    ctx.ellipse(0, 12, mon.isBoss ? 32 : 12, mon.isBoss ? 12 : 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    const bounce = Math.sin((mon.walkTimer || 0) * 1.5) * 2;
+
+    if (mon.isBoss) {
+      // Chimera Boss: 3-Headed Beast with Multi-Element Auras
+      ctx.fillStyle = '#48185c';
+      ctx.fillRect(-28, -26 + bounce, 56, 42);
+      ctx.fillStyle = '#8e24aa';
+      ctx.fillRect(-22, -22 + bounce, 44, 34);
+
+      // 3 Glowing Head Cores (Fire Dragon, Frost Serpent, Holy Lion)
+      ctx.fillStyle = '#ff4757';
+      ctx.fillRect(-24, -36 + bounce, 12, 12);
+      ctx.fillStyle = '#00d2d3';
+      ctx.fillRect(-6, -42 + bounce, 12, 12);
+      ctx.fillStyle = '#ffd32a';
+      ctx.fillRect(12, -36 + bounce, 12, 12);
+    } else if (mon.type === "Skeleton") {
+      ctx.fillStyle = '#2d3436';
+      ctx.fillRect(-6, -10 + bounce, 12, 18);
+      ctx.fillStyle = mon.color;
+      ctx.fillRect(-5, -20 + bounce, 10, 9);
+      ctx.fillStyle = '#00ffff';
+      ctx.fillRect(-3, -17 + bounce, 2, 2);
+      ctx.fillRect(1, -17 + bounce, 2, 2);
+      ctx.fillStyle = '#dcdde1';
+      ctx.fillRect(7, -14 + bounce, 3, 16);
+    } else {
+      // Wisp / Floating Void Skull
+      ctx.fillStyle = mon.color;
+      ctx.beginPath();
+      ctx.arc(0, -6 + bounce, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(0, -6 + bounce, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Monster HP Bar
+    const hpRatio = Math.max(0, mon.hp / mon.maxHP);
+    const barW = mon.isBoss ? 64 : 26;
+    ctx.fillStyle = '#1e272e';
+    ctx.fillRect(-barW / 2, -32, barW, 4);
+    ctx.fillStyle = mon.isBoss ? '#e056fd' : '#ff4757';
+    ctx.fillRect(-barW / 2, -32, barW * hpRatio, 4);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(mon.name, 0, -36);
+    ctx.restore();
+  });
 
   // 4. Telegraph Warning Floor
   if (bossState.activeTelegraph) {
@@ -2298,7 +2438,7 @@ function render() {
   });
 
   // 7. Draw Giant Boss
-  if (bossState.hp > 0) {
+  if (currentZone === "OpenWorld" && bossState.hp > 0) {
     drawGiantDragonValakas(ctx, bossState);
   }
 
@@ -2319,6 +2459,19 @@ function render() {
     ctx.fillText("배반 암살자", 0, -28);
     ctx.restore();
   }
+
+  // 9.5. Draw Player Dash Afterimages
+  playerAfterimages.forEach(ai => {
+    ctx.save();
+    ctx.translate(ai.x, ai.y);
+    ctx.globalAlpha = ai.alpha * 0.45;
+    ctx.fillStyle = ai.color;
+    ctx.beginPath();
+    ctx.arc(0, 0, 16, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(-8, -26, 16, 36);
+    ctx.restore();
+  });
 
   // 10. Draw Player Hero
   const mouseWorldX = mousePos.x - canvas.width / 2 + camera.x;
@@ -2369,6 +2522,37 @@ function render() {
     ctx.fillStyle = fn.color;
     ctx.fillText(fn.text, fn.x, fn.y);
   });
+
+  // 11.5. Dynamic Electric Lightning Bolts
+  activeLightningBolts.forEach(lb => {
+    ctx.save();
+    ctx.strokeStyle = '#00d2d3';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    lb.segments.forEach((pt, i) => {
+      if (i === 0) ctx.moveTo(pt.x, pt.y);
+      else ctx.lineTo(pt.x, pt.y);
+    });
+    ctx.stroke();
+
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    lb.segments.forEach((pt, i) => {
+      if (i === 0) ctx.moveTo(pt.x, pt.y);
+      else ctx.lineTo(pt.x, pt.y);
+    });
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  // 11.6. Atmospheric Floating Motes / Embers
+  ctx.save();
+  ambientMotes.forEach(mote => {
+    ctx.fillStyle = currentZone === "RiftDungeon" ? 'rgba(224, 86, 253, ' + mote.alpha + ')' : 'rgba(255, 175, 64, ' + mote.alpha + ')';
+    ctx.fillRect(mote.x + camera.x, mote.y + camera.y, mote.size, mote.size);
+  });
+  ctx.restore();
 
   // 12. Dynamic HD-2D Lighting Glows
   ctx.save();
@@ -2484,6 +2668,23 @@ function updateHUD() {
   if (wpEl) {
     wpEl.innerText = WEAPON_NAMES[wpLvl];
     wpEl.style.color = WEAPON_COLORS[wpLvl];
+  }
+
+  const dashEl = document.getElementById('dashStatusText');
+  if (dashEl) {
+    if (dashCooldown <= 0) {
+      dashEl.innerText = "[Space] 회피 가능";
+      dashEl.style.color = "#2ed573";
+    } else {
+      dashEl.innerText = "[Space] (" + dashCooldown.toFixed(1) + "s)";
+      dashEl.style.color = "#ff4757";
+    }
+  }
+
+  const potEl = document.getElementById('potionCountText');
+  if (potEl) {
+    potEl.innerText = "[H] 물약: " + potionCharges + "/" + maxPotionCharges;
+    potEl.style.color = potionCharges > 0 ? "#2ed573" : "#ff4757";
   }
 }
 
