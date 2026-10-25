@@ -936,6 +936,12 @@
         <button class="btn-buy" onclick="buyItem('celestial_pack', 110)">개봉하기</button>
       </div>
       <div class="shop-card">
+        <div class="shop-card-title">🔮 점술 타로 팩</div>
+        <div class="shop-card-desc">신비한 타로 아르카나 카드로 주사위/골드/체력 강화</div>
+        <div class="shop-card-price">95G</div>
+        <button class="btn-buy" onclick="buyItem('tarot_pack', 95)">개봉하기</button>
+      </div>
+      <div class="shop-card">
         <div class="shop-card-title">🛡️ 불사조 보험 계약</div>
         <div class="shop-card-desc">자멸(BUST) 1회 완전 무효 방어</div>
         <div class="shop-card-price">100G</div>
@@ -1097,11 +1103,31 @@ function playCoinSound() {
   setTimeout(() => playTone(1318, 0.15, 'sine', 0.4), 80 / gameSpeed);
 }
 
-function playFeverFanfare() {
-  [523, 659, 783, 1046, 1318].forEach((f, idx) => {
-    setTimeout(() => playTone(f, 0.15, 'triangle', 0.5), (idx * 90) / gameSpeed);
-  });
+function triggerHaptic(type) {
+  if (!navigator.vibrate) return;
+  try {
+    if (type === 'roll') navigator.vibrate(25);
+    else if (type === 'push') navigator.vibrate([35, 20, 55]);
+    else if (type === 'bust') navigator.vibrate([90, 40, 90, 40, 150]);
+    else if (type === 'crit') navigator.vibrate([100, 30, 80]);
+    else if (type === 'coin') navigator.vibrate([15, 10, 20]);
+  } catch(e) {}
 }
+
+function playHandFanfare(hand) {
+  if (isAudioMuted) return;
+  initAudio();
+  if (hand === '야추 (5 of a Kind)') {
+    [523, 659, 783, 1046, 1318].forEach((f, i) => setTimeout(() => playTone(f, 0.15, 'triangle', 0.5), (i * 70) / gameSpeed));
+  } else if (hand === '포카드 (4 of a Kind)' || hand === '풀하우스 (Full House)') {
+    [440, 554, 659, 880].forEach((f, i) => setTimeout(() => playTone(f, 0.12, 'sine', 0.45), (i * 80) / gameSpeed));
+  } else if (hand === '스트레이트 (Straight)' || hand === '트리플 (3 of a Kind)') {
+    [392, 523, 659].forEach((f, i) => setTimeout(() => playTone(f, 0.1, 'sine', 0.4), (i * 90) / gameSpeed));
+  } else {
+    playTone(440, 0.08, 'sine', 0.3);
+  }
+}
+
 
 function toggleAudio() {
   initAudio();
@@ -1211,29 +1237,41 @@ function evaluateDiceHand(values) {
 function initialRoll() {
   initAudio();
   playDiceSound();
+  triggerHaptic('roll');
 
-  // 주사위 회전 연출
+  // 주사위 롤링 텀블링 애니메이션
   for (let i = 0; i < 4; i++) {
     const el = document.getElementById(`slot-${i}`);
     el.classList.add('rolling');
-    setTimeout(() => el.classList.remove('rolling'), 350 / gameSpeed);
+    let tumbleCount = 0;
+    const interval = setInterval(() => {
+      document.getElementById(`dval-${i}`).innerText = Math.floor(Math.random() * diceSides[i]) + 1;
+      tumbleCount++;
+      if (tumbleCount > 5) {
+        clearInterval(interval);
+        document.getElementById(`dval-${i}`).innerText = diceValues[i];
+        el.classList.remove('rolling');
+      }
+    }, 40 / gameSpeed);
   }
 
   let luckyCount = 0;
   for (let i = 0; i < 4; i++) {
     diceValues[i] = Math.floor(Math.random() * diceSides[i]) + 1;
-    document.getElementById(`dval-${i}`).innerText = diceValues[i];
     if (diceValues[i] >= 7) luckyCount++;
   }
 
-  currentDetectedHand = evaluateDiceHand(diceValues);
-  applyHandScore();
+  setTimeout(() => {
+    currentDetectedHand = evaluateDiceHand(diceValues);
+    applyHandScore();
+    playHandFanfare(currentDetectedHand);
 
-  if (luckyCount >= 2) {
-    triggerFeverTime();
-  } else {
-    setLog(`🎲 [${currentDetectedHand}] 감지! 화력: ${currentPot} POT! 묻고 더블로!`);
-  }
+    if (luckyCount >= 2) {
+      triggerFeverTime();
+    } else {
+      setLog(`🎲 [${currentDetectedHand}] 감지! 화력: ${currentPot} POT! 묻고 더블로!`);
+    }
+  }, 220 / gameSpeed);
 }
 
 function applyHandScore() {
@@ -1323,6 +1361,7 @@ function pushDoubleDown() {
     }
 
     playBustSound();
+    triggerHaptic('bust');
     document.getElementById('mobile-viewport').classList.add('bust-screen-shake');
     setTimeout(() => document.getElementById('mobile-viewport').classList.remove('bust-screen-shake'), 400);
 
@@ -1353,6 +1392,7 @@ function pushDoubleDown() {
 
   updateBalatroUI();
   playCoinSound();
+  triggerHaptic('push');
   setLog(`🔥 [X2 MULT 돌파!] 주사위 [${testRoll}] 안착! 배율 ${currentMult}X! 화력: ${currentPot} POT!`);
 }
 
@@ -1363,6 +1403,7 @@ function bankAndStrike() {
     return;
   }
 
+  triggerHaptic('crit');
   let finalDmg = currentPot;
   let multSnapshot = currentMult;
   totalDamageDealt += finalDmg;
@@ -1539,6 +1580,9 @@ function buyItem(itemId, price) {
   } else if (itemId === 'celestial_pack') {
     closeShop();
     openPackModal('celestial');
+  } else if (itemId === 'tarot_pack') {
+    closeShop();
+    openPackModal('tarot');
   } else if (itemId === 'bust_shield') {
     hasBustShield = true;
     document.getElementById('joker-2').style.opacity = '1';
@@ -1582,7 +1626,31 @@ function openPackModal(type) {
       const card = document.createElement('div');
       card.className = 'pack-choice-card';
       card.innerHTML = `<div class="pack-card-info"><h4>${j.name}</h4><p>${j.desc}</p></div><button class="btn-buy" style="padding:6px 12px;">선택</button>`;
-      card.onclick = () => { j.fn(); closePackModal(); playFeverFanfare(); };
+      card.onclick = () => { j.fn(); closePackModal(); playHandFanfare('야추 (5 of a Kind)'); };
+      container.appendChild(card);
+    });
+  } else if (type === 'tarot') {
+    title.innerText = '🔮 점술 타로 팩 개봉';
+    const tarots = [
+      { name: '마법사 (The Magician)', desc: '2번 주사위를 즉시 D20 황금 주사위로 승급', fn: () => { diceSides[2] = 20; document.getElementById('dtag-2').innerText = 'D20 황금'; showBanner('🔮 2번 주사위가 D20으로 승급!'); } },
+      { name: '광대 (The Fool)', desc: '심연의 골드 보물상자 개봉 (+200G 즉시 획득)', fn: () => { gold += 200; document.getElementById('gold-val').innerText = `${gold}G`; spawnCoinShower(); showBanner('🃏 +200G 골드 복사 획득!'); } },
+      { name: '정의 (Justice)', desc: '파티 전체 체력 100% 완전 회복 및 스트레스 0 정화', fn: () => {
+        heroes.forEach((h, i) => { h.hp = h.maxHp; h.stress = 0; });
+        updateEntityUI();
+        showBanner('⚖️ 파티 체력/스트레스 완전 회복!');
+      }},
+      { name: '악마 (The Devil)', desc: '상시 배율 +0.6X 영구 폭발 (파티 스트레스 +20)', fn: () => {
+        extraJokerMult += 0.6;
+        heroes.forEach(h => h.stress = Math.min(100, h.stress + 20));
+        updateEntityUI();
+        showBanner('😈 악마의 계약 체결! 배율 +0.6X 폭발!');
+      }}
+    ];
+    tarots.forEach(t => {
+      const card = document.createElement('div');
+      card.className = 'pack-choice-card';
+      card.innerHTML = `<div class="pack-card-info"><h4>${t.name}</h4><p>${t.desc}</p></div><button class="btn-buy" style="padding:6px 12px;">선택</button>`;
+      card.onclick = () => { t.fn(); closePackModal(); playHandFanfare('포카드 (4 of a Kind)'); };
       container.appendChild(card);
     });
   } else {
@@ -1601,7 +1669,7 @@ function openPackModal(type) {
         showBanner(`🪐 ${p.name} 흡수! [${p.hand}] Lv.${handBook[p.hand].lvl} 달성!`);
         applyHandScore();
         closePackModal();
-        playFeverFanfare();
+        playHandFanfare('포카드 (4 of a Kind)');
       };
       container.appendChild(card);
     });
