@@ -286,5 +286,21 @@
     "desc": "2025 FIA F1 공식 10개 컨스트럭터(페라리, 레드불, 맥라렌, 메르세데스 등) 및 20명 탑 드라이버 실명 탑재! Three.js 3D 서킷 실시간 레이싱 시뮬레이션, 타이어 컴파운드(소프트/미디엄/하드/인터/웻) 전략, ERS 오버테이크 부스트, 실시간 피트스톱 피트월 오더, R&D 공기역학/파워유닛 팩토리 개발 및 드라이버 이적시장을 집대성한 궁극의 3D 모터스포츠 매니저.",
     "icon": "🏎️",
     "theme_color": "#e10600"
+  },
+  {
+    "session": "19",
+    "slug": "neon-launchpad-remix",
+    "title": "NEON PULSE: 런치패드 & 리믹스 스튜디오",
+    "sub_title": "Keyboard Launchpad, Serum 2 Synth & Live Beatmaker",
+    "category": "action",
+    "category_name": "아케이드/액션",
+    "genre": "런치패드 리믹스 & 비트메이킹 DAW",
+    "platform": "Web HTML5 · WebAudio Synth",
+    "tech": "M-Audio CODE 61 4x4 Pad · Serum 2 Wavetable · Live Overdub Sequencer",
+    "score": 100,
+    "fun": 100,
+    "desc": "유튜브 아인(@aynnxox) NEON 리믹스 감성 완벽 구현! 왼손 키보드 4x4 런치패드(1234/QWER/ASDF/ZXCV)로 보컬찹·808·저지클럽 드럼을 치고, 오른손 건반으로 Serum 2 110_Splash_Bass 워블 신스를 연주하며 실시간 오버더빙으로 비트를 찍고 믹싱하는 스튜디오 워크스테이션.",
+    "icon": "🎹",
+    "theme_color": "#00f0ff"
   }
 ]

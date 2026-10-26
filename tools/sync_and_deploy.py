@@ -72,15 +72,25 @@ if f1_src_dir.exists():
             shutil.copy2(f, f1_dst_dir / f.name)
     print("✔ Synced #18 F1 Apex Motorsport Manager & 3D Grand Prix")
 
-# 9. Update Portal HTML
+# 9. Sync Game 19 (NEON PULSE: Launchpad & Remix Studio)
+neon_src_dir = root / "games" / "neon-launchpad-remix"
+neon_dst_dir = site / "neon-launchpad-remix"
+if neon_src_dir.exists():
+    neon_dst_dir.mkdir(parents=True, exist_ok=True)
+    for f in neon_src_dir.glob("*"):
+        if f.is_file():
+            shutil.copy2(f, neon_dst_dir / f.name)
+    print("✔ Synced #19 NEON PULSE: Launchpad & Remix Studio")
+
+# 10. Update Portal HTML
 sys.path.insert(0, str(root / "tools"))
 import update_arcade_portal
 print("✔ Rebuilt site/index.html & manifest.json")
 
-# 10. Git Commit & Push
+# 11. Git Commit & Push
 try:
     subprocess.run(["git", "add", "site/", "BloodSouls/", "SeamlessPixelRPG/pixel_rpg_playable_test.html", "tools/"], check=True, cwd=root)
-    res = subprocess.run(["git", "commit", "-m", "sync: auto-sync all 18 games including #18 F1 Apex Manager to GitHub Pages"], capture_output=True, text=True, cwd=root)
+    res = subprocess.run(["git", "commit", "-m", "sync: auto-sync all 19 games including #19 NEON Launchpad Remix to GitHub Pages"], capture_output=True, text=True, cwd=root)
     print(res.stdout or res.stderr)
     subprocess.run(["git", "push", "origin", "main"], check=True, cwd=root)
     print("🚀 Successfully pushed to GitHub Pages! Deployment in progress.")

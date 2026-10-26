@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><script>
+window.__errs=[];
+addEventListener('error',function(e){window.__errs.push((e.message||String(e.error)||'error')+' @'+(e.filename||'')+':'+(e.lineno||0));});
+addEventListener('unhandledrejection',function(e){window.__errs.push('promise: '+((e.reason&&e.reason.message)||String(e.reason)));});
+addEventListener('load',function(){setTimeout(function(){var d=document.createElement('div');d.id='__errout';d.style.display='none';d.textContent=JSON.stringify(window.__errs);(document.body||document.documentElement).appendChild(d);},1500);});
+</script>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEON PULSE // 런치패드 & Serum 2 라이브 리믹스 비트메이커 (Aynn NEON Edition)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&family=JetBrains+Mono:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- TOP DAW TRANSPORT & HEADER -->
+  <header class="top-daw-bar">
+    <div class="brand-box">
+      <span class="code61-badge">CODE 61 // SERUM 2</span>
+      <div>
+        <div class="brand-title">NEON PULSE : KEYBOARD LAUNCHPAD &amp; BEAT WORKSTATION</div>
+        <div class="brand-sub">Inspired by @aynnxox — A2O LITE "NEON" Live Pad Remix &amp; 110_Splash_Bass_Mod_Square</div>
+      </div>
+    </div>
+
+    <div class="transport-cluster">
+      <button id="btnPlay" class="transport-btn" title="단축키: Spacebar">
+        <span id="playIcon">▶</span> <span id="playText">PLAY BEAT (Space)</span>
+      </button>
+      <button id="btnOverdub" class="transport-btn active-rec" title="단축키: Tab (켜두면 키보드로 친 패드 비트가 실시간으로 시퀀서에 찍힙니다!)">
+        ● LIVE OVERDUB 찍기 (Tab): <span id="overdubState">ON</span>
+      </button>
+      <button id="btnClearScene" class="transport-btn" title="단축키: Backspace (현재 패턴 비우기)">
+        ⌫ 패턴 초기화 (BS)
+      </button>
+
+      <div class="lcd-readout">
+        <div class="lcd-item">
+          <span class="lcd-label">TEMPO (BPM)</span>
+          <span id="bpmValue" class="lcd-val">130</span>
+        </div>
+        <input id="bpmSlider" type="range" class="bpm-slider" min="80" max="175" value="130" />
+        <div class="lcd-item">
+          <span class="lcd-label">BAR : STEP</span>
+          <span id="stepCounter" class="lcd-val">01 : 01</span>
+        </div>
+        <div class="lcd-item">
+          <span class="lcd-label">SIDECHAIN</span>
+          <span id="pumpVal" class="lcd-val" style="color:#00ff9d;">72%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <select id="kitSelect" class="kit-select" title="사운드 팩 (패드 키트) 전환">
+        <option value="neon_aynn">🔥 NEON - A2O LITE (Aynn Remix Kit · 130 BPM)</option>
+        <option value="cyber_ukg">⚡ CYBER UK GARAGE / 2-STEP (134 BPM)</option>
+        <option value="jersey_drill">💎 JERSEY CLUB &amp; K-DRILL (140 BPM)</option>
+        <option value="y2k_dnb">🎹 Y2K LIQUID D&amp;B / NEW-GEN (160 BPM)</option>
+      </select>
+      <button id="btnToggleYT" class="action-pill yt-active">📺 아인(Aynn) NEON 원본 영상 덱</button>
+      <button id="btnMasterRec" class="action-pill">🎙️ 내 리믹스 녹음 (.WEBM/.WAV)</button>
+    </div>
+  </header>
+
+  <!-- SCENE LAUNCHER & KEYBOARD DJ FX STRIP -->
+  <section class="scene-strip">
+    <div class="scene-buttons" id="sceneButtonsContainer">
+      <!-- Populated by app.js -->
+    </div>
+
+    <div class="live-fx-strip" id="fxButtonsContainer">
+      <!-- Populated by app.js (Keys 5, 6, 7, 8, 9, 0) -->
+    </div>
+  </section>
+
+  <!-- MAIN 3-COLUMN STUDIO WORKSTATION -->
+  <main class="workstation-grid">
+
+    <!-- LEFT COLUMN: M-AUDIO CODE 61 4x4 RGB SILICONE LAUNCHPAD + SAMPLE AUTO-CHOPPER -->
+    <section class="hw-card">
+      <div class="card-header">
+        <div class="card-title">
+          <span>🎛️ 4x4 RGB LAUNCHPAD MATRIX</span>
+        </div>
+        <div class="card-sub">키보드 [1~4 / Q~R / A~F / Z~V] + Shift 홀드=자동 롤</div>
+      </div>
+
+      <div class="pad-matrix-wrap">
+        <div id="padMatrix" class="pad-matrix">
+          <!-- 16 Silicone Velocity Pads populated by app.js -->
+        </div>
+      </div>
+
+      <!-- Custom Audio File Drag & Drop Auto-Slicer -->
+      <div id="sampleDropzone" class="sample-dropzone">
+        <div>
+          <div style="font-size:0.78rem; font-weight:800; color:#00f0ff;">📂 내 음원(MP3/WAV) 16패드 오토 슬라이스 (Auto-Chop)</div>
+          <div id="customSampleStatus" style="font-size:0.68rem; color:#94a3b8;">여기에 오디오 파일을 드래그하거나 클릭해 업로드하면 16개 키보드 패드에 자동 분할 매핑됩니다!</div>
+        </div>
+        <input id="fileInput" type="file" accept="audio/*" style="display:none;" />
+        <button id="btnResetKit" class="action-pill" style="display:none; font-size:0.72rem; padding:4px 8px;">기본 키트 복귀</button>
+      </div>
+
+      <!-- Quick Keyboard Pro-Tip Box -->
+      <div style="background:#080c14; border:1px solid #1d2a44; border-radius:8px; padding:9px 11px; font-size:0.73rem; color:#cbd5e1; line-height:1.5;">
+        <div style="color:#ffd166; font-weight:800; margin-bottom:2px;">⚡ 프로듀서 아인(@aynnxox) 스타일 키보드 리믹스 조작법</div>
+        • <b>왼손 패드 연주</b>: <code style="color:#ff007f;">1 2 3 4</code>(보컬찹/FX) · <code style="color:#00f0ff;">Q W E R</code>(Serum 스플래시 베이스/코드) · <code style="color:#10b981;">A S D F</code>(스네어/클랩/저지삐걱) · <code style="color:#fff;">Z X C V</code>(킥/808/하이햇)<br/>
+        • <b>오른손 Serum 2 신스 건반</b>: <code style="color:#00f0ff;">N J M K , . ; /</code> + <code style="color:#00f0ff;">U I O P [ ] \</code> (동시 연주 가능!)<br/>
+        • <b>실시간 비트 찍기</b>: <code style="color:#ff2a54;">Tab(OVERDUB ON)</code> 상태에서 리듬에 맞춰 키보드를 치면 16스텝 그리드에 자동 입력! (<code style="color:#ffd166;">Shift + 패드 키</code> = 트랩 연타 롤!)
+      </div>
+    </section>
+
+    <!-- CENTER COLUMN: XFER SERUM 2 WAVETABLE SYNTH + 16-STEP SEQUENCER + SYNTH KEYBOARD -->
+    <section class="center-column">
+
+      <!-- XFER SERUM 2 WAVETABLE & LFO DISPLAY PANEL -->
+      <div class="hw-card" style="padding:12px;">
+        <div class="card-header">
+          <div class="card-title">
+            <span style="color:#00ff9d;">🟢 XFER SERUM 2 // WAVETABLE &amp; LFO ENGINE</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="card-sub">PATCH:</span>
+            <select id="serumPatchSelect" class="kit-select" style="padding:4px 8px; font-size:0.75rem; border-color:#00ff9d;">
+              <!-- Populated by app.js -->
+            </select>
+          </div>
+        </div>
+
+        <div class="serum-panel">
+          <!-- OSC A / B 3D Wavetable + Master Spectrum Canvas -->
+          <div class="serum-screen-box">
+            <div class="serum-screen-header">
+              <span id="oscTitleText">OSC A+B // 110_Splash_Bass_Mod_Square</span>
+              <span style="color:#00f0ff;">3D WAVETABLE + FFT</span>
+            </div>
+            <canvas id="wavetableCanvas" class="serum-canvas" width="380" height="112"></canvas>
+          </div>
+
+          <!-- LFO 1 Envelope Modulator Canvas -->
+          <div class="serum-screen-box">
+            <div class="serum-screen-header">
+              <span style="color:#38bdf8;">LFO 1 ➔ FILTER CUTOFF &amp; FM WARP</span>
+              <span id="lfoHzReadout" style="color:#ffd166;">6.5 Hz</span>
+            </div>
+            <canvas id="lfoCanvas" class="serum-canvas" width="260" height="112"></canvas>
+          </div>
+
+          <!-- 6 Live Synth Parameter Sliders/Knobs -->
+          <div class="serum-knobs-grid">
+            <div class="knob-item">
+              <span class="knob-label">CUTOFF</span>
+              <input id="knobCutoff" type="range" class="knob-slider" min="180" max="8000" value="1650" />
+              <span id="valCutoff" class="knob-val">1650 Hz</span>
+            </div>
+            <div class="knob-item">
+              <span class="knob-label">RESONANCE</span>
+              <input id="knobReso" type="range" class="knob-slider" min="1" max="18" step="0.5" value="6.5" />
+              <span id="valReso" class="knob-val">6.5 Q</span>
+            </div>
+            <div class="knob-item">
+              <span class="knob-label">LFO WOBBLE</span>
+              <input id="knobLfoRate" type="range" class="knob-slider" min="0.5" max="20" step="0.5" value="6.5" />
+              <span id="valLfoRate" class="knob-val">6.5 Hz</span>
+            </div>
+            <div class="knob-item">
+              <span class="knob-label">LFO DEPTH</span>
+              <input id="knobLfoDepth" type="range" class="knob-slider" min="0" max="2400" value="1100" />
+              <span id="valLfoDepth" class="knob-val">1100</span>
+            </div>
+            <div class="knob-item">
+              <span class="knob-label">FM DRIVE</span>
+              <input id="knobDrive" type="range" class="knob-slider" min="0.05" max="1.0" step="0.05" value="0.55" />
+              <span id="valDrive" class="knob-val">55%</span>
+            </div>
+            <div class="knob-item">
+              <span class="knob-label">OCTAVE</span>
+              <input id="knobOctave" type="range" class="knob-slider" min="-2" max="1" step="1" value="-1" />
+              <span id="valOctave" class="knob-val">-1 OCT</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 16-STEP BEAT SEQUENCER & MULTI-TRACK MATRIX -->
+      <div class="hw-card" style="flex:1;">
+        <div class="card-header">
+          <div class="card-title">
+            <span>🔥 16-STEP BEAT SEQUENCER &amp; LIVE LOOP GRID</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="card-sub">좌클릭: 비트 찍기/해제 · 우클릭(또는 Shift+클릭): 2x/3x/4x 연타 롤(Roll) 토글</span>
+            <button id="btnRandomBeat" class="action-pill" style="padding:3px 9px; font-size:0.72rem;">🎲 AI 리믹스 비트 생성</button>
+          </div>
+        </div>
+
+        <div id="sequencerGrid" class="sequencer-wrap">
+          <!-- 16 rows x 16 steps populated by app.js -->
+        </div>
+      </div>
+
+      <!-- RIGHT-HAND PLAYABLE M-AUDIO CODE 61 SYNTH KEYBOARD -->
+      <div class="hw-card" style="padding:10px 14px;">
+        <div class="card-header" style="padding-bottom:4px;">
+          <div class="card-title" style="font-size:0.8rem;">
+            <span>🎹 CODE 61 RIGHT-HAND SYNTH KEYBOARD (SERUM 2 LIVE LEAD &amp; BASS)</span>
+          </div>
+          <div class="card-sub">키보드 [N J M K , . ; /] 및 [U I O P [ ] \] 키로 실시간 베이스/신스 멜로디 연주</div>
+        </div>
+        <div id="synthKeyboard" class="synth-keyboard-bar">
+          <!-- Populated by app.js -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT COLUMN: CODE 61 6-CHANNEL LED MIXER + XY FILTER PAD + YOUTUBE REFERENCE DECK -->
+    <aside class="right-column">
+
+      <!-- 6-Channel LED Fader Mixer & Stem Mute (F1~F6) -->
+      <div class="hw-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>🎚️ CODE 61 STEM MIXER</span>
+          </div>
+          <div class="card-sub">단축키 F1~F6: 트랙 뮤트(드롭 연출)</div>
+        </div>
+
+        <div id="mixerGrid" class="mixer-grid">
+          <!-- Populated by app.js -->
+        </div>
+      </div>
+
+      <!-- XY LIVE DJ FILTER & RESONANCE MORPH PAD -->
+      <div class="hw-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>🎛️ XY DJ FILTER &amp; WARP PAD</span>
+          </div>
+          <div class="card-sub" id="xyReadout">X: BYPASS (50%) · Y: RESO</div>
+        </div>
+
+        <div id="xyPad" class="xy-pad-box">
+          <div id="xyPuck" class="xy-puck"></div>
+          <div class="xy-labels">
+            <span>◄ LOW-PASS (먹먹한 수중 필터)</span>
+            <span>HIGH-PASS (빌드업) ►</span>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; gap:6px;">
+          <button id="btnResetFilter" class="action-pill" style="flex:1; font-size:0.72rem; padding:5px;">필터 중앙 리셋 (Bypass)</button>
+          <button id="btnSidechainToggle" class="action-pill" style="flex:1; font-size:0.72rem; padding:5px; border-color:#00ff9d; color:#00ff9d;">사이드체인 펌핑: 강함</button>
+        </div>
+      </div>
+
+      <!-- YOUTUBE ORIGINAL VIDEO DECK (https://www.youtube.com/watch?v=4yjlotLQgdc) -->
+      <div id="ytDeck" class="hw-card yt-deck open">
+        <div class="card-header" style="margin-bottom:8px;">
+          <div class="card-title" style="font-size:0.8rem; color:#ffd166;">
+            <span>📺 아인 (@aynnxox) - NEON (A2O LITE Remix)</span>
+          </div>
+          <a href="https://www.youtube.com/watch?v=4yjlotLQgdc" target="_blank" style="font-size:0.7rem; color:#00f0ff; text-decoration:none; font-weight:700;">YouTube 새창 ↗</a>
+        </div>
+        <div class="yt-iframe-wrap">
+          <iframe
+            id="ytIframe"
+            src="https://www.youtube.com/embed/4yjlotLQgdc?rel=0"
+            title="NEON - A2O LITE (Aynn remix)"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen>
+          </iframe>
+        </div>
+        <div style="font-size:0.68rem; color:#94a3b8; margin-top:6px; line-height:1.4;">
+          💡 원본 영상을 재생해두고 위 키보드 패드(<code style="color:#00f0ff;">1234/QWER/ASDF/ZXCV</code>)로 똑같이 비트와 보컬찹을 얹거나 자체 시퀀서(<code style="color:#00ff9d;">Space</code>)로 리믹스해보세요!
+        </div>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <script src="presets.js"></script>
+  <script src="audio-engine.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
