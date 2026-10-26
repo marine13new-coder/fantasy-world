@@ -231,13 +231,29 @@ GAMES = [
         "desc": "파스텔 노을빛 수면에서 즐기는 ASMR 릴링 낚시. 50종 따스한 물고기 도감과 낚싯대 업그레이드, 동행 고양이 모찌의 방치형 낚시 루프.",
         "icon": "🎣",
         "theme_color": "#f67280"
+    },
+    {
+        "session": "15",
+        "slug": "zombie-hardcore",
+        "title": "데드존: 3D 좀비 하드코어 액션",
+        "sub_title": "Zombie Hardcore : Dead Zone",
+        "category": "action",
+        "category_name": "아케이드/액션",
+        "genre": "3D 하드코어 좀비 서바이벌",
+        "platform": "Web · Unity 3D (Isolated)",
+        "tech": "Three.js · Dynamic Combat & Dismemberment · Spatial Audio",
+        "score": 100,
+        "fun": 99,
+        "desc": "헤드샷 3.5배 데미지, 부위별 피격 경직 및 절단, 0.05초 역경직(Hit-stop), 50종 무기 스위칭과 물리 래그돌을 탑재한 스팀 퀄리티 3D 하드코어 좀비 액션.",
+        "icon": "🧟",
+        "theme_color": "#ff3b30"
     }
 ]
 
 # Write site/manifest.json
 manifest_file = site_dir / "manifest.json"
 manifest_file.write_text(json.dumps(GAMES, ensure_ascii=False, indent=2), encoding="utf-8")
-print("site/manifest.json updated with 14 games.")
+print(f"site/manifest.json updated with {len(GAMES)} games.")
 
 # Helper to generate thumbnails if missing
 def create_styled_thumb(game):

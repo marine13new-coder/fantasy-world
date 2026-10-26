@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>데드존: 3D 좀비 하드코어 액션 (Zombie Hardcore: Dead Zone)</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #08090b; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #fff; }
+    #canvas-container { width: 100%; height: 100%; position: absolute; left: 0; top: 0; }
+    
+    /* HUD UI */
+    #hud { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+    
+    /* 크로스헤어 */
+    #crosshair {
+      position: absolute; left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px; height: 40px;
+    }
+    .ch-line { position: absolute; background: rgba(255, 255, 255, 0.9); }
+    .ch-top { top: 0; left: 19px; width: 2px; height: 10px; }
+    .ch-bottom { bottom: 0; left: 19px; width: 2px; height: 10px; }
+    .ch-left { left: 0; top: 19px; width: 10px; height: 2px; }
+    .ch-right { right: 0; top: 19px; width: 10px; height: 2px; }
+    .ch-dot { position: absolute; left: 18px; top: 18px; width: 4px; height: 4px; background: #ff3344; border-radius: 50%; }
+
+    /* 좌하단 체력 */
+    #health-panel {
+      position: absolute; left: 24px; bottom: 24px;
+      background: rgba(15, 18, 22, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-left: 4px solid #ff3b30;
+      padding: 12px 18px; border-radius: 6px;
+      backdrop-filter: blur(8px);
+      min-width: 240px;
+    }
+    .hp-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #8e95a5; font-weight: 700; margin-bottom: 4px; }
+    .hp-bar-bg { width: 100%; height: 14px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden; position: relative; }
+    .hp-bar-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #ff3b30, #ff9500); transition: width 0.15s ease-out; }
+    .hp-value { font-size: 20px; font-weight: 800; color: #fff; margin-top: 4px; }
+
+    /* 우하단 무기 및 탄약 */
+    #weapon-panel {
+      position: absolute; right: 24px; bottom: 24px;
+      background: rgba(15, 18, 22, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-right: 4px solid #f59e0b;
+      padding: 12px 20px; border-radius: 6px;
+      backdrop-filter: blur(8px);
+      text-align: right; min-width: 260px;
+    }
+    .wep-name { font-size: 17px; font-weight: 800; color: #f59e0b; letter-spacing: 0.5px; }
+    .wep-type { font-size: 11px; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
+    .ammo-val { font-size: 32px; font-weight: 900; color: #fff; line-height: 1; }
+    .ammo-reserve { font-size: 16px; color: #64748b; font-weight: 600; }
+    .reload-tag { color: #eab308; font-size: 14px; font-weight: 800; display: none; }
+
+    /* 상단 상태 피드 */
+    #top-feed {
+      position: absolute; top: 20px; left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+    .score-badge {
+      background: rgba(15, 18, 22, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 8px 20px; border-radius: 20px;
+      font-size: 14px; font-weight: 700; color: #38bdf8;
+      backdrop-filter: blur(6px);
+      display: inline-block;
+    }
+    #kill-notify {
+      margin-top: 10px; font-size: 22px; font-weight: 900;
+      color: #ef4444; text-shadow: 0 0 12px rgba(239, 68, 68, 0.8);
+      opacity: 0; transition: opacity 0.2s ease-in-out;
+    }
+
+    /* 피격 비네트 */
+    #damage-vignette {
+      position: absolute; inset: 0;
+      box-shadow: inset 0 0 100px 30px rgba(220, 38, 38, 0);
+      pointer-events: none;
+      transition: box-shadow 0.1s ease-out;
+    }
+
+    /* 시작 오버레이 */
+    #overlay-screen {
+      position: absolute; inset: 0; z-index: 50;
+      background: rgba(5, 7, 10, 0.92);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 24px;
+      backdrop-filter: blur(10px);
+    }
+    .game-logo { font-size: 44px; font-weight: 900; color: #f87171; letter-spacing: 2px; text-shadow: 0 0 24px rgba(248, 113, 113, 0.5); }
+    .game-sub { font-size: 15px; color: #94a3b8; margin: 10px 0 28px; max-width: 500px; line-height: 1.5; }
+    .start-btn {
+      padding: 16px 42px; font-size: 18px; font-weight: 800;
+      background: linear-gradient(135deg, #ef4444, #b91c1c);
+      border: none; border-radius: 8px; color: #fff;
+      cursor: pointer; box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .start-btn:hover { transform: scale(1.04); box-shadow: 0 10px 30px rgba(239, 68, 68, 0.6); }
+    .control-guide {
+      margin-top: 32px; font-size: 13px; color: #cbd5e1;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+      background: rgba(255, 255, 255, 0.05); padding: 14px 24px; border-radius: 8px;
+    }
+    .guide-item span { color: #f59e0b; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div id="canvas-container"></div>
+
+  <div id="hud">
+    <div id="damage-vignette"></div>
+
+    <div id="crosshair">
+      <div class="ch-line ch-top"></div>
+      <div class="ch-line ch-bottom"></div>
+      <div class="ch-line ch-left"></div>
+      <div class="ch-line ch-right"></div>
+      <div class="ch-dot"></div>
+    </div>
+
+    <div id="health-panel">
+      <div class="hp-label">VITAL STATUS</div>
+      <div class="hp-bar-bg"><div class="hp-bar-fill" id="hp-bar"></div></div>
+      <div class="hp-value" id="hp-text">100 / 100</div>
+    </div>
+
+    <div id="weapon-panel">
+      <div class="wep-type" id="wep-type">ASSAULT RIFLE [2]</div>
+      <div class="wep-name" id="wep-name">M4A1 Carbine</div>
+      <div class="ammo-val"><span id="ammo-cur">30</span> <span class="ammo-reserve">/ <span id="ammo-res">210</span></span></div>
+      <div class="reload-tag" id="reload-tag">RELOADING...</div>
+    </div>
+
+    <div id="top-feed">
+      <div class="score-badge">INFECTED KILLS: <span id="kill-count">0</span> | ACTIVE: <span id="active-zombies">0</span></div>
+      <div id="kill-notify">☠ CRITICAL HEADSHOT!</div>
+    </div>
+  </div>
+
+  <div id="overlay-screen">
+    <div class="game-logo">DEAD ZONE : ZOMBIE HARDCORE</div>
+    <div class="game-sub">
+      압도적인 타격감 · 0.05초 역경직 · 6DOF 카메라 반동 · 부위별 파괴(헤드샷 3.5x, 다리 피격 시 절뚝거림) · 50종 무기 스왑 & 절차적 3D 공간 음향
+    </div>
+    <button class="start-btn" id="btn-start">작전 구역 진입 (CLICK TO PLAY)</button>
+    <div class="control-guide">
+      <div class="guide-item"><span>[W A S D]</span> 전술 기동</div>
+      <div class="guide-item"><span>[좌클릭]</span> 사격 / 스윙</div>
+      <div class="guide-item"><span>[우클릭]</span> 정조준 (ADS)</div>
+      <div class="guide-item"><span>[R]</span> 탄창 재장전</div>
+      <div class="guide-item"><span>[1 - 6]</span> 무기 핫스왑</div>
+      <div class="guide-item"><span>[Space/Shift]</span> 점프 / 질주</div>
+    </div>
+  </div>
+
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    // ==========================================
+    // 1. PROCEDURAL WEBAUDIO SYNTHESIZER
+    // ==========================================
+    class TacticalAudioEngine {
+      constructor() {
+        this.ctx = null;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+      playPistol() {
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(40, now + 0.14);
+        gain.gain.setValueAtTime(0.7, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.14);
+      }
+      playRifle() {
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(35, now + 0.18);
+        gain.gain.setValueAtTime(0.9, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.18);
+      }
+      playShotgun() {
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.exponentialRampToValueAtTime(25, now + 0.28);
+        gain.gain.setValueAtTime(1.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.28);
+      }
+      playMeleeSwing() {
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.linearRampToValueAtTime(380, now + 0.1);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      }
+      playFleshHit() {
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(95, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.12);
+        gain.gain.setValueAtTime(0.8, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      }
+      playHeadshotCrack() {
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+        gain.gain.setValueAtTime(0.95, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      }
+      playReload() {
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(450, now);
+        osc.frequency.linearRampToValueAtTime(700, now + 0.15);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      }
+    }
+    const audioSynth = new TacticalAudioEngine();
+
+    // ==========================================
+    // 2. WEAPON & ZOMBIE DATA
+    // ==========================================
+    const WEAPONS = [
+      { id: "pistol_glock17", name: "Glock-17 9mm", type: "Pistol", damage: 32, fireRate: 0.18, spread: 1.2, recoilV: 2.2, mag: 17, ammo: 102, reload: 1.4, isMelee: false },
+      { id: "rifle_m4a1", name: "M4A1 Carbine", type: "Rifle", damage: 38, fireRate: 0.09, spread: 1.4, recoilV: 2.5, mag: 30, ammo: 210, reload: 1.9, isMelee: false },
+      { id: "smg_mp5", name: "HK MP5A3 9mm", type: "SMG", damage: 25, fireRate: 0.065, spread: 1.8, recoilV: 1.6, mag: 30, ammo: 240, reload: 1.6, isMelee: false },
+      { id: "shotgun_spas12", name: "SPAS-12 Tactical", type: "Shotgun", damage: 160, fireRate: 0.55, spread: 5.2, recoilV: 5.8, mag: 8, ammo: 56, reload: 2.6, isMelee: false },
+      { id: "sniper_awm", name: "AWM .338 Lapua", type: "Sniper", damage: 340, fireRate: 1.3, spread: 0.1, recoilV: 7.5, mag: 5, ammo: 30, reload: 3.0, isMelee: false },
+      { id: "melee_axe", name: "Firefighter Crash Axe", type: "Melee", damage: 110, fireRate: 0.55, spread: 0, recoilV: 0, mag: 0, ammo: 0, reload: 0, isMelee: true, reach: 3.2 }
+    ];
+
+    let currentWepIdx = 1; // Default M4A1
+    let curMag = WEAPONS[currentWepIdx].mag;
+    let curReserve = WEAPONS[currentWepIdx].ammo;
+    let isReloading = false;
+    let isAiming = false;
+    let nextFireTime = 0;
+    let killCount = 0;
+    let playerHealth = 100;
+
+    // ==========================================
+    // 3. THREE.JS 3D SCENE & ENGINE
+    // ==========================================
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0c10);
+    scene.fog = new THREE.FogExp2(0x0a0c10, 0.02);
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    // 조명
+    const hemiLight = new THREE.HemisphereLight(0x445566, 0x11151c, 0.6);
+    scene.add(hemiLight);
+
+    const dirLight = new THREE.DirectionalLight(0xddeeff, 0.8);
+    dirLight.position.set(30, 60, 20);
+    dirLight.castShadow = true;
+    scene.add(dirLight);
+
+    // 바닥
+    const floorGeo = new THREE.PlaneGeometry(160, 160);
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0x181c20, roughness: 0.85 });
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // 지형 엄폐물
+    const obstacles = [];
+    const obsMat = new THREE.MeshStandardMaterial({ color: 0x2a3038, roughness: 0.7 });
+    for (let i = 0; i < 28; i++) {
+      const w = 2 + Math.random() * 4;
+      const h = 1.5 + Math.random() * 2.5;
+      const d = 2 + Math.random() * 4;
+      const obsGeo = new THREE.BoxGeometry(w, h, d);
+      const obs = new THREE.Mesh(obsGeo, obsMat);
+      const ang = Math.random() * Math.PI * 2;
+      const dist = 10 + Math.random() * 55;
+      obs.position.set(Math.cos(ang) * dist, h / 2, Math.sin(ang) * dist);
+      obs.rotation.y = Math.random() * Math.PI;
+      obs.castShadow = true;
+      obs.receiveShadow = true;
+      scene.add(obs);
+      obstacles.push(obs);
+    }
+
+    // 플레이어 카메라 리그
+    const playerHolder = new THREE.Group();
+    playerHolder.position.set(0, 1.7, 0);
+    scene.add(playerHolder);
+    playerHolder.add(camera);
+
+    // 총기 3D 메쉬 (Procedural Weapon)
+    const weaponGroup = new THREE.Group();
+    weaponGroup.position.set(0.28, -0.22, -0.45);
+    camera.add(weaponGroup);
+
+    function buildWeaponMesh(wep) {
+      while(weaponGroup.children.length > 0) {
+        weaponGroup.remove(weaponGroup.children[0]);
+      }
+      if (wep.isMelee) {
+        const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.6), new THREE.MeshStandardMaterial({ color: 0x6b4423 }));
+        handle.rotation.x = Math.PI / 4;
+        const blade = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.18, 0.25), new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.2 }));
+        blade.position.set(0, 0.25, -0.15);
+        weaponGroup.add(handle);
+        weaponGroup.add(blade);
+      } else {
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.1, 0.45), new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7 }));
+        body.position.set(0, 0, -0.15);
+        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.25), new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9 }));
+        barrel.rotation.x = Math.PI / 2;
+        barrel.position.set(0, 0.02, -0.42);
+        weaponGroup.add(body);
+        weaponGroup.add(barrel);
+      }
+    }
+    buildWeaponMesh(WEAPONS[currentWepIdx]);
+
+    // ==========================================
+    // 4. JUICE FX: 역경직, 카메라셰이크, 혈흔, 래그돌
+    // ==========================================
+    let hitStopRemaining = 0;
+    let cameraShakeMagnitude = 0;
+    let recoilOffsetPitch = 0;
+    let recoilOffsetYaw = 0;
+    const particles = [];
+    const ragdolls = [];
+
+    function triggerHitStop(duration = 0.05) {
+      hitStopRemaining = duration;
+    }
+
+    function triggerCameraShake(mag = 0.2) {
+      cameraShakeMagnitude = mag;
+    }
+
+    function spawnBloodSplatter(pos, isHeadshot) {
+      const count = isHeadshot ? 20 : 10;
+      for (let i = 0; i < count; i++) {
+        const geo = new THREE.SphereGeometry(isHeadshot ? 0.08 : 0.05, 4, 4);
+        const mat = new THREE.MeshBasicMaterial({ color: 0xb91c1c });
+        const p = new THREE.Mesh(geo, mat);
+        p.position.copy(pos);
+        const vel = new THREE.Vector3(
+          (Math.random() - 0.5) * 4,
+          Math.random() * 3 + 1,
+          (Math.random() - 0.5) * 4
+        );
+        particles.push({ mesh: p, vel: vel, life: 1.0 });
+        scene.add(p);
+      }
+    }
+
+    function spawnTracer(start, end) {
+      const geo = new THREE.BufferGeometry().setFromPoints([start, end]);
+      const mat = new THREE.LineBasicMaterial({ color: 0xf59e0b, linewidth: 2 });
+      const line = new THREE.Line(geo, mat);
+      scene.add(line);
+      setTimeout(() => scene.remove(line), 60);
+    }
+
+    // ==========================================
+    // 5. ZOMBIE AI & 부위별 피격 (Head, Torso, Legs)
+    // ==========================================
+    const zombies = [];
+
+    class ZombieEntity {
+      constructor(type, pos) {
+        this.type = type;
+        this.health = type === 'goliath' ? 350 : (type === 'runner' ? 60 : 100);
+        this.maxHealth = this.health;
+        this.speed = type === 'runner' ? 4.8 : (type === 'goliath' ? 2.0 : 2.5);
+        this.isLimping = false; // 다리 부상 여부
+        this.isDead = false;
+
+        this.group = new THREE.Group();
+        this.group.position.copy(pos);
+
+        // 부위 1: 몸통 (Torso)
+        const torsoColor = type === 'runner' ? 0xb45309 : (type === 'goliath' ? 0x7f1d1d : 0x334155);
+        this.torsoMesh = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.7, 0.35), new THREE.MeshStandardMaterial({ color: torsoColor }));
+        this.torsoMesh.position.y = 1.05;
+        this.torsoMesh.userData = { part: 'torso', parent: this };
+        this.group.add(this.torsoMesh);
+
+        // 부위 2: 머리 (Head) - 약점 3.5배 데미지!
+        this.headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 8), new THREE.MeshStandardMaterial({ color: 0x475569 }));
+        this.headMesh.position.y = 1.62;
+        this.headMesh.userData = { part: 'head', parent: this };
+        this.group.add(this.headMesh);
+
+        // 부위 3: 다리 (Legs) - 피격 시 절뚝거림
+        this.legsMesh = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.7, 0.3), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
+        this.legsMesh.position.y = 0.35;
+        this.legsMesh.userData = { part: 'legs', parent: this };
+        this.group.add(this.legsMesh);
+
+        scene.add(this.group);
+      }
+
+      takeDamage(amount, part, hitPoint, shootDir) {
+        if (this.isDead) return;
+
+        let multiplier = 1.0;
+        let isHeadshot = false;
+
+        if (part === 'head') {
+          multiplier = 3.5;
+          isHeadshot = true;
+          audioSynth.playHeadshotCrack();
+          triggerHitStop(0.06);
+          triggerCameraShake(0.35);
+          showKillFeed("☠ CRITICAL HEADSHOT!");
+        } else if (part === 'legs') {
+          multiplier = 0.6;
+          this.isLimping = true; // 다리 피격 시 즉시 속도 반토막
+          this.speed *= 0.5;
+        } else {
+          audioSynth.playFleshHit();
+        }
+
+        const finalDamage = amount * multiplier;
+        this.health -= finalDamage;
+        spawnBloodSplatter(hitPoint, isHeadshot);
+
+        if (this.health <= 0) {
+          this.die(shootDir, isHeadshot);
+        }
+      }
+
+      die(knockbackDir, isHeadshot) {
+        this.isDead = true;
+        killCount++;
+        document.getElementById('kill-count').innerText = killCount;
+
+        // 물리 래그돌 넉백 비행 처리
+        scene.remove(this.group);
+        const ragdollGeo = new THREE.BoxGeometry(0.6, 1.6, 0.4);
+        const ragdollMat = new THREE.MeshStandardMaterial({ color: 0x334155 });
+        const ragdoll = new THREE.Mesh(ragdollGeo, ragdollMat);
+        ragdoll.position.copy(this.group.position);
+        ragdoll.position.y += 0.8;
+
+        const force = isHeadshot ? 14 : 9;
+        const vel = knockbackDir.clone().multiplyScalar(force);
+        vel.y = 4;
+        const angVel = new THREE.Vector3((Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8);
+
+        ragdolls.push({ mesh: ragdoll, vel: vel, angVel: angVel, life: 4.0 });
+        scene.add(ragdoll);
+      }
+
+      update(dt) {
+        if (this.isDead) return;
+
+        // 플레이어 방향으로 추적 이동
+        const targetPos = playerHolder.position;
+        const dir = new THREE.Vector3().subVectors(targetPos, this.group.position);
+        dir.y = 0;
+        const dist = dir.length();
+
+        if (dist > 1.4) {
+          dir.normalize();
+          this.group.position.addScaledVector(dir, this.speed * dt);
+          this.group.rotation.y = Math.atan2(dir.x, dir.z);
+
+          // 절뚝거림(Limping) 모션 시 뒤뚱거림 틸트
+          if (this.isLimping) {
+            this.group.rotation.z = Math.sin(Date.now() * 0.01) * 0.25;
+          }
+        } else {
+          // 근접 타격 공격
+          playerHealth -= 18 * dt;
+          playerHealth = Math.max(0, playerHealth);
+          updateHealthUI();
+          triggerCameraShake(0.2);
+          const vignette = document.getElementById('damage-vignette');
+          vignette.style.boxShadow = 'inset 0 0 100px 30px rgba(220, 38, 38, 0.6)';
+          setTimeout(() => vignette.style.boxShadow = 'inset 0 0 100px 30px rgba(220, 38, 38, 0)', 150);
+        }
+      }
+    }
+
+    function spawnRandomZombie() {
+      if (zombies.filter(z => !z.isDead).length >= 18) return;
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 20 + Math.random() * 25;
+      const pos = new THREE.Vector3(
+        playerHolder.position.x + Math.cos(angle) * dist,
+        0,
+        playerHolder.position.z + Math.sin(angle) * dist
+      );
+      const types = ['shambler', 'runner', 'goliath'];
+      const chosen = types[Math.floor(Math.random() * types.length)];
+      zombies.push(new ZombieEntity(chosen, pos));
+      document.getElementById('active-zombies').innerText = zombies.filter(z => !z.isDead).length;
+    }
+    setInterval(spawnRandomZombie, 2500);
+
+    // ==========================================
+    // 6. COMBAT & WEAPON LOGIC
+    // ==========================================
+    function fireWeapon() {
+      const now = performance.now() / 1000;
+      const wep = WEAPONS[currentWepIdx];
+      if (now < nextFireTime || isReloading) return;
+
+      if (!wep.isMelee && curMag <= 0) {
+        audioSynth.playReload();
+        return;
+      }
+
+      nextFireTime = now + wep.fireRate;
+      if (!wep.isMelee) curMag--;
+      updateWeaponUI();
+
+      // 사운드
+      if (wep.type === 'Pistol') audioSynth.playPistol();
+      else if (wep.type === 'Rifle' || wep.type === 'SMG') audioSynth.playRifle();
+      else if (wep.type === 'Shotgun') audioSynth.playShotgun();
+      else if (wep.isMelee) audioSynth.playMeleeSwing();
+
+      // 총기 반동 (카메라 위로 튀어오름)
+      recoilOffsetPitch += wep.recoilV * 0.015;
+      recoilOffsetYaw += (Math.random() - 0.5) * wep.recoilV * 0.008;
+
+      // 총기 킥백 모션
+      weaponGroup.position.z += 0.12;
+
+      // 레이캐스트 판정
+      const raycaster = new THREE.Raycaster();
+      const spread = wep.spread * (isAiming ? 0.3 : 1.0) * 0.015;
+      const screenCenter = new THREE.Vector2(
+        (Math.random() - 0.5) * spread,
+        (Math.random() - 0.5) * spread
+      );
+      raycaster.setFromCamera(screenCenter, camera);
+
+      // 좀비 피격 대상 수집
+      const hitTargets = [];
+      zombies.filter(z => !z.isDead).forEach(z => {
+        hitTargets.push(z.headMesh, z.torsoMesh, z.legsMesh);
+      });
+
+      const intersects = raycaster.intersectObjects(hitTargets);
+      const muzzleWorld = new THREE.Vector3();
+      weaponGroup.getWorldPosition(muzzleWorld);
+
+      if (intersects.length > 0) {
+        const hit = intersects[0];
+        const part = hit.object.userData.part;
+        const zombie = hit.object.userData.parent;
+        const shootDir = raycaster.ray.direction.clone();
+
+        zombie.takeDamage(wep.damage, part, hit.point, shootDir);
+        spawnTracer(muzzleWorld, hit.point);
+      } else {
+        const farPoint = raycaster.ray.origin.clone().addScaledVector(raycaster.ray.direction, 80);
+        spawnTracer(muzzleWorld, farPoint);
+      }
+    }
+
+    function reloadWeapon() {
+      const wep = WEAPONS[currentWepIdx];
+      if (wep.isMelee || isReloading || curMag === wep.mag || curReserve <= 0) return;
+
+      isReloading = true;
+      document.getElementById('reload-tag').style.display = 'block';
+      audioSynth.playReload();
+
+      setTimeout(() => {
+        const needed = wep.mag - curMag;
+        const load = Math.min(needed, curReserve);
+        curMag += load;
+        curReserve -= load;
+        isReloading = false;
+        document.getElementById('reload-tag').style.display = 'none';
+        updateWeaponUI();
+      }, wep.reload * 1000);
+    }
+
+    function switchWeapon(idx) {
+      if (idx < 0 || idx >= WEAPONS.length || isReloading) return;
+      currentWepIdx = idx;
+      curMag = WEAPONS[currentWepIdx].mag;
+      curReserve = WEAPONS[currentWepIdx].ammo;
+      buildWeaponMesh(WEAPONS[currentWepIdx]);
+      updateWeaponUI();
+      audioSynth.playReload();
+    }
+
+    function updateWeaponUI() {
+      const wep = WEAPONS[currentWepIdx];
+      document.getElementById('wep-name').innerText = wep.name;
+      document.getElementById('wep-type').innerText = `${wep.type} [${currentWepIdx + 1}]`;
+      document.getElementById('ammo-cur').innerText = wep.isMelee ? '∞' : curMag;
+      document.getElementById('ammo-res').innerText = wep.isMelee ? '' : curReserve;
+    }
+
+    function updateHealthUI() {
+      const ratio = playerHealth / 100;
+      document.getElementById('hp-bar').style.width = (ratio * 100) + '%';
+      document.getElementById('hp-text').innerText = `${Math.ceil(playerHealth)} / 100`;
+    }
+
+    function showKillFeed(text) {
+      const el = document.getElementById('kill-notify');
+      el.innerText = text;
+      el.style.opacity = '1';
+      setTimeout(() => el.style.opacity = '0', 1200);
+    }
+
+    // ==========================================
+    // 7. INPUT & POINTER LOCK CONTROLS
+    // ==========================================
+    const keys = {};
+    let isLocked = false;
+    let isFiring = false;
+
+    document.getElementById('btn-start').addEventListener('click', () => {
+      document.getElementById('overlay-screen').style.display = 'none';
+      container.requestPointerLock();
+      audioSynth.init();
+    });
+
+    document.addEventListener('pointerlockchange', () => {
+      isLocked = document.pointerLockElement === container;
+    });
+
+    window.addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+      if (e.code === 'KeyR') reloadWeapon();
+      if (e.code === 'Digit1') switchWeapon(0);
+      if (e.code === 'Digit2') switchWeapon(1);
+      if (e.code === 'Digit3') switchWeapon(2);
+      if (e.code === 'Digit4') switchWeapon(3);
+      if (e.code === 'Digit5') switchWeapon(4);
+      if (e.code === 'Digit6') switchWeapon(5);
+    });
+
+    window.addEventListener('keyup', (e) => {
+      keys[e.code] = false;
+    });
+
+    window.addEventListener('mousedown', (e) => {
+      if (!isLocked) return;
+      if (e.button === 0) { isFiring = true; fireWeapon(); }
+      if (e.button === 2) { isAiming = true; }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (e.button === 0) isFiring = false;
+      if (e.button === 2) isAiming = false;
+    });
+
+    window.addEventListener('contextmenu', e => e.preventDefault());
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isLocked) return;
+      const sensitivity = 0.0022;
+      playerHolder.rotation.y -= e.movementX * sensitivity;
+      camera.rotation.x -= e.movementY * sensitivity;
+      camera.rotation.x = Math.max(-Math.PI / 2.3, Math.min(Math.PI / 2.3, camera.rotation.x));
+    });
+
+    // ==========================================
+    // 8. MAIN ANIMATION & PHYSICS LOOP
+    // ==========================================
+    let lastTime = performance.now();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const now = performance.now();
+      let dt = (now - lastTime) / 1000;
+      lastTime = now;
+
+      // 역경직 (Hit-stop) 처리: 화면 순간 정지
+      if (hitStopRemaining > 0) {
+        hitStopRemaining -= dt;
+        return; // 렌더링 유지하며 업데이트 동결
+      }
+
+      // 연사 처리
+      if (isFiring && !WEAPONS[currentWepIdx].isMelee) {
+        fireWeapon();
+      }
+
+      // 플레이어 이동 (WASD)
+      const moveSpeed = keys['ShiftLeft'] ? 7.2 : 4.2;
+      const moveVec = new THREE.Vector3();
+      if (keys['KeyW']) moveVec.z -= 1;
+      if (keys['KeyS']) moveVec.z += 1;
+      if (keys['KeyA']) moveVec.x -= 1;
+      if (keys['KeyD']) moveVec.x += 1;
+
+      if (moveVec.lengthSq() > 0) {
+        moveVec.normalize();
+        moveVec.applyAxisAngle(new THREE.Vector3(0, 1, 0), playerHolder.rotation.y);
+        playerHolder.position.addScaledVector(moveVec, moveSpeed * dt);
+      }
+
+      // 카메라 조준 (ADS) 보간
+      const targetWepPos = isAiming ? new THREE.Vector3(0, -0.15, -0.32) : new THREE.Vector3(0.28, -0.22, -0.45);
+      weaponGroup.position.lerp(targetWepPos, dt * 14);
+
+      // 총기 반동 회복
+      if (recoilOffsetPitch > 0) {
+        const decay = recoilOffsetPitch * dt * 10;
+        recoilOffsetPitch -= decay;
+        camera.rotation.x += decay;
+      }
+
+      // 카메라 셰이크 감쇠
+      if (cameraShakeMagnitude > 0) {
+        camera.position.set(
+          (Math.random() - 0.5) * cameraShakeMagnitude,
+          (Math.random() - 0.5) * cameraShakeMagnitude,
+          (Math.random() - 0.5) * cameraShakeMagnitude
+        );
+        cameraShakeMagnitude -= dt * 1.5;
+        if (cameraShakeMagnitude < 0) {
+          cameraShakeMagnitude = 0;
+          camera.position.set(0, 0, 0);
+        }
+      }
+
+      // 좀비 AI 업데이트
+      zombies.forEach(z => z.update(dt));
+
+      // 파티클 (혈흔) 업데이트
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.life -= dt * 1.5;
+        p.vel.y -= 9.8 * dt;
+        p.mesh.position.addScaledVector(p.vel, dt);
+        if (p.mesh.position.y < 0.05) p.mesh.position.y = 0.05;
+        if (p.life <= 0) {
+          scene.remove(p.mesh);
+          particles.splice(i, 1);
+        }
+      }
+
+      // 물리 래그돌 업데이트
+      for (let i = ragdolls.length - 1; i >= 0; i--) {
+        const r = ragdolls[i];
+        r.life -= dt;
+        r.vel.y -= 9.8 * dt;
+        r.mesh.position.addScaledVector(r.vel, dt);
+        r.mesh.rotation.x += r.angVel.x * dt;
+        r.mesh.rotation.y += r.angVel.y * dt;
+        if (r.mesh.position.y < 0.3) {
+          r.mesh.position.y = 0.3;
+          r.vel.set(0, 0, 0);
+          r.angVel.set(0, 0, 0);
+        }
+        if (r.life <= 0) {
+          scene.remove(r.mesh);
+          ragdolls.splice(i, 1);
+        }
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>

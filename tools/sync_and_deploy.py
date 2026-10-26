@@ -37,15 +37,24 @@ if fishing_build_script.exists():
     subprocess.run([sys.executable, str(fishing_build_script)], check=True, cwd=root)
     print("✔ Synced #14 Cozy Pixel Fishing (Full Web Build with 7 systems & 73 textures)")
 
-# 5. Update Portal HTML
+# 5. Sync Game 15 (Zombie Hardcore : Dead Zone)
+zombie_src = root / "games" / "zombie-hardcore.html"
+zombie_dst_dir = site / "zombie-hardcore"
+zombie_dst_dir.mkdir(parents=True, exist_ok=True)
+zombie_dst = zombie_dst_dir / "index.html"
+if zombie_src.exists():
+    shutil.copy2(zombie_src, zombie_dst)
+    print("✔ Synced #15 Zombie Hardcore : Dead Zone")
+
+# 6. Update Portal HTML
 sys.path.insert(0, str(root / "tools"))
 import update_arcade_portal
 print("✔ Rebuilt site/index.html & manifest.json")
 
-# 6. Git Commit & Push
+# 7. Git Commit & Push
 try:
     subprocess.run(["git", "add", "site/", "SeamlessPixelRPG/pixel_rpg_playable_test.html", "tools/"], check=True, cwd=root)
-    res = subprocess.run(["git", "commit", "-m", "sync: auto-sync latest game builds (11, 13, 14) to GitHub Pages"], capture_output=True, text=True, cwd=root)
+    res = subprocess.run(["git", "commit", "-m", "sync: auto-sync all 15 games including #15 Zombie Hardcore to GitHub Pages"], capture_output=True, text=True, cwd=root)
     print(res.stdout or res.stderr)
     subprocess.run(["git", "push", "origin", "main"], check=True, cwd=root)
     print("🚀 Successfully pushed to GitHub Pages! Deployment in progress.")
