@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FM 드림 클럽: 택티컬 매니저 (FM Dream Club)</title>
+    <title>FM 드림 클럽: 택티컬 & 킥루 커리어 매니저</title>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20width=%22100%22%20height=%22100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
 </head>
@@ -14,67 +14,204 @@
         <div class="brand-section">
             <span style="font-size:1.8rem;">⚽</span>
             <div>
-                <h1 class="brand-title">FM DREAM CLUB</h1>
-                <div style="font-size:0.75rem; color:#94a3b8; font-weight:600;">TACTICAL FOOTBALL SIMULATOR</div>
+                <h1 class="brand-title">FM DREAM & KICKRU CAREER</h1>
+                <div class="brand-subtitle">LIVING WORLD FOOTBALL & CAREER SIMULATOR</div>
             </div>
-            <span class="brand-badge">FM 1-20 STATS ENGINE</span>
+            <span class="brand-badge" id="currentSeasonBadge">2024/25 시즌 (1R)</span>
         </div>
 
         <!-- NAVIGATION TABS -->
         <nav class="nav-tabs">
-            <button class="nav-tab-btn active" data-tab="tactics">
-                <span>📋</span> 스쿼드 & 전술판
+            <button class="nav-tab-btn active" data-tab="playerCareer">
+                <span>🌟</span> 선수 커리어 (벤치 to 발롱)
+            </button>
+            <button class="nav-tab-btn" data-tab="tactics">
+                <span>📋</span> 스쿼드 & 전술
+            </button>
+            <button class="nav-tab-btn" data-tab="league">
+                <span>📊</span> 리그 순위
             </button>
             <button class="nav-tab-btn" data-tab="scouting">
-                <span>🔍</span> 선수 영입 & 스카우트
+                <span>🔍</span> 이적 & 스카우트
             </button>
-            <button class="nav-tab-btn" data-tab="club">
-                <span>🎨</span> 나만의 구단 설정
+            <button class="nav-tab-btn" data-tab="shop">
+                <span>🛍️</span> 럭셔리 상점
             </button>
             <button class="nav-tab-btn" data-tab="match">
-                <span>⚔️</span> 매치 센터 (경기 진행)
+                <span>⚔️</span> 2D 매치 센터
             </button>
-            <button class="nav-tab-btn" data-tab="tournament">
-                <span>🏆</span> 챔피언스 컵
+            <button class="nav-tab-btn" data-tab="hallOfFame">
+                <span>👑</span> 명예의 전당 & 은퇴
             </button>
         </nav>
 
-        <!-- MY CLUB BADGE -->
+        <!-- ACTIVE CLUB BADGE -->
         <div class="my-club-header-badge" id="headerClubBadge">
-            <span id="headerClubLogo">👑</span>
-            <span id="headerClubName">골든 갤럭시 FC</span>
+            <span id="headerClubLogo">🐯</span>
+            <span id="headerClubName">울산 HD FC</span>
         </div>
     </header>
 
-    <!-- MAIN APP CONTAINER -->
+    <!-- MAIN CONTENT -->
     <main class="main-content">
 
         <!-- ==============================================
-             TAB 1: SQUAD & TACTICS BOARD
+             TAB 0: KICKRU PLAYER CAREER (FROM BENCH TO BALLON D'OR)
         =============================================== -->
-        <section id="tab-tactics" class="tab-panel active">
-            <!-- Analytics Bar -->
-            <div class="squad-analytics-bar">
-                <div class="analytic-card">
-                    <div class="analytic-label">팀 종합 전력 (OVR)</div>
-                    <div class="analytic-val" id="squadAvgOvr" style="color:#f59e0b;">91</div>
+        <section id="tab-playerCareer" class="tab-panel active">
+            <!-- Hero Profile Card -->
+            <div class="career-hero-card">
+                <div class="career-profile-header">
+                    <div class="career-player-main">
+                        <div class="career-avatar-box" id="careerAvatar">👟</div>
+                        <div class="career-name-box">
+                            <h2>
+                                <span id="careerPlayerName">이유찬</span>
+                                <span class="career-ovr-badge" id="careerPlayerOvr">OVR 64</span>
+                                <span class="wonderkid-badge" id="careerWonderkidTag">✨ WONDERKID</span>
+                            </h2>
+                            <div style="font-size:0.85rem; color:#94a3b8; margin-top:4px;">
+                                <span id="careerPlayerNation">🇰🇷 대한민국</span> • 
+                                <span id="careerPlayerAge">17세 (2007년생)</span> • 
+                                <span id="careerPlayerPos">ST (스트라이커)</span> • 
+                                <span id="careerPlayerStyle" style="color:#38bdf8;">컴플리트 포워드</span> • 
+                                <span id="careerPlayerClub" style="color:#f59e0b; font-weight:800;">울산 HD FC</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="text-align:right;">
+                        <div style="font-size:0.8rem; color:#94a3b8;">주급 / 누적 자산</div>
+                        <div style="font-size:1.3rem; font-weight:900; color:#10b981; font-family:var(--font-mono);">
+                            <span id="careerWeeklyWage">25</span>만원 / <span id="careerBankBalance">120</span>만원
+                        </div>
+                        <div style="font-size:0.75rem; color:#64748b; margin-top:2px;" id="careerMilitaryStatus">
+                            🎖️ 병역: 미필 (아시안게임 금메달 시 면제)
+                        </div>
+                    </div>
                 </div>
-                <div class="analytic-card">
-                    <div class="analytic-label">공격력 (ATT)</div>
-                    <div class="analytic-val" id="squadAvgAtt" style="color:#ef4444;">94</div>
+
+                <!-- Career Vital Meters -->
+                <div class="career-metrics-row">
+                    <div class="career-metric-card">
+                        <div class="career-metric-label">감독 신뢰도</div>
+                        <div class="career-metric-val" id="careerTrustVal" style="color:#38bdf8;">45%</div>
+                        <div style="font-size:0.7rem; color:#64748b;">(70% 이상 선발)</div>
+                    </div>
+                    <div class="career-metric-card">
+                        <div class="career-metric-label">팬덤 인기</div>
+                        <div class="career-metric-val" id="careerFameVal" style="color:#f59e0b;">30%</div>
+                        <div style="font-size:0.7rem; color:#64748b;" id="careerFameTitle">유망주 벤치워머</div>
+                    </div>
+                    <div class="career-metric-card">
+                        <div class="career-metric-label">팀 사기/케미</div>
+                        <div class="career-metric-val" id="careerMoraleVal" style="color:#10b981;">80%</div>
+                        <div style="font-size:0.7rem; color:#64748b;">라커룸 분위기 양호</div>
+                    </div>
+                    <div class="career-metric-card">
+                        <div class="career-metric-label">잠재력 (PA)</div>
+                        <div class="career-metric-val" id="careerPaVal" style="color:#ec4899;">188</div>
+                        <div style="font-size:0.7rem; color:#64748b;">월드클래스 잠재력</div>
+                    </div>
+                    <div class="career-metric-card">
+                        <div class="career-metric-label">통산 득점 / 도움</div>
+                        <div class="career-metric-val" id="careerGoalsVal" style="color:#ef4444;">0골 0도움</div>
+                        <div style="font-size:0.7rem; color:#64748b;" id="careerAppsVal">총 0경기 출전</div>
+                    </div>
+                    <div class="career-metric-card">
+                        <div class="career-metric-label">트로피 / 발롱도르</div>
+                        <div class="career-metric-val" id="careerTrophiesVal" style="color:#eab308;">🏆 0 / 🥇 0</div>
+                        <div style="font-size:0.7rem; color:#64748b;">커리어 타이틀</div>
+                    </div>
                 </div>
-                <div class="analytic-card">
-                    <div class="analytic-label">미드필드 (MID)</div>
-                    <div class="analytic-val" id="squadAvgMid" style="color:#0ea5e9;">92</div>
+
+                <!-- Actions Command Bar -->
+                <div class="career-actions-bar">
+                    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                        <button id="careerNextMatchBtn" class="action-btn-primary">
+                            <span>⚽</span> 다음 경기 진행 (라운드 출전)
+                        </button>
+
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <select id="careerTrainSelect" class="fm-select" style="font-size:0.85rem; padding:8px 12px; background:#1e293b;">
+                                <option value="finishing">🎯 골 결정력 & 슈팅 특훈</option>
+                                <option value="playmaking">🧠 패스 & 시야 훈련</option>
+                                <option value="dribble">⚡ 개인기 & 탈압박 드리블</option>
+                                <option value="physical">🏋️ 피지컬 벌크업 & 스프린트</option>
+                            </select>
+                            <button id="careerDoTrainBtn" class="action-btn-secondary">
+                                훈련 진행
+                            </button>
+                        </div>
+                    </div>
+
+                    <button id="careerSimSeasonBtn" class="action-btn-secondary" style="border-color:#f59e0b; color:#f59e0b;">
+                        ⏩ 1시즌 일괄 시뮬레이션
+                    </button>
                 </div>
-                <div class="analytic-card">
-                    <div class="analytic-label">수비력 (DEF)</div>
-                    <div class="analytic-val" id="squadAvgDef" style="color:#10b981;">89</div>
+            </div>
+
+            <!-- Career Match & Story Feed Layout -->
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                <!-- Left: Recent Match Logs & Status -->
+                <div class="glass-panel">
+                    <h3 style="font-size:1.05rem; font-weight:800; color:#38bdf8; margin-bottom:12px; display:flex; justify-content:space-between;">
+                        <span>📋 최근 출전 기록 & 상태</span>
+                        <span id="careerMatchRoleStatus" style="font-size:0.8rem; color:#f59e0b;">후보 명단 (BENCH)</span>
+                    </h3>
+                    <div id="careerMatchLogFeed" style="display:flex; flex-direction:column; gap:8px; max-height:360px; overflow-y:auto; padding-right:4px;">
+                        <div style="color:#64748b; font-size:0.85rem; text-align:center; padding:30px 0;">
+                            '다음 경기 진행' 버튼을 눌러 첫 프로 데뷔전을 치르세요!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: World Headlines & Season Chronicle -->
+                <div class="glass-panel">
+                    <h3 style="font-size:1.05rem; font-weight:800; color:#f59e0b; margin-bottom:12px;">
+                        📰 세계 축구 소식 & 이적/은퇴 브리핑
+                    </h3>
+                    <div id="careerNewsFeed" style="display:flex; flex-direction:column; gap:10px; max-height:360px; overflow-y:auto; padding-right:4px;">
+                        <div style="padding:10px; background:rgba(30,41,59,0.5); border-radius:8px; font-size:0.85rem;">
+                            <span style="color:#38bdf8; font-weight:800;">[2024/25 시즌 개막]</span> 
+                            전 세계 32개 명문 구단들이 새로운 우승 트로피를 향한 대장정을 시작합니다.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==============================================
+             TAB 1: SQUAD & TACTICS BOARD (EXISTING REFINED)
+        =============================================== -->
+        <section id="tab-tactics" class="tab-panel">
+            <div class="squad-top-bar glass-panel">
+                <div class="club-switch-box">
+                    <label style="font-size:0.8rem; font-weight:700; color:#94a3b8; display:block; margin-bottom:4px;">현재 플레이할 팀 선택:</label>
+                    <select id="activeClubSelect" class="fm-select" style="font-size:1rem; font-weight:800; background:#0f172a; border-color:#38bdf8;"></select>
+                </div>
+
+                <div class="squad-analytics-bar">
+                    <div class="analytic-card">
+                        <div class="analytic-label">팀 종합 전력 (OVR)</div>
+                        <div class="analytic-val" id="squadAvgOvr" style="color:#f59e0b;">84</div>
+                    </div>
+                    <div class="analytic-card">
+                        <div class="analytic-label">공격력 (ATT)</div>
+                        <div class="analytic-val" id="squadAvgAtt" style="color:#ef4444;">85</div>
+                    </div>
+                    <div class="analytic-card">
+                        <div class="analytic-label">미드필드 (MID)</div>
+                        <div class="analytic-val" id="squadAvgMid" style="color:#0ea5e9;">83</div>
+                    </div>
+                    <div class="analytic-card">
+                        <div class="analytic-label">수비력 (DEF)</div>
+                        <div class="analytic-val" id="squadAvgDef" style="color:#10b981;">83</div>
+                    </div>
                 </div>
             </div>
 
             <div class="tactics-layout">
-                <!-- 2D Interactive Pitch Formation Board -->
                 <div class="tactics-pitch-container">
                     <div class="pitch-stripes-bg">
                         <div class="pitch-stripe"></div><div class="pitch-stripe"></div>
@@ -87,20 +224,16 @@
                         <div class="half-line"></div>
                         <div class="center-circle"></div>
                     </div>
-
-                    <!-- Dynamic Starting 11 Node Slots -->
                     <div id="tacticsPitchSlots"></div>
                 </div>
 
-                <!-- Tactics Settings & Bench Sidebar -->
                 <div class="tactics-sidebar glass-panel">
                     <div class="sidebar-heading">
                         <span>전술 설정 (Tactics)</span>
-                        <span style="font-size:0.75rem; color:#38bdf8;">실시간 반영</span>
                     </div>
 
                     <div>
-                        <label style="font-size:0.75rem; font-weight:700; color:#94a3b8; display:block; margin-bottom:4px;">포메이션 (Formation)</label>
+                        <label style="font-size:0.75rem; font-weight:700; color:#94a3b8; display:block; margin-bottom:4px;">포메이션</label>
                         <select id="tacticsFormationSelect" class="fm-select">
                             <option value="4-3-3">4-3-3 (현대 축구 트렌드)</option>
                             <option value="4-2-3-1">4-2-3-1 (공수 밸런스)</option>
@@ -109,89 +242,100 @@
                         </select>
                     </div>
 
-                    <div>
-                        <label style="font-size:0.75rem; font-weight:700; color:#94a3b8; display:block; margin-bottom:4px;">전술 성향 (Mentality)</label>
-                        <select id="tacticsMentalitySelect" class="fm-select">
-                            <option value="UltraAttacking">🔥 파상공격 (All-Out Attack)</option>
-                            <option value="Attacking">⚡ 공격적 (Attacking)</option>
-                            <option value="Balanced">⚖️ 균형 유지 (Balanced)</option>
-                            <option value="Defensive">🛡️ 수비적 (Defensive)</option>
-                            <option value="Bus">🚌 극단적 텐백 (Park the Bus)</option>
-                        </select>
-                    </div>
+                    <button id="tacticsAutoPickBtn" class="fm-input" style="background:#0284c7; cursor:pointer; font-weight:800; border:none; margin-top:6px;">
+                        ⚡ AI 베스트 11 자동 편성
+                    </button>
 
-                    <div>
-                        <label style="font-size:0.75rem; font-weight:700; color:#94a3b8; display:block; margin-bottom:4px;">압박 강도 (Pressing)</label>
-                        <select id="tacticsPressingSelect" class="fm-select">
-                            <option value="High">💥 게겐프레싱 전방압박 (High)</option>
-                            <option value="Normal">🛡️ 일반 압박 (Normal)</option>
-                            <option value="Low">🧱 하프라인 지역방어 (Low)</option>
-                        </select>
-                    </div>
-
-                    <div style="display:flex; gap:8px;">
-                        <button id="tacticsAutoPickBtn" class="fm-input" style="background:#0284c7; cursor:pointer; font-weight:800; border:none;">
-                            ⚡ AI 베스트11 자동편성
-                        </button>
-                        <button id="tacticsHealAllBtn" class="fm-input" style="background:#059669; cursor:pointer; font-weight:800; border:none; width:auto;" title="피로 회복">
-                            💚
-                        </button>
-                    </div>
-
-                    <hr style="border:none; border-top:1px solid #334155; margin:8px 0;">
+                    <hr style="border:none; border-top:1px solid #334155; margin:12px 0;">
 
                     <div class="sidebar-heading">
-                        <span>후보 명단 (Bench XI)</span>
+                        <span>교체 명단 (Bench)</span>
                         <span style="font-size:0.75rem; color:#94a3b8;">클릭하여 선발과 교체</span>
                     </div>
 
-                    <!-- Bench Slots Container -->
-                    <div id="tacticsBenchSlots" style="display:flex; flex-direction:column; gap:8px; max-height:220px; overflow-y:auto;"></div>
+                    <div id="tacticsBenchSlots" style="display:flex; flex-direction:column; gap:8px; max-height:280px; overflow-y:auto;"></div>
                 </div>
             </div>
         </section>
 
         <!-- ==============================================
-             TAB 2: SCOUTING & TRANSFER MARKET
+             TAB 2: LEAGUE STANDINGS & TABLES
+        =============================================== -->
+        <section id="tab-league" class="tab-panel">
+            <div class="glass-panel" style="margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                    <div>
+                        <h2 style="font-size:1.3rem; font-weight:900; color:#ffffff;">실시간 리그 순위표</h2>
+                        <div style="font-size:0.8rem; color:#94a3b8;">시즌 진행에 따라 승점과 골득실이 실시간 갱신됩니다.</div>
+                    </div>
+
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;" id="leagueTabButtons">
+                        <button class="action-btn-secondary active" data-league="kleague">🇰🇷 K리그 1</button>
+                        <button class="action-btn-secondary" data-league="epl">🏴󠁧󠁢󠁥󠁮󠁧󠁿 프리미어리그</button>
+                        <button class="action-btn-secondary" data-league="laliga">🇪🇸 라리가</button>
+                        <button class="action-btn-secondary" data-league="bundesliga">🇩🇪 분데스리가</button>
+                        <button class="action-btn-secondary" data-league="seriea">🇮🇹 세리에 A</button>
+                        <button class="action-btn-secondary" data-league="jleague">🇯🇵 J1 리그</button>
+                        <button class="action-btn-secondary" data-league="mls">🇺🇸 MLS</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="league-table-wrap">
+                <table class="league-table">
+                    <thead>
+                        <tr>
+                            <th style="width:60px;">순위</th>
+                            <th style="text-align:left;">구단명</th>
+                            <th style="width:60px;">경기</th>
+                            <th style="width:60px;">승</th>
+                            <th style="width:60px;">무</th>
+                            <th style="width:60px;">패</th>
+                            <th style="width:60px;">득점</th>
+                            <th style="width:60px;">실점</th>
+                            <th style="width:60px;">득실</th>
+                            <th style="width:70px; color:#f59e0b;">승점</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leagueTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==============================================
+             TAB 3: SCOUTING & TRANSFERS (433+ PLAYERS & NEWGENS)
         =============================================== -->
         <section id="tab-scouting" class="tab-panel">
-            <!-- Filter Bar -->
             <div class="glass-panel" style="margin-bottom:20px;">
                 <div class="scouting-filters-bar">
-                    <input type="text" id="scoutSearchInput" class="fm-input" placeholder="🔍 선수 실명, 구단명, 국적 검색 (예: 손흥민, 홀란드, 맨시티, 대한민국...)">
+                    <input type="text" id="scoutSearchInput" class="fm-input" placeholder="🔍 선수 실명, 구단명 검색 (예: 손흥민, 홀란드, 메시, 음바페, 조현우, 김민재...)">
                     
                     <select id="scoutLeagueFilter" class="fm-select">
                         <option value="all">🌍 모든 리그 전체</option>
+                        <option value="kleague">🇰🇷 K리그 1 (대한민국)</option>
                         <option value="epl">🏴󠁧󠁢󠁥󠁮󠁧󠁿 프리미어리그 (EPL)</option>
                         <option value="laliga">🇪🇸 라리가 (La Liga)</option>
                         <option value="bundesliga">🇩🇪 분데스리가 (Bundesliga)</option>
                         <option value="seriea">🇮🇹 세리에 A (Serie A)</option>
                         <option value="ligue1">🇫🇷 리그 1 (Ligue 1)</option>
-                        <option value="korea">🇰🇷 코리안 리거 & K-스타</option>
-                        <option value="legends">🏆 월드 레전드 & 아이콘</option>
+                        <option value="jleague">🇯🇵 J1 리그 (일본)</option>
+                        <option value="mls">🇺🇸 MLS (미국)</option>
+                        <option value="national">🌐 국가대표팀</option>
+                        <option value="legends">🏆 월드 레전드</option>
                     </select>
 
                     <select id="scoutPosFilter" class="fm-select">
-                        <option value="all">모든 포지션 (All)</option>
+                        <option value="all">모든 포지션</option>
                         <option value="FW">공격수 (FW: ST, LW, RW)</option>
                         <option value="MF">미드필더 (MF: CAM, CM, CDM)</option>
                         <option value="DF">수비수 (DF: CB, LB, RB)</option>
                         <option value="GK">골키퍼 (GK)</option>
                     </select>
-
-                    <select id="scoutStatFilter" class="fm-select">
-                        <option value="none">⭐ FM 핵심 능력치 필터</option>
-                        <option value="fin16">골 결정력 16+ (Finishing)</option>
-                        <option value="pac17">주력 17+ (Pace)</option>
-                        <option value="pas17">패스 17+ (Passing)</option>
-                        <option value="tac17">태클 17+ (Tackling)</option>
-                        <option value="vis17">시야 17+ (Vision)</option>
-                    </select>
                 </div>
 
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span id="scoutResultCount" style="font-size:0.85rem; font-weight:700; color:#38bdf8;">270명의 슈퍼스타 검색됨</span>
-                    <span style="font-size:0.8rem; color:#94a3b8;">*FM 1~20 상세 능력치 카드 클릭 시 전체 스탯표 확인 가능</span>
+                    <span id="scoutResultCount" style="font-size:0.85rem; font-weight:700; color:#38bdf8;">선수 검색 결과</span>
+                    <span style="font-size:0.8rem; color:#94a3b8;">*공식 FC 24/25 & FM 24 데이터베이스 + 매 시즌 생성되는 신인 원더키드 포함</span>
                 </div>
             </div>
 
@@ -200,116 +344,73 @@
         </section>
 
         <!-- ==============================================
-             TAB 3: CLUB CUSTOMIZER
+             TAB 4: LUXURY ASSET SHOP (KICKRU STYLE)
         =============================================== -->
-        <section id="tab-club" class="tab-panel">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
-                <div class="glass-panel">
-                    <h2 style="font-size:1.2rem; font-weight:800; margin-bottom:16px; color:#38bdf8;">나만의 구단 정보 커스터마이징</h2>
-                    
-                    <div style="margin-bottom:14px;">
-                        <label style="font-size:0.85rem; font-weight:700; color:#94a3b8; display:block; margin-bottom:6px;">구단명 (Club Name)</label>
-                        <input type="text" id="clubNameInput" class="fm-input" value="골든 갤럭시 FC">
-                    </div>
-
-                    <div style="margin-bottom:14px;">
-                        <label style="font-size:0.85rem; font-weight:700; color:#94a3b8; display:block; margin-bottom:6px;">구단 약칭 (3글자)</label>
-                        <input type="text" id="clubShortNameInput" class="fm-input" maxlength="3" value="GGF">
-                    </div>
-
-                    <div style="margin-bottom:14px;">
-                        <label style="font-size:0.85rem; font-weight:700; color:#94a3b8; display:block; margin-bottom:6px;">홈 경기장 명칭 (Stadium)</label>
-                        <input type="text" id="clubStadiumInput" class="fm-input" value="갤럭시 스타디움">
-                    </div>
-
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
-                        <div>
-                            <label style="font-size:0.85rem; font-weight:700; color:#94a3b8; display:block; margin-bottom:6px;">홈 유니폼 주 색상</label>
-                            <input type="color" id="clubColor1Input" class="fm-input" value="#0ea5e9" style="height:45px; padding:4px;">
-                        </div>
-                        <div>
-                            <label style="font-size:0.85rem; font-weight:700; color:#94a3b8; display:block; margin-bottom:6px;">홈 유니폼 보조 색상</label>
-                            <input type="color" id="clubColor2Input" class="fm-input" value="#f59e0b" style="height:45px; padding:4px;">
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom:14px;">
-                        <label style="font-size:0.85rem; font-weight:700; color:#94a3b8; display:block; margin-bottom:6px;">구단 엠블럼 심볼 선택</label>
-                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                            <button class="emblem-option-btn fm-input selected" style="width:auto; font-size:1.4rem; padding:8px 14px; cursor:pointer;">👑</button>
-                            <button class="emblem-option-btn fm-input" style="width:auto; font-size:1.4rem; padding:8px 14px; cursor:pointer;">🦁</button>
-                            <button class="emblem-option-btn fm-input" style="width:auto; font-size:1.4rem; padding:8px 14px; cursor:pointer;">🐯</button>
-                            <button class="emblem-option-btn fm-input" style="width:auto; font-size:1.4rem; padding:8px 14px; cursor:pointer;">🦅</button>
-                            <button class="emblem-option-btn fm-input" style="width:auto; font-size:1.4rem; padding:8px 14px; cursor:pointer;">⭐</button>
-                            <button class="emblem-option-btn fm-input" style="width:auto; font-size:1.4rem; padding:8px 14px; cursor:pointer;">⚡</button>
-                            <button class="emblem-option-btn fm-input" style="width:auto; font-size:1.4rem; padding:8px 14px; cursor:pointer;">🛡️</button>
-                            <button class="emblem-option-btn fm-input" style="width:auto; font-size:1.4rem; padding:8px 14px; cursor:pointer;">🐉</button>
-                        </div>
-                    </div>
+        <section id="tab-shop" class="tab-panel">
+            <div class="glass-panel" style="margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <h2 style="font-size:1.3rem; font-weight:900; color:#f59e0b;">🛍️ 럭셔리 라이프 & 개인 자산 상점</h2>
+                    <div style="font-size:0.8rem; color:#94a3b8;">축구선수로서 벌어들인 연봉으로 슈퍼카, 펜트하우스, 전용기를 구매하세요!</div>
                 </div>
-
-                <div class="glass-panel" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
-                    <div style="font-size:0.9rem; font-weight:800; color:#94a3b8; margin-bottom:20px;">구단 공식 프로필 미리보기</div>
-                    <div id="clubCustomPreviewLogo" style="font-size:5rem; filter:drop-shadow(0 8px 16px rgba(0,0,0,0.5));">👑</div>
-                    <div id="clubCustomPreviewName" style="font-size:1.8rem; font-weight:900; margin-top:10px; color:#ffffff;">골든 갤럭시 FC</div>
-                    <div id="clubCustomPreviewStadium" style="font-size:1rem; color:#38bdf8; margin-top:4px;">홈구장: 갤럭시 스타디움</div>
-                    <div style="margin-top:20px; font-size:0.85rem; color:#64748b;">*변경 사항은 브라우저에 실시간 자동 영구 저장됩니다.</div>
+                <div style="font-size:1.2rem; font-weight:900; color:#10b981; font-family:var(--font-mono);">
+                    보유 잔액: <span id="shopBankBalanceDisplay">120</span>만원
                 </div>
             </div>
+
+            <div id="shopCatalogGrid" class="shop-grid"></div>
         </section>
 
         <!-- ==============================================
-             TAB 4: MATCH CENTER
+             TAB 5: 2D MATCH CENTER
         =============================================== -->
         <section id="tab-match" class="tab-panel">
             <!-- 1. Pre-Match Setup Screen -->
             <div id="matchPreScreen" class="glass-panel" style="max-width:750px; margin:0 auto; text-align:center;">
-                <h2 style="font-size:1.5rem; font-weight:900; margin-bottom:6px; color:#ffffff;">친선 경기 & 빅매치 대결</h2>
-                <p id="preMatchVenue" style="font-size:0.85rem; color:#94a3b8; margin-bottom:24px;">홈구장 경기</p>
+                <h2 style="font-size:1.6rem; font-weight:900; margin-bottom:6px; color:#ffffff;">축구 경기 킥오프 (Match Kickoff)</h2>
+                <p style="font-size:0.85rem; color:#94a3b8; margin-bottom:24px;">실시간 2D 피치 엔진 시뮬레이션</p>
 
                 <div style="display:flex; justify-content:space-around; align-items:center; margin-bottom:30px;">
                     <!-- Home Team -->
                     <div style="flex:1;">
-                        <div id="preMatchHomeEmblem" style="font-size:4rem;">👑</div>
-                        <div id="preMatchHomeName" style="font-size:1.2rem; font-weight:900; margin-top:8px;">골든 갤럭시 FC</div>
-                        <div style="font-size:0.8rem; color:#38bdf8;">(나만의 드림 클럽)</div>
+                        <div id="preMatchHomeEmblem" style="font-size:4.5rem;">🐓</div>
+                        <div id="preMatchHomeName" style="font-size:1.3rem; font-weight:900; margin-top:8px;">토트넘 홋스퍼</div>
+                        <div style="font-size:0.8rem; color:#38bdf8;">(내 팀)</div>
                     </div>
 
                     <div style="font-size:2rem; font-weight:900; color:#f59e0b; padding:0 20px;">VS</div>
 
                     <!-- Away Opponent Selection -->
                     <div style="flex:1;">
-                        <div id="preMatchAwayEmblem" style="font-size:4rem;">🛡️</div>
-                        <div id="preMatchAwayName" style="font-size:1.2rem; font-weight:900; margin-top:8px;">맨체스터 시티</div>
-                        <div style="font-size:0.8rem; color:#94a3b8;">원정 상대팀</div>
+                        <div id="preMatchAwayEmblem" style="font-size:4.5rem;">👑</div>
+                        <div id="preMatchAwayName" style="font-size:1.3rem; font-weight:900; margin-top:8px;">레알 마드리드</div>
+                        <div style="font-size:0.8rem; color:#94a3b8;">(원정 상대팀)</div>
                     </div>
                 </div>
 
                 <div style="max-width:400px; margin:0 auto 24px;">
-                    <label style="font-size:0.85rem; font-weight:700; color:#94a3b8; display:block; margin-bottom:8px;">대결할 상대 구단 선택</label>
-                    <select id="matchOpponentSelect" class="fm-select"></select>
+                    <label style="font-size:0.85rem; font-weight:700; color:#94a3b8; display:block; margin-bottom:8px;">맞붙을 상대 팀 선택:</label>
+                    <select id="matchOpponentSelect" class="fm-select" style="font-size:1rem; font-weight:800; background:#0f172a; border-color:#f59e0b;"></select>
                 </div>
 
-                <button id="startMatchBtn" class="fm-input" style="background:linear-gradient(135deg, #10b981 0%, #059669 100%); color:#ffffff; font-size:1.2rem; font-weight:900; padding:16px; border:none; border-radius:12px; cursor:pointer; box-shadow:0 8px 24px rgba(16, 185, 129, 0.4);">
-                    ⚽ 킥오프! 경기 시작하기
+                <button id="startMatchBtn" class="fm-input" style="background:linear-gradient(135deg, #10b981 0%, #059669 100%); color:#ffffff; font-size:1.25rem; font-weight:900; padding:16px 32px; width:auto; border:none; border-radius:12px; cursor:pointer; box-shadow:0 8px 24px rgba(16, 185, 129, 0.4);">
+                    ⚽ 경기 시작 (Kickoff)!
                 </button>
             </div>
 
-            <!-- 2. Live Match Screen -->
+            <!-- 2. Live Match Screen (GUARANTEED VISIBLE CANVAS) -->
             <div id="matchLiveScreen" style="display:none;">
-                <!-- Live Scoreboard -->
                 <div class="scoreboard-bar">
                     <div style="display:flex; align-items:center; gap:12px;">
-                        <span id="liveHomeName" style="font-size:1.2rem; font-weight:900;">내 팀</span>
+                        <span id="liveHomeName" style="font-size:1.3rem; font-weight:900;">내 팀</span>
                     </div>
                     
                     <div style="text-align:center;">
                         <div id="liveScoreText" class="score-display">0 - 0</div>
-                        <div id="liveClockText" class="clock-display">00:00</div>
+                        <div id="liveClockText" class="clock-display">00:00 (전반)</div>
                     </div>
 
                     <div style="display:flex; align-items:center; gap:12px;">
-                        <span id="liveAwayName" style="font-size:1.2rem; font-weight:900;">상대 팀</span>
+                        <span id="liveAwayName" style="font-size:1.3rem; font-weight:900;">상대 팀</span>
                     </div>
                 </div>
 
@@ -317,41 +418,17 @@
                     <!-- Left: 2D Pitch Canvas & Controls -->
                     <div>
                         <div class="match-canvas-wrap">
-                            <canvas id="livePitchCanvas" width="800" height="480"></canvas>
+                            <canvas id="livePitchCanvas"></canvas>
                         </div>
 
                         <!-- Match Controls Bar -->
                         <div class="match-controls-bar glass-panel" style="padding:12px 16px;">
                             <div class="speed-btns">
-                                <span style="font-size:0.75rem; font-weight:700; color:#94a3b8; margin-right:4px;">속도:</span>
+                                <span style="font-size:0.8rem; font-weight:700; color:#94a3b8; margin-right:6px;">경기 속도:</span>
                                 <button class="match-speed-btn active" data-speed="1">1x</button>
                                 <button class="match-speed-btn" data-speed="2">2x</button>
                                 <button class="match-speed-btn" data-speed="5">5x (고속)</button>
                                 <button class="match-speed-btn" data-speed="0" style="color:#f59e0b;">스킵 (즉시결과)</button>
-                            </div>
-
-                            <div class="shout-btns">
-                                <span style="font-size:0.75rem; font-weight:700; color:#94a3b8; margin-right:4px;">감독 지시:</span>
-                                <button class="shout-btn" data-shout="attack">⚡ 공격 앞으로!</button>
-                                <button class="shout-btn" data-shout="press">💥 전방 압박!</button>
-                                <button class="shout-btn" data-shout="tempo">⚖️ 템포 조절</button>
-                                <button class="shout-btn" data-shout="defense">🛡️ 수비 집중!</button>
-                            </div>
-                        </div>
-
-                        <!-- Live Stats Bar -->
-                        <div class="glass-panel" style="margin-top:14px; padding:12px 16px;">
-                            <div style="font-size:0.8rem; font-weight:800; color:#94a3b8; margin-bottom:8px; display:flex; justify-content:space-between;">
-                                <span>볼 점유율: <b id="liveHomePossText">50%</b></span>
-                                <span><b id="liveAwayPossText">50%</b></span>
-                            </div>
-                            <div style="background:#1e293b; height:10px; border-radius:5px; overflow:hidden; margin-bottom:12px; display:flex;">
-                                <div id="livePossessionBar" style="background:#0284c7; width:50%; transition:width 0.3s ease;"></div>
-                            </div>
-                            <div style="display:grid; grid-template-columns: repeat(3, 1fr); text-align:center; font-size:0.85rem;">
-                                <div>총 슈팅: <b id="liveHomeShots">0</b> - <b id="liveAwayShots">0</b></div>
-                                <div>유효 슈팅: <b id="liveHomeSOT">0</b> - <b id="liveAwaySOT">0</b></div>
-                                <div>기대 득점 (xG): <b id="liveHomexG">0.00</b> - <b id="liveAwayxG">0.00</b></div>
                             </div>
                         </div>
                     </div>
@@ -371,12 +448,10 @@
                     <span id="reportHomeName"></span> <b id="reportScoreText" style="font-size:2.4rem; color:#ffffff; margin:0 12px;"></b> <span id="reportAwayName"></span>
                 </div>
 
-                <!-- MOM Box -->
                 <div id="reportMomCard" class="report-mom-box"></div>
 
-                <!-- Scorers List -->
                 <div style="text-align:left; margin-bottom:24px;">
-                    <h3 style="font-size:0.9rem; font-weight:800; color:#38bdf8; margin-bottom:10px;">득점 상세 기록</h3>
+                    <h3 style="font-size:0.9rem; font-weight:800; color:#38bdf8; margin-bottom:10px;">득점 기록</h3>
                     <div id="reportScorersList" style="display:flex; flex-direction:column; gap:6px;"></div>
                 </div>
 
@@ -387,39 +462,57 @@
         </section>
 
         <!-- ==============================================
-             TAB 5: TOURNAMENT (CHAMPIONS CUP)
+             TAB 6: HALL OF FAME & RETIREMENT MEMORIAL
         =============================================== -->
-        <section id="tab-tournament" class="tab-panel">
-            <div class="glass-panel" style="max-width:900px; margin:0 auto; text-align:center;">
-                <div style="font-size:4rem; margin-bottom:10px;">🏆</div>
-                <h2 style="font-size:1.8rem; font-weight:900; margin-bottom:8px;">월드 클럽 챔피언스 컵 (8강 토너먼트)</h2>
-                <p style="color:#94a3b8; font-size:0.95rem; margin-bottom:24px;">
-                    유럽 7대 슈퍼클럽 (맨시티, 레알 마드리드, 바이에른 뮌헨, 아스날, 바르셀로나, 인터 밀란, PSG)과 당신의 드림 클럽이 펼치는 지상 최대의 토너먼트!
-                </p>
+        <section id="tab-hallOfFame" class="tab-panel">
+            <div class="glass-panel" style="margin-bottom:20px;">
+                <h2 style="font-size:1.4rem; font-weight:900; color:#f59e0b; margin-bottom:6px;">👑 명예의 전당 & 은퇴 레전드 기념관</h2>
+                <div style="font-size:0.85rem; color:#94a3b8;">
+                    시간이 흐름에 따라 은퇴한 전설적인 선수들의 마지막 순간과 역대 발롱도르 수상자를 기록합니다.
+                </div>
+            </div>
 
-                <!-- Tournament Bracket Visual -->
-                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin-bottom:30px; text-align:left;">
-                    <div style="background:rgba(30,41,59,0.7); border:1px solid #334155; border-radius:10px; padding:14px;">
-                        <div style="font-size:0.8rem; font-weight:800; color:#38bdf8; margin-bottom:8px;">8강전 Match 1</div>
-                        <div>👑 내 드림팀 vs 🛡️ 맨체스터 시티</div>
-                    </div>
-                    <div style="background:rgba(30,41,59,0.7); border:1px solid #334155; border-radius:10px; padding:14px;">
-                        <div style="font-size:0.8rem; font-weight:800; color:#38bdf8; margin-bottom:8px;">8강전 Match 2</div>
-                        <div>👑 레알 마드리드 vs 🔴 아스날 FC</div>
-                    </div>
-                    <div style="background:rgba(30,41,59,0.7); border:1px solid #334155; border-radius:10px; padding:14px;">
-                        <div style="font-size:0.8rem; font-weight:800; color:#38bdf8; margin-bottom:8px;">8강전 Match 3</div>
-                        <div>⭐ 바이에른 뮌헨 vs 🔵 바르셀로나</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                <!-- Left: Retired Legends List -->
+                <div class="glass-panel">
+                    <h3 style="font-size:1.1rem; font-weight:800; color:#ffffff; margin-bottom:12px;">
+                        🕊️ 최근 공식 은퇴 선수 명단
+                    </h3>
+                    <div id="hofRetireesList" style="display:flex; flex-direction:column; gap:8px; max-height:420px; overflow-y:auto;">
+                        <div style="color:#64748b; font-size:0.85rem; padding:20px 0; text-align:center;">
+                            시즌이 경과하면 베테랑 선수들의 공식 은퇴 기록이 등재됩니다.
+                        </div>
                     </div>
                 </div>
 
-                <button id="startTournamentBtn" class="fm-input" style="background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color:#ffffff; font-size:1.1rem; font-weight:900; padding:14px 28px; width:auto; border:none; border-radius:10px; cursor:pointer; box-shadow:0 8px 24px rgba(245, 158, 11, 0.4);">
-                    🏆 챔피언스 컵 도전하기!
-                </button>
+                <!-- Right: Season History & Ballon d'Or Winners -->
+                <div class="glass-panel">
+                    <h3 style="font-size:1.1rem; font-weight:800; color:#eab308; margin-bottom:12px;">
+                        🥇 역대 발롱도르 & 시즌 리뷰
+                    </h3>
+                    <div id="hofBallonDorList" style="display:flex; flex-direction:column; gap:10px; max-height:420px; overflow-y:auto;">
+                        <div style="padding:10px; background:rgba(30,41,59,0.5); border-radius:8px;">
+                            <div style="font-weight:800; color:#f59e0b;">2024년 발롱도르</div>
+                            <div style="font-size:0.85rem; color:#cbd5e1;">로드리 (맨체스터 시티 / 스페인)</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
     </main>
+
+    <!-- KICKRU INTERACTIVE STORY MODAL -->
+    <div id="storyEventModal" class="story-backdrop" style="display:none;">
+        <div class="story-card">
+            <span class="story-category-pill" id="storyModalCategory">[락커룸 이벤트]</span>
+            <h3 class="story-title" id="storyModalTitle">선배의 조언</h3>
+            <div class="story-desc" id="storyModalDesc">
+                훈련 종료 후 선배 선수가 다가옵니다.
+            </div>
+            <div class="story-choices" id="storyModalChoices"></div>
+        </div>
+    </div>
 
     <!-- DETAILED FM STATS MODAL -->
     <div id="playerDetailModal" class="fm-modal-backdrop">
@@ -432,7 +525,6 @@
                 <button class="modal-close-btn" onclick="app.closePlayerDetailModal()">✕</button>
             </div>
 
-            <!-- FM Attribute Columns -->
             <div class="fm-stats-three-cols">
                 <div class="fm-stat-col">
                     <div class="col-title">기술 (Technical)</div>
@@ -448,7 +540,6 @@
                 </div>
             </div>
 
-            <!-- Traits Box -->
             <div>
                 <div style="font-size:0.85rem; font-weight:800; color:#94a3b8; margin-bottom:6px;">선호 플레이 (Traits)</div>
                 <div id="modalTraitsBox"></div>
@@ -461,6 +552,7 @@
     <script src="audio.js"></script>
     <script src="pitch.js"></script>
     <script src="engine.js"></script>
+    <script src="career.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

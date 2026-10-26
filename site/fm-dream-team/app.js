@@ -1,107 +1,123 @@
-// FM Dream Team Master Application Controller
-// Handles Squad Management, Scouting, Tactics Board, Live Matches, and LocalStorage
+// FM Dream Club & Kickru Master Application Controller
+// Complete Living Football Universe, Career Progression, 32 Real Clubs, 433+ Real Stars & Regens
 
-class App {
+var App = window.App = class App {
     constructor() {
         this.pitchCanvas = null;
         this.matchEngine = null;
-        this.currentTab = 'tactics';
-        this.selectedPlayerForDetail = null;
-        this.swapSlotA = null; // for drag/click player swap
-        this.selectedOpponentId = 'mancity';
+        this.currentTab = 'playerCareer';
+        this.selectedLeagueId = 'kleague';
+        this.selectedOpponentId = 'realmadrid';
+        this.swapSlotA = null;
 
-        // Load or initialize My Club
-        this.myClub = this.loadMyClub();
+        // Initialize Career Engine
+        this.career = new CareerEngine();
+
+        // Current Active Club for Manager/Tactics Mode
+        this.activeClubId = localStorage.getItem('fm_active_club_id') || 'ulsan';
+        this.myClub = this.loadClub(this.activeClubId);
     }
 
     init() {
         // Initialize 2D Pitch Canvas
         this.pitchCanvas = new PitchCanvas('livePitchCanvas');
 
-        // Setup DOM event listeners
+        // Setup All UI Handlers
         this.setupNavigation();
+        this.setupActiveClubSelector();
+        this.setupCareerUI();
+        this.setupLeagueUI();
+        this.setupShopUI();
         this.setupTacticsUI();
         this.setupScoutingUI();
-        this.setupClubCustomizerUI();
         this.setupMatchCenterUI();
-        this.setupTournamentUI();
 
         // Initial Renders
+        this.renderPlayerCareer();
+        this.renderLeagueStandings(this.selectedLeagueId);
+        this.renderShopCatalog();
+        this.renderHallOfFame();
         this.renderSquadTactics();
         this.renderScoutingList();
-        this.renderClubCustomizer();
         this.updateHeaderClubBadge();
 
-        // Handle Audio Unlock on user interaction
+        // Unlock Web Audio on first interaction
         document.body.addEventListener('click', () => sounds.init(), { once: true });
+
+        // Ensure canvas has correct sizing
+        setTimeout(() => this.pitchCanvas.resize(), 100);
     }
 
-    // Default or Saved Club State
-    loadMyClub() {
-        const saved = localStorage.getItem('fm_dream_club_data');
-        if (saved) {
-            try { return JSON.parse(saved); } catch (e) { console.error(e); }
+    // Load either a Real Club or Custom Team
+    loadClub(clubId) {
+        if (clubId === 'custom') {
+            const saved = localStorage.getItem('fm_custom_club_data');
+            if (saved) {
+                try { return JSON.parse(saved); } catch (e) {}
+            }
+            return {
+                id: 'custom',
+                name: '나만의 드림 클럽',
+                shortName: 'DRM',
+                emblem: '👑',
+                color1: '#0ea5e9',
+                color2: '#f59e0b',
+                stadium: '드림 아레나',
+                formation: '4-3-3',
+                mentality: 'Attacking',
+                pressing: 'High',
+                starters: ['mancity_haaland', 'tottenham_son', 'real_mbappe', 'mancity_debruyne', 'mancity_rodri', 'real_bellingham', 'liv_trent', 'bayern_kimminjae', 'liv_vandijk', 'mancity_gvardiol', 'liv_alisson'],
+                bench: ['kor_chohyunwoo', 'psg_leekangin', 'real_vinicius', 'bayern_kane', 'leg_messi']
+            };
         }
 
-        // Default Dream Squad
-        const defaultStarters = [
-            'liverpool_alisson',
-            'liverpool_trent',
-            'bayern_kimminjae',
-            'liverpool_vandijk',
-            'mancity_gvardiol',
-            'mancity_rodri',
-            'mancity_debruyne',
-            'real_bellingham',
-            'leg_messi',
-            'tottenham_son',
-            'mancity_haaland'
-        ];
-
-        const defaultBench = [
-            'kor_chohyunwoo',
-            'real_rudiger',
-            'bayern_kimmich',
-            'psg_leekangin',
-            'real_vinicius',
-            'arsenal_saka',
-            'bayern_kane'
-        ];
+        const realClub = CLUB_MAP[clubId] || CLUBS[0];
+        const starters = [...(realClub.starters || [])];
+        const bench = [...(realClub.bench || [])];
 
         return {
-            name: '골든 갤럭시 FC',
-            shortName: 'GGF',
-            emblem: '👑',
-            color1: '#0ea5e9',
-            color2: '#f59e0b',
-            stadium: '갤럭시 스타디움',
-            formation: '4-3-3',
-            mentality: 'Attacking',
-            pressing: 'High',
-            budget: 500, // Millions EUR
-            starters: defaultStarters,
-            bench: defaultBench
+            id: realClub.id,
+            name: realClub.name,
+            shortName: realClub.shortName,
+            emblem: realClub.emblem,
+            color1: realClub.color1,
+            color2: realClub.color2,
+            stadium: realClub.stadium,
+            formation: realClub.formation || '4-3-3',
+            mentality: 'Balanced',
+            pressing: 'Normal',
+            starters: starters,
+            bench: bench
         };
     }
 
-    saveMyClub() {
-        localStorage.setItem('fm_dream_club_data', JSON.stringify(this.myClub));
+    saveCurrentClub() {
+        if (this.myClub.id === 'custom') {
+            localStorage.setItem('fm_custom_club_data', JSON.stringify(this.myClub));
+        }
+        localStorage.setItem('fm_active_club_id', this.activeClubId);
         this.updateHeaderClubBadge();
     }
 
+    // Top Header Badge Update
     updateHeaderClubBadge() {
         const logoEl = document.getElementById('headerClubLogo');
         const nameEl = document.getElementById('headerClubName');
         const badgeEl = document.getElementById('headerClubBadge');
-        if (logoEl) logoEl.textContent = this.myClub.emblem || '👑';
-        if (nameEl) nameEl.textContent = this.myClub.name || '내 드림팀';
+        if (logoEl) logoEl.textContent = this.myClub.emblem || '⚽';
+        if (nameEl) nameEl.textContent = this.myClub.name || '선택된 팀';
         if (badgeEl) {
             badgeEl.style.backgroundColor = this.myClub.color1;
             badgeEl.style.borderColor = this.myClub.color2;
         }
+
+        const seasonBadge = document.getElementById('currentSeasonBadge');
+        if (seasonBadge) {
+            seasonBadge.textContent = `${this.career.currentSeason} 시즌 (${this.career.currentRound}R)`;
+        }
     }
 
-    // Tab Navigation
+    // Navigation Tabs Setup
     setupNavigation() {
         const navBtns = document.querySelectorAll('.nav-tab-btn');
         navBtns.forEach(btn => {
@@ -118,817 +134,880 @@ class App {
         document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
         document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${tabId}`));
 
-        if (tabId === 'tactics') {
+        if (tabId === 'playerCareer') {
+            this.renderPlayerCareer();
+        } else if (tabId === 'tactics') {
             this.renderSquadTactics();
+        } else if (tabId === 'league') {
+            this.renderLeagueStandings(this.selectedLeagueId);
         } else if (tabId === 'scouting') {
             this.renderScoutingList();
-        } else if (tabId === 'club') {
-            this.renderClubCustomizer();
+        } else if (tabId === 'shop') {
+            this.renderShopCatalog();
+        } else if (tabId === 'hallOfFame') {
+            this.renderHallOfFame();
         } else if (tabId === 'match') {
             this.renderMatchPreScreen();
+            setTimeout(() => this.pitchCanvas.resize(), 50);
         }
     }
 
-    // ----------------------------------------------------
-    // TAB 1: SQUAD & TACTICS BOARD
-    // ----------------------------------------------------
+    // ========================================================================
+    // 1. KICKRU PLAYER CAREER UI CONTROLLERS
+    // ========================================================================
+    setupCareerUI() {
+        const nextMatchBtn = document.getElementById('careerNextMatchBtn');
+        if (nextMatchBtn) {
+            nextMatchBtn.addEventListener('click', () => this.advanceCareerRound());
+        }
+
+        const trainBtn = document.getElementById('careerDoTrainBtn');
+        if (trainBtn) {
+            trainBtn.addEventListener('click', () => this.trainCareerPlayer());
+        }
+
+        const simSeasonBtn = document.getElementById('careerSimSeasonBtn');
+        if (simSeasonBtn) {
+            simSeasonBtn.addEventListener('click', () => this.simulateCareerSeason());
+        }
+    }
+
+    renderPlayerCareer() {
+        const p = this.career.playerProfile;
+
+        // Player Info
+        document.getElementById('careerPlayerName').textContent = p.name;
+        document.getElementById('careerPlayerOvr').textContent = `OVR ${p.ovr}`;
+        document.getElementById('careerPlayerNation').textContent = `${p.flag} ${p.nation}`;
+        document.getElementById('careerPlayerAge').textContent = `${p.age}세 (${p.birthYear}년생)`;
+        document.getElementById('careerPlayerPos').textContent = p.pos;
+        document.getElementById('careerPlayerStyle').textContent = p.style;
+        document.getElementById('careerPlayerClub').textContent = p.clubName;
+
+        // Financials & Military
+        document.getElementById('careerWeeklyWage').textContent = p.weeklyWage.toLocaleString();
+        document.getElementById('careerBankBalance').textContent = p.bankBalance.toLocaleString();
+        
+        const milEl = document.getElementById('careerMilitaryStatus');
+        if (milEl) {
+            milEl.innerHTML = p.militaryExempt 
+                ? '<span style="color:#10b981; font-weight:800;">🥇 병역 면제 (체육요원 특례 달성)</span>' 
+                : '🎖️ 병역: 미필 (아시안게임 금메달 시 면제)';
+        }
+
+        // Vital Metrics
+        document.getElementById('careerTrustVal').textContent = `${p.managerTrust}%`;
+        document.getElementById('careerFameVal').textContent = `${p.fanPopularity}%`;
+        document.getElementById('careerFameTitle').textContent = p.fameLevel;
+        document.getElementById('careerMoraleVal').textContent = `${p.teamMorale}%`;
+        document.getElementById('careerPaVal').textContent = `${p.pa}`;
+        document.getElementById('careerGoalsVal').textContent = `${p.careerStats.goals}골 ${p.careerStats.assists}도움`;
+        document.getElementById('careerAppsVal').textContent = `총 ${p.careerStats.appearances}경기 출전`;
+        document.getElementById('careerTrophiesVal').textContent = `🏆 ${p.careerStats.trophies} / 🥇 ${p.careerStats.ballonDor}`;
+
+        // Match Role Status
+        const roleStatusEl = document.getElementById('careerMatchRoleStatus');
+        if (roleStatusEl) {
+            if (p.managerTrust >= 65 && p.ovr >= 70) {
+                roleStatusEl.innerHTML = '<span style="color:#10b981; font-weight:800;">주전 선발 (STARTER)</span>';
+            } else if (p.managerTrust >= 40) {
+                roleStatusEl.innerHTML = '<span style="color:#f59e0b; font-weight:800;">후반 조커 (SUB IN)</span>';
+            } else {
+                roleStatusEl.innerHTML = '<span style="color:#94a3b8;">후보 벤치 (BENCH)</span>';
+            }
+        }
+
+        this.updateHeaderClubBadge();
+    }
+
+    advanceCareerRound() {
+        const res = this.career.advanceRound();
+        sounds.playClick();
+
+        if (res && res.isSeasonEnd) {
+            this.handleSeasonEndNotification(res);
+            return;
+        }
+
+        // Append to Match Log Feed
+        if (res && res.matchResult) {
+            const feed = document.getElementById('careerMatchLogFeed');
+            const item = document.createElement('div');
+            item.style.padding = '10px 12px';
+            item.style.background = 'rgba(30, 41, 59, 0.6)';
+            item.style.borderLeft = res.matchResult.goals > 0 ? '4px solid #10b981' : '4px solid #0284c7';
+            item.style.borderRadius = '6px';
+            item.style.fontSize = '0.85rem';
+            item.innerHTML = `
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span style="font-weight:800; color:#ffffff;">[${this.career.currentSeason} ${this.career.currentRound}R] ${res.matchResult.status}</span>
+                    <span style="color:#f59e0b; font-weight:800;">${res.matchResult.rating ? `평점 ${res.matchResult.rating}` : ''}</span>
+                </div>
+                <div style="color:#cbd5e1;">${res.matchResult.desc}</div>
+            `;
+            feed.insertBefore(item, feed.firstChild);
+        }
+
+        this.renderPlayerCareer();
+
+        // Check if random story event triggered
+        if (res && res.storyEvent) {
+            setTimeout(() => this.openStoryModal(res.storyEvent), 300);
+        }
+    }
+
+    trainCareerPlayer() {
+        const focus = document.getElementById('careerTrainSelect').value;
+        const res = this.career.trainPlayer(focus);
+        sounds.playWhistle('short');
+        alert(res.message);
+        this.renderPlayerCareer();
+    }
+
+    simulateCareerSeason() {
+        if (!confirm("현재 시즌을 마지막 라운드까지 고속 시뮬레이션 하시겠습니까?")) return;
+
+        let endRes = null;
+        while (this.career.currentRound <= this.career.totalRounds) {
+            const res = this.career.advanceRound();
+            if (res && res.isSeasonEnd) {
+                endRes = res;
+                break;
+            }
+        }
+
+        if (!endRes) {
+            endRes = this.career.endSeasonTransition();
+        }
+
+        this.handleSeasonEndNotification(endRes);
+    }
+
+    handleSeasonEndNotification(endRes) {
+        sounds.playWhistle('triple');
+        this.renderPlayerCareer();
+        this.renderHallOfFame();
+
+        // Add to News Feed
+        const newsFeed = document.getElementById('careerNewsFeed');
+        if (newsFeed) {
+            const item = document.createElement('div');
+            item.style.padding = '10px';
+            item.style.background = 'rgba(245, 158, 11, 0.15)';
+            item.style.border = '1px solid #f59e0b';
+            item.style.borderRadius = '8px';
+            item.style.fontSize = '0.85rem';
+            item.innerHTML = `
+                <div style="font-weight:800; color:#f59e0b; margin-bottom:4px;">🏆 [시즌 종료 리포트] ${endRes.newSeason} 시즌 돌입</div>
+                <div style="color:#ffffff;">🥇 올해의 발롱도르 수상자: <b>${endRes.summary.ballonDor}</b></div>
+                <div style="font-size:0.78rem; color:#94a3b8; margin-top:4px;">
+                    은퇴 스타: ${endRes.retirements.length}명 / 신규 유스 원더키드: ${endRes.newgens.length}명 입단
+                </div>
+            `;
+            newsFeed.insertBefore(item, newsFeed.firstChild);
+        }
+
+        alert(`🎉 [${endRes.newSeason} 새로운 시즌 개막!]
+
+🥇 올해의 발롱도르: ${endRes.summary.ballonDor}
+
+모든 선수의 나이가 1살 증가하였으며, 은퇴한 베테랑을 대신하여 전 세계 아카데미에서 신인 생성 선수(Regens/Wonderkids)들이 대거 유입되었습니다!`);
+    }
+
+    // ========================================================================
+    // 2. KICKRU INTERACTIVE STORY EVENT MODAL
+    // ========================================================================
+    openStoryModal(ev) {
+        sounds.playWhistle('short');
+        const modal = document.getElementById('storyEventModal');
+        document.getElementById('storyModalCategory').textContent = `[${ev.category}]`;
+        document.getElementById('storyModalTitle').textContent = ev.title;
+        document.getElementById('storyModalDesc').textContent = ev.desc;
+
+        const choicesWrap = document.getElementById('storyModalChoices');
+        choicesWrap.innerHTML = '';
+
+        ev.choices.forEach(choice => {
+            const btn = document.createElement('button');
+            btn.className = 'story-choice-btn';
+            btn.innerHTML = `
+                <div class="choice-text">👉 ${choice.text}</div>
+                <div class="choice-effect">${choice.effect}</div>
+            `;
+            btn.addEventListener('click', () => {
+                choice.apply();
+                sounds.playClick();
+                modal.style.display = 'none';
+                this.renderPlayerCareer();
+
+                // Add to News Feed
+                const newsFeed = document.getElementById('careerNewsFeed');
+                if (newsFeed) {
+                    const item = document.createElement('div');
+                    item.style.padding = '8px 10px';
+                    item.style.background = 'rgba(30, 41, 59, 0.6)';
+                    item.style.borderRadius = '6px';
+                    item.style.fontSize = '0.8rem';
+                    item.innerHTML = `<b>[${ev.title}]</b> ${choice.effect}`;
+                    newsFeed.insertBefore(item, newsFeed.firstChild);
+                }
+            });
+            choicesWrap.appendChild(btn);
+        });
+
+        modal.style.display = 'flex';
+    }
+
+    // ========================================================================
+    // 3. LIVING LEAGUE STANDINGS UI
+    // ========================================================================
+    setupLeagueUI() {
+        const btns = document.querySelectorAll('#leagueTabButtons button');
+        btns.forEach(b => {
+            b.addEventListener('click', () => {
+                btns.forEach(x => x.classList.remove('active'));
+                b.classList.add('active');
+                this.selectedLeagueId = b.dataset.league;
+                this.renderLeagueStandings(this.selectedLeagueId);
+                sounds.playClick();
+            });
+        });
+    }
+
+    renderLeagueStandings(leagueId) {
+        const tbody = document.getElementById('leagueTableBody');
+        if (!tbody) return;
+
+        const table = this.career.leagueStandings[leagueId] || [];
+        tbody.innerHTML = '';
+
+        table.forEach((row, idx) => {
+            const tr = document.createElement('tr');
+            const rankClass = idx === 0 ? 'rank-1' : (idx === 1 ? 'rank-2' : (idx === 2 ? 'rank-3' : ''));
+            tr.innerHTML = `
+                <td><span class="rank-badge ${rankClass}">${idx + 1}</span></td>
+                <td class="team-cell">
+                    <span>${row.emblem || '🛡️'}</span>
+                    <span>${row.name}</span>
+                </td>
+                <td>${row.played}</td>
+                <td>${row.won}</td>
+                <td>${row.drawn}</td>
+                <td>${row.lost}</td>
+                <td>${row.gf}</td>
+                <td>${row.ga}</td>
+                <td style="color:${row.gd > 0 ? '#10b981' : (row.gd < 0 ? '#ef4444' : '#94a3b8')}; font-weight:700;">
+                    ${row.gd > 0 ? `+${row.gd}` : row.gd}
+                </td>
+                <td style="font-weight:900; color:#f59e0b; font-size:1rem;">${row.points}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // ========================================================================
+    // 4. LUXURY ASSET SHOP UI
+    // ========================================================================
+    setupShopUI() {
+        // Handled in renderShopCatalog
+    }
+
+    renderShopCatalog() {
+        const grid = document.getElementById('shopCatalogGrid');
+        if (!grid) return;
+
+        const balanceEl = document.getElementById('shopBankBalanceDisplay');
+        if (balanceEl) balanceEl.textContent = this.career.playerProfile.bankBalance.toLocaleString();
+
+        const catalog = this.career.getShopCatalog();
+        const p = this.career.playerProfile;
+
+        grid.innerHTML = '';
+
+        catalog.forEach(item => {
+            const isOwned = p.ownedAssets.includes(item.id);
+            const canAfford = p.bankBalance >= item.cost;
+
+            const card = document.createElement('div');
+            card.className = `shop-card ${isOwned ? 'owned' : ''}`;
+            card.innerHTML = `
+                <div class="shop-icon">${item.icon}</div>
+                <div class="shop-title">${item.name}</div>
+                <div class="shop-cost">${item.cost.toLocaleString()}만원</div>
+                <div class="shop-desc">${item.desc} (명성 +${item.fameBonus})</div>
+                <button class="shop-buy-btn ${isOwned ? 'disabled' : (!canAfford ? 'disabled' : '')}" ${isOwned || !canAfford ? 'disabled' : ''}>
+                    ${isOwned ? '✅ 보유 중' : (canAfford ? '💳 즉시 구매' : '잔액 부족')}
+                </button>
+            `;
+
+            const btn = card.querySelector('.shop-buy-btn');
+            if (!isOwned && canAfford) {
+                btn.addEventListener('click', () => {
+                    const res = this.career.buyAsset(item.id);
+                    if (res.success) {
+                        sounds.playWhistle('short');
+                        alert(res.message);
+                        this.renderShopCatalog();
+                        this.renderPlayerCareer();
+                    }
+                });
+            }
+
+            grid.appendChild(card);
+        });
+    }
+
+    // ========================================================================
+    // 5. HALL OF FAME & RETIREMENT MEMORIAL UI
+    // ========================================================================
+    renderHallOfFame() {
+        const retireList = document.getElementById('hofRetireesList');
+        if (retireList) {
+            retireList.innerHTML = '';
+            if (this.career.retiredLegends.length === 0) {
+                retireList.innerHTML = '<div style="color:#64748b; font-size:0.85rem; padding:20px 0; text-align:center;">시즌이 경과하면 베테랑 선수들의 공식 은퇴 기록이 등재됩니다.</div>';
+            } else {
+                this.career.retiredLegends.slice(0, 30).forEach(r => {
+                    const item = document.createElement('div');
+                    item.style.padding = '8px 12px';
+                    item.style.background = 'rgba(30, 41, 59, 0.6)';
+                    item.style.borderRadius = '8px';
+                    item.style.display = 'flex';
+                    item.style.justifyContent = 'space-between';
+                    item.style.alignItems = 'center';
+                    item.innerHTML = `
+                        <div>
+                            <span style="font-weight:800; color:#ffffff;">${r.name}</span>
+                            <span style="font-size:0.75rem; color:#94a3b8; margin-left:6px;">(${r.finalClub})</span>
+                        </div>
+                        <div style="font-size:0.8rem; color:#f59e0b;">
+                            ${r.age}세 은퇴 (${r.year}년)
+                        </div>
+                    `;
+                    retireList.appendChild(item);
+                });
+            }
+        }
+
+        const bList = document.getElementById('hofBallonDorList');
+        if (bList) {
+            bList.innerHTML = `
+                <div style="padding:10px; background:rgba(30,41,59,0.5); border-radius:8px; margin-bottom:8px;">
+                    <div style="font-weight:800; color:#f59e0b;">2024년 발롱도르</div>
+                    <div style="font-size:0.85rem; color:#cbd5e1;">로드리 (맨체스터 시티 / 스페인)</div>
+                </div>
+            `;
+            this.career.seasonHistory.forEach(s => {
+                const item = document.createElement('div');
+                item.style.padding = '10px';
+                item.style.background = 'rgba(30,41,59,0.5)';
+                item.style.borderRadius = '8px';
+                item.style.marginBottom = '8px';
+                item.innerHTML = `
+                    <div style="font-weight:800; color:#f59e0b;">${s.season} 시즌 발롱도르</div>
+                    <div style="font-size:0.85rem; color:#cbd5e1;">${s.ballonDor}</div>
+                `;
+                bList.appendChild(item);
+            });
+        }
+    }
+
+    // ========================================================================
+    // 6. SQUAD & TACTICS BOARD (32 CLUBS FULL DATA INTEGRATION)
+    // ========================================================================
+    setupActiveClubSelector() {
+        const selector = document.getElementById('activeClubSelect');
+        if (!selector) return;
+
+        selector.innerHTML = `
+            <option value="custom">👑 [나만의 커스텀 드림팀]</option>
+            ${CLUBS.map(c => `<option value="${c.id}">${c.emblem} ${c.name} (${c.shortName})</option>`).join('')}
+        `;
+
+        selector.value = this.activeClubId;
+        selector.addEventListener('change', (e) => {
+            this.activeClubId = e.target.value;
+            this.myClub = this.loadClub(this.activeClubId);
+            this.saveCurrentClub();
+            this.renderSquadTactics();
+            this.updateHeaderClubBadge();
+            sounds.playWhistle('short');
+        });
+    }
+
     setupTacticsUI() {
-        const formationSelect = document.getElementById('tacticsFormationSelect');
-        if (formationSelect) {
-            formationSelect.value = this.myClub.formation || '4-3-3';
-            formationSelect.addEventListener('change', (e) => {
+        const formSelect = document.getElementById('tacticsFormationSelect');
+        if (formSelect) {
+            formSelect.value = this.myClub.formation || '4-3-3';
+            formSelect.addEventListener('change', (e) => {
                 this.myClub.formation = e.target.value;
-                this.saveMyClub();
+                this.saveCurrentClub();
                 this.renderSquadTactics();
                 sounds.playClick();
             });
         }
 
-        const mentalitySelect = document.getElementById('tacticsMentalitySelect');
-        if (mentalitySelect) {
-            mentalitySelect.value = this.myClub.mentality || 'Attacking';
-            mentalitySelect.addEventListener('change', (e) => {
-                this.myClub.mentality = e.target.value;
-                this.saveMyClub();
+        const autoBtn = document.getElementById('tacticsAutoPickBtn');
+        if (autoBtn) {
+            autoBtn.addEventListener('click', () => {
+                this.autoPickBestXI();
+                sounds.playWhistle('short');
             });
         }
+    }
 
-        const pressingSelect = document.getElementById('tacticsPressingSelect');
-        if (pressingSelect) {
-            pressingSelect.value = this.myClub.pressing || 'High';
-            pressingSelect.addEventListener('change', (e) => {
-                this.myClub.pressing = e.target.value;
-                this.saveMyClub();
-            });
-        }
+    autoPickBestXI() {
+        const allIds = [...this.myClub.starters, ...this.myClub.bench];
+        const allPlayers = allIds.map(id => PLAYER_MAP[id]).filter(Boolean);
+        allPlayers.sort((a, b) => b.ovr - a.ovr);
 
-        const autoPickBtn = document.getElementById('tacticsAutoPickBtn');
-        if (autoPickBtn) {
-            autoPickBtn.addEventListener('click', () => {
-                this.autoOptimizeBest11();
-                sounds.playClick();
-            });
-        }
+        const newStarters = allPlayers.slice(0, 11).map(p => p.id);
+        const newBench = allPlayers.slice(11).map(p => p.id);
 
-        const healAllBtn = document.getElementById('tacticsHealAllBtn');
-        if (healAllBtn) {
-            healAllBtn.addEventListener('click', () => {
-                this.healSquadStamina();
-                sounds.playClick();
-            });
-        }
+        this.myClub.starters = newStarters;
+        this.myClub.bench = newBench;
+        this.saveCurrentClub();
+        this.renderSquadTactics();
     }
 
     renderSquadTactics() {
-        const pitchSlotsContainer = document.getElementById('tacticsPitchSlots');
-        const benchSlotsContainer = document.getElementById('tacticsBenchSlots');
-        if (!pitchSlotsContainer) return;
+        this.renderTacticsPitch();
+        this.renderTacticsBench();
+        this.updateSquadAnalytics();
+    }
 
-        pitchSlotsContainer.innerHTML = '';
-        if (benchSlotsContainer) benchSlotsContainer.innerHTML = '';
+    renderTacticsPitch() {
+        const container = document.getElementById('tacticsPitchSlots');
+        if (!container) return;
+        container.innerHTML = '';
 
         const formation = this.myClub.formation || '4-3-3';
-        const coords = this.pitchCanvas.getFormationCoordinates(formation, true);
+        const coords = this.getFormationCoordinates(formation);
 
-        // Render 11 Starting Slots on Pitch
-        this.myClub.starters.forEach((pid, idx) => {
-            const player = PLAYER_MAP[pid] || PLAYERS[0];
-            const coord = coords[idx] || { x: 0.2, y: 0.5, pos: player.pos };
+        this.myClub.starters.slice(0, 11).forEach((pId, idx) => {
+            const player = PLAYER_MAP[pId] || { name: '선수', ovr: 75, pos: 'MF' };
+            const coord = coords[idx] || { x: 50, y: 50 };
 
-            const slot = document.createElement('div');
-            slot.className = 'tactics-player-node';
-            slot.style.left = `${coord.x * 100}%`;
-            slot.style.top = `${coord.y * 100}%`;
-            slot.dataset.slotType = 'starter';
-            slot.dataset.slotIndex = idx;
-            slot.dataset.playerId = player.id;
+            const node = document.createElement('div');
+            node.className = `player-pitch-node ${this.swapSlotA === idx ? 'selected-swap' : ''}`;
+            node.style.left = `${coord.x}%`;
+            node.style.top = `${coord.y}%`;
 
-            slot.innerHTML = `
-                <div class="node-jersey" style="background:${this.myClub.color1}; border-color:${this.myClub.color2};">
-                    <span class="node-num">${idx + 1}</span>
+            const ovrClass = player.ovr >= 85 ? 'ovr-world-class' : (player.ovr >= 78 ? 'ovr-elite' : 'ovr-regular');
+
+            node.innerHTML = `
+                <div class="node-token" style="background:${this.myClub.color1 || '#0284c7'}; border-color:${this.myClub.color2 || '#ffffff'};">
+                    ${player.pos || 'MF'}
                 </div>
-                <div class="node-info">
-                    <span class="node-pos">${player.pos}</span>
-                    <span class="node-ovr">${player.ovr}</span>
-                    <span class="node-name">${player.koreanName || player.name}</span>
+                <div class="node-name">${player.koreanName || player.name}</div>
+                <div class="node-ovr-tag ${ovrClass}">${player.ovr}</div>
+            `;
+
+            node.addEventListener('click', () => this.handleTacticsNodeClick(idx, 'starter'));
+            container.appendChild(node);
+        });
+    }
+
+    renderTacticsBench() {
+        const container = document.getElementById('tacticsBenchSlots');
+        if (!container) return;
+        container.innerHTML = '';
+
+        this.myClub.bench.forEach((pId, idx) => {
+            const player = PLAYER_MAP[pId] || { name: '후보', ovr: 70, pos: 'SUB' };
+            const isSelected = this.swapSlotA === (idx + 100);
+
+            const card = document.createElement('div');
+            card.className = `bench-item-card ${isSelected ? 'selected-swap' : ''}`;
+            card.innerHTML = `
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-weight:800; font-size:0.75rem; color:#94a3b8; width:28px;">${player.pos}</span>
+                    <span style="font-weight:800; font-size:0.85rem; color:#ffffff;">${player.koreanName || player.name}</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <span class="node-ovr-tag ${player.ovr >= 85 ? 'ovr-world-class' : 'ovr-elite'}">${player.ovr}</span>
                 </div>
             `;
 
-            slot.addEventListener('click', () => this.handleSlotClick('starter', idx, player));
-            pitchSlotsContainer.appendChild(slot);
+            card.addEventListener('click', () => this.handleTacticsNodeClick(idx + 100, 'bench'));
+            container.appendChild(card);
         });
-
-        // Render Bench Slots
-        if (benchSlotsContainer) {
-            this.myClub.bench.forEach((pid, idx) => {
-                const player = PLAYER_MAP[pid] || PLAYERS[0];
-                const card = document.createElement('div');
-                card.className = 'bench-player-card';
-                card.dataset.slotType = 'bench';
-                card.dataset.slotIndex = idx;
-                card.dataset.playerId = player.id;
-
-                card.innerHTML = `
-                    <div class="bench-pos-badge">${player.pos}</div>
-                    <div class="bench-ovr-badge">${player.ovr}</div>
-                    <div class="bench-name">${player.flag} ${player.koreanName || player.name}</div>
-                    <button class="bench-detail-btn" title="FM 능력치 보기">📋</button>
-                `;
-
-                card.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('bench-detail-btn')) {
-                        this.openPlayerDetailModal(player);
-                    } else {
-                        this.handleSlotClick('bench', idx, player);
-                    }
-                });
-
-                benchSlotsContainer.appendChild(card);
-            });
-        }
-
-        // Update Squad Analytics Panel
-        this.updateSquadSummaryStats();
     }
 
-    handleSlotClick(slotType, slotIndex, player) {
-        if (!this.swapSlotA) {
-            // Select first player to swap
-            this.swapSlotA = { slotType, slotIndex, player };
-            document.querySelectorAll('.tactics-player-node, .bench-player-card').forEach(el => {
-                if (el.dataset.slotType === slotType && parseInt(el.dataset.slotIndex) === slotIndex) {
-                    el.classList.add('selected-for-swap');
-                }
-            });
-            sounds.playClick();
+    handleTacticsNodeClick(slotIndex, type) {
+        sounds.playClick();
+        if (this.swapSlotA === null) {
+            this.swapSlotA = slotIndex;
+            this.renderSquadTactics();
         } else {
-            // Swap with second player
-            const a = this.swapSlotA;
-            const b = { slotType, slotIndex, player };
+            const slotA = this.swapSlotA;
+            const slotB = slotIndex;
+            this.swapSlotA = null;
 
-            if (a.slotType === 'starter' && b.slotType === 'starter') {
-                const temp = this.myClub.starters[a.slotIndex];
-                this.myClub.starters[a.slotIndex] = this.myClub.starters[b.slotIndex];
-                this.myClub.starters[b.slotIndex] = temp;
-            } else if (a.slotType === 'starter' && b.slotType === 'bench') {
-                const temp = this.myClub.starters[a.slotIndex];
-                this.myClub.starters[a.slotIndex] = this.myClub.bench[b.slotIndex];
-                this.myClub.bench[b.slotIndex] = temp;
-            } else if (a.slotType === 'bench' && b.slotType === 'starter') {
-                const temp = this.myClub.bench[a.slotIndex];
-                this.myClub.bench[a.slotIndex] = this.myClub.starters[b.slotIndex];
-                this.myClub.starters[b.slotIndex] = temp;
-            } else if (a.slotType === 'bench' && b.slotType === 'bench') {
-                const temp = this.myClub.bench[a.slotIndex];
-                this.myClub.bench[a.slotIndex] = this.myClub.bench[b.slotIndex];
-                this.myClub.bench[b.slotIndex] = temp;
+            if (slotA === slotB) {
+                this.renderSquadTactics();
+                return;
             }
 
-            this.swapSlotA = null;
-            document.querySelectorAll('.selected-for-swap').forEach(el => el.classList.remove('selected-for-swap'));
-            this.saveMyClub();
+            const getRef = (s) => (s < 100 ? { arr: this.myClub.starters, idx: s } : { arr: this.myClub.bench, idx: s - 100 });
+            const refA = getRef(slotA);
+            const refB = getRef(slotB);
+
+            const temp = refA.arr[refA.idx];
+            refA.arr[refA.idx] = refB.arr[refB.idx];
+            refB.arr[refB.idx] = temp;
+
+            this.saveCurrentClub();
             this.renderSquadTactics();
             sounds.playWhistle('short');
         }
     }
 
-    autoOptimizeBest11() {
-        // Collect all owned players
-        const allOwnedIds = [...this.myClub.starters, ...this.myClub.bench];
-        const allOwned = allOwnedIds.map(id => PLAYER_MAP[id]).filter(Boolean);
+    updateSquadAnalytics() {
+        const starters = this.myClub.starters.slice(0, 11).map(id => PLAYER_MAP[id]).filter(Boolean);
+        if (starters.length === 0) return;
 
-        // Sort by OVR descending
-        allOwned.sort((a, b) => b.ovr - a.ovr);
+        const avg = Math.round(starters.reduce((acc, p) => acc + p.ovr, 0) / starters.length);
+        const fw = starters.filter(p => ['ST', 'LW', 'RW', 'CF'].includes(p.pos));
+        const mid = starters.filter(p => ['CAM', 'CM', 'CDM', 'RM', 'LM'].includes(p.pos));
+        const def = starters.filter(p => ['CB', 'LB', 'RB', 'GK'].includes(p.pos));
 
-        const newStarters = [];
-        const usedIds = new Set();
+        const getAvg = (list) => list.length ? Math.round(list.reduce((a, b) => a + b.ovr, 0) / list.length) : avg;
 
-        // 1. Pick Best GK
-        const bestGk = allOwned.find(p => p.pos === 'GK');
-        if (bestGk) {
-            newStarters.push(bestGk.id);
-            usedIds.add(bestGk.id);
-        }
-
-        // 2. Pick remaining best field players
-        for (const p of allOwned) {
-            if (newStarters.length >= 11) break;
-            if (!usedIds.has(p.id) && p.pos !== 'GK') {
-                newStarters.push(p.id);
-                usedIds.add(p.id);
-            }
-        }
-
-        // Fill bench
-        const newBench = [];
-        for (const p of allOwned) {
-            if (newBench.length >= 7) break;
-            if (!usedIds.has(p.id)) {
-                newBench.push(p.id);
-                usedIds.add(p.id);
-            }
-        }
-
-        this.myClub.starters = newStarters;
-        this.myClub.bench = newBench;
-        this.saveMyClub();
-        this.renderSquadTactics();
-        alert('✨ [AI 베스트 11 자동 편성 완료] 능력치(OVR) 기반 최적의 선발 명단이 배치되었습니다!');
+        document.getElementById('squadAvgOvr').textContent = avg;
+        document.getElementById('squadAvgAtt').textContent = getAvg(fw);
+        document.getElementById('squadAvgMid').textContent = getAvg(mid);
+        document.getElementById('squadAvgDef').textContent = getAvg(def);
     }
 
-    healSquadStamina() {
-        alert('💚 [선수단 컨디션 회복] 모든 선수의 피로도가 100% 최상으로 회복되었습니다!');
+    getFormationCoordinates(formation) {
+        if (formation === '4-2-3-1') {
+            return [
+                { x: 50, y: 88 },
+                { x: 15, y: 72 }, { x: 38, y: 74 }, { x: 62, y: 74 }, { x: 85, y: 72 },
+                { x: 35, y: 56 }, { x: 65, y: 56 },
+                { x: 18, y: 38 }, { x: 50, y: 36 }, { x: 82, y: 38 },
+                { x: 50, y: 18 }
+            ];
+        } else if (formation === '4-4-2') {
+            return [
+                { x: 50, y: 88 },
+                { x: 15, y: 72 }, { x: 38, y: 74 }, { x: 62, y: 74 }, { x: 85, y: 72 },
+                { x: 15, y: 48 }, { x: 38, y: 48 }, { x: 62, y: 48 }, { x: 85, y: 48 },
+                { x: 38, y: 20 }, { x: 62, y: 20 }
+            ];
+        } else if (formation === '3-5-2') {
+            return [
+                { x: 50, y: 88 },
+                { x: 25, y: 74 }, { x: 50, y: 76 }, { x: 75, y: 74 },
+                { x: 12, y: 50 }, { x: 35, y: 54 }, { x: 50, y: 46 }, { x: 65, y: 54 }, { x: 88, y: 50 },
+                { x: 38, y: 20 }, { x: 62, y: 20 }
+            ];
+        }
+        // Default 4-3-3
+        return [
+            { x: 50, y: 88 },
+            { x: 15, y: 72 }, { x: 38, y: 74 }, { x: 62, y: 74 }, { x: 85, y: 72 },
+            { x: 28, y: 52 }, { x: 50, y: 54 }, { x: 72, y: 52 },
+            { x: 18, y: 25 }, { x: 50, y: 18 }, { x: 82, y: 25 }
+        ];
     }
 
-    updateSquadSummaryStats() {
-        const starters = this.myClub.starters.map(id => PLAYER_MAP[id]).filter(Boolean);
-        const avgOvr = Math.round(starters.reduce((s, p) => s + p.ovr, 0) / (starters.length || 1));
-
-        const att = starters.filter(p => ['ST', 'LW', 'RW'].includes(p.pos));
-        const mid = starters.filter(p => ['CAM', 'CM', 'CDM', 'LM', 'RM'].includes(p.pos));
-        const def = starters.filter(p => ['CB', 'LB', 'RB', 'LWB', 'RWB'].includes(p.pos));
-
-        const avg = (list) => list.length ? Math.round(list.reduce((s, p) => s + p.ovr, 0) / list.length) : 80;
-
-        const ovrEl = document.getElementById('squadAvgOvr');
-        const attEl = document.getElementById('squadAvgAtt');
-        const midEl = document.getElementById('squadAvgMid');
-        const defEl = document.getElementById('squadAvgDef');
-
-        if (ovrEl) ovrEl.textContent = avgOvr;
-        if (attEl) attEl.textContent = avg(att);
-        if (midEl) midEl.textContent = avg(mid);
-        if (defEl) defEl.textContent = avg(def);
-    }
-
-    // ----------------------------------------------------
-    // TAB 2: SCOUTING & TRANSFER MARKET
-    // ----------------------------------------------------
+    // ========================================================================
+    // 7. SCOUTING & TRANSFERS (433+ PLAYERS & REAL NEWGEN FILTERING)
+    // ========================================================================
     setupScoutingUI() {
         const searchInput = document.getElementById('scoutSearchInput');
-        if (searchInput) {
-            searchInput.addEventListener('input', () => this.renderScoutingList());
-        }
+        const leagueFilter = document.getElementById('scoutLeagueFilter');
+        const posFilter = document.getElementById('scoutPosFilter');
 
-        const leagueSelect = document.getElementById('scoutLeagueFilter');
-        if (leagueSelect) {
-            leagueSelect.addEventListener('change', () => this.renderScoutingList());
-        }
-
-        const posSelect = document.getElementById('scoutPosFilter');
-        if (posSelect) {
-            posSelect.addEventListener('change', () => this.renderScoutingList());
-        }
-
-        const statFilter = document.getElementById('scoutStatFilter');
-        if (statFilter) {
-            statFilter.addEventListener('change', () => this.renderScoutingList());
-        }
+        const trigger = () => this.renderScoutingList();
+        if (searchInput) searchInput.addEventListener('input', trigger);
+        if (leagueFilter) leagueFilter.addEventListener('change', trigger);
+        if (posFilter) posFilter.addEventListener('change', trigger);
     }
 
     renderScoutingList() {
-        const listContainer = document.getElementById('scoutingPlayerGrid');
-        if (!listContainer) return;
+        const grid = document.getElementById('scoutingPlayerGrid');
+        if (!grid) return;
 
-        const query = (document.getElementById('scoutSearchInput')?.value || '').toLowerCase().trim();
+        const query = (document.getElementById('scoutSearchInput')?.value || '').trim().toLowerCase();
         const league = document.getElementById('scoutLeagueFilter')?.value || 'all';
         const pos = document.getElementById('scoutPosFilter')?.value || 'all';
-        const statReq = document.getElementById('scoutStatFilter')?.value || 'none';
 
-        const myPlayerIds = new Set([...this.myClub.starters, ...this.myClub.bench]);
+        let list = [...PLAYERS].filter(p => !p.retired);
 
-        const filtered = PLAYERS.filter(p => {
-            // Text search
-            if (query) {
-                const matchName = (p.name || '').toLowerCase().includes(query);
-                const matchKor = (p.koreanName || '').toLowerCase().includes(query);
-                const matchTeam = (p.team || '').toLowerCase().includes(query);
-                const matchNat = (p.nation || '').toLowerCase().includes(query);
-                if (!matchName && !matchKor && !matchTeam && !matchNat) return false;
-            }
+        if (league !== 'all') {
+            list = list.filter(p => p.league === league);
+        }
 
-            // League filter
-            if (league !== 'all' && p.league !== league) return false;
+        if (pos !== 'all') {
+            if (pos === 'FW') list = list.filter(p => ['ST', 'LW', 'RW', 'CF'].includes(p.pos));
+            else if (pos === 'MF') list = list.filter(p => ['CAM', 'CM', 'CDM', 'RM', 'LM'].includes(p.pos));
+            else if (pos === 'DF') list = list.filter(p => ['CB', 'LB', 'RB', 'LWB', 'RWB'].includes(p.pos));
+            else if (pos === 'GK') list = list.filter(p => p.pos === 'GK');
+        }
 
-            // Position filter
-            if (pos !== 'all') {
-                if (pos === 'FW' && !['ST', 'LW', 'RW'].includes(p.pos)) return false;
-                if (pos === 'MF' && !['CAM', 'CM', 'CDM', 'LM', 'RM'].includes(p.pos)) return false;
-                if (pos === 'DF' && !['CB', 'LB', 'RB', 'LWB', 'RWB'].includes(p.pos)) return false;
-                if (pos === 'GK' && p.pos !== 'GK') return false;
-                if (!['FW', 'MF', 'DF', 'GK'].includes(pos) && p.pos !== pos) return false;
-            }
+        if (query) {
+            list = list.filter(p => 
+                (p.koreanName && p.koreanName.toLowerCase().includes(query)) ||
+                (p.name && p.name.toLowerCase().includes(query)) ||
+                (p.team && p.team.toLowerCase().includes(query))
+            );
+        }
 
-            // Stat Requirements (FM 16+)
-            if (statReq === 'fin16' && (p.stats.finishing || 0) < 16) return false;
-            if (statReq === 'pac17' && (p.stats.pace || 0) < 17) return false;
-            if (statReq === 'pas17' && (p.stats.passing || 0) < 17) return false;
-            if (statReq === 'tac17' && (p.stats.tackling || 0) < 17) return false;
-            if (statReq === 'vis17' && (p.stats.vision || 0) < 17) return false;
+        list.sort((a, b) => b.ovr - a.ovr);
 
-            return true;
-        });
+        const countEl = document.getElementById('scoutResultCount');
+        if (countEl) countEl.textContent = `검색 결과: 총 ${list.length}명 등록됨`;
 
-        listContainer.innerHTML = '';
-
-        const countBadge = document.getElementById('scoutResultCount');
-        if (countBadge) countBadge.textContent = `${filtered.length}명의 슈퍼스타 검색됨`;
-
-        filtered.slice(0, 80).forEach(player => {
-            const isOwned = myPlayerIds.has(player.id);
+        grid.innerHTML = '';
+        list.slice(0, 60).forEach(p => {
             const card = document.createElement('div');
-            card.className = `scout-card ${isOwned ? 'owned-card' : ''}`;
-
-            // Key FM Stat Badge preview
-            let keyStatLabel = '골결';
-            let keyStatVal = player.stats.finishing;
-            if (player.pos === 'GK') { keyStatLabel = '반사'; keyStatVal = player.stats.reflexes; }
-            else if (['CB', 'LB', 'RB'].includes(player.pos)) { keyStatLabel = '태클'; keyStatVal = player.stats.tackling; }
-            else if (['CM', 'CAM', 'CDM'].includes(player.pos)) { keyStatLabel = '패스'; keyStatVal = player.stats.passing; }
-            else if (['LW', 'RW'].includes(player.pos)) { keyStatLabel = '주력'; keyStatVal = player.stats.pace; }
-
-            const getStatColorClass = (val) => {
-                if (val >= 16) return 'stat-elite';
-                if (val >= 13) return 'stat-good';
-                if (val >= 9) return 'stat-mid';
-                return 'stat-low';
-            };
-
+            card.className = 'scout-card';
             card.innerHTML = `
-                <div class="scout-card-header">
-                    <span class="scout-pos-tag ${player.pos}">${player.pos}</span>
-                    <span class="scout-ovr-tag">${player.ovr}</span>
-                </div>
-                <div class="scout-player-main">
-                    <div class="scout-flag-name">
-                        <span class="flag-icon">${player.flag}</span>
-                        <div class="name-box">
-                            <span class="korean-name">${player.koreanName || player.name}</span>
-                            <span class="eng-name">${player.name}</span>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                        <div style="font-weight:900; font-size:1.05rem; color:#ffffff;">
+                            ${p.koreanName || p.name}
                         </div>
+                        <div style="font-size:0.75rem; color:#94a3b8;">${p.name} • ${p.flag} ${p.nation}</div>
                     </div>
-                    <div class="scout-team-text">소속: ${player.team}</div>
+                    <div class="node-ovr-tag ${p.ovr >= 85 ? 'ovr-world-class' : (p.ovr >= 78 ? 'ovr-elite' : 'ovr-regular')}">
+                        ${p.ovr}
+                    </div>
                 </div>
-                <div class="scout-stats-row">
-                    <div class="mini-stat"><span>주력</span> <b class="${getStatColorClass(player.stats.pace)}">${player.stats.pace}</b></div>
-                    <div class="mini-stat"><span>${keyStatLabel}</span> <b class="${getStatColorClass(keyStatVal)}">${keyStatVal}</b></div>
-                    <div class="mini-stat"><span>시야</span> <b class="${getStatColorClass(player.stats.vision)}">${player.stats.vision}</b></div>
-                    <div class="mini-stat"><span>판단</span> <b class="${getStatColorClass(player.stats.decisions)}">${player.stats.decisions}</b></div>
+
+                <div style="margin:10px 0; font-size:0.82rem; color:#cbd5e1; display:flex; justify-content:space-between;">
+                    <span>소속: <b>${p.team}</b></span>
+                    <span style="color:#38bdf8; font-weight:800;">${p.pos} (${p.age}세)</span>
                 </div>
-                <div class="scout-card-actions">
-                    <button class="view-fm-btn">FM 스탯표</button>
-                    ${isOwned 
-                        ? `<button class="release-btn">방출</button>`
-                        : `<button class="sign-btn">영입 (€${player.value}M)</button>`
-                    }
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; border-top:1px solid rgba(51,65,85,0.4); padding-top:8px;">
+                    <span style="font-size:0.75rem; color:#10b981; font-weight:800;">주급: 약 ${p.wage || 20}만</span>
+                    <button class="action-btn-secondary" style="padding:4px 10px; font-size:0.75rem;">
+                        📊 FM 상세 스탯
+                    </button>
                 </div>
             `;
 
-            // Action triggers
-            card.querySelector('.view-fm-btn').addEventListener('click', () => {
-                this.openPlayerDetailModal(player);
-                sounds.playClick();
-            });
-
-            const signBtn = card.querySelector('.sign-btn');
-            if (signBtn) {
-                signBtn.addEventListener('click', () => {
-                    this.signPlayer(player);
-                    sounds.playWhistle('short');
-                });
-            }
-
-            const releaseBtn = card.querySelector('.release-btn');
-            if (releaseBtn) {
-                releaseBtn.addEventListener('click', () => {
-                    this.releasePlayer(player);
-                    sounds.playClick();
-                });
-            }
-
-            listContainer.appendChild(card);
+            card.addEventListener('click', () => this.openPlayerDetailModal(p.id));
+            grid.appendChild(card);
         });
     }
 
-    signPlayer(player) {
-        if (this.myClub.starters.length + this.myClub.bench.length >= 25) {
-            alert('⚠️ 스쿼드 인원 제한(최대 25명)을 초과했습니다. 기존 선수를 먼저 방출해 주세요!');
-            return;
-        }
+    openPlayerDetailModal(playerId) {
+        const p = PLAYER_MAP[playerId];
+        if (!p) return;
 
-        // Add to bench
-        this.myClub.bench.push(player.id);
-        this.saveMyClub();
-        this.renderScoutingList();
-        this.renderSquadTactics();
-        alert(`🎉 [영입 성공!] ${player.flag} ${player.koreanName || player.name} 선수가 [${this.myClub.name}]의 후보 명단에 합류했습니다!`);
-    }
+        document.getElementById('modalPlayerName').textContent = `${p.koreanName || p.name} (${p.name})`;
+        document.getElementById('modalPlayerMeta').textContent = `${p.flag} ${p.nation} • ${p.team} • ${p.pos} • ${p.age}세 • OVR ${p.ovr}`;
 
-    releasePlayer(player) {
-        if (this.myClub.starters.length <= 11 && this.myClub.starters.includes(player.id)) {
-            alert('⚠️ 선발 11명 선수는 바로 방출할 수 없습니다. 다른 선수와 교체 후 방출해주세요!');
-            return;
-        }
-
-        this.myClub.starters = this.myClub.starters.filter(id => id !== player.id);
-        this.myClub.bench = this.myClub.bench.filter(id => id !== player.id);
-        this.saveMyClub();
-        this.renderScoutingList();
-        this.renderSquadTactics();
-        alert(`👋 [방출 완료] ${player.koreanName || player.name} 선수가 자유 계약으로 방출되었습니다.`);
-    }
-
-    // Detailed FM Profile Modal
-    openPlayerDetailModal(player) {
-        const modal = document.getElementById('playerDetailModal');
-        if (!modal) return;
-
-        const s = player.stats;
-        const color = (val) => {
-            if (val >= 16) return 'stat-elite';
-            if (val >= 13) return 'stat-good';
-            if (val >= 9) return 'stat-mid';
-            return 'stat-low';
+        const renderStatGroup = (containerId, statsList) => {
+            const el = document.getElementById(containerId);
+            if (!el) return;
+            el.innerHTML = statsList.map(([key, label]) => {
+                const val = (p.stats && p.stats[key]) || 10;
+                const color = val >= 16 ? '#10b981' : (val >= 12 ? '#38bdf8' : '#94a3b8');
+                return `
+                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; padding:3px 0; border-bottom:1px solid rgba(51,65,85,0.2);">
+                        <span style="color:#cbd5e1;">${label}</span>
+                        <span style="font-weight:900; color:${color}; font-family:var(--font-mono);">${val}</span>
+                    </div>
+                `;
+            }).join('');
         };
 
-        document.getElementById('modalPlayerName').textContent = `${player.flag} ${player.koreanName || player.name} (${player.name})`;
-        document.getElementById('modalPlayerMeta').textContent = `${player.pos} · OVR ${player.ovr} · CA ${player.ca} / PA ${player.pa} · 나이 ${player.age}세 · ${player.team} · 주발: ${player.foot === 'Both' ? '양발' : (player.foot === 'Left' ? '왼발' : '오른발')} · 신장 ${player.height}cm / 체중 ${player.weight}kg`;
+        renderStatGroup('modalTechStats', [
+            ['finishing', '골 결정력'], ['passing', '패스'], ['dribbling', '드리블'],
+            ['firstTouch', '첫 터치'], ['technique', '개인기'], ['longShots', '중거리슛']
+        ]);
 
-        // Fill Technical Grid
-        const techHtml = `
-            <div class="fm-stat-item"><span>골 결정력 (Finishing)</span><b class="${color(s.finishing)}">${s.finishing}</b></div>
-            <div class="fm-stat-item"><span>패스 (Passing)</span><b class="${color(s.passing)}">${s.passing}</b></div>
-            <div class="fm-stat-item"><span>드리블 (Dribbling)</span><b class="${color(s.dribbling)}">${s.dribbling}</b></div>
-            <div class="fm-stat-item"><span>퍼스트 터치 (First Touch)</span><b class="${color(s.firstTouch)}">${s.firstTouch}</b></div>
-            <div class="fm-stat-item"><span>개인기 (Technique)</span><b class="${color(s.technique)}">${s.technique}</b></div>
-            <div class="fm-stat-item"><span>태클 (Tackling)</span><b class="${color(s.tackling)}">${s.tackling}</b></div>
-            <div class="fm-stat-item"><span>대인 마크 (Marking)</span><b class="${color(s.marking)}">${s.marking}</b></div>
-            <div class="fm-stat-item"><span>헤더 (Heading)</span><b class="${color(s.heading)}">${s.heading}</b></div>
-            <div class="fm-stat-item"><span>중거리 슛 (Long Shots)</span><b class="${color(s.longShots)}">${s.longShots}</b></div>
-            <div class="fm-stat-item"><span>크로스 (Crossing)</span><b class="${color(s.crossing)}">${s.crossing}</b></div>
-            <div class="fm-stat-item"><span>프리킥 (Free Kicks)</span><b class="${color(s.freeKicks)}">${s.freeKicks}</b></div>
-        `;
-        document.getElementById('modalTechStats').innerHTML = techHtml;
+        renderStatGroup('modalMentalStats', [
+            ['vision', '시야'], ['decisions', '판단력'], ['positioning', '위치선정'],
+            ['anticipation', '예측력'], ['composure', '침착성'], ['teamwork', '팀워크']
+        ]);
 
-        // Fill Mental Grid
-        const mentalHtml = `
-            <div class="fm-stat-item"><span>시야 (Vision)</span><b class="${color(s.vision)}">${s.vision}</b></div>
-            <div class="fm-stat-item"><span>판단력 (Decisions)</span><b class="${color(s.decisions)}">${s.decisions}</b></div>
-            <div class="fm-stat-item"><span>수비위치선정 (Positioning)</span><b class="${color(s.positioning)}">${s.positioning}</b></div>
-            <div class="fm-stat-item"><span>예측력 (Anticipation)</span><b class="${color(s.anticipation)}">${s.anticipation}</b></div>
-            <div class="fm-stat-item"><span>침착성 (Composure)</span><b class="${color(s.composure)}">${s.composure}</b></div>
-            <div class="fm-stat-item"><span>승부욕 (Determination)</span><b class="${color(s.determination)}">${s.determination}</b></div>
-            <div class="fm-stat-item"><span>팀워크 (Teamwork)</span><b class="${color(s.teamwork)}">${s.teamwork}</b></div>
-            <div class="fm-stat-item"><span>활동량 (Work Rate)</span><b class="${color(s.workRate)}">${s.workRate}</b></div>
-            <div class="fm-stat-item"><span>오프 더 볼 (Off The Ball)</span><b class="${color(s.offTheBall)}">${s.offTheBall}</b></div>
-            <div class="fm-stat-item"><span>대담성 (Bravery)</span><b class="${color(s.bravery)}">${s.bravery}</b></div>
-        `;
-        document.getElementById('modalMentalStats').innerHTML = mentalHtml;
+        renderStatGroup('modalPhysicalStats', [
+            ['pace', '순간속도'], ['acceleration', '가속도'], ['stamina', '스태미너'],
+            ['strength', '몸싸움'], ['jumping', '점프력'], ['reflexes', '반사신경(GK)']
+        ]);
 
-        // Fill Physical & GK Grid
-        const physicalHtml = `
-            <div class="fm-stat-item"><span>주력 (Pace)</span><b class="${color(s.pace)}">${s.pace}</b></div>
-            <div class="fm-stat-item"><span>순간속도 (Acceleration)</span><b class="${color(s.acceleration)}">${s.acceleration}</b></div>
-            <div class="fm-stat-item"><span>지구력 (Stamina)</span><b class="${color(s.stamina)}">${s.stamina}</b></div>
-            <div class="fm-stat-item"><span>몸싸움 (Strength)</span><b class="${color(s.strength)}">${s.strength}</b></div>
-            <div class="fm-stat-item"><span>민첩성 (Agility)</span><b class="${color(s.agility)}">${s.agility}</b></div>
-            <div class="fm-stat-item"><span>점프거리 (Jumping)</span><b class="${color(s.jumping)}">${s.jumping}</b></div>
-            <div class="fm-stat-item"><span>균형감각 (Balance)</span><b class="${color(s.balance)}">${s.balance}</b></div>
-            ${player.pos === 'GK' ? `
-                <div class="fm-stat-item" style="border-top:1px dashed #334155; margin-top:6px; padding-top:6px;"><span>반사신경 (Reflexes)</span><b class="${color(s.reflexes)}">${s.reflexes}</b></div>
-                <div class="fm-stat-item"><span>1대1 방어 (1 on 1)</span><b class="${color(s.oneOnOnes)}">${s.oneOnOnes}</b></div>
-                <div class="fm-stat-item"><span>핸들링 (Handling)</span><b class="${color(s.handling)}">${s.handling}</b></div>
-                <div class="fm-stat-item"><span>공중장악 (Aerial)</span><b class="${color(s.aerial)}">${s.aerial}</b></div>
-            ` : ''}
-        `;
-        document.getElementById('modalPhysicalStats').innerHTML = physicalHtml;
+        const traitsBox = document.getElementById('modalTraitsBox');
+        if (traitsBox) {
+            traitsBox.innerHTML = (p.traits || ['기본 플레이']).map(t => `
+                <span style="background:rgba(2,132,199,0.2); color:#38bdf8; border:1px solid #0284c7; padding:2px 8px; border-radius:6px; font-size:0.75rem; font-weight:700; margin-right:6px; display:inline-block; margin-bottom:4px;">
+                    ${t}
+                </span>
+            `).join('');
+        }
 
-        // Player Traits
-        const traitsHtml = (player.traits || ['기본기 탄탄']).map(t => `<span class="trait-tag">⚡ ${t}</span>`).join(' ');
-        document.getElementById('modalTraitsBox').innerHTML = traitsHtml;
-
-        modal.classList.add('open');
+        document.getElementById('playerDetailModal').style.display = 'flex';
+        sounds.playClick();
     }
 
     closePlayerDetailModal() {
-        const modal = document.getElementById('playerDetailModal');
-        if (modal) modal.classList.remove('open');
+        document.getElementById('playerDetailModal').style.display = 'none';
     }
 
-    // ----------------------------------------------------
-    // TAB 3: CLUB CUSTOMIZER
-    // ----------------------------------------------------
-    setupClubCustomizerUI() {
-        const nameInput = document.getElementById('clubNameInput');
-        if (nameInput) {
-            nameInput.value = this.myClub.name;
-            nameInput.addEventListener('input', (e) => {
-                this.myClub.name = e.target.value;
-                this.saveMyClub();
-            });
-        }
-
-        const shortInput = document.getElementById('clubShortNameInput');
-        if (shortInput) {
-            shortInput.value = this.myClub.shortName;
-            shortInput.addEventListener('input', (e) => {
-                this.myClub.shortName = e.target.value.toUpperCase();
-                this.saveMyClub();
-            });
-        }
-
-        const stadiumInput = document.getElementById('clubStadiumInput');
-        if (stadiumInput) {
-            stadiumInput.value = this.myClub.stadium;
-            stadiumInput.addEventListener('input', (e) => {
-                this.myClub.stadium = e.target.value;
-                this.saveMyClub();
-            });
-        }
-
-        const color1Input = document.getElementById('clubColor1Input');
-        if (color1Input) {
-            color1Input.value = this.myClub.color1;
-            color1Input.addEventListener('input', (e) => {
-                this.myClub.color1 = e.target.value;
-                this.saveMyClub();
-                this.renderSquadTactics();
-            });
-        }
-
-        const color2Input = document.getElementById('clubColor2Input');
-        if (color2Input) {
-            color2Input.value = this.myClub.color2;
-            color2Input.addEventListener('input', (e) => {
-                this.myClub.color2 = e.target.value;
-                this.saveMyClub();
-                this.renderSquadTactics();
-            });
-        }
-
-        const emblemButtons = document.querySelectorAll('.emblem-option-btn');
-        emblemButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                this.myClub.emblem = btn.textContent.trim();
-                emblemButtons.forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                this.saveMyClub();
-                sounds.playClick();
-            });
-        });
-    }
-
-    renderClubCustomizer() {
-        const previewLogo = document.getElementById('clubCustomPreviewLogo');
-        const previewName = document.getElementById('clubCustomPreviewName');
-        const previewStad = document.getElementById('clubCustomPreviewStadium');
-        if (previewLogo) previewLogo.textContent = this.myClub.emblem;
-        if (previewName) previewName.textContent = this.myClub.name;
-        if (previewStad) previewStad.textContent = `홈구장: ${this.myClub.stadium}`;
-    }
-
-    // ----------------------------------------------------
-    // TAB 4: MATCH CENTER
-    // ----------------------------------------------------
+    // ========================================================================
+    // 8. 2D LIVE MATCH CENTER UI
+    // ========================================================================
     setupMatchCenterUI() {
-        const opponentSelect = document.getElementById('matchOpponentSelect');
-        if (opponentSelect) {
-            opponentSelect.innerHTML = CLUBS.map(c => `
-                <option value="${c.id}">${c.emblem} ${c.name} (${c.league.toUpperCase()})</option>
-            `).join('');
-
-            opponentSelect.value = this.selectedOpponentId;
-            opponentSelect.addEventListener('change', (e) => {
+        const oppSelect = document.getElementById('matchOpponentSelect');
+        if (oppSelect) {
+            oppSelect.innerHTML = CLUBS.map(c => `<option value="${c.id}">${c.emblem} ${c.name} (${c.league.toUpperCase()})</option>`).join('');
+            oppSelect.value = 'realmadrid';
+            oppSelect.addEventListener('change', (e) => {
                 this.selectedOpponentId = e.target.value;
                 this.renderMatchPreScreen();
                 sounds.playClick();
             });
         }
 
-        const startMatchBtn = document.getElementById('startMatchBtn');
-        if (startMatchBtn) {
-            startMatchBtn.addEventListener('click', () => {
-                this.startLiveMatch();
+        const startBtn = document.getElementById('startMatchBtn');
+        if (startBtn) {
+            startBtn.addEventListener('click', () => this.startLiveMatch());
+        }
+
+        const returnBtn = document.getElementById('reportReturnBtn');
+        if (returnBtn) {
+            returnBtn.addEventListener('click', () => {
+                document.getElementById('matchReportScreen').style.display = 'none';
+                document.getElementById('matchPreScreen').style.display = 'block';
+                this.renderMatchPreScreen();
+                sounds.playClick();
             });
         }
 
-        // Speed buttons
-        document.querySelectorAll('.match-speed-btn').forEach(btn => {
+        const speedBtns = document.querySelectorAll('.match-speed-btn');
+        speedBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                const spd = parseInt(btn.dataset.speed);
-                document.querySelectorAll('.match-speed-btn').forEach(b => b.classList.remove('active'));
+                speedBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                if (this.matchEngine) this.matchEngine.setSpeed(spd);
-                sounds.playClick();
-            });
-        });
-
-        // Tactical Shouts
-        document.querySelectorAll('.shout-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const shout = btn.dataset.shout;
-                this.handleTacticalShout(shout);
+                const spd = parseInt(btn.dataset.speed);
+                if (spd === 0) {
+                    if (this.matchEngine) this.matchEngine.simulateFullMatchInstantly();
+                } else {
+                    if (this.matchEngine) this.matchEngine.setSpeed(spd);
+                }
                 sounds.playClick();
             });
         });
     }
 
     renderMatchPreScreen() {
-        const oppClub = CLUB_MAP[this.selectedOpponentId] || CLUBS[0];
-
-        const homeName = document.getElementById('preMatchHomeName');
         const homeEmblem = document.getElementById('preMatchHomeEmblem');
-        const awayName = document.getElementById('preMatchAwayName');
+        const homeName = document.getElementById('preMatchHomeName');
+        if (homeEmblem) homeEmblem.textContent = this.myClub.emblem || '⚽';
+        if (homeName) homeName.textContent = this.myClub.name || '내 팀';
+
+        const opp = CLUB_MAP[this.selectedOpponentId] || CLUBS[0];
         const awayEmblem = document.getElementById('preMatchAwayEmblem');
-        const venueText = document.getElementById('preMatchVenue');
-
-        if (homeName) homeName.textContent = this.myClub.name;
-        if (homeEmblem) homeEmblem.textContent = this.myClub.emblem;
-        if (awayName) awayName.textContent = oppClub.name;
-        if (awayEmblem) awayEmblem.textContent = oppClub.emblem;
-        if (venueText) venueText.textContent = `경기장: ${this.myClub.stadium} (홈 경기)`;
-
-        // Hide live scoreboard & live commentary initially, show kickoff block
-        document.getElementById('matchPreScreen').style.display = 'block';
-        document.getElementById('matchLiveScreen').style.display = 'none';
-        document.getElementById('matchReportScreen').style.display = 'none';
+        const awayName = document.getElementById('preMatchAwayName');
+        if (awayEmblem) awayEmblem.textContent = opp.emblem || '⚽';
+        if (awayName) awayName.textContent = opp.name || '상대 팀';
     }
 
     startLiveMatch() {
-        const oppClub = CLUB_MAP[this.selectedOpponentId] || CLUBS[0];
+        sounds.playWhistle('short');
 
-        // Prepare Real Squad for Opponent
-        const oppStarters = (oppClub.starters || []).map(id => PLAYER_MAP[id]).filter(Boolean);
-        const oppBench = (oppClub.bench || []).map(id => PLAYER_MAP[id]).filter(Boolean);
+        const opp = CLUB_MAP[this.selectedOpponentId] || CLUBS[0];
 
-        const myStarters = this.myClub.starters.map(id => PLAYER_MAP[id]).filter(Boolean);
-        const myBench = this.myClub.bench.map(id => PLAYER_MAP[id]).filter(Boolean);
+        const homeStarters = this.myClub.starters.slice(0, 11).map(id => PLAYER_MAP[id] || { name: '선수', ovr: 75, pos: 'MF' });
+        const awayStarters = opp.starters.slice(0, 11).map(id => PLAYER_MAP[id] || { name: '상대선수', ovr: 75, pos: 'MF' });
 
         const homeTeam = {
             name: this.myClub.name,
-            color1: this.myClub.color1,
-            color2: this.myClub.color2,
+            color1: this.myClub.color1 || '#0284c7',
+            color2: this.myClub.color2 || '#ffffff',
             formation: this.myClub.formation || '4-3-3',
-            mentality: this.myClub.mentality || 'Attacking',
-            pressing: this.myClub.pressing || 'High',
-            startingXI: myStarters,
-            bench: myBench
+            startingXI: homeStarters
         };
 
         const awayTeam = {
-            name: oppClub.name,
-            color1: oppClub.color1,
-            color2: oppClub.color2,
-            formation: oppClub.formation || '4-3-3',
-            mentality: 'Balanced',
-            pressing: 'Normal',
-            startingXI: oppStarters,
-            bench: oppBench
+            name: opp.name,
+            color1: opp.color1 || '#ef4444',
+            color2: opp.color2 || '#ffffff',
+            formation: opp.formation || '4-3-3',
+            startingXI: awayStarters
         };
 
-        // Switch to Live Match UI
+        // Switch to Live Match Screen
         document.getElementById('matchPreScreen').style.display = 'none';
         document.getElementById('matchLiveScreen').style.display = 'block';
         document.getElementById('matchReportScreen').style.display = 'none';
+        document.getElementById('liveCommentaryFeed').innerHTML = '';
 
-        // Clear commentary
-        const commFeed = document.getElementById('liveCommentaryFeed');
-        if (commFeed) commFeed.innerHTML = '';
-
-        // Sync 2D Canvas Teams & Formations
-        this.pitchCanvas.syncTeamFormation(homeTeam, awayTeam);
-
-        // Instantiate Engine
-        this.matchEngine = new MatchEngine(homeTeam, awayTeam, {
-            speed: 1,
-            pitchCanvas: this.pitchCanvas,
-            onMinute: (min, hScore, aScore, stats) => this.onMatchMinuteUpdate(min, hScore, aScore, stats),
-            onEvent: (ev) => this.onMatchEventCommentary(ev),
-            onComplete: (result) => this.onMatchCompleted(result)
-        });
-
-        // Set live header labels
         document.getElementById('liveHomeName').textContent = homeTeam.name;
         document.getElementById('liveAwayName').textContent = awayTeam.name;
         document.getElementById('liveScoreText').textContent = '0 - 0';
         document.getElementById('liveClockText').textContent = "00:00 (전반)";
 
+        setTimeout(() => {
+            this.pitchCanvas.resize();
+            this.pitchCanvas.syncTeamFormation(homeTeam, awayTeam);
+        }, 30);
+
+        this.matchEngine = new MatchEngine(homeTeam, awayTeam, {
+            speed: 1,
+            pitchCanvas: this.pitchCanvas,
+            onMinute: (min, hScore, aScore) => {
+                document.getElementById('liveScoreText').textContent = `${hScore} - ${aScore}`;
+                document.getElementById('liveClockText').textContent = `${min}' (${min <= 45 ? '전반' : '후반'})`;
+            },
+            onEvent: (ev) => {
+                const item = document.createElement('div');
+                item.className = `comm-item comm-type-${ev.type.toLowerCase()}`;
+                item.innerHTML = `<span class="comm-minute">${ev.minute}'</span> <span class="comm-text">${ev.text}</span>`;
+                const feed = document.getElementById('liveCommentaryFeed');
+                feed.appendChild(item);
+                feed.scrollTop = feed.scrollHeight;
+            },
+            onComplete: (summary) => {
+                this.renderMatchReport(summary);
+            }
+        });
+
         this.matchEngine.start();
     }
 
-    onMatchMinuteUpdate(min, hScore, aScore, stats) {
-        const scoreText = document.getElementById('liveScoreText');
-        const clockText = document.getElementById('liveClockText');
-        if (scoreText) scoreText.textContent = `${hScore} - ${aScore}`;
-        if (clockText) {
-            const halfStr = min <= 45 ? '전반' : '후반';
-            clockText.textContent = `${min}' (${halfStr})`;
-        }
-
-        // Update Live Stats Bars
-        document.getElementById('livePossessionBar').style.width = `${stats.home.possession}%`;
-        document.getElementById('liveHomePossText').textContent = `${stats.home.possession}%`;
-        document.getElementById('liveAwayPossText').textContent = `${stats.away.possession}%`;
-
-        document.getElementById('liveHomeShots').textContent = stats.home.shots;
-        document.getElementById('liveAwayShots').textContent = stats.away.shots;
-        document.getElementById('liveHomeSOT').textContent = stats.home.shotsOnTarget;
-        document.getElementById('liveAwaySOT').textContent = stats.away.shotsOnTarget;
-        document.getElementById('liveHomexG').textContent = stats.home.xG.toFixed(2);
-        document.getElementById('liveAwayxG').textContent = stats.away.xG.toFixed(2);
-    }
-
-    onMatchEventCommentary(ev) {
-        const commFeed = document.getElementById('liveCommentaryFeed');
-        if (!commFeed) return;
-
-        const item = document.createElement('div');
-        item.className = `comm-item comm-type-${ev.type.toLowerCase()}`;
-        item.innerHTML = `
-            <span class="comm-min">${ev.minute}'</span>
-            <span class="comm-text">${ev.text}</span>
-        `;
-        commFeed.prepend(item);
-    }
-
-    handleTacticalShout(shout) {
-        if (!this.matchEngine) return;
-        if (shout === 'press') {
-            this.matchEngine.setHomeTactics(null, 'High');
-        } else if (shout === 'attack') {
-            this.matchEngine.setHomeTactics('UltraAttacking', null);
-        } else if (shout === 'tempo') {
-            this.matchEngine.setHomeTactics('Balanced', 'Normal');
-        } else if (shout === 'defense') {
-            this.matchEngine.setHomeTactics('Bus', 'Low');
-        }
-    }
-
-    onMatchCompleted(res) {
+    renderMatchReport(summary) {
         document.getElementById('matchLiveScreen').style.display = 'none';
-        const rep = document.getElementById('matchReportScreen');
-        rep.style.display = 'block';
+        document.getElementById('matchReportScreen').style.display = 'block';
 
-        document.getElementById('reportScoreText').textContent = `${res.homeScore} : ${res.awayScore}`;
-        document.getElementById('reportHomeName').textContent = res.homeTeam.name;
-        document.getElementById('reportAwayName').textContent = res.awayTeam.name;
+        document.getElementById('reportHomeName').textContent = summary.homeTeam.name;
+        document.getElementById('reportAwayName').textContent = summary.awayTeam.name;
+        document.getElementById('reportScoreText').textContent = `${summary.homeScore} - ${summary.awayScore}`;
 
-        // MOM Showcase
-        const mom = res.mom;
+        const mom = summary.mom;
         const momCard = document.getElementById('reportMomCard');
-        if (momCard && mom) {
+        if (mom && momCard) {
             momCard.innerHTML = `
-                <div class="mom-trophy">🏆 MAN OF THE MATCH</div>
-                <div class="mom-avatar">${mom.flag || '⭐'}</div>
-                <div class="mom-name">${mom.koreanName || mom.name}</div>
-                <div class="mom-rating">매치 평점: <b>${mom.finalRating || 8.5}</b> / 10.0</div>
-                <div class="mom-stats">골: ${mom.matchStats.goals} | 도움: ${mom.matchStats.assists} | 태클: ${mom.matchStats.tackles} | 세이브: ${mom.matchStats.saves}</div>
+                <div style="font-size:0.8rem; font-weight:800; color:#f59e0b; margin-bottom:4px;">🎖️ MAN OF THE MATCH (최우수 선수)</div>
+                <div style="font-size:1.3rem; font-weight:900; color:#ffffff;">${mom.koreanName || mom.name}</div>
+                <div style="font-size:0.85rem; color:#38bdf8; margin-top:2px;">경기 평점: ${mom.finalRating || 8.5}점</div>
             `;
         }
 
-        // Scorers summary list
         const scorersList = document.getElementById('reportScorersList');
         if (scorersList) {
-            if (res.scorers.length === 0) {
-                scorersList.innerHTML = '<div style="color:#94a3b8; text-align:center;">득점자 없음 (0:0 무승부)</div>';
-            } else {
-                scorersList.innerHTML = res.scorers.map(sc => `
-                    <div class="report-scorer-item">
-                        <span>⚽ ${sc.minute}' <b>${sc.scorerName}</b> (${sc.teamName})</span>
-                        <span style="color:#64748b; font-size:0.85rem;">${sc.assistName ? '도움: ' + sc.assistName : '단독 득점'} · xG ${sc.xG.toFixed(2)}</span>
-                    </div>
-                `).join('');
-            }
-        }
-
-        // Return button
-        const returnBtn = document.getElementById('reportReturnBtn');
-        if (returnBtn) {
-            returnBtn.onclick = () => {
-                this.renderMatchPreScreen();
-                sounds.playClick();
-            };
-        }
-    }
-
-    // ----------------------------------------------------
-    // TAB 5: WORLD TOURNAMENT (CHAMPIONS CUP)
-    // ----------------------------------------------------
-    setupTournamentUI() {
-        const startTournBtn = document.getElementById('startTournamentBtn');
-        if (startTournBtn) {
-            startTournBtn.addEventListener('click', () => {
-                alert('🏆 [챔피언스 컵 토너먼트 시작!] 8강전 상대로 맨체스터 시티가 배정되었습니다! 매치 센터에서 즉시 맞붙어 승리하세요!');
-                this.selectedOpponentId = 'mancity';
-                this.switchTab('match');
-            });
+            scorersList.innerHTML = summary.scorers.length ? summary.scorers.map(s => `
+                <div style="font-size:0.85rem; padding:4px 0; border-bottom:1px solid rgba(51,65,85,0.3);">
+                    ⚽ <b>${s.scorerName}</b> (${s.teamName}) - ${s.minute}'
+                </div>
+            `).join('') : '<div style="color:#64748b; font-size:0.85rem;">득점 없음</div>';
         }
     }
 }
 
-// Global App Instance
-let app = null;
-window.addEventListener('DOMContentLoaded', () => {
-    app = new App();
-    app.init();
-});
+// Global Instant Initialization
+if (typeof window !== 'undefined' && window.addEventListener) {
+    window.addEventListener('DOMContentLoaded', () => {
+        window.app = new App();
+        window.app.init();
+    });
+}
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { App };
+}
