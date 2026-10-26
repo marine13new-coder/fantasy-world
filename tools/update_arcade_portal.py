@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw, ImageFont
 site_dir = Path("site")
 site_dir.mkdir(exist_ok=True)
 
-# 14 Games Definition
+# 15 Games Definition
 GAMES = [
     {
         "session": "01",
@@ -350,7 +350,7 @@ portal_html = f"""<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Game Arcade Hub - 14 Games Showcase</title>
+<title>AI Game Arcade Hub - 15 Games Showcase</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
@@ -747,4 +747,4 @@ function filterCards() {{
 """
 
 (site_dir / "index.html").write_text(portal_html, encoding="utf-8")
-print("site/index.html generated with 14 games successfully!")
+print(f"site/index.html generated with {len(GAMES)} games successfully!")
