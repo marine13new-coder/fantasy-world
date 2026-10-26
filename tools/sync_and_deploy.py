@@ -46,14 +46,11 @@ if zombie_src.exists():
     shutil.copy2(zombie_src, zombie_dst)
     print("✔ Synced #15 Zombie Hardcore : Dead Zone")
 
-# 6. Sync Game 16 (Blood Souls : Ashen Hunter)
-souls_src = root / "games" / "souls-borne.html"
-souls_dst_dir = site / "souls-borne"
-souls_dst_dir.mkdir(parents=True, exist_ok=True)
-souls_dst = souls_dst_dir / "index.html"
-if souls_src.exists():
-    shutil.copy2(souls_src, souls_dst)
-    print("✔ Synced #16 Blood Souls : Ashen Hunter")
+# 6. Sync Game 16 (Blood Souls : Ashen Hunter from BloodSouls/ dedicated folder)
+blood_souls_sync = root / "BloodSouls" / "Tools" / "sync_blood_souls.py"
+if blood_souls_sync.exists():
+    subprocess.run([sys.executable, str(blood_souls_sync)], check=True, cwd=root)
+    print("✔ Synced #16 Blood Souls : Ashen Hunter (Web, 3D Models, and Portal)")
 
 # 7. Update Portal HTML
 sys.path.insert(0, str(root / "tools"))
@@ -62,7 +59,7 @@ print("✔ Rebuilt site/index.html & manifest.json")
 
 # 8. Git Commit & Push
 try:
-    subprocess.run(["git", "add", "site/", "SeamlessPixelRPG/pixel_rpg_playable_test.html", "tools/"], check=True, cwd=root)
+    subprocess.run(["git", "add", "site/", "BloodSouls/", "SeamlessPixelRPG/pixel_rpg_playable_test.html", "tools/"], check=True, cwd=root)
     res = subprocess.run(["git", "commit", "-m", "sync: auto-sync all 16 games including #16 Blood Souls to GitHub Pages"], capture_output=True, text=True, cwd=root)
     print(res.stdout or res.stderr)
     subprocess.run(["git", "push", "origin", "main"], check=True, cwd=root)
