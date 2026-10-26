@@ -5,1016 +5,422 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>OUTPOST PROTOCOL : TACTICAL RPG (오픈월드 전술 파밍 RPG 3.0)</title>
 <style>
-:root{
-  --rpg-gold:#f5c542;
-  --rpg-cyan:#00f0ff;
-  --rpg-red:#ff4655;
-  --rpg-green:#22c55e;
-  --rpg-purple:#c084fc;
-  --rpg-panel:rgba(10,15,22,0.94);
-  --rpg-border:#223040;
-}
-*{box-sizing:border-box}
-body{margin:0;background:#06080d;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;color:#ece8e1;user-select:none}
-canvas#c{display:block;width:100vw;height:100vh}
-#ui{position:fixed;inset:0;pointer-events:none}
+  :root {
+    --hud-bg: rgba(8, 12, 18, 0.65);
+    --hud-border: rgba(255, 255, 255, 0.1);
+    --hud-blur: blur(12px);
+    --accent-cyan: #00f0ff;
+    --accent-green: #22c55e;
+    --accent-gold: #f59e0b;
+    --accent-red: #ef4444;
+  }
+  * { box-sizing: border-box; user-select: none; margin: 0; padding: 0; }
+  body {
+    background: #000; overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+    color: #e2e8f0; width: 100vw; height: 100vh;
+  }
+  #c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
-/* 상단 RPG 레벨 & 경험치 프로그레스 & 전술 나침반 */
-#top-hud{
-  position:absolute;top:12px;left:50%;transform:translateX(-50%);
-  display:flex;flex-direction:column;align-items:center;gap:5px;
-  background:var(--rpg-panel);border:1px solid var(--rpg-border);border-top:3px solid var(--rpg-cyan);
-  padding:6px 28px;border-radius:6px;box-shadow:0 8px 30px rgba(0,0,0,0.85);
-  min-width:460px;backdrop-filter:blur(8px);
-}
-.level-row{display:flex;justify-content:space-between;width:100%;align-items:center;font-size:12.5px;font-weight:800}
-#player-lvl{color:var(--rpg-gold);font-size:15px}
-#stat-points{color:var(--rpg-cyan);font-size:12px}
-#exp-text{color:#8ba2b5;font-size:11px}
-.exp-track{width:100%;height:6px;background:#131c26;border-radius:3px;overflow:hidden}
-#exp-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--rpg-cyan),#38ef7d);transition:width .2s}
+  /* 시네마틱 스크린 비네트 (Cinematic Vignette) */
+  #cinematic-vignette {
+    position: absolute; inset: 0; pointer-events: none; z-index: 10;
+    box-shadow: inset 0 0 110px rgba(0,0,0,0.55);
+  }
 
-/* 나침반 바 */
-#compass-strip{
-  font-family:monospace;font-size:11px;color:#7e93a6;letter-spacing:10px;
-  margin-top:2px;font-weight:700;
-}
+  /* 데미지 / 피격 인디케이터 */
+  #hit-indicator {
+    position: absolute; inset: 0; pointer-events: none; z-index: 20; opacity: 0;
+    transition: opacity 0.12s ease-out;
+  }
+  #dmg-layer { position: absolute; inset: 0; pointer-events: none; z-index: 25; }
+  .dmg-pop {
+    position: absolute; font-size: 15px; font-weight: 900; color: #ff4444;
+    text-shadow: 0 0 4px #000, 0 2px 8px rgba(0,0,0,0.9);
+    animation: dmgFloat 0.75s ease-out forwards;
+  }
+  .dmg-pop.crit { color: #f59e0b; font-size: 18px; transform: scale(1.15); }
+  @keyframes dmgFloat { 0%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-35px)} }
 
-/* 좌상단 레이드 작전 퀘스트 패널 */
-#quest-box{
-  position:absolute;top:16px;left:16px;
-  background:var(--rpg-panel);border-left:4px solid var(--rpg-gold);border:1px solid var(--rpg-border);
-  padding:12px 18px;border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,0.7);
-  min-width:250px;backdrop-filter:blur(6px);
-}
-#quest-box h4{margin:0 0 8px;font-size:13px;color:var(--rpg-gold);letter-spacing:1px}
-.quest-item{font-size:11.5px;color:#cbd5e1;margin-bottom:4px;display:flex;align-items:center;gap:6px}
-.quest-item.done{color:var(--rpg-green);text-decoration:line-through}
+  /* 피격 방향 인디케이터 (Threat Arc) */
+  #threat-indicator {
+    position: absolute; top: 50%; left: 50%; width: 220px; height: 220px;
+    transform: translate(-50%, -50%); pointer-events: none; z-index: 22; display: none;
+  }
+  #threat-arrow {
+    width: 100%; height: 100%; border-radius: 50%;
+    border: 3px solid transparent; border-top: 5px solid rgba(239,68,68,0.9);
+    filter: drop-shadow(0 0 8px rgba(239,68,68,0.8));
+  }
 
-/* 좌하단 실드 & 체력 HUD (5초 비피격 자동재생) */
+  /* 크로스헤어 캔버스 */
+  #ch-canvas { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 30; }
 
-/* 아군 분대원 HUD & 무전 브리핑 자막 */
-#squad-hud{
-  position:absolute;bottom:148px;left:22px;
-  background:var(--rpg-panel);border:1px solid var(--rpg-border);border-left:4px solid #38ef7d;
-  padding:8px 16px;border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,0.8);
-  min-width:240px;backdrop-filter:blur(6px);pointer-events:none;z-index:22;
-}
-.sq-header{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:800;margin-bottom:4px}
-.sq-name{color:#38ef7d}
-.sq-status{color:var(--rpg-cyan);font-size:10px}
-#radio-sub{
-  position:absolute;bottom:192px;left:50%;transform:translateX(-50%);
-  background:rgba(8,14,20,0.92);border:1px solid var(--rpg-cyan);
-  padding:8px 24px;border-radius:20px;font-size:13px;font-weight:700;
-  color:#e2e8f0;box-shadow:0 0 15px rgba(0,240,255,0.4);
-  opacity:0;transition:opacity .2s;pointer-events:none;z-index:32;white-space:nowrap;
-}
+  /* 상단 미니멀 레이드 타이머 & 안전지대 뱃지 */
+  #top-bar {
+    position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 12px; align-items: center; z-index: 35; pointer-events: none;
+  }
+  .top-pill {
+    background: var(--hud-bg); backdrop-filter: var(--hud-blur);
+    border: 1px solid var(--hud-border); border-radius: 20px;
+    padding: 6px 16px; font-size: 12px; font-weight: 700; letter-spacing: 1px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+  #raid-timer { color: #f1f5f9; display: flex; align-items: center; gap: 6px; }
+  #safezone-badge { color: var(--accent-cyan); display: none; border-color: rgba(0,240,255,0.3); }
 
-#hud-vital{
-  position:absolute;bottom:22px;left:22px;
-  background:var(--rpg-panel);border:1px solid var(--rpg-border);border-left:4px solid var(--rpg-cyan);
-  padding:14px 22px;border-radius:6px;box-shadow:0 8px 25px rgba(0,0,0,0.8);
-  min-width:270px;backdrop-filter:blur(6px);
-}
-.vital-row{display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#8ba2b5;margin-bottom:3px}
-.vital-track{width:230px;height:9px;background:#101720;border-radius:2px;overflow:hidden;margin-bottom:8px}
-#shield-fill{height:100%;width:100%;background:linear-gradient(90deg,#00b4d8,#00f0ff);transition:width .15s}
-#hp-fill{height:100%;width:100%;background:linear-gradient(90deg,#10b981,#34d399);transition:width .15s}
-#armor-tier{font-size:11px;color:var(--rpg-purple);font-weight:800}
+  /* 우상단 슬릭 원형 미니맵 (Radar) */
+  #minimap-card {
+    position: absolute; top: 18px; right: 20px; z-index: 35; pointer-events: none;
+    display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+  }
+  #mm-wrap {
+    width: 140px; height: 140px; border-radius: 50%; overflow: hidden;
+    border: 2px solid rgba(0, 240, 255, 0.45);
+    background: rgba(6, 10, 16, 0.85); backdrop-filter: var(--hud-blur);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.6), inset 0 0 20px rgba(0,0,0,0.8);
+  }
+  #minimap-canvas { width: 140px; height: 140px; display: block; }
+  #minimap-coords { font-size: 10px; font-weight: 700; color: #94a3b8; letter-spacing: 1px; font-family: monospace; }
 
-/* 우하단 배틀그라운드 무기 & 스탠스 HUD */
-#hud-weapon{
-  position:absolute;bottom:22px;right:22px;
-  background:var(--rpg-panel);border:1px solid var(--rpg-border);border-right:4px solid var(--rpg-gold);
-  padding:14px 26px;border-radius:6px;text-align:right;box-shadow:0 8px 25px rgba(0,0,0,0.8);
-  min-width:260px;backdrop-filter:blur(6px);
-}
-#ammo-val{font-size:38px;font-weight:900;color:#fff;line-height:1}
-#wep-name{font-size:16px;color:var(--rpg-gold);font-weight:900;letter-spacing:1px;margin-top:4px}
-#wep-tier{font-size:11px;color:var(--rpg-purple);font-weight:800}
-#stance-indicator{font-size:11px;color:var(--rpg-cyan);font-weight:700;margin-top:4px}
+  /* 좌하단 미니멀 생명력/쉴드 HUD (Modern Left HUD) */
+  #hud-vital {
+    position: absolute; bottom: 24px; left: 24px; z-index: 35; pointer-events: none;
+    background: var(--hud-bg); backdrop-filter: var(--hud-blur);
+    border: 1px solid var(--hud-border); border-radius: 8px;
+    padding: 14px 18px; min-width: 250px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  }
+  .status-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 800; letter-spacing: 1px; margin-bottom: 4px; }
+  .status-label { color: #94a3b8; font-size: 10px; }
+  .status-val { color: #f8fafc; font-family: monospace; font-size: 13px; }
+  .bar-track { width: 100%; height: 6px; background: rgba(15, 23, 42, 0.8); border-radius: 3px; overflow: hidden; }
+  #shield-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #00b4d8, #00f0ff); transition: width 0.15s ease-out; }
+  #hp-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #16a34a, #22c55e); transition: width 0.15s ease-out; }
 
-/* 중앙 하단 전술 액티브 스킬 & 핫바 */
-#hotbar{
-  position:absolute;bottom:22px;left:50%;transform:translateX(-50%);
-  display:flex;gap:5px;
-}
-.hb-slot{
-  background:var(--rpg-panel);border:1px solid var(--rpg-border);padding:7px 10px;
-  border-radius:4px;text-align:center;min-width:62px;font-size:10.5px;
-  box-shadow:0 4px 14px rgba(0,0,0,0.6);transition:all .15s;
-}
-.hb-slot.active{border-color:var(--rpg-cyan);background:rgba(0,240,255,0.18);box-shadow:0 0 12px rgba(0,240,255,0.4)}
-.hb-slot b{display:block;font-size:11.5px;color:var(--rpg-gold);margin-bottom:2px}
-.cd-overlay{font-size:10px;color:#ff8888;font-weight:800}
+  /* 우하단 배틀필드풍 무기 & 탄약 HUD (Modern Right HUD) */
+  #hud-weapon {
+    position: absolute; bottom: 24px; right: 24px; z-index: 35; pointer-events: none;
+    background: var(--hud-bg); backdrop-filter: var(--hud-blur);
+    border: 1px solid var(--hud-border); border-radius: 8px;
+    padding: 14px 22px; text-align: right; min-width: 260px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  }
+  #wep-name { font-size: 15px; font-weight: 900; color: #f8fafc; letter-spacing: 1px; }
+  .ammo-display { display: flex; justify-content: flex-end; align-items: baseline; gap: 4px; margin: 4px 0 6px; }
+  #ammo-val { font-size: 32px; font-weight: 900; color: #ffffff; letter-spacing: 1px; font-family: monospace; }
+  .wep-meta-row { display: flex; justify-content: flex-end; gap: 8px; align-items: center; margin-top: 2px; }
+  .badge-tag {
+    font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 4px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1;
+  }
+  .badge-tag.active { border-color: var(--accent-cyan); color: var(--accent-cyan); background: rgba(0,240,255,0.12); }
+  .badge-tag.gold { border-color: var(--accent-gold); color: var(--accent-gold); background: rgba(245,158,11,0.12); }
 
-/* 상호작용 프롬프트 */
-#prompt{
-  position:absolute;top:58%;left:50%;transform:translate(-50%,-50%);
-  background:rgba(12,18,26,0.94);border:1px solid var(--rpg-cyan);padding:8px 22px;
-  border-radius:4px;color:#fff;font-size:14px;font-weight:800;letter-spacing:1px;
-  display:none;box-shadow:0 0 20px rgba(0,240,255,0.4);
-}
-#prompt kbd{background:var(--rpg-cyan);color:#000;padding:2px 7px;border-radius:3px;margin-right:6px}
+  /* 무기 핫바 슬롯 */
+  .slot-row { display: flex; gap: 5px; justify-content: flex-end; margin-top: 8px; }
+  .slot-btn {
+    font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 4px;
+    background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); color: #64748b;
+  }
+  .slot-btn.active { color: #f8fafc; border-color: var(--accent-cyan); background: rgba(0,240,255,0.15); }
 
-/* RPG 플로팅 대미지 팝업 */
-#dmg-layer{position:fixed;inset:0;pointer-events:none;z-index:35}
-.dmg-pop{
-  position:absolute;font-size:18px;font-weight:900;color:#fff;
-  text-shadow:0 0 8px rgba(0,0,0,0.9), 0 2px 4px #000;
-  animation:floatUp .8s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
-}
-.dmg-pop.crit{color:var(--rpg-gold);font-size:24px}
-@keyframes floatUp{0%{opacity:0;transform:translateY(10px) scale(0.8)}20%{opacity:1;transform:translateY(0) scale(1.1)}100%{opacity:0;transform:translateY(-38px) scale(1)}}
+  /* 중앙 깔끔한 인터랙션 프롬프트 */
+  #prompt {
+    position: absolute; top: 62%; left: 50%; transform: translate(-50%, -50%);
+    background: rgba(10, 16, 24, 0.85); backdrop-filter: var(--hud-blur);
+    border: 1px solid var(--accent-cyan); border-radius: 6px;
+    padding: 8px 18px; font-size: 13px; font-weight: 800; color: #f8fafc;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6); pointer-events: none; z-index: 40; display: none;
+  }
 
-/* 배너 & 알림 */
-#banner{
-  position:absolute;top:20%;left:50%;transform:translateX(-50%);
-  font-size:32px;font-weight:900;color:var(--rpg-gold);letter-spacing:3px;
-  text-shadow:0 0 25px rgba(245,197,66,0.8);opacity:0;transition:all .2s;pointer-events:none;text-align:center;
-}
-#kill-badge{
-  position:absolute;bottom:140px;left:50%;transform:translateX(-50%);
-  font-size:22px;font-weight:900;color:#fff;letter-spacing:2px;
-  text-shadow:0 0 15px rgba(0,240,255,0.7);opacity:0;transition:all .15s;
-}
+  /* 중앙 배너 알림 */
+  #banner {
+    position: absolute; top: 18%; left: 50%; transform: translateX(-50%);
+    background: rgba(8, 12, 18, 0.85); backdrop-filter: var(--hud-blur);
+    border: 1px solid var(--accent-cyan); border-radius: 6px;
+    padding: 10px 24px; font-size: 13px; font-weight: 800; color: #f8fafc;
+    box-shadow: 0 8px 30px rgba(0,240,255,0.25); pointer-events: none; z-index: 45; opacity: 0;
+    transition: opacity 0.25s ease-out;
+  }
+  #kill-badge {
+    position: absolute; top: 24%; left: 50%; transform: translateX(-50%);
+    font-size: 18px; font-weight: 900; color: #22c55e; letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(34,197,94,0.6); pointer-events: none; z-index: 45; opacity: 0;
+  }
 
-/* 탈출 카운트다운 배너 */
-#extract-banner{
-  position:absolute;top:28%;left:50%;transform:translateX(-50%);
-  background:rgba(18,34,22,0.96);border:2px solid var(--rpg-green);padding:14px 34px;
-  border-radius:6px;text-align:center;box-shadow:0 0 35px rgba(34,197,94,0.6);
-  display:none;
-}
-#extract-banner h2{margin:0 0 4px;font-size:24px;color:var(--rpg-green);letter-spacing:2px}
-#extract-banner p{margin:0;font-size:14px;color:#dcfce7}
+  /* 탈출 게이지 배너 */
+  #extract-banner {
+    position: absolute; top: 22%; left: 50%; transform: translateX(-50%);
+    background: rgba(34,197,94,0.15); backdrop-filter: var(--hud-blur);
+    border: 2px solid #22c55e; border-radius: 8px; padding: 12px 28px;
+    text-align: center; color: #4ade80; font-weight: 900; z-index: 45; display: none;
+  }
 
-/* 스킬 & 인벤토리 모달 [Tab] */
-#rpg-modal{
-  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:880px;height:540px;background:rgba(10,15,22,0.98);border:2px solid var(--rpg-cyan);
-  border-radius:6px;box-shadow:0 20px 60px rgba(0,0,0,0.95);
-  display:none;z-index:90;backdrop-filter:blur(10px);pointer-events:auto;
-  flex-direction:column;
-}
-.modal-header{
-  padding:14px 22px;border-bottom:1px solid var(--rpg-border);display:flex;
-  justify-content:space-between;align-items:center;background:#101722;
-}
-.modal-header h3{margin:0;font-size:16px;letter-spacing:2px;color:var(--rpg-gold)}
-.modal-body{display:flex;flex:1;overflow:hidden}
-.modal-col{flex:1;padding:18px;border-right:1px solid var(--rpg-border);overflow-y:auto}
-.modal-col:last-child{border-right:none}
-.modal-col h4{margin:0 0 12px;font-size:13px;color:#8ba2b5;letter-spacing:1px;text-transform:uppercase}
-.skill-card{
-  background:#141c26;border:1px solid #233142;padding:12px;border-radius:4px;
-  margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;
-}
-.skill-card b{display:block;font-size:13px;color:#fff}
-.skill-card p{margin:2px 0 0;font-size:11px;color:#8ba2b5}
-.btn-up{
-  background:var(--rpg-cyan);color:#000;border:none;padding:6px 14px;
-  font-weight:900;border-radius:3px;cursor:pointer;font-size:11px;
-}
-.btn-up:hover{background:#38ef7d}
+  /* 최초 클릭 즉시 투입 오버레이 (Deploy Card) */
+  #deploy-overlay {
+    position: fixed; inset: 0; background: rgba(4, 7, 12, 0.55); backdrop-filter: blur(4px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 100; cursor: pointer;
+  }
+  .deploy-card {
+    background: rgba(10, 16, 24, 0.88); backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 12px;
+    padding: 36px 48px; text-align: center; max-width: 540px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 40px rgba(0,240,255,0.15);
+  }
+  .deploy-tag { font-size: 11px; font-weight: 800; letter-spacing: 3px; color: var(--accent-cyan); margin-bottom: 6px; }
+  .deploy-title { font-size: 28px; font-weight: 900; letter-spacing: 2px; color: #f8fafc; margin-bottom: 8px; }
+  .deploy-sub { font-size: 13px; color: #94a3b8; margin-bottom: 24px; line-height: 1.6; }
+  .deploy-btn {
+    background: linear-gradient(135deg, #00b4d8, #0077b6); color: #fff;
+    border: none; border-radius: 6px; padding: 14px 32px; font-size: 15px; font-weight: 800;
+    letter-spacing: 1px; cursor: pointer; width: 100%; box-shadow: 0 6px 20px rgba(0,180,216,0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .deploy-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,180,216,0.6); }
+  .deploy-hints { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 20px; font-size: 11px; color: #64748b; }
+  .deploy-hint-pill { background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 4px; }
 
-/* 상인 & 암시장 거래소 모달 [B] */
-#trader-modal{
-  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:900px;height:540px;background:rgba(8,11,16,0.98);border:2px solid var(--rpg-gold);
-  border-radius:6px;box-shadow:0 25px 70px rgba(0,0,0,0.95);
-  display:none;z-index:95;backdrop-filter:blur(10px);pointer-events:auto;
-  flex-direction:column;
-}
-.trader-tabs{display:flex;border-bottom:1px solid var(--rpg-border);background:#101620}
-.trader-tab{padding:12px 24px;cursor:pointer;font-weight:700;font-size:13px;color:#8ba2b5;border-bottom:2px solid transparent}
-.trader-tab.active{color:var(--rpg-gold);border-bottom-color:var(--rpg-gold);background:#151d2a}
-.shop-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:16px}
-.item-card{
-  background:#141c26;border:1px solid #233142;padding:10px;border-radius:4px;
-  font-size:11.5px;cursor:pointer;transition:all .15s;position:relative;
-}
-.item-card:hover{border-color:var(--rpg-gold);background:#1d2837}
-.item-card b{display:block;font-size:12px;color:#fff;margin-bottom:3px}
-.item-card .val{color:var(--rpg-gold);font-weight:700}
+  /* 야간투시경 오버레이 */
+  #nvg-overlay {
+    position: absolute; inset: 0; pointer-events: none; z-index: 12; display: none;
+    background: radial-gradient(circle at center, rgba(16, 255, 60, 0.14), rgba(2, 45, 12, 0.65) 85%),
+                repeating-linear-gradient(rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0, 30, 0, 0.35) 3px);
+    mix-blend-mode: screen;
+  }
+  #thermal-overlay {
+    position: absolute; inset: 0; pointer-events: none; z-index: 12; display: none;
+    background: radial-gradient(circle at center, rgba(30, 64, 175, 0.22), rgba(15, 23, 42, 0.75));
+    mix-blend-mode: color;
+  }
+  #breath-indicator {
+    position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%);
+    font-size: 11px; font-weight: 800; color: #38ef7d; letter-spacing: 2px;
+    background: rgba(4, 20, 10, 0.75); border: 1px solid #38ef7d;
+    padding: 4px 14px; border-radius: 12px; display: none; pointer-events: none; z-index: 42;
+  }
+  #jam-banner {
+    position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%);
+    background: rgba(185, 28, 28, 0.88); backdrop-filter: var(--hud-blur);
+    border: 2px solid #ef4444; border-radius: 8px; padding: 12px 28px;
+    color: #fff; font-weight: 900; font-size: 15px; letter-spacing: 1px; z-index: 45; display: none;
+  }
 
-/* 정산 모달 */
-#result-modal{
-  position:fixed;inset:0;background:rgba(6,9,13,0.97);display:none;
-  flex-direction:column;align-items:center;justify-content:center;
-  z-index:100;pointer-events:auto;
-}
-#result-modal h1{font-size:48px;margin:0 0 8px;letter-spacing:4px;color:var(--rpg-gold);text-shadow:0 0 30px rgba(245,197,66,0.6)}
-.res-card{
-  background:#121822;border:1px solid var(--rpg-border);padding:24px 38px;
-  border-radius:6px;min-width:440px;margin-top:16px;box-shadow:0 10px 30px rgba(0,0,0,0.7);
-}
-.res-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #1d2633;font-size:14px}
-.res-row:last-child{border-bottom:none;font-weight:900;font-size:16px;color:var(--rpg-cyan)}
-.btn-act{
-  background:var(--rpg-cyan);color:#0a0d10;border:none;padding:12px 34px;
-  font-weight:900;letter-spacing:1.5px;border-radius:4px;cursor:pointer;font-size:14px;margin-top:24px;
-}
-.btn-act:hover{background:#38ef7d}
+  /* 모달 공통 스타일 (Settings, Map, Trader, RPG) */
+  .tactical-modal {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: rgba(10, 16, 24, 0.95); backdrop-filter: blur(16px);
+    border: 1px solid var(--accent-cyan); border-radius: 8px;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.95), 0 0 40px rgba(0,240,255,0.2);
+    display: none; z-index: 95; pointer-events: auto; flex-direction: column; overflow: hidden;
+  }
+  .modal-head {
+    padding: 14px 24px; background: #0d1522; border-bottom: 1px solid var(--hud-border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .modal-head h3 { font-size: 16px; font-weight: 900; color: var(--accent-cyan); letter-spacing: 1.5px; }
+  .modal-close-btn { background: transparent; border: none; color: #94a3b8; font-size: 18px; cursor: pointer; }
+  .modal-close-btn:hover { color: #fff; }
 
+  /* 설정 모달 */
+  #settings-modal { width: 500px; padding-bottom: 18px; }
+  .set-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .set-row label { font-size: 13px; font-weight: 700; color: #cbd5e1; }
+  .set-row input[type=range] { width: 180px; accent-color: var(--accent-cyan); }
 
-/* 전술 레이더 미니맵 & 좌표 HUD */
-#minimap-box{
-  position:absolute;top:56px;right:22px;
-  width:160px;height:160px;border-radius:50%;
-  background:rgba(8,14,20,0.92);border:2px solid var(--rpg-cyan);
-  box-shadow:0 0 20px rgba(0,240,255,0.35), inset 0 0 15px rgba(0,0,0,0.8);
-  overflow:hidden;pointer-events:none;z-index:25;
-}
-#minimap-canvas{display:block;width:100%;height:100%}
-#minimap-coords{
-  position:absolute;top:222px;right:22px;
-  font-family:monospace;font-size:10.5px;color:var(--rpg-cyan);
-  background:var(--rpg-panel);padding:3px 10px;border-radius:3px;
-  border:1px solid var(--rpg-border);pointer-events:none;z-index:25;
-}
+  /* 위성 지도 모달 */
+  #sat-map-modal { width: 880px; height: 580px; }
+  #sat-canvas { flex: 1; display: block; background: #05080c; cursor: crosshair; }
 
-/* 저격 스코프 비네트 (AWM 4배율 전용) */
-#sniper-scope{
-  position:fixed;inset:0;pointer-events:none;display:none;z-index:38;
-  background:radial-gradient(circle at center, transparent 28%, rgba(0,0,0,0.95) 44%, #000 65%);
-}
-#sniper-crosshair{
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:360px;height:360px;pointer-events:none;
-}
+  /* 암시장 상인 모달 */
+  #trader-modal { width: 680px; }
+  .trader-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 20px; }
+  .item-card {
+    background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;
+    padding: 14px; cursor: pointer; transition: border-color 0.15s;
+  }
+  .item-card:hover { border-color: var(--accent-cyan); }
+  .item-card b { display: block; font-size: 13px; color: #f8fafc; margin-bottom: 4px; }
+  .item-card .val { font-size: 14px; font-weight: 800; color: var(--accent-gold); font-family: monospace; }
 
-/* 전술 핑 팝업 레이어 */
-#ping-marker{
-  position:absolute;transform:translate(-50%, -50%);
-  font-size:11px;font-weight:900;color:var(--rpg-gold);
-  background:rgba(12,18,26,0.92);border:1px solid var(--rpg-gold);
-  padding:3px 8px;border-radius:4px;box-shadow:0 0 14px rgba(245,197,66,0.8);
-  pointer-events:none;display:none;align-items:center;gap:4px;z-index:36;
-}
-
-
-/* 설정 메뉴 모달 [Esc] */
-#settings-modal{
-  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:520px;background:rgba(10,15,22,0.98);border:2px solid var(--rpg-cyan);
-  border-radius:6px;box-shadow:0 20px 60px rgba(0,0,0,0.95);
-  display:none;z-index:99;backdrop-filter:blur(10px);pointer-events:auto;
-  flex-direction:column;padding:24px 30px;
-}
-#settings-modal h2{margin:0 0 16px;color:var(--rpg-gold);font-size:18px;letter-spacing:2px}
-.setting-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:13px}
-.setting-row input[type=range]{width:160px;cursor:pointer}
-.keybind-list{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11.5px;color:#94a3b8;margin-top:14px;border-top:1px solid #1e293b;padding-top:12px}
-.keybind-list span b{color:var(--rpg-cyan);margin-right:4px}
-
-/* 차량 탑승 계기판 HUD */
-#vehicle-hud{
-  position:absolute;bottom:90px;left:50%;transform:translateX(-50%);
-  background:rgba(10,15,22,0.94);border:2px solid #f5c542;
-  padding:10px 28px;border-radius:6px;display:none;
-  align-items:center;gap:18px;pointer-events:none;z-index:30;
-}
-.spd-val{font-size:32px;font-weight:900;color:#f5c542}
-
-
-/* 코옵 멀티플레이 버튼 & 모달 */
-#coop-btn{
-  position:absolute;top:16px;right:210px;font-size:12px;font-weight:700;
-  color:#fff;background:linear-gradient(135deg,#1e3a8a,#2563eb);
-  padding:7px 16px;border-radius:4px;border:1px solid #3b82f6;
-  pointer-events:auto;cursor:pointer;box-shadow:0 0 15px rgba(37,99,235,0.4);
-}
-#coop-btn:hover{background:#1d4ed8;box-shadow:0 0 20px rgba(59,130,246,0.7)}
-
-#coop-modal{
-  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:580px;background:rgba(8,12,18,0.98);border:2px solid var(--rpg-cyan);
-  border-radius:6px;box-shadow:0 25px 70px rgba(0,0,0,0.95);
-  display:none;z-index:98;backdrop-filter:blur(10px);pointer-events:auto;
-  flex-direction:column;padding:24px 30px;
-}
-#coop-modal h2{margin:0 0 12px;font-size:18px;color:var(--rpg-gold);letter-spacing:1.5px}
-.coop-section{background:#111924;border:1px solid var(--rpg-border);padding:14px;border-radius:4px;margin-bottom:12px}
-.coop-section h4{margin:0 0 8px;font-size:13px;color:var(--rpg-cyan)}
-.coop-row{display:flex;gap:8px;align-items:center}
-.coop-input{flex:1;background:#090d13;border:1px solid var(--rpg-border);color:#fff;padding:8px 12px;border-radius:4px;font-family:monospace;font-size:13px}
-.coop-status{font-size:12px;color:#94a3b8;margin-top:8px}
-
-/* 열화상 IR 필터 오버레이 */
-#thermal-overlay{
-  position:fixed;inset:0;pointer-events:none;display:none;z-index:37;
-  background:rgba(10,25,47,0.35);mix-blend-mode:luminosity;
-  box-shadow:inset 0 0 100px rgba(0,240,255,0.4);
-}
-#thermal-badge{
-  position:absolute;top:70px;left:50%;transform:translateX(-50%);
-  font-size:11px;font-weight:900;letter-spacing:2px;color:#00f0ff;
-  background:rgba(0,20,40,0.85);padding:4px 12px;border-radius:3px;
-  border:1px solid #00f0ff;pointer-events:none;display:none;z-index:38;
-}
-
-/* 건스미스 부착물 카드 */
-.mod-card{
-  background:#141c26;border:1px solid #233142;padding:10px 14px;border-radius:4px;
-  margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;
-}
-.mod-card.installed{border-color:#38ef7d;background:rgba(34,197,94,0.12)}
-
-
-/* [M] 전술 위성 지도 모달 */
-#sat-map-modal{
-  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:920px;height:620px;background:rgba(6,10,16,0.98);
-  border:2px solid var(--rpg-cyan);border-radius:6px;
-  box-shadow:0 0 50px rgba(0,240,255,0.4), 0 25px 80px rgba(0,0,0,0.95);
-  display:none;z-index:97;backdrop-filter:blur(12px);pointer-events:auto;
-  flex-direction:column;overflow:hidden;
-}
-.sat-header{
-  padding:12px 24px;background:#0d1522;border-bottom:1px solid var(--rpg-border);
-  display:flex;justify-content:space-between;align-items:center;
-}
-.sat-header h3{margin:0;font-size:16px;color:var(--rpg-cyan);letter-spacing:2px}
-.sat-body{display:flex;flex:1;overflow:hidden}
-#sat-canvas{flex:1;display:block;cursor:crosshair;background:#05080c}
-.sat-sidebar{width:280px;background:#090e15;border-left:1px solid var(--rpg-border);padding:18px;overflow-y:auto}
-.sector-badge{padding:8px;border-radius:4px;background:#121a24;border:1px solid #1f2b38;margin-bottom:8px;font-size:12px}
-.sector-badge b{display:block;color:var(--rpg-gold);margin-bottom:2px}
-
-/* 슬라이딩 및 불릿타임 블러 FX */
-#bullet-time-vignette{
-  position:fixed;inset:0;pointer-events:none;display:none;z-index:42;
-  box-shadow:inset 0 0 120px rgba(245,197,66,0.5);mix-blend-mode:screen;
-}
-
-
-/* [Q] 정찰 쿼드콥터 드론 비행 HUD */
-#drone-hud{
-  position:fixed;inset:0;pointer-events:none;display:none;z-index:41;
-  background:radial-gradient(circle at center, transparent 45%, rgba(0,25,15,0.7) 85%);
-  border:12px solid rgba(0,255,136,0.3);box-shadow:inset 0 0 80px rgba(0,255,136,0.25);
-}
-#drone-crosshair{
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:200px;height:200px;
-}
-.drone-osd{
-  position:absolute;font-family:monospace;font-size:12px;color:#00ff88;font-weight:700;
-  text-shadow:0 0 8px rgba(0,255,136,0.8);
-}
-#drone-scanline{
-  position:absolute;inset:0;background:repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,255,136,0.06) 4px);
-  pointer-events:none;
-}
-
-
-/* 오퍼레이터 전문화 클래스 카드 */
-.class-grid{display:grid;grid-template-columns:repeat(3, 1fr);gap:10px;margin-top:10px}
-.class-card{
-  background:#131c26;border:2px solid #233142;padding:12px;border-radius:6px;
-  cursor:pointer;transition:all .15s;text-align:center;
-}
-.class-card:hover{border-color:var(--rpg-cyan);background:#1a2636}
-.class-card.selected{border-color:var(--rpg-gold);background:rgba(245,197,66,0.15);box-shadow:0 0 15px rgba(245,197,66,0.3)}
-.class-card h5{margin:0 0 6px;font-size:13px;color:#fff}
-.class-card p{margin:0;font-size:10.5px;color:#8ba2b5;line-height:1.4}
-
-/* 야간 전술 라이트 인디케이터 */
-#light-indicator{
-  position:absolute;bottom:22px;left:305px;
-  background:var(--rpg-panel);border:1px solid var(--rpg-border);
-  padding:8px 14px;border-radius:4px;font-size:11px;font-weight:800;
-  color:#cbd5e1;display:flex;align-items:center;gap:6px;pointer-events:none;
-}
-#light-dot{width:8px;height:8px;border-radius:50%;background:#475569;display:inline-block}
-#light-dot.on{background:#fde047;box-shadow:0 0 8px #fde047}
-
-
-/* 메인 메뉴 오버레이 */
-#main-menu-overlay{
-  position:fixed;inset:0;background:radial-gradient(circle at center, rgba(10,16,24,0.92) 20%, rgba(4,7,12,0.98) 90%);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  z-index:150;backdrop-filter:blur(15px);pointer-events:auto;
-}
-.menu-box{
-  text-align:center;max-width:580px;padding:36px;
-  background:rgba(12,18,26,0.94);border:2px solid var(--rpg-cyan);
-  border-radius:8px;box-shadow:0 0 60px rgba(0,240,255,0.35), 0 25px 80px rgba(0,0,0,0.95);
-}
-.menu-tag{font-size:11px;font-weight:900;letter-spacing:3px;color:var(--rpg-gold);margin-bottom:8px}
-.menu-title{font-size:38px;font-weight:900;letter-spacing:4px;color:#fff;margin:0 0 6px;text-shadow:0 0 25px rgba(0,240,255,0.7)}
-.menu-subtitle{font-size:13px;color:#94a3b8;margin:0 0 28px}
-.menu-btn-group{display:flex;flex-direction:column;gap:10px}
-.menu-btn{
-  background:#141d28;border:1px solid #233142;color:#e2e8f0;padding:14px 24px;
-  font-size:14px;font-weight:900;letter-spacing:1.5px;border-radius:4px;cursor:pointer;
-  transition:all .15s;text-decoration:none;display:inline-block;
-}
-.menu-btn:hover{background:var(--rpg-cyan);color:#000;border-color:var(--rpg-cyan);box-shadow:0 0 20px rgba(0,240,255,0.5)}
-.menu-btn.primary{background:linear-gradient(135deg,#00b4d8,#00f0ff);color:#05080c;border:none;box-shadow:0 0 25px rgba(0,240,255,0.4)}
-.menu-btn.primary:hover{background:#38ef7d;box-shadow:0 0 30px rgba(56,239,125,0.6)}
-
-/* 상단 우측 메뉴 & 설정 버튼 */
-.top-action-bar{
-  position:absolute;top:16px;right:22px;display:flex;gap:8px;align-items:center;
-  pointer-events:auto;z-index:28;
-}
-.hud-btn{
-  font-size:12px;font-weight:700;color:#ece8e1;background:var(--rpg-panel);
-  padding:7px 14px;border-radius:4px;border:1px solid var(--rpg-border);
-  cursor:pointer;text-decoration:none;transition:all .15s;
-}
-.hud-btn:hover{background:var(--rpg-cyan);color:#000}
-
-/* 안전지대 HUD 뱃지 */
-#safezone-badge{
-  position:absolute;top:74px;left:50%;transform:translateX(-50%);
-  background:rgba(18,34,22,0.92);border:1.5px solid var(--rpg-green);
-  color:#38ef7d;padding:6px 20px;border-radius:20px;font-size:12px;font-weight:900;
-  letter-spacing:1.5px;box-shadow:0 0 15px rgba(34,197,94,0.4);
-  pointer-events:none;display:none;z-index:32;
-}
-
-
-/* 탈코프 신체 부위 상태 인형 (Body Status Doll) */
-#body-doll{
-  position:absolute;bottom:148px;left:274px;
-  background:rgba(8,12,18,0.92);border:1px solid var(--rpg-border);
-  padding:6px 12px;border-radius:4px;display:flex;flex-direction:column;align-items:center;
-  box-shadow:0 4px 15px rgba(0,0,0,0.7);pointer-events:none;z-index:26;
-}
-.doll-title{font-size:9.5px;font-weight:900;color:#64748b;letter-spacing:1px;margin-bottom:4px}
-.doll-svg{width:38px;height:52px}
-
-/* 무기 검사 HUD 알림 */
-#inspect-hint{
-  position:absolute;bottom:120px;right:22px;
-  font-size:11px;color:#94a3b8;background:rgba(10,15,22,0.85);
-  padding:3px 10px;border-radius:3px;border:1px solid #1e293b;pointer-events:none;
-}
-
-
-/* 방탄판 교체 [K] 및 레이드 시계 HUD */
-#plate-indicator{
-  position:absolute;bottom:22px;left:420px;
-  background:var(--rpg-panel);border:1px solid var(--rpg-border);
-  padding:8px 14px;border-radius:4px;font-size:11px;font-weight:800;
-  color:#f5c542;display:flex;align-items:center;gap:6px;pointer-events:none;
-}
-#raid-timer-box{
-  position:absolute;top:16px;left:50%;transform:translateX(-50%);
-  font-family:monospace;font-size:14px;font-weight:900;letter-spacing:2px;
-  color:#f87171;background:rgba(12,18,26,0.95);border:1px solid #ef4444;
-  padding:4px 16px;border-radius:4px;box-shadow:0 0 15px rgba(239,68,68,0.4);
-  pointer-events:none;z-index:27;
-}
-
-
-/* [P] 로파이 카세트 워크맨 HUD */
-#walkman-hud{
-  position:absolute;bottom:22px;left:560px;
-  background:rgba(12,18,26,0.92);border:1px solid #c084fc;
-  padding:8px 14px;border-radius:4px;font-size:11px;font-weight:800;
-  color:#e9d5ff;display:flex;align-items:center;gap:6px;pointer-events:none;
-}
-#walkman-dot{width:7px;height:7px;border-radius:50%;background:#475569;display:inline-block}
-#walkman-dot.playing{background:#c084fc;box-shadow:0 0 8px #c084fc}
-
-/* 차탄 불량 (Jam) 경고 배너 */
-#jam-banner{
-  position:absolute;top:48%;left:50%;transform:translate(-50%,-50%);
-  background:rgba(220,38,38,0.95);border:2px solid #fecaca;
-  color:#fff;padding:10px 24px;border-radius:6px;font-size:14px;font-weight:900;
-  letter-spacing:1px;box-shadow:0 0 30px rgba(239,68,68,0.8);
-  display:none;pointer-events:none;z-index:44;
-}
-
-
-/* 방향성 피격 위협 인디케이터 (Threat Arc) */
-#threat-indicator{
-  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:260px;height:260px;pointer-events:none;display:none;z-index:35;
-}
-.threat-arrow{
-  position:absolute;top:50%;left:50%;width:0;height:0;
-  border-left:14px solid transparent;border-right:14px solid transparent;
-  border-bottom:28px solid #ef4444;filter:drop-shadow(0 0 10px #ef4444);
-  transform-origin:center 120px;
-}
-
-/* 무기 숙련도 & 헤드샷 트래커 */
-#mastery-badge{
-  position:absolute;bottom:84px;right:22px;
-  background:rgba(10,16,24,0.92);border:1px solid #3b82f6;
-  padding:4px 12px;border-radius:4px;font-size:11px;font-weight:800;
-  color:#93c5fd;display:flex;align-items:center;gap:6px;pointer-events:none;
-}
-
-
-/* 킬스트릭 배너 (Double / Triple / Rampage) */
-#killstreak-banner{
-  position:absolute;top:18%;left:50%;transform:translateX(-50%);
-  font-size:28px;font-weight:900;letter-spacing:3px;color:#facc15;
-  text-shadow:0 0 25px rgba(250,204,21,0.8), 0 2px 4px #000;
-  opacity:0;transition:all .18s;pointer-events:none;z-index:36;text-align:center;
-}
-
-#ch-canvas{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;width:160px;height:160px;z-index:40}
-#hit-indicator{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .15s;z-index:30}
-#arcade-btn{position:absolute;top:16px;right:22px;font-size:12px;color:#ece8e1;background:var(--rpg-panel);padding:7px 16px;border-radius:4px;border:1px solid var(--rpg-border);pointer-events:auto;cursor:pointer;text-decoration:none}
-#arcade-btn:hover{background:var(--rpg-red);color:#fff}
-
-    /* === AAA GRAPHICS & HUD EXTENSIONS === */
-    #nvg-overlay {
-      position: absolute; inset: 0; pointer-events: none; z-index: 48; display: none;
-      background: radial-gradient(circle at center, rgba(16, 255, 60, 0.18), rgba(2, 45, 12, 0.72) 85%),
-                  repeating-linear-gradient(rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0, 30, 0, 0.38) 3px);
-      box-shadow: inset 0 0 120px rgba(0,0,0,0.9);
-      mix-blend-mode: screen;
-    }
-    #breath-indicator {
-      position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%);
-      font-size: 11px; font-weight: 800; color: #38ef7d; letter-spacing: 2px;
-      background: rgba(4, 20, 10, 0.75); border: 1px solid #38ef7d;
-      padding: 3px 12px; border-radius: 12px; display: none; pointer-events: none; z-index: 42;
-    }
-    .hud-badge-row {
-      display: flex; gap: 6px; margin-top: 5px; flex-wrap: wrap;
-    }
-    .hud-badge {
-      font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;
-      background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255,255,255,0.15);
-      color: #94a3b8; letter-spacing: 0.5px;
-    }
-    .hud-badge.active-gold {
-      border-color: #f59e0b; color: #fbbf24; background: rgba(245, 158, 11, 0.15);
-      box-shadow: 0 0 8px rgba(245, 158, 11, 0.35);
-    }
-    .hud-badge.active-cyan {
-      border-color: #00f0ff; color: #00f0ff; background: rgba(0, 240, 255, 0.15);
-      box-shadow: 0 0 8px rgba(0, 240, 255, 0.35);
-    }
-    .hud-badge.active-green {
-      border-color: #22c55e; color: #4ade80; background: rgba(34, 197, 94, 0.15);
-      box-shadow: 0 0 8px rgba(34, 197, 94, 0.35);
-    }
-
+  /* 작전 결과 모달 */
+  #result-modal { width: 440px; padding: 30px; text-align: center; }
+  #res-title { font-size: 24px; font-weight: 900; margin-bottom: 6px; }
+  #res-sub { font-size: 14px; font-weight: 800; margin-bottom: 20px; }
+  .res-stat { display: flex; justify-content: space-between; font-size: 13px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
 </style>
 </head>
 <body>
 <div id="ui">
- <div id="dmg-layer"></div>
- 
- 
- <div id="thermal-overlay"></div>
-
-<div id="nvg-overlay"></div>
-<div id="breath-indicator">🫁 BREATH HELD (조준 안정화)</div>
-
- <div id="thermal-badge">FLIR THERMAL IR VISION [ON]</div>
-
- <!-- 2인 코옵 멀티플레이 모달 -->
- <div id="coop-modal">
-  <h2>🌐 전술 코옵 멀티플레이 (P2P CO-OP SQUAD)</h2>
-  <p style="font-size:12px;color:#94a3b8;margin:0 0 14px">
-   친구와 함께 같은 전장에 투입되어 실시간 협동 레이드 및 보스 공략을 진행합니다. (서버 설치 없이 WebRTC P2P로 직접 연결)
-  </p>
-  <div class="coop-section">
-   <h4>방 만들기 (HOST SQUAD)</h4>
-   <div class="coop-row">
-    <input type="text" id="host-code-input" class="coop-input" readonly value="생성 대기 중...">
-    <button class="btn-up" style="padding:8px 16px" onclick="createCoopRoom()">방 생성</button>
-    <button class="btn-up" style="padding:8px 16px;background:var(--rpg-gold)" onclick="copyCoopLink()">링크 복사</button>
-   </div>
-   <div id="host-status" class="coop-status">방 생성 버튼을 누르면 초대 코드 및 링크가 발급됩니다.</div>
-  </div>
-  <div class="coop-section">
-   <h4>방 참가하기 (JOIN SQUAD)</h4>
-   <div class="coop-row">
-    <input type="text" id="join-code-input" class="coop-input" placeholder="호스트의 6자리 방 코드 입력">
-    <button class="btn-up" style="padding:8px 16px" onclick="joinCoopRoom()">참가</button>
-   </div>
-   <div id="join-status" class="coop-status">친구가 공유한 코드나 URL 링크로 접속할 수 있습니다.</div>
-  </div>
-  <div style="display:flex;justify-content:flex-end;margin-top:10px">
-   <button class="btn-act" style="margin-top:0;padding:8px 22px" onclick="toggleCoopModal()">닫기</button>
-  </div>
- </div>
-
- 
-
- 
- <!-- 안전지대 상태 표시기 -->
- <div id="safezone-badge">🛡️ SAFE ZONE (안전 기지 벙커 - 교전 금지 & 무적 구역)</div>
-
- <!-- 상단 우측 전술 액션 바 -->
- <div class="top-action-bar">
-  <button class="hud-btn" onclick="openMainMenu()">📋 메인 메뉴</button>
-  <button class="hud-btn" onclick="toggleSettings()">⚙️ 설정</button>
-  <button class="hud-btn" style="background:#1d4ed8;border-color:#3b82f6" onclick="toggleCoopModal()">👥 코옵</button>
-  <a class="hud-btn" style="background:#1e293b" href="../site/index.html">🏠 포털</a>
- </div>
-
- <!-- 상업용 메인 메뉴 오버레이 -->
- <div id="main-menu-overlay">
-  <div class="menu-box">
-   <div class="menu-tag">TACTICAL OPEN WORLD SURVIVAL RPG</div>
-   <h1 class="menu-title">OUTPOST PROTOCOL</h1>
-   <div class="menu-subtitle">아웃포스트 프로토콜 : 3.0 전술 레이드 생환전</div>
-   <div class="menu-btn-group">
-    <button class="menu-btn primary" onclick="startRaidGame()">⚔️ 레이드 작전 출격 (START RAID)</button>
-    <button class="menu-btn" onclick="toggleCoopModal()">👥 2인 코옵 멀티플레이 (CO-OP SQUAD)</button>
-    <button class="menu-btn" onclick="toggleSettings()">⚙️ 작전 설정 (SETTINGS)</button>
-    <button class="menu-btn" onclick="toggleTrader()">🏛️ 암시장 상점 (TRADER & ARSENAL)</button>
-    <a class="menu-btn" href="../site/index.html">🏠 아케이드 포털 복귀</a>
-   </div>
-   <div style="margin-top:24px;font-size:11px;color:#64748b;display:flex;justify-content:space-between">
-    <span>COMMERCIAL EDITION VER 5.5</span>
-    <span>PBR COLLISION & SAFE ZONE SYSTEM</span>
-   </div>
-  </div>
- </div>
-
- <div id="top-hud">
-  <div class="level-row">
-   <span id="player-lvl">LV. 1 특수작전 요원</span>
-   <span id="stat-points">가용 스킬 포인트: <b>0</b> SP</span>
-   <span id="exp-text">EXP 0 / 100</span>
-  </div>
-  <div class="exp-track"><div id="exp-fill"></div></div>
-  <div id="compass-strip">··· N ··· 030 ··· 060 ··· E ··· 120 ··· 150 ··· S ··· 210 ··· 240 ··· W ··· 300 ··· 330 ··· N ···</div>
- </div>
-
- <div id="quest-box">
-  <h4>📜 레이드 전술 미션</h4>
-  <div class="quest-item" id="q-scav">🎯 약탈자 스캐브 소탕 (0 / 4)</div>
-  <div class="quest-item" id="q-box">📦 전술 보급 상자 파밍 (0 / 2)</div>
-  <div class="quest-item" id="q-boss">👑 저격탑 보스 글루하르 처치 (0 / 1)</div>
-  <div class="quest-item" id="q-exfil">🚁 녹색 신호탄 탈출 지점 생환</div>
- </div>
-
- <div id="banner"></div>
- <div id="kill-badge">KILL +60 EXP</div>
- <div id="prompt"><kbd>F</kbd> <span id="prompt-txt">상호작용</span></div>
-
- <div id="extract-banner">
-  <h2>탈출 진행 중 (EXTRACTING)</h2>
-  <p><b id="extract-time" style="color:#fff;font-size:22px">5.0</b>초 동안 탈출 구역 유지</p>
- </div>
-
- 
- <div id="squad-hud">
-  <div class="sq-header">
-   <span class="sq-name">🛡️ ALPHA-1 (아군 특수요원)</span>
-   <span id="sq-status" class="sq-status">동행 대기 [READY]</span>
-  </div>
-  <div class="vital-track" style="height:6px;margin-bottom:0">
-   <div id="sq-hp-fill" style="height:100%;width:100%;background:linear-gradient(90deg,#22c55e,#38ef7d)"></div>
-  </div>
- </div>
- <div id="radio-sub">📻 [Alpha-1] 대위님, 엄호 준비 완료되었습니다. 함께 이동하시죠.</div>
-
- 
- <div id="body-doll">
-  <div class="doll-title">BODY STATUS</div>
-  <svg class="doll-svg" viewBox="0 0 40 60">
-   <!-- Head -->
-   <circle cx="20" cy="8" r="6" id="doll-head" fill="#22c55e"/>
-   <!-- Torso -->
-   <rect x="13" y="16" width="14" height="20" rx="2" id="doll-torso" fill="#22c55e"/>
-   <!-- Left Arm -->
-   <rect x="5" y="16" width="6" height="18" rx="2" id="doll-arm-l" fill="#22c55e"/>
-   <!-- Right Arm -->
-   <rect x="29" y="16" width="6" height="18" rx="2" id="doll-arm-r" fill="#22c55e"/>
-   <!-- Left Leg -->
-   <rect x="13" y="38" width="6" height="20" rx="2" id="doll-leg-l" fill="#22c55e"/>
-   <!-- Right Leg -->
-   <rect x="21" y="38" width="6" height="20" rx="2" id="doll-leg-r" fill="#22c55e"/>
-  </svg>
- </div>
-
- <div id="hud-vital">
-  <div class="vital-row"><span>KEVLAR SHIELD (5초 비피격 시 자동 재생)</span><span id="shield-val">100 / 100</span></div>
-  <div class="vital-track"><div id="shield-fill"></div></div>
-  <div class="vital-row"><span>AGENT HEALTH</span><span id="hp-val">100 / 100</span></div>
-  <div class="vital-track"><div id="hp-fill"></div></div>
-  <div id="armor-tier">🛡️ 방탄 장비: LEVEL 2 헬멧 & 방탄복</div>
- </div>
-
- <div id="hud-weapon">
-  <div id="wep-tier">⭐⭐⭐ RARE ASSAULT RIFLE</div>
-  <div id="ammo-val">30 / 120</div>
-  <div id="wep-name">M4A1-S TACTICAL</div>
-  <div id="stance-indicator">서서쏴 [기본 자세]</div>
-  <div class="hud-badge-row">
-    <div id="badge-firemode" class="hud-badge active-cyan">[X] 연발 (AUTO)</div>
-    <div id="badge-ammo" class="hud-badge">[U] FMJ 표준탄</div>
-    <div id="badge-nvg" class="hud-badge">[N] NVG 야간경</div>
-    <div id="badge-camo" class="hud-badge">[K] 기본 도색</div>
-    <div id="badge-light" class="hud-badge">[L] 전술 조명</div>
-  </div>
- </div>
-
- <div id="hotbar">
-  <div class="hb-slot active" id="hb-1"><b>[1] M4A1</b>소음돌격</div>
-  <div class="hb-slot" id="hb-2"><b>[2] AK-47</b>중화기소총</div>
-  <div class="hb-slot" id="hb-3"><b>[3] AWM</b>헤비저격총</div>
-  <div class="hb-slot" id="hb-4"><b>[4] 샷건</b>SPAS-12</div>
-   <div class="hb-slot" id="hb-5"><b>[5] 센트리</b>설치형포탑</div>
-
-  <div class="hb-slot" id="hb-q"><b>[Q] 드론</b><span id="cd-q">적 탐지</span></div>
-  <div class="hb-slot" id="hb-e"><b>[E] 나노스팀</b><span id="cd-e">실드충전</span></div>
-  <div class="hb-slot" id="hb-g"><b>[G] 수류탄</b><span id="cnt-g">2개 소지</span></div>
-  <div class="hb-slot"><b>[Tab]</b>스킬/스탯</div>
-  <div class="hb-slot"><b>[B]</b>암시장상인</div>
-     <div class="hb-slot"><b>[우클릭]</b>정밀조준</div>
-      <div class="hb-slot"><b>[M]</b>위성지도</div>
-   <div class="hb-slot"><b>[T]</b>열화상</div>
-      <div class="hb-slot"><b>[L]</b>전술라이트</div>
-   <div class="hb-slot"><b>[H]</b>섬광탄</div>
-   <div class="hb-slot"><b>[Z]</b>전술핑</div>
-   <div class="hb-slot"><b>[C]</b>앉기</div>
-  <div class="hb-slot"><b>[R]</b>장전</div>
- </div>
-
- 
- <div id="minimap-box">
-  <canvas id="minimap-canvas" width="160" height="160"></canvas>
- </div>
- <div id="minimap-coords">GRID: X:00 Z:-34</div>
- <div id="ping-marker"><span id="ping-icon">📍</span> <span id="ping-dist">35m</span></div>
-
- <div id="sniper-scope">
-  <svg id="sniper-crosshair" viewBox="0 0 360 360">
-    <circle cx="180" cy="180" r="160" fill="none" stroke="#22d3ee" stroke-width="1.8" opacity="0.6"/>
-    <line x1="20" y1="180" x2="340" y2="180" stroke="#22d3ee" stroke-width="1.4" opacity="0.85"/>
-    <line x1="180" y1="20" x2="180" y2="340" stroke="#22d3ee" stroke-width="1.4" opacity="0.85"/>
-    <circle cx="180" cy="180" r="3.5" fill="#ff4655"/>
-    <line x1="150" y1="180" x2="150" y2="186" stroke="#22d3ee" stroke-width="1.2"/>
-    <line x1="210" y1="180" x2="210" y2="186" stroke="#22d3ee" stroke-width="1.2"/>
-    <line x1="120" y1="180" x2="120" y2="190" stroke="#22d3ee" stroke-width="1.2"/>
-    <line x1="240" y1="180" x2="240" y2="190" stroke="#22d3ee" stroke-width="1.2"/>
-    <line x1="180" y1="150" x2="186" y2="150" stroke="#22d3ee" stroke-width="1.2"/>
-    <line x1="180" y1="210" x2="186" y2="210" stroke="#22d3ee" stroke-width="1.2"/>
-    <line x1="180" y1="120" x2="190" y2="120" stroke="#22d3ee" stroke-width="1.2"/>
-    <line x1="180" y1="240" x2="190" y2="240" stroke="#22d3ee" stroke-width="1.2"/>
-    <text x="188" y="172" fill="#22d3ee" font-size="10" font-family="monospace" font-weight="bold">4.0x MIL-DOT</text>
-    <text x="188" y="196" fill="#f5c542" font-size="10" font-family="monospace">RANGE: AUTO</text>
-  </svg>
- </div>
-
- 
- <!-- 차량 계기판 HUD -->
- <div id="vehicle-hud">
-  <div>
-   <div style="font-size:10px;color:#8ba2b5;font-weight:800">4x4 TACTICAL BUGGY</div>
-   <div class="spd-val"><span id="buggy-spd">0</span> <span style="font-size:14px;color:#8ba2b5">KM/H</span></div>
-  </div>
-  <div style="font-size:11px;color:#cbd5e1">
-   • <kbd>W</kbd>/<kbd>S</kbd> 전진 및 후진<br>
-   • <kbd>A</kbd>/<kbd>D</kbd> 핸들 조향<br>
-   • <kbd>F</kbd> 차량 하차
-  </div>
- </div>
-
- <!-- 설정 모달 [Esc] -->
- <div id="settings-modal">
-  <h2>⚙️ 작전 설정 & 제어 패널 (SETTINGS)</h2>
-  <div class="setting-row">
-   <span>마우스 회전 감도 (Mouse Sensitivity)</span>
-   <input type="range" id="sens-slider" min="0.5" max="3.0" step="0.1" value="1.0" oninput="updateSens(this.value)">
-   <b id="sens-val" style="color:var(--rpg-cyan)">1.0x</b>
-  </div>
-  <div class="setting-row">
-   <span>효과음 볼륨 (Master Volume)</span>
-   <input type="range" id="vol-slider" min="0" max="1" step="0.05" value="0.8" oninput="updateVol(this.value)">
-   <b id="vol-val" style="color:var(--rpg-gold)">80%</b>
-  </div>
-  <div class="keybind-list">
-   <span><b>[W,A,S,D]</b> 이동/조향</span>
-   <span><b>[Shift]</b> 전력 질주</span>
-   <span><b>[우클릭]</b> 정밀 조준(ADS)</span>
-   <span><b>[좌클릭]</b> 무기 격발</span>
-   <span><b>[1,2,3,4]</b> 무기 교체</span>
-   <span><b>[R]</b> 탄창 재장전</span>
-   <span><b>[Q]</b> 전술 정찰 드론</span>
-   <span><b>[E]</b> 나노 스팀 회복</span>
-   <span><b>[G]</b> 세열 수류탄</span>
-   <span><b>[Z]</b> 전술 핑 지정</span>
-   <span><b>[C]</b> 앉기 (반동 -55%)</span>
-   <span><b>[F]</b> 상호작용/탑승</span>
-   <span><b>[Tab]</b> 스킬/스탯창</span>
-   <span><b>[B]</b> 암시장 거래소</span>
-  </div>
-  <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px">
-   <button class="btn-act" style="margin-top:0;padding:8px 22px" onclick="toggleSettings()">작전 재개 (Resume)</button>
-  </div>
- </div>
-
- 
- <div id="bullet-time-vignette"></div>
-
- <!-- [M] 전술 위성 Recon 지도 모달 -->
- <div id="sat-map-modal">
-  <div class="sat-header">
-   <h3>🛰️ TACTICAL SATELLITE RECON MAP (작전 전구 위성 지도)</h3>
-   <div style="font-size:12px;color:#94a3b8">지도를 클릭하여 전술 웨이포인트(핑) 설정 | <kbd style="background:#22d3ee;color:#000;padding:2px 6px;border-radius:2px">M</kbd> 닫기</div>
-  </div>
-  <div class="sat-body">
-   <canvas id="sat-canvas" width="640" height="560"></canvas>
-   <div class="sat-sidebar">
-    <h4 style="margin:0 0 12px;font-size:13px;color:var(--rpg-gold)">작전 섹터 구역 정보</h4>
-    <div class="sector-badge">
-     <b>🛡️ SECTOR A: 아웃포스트 안전 벙커</b>
-     <span style="color:#94a3b8">기지 안전 구역, 보급품 및 버기카 대기</span>
-    </div>
-    <div class="sector-badge">
-     <b>🏭 SECTOR B: 중앙 레이더 전술 기지</b>
-     <span style="color:#94a3b8">다수 스캐브 주둔, 유류 드럼통 및 파밍 상자</span>
-    </div>
-    <div class="sector-badge">
-     <b>👑 SECTOR C: 감시탑 요새 (보스 구역)</b>
-     <span style="color:#ff4655">보스 글루하르 주둔, 광폭화 주의</span>
-    </div>
-    <div class="sector-badge">
-     <b>🚁 SECTOR D: 델타 헬리패드 생환 지점</b>
-     <span style="color:#22c55e">신호탄 작동 및 UH-60 헬리콥터 탈출 구역</span>
-    </div>
-    <div style="margin-top:16px;border-top:1px solid #1e293b;padding-top:12px;font-size:11.5px;color:#cbd5e1;line-height:1.7">
-     • <b>[Shift + C]</b>: 고속 전술 슬라이딩<br>
-     • <b>[빨간 드럼통]</b>: 사격 시 광역 폭발 유발<br>
-     • <b>[T]</b>: FLIR 열화상 스코프 모드
-    </div>
-   </div>
-  </div>
- </div>
-
- 
- <div id="drone-hud">
-  <div id="drone-scanline"></div>
-  <svg id="drone-crosshair" viewBox="0 0 200 200">
-   <circle cx="100" cy="100" r="40" fill="none" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="8 4"/>
-   <line x1="100" y1="30" x2="100" y2="70" stroke="#00ff88" stroke-width="1.5"/>
-   <line x1="100" y1="130" x2="100" y2="170" stroke="#00ff88" stroke-width="1.5"/>
-   <line x1="30" y1="100" x2="70" y2="100" stroke="#00ff88" stroke-width="1.5"/>
-   <line x1="130" y1="100" x2="170" y2="100" stroke="#00ff88" stroke-width="1.5"/>
-   <circle cx="100" cy="100" r="3" fill="#00ff88"/>
-  </svg>
-  <div class="drone-osd" style="top:25px;left:35px">
-   <div>DRONE RECON QUAD-1 [ONLINE]</div>
-   <div>ALTITUDE: <span id="dr-alt">4.5</span> M</div>
-   <div>SIGNAL: 98% [5.8 GHZ ENCRYPTED]</div>
-  </div>
-  <div class="drone-osd" style="bottom:25px;left:50%;transform:translateX(-50%);text-align:center">
-   <div>[W,A,S,D] 비행 이동 | [Space/Ctrl] 상승/하강 | [좌클릭/F] EMP 펄스 발사 | [Q] 요원 복귀</div>
-  </div>
- </div>
-
- 
- <div id="light-indicator"><span id="light-dot"></span> [L] 전술 라이트</div>
-
- 
- <div id="raid-timer-box">⏱️ TIME REMAINING: <span id="raid-time">19:45</span></div>
- <div id="plate-indicator">🛡️ [K] 방탄판: <b id="plate-count" style="color:#fff">3</b>개</div>
-
- 
- <div id="walkman-hud"><span id="walkman-dot"></span> 📼 [P] 워크맨: <span id="walkman-txt">OFF</span></div>
- <div id="jam-banner">⚠️ [차탄 불량] [J] 키를 눌러 노리쇠를 후퇴 장전하여 탄피를 배출하십시오!</div>
-
- 
- <div id="threat-indicator"><div class="threat-arrow" id="threat-arrow"></div></div>
- <div id="mastery-badge">🎯 헤드샷 정밀도: <span id="hs-rate">0%</span> (<span id="hs-count">0</span>회)</div>
-
- 
- <div id="killstreak-banner">🔥 DOUBLE KILL</div>
-
- <canvas id="ch-canvas" width="160" height="160"></canvas>
+ <!-- 시네마틱 비네트 & 이펙트 -->
+ <div id="cinematic-vignette"></div>
  <div id="hit-indicator"></div>
+ <div id="dmg-layer"></div>
+ <div id="nvg-overlay"></div>
+ <div id="thermal-overlay"></div>
+ <div id="breath-indicator">🫁 BREATH HELD (조준 안정화)</div>
+ <div id="jam-banner">⚠️ [격발 불량] [J] 노리쇠 후퇴 고정 탄피 배출</div>
 
- <!-- RPG 스킬/스탯 모달 [Tab] -->
- <div id="rpg-modal">
-  <div class="modal-header">
-   <h3>⚡ OPERATOR SKILLS & STATS (전술 특성 강화)</h3>
-   <div style="font-size:13px;color:var(--rpg-cyan)">가용 스킬 포인트: <b id="modal-sp">0</b></div>
+ <!-- 피격 위협 방향 아크 -->
+ <div id="threat-indicator"><div id="threat-arrow"></div></div>
+
+ <!-- 크로스헤어 캔버스 -->
+ <canvas id="ch-canvas" width="160" height="160"></canvas>
+
+ <!-- 상단 미니멀 레이드 상태 바 -->
+ <div id="top-bar">
+  <div class="top-pill" id="raid-timer">⏱️ <span id="raid-time">20:00</span></div>
+  <div class="top-pill" id="safezone-badge">🛡️ SAFE ZONE (안전기지)</div>
+ </div>
+
+ <!-- 우상단 슬릭 원형 레이더 미니맵 -->
+ <div id="minimap-card">
+  <div id="mm-wrap"><canvas id="minimap-canvas" width="140" height="140"></canvas></div>
+  <div id="minimap-coords">GRID: X:00 Z:00</div>
+ </div>
+
+ <!-- 좌하단 생명력 & 아머 HUD (Modern Clean Left) -->
+ <div id="hud-vital">
+  <div class="status-row">
+   <span class="status-label">ARMOR</span>
+   <span id="shield-val" class="status-val">100 / 100</span>
   </div>
-  
-    <div style="padding:14px 18px;border-bottom:1px solid var(--rpg-border);background:#0c121a">
-     <div style="font-size:12px;color:var(--rpg-gold);font-weight:800;letter-spacing:1px">🎖️ OPERATOR CLASS SPECIALIZATION (오퍼레이터 전문화 병과)</div>
-     <div class="class-grid">
-      <div class="class-card selected" id="cls-jugg" onclick="selectClass('jugg')">
-       <h5>🛡️ 저거너트 (포인트맨)</h5>
-       <p>최대 실드 +50, 폭발 피해 50% 흡수, 산탄총 집탄율 30% 증가</p>
-      </div>
-      <div class="class-card" id="cls-recon" onclick="selectClass('recon')">
-       <h5>⚡ 팬텀 (정찰병)</h5>
-       <p>이동/질주 속도 +25%, 발소리 완전 소음, 저격 에임 무반동</p>
-      </div>
-      <div class="class-card" id="cls-medic" onclick="selectClass('medic')">
-       <h5>🩺 컴뱃 메딕 (의무병)</h5>
-       <p>스팀 회복 시 실드/체력 100% 완전 회복, 비전투 시 체력 자동 재생</p>
-      </div>
-     </div>
-    </div>
+  <div class="bar-track" style="margin-bottom:8px"><div id="shield-fill"></div></div>
+  <div class="status-row">
+   <span class="status-label">HEALTH</span>
+   <span id="hp-val" class="status-val">100 / 100</span>
+  </div>
+  <div class="bar-track"><div id="hp-fill"></div></div>
+ </div>
 
-  <div class="modal-body">
-   <div class="modal-col">
-    <h4>전투 스탯 트리</h4>
-    <div class="skill-card">
-     <div><b>[화력 증강] 무기 대미지 증가</b><p>모든 총기 대미지 +15% (현재: <span id="stat-dmg">+0%</span>)</p></div>
-     <button class="btn-up" onclick="upgradeSkill('dmg')">강화</button>
-    </div>
-    <div class="skill-card">
-     <div><b>[나노 실드] 방어막 용량 증대</b><p>최대 실드 +25 (현재: <span id="stat-shd">100</span>)</p></div>
-     <button class="btn-up" onclick="upgradeSkill('shd')">강화</button>
-    </div>
-    <div class="skill-card">
-     <div><b>[신속 기동] 기동 속도 증가</b><p>이동 및 달리기 속도 +10% (현재: <span id="stat-spd">+0%</span>)</p></div>
-     <button class="btn-up" onclick="upgradeSkill('spd')">강화</button>
-    </div>
-    <div class="skill-card">
-     <div><b>[흡혈 탄환] 처치 시 실드 회복</b><p>적 처치 시 실드 30 즉각 충전 (현재: <span id="stat-vamp">Lv.0</span>)</p></div>
-     <button class="btn-up" onclick="upgradeSkill('vamp')">강화</button>
-    </div>
+ <!-- 우하단 무기 & 탄약 HUD (Modern Clean Right) -->
+ <div id="hud-weapon">
+  <div id="wep-name">M4A1-S TACTICAL</div>
+  <div class="ammo-display">
+   <span id="ammo-val">30 / 120</span>
+  </div>
+  <div class="wep-meta-row">
+   <span id="badge-firemode" class="badge-tag active">[X] AUTO</span>
+   <span id="badge-ammo" class="badge-tag">[U] FMJ</span>
+   <span id="stance-indicator" class="badge-tag">STAND</span>
+  </div>
+  <div class="slot-row">
+   <div id="hb-1" class="slot-btn active">1: M4</div>
+   <div id="hb-2" class="slot-btn">2: AK</div>
+   <div id="hb-3" class="slot-btn">3: AWM</div>
+   <div id="hb-4" class="slot-btn">4: SPAS</div>
+   <div id="hb-5" class="slot-btn">5: VEC</div>
+   <div id="hb-6" class="slot-btn">6: DEAGLE</div>
+   <div id="hb-7" class="slot-btn">7: RPK</div>
+   <div id="hb-8" class="slot-btn">8: MGL</div>
+  </div>
+ </div>
+
+ <!-- 상호작용 및 알림 프롬프트 -->
+ <div id="prompt"><span id="prompt-txt">[F] 상호작용</span></div>
+ <div id="banner"></div>
+ <div id="kill-badge"></div>
+ <div id="extract-banner">🚨 탈출 중... <span id="extract-time">5.0</span>초 남음</div>
+
+ <!-- 최초 클릭 즉시 투입 오버레이 (Deploy Card) -->
+ <div id="deploy-overlay" onclick="deployGame()">
+  <div class="deploy-card">
+   <div class="deploy-tag">TACTICAL OPEN WORLD SURVIVAL</div>
+   <h1 class="deploy-title">OUTPOST PROTOCOL</h1>
+   <p class="deploy-sub">
+    260M 광활한 전장, 8대 전술 섹터, 슈퍼 보스 킬라(KILLA) 생환 레이드.<br>
+    화면을 클릭하여 즉시 작전 구역에 투입하십시오.
+   </p>
+   <button class="deploy-btn">▶ 클릭하여 작전 투입 (DEPLOY)</button>
+   <div class="deploy-hints">
+    <span class="deploy-hint-pill">[좌클릭 유지] 연발 사격</span>
+    <span class="deploy-hint-pill">[우클릭] 정밀 조준</span>
+    <span class="deploy-hint-pill">[Q/E] 코너 피킹</span>
+    <span class="deploy-hint-pill">[Shift+C] 슬라이드</span>
+    <span class="deploy-hint-pill">[X] 사격 모드</span>
+    <span class="deploy-hint-pill">[M] 위성 지도</span>
+    <span class="deploy-hint-pill">[Esc] 설정</span>
    </div>
-   <div class="modal-col">
-    <h4>작전 기록 및 안내</h4>
-    <p style="font-size:13px;color:#cbd5e1;line-height:1.8">
-     • 처치한 적: <b id="stat-kills" style="color:var(--rpg-cyan)">0</b> 명<br>
-     • 파밍한 보급 상자: <b id="stat-crates" style="color:var(--rpg-gold)">0</b> 개<br>
-     • 보유 루블: <b id="stat-rub" style="color:var(--rpg-green)">₽ 250,000</b><br>
-     • 안전 기지: 시작 지점은 안전 구역입니다.<br>
-     • 퀘스트 수행 후 동북쪽 녹색 신호탄 탈출 지점으로 생환하세요!
-    </p>
-   
-    <div class="modal-col">
-     <h4>건스미스 총기 부착물 개조</h4>
-     <div class="mod-card" id="mod-sup">
-      <div><b>전술 소음기 (Suppressor)</b><p>총성 소음화, 화염 제거, 적 감지 거리 60% 감소</p></div>
-      <button class="btn-up" onclick="toggleMod('suppressor')">장착</button>
-     </div>
-     <div class="mod-card" id="mod-grip">
-      <div><b>수직 손잡이 (Foregrip)</b><p>모든 총기 반동 50% 억제</p></div>
-      <button class="btn-up" onclick="toggleMod('foregrip')">장착</button>
-     </div>
-     <div class="mod-card" id="mod-mag">
-      <div><b>확장 드럼 탄창 (Ext Mag)</b><p>탄창 용량 +50% 증가</p></div>
-      <button class="btn-up" onclick="toggleMod('extMag')">장착</button>
-     </div>
-     <div class="mod-card" id="mod-flir">
-      <div><b>FLIR 열화상 스코프 ([T] 키)</b><p>적군 체온 열원 탐지 발광 모드</p></div>
-      <button class="btn-up" onclick="toggleMod('thermal')">장착</button>
-     </div>
-    </div>
-</div>
   </div>
  </div>
 
- <!-- 암시장 상인 모달 [B] -->
- <div id="trader-modal">
-  <div class="modal-header">
-   <h3>🏛️ PRAPOR & PEACEKEEPER 전술 상인 거래소</h3>
-   <div style="font-size:13px;color:var(--rpg-gold)">보유 자산: <b id="trader-wallet">₽ 250,000</b></div>
+ <!-- 설정 모달 -->
+ <div id="settings-modal" class="tactical-modal">
+  <div class="modal-head">
+   <h3>⚙️ OPERATION SETTINGS</h3>
+   <button class="modal-close-btn" onclick="toggleSettings()">✕</button>
   </div>
-  <div class="trader-tabs">
-   <div class="trader-tab active" onclick="switchTraderTab('buy')">장비 및 탄약 구매</div>
-   <div class="trader-tab" onclick="switchTraderTab('sell')">전리품 일괄 매각 (Sell All Valuables)</div>
+  <div class="set-row">
+   <label>마우스 감도</label>
+   <input type="range" id="sens-slider" min="0.2" max="3.0" step="0.1" value="1.0" oninput="setMouseSens(this.value)">
+   <span id="sens-val" style="font-size:12px;color:var(--accent-cyan);min-width:30px">1.0</span>
   </div>
-  <div class="shop-grid" id="trader-items-grid"></div>
+  <div class="set-row">
+   <label>마스터 볼륨</label>
+   <input type="range" id="vol-slider" min="0" max="1" step="0.05" value="0.8" oninput="setMasterVol(this.value)">
+   <span id="vol-val" style="font-size:12px;color:var(--accent-cyan);min-width:30px">80%</span>
+  </div>
+  <div style="display:flex;justify-content:flex-end;padding:14px 24px">
+   <a href="../site/index.html" style="font-size:12px;color:#94a3b8;text-decoration:none">🏠 아케이드 포털 복귀</a>
+  </div>
  </div>
 
- <!-- 승리 / 탈출 정산 결과 모달 -->
- <div id="result-modal">
-  <h1 id="res-title">MISSION COMPLETED</h1>
-  <div class="res-card">
-   <div class="res-row"><span>작전 결과</span><b id="res-sub" style="color:var(--rpg-green)">생환 성공 (SURVIVED)</b></div>
-   <div class="res-row"><span>달성 레벨</span><b id="res-lvl">LV. 1</b></div>
-   <div class="res-row"><span>처치한 적</span><b id="res-kills">0 명</b></div>
-   <div class="res-row"><span>획득한 총 경험치</span><b id="res-exp">+0 EXP</b></div>
-   <div class="res-row"><span>보상 레이팅</span><b style="color:var(--rpg-gold)">⭐⭐⭐⭐⭐ S RANK</b></div>
+ <!-- 위성 지도 모달 -->
+ <div id="sat-map-modal" class="tactical-modal">
+  <div class="modal-head">
+   <h3>🛰️ SATELLITE TACTICAL MAP [260M]</h3>
+   <button class="modal-close-btn" onclick="toggleSatMap()">✕</button>
   </div>
-  <button class="btn-act" onclick="location.reload()">새로운 작전 시작 (재배치)</button>
+  <canvas id="sat-canvas" width="880" height="520"></canvas>
  </div>
+
+ <!-- 암시장 상인 모달 -->
+ <div id="trader-modal" class="tactical-modal">
+  <div class="modal-head">
+   <h3>🏛️ PRAPOR'S BLACK MARKET ARSENAL</h3>
+   <button class="modal-close-btn" onclick="toggleTrader()">✕</button>
+  </div>
+  <div style="padding:10px 20px;font-size:12px;color:#94a3b8;border-bottom:1px solid rgba(255,255,255,0.06)">
+   보유 루블: <b id="trader-wallet" style="color:var(--accent-gold)">₽ 0</b>
+  </div>
+  <div id="trader-items-grid" class="trader-grid"></div>
+ </div>
+
+ <!-- 작전 결과 모달 -->
+ <div id="result-modal" class="tactical-modal">
+  <div id="res-title">MISSION COMPLETED</div>
+  <div id="res-sub">SURVIVED & EXTRACTED</div>
+  <div class="res-stat"><span>계급 / 레벨</span><span id="res-lvl">LV. 1</span></div>
+  <div class="res-stat"><span>사살 기록</span><span id="res-kills">0 명</span></div>
+  <div class="res-stat"><span>획득 경험치</span><span id="res-exp">+0 EXP</span></div>
+  <button class="deploy-btn" style="margin-top:20px" onclick="location.reload()">다시 출격하기</button>
+ </div>
+
 </div>
 <canvas id="c"></canvas>
-
-<!-- Three.js Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
 <script>
 // ==========================================
 
-let inMainMenu = true;
+let inMainMenu = false;
+let isMouseDown = false;
 
-function startRaidGame() {
-  inMainMenu = false;
-  document.getElementById('main-menu-overlay').style.display = 'none';
-  cv.requestPointerLock();
-  // Initial banner handled by startRaidGame
-  SND.connectBeep();
+
+function deployGame() {
+  const d = document.getElementById('deploy-overlay');
+  if (d) d.style.display = 'none';
+  if (cv) cv.requestPointerLock();
+  if (typeof audio === 'function') audio();
+  if (typeof SND !== 'undefined' && SND.connectBeep) SND.connectBeep();
 }
+function startRaidGame() {
+  deployGame();
+}
+
 
 function openMainMenu() {
   inMainMenu = true;
@@ -1048,6 +454,20 @@ function tone(f0, f1, dur, vol, type='sine', delay=0) {
 }
 
 const SND = {
+    magOut() { tone(450, 180, 0.08, 0.3, 'sine'); noise(0.04, 0.25, 1200); },
+    magIn() { noise(0.05, 0.35, 1600); tone(220, 600, 0.07, 0.35, 'triangle'); },
+    boltRack() { noise(0.06, 0.4, 2800); tone(700, 1100, 0.05, 0.3, 'sawtooth'); },
+    ricochet() { tone(1800 + Math.random()*800, 400 + Math.random()*200, 0.15, 0.25, 'sine'); noise(0.02, 0.15, 3000); },
+    fleshHit() { noise(0.06, 0.35, 450, 'lowpass'); tone(120, 50, 0.05, 0.3, 'sine'); },
+    armorClang() { tone(1600, 800, 0.06, 0.4, 'triangle'); noise(0.03, 0.3, 3500); },
+    stimInject() { tone(700, 1400, 0.12, 0.3, 'sine'); noise(0.05, 0.15, 2000); tone(80, 55, 0.3, 0.4, 'sine', 0.1); },
+    enemyShout(isBoss=false) {
+      if (isBoss) {
+        noise(0.6, 0.8, 220, 'lowpass'); tone(140, 45, 0.5, 0.8, 'sawtooth');
+      } else {
+        noise(0.3, 0.4, 600, 'bandpass'); tone(240, 120, 0.25, 0.4, 'sawtooth');
+      }
+    },
     nvgClick() { tone(2800, 3200, 0.08, 0.25, 'sine'); tone(3200, 3200, 0.25, 0.12, 'triangle', 0.08); },
     fireModeClick() { tone(1800, 1100, 0.035, 0.35, 'triangle'); noise(0.025, 0.25, 2400); },
     flashlightClick() { noise(0.02, 0.25, 3800); tone(1500, 900, 0.025, 0.25, 'sine'); },
@@ -1093,10 +513,10 @@ const SND = {
 // ==========================================
 // 2. 오픈월드 전장 & 개선된 자연광 조명 시스템
 // ==========================================
-const MAP_SIZE = 260;
+const MAP_SIZE = 400;
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x6e8396);
-scene.fog = new THREE.FogExp2(0x6e8396, 0.0052);
+scene.background = new THREE.Color(0x768f9f);
+scene.fog = new THREE.FogExp2(0x768f9f, 0.005);
 
 const cv = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' });
@@ -1104,14 +524,17 @@ renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(2, devicePixelRatio));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.22;
+renderer.outputEncoding = THREE.sRGBEncoding;
 
-const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 340);
+const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 520);
 camera.rotation.order = 'YXZ';
 scene.add(camera);
 
 // 개선된 부드러운 햇빛 & 앰비언트 라이트 (260m 전체 균등 그림자)
-scene.add(new THREE.HemisphereLight(0xdde9f5, 0x3d4740, 0.95));
-const sunLight = new THREE.DirectionalLight(0xfff8ee, 1.35);
+scene.add(new THREE.HemisphereLight(0x9fc0db, 0x2e3b2e, 0.92));
+const sunLight = new THREE.DirectionalLight(0xfff5ea, 1.55);
 sunLight.position.set(65, 110, 60);
 sunLight.castShadow = true;
 sunLight.shadow.mapSize.width = 2048;
@@ -1159,6 +582,56 @@ const terrain = new THREE.Mesh(
 terrain.rotation.x = -Math.PI / 2; terrain.position.set(0, 0, 0);
 terrain.receiveShadow = true; scene.add(terrain);
 
+
+// ==========================================
+// 2-B. 실시간 물리 파티클 엔진 (스파크, 연기, 먼지, 파편)
+// ==========================================
+const impactParticles = [];
+const sparkMat = new THREE.MeshBasicMaterial({ color: 0xffe066 });
+const dustMat = new THREE.MeshBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.6 });
+const bloodMat = new THREE.MeshBasicMaterial({ color: 0x991b1b });
+
+function spawnImpactFX(x, y, z, normal, isFlesh=false, isMetal=false) {
+  const count = isFlesh ? 6 : 8;
+  for (let i = 0; i < count; i++) {
+    const geo = new THREE.BoxGeometry(0.04, 0.04, 0.04);
+    const mat = isFlesh ? bloodMat : (isMetal || Math.random() < 0.6) ? sparkMat : dustMat;
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(x, y, z);
+    scene.add(mesh);
+
+    const speed = 2.5 + Math.random() * 4.0;
+    const spreadX = (Math.random() - 0.5) * 1.5 + (normal ? normal.x * 2 : 0);
+    const spreadY = Math.random() * 2.0 + (normal ? normal.y * 2 : 1);
+    const spreadZ = (Math.random() - 0.5) * 1.5 + (normal ? normal.z * 2 : 0);
+
+    impactParticles.push({
+      mesh,
+      vx: spreadX * speed * 0.4,
+      vy: spreadY * speed * 0.5,
+      vz: spreadZ * speed * 0.4,
+      life: 0.25 + Math.random() * 0.35,
+      maxLife: 0.5
+    });
+  }
+}
+
+function updateImpactParticles(dt) {
+  for (let i = impactParticles.length - 1; i >= 0; i--) {
+    const p = impactParticles[i];
+    p.life -= dt;
+    p.mesh.position.x += p.vx * dt;
+    p.mesh.position.y += p.vy * dt;
+    p.mesh.position.z += p.vz * dt;
+    p.vy -= 12 * dt; // 중력
+    p.mesh.scale.multiplyScalar(0.92);
+
+    if (p.life <= 0) {
+      scene.remove(p.mesh);
+      impactParticles.splice(i, 1);
+    }
+  }
+}
 const wallMeshes = [];
 const lootCrates = [];
 const exfilZone = { x: 0, z: 95, rad: 8.5 };
@@ -1185,7 +658,7 @@ function addBoxCollider(x, z, w, d) {
 
 function checkCollision(x, z, radius = 0.45) {
   // 맵 외곽 경계 (-125m ~ +125m)
-  if (x < -125 || x > 125 || z < -125 || z > 125) return true;
+  if (x < -195 || x > 195 || z < -195 || z > 195) return true;
 
   for (let i = 0; i < colliders.length; i++) {
     const c = colliders[i];
@@ -1231,6 +704,60 @@ function createPBRBox(x, z, w, h, d, color=0x55606d) {
   return m;
 }
 
+
+// ==========================================
+// 2-C. 전술 아스팔트 고속도로 및 하늘 구름 시스템
+// ==========================================
+const roadMat = new THREE.MeshStandardMaterial({ color: 0x1f242b, roughness: 0.9, metalness: 0.1 });
+const lineMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+
+function createRoadSegment(x, z, w, d) {
+  const road = new THREE.Mesh(new THREE.PlaneGeometry(w, d), roadMat);
+  road.rotation.x = -Math.PI / 2;
+  road.position.set(x, 0.02, z);
+  road.receiveShadow = true;
+  scene.add(road);
+
+  // 중앙 차선
+  const isEW = (w > d);
+  const lineGeo = isEW ? new THREE.PlaneGeometry(w, 0.35) : new THREE.PlaneGeometry(0.35, d);
+  const line = new THREE.Mesh(lineGeo, lineMat);
+  line.rotation.x = -Math.PI / 2;
+  line.position.set(x, 0.03, z);
+  scene.add(line);
+}
+
+// 메인 도로망 구축 (FOB Alpha -> 요새 -> 주유소 -> 기차역 연결)
+createRoadSegment(0, -35, 7.5, 95);  // 남북 주간선도로
+createRoadSegment(-35, -15, 70, 7.5); // 야적장 연결 동서도로
+createRoadSegment(-68, 20, 7.5, 70);  // 주유소 연결 도로
+createRoadSegment(30, 25, 60, 7.5);   // 기차역 연결 도로
+
+// 하늘을 부드럽게 유영하는 3D 솜사탕 구름 클러스터
+const clouds = [];
+const cloudMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.95, transparent: true, opacity: 0.85 });
+for (let c = 0; c < 30; c++) {
+  const cGroup = new THREE.Group();
+  const cPuffs = 4 + (Math.random() * 4) | 0;
+  for (let p = 0; p < cPuffs; p++) {
+    const puff = new THREE.Mesh(
+      new THREE.SphereGeometry(6 + Math.random() * 8, 8, 8),
+      cloudMat
+    );
+    puff.position.set((Math.random() - 0.5) * 22, (Math.random() - 0.5) * 4, (Math.random() - 0.5) * 18);
+    cGroup.add(puff);
+  }
+  cGroup.position.set((Math.random() - 0.5) * 260, 48 + Math.random() * 15, (Math.random() - 0.5) * 260);
+  scene.add(cGroup);
+  clouds.push({ group: cGroup, speed: 0.8 + Math.random() * 1.4 });
+}
+
+function updateClouds(dt) {
+  clouds.forEach(cl => {
+    cl.group.position.x += cl.speed * dt;
+    if (cl.group.position.x > 140) cl.group.position.x = -140;
+  });
+}
 // ==========================================
 // 8대 섹터 오픈월드 건축 시스템
 // ==========================================
@@ -1359,6 +886,40 @@ rotorMesh.position.y = 3.8;
 heliRoot.add(heliBody, rotorMesh);
 heliRoot.position.set(0, 0, 95); scene.add(heliRoot);
 
+
+// ==========================================
+// 4대 신규 확장 섹터 (400M 오픈월드 완성)
+// ==========================================
+
+// [섹터 9] 잠수함 해안 기지 & 함선 도크 (-135, -60)
+createPBRBox(-135, -60, 9.5, 7.5, 48, 0x0f172a); // 48m 원자력 잠수함 선체
+createPBRBox(-135, -55, 4.2, 4.2, 9.5, 0x1e293b); // 사령탑 (Conning Tower)
+createPBRBox(-120, -60, 6.5, 0.6, 54, 0x3d2d1d); // 목재 선창 피어 데크
+createPBRBox(-120, -75, 4.5, 3.2, 6.5, 0xd97706); // 선창 화물 컨테이너
+const dockLight = new THREE.PointLight(0x38bdf8, 2.2, 22);
+dockLight.position.set(-120, 4.5, -60); scene.add(dockLight);
+
+// [섹터 10] 화학 사일로 & 대형 원형 유류탱크 (130, -75)
+const tankMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.4, metalness: 0.7 });
+for (let ti = 0; ti < 4; ti++) {
+  const tx = 115 + (ti % 2) * 32, tz = -65 - ((ti / 2) | 0) * 28;
+  const tank = new THREE.Mesh(new THREE.CylinderGeometry(8.5, 8.5, 14, 16), tankMat);
+  tank.position.set(tx, 7, tz); tank.castShadow = true; scene.add(tank); wallMeshes.push(tank);
+  addBoxCollider(tx, tz, 17, 17);
+}
+createPBRBox(130, -78, 38, 0.8, 4.5, 0xd97706); // 안전 캣워크 브릿지
+
+// [섹터 11] 라디오 방송 송신탑 & 통신 벙커 (-130, 95)
+createPBRBox(-130, 95, 1.4, 38, 1.4, 0xdc2626); // 38m 철탑 기둥
+const towerBeacon = new THREE.PointLight(0xef4444, 3.0, 35);
+towerBeacon.position.set(-130, 39, 95); scene.add(towerBeacon);
+createPBRBox(-130, 95, 16, 4.5, 14, 0x334155); // 통신 사령부 벙커
+
+// [섹터 12] 산악 저격 암벽 & 동굴 통로 (125, 90)
+createPBRBox(125, 90, 28, 14, 24, 0x272e38); // 저격 암벽 고지대
+createPBRBox(125, 90, 5.5, 4.5, 26, 0x0a0f18); // 관통 가능한 암벽 동굴 통로
+const caveLight = new THREE.PointLight(0xf59e0b, 1.8, 14);
+caveLight.position.set(125, 2.5, 90); scene.add(caveLight);
 // 3. 배그풍 보급 투하 상자 (Airdrop Care Package)
 function spawnAirdrop(x, z) {
   const root = new THREE.Group();
@@ -1408,7 +969,7 @@ for (let i = 0; i < 140; i++) {
 // 3. 고품질 1인칭 현대 무기 & 모션 리그
 // ==========================================
 let P = {
-  x: 0, y: 0, z: -83, vy: 0, yaw: 0, pitch: 0,
+  x: 0, y: 0, z: -68, vy: 0, yaw: Math.PI, pitch: 0,
   hp: 100, hpMax: 100,
   shield: 100, shieldMax: 100,
   shieldRegenTimer: 0,
@@ -1417,8 +978,8 @@ let P = {
   walletRub: 250000,
   dmgBonus: 0, speedBonus: 0, vampLevel: 0,
   wep: 0,
-  ammo: [30, 30, 5, 8],
-  reserve: [120, 120, 25, 32],
+  ammo: [30, 30, 5, 8, 33, 7, 95, 6],
+  reserve: [120, 120, 25, 32, 132, 28, 190, 12], inventory: [],
   grenades: 2,
   droneCd: 0, stimCd: 0,
   reloading: 0, cool: 0, recoil: 0, bob: 0, swayX: 0, swayY: 0,
@@ -1440,10 +1001,14 @@ let P = {
 };
 
 const WEAPONS = [
-  { name: 'M4A1-S TACTICAL RIFLE', mag: 30, dmg: 44, cd: 0.095, recoil: 0.016, tier: '⭐⭐⭐ RARE 돌격소총', desc: '5.56MM NATO · 소음기 연사' },
-  { name: 'AK-47 ASSAULT RIFLE', mag: 30, dmg: 55, cd: 0.11, recoil: 0.024, tier: '⭐⭐⭐⭐ EPIC 돌격소총', desc: '7.62MM · 묵직한 펀치력' },
-  { name: 'AWM HEAVY SNIPER', mag: 5, dmg: 165, cd: 1.25, recoil: 0.08, tier: '⭐⭐⭐⭐⭐ LEGENDARY 저격총', desc: '.300 WIN · 1방 관통' },
-  { name: 'SPAS-12 COMBAT SHOTGUN', mag: 8, dmg: 28, cd: 0.65, recoil: 0.065, tier: '⭐⭐⭐ RARE 전술산탄총', desc: '12-GAUGE · 8발 펠릿' }
+  { name: 'M4A1-S TACTICAL', mag: 30, dmg: 44, cd: 0.09, recoil: 0.016, tier: '⭐⭐⭐ RARE 돌격소총', desc: '5.56x45MM NATO · 소음기 660 RPM' },
+  { name: 'AK-47 KALASHNIKOV', mag: 30, dmg: 56, cd: 0.11, recoil: 0.023, tier: '⭐⭐⭐⭐ EPIC 돌격소총', desc: '7.62x39MM · 강력한 저지력 550 RPM' },
+  { name: 'AWM ARCTIC WARFARE', mag: 5, dmg: 175, cd: 1.2, recoil: 0.075, tier: '⭐⭐⭐⭐⭐ LEGENDARY 저격소총', desc: '.300 WIN MAG · 초장거리 1방 저격' },
+  { name: 'SPAS-12 COMBAT PUMP', mag: 8, dmg: 32, cd: 0.6, recoil: 0.06, tier: '⭐⭐⭐ RARE 산탄총', desc: '12-GAUGE 벅샷 · 8발 펠릿 산탄' },
+  { name: 'KRISS VECTOR SMG-45', mag: 33, dmg: 32, cd: 0.055, recoil: 0.012, tier: '⭐⭐⭐⭐ EPIC 기관단총', desc: '.45 ACP · 1,100 RPM 초고속 난사' },
+  { name: 'DESERT EAGLE .50 AE', mag: 7, dmg: 95, cd: 0.35, recoil: 0.055, tier: '⭐⭐⭐⭐ EPIC 핸드캐논', desc: '.50 ACTION EXPRESS · 괴물급 매그넘' },
+  { name: 'RPK-16 HEAVY DRUM', mag: 95, dmg: 58, cd: 0.10, recoil: 0.025, tier: '⭐⭐⭐⭐⭐ LEGENDARY 분대기관총', desc: '7.62MM 95발 드럼 탄창 제압 사격' },
+  { name: 'MGL-32 REVOLVER LAUNCHER', mag: 6, dmg: 230, cd: 0.85, recoil: 0.07, tier: '⭐⭐⭐⭐⭐ LEGENDARY 고폭유탄', desc: '40MM HE 고폭 유탄 · 범위 폭발 타격' }
 ];
 
 const gunRoot = new THREE.Group();
@@ -1490,7 +1055,44 @@ function buildFPSGun() {
   const spasBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.48, 8), steelMat); spasBarrel.rotation.x = Math.PI / 2; spasBarrel.position.set(0, 0.02, -0.88);
   g3.add(spasBody, spasShield, spasPump, spasBarrel);
 
-  const wepSubGroups = [g0, g1, g2, g3];
+  // [4] KRISS VECTOR SMG-45 (슈퍼 V 반동제어 시스템 & 앵글드 리시버)
+  const g4 = new THREE.Group();
+  const vecBody = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.15, 0.36), darkPolyMat); vecBody.position.set(0, -0.02, -0.42);
+  const vecMag = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.24, 0.06), steelMat); vecMag.position.set(0, -0.16, -0.46); vecMag.rotation.x = -0.15;
+  const vecBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.22, 8), steelMat); vecBarrel.rotation.x = Math.PI / 2; vecBarrel.position.set(0, 0.02, -0.68);
+  g4.add(vecBody, vecMag, vecBarrel);
+
+  // [5] DESERT EAGLE .50 AE (크롬 슬라이드 & 헤비 비버테일)
+  const g5 = new THREE.Group();
+  const deSlide = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.08, 0.32), new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.95, roughness: 0.15 }));
+  deSlide.position.set(0, 0.03, -0.38);
+  const deFrame = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.16, 0.1), darkPolyMat);
+  deFrame.position.set(0, -0.06, -0.28); deFrame.rotation.x = 0.22;
+  const deBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.24, 8), steelMat);
+  deBarrel.rotation.x = Math.PI / 2; deBarrel.position.set(0, 0.03, -0.52);
+  g5.add(deSlide, deFrame, deBarrel);
+
+  // [6] RPK-16 HEAVY LMG (롱 배럴 & 95발 드럼 탄창)
+  const g6 = new THREE.Group();
+  const rpkBody = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.12, 0.52), steelMat); rpkBody.position.set(0, 0, -0.46);
+  const rpkDrum = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.12, 12), darkPolyMat);
+  rpkDrum.rotation.x = Math.PI / 2; rpkDrum.position.set(0, -0.16, -0.48);
+  const rpkBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.65, 8), steelMat);
+  rpkBarrel.rotation.x = Math.PI / 2; rpkBarrel.position.set(0, 0.02, -1.02);
+  const rpkBipod = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.04, 0.14), darkPolyMat);
+  rpkBipod.position.set(0, -0.08, -0.92);
+  g6.add(rpkBody, rpkDrum, rpkBarrel, rpkBipod);
+
+  // [7] MGL-32 REVOLVER GRENADE LAUNCHER (6연발 회전 실린더 & 유탄 총열)
+  const g7 = new THREE.Group();
+  const mglFrame = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 0.44), steelMat); mglFrame.position.set(0, 0, -0.42);
+  const mglCyl = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.095, 0.22, 12), darkPolyMat);
+  mglCyl.rotation.x = Math.PI / 2; mglCyl.position.set(0, 0.01, -0.42);
+  const mglBrl = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.32, 8), steelMat);
+  mglBrl.rotation.x = Math.PI / 2; mglBrl.position.set(0, 0.01, -0.66);
+  g7.add(mglFrame, mglCyl, mglBrl);
+
+  const wepSubGroups = [g0, g1, g2, g3, g4, g5, g6, g7];
   wepSubGroups.forEach((wg, idx) => {
     wg.visible = (idx === 0);
     g.add(wg);
@@ -1546,6 +1148,38 @@ function buildFPSGun() {
 // ==========================================
 // 3-B. 무기 위장 도색 & 건스미스 커스텀 시스템
 // ==========================================
+
+// ==========================================
+// 30종 하이엔드 전리품 & 인벤토리 경제 시스템
+// ==========================================
+const ITEM_DB = [
+  { id: 'med_bandage', name: '멸균 전술 붕대', tier: 'common', price: 3500, icon: '🩹' },
+  { id: 'med_ifak', name: 'IFAK 군용 구급키트', tier: 'rare', price: 18000, icon: '🩸' },
+  { id: 'med_morphine', name: '전술 모르핀 주사기', tier: 'rare', price: 25000, icon: '💉' },
+  { id: 'med_goldenstar', name: '골든스타 허브 밤', tier: 'epic', price: 75000, icon: '🌟' },
+  { id: 'ammo_995', name: 'M995 5.56mm 철갑탄', tier: 'rare', price: 24000, icon: '📦' },
+  { id: 'ammo_bs', name: '7N39 7.62mm 이골닉탄', tier: 'epic', price: 48000, icon: '📦' },
+  { id: 'part_suppressor', name: '티타늄 하이브리드 소음기', tier: 'rare', price: 42000, icon: '🔇' },
+  { id: 'part_holo', name: 'EOTech EXPS3 조준경', tier: 'rare', price: 35000, icon: '🎯' },
+  { id: 'part_drum', name: '60발 드럼 탄창', tier: 'epic', price: 58000, icon: '🔄' },
+  { id: 'scrap_gpu', name: '군용 고성능 GPU', tier: 'epic', price: 140000, icon: '⚡' },
+  { id: 'scrap_bitcoin', name: '0.2 BTC 물리 비트코인', tier: 'legendary', price: 400000, icon: '🪙' },
+  { id: 'scrap_vpx', name: 'VPX 기밀 플래시 모듈', tier: 'epic', price: 95000, icon: '💾' },
+  { id: 'scrap_battery', name: '밀리터리 탄소 배터리', tier: 'rare', price: 36000, icon: '🔋' },
+  { id: 'key_killa', name: '킬라의 순금 도그택', tier: 'legendary', price: 250000, icon: '🎖️' },
+  { id: 'key_shturman', name: '슈투르만 전술 금고 열쇠', tier: 'legendary', price: 300000, icon: '🗝️' },
+  { id: 'key_glukhar', name: '글루하르 사령관 보안 인가증', tier: 'legendary', price: 350000, icon: '💳' },
+  { id: 'key_lab_black', name: '연구소 블랙 키카드', tier: 'legendary', price: 600000, icon: '🃏' }
+];
+
+function giveRandomLoot(tier='common') {
+  const pool = ITEM_DB.filter(it => tier === 'all' || it.tier === tier);
+  const it = pool[Math.floor(Math.random() * pool.length)] || ITEM_DB[0];
+  if (P.inventory.length < 24) {
+    P.inventory.push(it);
+    banner(`🎁 전리품 획득: [${it.icon} ${it.name}] (가치: ₽${it.price.toLocaleString()})`);
+  }
+}
 const CAMO_PRESETS = [
   { name: '공장 기본 (Standard Matte)', color: 0x181f26, metalness: 0.85, roughness: 0.35 },
   { name: '특수작전 블랙아웃 (Blackout)', color: 0x0a0c10, metalness: 0.95, roughness: 0.2 },
@@ -1743,7 +1377,14 @@ function spawnBot(x, z, type='scav') {
 }
 
 // [섹터 3] 레이더 요새 중앙 슈퍼 보스 킬라 & 호위 레이더
-spawnBot(0, 15, 'killa');
+
+// 3대 전설급 구역 보스 배치
+spawnBot(0, 15, 'killa'); // [섹터 3] 레이더 요새 보스 킬라 (RPK 중기관총, 850 HP)
+spawnBot(125, 90, 'raider'); // [섹터 12] 산악 보스 슈투르만 호위대
+spawnBot(-135, -60, 'raider'); // [섹터 9] 잠수함 보스 글루하르 호위대
+spawnBot(-130, 95, 'raider'); // [섹터 11] 송신탑 수비대
+spawnBot(130, -75, 'scav');  // [섹터 10] 화학탱크 수비대
+
 spawnBot(-8, 12, 'raider');
 spawnBot(8, 12, 'raider');
 spawnBot(0, 24, 'raider');
@@ -2248,7 +1889,7 @@ function sendCoopData(data) {
 }
 
 // URL에 ?room= 파라미터가 있을 시 자동 접속
-const urlParams = new URLSearchParams(window.location.search);
+const urlParams = new URLSearchParams(typeof window !== 'undefined' && window.location && window.location.search ? window.location.search : '');
 const roomParam = urlParams.get('room');
 if (roomParam) {
   setTimeout(() => joinCoopRoom(roomParam), 800);
@@ -2452,11 +2093,11 @@ function renderSatMap() {
   for (let x = 0; x < w; x += 40) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
   for (let y = 0; y < h; y += 40) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
 
-  // 월드 좌표 변환 (-130m ~ +130m -> 0 ~ w, 0 ~ h)
+  // 월드 좌표 변환 (-200m ~ +200m -> 0 ~ w, 0 ~ h)
   const toScreen = (wx, wz) => {
     return {
-      sx: ((wx + 130) / 260) * w,
-      sy: ((wz + 130) / 260) * h
+      sx: ((wx + 200) / 400) * w,
+      sy: ((wz + 200) / 400) * h
     };
   };
 
@@ -2664,7 +2305,11 @@ function shoot() {
   if (P.wep === 0) SND.m4Shot();
   else if (P.wep === 1) SND.akShot();
   else if (P.wep === 2) SND.sniperShot();
-  else SND.shotgunShot();
+  else if (P.wep === 3) SND.shotgunShot();
+  else if (P.wep === 4) { noise(0.1, 0.55, 2300, 'lowpass'); tone(220, 55, 0.08, 0.45, 'sawtooth'); } // Vector 1100 RPM
+  else if (P.wep === 5) { noise(0.38, 1.15, 900, 'lowpass'); tone(120, 25, 0.32, 0.95, 'sawtooth'); } // Deagle .50 AE
+  else if (P.wep === 6) { noise(0.24, 0.88, 1200, 'lowpass'); tone(135, 22, 0.22, 0.82, 'sawtooth'); } // RPK-16 Heavy LMG
+  else { noise(0.7, 1.3, 500, 'lowpass'); tone(85, 15, 0.55, 1.05, 'sawtooth'); } // MGL-32 HE Grenade
 
   GUN_MESH.flash.visible = true;
   dynamicLight.intensity = 2.6;
@@ -2692,6 +2337,12 @@ function shoot() {
       const obj = hits[0].object;
       const bot = bots.find(b => { let f = false; b.mesh.traverse(c => { if (c === obj) f = true; }); return f; });
 
+      // 벽 및 장애물 타격 파티클 & 도비탄(Ricochet) 사운드
+      if (!obj.userData || !obj.userData.isHead) {
+        spawnImpactFX(endPt.x, endPt.y, endPt.z, hits[0].face ? hits[0].face.normal : null, false, !!obj.userData.isBarrel);
+        if (Math.random() < 0.28) SND.ricochet();
+      }
+
       // 폭발성 유류 드럼통 피격 판정 (baseDmg 정상 적용)
       if (obj.userData && obj.userData.isBarrel) {
         const bRef = obj.userData.barrelRef;
@@ -2716,6 +2367,8 @@ function shoot() {
 
         bot.hp -= finalDmg;
 
+        spawnImpactFX(endPt.x, endPt.y, endPt.z, null, true, false);
+        if (isHead || bot.isKilla) SND.armorClang(); else SND.fleshHit();
         if (isHead) {
           SND.headshot();
           totalHeadshots++;
@@ -2736,6 +2389,9 @@ function shoot() {
         if (bot.hp <= 0) {
           P.kills++;
           triggerBotRagdoll(bot);
+          // 사망 위치에 즉시 전리품 상자 스폰
+          const lootTitle = bot.isKilla ? '👑 킬라의 티타늄 장비함' : (bot.type === 'raider' ? '군용 보급 탄약 상자' : '스캐브 전술 주머니');
+          spawnCrate(bot.x, bot.z, lootTitle);
           if (bot.isKilla) {
             P.bossKilled = true;
             P.walletRub += 150000;
@@ -2783,8 +2439,9 @@ function triggerTacticalPing() {
 function reload() {
   const w = WEAPONS[P.wep];
   if (P.reloading > 0 || P.ammo[P.wep] === w.mag || P.reserve[P.wep] <= 0) return;
-  P.reloading = 1.3;
-  SND.magDrop();
+  P.reloading = 1.35;
+  P.reloadStage = 0;
+  SND.magOut();
   updateHUD();
 }
 
@@ -2988,12 +2645,17 @@ function activateReconDrone() {
 }
 
 function activateNanoStim() {
-  if (P.stimCd > 0) return;
-  P.stimCd = 14;
-  P.shield = Math.min(P.shieldMax, P.shield + 50);
-  P.hp = Math.min(P.hpMax, P.hp + 20);
-  SND.stimHeal();
-  banner('💉 나노 스팀 주입! (실드 +50 회복 & 질주 가속)');
+  if (raidOver) return;
+  if (P.stimCd > 0) {
+    banner(`⏳ 아드레날린 주사기 쿨다운 (${Math.ceil(P.stimCd)}초)`);
+    return;
+  }
+  P.stimCd = 18.0;
+  P.hp = Math.min(P.hpMax, P.hp + 45);
+  P.speedBonus = 0.25;
+  setTimeout(() => { P.speedBonus = 0; }, 10000);
+  SND.stimInject();
+  banner('💉 [군용 아드레날린 주사] HP +45 회복 & 10초간 이동속도 +25% 부스트!');
   updateHUD();
 }
 
@@ -3231,6 +2893,17 @@ function update(dt) {
 
   if (P.reloading > 0) {
     P.reloading -= dt;
+    const rt = 1.35 - P.reloading;
+    // 재장전 절차적 오디오 및 모션 시퀀스
+    if (rt > 0.45 && P.reloadStage === 0) { P.reloadStage = 1; SND.magIn(); }
+    if (rt > 1.05 && P.reloadStage === 1) { P.reloadStage = 2; SND.boltRack(); }
+
+    // 총기 하강 및 탄창 삽입 틸트 모션
+    const dip = Math.sin((rt / 1.35) * Math.PI) * 0.22;
+    const roll = Math.sin((rt / 1.35) * Math.PI) * 0.32;
+    gunRoot.position.y -= dip;
+    gunRoot.rotation.z += roll;
+
     if (P.reloading <= 0) {
       const w = WEAPONS[P.wep];
       const take = Math.min(w.mag - P.ammo[P.wep], P.reserve[P.wep]);
@@ -3238,6 +2911,12 @@ function update(dt) {
       updateHUD();
     }
   }
+
+  // 실시간 마우스 관성 스웨이 (Inertial Weapon Lag)
+  P.swayX = THREE.MathUtils.lerp(P.swayX, 0, dt * 8);
+  P.swayY = THREE.MathUtils.lerp(P.swayY, 0, dt * 8);
+  gunRoot.rotation.y = P.swayX * 0.8;
+  gunRoot.rotation.x = P.recoil * 1.3 - P.swayY * 0.8;
 
   
   // ADS (정밀 조준) 시야각 및 무기 위치 전환
@@ -3720,8 +3399,8 @@ function update(dt) {
   if (!checkCollision(P.x, P.z + vz, 0.45)) {
     P.z += vz;
   }
-  P.x = Math.max(-125, Math.min(125, P.x));
-  P.z = Math.max(-125, Math.min(125, P.z));
+  P.x = Math.max(-195, Math.min(195, P.x));
+  P.z = Math.max(-195, Math.min(195, P.z));
 
   // 안전 구역 실시간 체크 및 HUD 표시
   const inSafe = isPlayerInSafeZone(P.x, P.z);
@@ -3761,6 +3440,11 @@ function update(dt) {
   camera.position.set(camX, eyeH + P.y + Math.sin(P.bob * 2) * 0.03, camZ);
   gunRoot.position.set(Math.cos(P.bob) * 0.012 + P.swayX, Math.abs(Math.sin(P.bob)) * 0.014 + P.swayY, P.recoil * 1.2);
   gunRoot.rotation.set(P.recoil * 1.3, 0, 0);
+
+  // 연발(AUTO) 연속 사격 루프
+  if (isMouseDown && P.fireMode === 0 && P.cool <= 0 && locked && !raidOver && !isModalOpen()) {
+    shoot();
+  }
 
   // 3점사 연쇄 발사 처리
   if (P.burstRemaining > 0) {
@@ -3802,6 +3486,8 @@ function update(dt) {
   }
 
   if (!checkBuggyInteraction()) checkInteractions();
+  updateImpactParticles(dt);
+  updateClouds(dt);
   updateWeatherAndAirdrop(dt);
 
   // 수류탄 물리
@@ -3845,8 +3531,12 @@ function update(dt) {
       b.mesh.rotation.y = Math.atan2(dx, dz);
       if (!b.aggro) {
         b.aggro = true;
-        banner('⚠️ 적 분대 교전 개시!');
+        SND.enemyShout(b.isKilla);
+        const shoutText = b.isKilla ? '👑 [킬라 전투 함성] "Умри! (모두 쓸어버려라!)"' : (b.type === 'raider' ? '⚠️ [PMC 레이더] "Contact Front! Suppress target!"' : '⚠️ [스캐브] "Цель обнаружена! (표적 식별!)"');
+        banner(shoutText);
       }
+      // 교전 중 전술적 좌우 스트레이프 회피 기동
+      b.x += Math.cos(performance.now() * 0.003 + b.z) * 1.2 * dt;
 
       if (b.cd <= 0) {
         b.cd = b.isBoss ? 0.75 : 1.4;
@@ -3898,49 +3588,41 @@ function finishRaid(survived) {
 }
 
 function updateHUD() {
-  document.getElementById('player-lvl').textContent = `LV. ${P.level} 특수작전 요원`;
-  document.getElementById('stat-points').innerHTML = `가용 스킬 포인트: <b style="color:var(--rpg-cyan)">${P.skillPoints}</b> SP`;
-  document.getElementById('exp-text').textContent = `EXP ${P.exp} / ${P.expNext}`;
-  document.getElementById('exp-fill').style.width = `${Math.min(100, (P.exp / P.expNext) * 100)}%`;
+  const sVal = document.getElementById('shield-val');
+  if (sVal) sVal.textContent = `${Math.round(P.shield)} / ${P.shieldMax}`;
+  const sFill = document.getElementById('shield-fill');
+  if (sFill) sFill.style.width = `${Math.max(0, (P.shield / P.shieldMax) * 100)}%`;
 
-  document.getElementById('shield-val').textContent = `${Math.round(P.shield)} / ${P.shieldMax}`;
-  document.getElementById('shield-fill').style.width = `${Math.max(0, (P.shield / P.shieldMax) * 100)}%`;
-  document.getElementById('hp-val').textContent = `${Math.max(0, Math.round(P.hp))} / ${P.hpMax}`;
-  document.getElementById('hp-fill').style.width = `${Math.max(0, (P.hp / P.hpMax) * 100)}%`;
+  const hVal = document.getElementById('hp-val');
+  if (hVal) hVal.textContent = `${Math.max(0, Math.round(P.hp))} / ${P.hpMax}`;
+  const hFill = document.getElementById('hp-fill');
+  if (hFill) hFill.style.width = `${Math.max(0, (P.hp / P.hpMax) * 100)}%`;
 
   const w = WEAPONS[P.wep];
-  document.getElementById('ammo-val').textContent = P.reloading > 0 ? 'RELOAD' : `${P.ammo[P.wep]} / ${P.reserve[P.wep]}`;
-  document.getElementById('wep-name').textContent = w.name;
-  document.getElementById('wep-tier').textContent = w.tier;
-  document.getElementById('stance-indicator').textContent = P.crouching ? '앉아서 쏴 [반동 55% 감소]' : '서서쏴 [기본 자세]';
+  const aVal = document.getElementById('ammo-val');
+  if (aVal) aVal.textContent = P.reloading > 0 ? 'RELOADING...' : `${P.ammo[P.wep]} / ${P.reserve[P.wep]}`;
+  const wName = document.getElementById('wep-name');
+  if (wName) wName.textContent = w.name;
 
-  // 무기 전술 뱃지 갱신
+  const stInd = document.getElementById('stance-indicator');
+  if (stInd) stInd.textContent = P.crouching ? 'CROUCH' : 'STAND';
+
   const bFm = document.getElementById('badge-firemode');
   if (bFm) {
-    bFm.textContent = `[X] ` + (P.fireMode === 0 ? '연발 (AUTO)' : P.fireMode === 1 ? '3점사 (BURST)' : '단발 (SEMI)');
-    bFm.className = 'hud-badge ' + (P.fireMode === 0 ? 'active-cyan' : P.fireMode === 1 ? 'active-gold' : '');
+    bFm.textContent = `[X] ` + (P.fireMode === 0 ? 'AUTO' : P.fireMode === 1 ? 'BURST' : 'SEMI');
+    bFm.className = 'badge-tag ' + (P.fireMode === 0 ? 'active' : P.fireMode === 1 ? 'gold' : '');
   }
   const bAmmo = document.getElementById('badge-ammo');
   if (bAmmo) {
-    bAmmo.textContent = `[U] ` + (P.isAPAmmo ? '7N39 철갑탄 (AP)' : 'FMJ 표준탄');
-    bAmmo.className = 'hud-badge ' + (P.isAPAmmo ? 'active-gold' : '');
+    bAmmo.textContent = `[U] ` + (P.isAPAmmo ? 'AP 7N39' : 'FMJ');
+    bAmmo.className = 'badge-tag ' + (P.isAPAmmo ? 'gold' : '');
   }
-  const bNvg = document.getElementById('badge-nvg');
-  if (bNvg) {
-    bNvg.textContent = `[N] ` + (P.nvgActive ? 'NVG ON' : 'NVG OFF');
-    bNvg.className = 'hud-badge ' + (P.nvgActive ? 'active-green' : '');
-  }
-  const bCamo = document.getElementById('badge-camo');
-  if (bCamo && CAMO_PRESETS) {
-    bCamo.textContent = `[K] ` + CAMO_PRESETS[P.camoSkin].name.split(' ')[0];
-  }
-  const bLight = document.getElementById('badge-light');
-  if (bLight) {
-    bLight.textContent = `[L] ` + (P.flashlightActive ? '라이트 ON' : '라이트 OFF');
-    bLight.className = 'hud-badge ' + (P.flashlightActive ? 'active-cyan' : '');
+
+  for (let i = 1; i <= 8; i++) {
+    const el = document.getElementById(`hb-${i}`);
+    if (el) el.classList.toggle('active', i - 1 === P.wep);
   }
 }
-
 function renderSkillModal() {
   document.getElementById('modal-sp').textContent = P.skillPoints;
   document.getElementById('stat-dmg').textContent = `+${Math.round(P.dmgBonus * 100)}%`;
@@ -3957,7 +3639,7 @@ function selectWeapon(idx) {
   if (GUN_MESH && GUN_MESH.wepSubGroups) {
     GUN_MESH.wepSubGroups.forEach((wg, i) => { wg.visible = (i === idx); });
   }
-  for (let i = 1; i <= 4; i++) {
+  for (let i = 1; i <= 8; i++) {
     const el = document.getElementById(`hb-${i}`);
     if (el) el.classList.toggle('active', i - 1 === idx);
   }
@@ -3982,6 +3664,10 @@ addEventListener('keydown', e => {
   if (k === '2') selectWeapon(1);
   if (k === '3') selectWeapon(2);
   if (k === '4') selectWeapon(3);
+  if (k === '5') selectWeapon(4);
+  if (k === '6') selectWeapon(5);
+  if (k === '7') selectWeapon(6);
+  if (k === '8') selectWeapon(7);
   if (k === '5') deploySentryTurret();
   if (k === '6') activateReconDrone();
   if (k === 'q') P.leaning = -1;
@@ -4086,25 +3772,36 @@ addEventListener('keyup', e => {
 addEventListener('mousemove', e => {
   if (!locked) return;
   P.yaw -= e.movementX * 0.0022 * mouseSensitivity;
+  P.swayX = Math.max(-0.04, Math.min(0.04, P.swayX - e.movementX * 0.0004));
+  P.swayY = Math.max(-0.04, Math.min(0.04, P.swayY - e.movementY * 0.0004));
   P.pitch = Math.max(-1.35, Math.min(1.35, P.pitch - e.movementY * 0.0022 * mouseSensitivity));
   camera.rotation.y = P.yaw; camera.rotation.x = P.pitch;
 });
 addEventListener('mousedown', e => {
   if (e.button === 0) {
     if (droneActive) { fireDroneEMP(); return; }
-    if (locked) shoot();
-    else if (!isModalOpen()) cv.requestPointerLock();
-  } else if (e.button === 1) { // 휠 클릭 핑
+    if (locked) {
+      isMouseDown = true;
+      shoot();
+    } else if (!isModalOpen()) {
+      cv.requestPointerLock();
+    }
+  } else if (e.button === 1) {
     e.preventDefault();
     if (locked) triggerTacticalPing();
-  } else if (e.button === 2) { // 우클릭 ADS
+  } else if (e.button === 2) {
     e.preventDefault();
     if (locked) P.isADS = true;
   }
 });
 addEventListener('mouseup', e => {
-  if (e.button === 2) {
+  if (e.button === 0) {
+    isMouseDown = false;
+  } else if (e.button === 2) {
     P.isADS = false;
+    P.isHoldingBreath = false;
+    const bi = document.getElementById('breath-indicator');
+    if (bi) bi.style.display = 'none';
   }
 });
 addEventListener('contextmenu', e => e.preventDefault());

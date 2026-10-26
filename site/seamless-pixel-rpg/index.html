@@ -507,6 +507,17 @@
 <div id="gameContainer">
   <canvas id="gameCanvas" width="1260" height="760"></canvas>
 
+  <!-- Story Quest HUD Tracker -->
+  <div id="storyHUDCard" style="position:absolute; top:78px; left:16px; width:220px; background:rgba(18, 22, 34, 0.92); border:1.5px solid #d4af37; border-radius:6px; padding:7px 10px; color:#ecf0f1; box-shadow:0 4px 15px rgba(0,0,0,0.6); pointer-events:auto; z-index:25;">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(212,175,55,0.4); padding-bottom:3px; margin-bottom:4px;">
+      <span id="storyChapterTitle" style="font-weight:bold; font-size:10.5px; color:#f1c40f;">👑 제 1장: 룬의 각성</span>
+      <span style="font-size:8.5px; background:#d4af37; color:#1a1a1a; padding:1px 4px; border-radius:3px; font-weight:bold;">스토리</span>
+    </div>
+    <div id="storyObjectiveText" style="font-size:9.5px; color:#bdc3c7; margin-bottom:3px;">⚔️ 들판 몬스터 소탕: 0 / 5</div>
+    <div id="storyGiverText" style="font-size:8.5px; color:#7f8c8d;">의뢰인: 촌장 엘더 발도르 [F]</div>
+    <div id="storyRewardReadyNotice" style="display:none; color:#2ecc71; font-weight:bold; font-size:9px; margin-top:3px;">✅ 완료 가능! 의뢰인에게 보고하세요!</div>
+  </div>
+
   <!-- Player Profile HUD -->
   <div id="playerProfileHUD">
     <div class="player-avatar-box">
@@ -581,6 +592,14 @@
       <span class="hotbar-slot-key">H</span>
       <span class="hotbar-slot-icon">🧪</span>
       <span id="potionCountText" style="position:absolute; bottom:2px; right:4px; font-size:10px; font-weight:bold; color:#2ecc71;">3</span>
+    </div>
+    <div class="hotbar-slot ready" onclick="cycleWeaponArchetype()" title="무기 스왑 [Tab]">
+      <span class="hotbar-slot-key">Tab</span>
+      <span class="hotbar-slot-icon" id="weaponArchetypeBadge">⚔️ 대검</span>
+    </div>
+    <div class="hotbar-slot ready" onclick="toggleQuickHelpModal()" title="도움말 [U]">
+      <span class="hotbar-slot-key">U</span>
+      <span class="hotbar-slot-icon">❓</span>
     </div>
   </div>
 
@@ -1593,6 +1612,7 @@ let droppedLoot = [];
 let floatingNumbers = [];
 let pixelShards = [];
 let woodDebris = [];
+let activeHitSparks = [];
 let footstepDust = [];
 let playerAfterimages = [];
 let activeSwordWaves = [];
@@ -1781,6 +1801,90 @@ let skyLightningBolts = []; // { points, timer, maxTimer }
 // ==========================================
 let coliseumWave = 0;
 let coliseumMonsters = [];
+
+// Unified Cross-Zone Monster Retrieval Engine
+function getCurrentZoneMonsters() {
+  if (currentZone === "OpenWorld") return fieldMonsters;
+  if (currentZone === "Coliseum") return coliseumMonsters;
+  if (currentZone === "RiftDungeon") return riftMonsters;
+  if (currentZone === "MagmaAbyss") return magmaMonsters;
+  if (currentZone === "AncientCatacombs") return catacombMonsters;
+  return [];
+}
+
+// ==========================================
+// 👑 4-CHAPTER EPIC MAIN STORY SYSTEM
+// ==========================================
+let storyChapter = 1;
+let storyProgress = {
+  killCount: 0,
+  essenceCount: 0,
+  ramsesDefeated: false,
+  bahamutDefeated: false
+};
+
+const MAIN_STORY_CHAPTERS = [
+  {
+    chapter: 1,
+    title: "제 1장: 룬의 각성",
+    giver: "촌장 엘더 발도르",
+    npcId: "elder",
+    desc: "성채 외곽의 몬스터들을 소탕하여 주민들의 안전을 확보하라.",
+    objectiveText: "들판 몬스터 소탕",
+    target: 5,
+    goldReward: 250,
+    expReward: 400,
+    rewardDesc: "250G, 400 EXP, 영웅의 은화"
+  },
+  {
+    chapter: 2,
+    title: "제 2장: 심연의 룬 강철",
+    giver: "대장장이 브록",
+    npcId: "blacksmith",
+    desc: "차원 균열 또는 마그마 심연에서 마물을 처치해 심연의 정수 3개를 획득하라.",
+    objectiveText: "심연의 정수 수집",
+    target: 3,
+    goldReward: 500,
+    expReward: 800,
+    rewardDesc: "500G, 800 EXP, 룬 강철 각인 (무기 공격력 +15%)"
+  },
+  {
+    chapter: 3,
+    title: "제 3장: 파라오의 저주",
+    giver: "연금술사 세레나",
+    npcId: "alchemist",
+    desc: "고대 지하묘지(Ancient Catacombs)로 들어가 불경한 파라오 람세스를 토벌하라.",
+    objectiveText: "파라오 람세스 토벌",
+    target: 1,
+    goldReward: 800,
+    expReward: 1500,
+    rewardDesc: "800G, 1500 EXP, 영생의 비약 (최대 HP +150)"
+  },
+  {
+    chapter: 4,
+    title: "제 4장: 종말의 화염군주",
+    giver: "촌장 엘더 발도르 & 모험가 길드",
+    npcId: "elder",
+    desc: "북쪽 분화구에서 부활한 태고의 고룡 바하무트를 토벌하여 대륙을 구원하라!",
+    objectiveText: "화염 군주 바하무트 토벌",
+    target: 1,
+    goldReward: 3000,
+    expReward: 5000,
+    rewardDesc: "3000G, 5000 EXP, 신화 칭호 '에델가르드의 수호자'"
+  }
+];
+
+// ==========================================
+// ⚔️ WEAPON ARCHETYPE SYSTEM ([Tab] Key Swap)
+// ==========================================
+let currentWeaponArchetype = "greatsword";
+const WEAPON_ARCHETYPES = {
+  greatsword: { name: "용사의 대검", icon: "⚔️", atkMult: 1.25, speedMult: 0.9, critBonus: 0.05, rangeBonus: 22, desc: "묵직한 광역 베기, 높은 경직치 및 충격파" },
+  daggers: { name: "그림자 쌍단검", icon: "🗡️", atkMult: 0.85, speedMult: 1.45, critBonus: 0.25, rangeBonus: -5, desc: "초고속 3연타 난무, 높은 치명타율과 잔상" },
+  staff: { name: "비전 마법봉", icon: "🪄", atkMult: 1.05, speedMult: 1.1, critBonus: 0.12, rangeBonus: 50, isRanged: true, desc: "유도 비전 유성 탄환 발사 및 광역 마법 폭발" }
+};
+let activeArcaneStaffProjectiles = [];
+
 let coliseumMedals = 0;
 let coliseumBannerTimer = 0;
 let coliseumBoss = null;
@@ -1962,7 +2066,10 @@ function saveGame() {
       equipped: inventory.equipped, backpack: inventory.backpack,
       quests: quests, guildBounties: guildBounties, riftWave: riftWaveLevel,
       hallOfFame: hallOfFame,
-      unlockedAchievements: unlockedAchievements
+      unlockedAchievements: unlockedAchievements,
+      storyChapter: storyChapter,
+      storyProgress: storyProgress,
+      currentWeaponArchetype: currentWeaponArchetype
     };
     localStorage.setItem('SeamlessPixelRPG_SaveMasterpiece', JSON.stringify(data));
   } catch(e) {}
@@ -1993,6 +2100,9 @@ function loadGame() {
       if (data.riftWave) riftWaveLevel = data.riftWave;
       if (data.hallOfFame) hallOfFame = data.hallOfFame;
       if (data.unlockedAchievements) unlockedAchievements = data.unlockedAchievements;
+      if (data.storyChapter) storyChapter = data.storyChapter;
+      if (data.storyProgress) storyProgress = Object.assign(storyProgress, data.storyProgress);
+      if (data.currentWeaponArchetype) currentWeaponArchetype = data.currentWeaponArchetype;
       recalculateStats();
     }
   } catch(e) {}
@@ -2227,6 +2337,16 @@ const mousePos = { x: 630, y: 380 };
 window.addEventListener('keydown', e => {
   initAudio();
   keys[e.key.toLowerCase()] = true;
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    cycleWeaponArchetype();
+    return;
+  }
+  if (e.key.toLowerCase() === 'u') {
+    e.preventDefault();
+    toggleQuickHelpModal();
+    return;
+  }
   if (e.code === 'Space') {
     e.preventDefault();
     if (fishingState.isFishing && fishingState.hasBite) {
@@ -2277,6 +2397,23 @@ canvas.addEventListener('mousedown', e => {
     }
   }
 });
+
+function cycleWeaponArchetype() {
+  const types = ["greatsword", "daggers", "staff"];
+  const curIdx = types.indexOf(currentWeaponArchetype);
+  currentWeaponArchetype = types[(curIdx + 1) % types.length];
+  const arc = WEAPON_ARCHETYPES[currentWeaponArchetype];
+  SoundEngine.playSlash(320);
+  flashScreen('#ffd700', 0.2);
+  addDamageText(player.x, player.y - 35, arc.icon + " " + arc.name + " 장착!", true, '#ffd700');
+  updateHUD();
+}
+
+function toggleQuickHelpModal() {
+  const m = document.getElementById('helpModal');
+  if (!m) return;
+  m.style.display = m.style.display === 'block' ? 'none' : 'block';
+}
 
 function togglePetSanctuaryQuick() {
   const pets = ['ignis', 'fenrir', 'sylph'];
@@ -2485,7 +2622,7 @@ function triggerDodgeRoll() {
 
   // Perfect Dodge & Bullet Time Check
   let isJustDodge = false;
-  const currentList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : (currentZone === "MagmaAbyss" ? magmaMonsters : catacombMonsters));
+  const currentList = getCurrentZoneMonsters();
   currentList.forEach(m => {
     if (m.hp > 0 && Math.hypot(m.x - player.x, m.y - player.y) < 75 && m.attackTimer >= 0.7) {
       isJustDodge = true;
@@ -2617,25 +2754,56 @@ function castSkill(index) {
 
   if (currentClassId === 'paladin') {
     if (index === 0) {
+      const arc = WEAPON_ARCHETYPES[currentWeaponArchetype] || WEAPON_ARCHETYPES.greatsword;
       comboStep = (comboStep % 3) + 1;
-      comboTimer = 1.0;
-      player.attackSwingTimer = 0.20;
-      const lunges = [90, 130, 240];
-      player.vx += Math.cos(aimDir) * lunges[comboStep - 1];
-      player.vy += Math.sin(aimDir) * lunges[comboStep - 1];
-      let dmg = Math.round(totalBaseDmg * berserkMultiplier * (comboStep === 3 ? 1.6 : 1.0));
-      SoundEngine.playSlash(240 + comboStep * 60);
 
-      if (comboStep === 3) {
-        activeSwordWaves.push({
-          x: player.x, y: player.y,
-          vx: Math.cos(aimDir) * 420, vy: Math.sin(aimDir) * 420,
-          angle: aimDir, damage: dmg, radius: 28, life: 0.6,
-          color: WEAPON_COLORS[inventory.weaponLevel || 0]
-        });
-        doShake(5);
+      if (currentWeaponArchetype === "daggers") {
+        comboTimer = 0.8;
+        player.attackSwingTimer = 0.12;
+        player.vx += Math.cos(aimDir) * 90;
+        player.vy += Math.sin(aimDir) * 90;
+        let dmg = Math.round(totalBaseDmg * berserkMultiplier * arc.atkMult);
+        SoundEngine.playSlash(360 + comboStep * 60);
+        checkMeleeHitCone(player.x, player.y, aimDir - 0.18, 70, dmg);
+        setTimeout(() => {
+          checkMeleeHitCone(player.x, player.y, aimDir + 0.18, 70, dmg);
+        }, 40);
+        playerAfterimages.push({ x: player.x, y: player.y, alpha: 0.6, color: '#4834d4' });
+      } else if (currentWeaponArchetype === "staff") {
+        comboTimer = 0.9;
+        player.attackSwingTimer = 0.16;
+        let dmg = Math.round(totalBaseDmg * berserkMultiplier * arc.atkMult);
+        SoundEngine.playSlash(480);
+        for (let b = -1; b <= 1; b += 2) {
+          activeArcaneStaffProjectiles.push({
+            x: player.x + Math.cos(aimDir + b * 0.3) * 16,
+            y: player.y + Math.sin(aimDir + b * 0.3) * 16,
+            vx: Math.cos(aimDir + b * 0.15) * 380,
+            vy: Math.sin(aimDir + b * 0.15) * 380,
+            angle: aimDir, damage: dmg, radius: 12, life: 1.2, homingTimer: 0.18
+          });
+        }
+      } else {
+        // Greatsword
+        comboTimer = 1.0;
+        player.attackSwingTimer = 0.22;
+        const lunges = [100, 140, 260];
+        player.vx += Math.cos(aimDir) * lunges[comboStep - 1];
+        player.vy += Math.sin(aimDir) * lunges[comboStep - 1];
+        let dmg = Math.round(totalBaseDmg * berserkMultiplier * arc.atkMult * (comboStep === 3 ? 1.7 : 1.0));
+        SoundEngine.playSlash(220 + comboStep * 50);
+
+        if (comboStep === 3) {
+          activeSwordWaves.push({
+            x: player.x, y: player.y,
+            vx: Math.cos(aimDir) * 440, vy: Math.sin(aimDir) * 440,
+            angle: aimDir, damage: dmg, radius: 34, life: 0.65,
+            color: WEAPON_COLORS[inventory.weaponLevel || 0]
+          });
+          doShake(8);
         } else {
-        checkMeleeHitCone(player.x, player.y, aimDir, 75, dmg);
+          checkMeleeHitCone(player.x, player.y, aimDir, 85 + arc.rangeBonus, dmg);
+        }
       }
     } else if (index === 1) {
       // Frost Nova
@@ -2817,7 +2985,7 @@ function checkMeleeHitCone(px, py, angle, range, damage) {
     color: slashColor,
     timer: 0.14, maxTimer: 0.14
   });
-  const currentList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : (currentZone === "MagmaAbyss" ? magmaMonsters : catacombMonsters));
+  const currentList = getCurrentZoneMonsters();
 
   if (currentZone === "OpenWorld") {
     if (Math.hypot(px - trainingDummy.x, py - trainingDummy.y) <= range + 20) {
@@ -2853,7 +3021,7 @@ function checkMeleeHitCone(px, py, angle, range, damage) {
 }
 
 function checkAreaHit(x, y, radius, damage) {
-  const currentList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : (currentZone === "MagmaAbyss" ? magmaMonsters : catacombMonsters));
+  const currentList = getCurrentZoneMonsters();
   if (currentZone === "OpenWorld" && Math.hypot(x - trainingDummy.x, y - trainingDummy.y) <= radius) {
     hitEntity(trainingDummy, damage, true);
   }
@@ -2938,7 +3106,7 @@ function registerCombatHit(target, isCrit, finalDamage) {
     }
   } else if (activeEnchantment === 'thunder') {
     // Chain Lightning to up to 3 nearby enemies
-    const list = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "Coliseum" ? coliseumMonsters : (currentZone === "RiftDungeon" ? riftMonsters : magmaMonsters));
+    const list = getCurrentZoneMonsters();
     let jumps = 0;
     list.forEach(other => {
       if (other !== target && other.hp > 0 && jumps < 3) {
@@ -3017,6 +3185,41 @@ function hitBoss(damage) {
 
 function onMonsterKilled(m) {
   hallOfFame.totalKills++;
+
+  // Story Chapter 1: Slay 5 Field Monsters
+  if (storyChapter === 1 && currentZone === "OpenWorld") {
+    if (storyProgress.killCount < 5) {
+      storyProgress.killCount++;
+      addDamageText(player.x, player.y - 45, "📜 [스토리 1장] 들판 몬스터 (" + storyProgress.killCount + "/5)", true, '#ffd700');
+      if (storyProgress.killCount >= 5) {
+        SoundEngine.playAchievementFanfare();
+        flashScreen('#ffd700', 0.3);
+        addDamageText(player.x, player.y - 65, "🎉 [스토리 1장 완료!] 촌장 엘더 발도르에게 보고하세요!", true, '#2ecc71');
+      }
+    }
+  }
+
+  // Story Chapter 2: Collect 3 Abyssal Essences from Dungeon/Elite Monsters
+  if (storyChapter === 2 && (currentZone === "RiftDungeon" || currentZone === "MagmaAbyss" || m.isElite)) {
+    if (storyProgress.essenceCount < 3 && Math.random() < 0.65) {
+      storyProgress.essenceCount++;
+      SoundEngine.playLoot();
+      addDamageText(m.x, m.y - 30, "🔮 심연의 정수 획득! (" + storyProgress.essenceCount + "/3)", true, '#9b59b6');
+      if (storyProgress.essenceCount >= 3) {
+        SoundEngine.playAchievementFanfare();
+        flashScreen('#9b59b6', 0.3);
+        addDamageText(player.x, player.y - 65, "🎉 [스토리 2장 완료!] 대장장이 브록에게 보고하세요!", true, '#2ecc71');
+      }
+    }
+  }
+
+  // Story Chapter 3: Defeat Pharaoh Ramses in Ancient Catacombs
+  if (storyChapter === 3 && currentZone === "AncientCatacombs" && (m.isBoss || (m.name && m.name.indexOf("람세스") !== -1))) {
+    storyProgress.ramsesDefeated = true;
+    SoundEngine.playAchievementFanfare();
+    flashScreen('#00d2d3', 0.4);
+    addDamageText(player.x, player.y - 65, "🎉 [스토리 3장 완료!] 연금술사 세레나에게 보고하세요!", true, '#2ecc71');
+  }
   updateBountyProgress('bounty_skel', 1);
 
   if (quests[0] && !quests[0].completed) {
@@ -3066,6 +3269,12 @@ function onMonsterKilled(m) {
 
 function onBossKilled() {
   SoundEngine.playDragonRoar();
+  if (storyChapter === 4) {
+    storyProgress.bahamutDefeated = true;
+    SoundEngine.playAchievementFanfare();
+    flashScreen('#ff4757', 0.5);
+    addDamageText(player.x, player.y - 70, "👑 [스토리 최종장 완료!] 에델가르드의 수호자!", true, '#ffd700');
+  }
   flashScreen('#ffd700', 0.6);
   doShake(30);
   triggerAchievement('dragon_slayer');
@@ -3207,7 +3416,7 @@ function update(dt) {
   // Update Mage Chrono Stasis Dome
   if (activeChronoDome) {
     activeChronoDome.timer -= dt;
-    const curMonsterList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "Coliseum" ? coliseumMonsters : (currentZone === "RiftDungeon" ? riftMonsters : magmaMonsters));
+    const curMonsterList = getCurrentZoneMonsters();
     curMonsterList.forEach(m => {
       if (m.hp > 0 && Math.hypot(m.x - activeChronoDome.x, m.y - activeChronoDome.y) <= activeChronoDome.radius) {
         m.speed = Math.min(m.speed, 35); // Heavy Slow
@@ -3216,10 +3425,66 @@ function update(dt) {
     if (activeChronoDome.timer <= 0) activeChronoDome = null;
   }
 
+  // Update Active Hit Sparks
+  for (let i = activeHitSparks.length - 1; i >= 0; i--) {
+    const spk = activeHitSparks[i];
+    spk.life -= dt;
+    spk.x += spk.vx * dt;
+    spk.y += spk.vy * dt;
+    if (spk.life <= 0) activeHitSparks.splice(i, 1);
+  }
+
   // Update Paladin Rock Fissures
   for (let i = activeFissures.length - 1; i >= 0; i--) {
     activeFissures[i].timer -= dt;
     if (activeFissures[i].timer <= 0) activeFissures.splice(i, 1);
+  }
+
+  // Update Arcane Staff Homing Star Projectiles
+  for (let i = activeArcaneStaffProjectiles.length - 1; i >= 0; i--) {
+    const proj = activeArcaneStaffProjectiles[i];
+    proj.life -= dt;
+    proj.homingTimer -= dt;
+    if (proj.homingTimer <= 0) {
+      const monsters = getCurrentZoneMonsters();
+      let nearest = null;
+      let minDist = 240;
+      monsters.forEach(m => {
+        if (m.hp > 0) {
+          const d = Math.hypot(m.x - proj.x, m.y - proj.y);
+          if (d < minDist) { minDist = d; nearest = m; }
+        }
+      });
+      if (nearest) {
+        const toTarget = Math.atan2(nearest.y - proj.y, nearest.x - proj.x);
+        proj.vx += Math.cos(toTarget) * 550 * dt;
+        proj.vy += Math.sin(toTarget) * 550 * dt;
+        const spd = Math.hypot(proj.vx, proj.vy);
+        if (spd > 420) { proj.vx = (proj.vx / spd) * 420; proj.vy = (proj.vy / spd) * 420; }
+      }
+    }
+    proj.x += proj.vx * dt;
+    proj.y += proj.vy * dt;
+
+    let hit = false;
+    const monsters = getCurrentZoneMonsters();
+    for (let m of monsters) {
+      if (m.hp > 0 && Math.hypot(m.x - proj.x, m.y - proj.y) < proj.radius + 14) {
+        hitEntity(m, proj.damage, false);
+        hit = true;
+        break;
+      }
+    }
+    if (hit || proj.life <= 0) {
+      for (let s = 0; s < 6; s++) {
+        activeHitSparks.push({
+          x: proj.x, y: proj.y,
+          vx: (Math.random() - 0.5) * 120, vy: (Math.random() - 0.5) * 120,
+          color: '#00d2d3', size: 3, life: 0.35, maxLife: 0.35
+        });
+      }
+      activeArcaneStaffProjectiles.splice(i, 1);
+    }
   }
 
   // Update Watermill Paddle Rotation
@@ -3484,7 +3749,7 @@ function update(dt) {
   petSnackTimer -= dt;
   if (petPounceTimer <= 0) {
     petPounceTimer = 3.5;
-    const monsterList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "Coliseum" ? coliseumMonsters : (currentZone === "RiftDungeon" ? riftMonsters : magmaMonsters));
+    const monsterList = getCurrentZoneMonsters();
     let nearestM = null;
     let nearDist = 200;
     monsterList.forEach(m => {
@@ -3545,12 +3810,19 @@ function update(dt) {
     }
   }
 
-  // Coliseum Waves Loop
+  // Coliseum Waves Loop with Transition Delay Guard & Victory Advance
   if (currentZone === "Coliseum") {
     let aliveCount = 0;
     coliseumMonsters.forEach(m => { if (m.hp > 0) aliveCount++; });
-    if (aliveCount === 0 && coliseumWave < 5) {
-      advanceColiseumWave();
+    if (aliveCount === 0 && coliseumMonsters.length > 0) {
+      if (typeof coliseumWaveDelay === "undefined") coliseumWaveDelay = 1.6;
+      coliseumWaveDelay -= dt;
+      if (coliseumWaveDelay <= 0) {
+        coliseumWaveDelay = 1.6;
+        advanceColiseumWave();
+      }
+    } else {
+      coliseumWaveDelay = 1.6;
     }
   }
 
@@ -3823,7 +4095,7 @@ function update(dt) {
         addDamageText(player.x, player.y - 25, "가시 함정!", false, '#ff4757');
         doShake(2);
       }
-      const currentList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : (currentZone === "MagmaAbyss" ? magmaMonsters : catacombMonsters));
+      const currentList = getCurrentZoneMonsters();
       currentList.forEach(m => {
         if (m.hp > 0 && Math.hypot(m.x - trap.x, m.y - trap.y) <= trapRadius + 14) {
           m.hp -= 260 * dt;
@@ -3835,7 +4107,7 @@ function update(dt) {
   });
 
   // Monsters AI
-  const currentMonsterList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : (currentZone === "MagmaAbyss" ? magmaMonsters : catacombMonsters));
+  const currentMonsterList = getCurrentZoneMonsters();
   currentMonsterList.forEach(m => {
     if (m.hp <= 0) return;
     if (m.hitFlashTimer > 0) m.hitFlashTimer -= dt;
@@ -4029,7 +4301,7 @@ function updateCompanionPet(dt) {
   petCompanion.attackTimer = (petCompanion.attackTimer || 0) + dt;
   if (petCompanion.attackTimer >= 2.5) {
     petCompanion.attackTimer = 0;
-    const currentList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : (currentZone === "MagmaAbyss" ? magmaMonsters : catacombMonsters));
+    const currentList = getCurrentZoneMonsters();
     let nearestMonster = null;
     let minDist = 180;
     currentList.forEach(m => {
@@ -4346,7 +4618,7 @@ function render() {
         }
       }
     }
-
+  }
     
     // Procedural Shimmering Water Caustics & Swimming Koi
     if (currentZone === "OpenWorld") {
@@ -4513,189 +4785,26 @@ function render() {
 
     
     // ==========================================
-    // 🏰 DETAILED BUILDINGS & TOWN DISTRICTS
+    // 🌍 1. GROUND DECALS, TRAPS & AMBIENT DUST
     // ==========================================
-    if (currentZone === "OpenWorld") {
-      // 1. Blacksmith Forge Workshop (-220, -20)
-      ctx.save();
-      ctx.translate(-220, -20);
-      // Soft Ground Contact Shadow
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-      ctx.beginPath(); ctx.ellipse(0, 24, 48, 18, 0, 0, Math.PI * 2); ctx.fill();
-      // Stone Walls
-      ctx.fillStyle = '#2d3436'; ctx.fillRect(-42, -32, 84, 56);
-      ctx.fillStyle = '#636e72'; ctx.fillRect(-38, -28, 76, 50);
-      // Wood Timber Framing
-      ctx.fillStyle = '#533519';
-      ctx.fillRect(-42, -32, 6, 56); ctx.fillRect(36, -32, 6, 56);
-      ctx.fillRect(-42, -4, 84, 5);
-      // Tiled Roof with Overhang
-      ctx.fillStyle = '#b33939'; ctx.fillRect(-46, -42, 92, 12);
-      ctx.fillStyle = '#c0392b'; ctx.fillRect(-44, -40, 88, 8);
-      // Chimney & Animated Hearth Fire
-      ctx.fillStyle = '#1e272e'; ctx.fillRect(20, -52, 14, 18);
-      const forgeFlame = Math.sin(performance.now() * 0.015) * 3;
-      ctx.fillStyle = '#ff4757'; ctx.fillRect(-22, 6 + forgeFlame, 18, 14);
-      ctx.fillStyle = '#ffd32a'; ctx.fillRect(-18, 10 + forgeFlame, 10, 8);
-      // Anvil with sparkling strikes
-      drawAtlasTile(ctx, 10, 8, 12, 4, 26, 26);
-      // Signboard
-      ctx.fillStyle = '#ffd700'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center';
-      ctx.fillText("⚔️ 룬 대장간", 0, -48);
-      ctx.restore();
-
-      // 2. Alchemist Herbal Laboratory (-170, 75)
-      ctx.save();
-      ctx.translate(-170, 75);
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
-      ctx.beginPath(); ctx.ellipse(0, 22, 44, 16, 0, 0, Math.PI * 2); ctx.fill();
-      // Timber Cottage Walls
-      ctx.fillStyle = '#4b382a'; ctx.fillRect(-36, -28, 72, 48);
-      ctx.fillStyle = '#785b40'; ctx.fillRect(-32, -24, 64, 42);
-      // Thatched Straw Roof
-      ctx.fillStyle = '#c5a059'; ctx.fillRect(-40, -38, 80, 12);
-      ctx.fillStyle = '#dfb15b'; ctx.fillRect(-38, -36, 76, 8);
-      // Glowing Window (Soft green magic glow)
-      ctx.fillStyle = '#00d2d3'; ctx.fillRect(-16, -12, 14, 14);
-      ctx.fillStyle = 'rgba(0, 210, 211, 0.35)'; ctx.fillRect(-20, -16, 22, 22);
-      // Bubbling Cauldron with purple steam
-      ctx.fillStyle = '#1e272e'; ctx.beginPath(); ctx.arc(20, 10, 10, 0, Math.PI * 2); ctx.fill();
-      const caulSteam = Math.sin(performance.now() * 0.01) * 3;
-      ctx.fillStyle = '#e056fd'; ctx.beginPath(); ctx.arc(20, 4 + caulSteam, 6, 0, Math.PI * 2); ctx.fill();
-      // Signboard
-      ctx.fillStyle = '#00d2d3'; ctx.font = 'bold 9.5px monospace'; ctx.textAlign = 'center';
-      ctx.fillText("🧪 연금술소", 0, -44);
-      ctx.restore();
-
-      // 3. Adventurer's Guild Hall & Town Plaza (0, -120)
-      ctx.save();
-      ctx.translate(0, -120);
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.48)';
-      ctx.beginPath(); ctx.ellipse(0, 28, 64, 22, 0, 0, Math.PI * 2); ctx.fill();
-      // Grand Brick Structure
-      ctx.fillStyle = '#2f3542'; ctx.fillRect(-54, -40, 108, 68);
-      ctx.fillStyle = '#57606f'; ctx.fillRect(-50, -36, 100, 62);
-      // Arch Double Doors
-      ctx.fillStyle = '#3a2717'; ctx.fillRect(-14, 2, 28, 24);
-      ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1.5; ctx.strokeRect(-14, 2, 28, 24);
-      // Clock Tower & Royal Banner
-      ctx.fillStyle = '#747d8c'; ctx.fillRect(-18, -60, 36, 22);
-      ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(0, -48, 7, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#e74c3c'; ctx.fillRect(-44, -20, 8, 26); ctx.fillRect(36, -20, 8, 26);
-      ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center';
-      ctx.fillText("🏰 모험가 길드 본부", 0, -68);
-      ctx.restore();
-
-      // 4. Cozy Harbor Pier & Ocean Lighthouse (320, -180)
-      ctx.save();
-      ctx.translate(320, -180);
-      // Towering Round Lighthouse
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-      ctx.beginPath(); ctx.ellipse(0, 24, 30, 12, 0, 0, Math.PI * 2); ctx.fill();
-      // White & Red Striped Tower
-      ctx.fillStyle = '#dfe4ea'; ctx.fillRect(-16, -70, 32, 90);
-      ctx.fillStyle = '#ff4757'; ctx.fillRect(-16, -50, 32, 16); ctx.fillRect(-16, -20, 32, 16);
-      // Lantern Room
-      ctx.fillStyle = '#ffd32a'; ctx.fillRect(-12, -84, 24, 16);
-      ctx.fillStyle = '#2f3542'; ctx.fillRect(-14, -88, 28, 6);
-      // Sweeping Rotating Beacon Light Beam at Night/Dusk
-      const dayRatio = dayCycleTimer / DAY_CYCLE_LENGTH;
-      if (dayRatio >= 0.45) {
-        ctx.save();
-        ctx.translate(0, -76);
-        ctx.rotate(lighthouseAngle);
-        const beamGrad = ctx.createRadialGradient(0, 0, 5, 240, 0, 260);
-        beamGrad.addColorStop(0, 'rgba(255, 242, 0, 0.7)');
-        beamGrad.addColorStop(0.35, 'rgba(255, 215, 0, 0.35)');
-        beamGrad.addColorStop(1, 'rgba(255, 215, 0, 0.0)');
-        ctx.fillStyle = beamGrad;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.arc(0, 0, 260, -0.22, 0.22);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
-      }
-      ctx.fillStyle = '#ffd700'; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
-      ctx.fillText("등대 관측소", 0, -94);
-      ctx.restore();
-
-      // Moored Wooden Sailing Sloop at Lake Dock (190, 80)
-      ctx.save();
-      ctx.translate(210, 80);
-      const boatBob = Math.sin(performance.now() * 0.003) * 3;
-      ctx.translate(0, boatBob);
-      // Boat Hull
-      ctx.fillStyle = '#593b1d';
-      ctx.beginPath();
-      ctx.moveTo(-24, 0); ctx.lineTo(24, 0); ctx.lineTo(16, 12); ctx.lineTo(-18, 12); ctx.closePath();
-      ctx.fill();
-      // Mast & Sail
-      ctx.strokeStyle = '#3a2510'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -26); ctx.stroke();
-      ctx.fillStyle = 'rgba(240, 240, 240, 0.85)';
-      ctx.beginPath(); ctx.moveTo(0, -24); ctx.lineTo(14, -12); ctx.lineTo(0, -6); ctx.closePath(); ctx.fill();
-      // Mast Lantern
-      ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(0, -26, 3, 0, Math.PI * 2); ctx.fill();
-      ctx.restore();
-    }
-
-    // Render Procedural Trees with Swaying Foliage
-    if (currentZone === "OpenWorld") {
-      const treeTime = performance.now() * 0.001;
-      worldTrees.forEach(tr => {
-        ctx.save();
-        ctx.translate(tr.x, tr.y);
-        // Contact Shadow
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.38)';
-        ctx.beginPath(); ctx.ellipse(0, 10, tr.size * 0.55, 8, 0, 0, Math.PI * 2); ctx.fill();
-        // Trunk
-        ctx.fillStyle = '#4a3319'; ctx.fillRect(-5, -6, 10, 16);
-        // Foliage with Wind Sway
-        const sway = Math.sin(treeTime * tr.swaySpeed + tr.x) * 3;
-        ctx.translate(sway, 0);
-        if (tr.type === 'cherry') {
-          ctx.fillStyle = '#ff7675'; ctx.beginPath(); ctx.arc(0, -22, tr.size * 0.5, 0, Math.PI * 2); ctx.fill();
-          ctx.fillStyle = '#fd79a8'; ctx.beginPath(); ctx.arc(-6, -26, tr.size * 0.42, 0, Math.PI * 2); ctx.fill();
-          ctx.fillStyle = '#fab1a0'; ctx.beginPath(); ctx.arc(8, -20, tr.size * 0.35, 0, Math.PI * 2); ctx.fill();
-        } else if (tr.type === 'pine') {
-          ctx.fillStyle = '#1b4332';
-          ctx.beginPath(); ctx.moveTo(0, -38); ctx.lineTo(-18, -14); ctx.lineTo(18, -14); ctx.closePath(); ctx.fill();
-          ctx.beginPath(); ctx.moveTo(0, -26); ctx.lineTo(-22, -4); ctx.lineTo(22, -4); ctx.closePath(); ctx.fill();
-        } else {
-          ctx.fillStyle = '#2d6a4f'; ctx.beginPath(); ctx.arc(0, -22, tr.size * 0.52, 0, Math.PI * 2); ctx.fill();
-          ctx.fillStyle = '#40916c'; ctx.beginPath(); ctx.arc(-8, -24, tr.size * 0.4, 0, Math.PI * 2); ctx.fill();
-          ctx.fillStyle = '#52b788'; ctx.beginPath(); ctx.arc(8, -18, tr.size * 0.36, 0, Math.PI * 2); ctx.fill();
-        }
-        ctx.restore();
-      });
-    }
-
     // Render Chimney Smoke Particles
     chimneySmokeParticles.forEach(sp => {
       ctx.save();
       ctx.fillStyle = "rgba(180, 185, 190, " + sp.alpha + ")";
-      ctx.beginPath();
-      ctx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     });
 
     // Render Drifting Leaves Particles
     driftingLeafParticles.forEach(lp => {
       ctx.save();
-      ctx.translate(lp.x, lp.y);
-      ctx.rotate(lp.rot);
+      ctx.translate(lp.x, lp.y); ctx.rotate(lp.rot);
       ctx.fillStyle = lp.color;
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 4, 2, 0, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.beginPath(); ctx.ellipse(0, 0, 4, 2, 0, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     });
 
-    // ==========================================
-    // ✨ RADIANT SKY LOOT BEAMS FOR DROPPED ITEMS
-    // ==========================================
+    // Radiant Sky Loot Beams
     droppedLoot.forEach(g => {
       if (g.type === "gem" || g.type === "equip") {
         ctx.save();
@@ -4705,7 +4814,6 @@ function render() {
         grad.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
         ctx.fillStyle = grad;
         ctx.fillRect(g.x - 6, g.y - 180, 12, 180);
-        // Twinkling stars
         const starPulse = (performance.now() * 0.005 + g.x) % 1;
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(g.x - 2, g.y - 40 - starPulse * 120, 4, 4);
@@ -4713,468 +4821,576 @@ function render() {
       }
     });
 
-    // Central Campfire with Cooking Prompt
-    ctx.save();
-    ctx.translate(campfirePos.x, campfirePos.y);
-    drawAtlasTile(ctx, 15, 10, -16, -16, 32, 32);
-    const campDist = Math.hypot(player.x - campfirePos.x, player.y - campfirePos.y);
-    if (campDist < 55) {
-      ctx.fillStyle = '#f39c12'; ctx.font = 'bold 9.5px monospace'; ctx.textAlign = 'center';
-      ctx.fillText("[F] 캠프파이어 요리 및 휴식", 0, -26);
-    }
-    ctx.restore();
-
-    // Town Streetlamps
-    streetLamps.forEach(lamp => {
+    // Ground Decals (Frost spikes / Lava puddles)
+    groundDecals.forEach(d => {
       ctx.save();
-      ctx.fillStyle = '#34495e';
-      ctx.fillRect(lamp.x - 2, lamp.y - 18, 4, 22);
-      ctx.fillStyle = '#f1c40f';
-      ctx.fillRect(lamp.x - 5, lamp.y - 24, 10, 8);
-      ctx.restore();
-    });
-
-    // Mercenary Guild Notice Board
-    ctx.save();
-    ctx.translate(60, -45);
-    ctx.fillStyle = '#5a3d1e'; ctx.fillRect(-12, -18, 24, 26);
-    ctx.fillStyle = '#dfb15b'; ctx.fillRect(-10, -16, 20, 20);
-    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
-    ctx.fillText("📜 의뢰", 0, -22);
-    if (Math.hypot(player.x - 60, player.y - (-45)) < 55) {
-      ctx.fillStyle = '#ffd700'; ctx.fillText("[B] 의뢰 확인", 0, -32);
-    }
-    ctx.restore();
-
-    // Lake Shoreline Wooden Dock & Fishing Prompt
-    ctx.save();
-    ctx.translate(lakeDockPos.x, lakeDockPos.y);
-    drawAtlasTile(ctx, 9, 0, -16, -16, 32, 32);
-    drawAtlasTile(ctx, 9, 0, 16, -16, 32, 32);
-    const dockDist = Math.hypot(player.x - lakeDockPos.x, player.y - lakeDockPos.y);
-    if (dockDist < 60) {
-      ctx.fillStyle = '#00d2d3'; ctx.font = 'bold 9.5px monospace'; ctx.textAlign = 'center';
-      ctx.fillText(fishingState.isFishing ? "[F] 낚시 종료" : "[F] 코지 호수 낚시 시작", 16, -26);
-    }
-    ctx.restore();
-
-    // Fishing Bobber in Lake Water
-    if (fishingState.isFishing) {
-      ctx.save();
-      const bBob = Math.sin(performance.now() * 0.01) * 3;
-      ctx.fillStyle = fishingState.hasBite ? '#ff4757' : '#ffd700';
-      ctx.beginPath();
-      ctx.arc(fishingState.bobberX, fishingState.bobberY + bBob, 4.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.stroke();
-
-      // Concentric Water Ripples
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
-      ctx.lineWidth = 1.5;
-      const ripR = (performance.now() * 0.015) % 18;
-      ctx.beginPath();
-      ctx.arc(fishingState.bobberX, fishingState.bobberY + bBob, ripR, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Fishing Line from Player to Bobber
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(player.x, player.y - 10);
-      ctx.lineTo(fishingState.bobberX, fishingState.bobberY + bBob);
-      ctx.stroke();
-
-      if (fishingState.hasBite) {
-        ctx.fillStyle = '#ff4757'; ctx.font = 'bold 16px Consolas'; ctx.textAlign = 'center';
-        ctx.fillText("❗", fishingState.bobberX, fishingState.bobberY - 14 + bBob);
+      if (d.type === 'frost') {
+        ctx.fillStyle = 'rgba(0, 210, 211, 0.28)';
+        ctx.strokeStyle = '#00d2d3'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      } else {
+        ctx.fillStyle = 'rgba(231, 76, 60, 0.45)';
+        ctx.strokeStyle = '#ff4757'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
       }
       ctx.restore();
-    }
+    });
 
-    // Combat Training Dummy
-    ctx.save();
-    ctx.translate(trainingDummy.x, trainingDummy.y);
-    ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    ctx.beginPath(); ctx.ellipse(0, 14, 14, 6, 0, 0, Math.PI * 2); ctx.fill();
-    drawAtlasSprite(ctx, 29, 6, -18, -26, 36, 36, false, trainingDummy.hitFlashTimer > 0);
-    ctx.fillStyle = '#ffd700'; ctx.font = 'bold 9.5px monospace'; ctx.textAlign = 'center';
-    ctx.fillText("🎯 수련장 더미", 0, -32);
-    if (trainingDummy.currentDPS > 0) {
-      ctx.fillStyle = '#e67e22'; ctx.font = 'bold 9px monospace';
-      ctx.fillText(trainingDummy.currentDPS + " DPS", 0, -44);
-    }
-    ctx.restore();
-
-    // Ruin Monoliths with Holy Safe Zone Glow
-    ruinMonoliths.forEach(mono => {
+    // Footstep Dust
+    footstepDust.forEach(d => {
       ctx.save();
-      ctx.fillStyle = 'rgba(0,0,0,0.55)';
-      ctx.beginPath(); ctx.ellipse(mono.x + 18, mono.y + 24, 28, 14, 0, 0, Math.PI * 2); ctx.fill();
-
-      ctx.fillStyle = '#1c1f2b'; ctx.fillRect(mono.x - 17, mono.y - 28, 34, 56);
-      ctx.fillStyle = '#2d3345'; ctx.fillRect(mono.x - 14, mono.y - 25, 28, 50);
-      ctx.fillStyle = '#485460'; ctx.fillRect(mono.x - 12, mono.y - 23, 8, 46);
-
-      ctx.fillStyle = mono.runeColor;
-      ctx.fillRect(mono.x - 3, mono.y - 12, 6, 4);
-      ctx.fillRect(mono.x - 1, mono.y - 4, 2, 14);
+      ctx.fillStyle = 'rgba(200, 200, 200, ' + (d.life / 0.35 * 0.45) + ')';
+      ctx.beginPath(); ctx.arc(d.x, d.y, 4, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     });
 
-    // Rift Portal
-    riftPortal.angle += 0.03;
-    ctx.save();
-    ctx.translate(riftPortal.x, riftPortal.y); ctx.rotate(riftPortal.angle);
-    ctx.fillStyle = 'rgba(142, 68, 173, 0.45)';
-    ctx.beginPath(); ctx.arc(0, 0, riftPortal.radius, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#a29bfe'; ctx.lineWidth = 4; ctx.stroke();
-    ctx.restore();
-    ctx.fillStyle = '#e056fd'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
-    ctx.fillText("🌀 차원 균열 [F]", riftPortal.x, riftPortal.y - 56);
+    // Dungeon Traps
+    dungeonTraps.forEach(trap => {
+      if (trap.zone !== currentZone) return;
+      ctx.save();
+      ctx.translate(trap.x, trap.y);
+      const half = trap.width / 2;
+      if (trap.state === 'retracted') {
+        ctx.fillStyle = '#2d3436'; ctx.fillRect(-half, -half, trap.width, trap.height);
+        ctx.strokeStyle = '#485460'; ctx.lineWidth = 1.5; ctx.strokeRect(-half, -half, trap.width, trap.height);
+      } else if (trap.state === 'warning') {
+        ctx.fillStyle = 'rgba(231, 76, 60, 0.4)'; ctx.fillRect(-half, -half, trap.width, trap.height);
+        ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 2; ctx.strokeRect(-half, -half, trap.width, trap.height);
+      } else {
+        ctx.fillStyle = '#2d3436'; ctx.fillRect(-half, -half, trap.width, trap.height);
+        ctx.fillStyle = '#ecf0f1';
+        for (let rx = -half + 5; rx < half - 4; rx += 8) {
+          for (let ry = -half + 5; ry < half - 4; ry += 8) {
+            ctx.beginPath(); ctx.moveTo(rx, ry + 4); ctx.lineTo(rx + 2, ry - 5); ctx.lineTo(rx + 4, ry + 4); ctx.fill();
+          }
+        }
+        ctx.strokeStyle = '#ff4757'; ctx.lineWidth = 2.5; ctx.strokeRect(-half, -half, trap.width, trap.height);
+      }
+      ctx.restore();
+    });
 
-    // Magma Portal
-    magmaPortal.angle -= 0.025;
-    ctx.save();
-    ctx.translate(magmaPortal.x, magmaPortal.y); ctx.rotate(magmaPortal.angle);
-    ctx.fillStyle = 'rgba(235, 47, 6, 0.45)';
-    ctx.beginPath(); ctx.arc(0, 0, magmaPortal.radius, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#ff4757'; ctx.lineWidth = 4; ctx.stroke();
-    ctx.restore();
-    ctx.fillStyle = '#ff4757'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
-    ctx.fillText("🌋 용암 심연 [F]", magmaPortal.x, magmaPortal.y - 52);
+    // ==========================================
+    // 🌟 UNIFIED 2.5D Y-SORTING ENTITY QUEUE
+    // ==========================================
+    const yEntities = [];
 
-    } else if (currentZone === "AncientCatacombs") {
-    // Ancient Catacombs Room
-    ctx.fillStyle = '#0a0806';
-    ctx.fillRect(camera.x - canvas.width, camera.y - canvas.height, canvas.width * 2, canvas.height * 2);
+    // 1. OpenWorld Town Buildings
+    if (currentZone === "OpenWorld") {
+      // Blacksmith Forge Workshop (-220, -20) -> base foot Y = 4
+      yEntities.push({
+        y: 4,
+        draw: () => {
+          ctx.save(); ctx.translate(-220, -20);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+          ctx.beginPath(); ctx.ellipse(0, 24, 48, 18, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#2d3436'; ctx.fillRect(-42, -32, 84, 56);
+          ctx.fillStyle = '#636e72'; ctx.fillRect(-38, -28, 76, 50);
+          ctx.fillStyle = '#533519';
+          ctx.fillRect(-42, -32, 6, 56); ctx.fillRect(36, -32, 6, 56); ctx.fillRect(-42, -4, 84, 5);
+          ctx.fillStyle = '#b33939'; ctx.fillRect(-46, -42, 92, 12);
+          ctx.fillStyle = '#c0392b'; ctx.fillRect(-44, -40, 88, 8);
+          ctx.fillStyle = '#1e272e'; ctx.fillRect(20, -52, 14, 18);
+          const forgeFlame = Math.sin(performance.now() * 0.015) * 3;
+          ctx.fillStyle = '#ff4757'; ctx.fillRect(-22, 6 + forgeFlame, 18, 14);
+          ctx.fillStyle = '#ffd32a'; ctx.fillRect(-18, 10 + forgeFlame, 10, 8);
+          drawAtlasTile(ctx, 10, 8, 12, 4, 26, 26);
+          ctx.fillStyle = '#ffd700'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center';
+          ctx.fillText("⚔️ 룬 대장간", 0, -48);
+          ctx.restore();
+        }
+      });
 
-    ctx.fillStyle = '#1c150c';
-    ctx.beginPath(); ctx.ellipse(0, 0, 560, 360, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#c5a059'; ctx.lineWidth = 4; ctx.stroke();
+      // Alchemist Herbal Laboratory (-170, 75) -> base foot Y = 97
+      yEntities.push({
+        y: 97,
+        draw: () => {
+          ctx.save(); ctx.translate(-170, 75);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+          ctx.beginPath(); ctx.ellipse(0, 22, 44, 16, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#4b382a'; ctx.fillRect(-36, -28, 72, 48);
+          ctx.fillStyle = '#785b40'; ctx.fillRect(-32, -24, 64, 42);
+          ctx.fillStyle = '#c5a059'; ctx.fillRect(-40, -38, 80, 12);
+          ctx.fillStyle = '#dfb15b'; ctx.fillRect(-38, -36, 76, 8);
+          ctx.fillStyle = '#00d2d3'; ctx.fillRect(-16, -12, 14, 14);
+          ctx.fillStyle = 'rgba(0, 210, 211, 0.35)'; ctx.fillRect(-20, -16, 22, 22);
+          ctx.fillStyle = '#1e272e'; ctx.beginPath(); ctx.arc(20, 10, 10, 0, Math.PI * 2); ctx.fill();
+          const caulSteam = Math.sin(performance.now() * 0.01) * 3;
+          ctx.fillStyle = '#e056fd'; ctx.beginPath(); ctx.arc(20, 4 + caulSteam, 6, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#00d2d3'; ctx.font = 'bold 9.5px monospace'; ctx.textAlign = 'center';
+          ctx.fillText("🧪 연금술소", 0, -44);
+          ctx.restore();
+        }
+      });
 
-    // Catacomb Pillars
-    [-180, 180].forEach(px => {
-      [-100, 100].forEach(py => {
-        ctx.fillStyle = '#2d2214'; ctx.fillRect(px - 14, py - 20, 28, 40);
-        ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1.5; ctx.strokeRect(px - 14, py - 20, 28, 40);
+      // Adventurer's Guild Hall & Town Plaza (0, -120) -> base foot Y = -92
+      yEntities.push({
+        y: -92,
+        draw: () => {
+          ctx.save(); ctx.translate(0, -120);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.48)';
+          ctx.beginPath(); ctx.ellipse(0, 28, 64, 22, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#2f3542'; ctx.fillRect(-54, -40, 108, 68);
+          ctx.fillStyle = '#57606f'; ctx.fillRect(-50, -36, 100, 62);
+          ctx.fillStyle = '#3a2717'; ctx.fillRect(-14, 2, 28, 24);
+          ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1.5; ctx.strokeRect(-14, 2, 28, 24);
+          ctx.fillStyle = '#747d8c'; ctx.fillRect(-18, -60, 36, 22);
+          ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(0, -48, 7, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#e74c3c'; ctx.fillRect(-44, -20, 8, 26); ctx.fillRect(36, -20, 8, 26);
+          ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center';
+          ctx.fillText("🏰 모험가 길드 본부", 0, -68);
+          ctx.restore();
+        }
+      });
+
+      // Ocean Lighthouse (320, -180) -> base foot Y = -156
+      yEntities.push({
+        y: -156,
+        draw: () => {
+          ctx.save(); ctx.translate(320, -180);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+          ctx.beginPath(); ctx.ellipse(0, 24, 30, 12, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#dfe4ea'; ctx.fillRect(-16, -70, 32, 90);
+          ctx.fillStyle = '#ff4757'; ctx.fillRect(-16, -50, 32, 16); ctx.fillRect(-16, -20, 32, 16);
+          ctx.fillStyle = '#ffd32a'; ctx.fillRect(-12, -84, 24, 16);
+          ctx.fillStyle = '#2f3542'; ctx.fillRect(-14, -88, 28, 6);
+          const dayRatio = dayCycleTimer / DAY_CYCLE_LENGTH;
+          if (dayRatio >= 0.45) {
+            ctx.save();
+            ctx.translate(0, -76); ctx.rotate(lighthouseAngle);
+            const beamGrad = ctx.createRadialGradient(0, 0, 5, 240, 0, 260);
+            beamGrad.addColorStop(0, 'rgba(255, 242, 0, 0.7)');
+            beamGrad.addColorStop(0.35, 'rgba(255, 215, 0, 0.35)');
+            beamGrad.addColorStop(1, 'rgba(255, 215, 0, 0.0)');
+            ctx.fillStyle = beamGrad;
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, 260, -0.22, 0.22); ctx.closePath(); ctx.fill();
+            ctx.restore();
+          }
+          ctx.fillStyle = '#ffd700'; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
+          ctx.fillText("등대 관측소", 0, -94);
+          ctx.restore();
+        }
+      });
+
+      // Moored Wooden Sailing Sloop (210, 80) -> base foot Y = 80
+      yEntities.push({
+        y: 80,
+        draw: () => {
+          ctx.save(); ctx.translate(210, 80);
+          const boatBob = Math.sin(performance.now() * 0.003) * 3;
+          ctx.translate(0, boatBob);
+          ctx.fillStyle = '#593b1d';
+          ctx.beginPath(); ctx.moveTo(-24, 0); ctx.lineTo(24, 0); ctx.lineTo(16, 12); ctx.lineTo(-18, 12); ctx.closePath(); ctx.fill();
+          ctx.strokeStyle = '#3a2510'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -26); ctx.stroke();
+          ctx.fillStyle = 'rgba(240, 240, 240, 0.85)';
+          ctx.beginPath(); ctx.moveTo(0, -24); ctx.lineTo(14, -12); ctx.lineTo(0, -6); ctx.closePath(); ctx.fill();
+          ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(0, -26, 3, 0, Math.PI * 2); ctx.fill();
+          ctx.restore();
+        }
+      });
+
+      // Central Campfire
+      yEntities.push({
+        y: campfirePos.y + 8,
+        draw: () => {
+          ctx.save(); ctx.translate(campfirePos.x, campfirePos.y);
+          drawAtlasTile(ctx, 15, 10, -16, -16, 32, 32);
+          const campDist = Math.hypot(player.x - campfirePos.x, player.y - campfirePos.y);
+          if (campDist < 55) {
+            ctx.fillStyle = '#f39c12'; ctx.font = 'bold 9.5px monospace'; ctx.textAlign = 'center';
+            ctx.fillText("[F] 캠프파이어 요리 및 휴식", 0, -26);
+          }
+          ctx.restore();
+        }
+      });
+
+      // Town Streetlamps
+      streetLamps.forEach(lamp => {
+        yEntities.push({
+          y: lamp.y + 4,
+          draw: () => {
+            ctx.save();
+            ctx.fillStyle = '#34495e'; ctx.fillRect(lamp.x - 2, lamp.y - 18, 4, 22);
+            ctx.fillStyle = '#f1c40f'; ctx.fillRect(lamp.x - 5, lamp.y - 24, 10, 8);
+            ctx.restore();
+          }
+        });
+      });
+
+      // Notice Board
+      yEntities.push({
+        y: -45 + 10,
+        draw: () => {
+          ctx.save(); ctx.translate(60, -45);
+          ctx.fillStyle = '#5a3d1e'; ctx.fillRect(-12, -18, 24, 26);
+          ctx.fillStyle = '#dfb15b'; ctx.fillRect(-10, -16, 20, 20);
+          ctx.fillStyle = '#ffffff'; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
+          ctx.fillText("📜 의뢰", 0, -22);
+          if (Math.hypot(player.x - 60, player.y - (-45)) < 55) {
+            ctx.fillStyle = '#ffd700'; ctx.fillText("[B] 의뢰 확인", 0, -32);
+          }
+          ctx.restore();
+        }
+      });
+
+      // Training Dummy
+      yEntities.push({
+        y: trainingDummy.y + 12,
+        draw: () => {
+          ctx.save(); ctx.translate(trainingDummy.x, trainingDummy.y);
+          ctx.scale(trainingDummy.squashX, trainingDummy.squashY);
+          ctx.fillStyle = 'rgba(0,0,0,0.45)';
+          ctx.beginPath(); ctx.ellipse(0, 14, 16, 6, 0, 0, Math.PI * 2); ctx.fill();
+          drawAtlasSprite(ctx, 3, 4, -18, -24, 36, 36, false, trainingDummy.hitFlashTimer > 0);
+          ctx.fillStyle = '#fff'; ctx.font = 'bold 9.5px monospace'; ctx.textAlign = 'center';
+          ctx.fillText(trainingDummy.name, 0, -32);
+          ctx.restore();
+        }
+      });
+
+      // Procedural Trees with Swaying Foliage
+      const treeTime = performance.now() * 0.001;
+      worldTrees.forEach(tr => {
+        yEntities.push({
+          y: tr.y + 10,
+          draw: () => {
+            ctx.save(); ctx.translate(tr.x, tr.y);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.38)';
+            ctx.beginPath(); ctx.ellipse(0, 10, tr.size * 0.55, 8, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#4a3319'; ctx.fillRect(-5, -6, 10, 16);
+            const sway = Math.sin(treeTime * tr.swaySpeed + tr.x) * 3;
+            ctx.translate(sway, 0);
+            if (tr.type === 'cherry') {
+              ctx.fillStyle = '#ff7675'; ctx.beginPath(); ctx.arc(0, -22, tr.size * 0.5, 0, Math.PI * 2); ctx.fill();
+              ctx.fillStyle = '#fd79a8'; ctx.beginPath(); ctx.arc(-6, -26, tr.size * 0.42, 0, Math.PI * 2); ctx.fill();
+              ctx.fillStyle = '#fab1a0'; ctx.beginPath(); ctx.arc(8, -20, tr.size * 0.35, 0, Math.PI * 2); ctx.fill();
+            } else if (tr.type === 'pine') {
+              ctx.fillStyle = '#1b4332';
+              ctx.beginPath(); ctx.moveTo(0, -38); ctx.lineTo(-18, -14); ctx.lineTo(18, -14); ctx.closePath(); ctx.fill();
+              ctx.beginPath(); ctx.moveTo(0, -26); ctx.lineTo(-22, -4); ctx.lineTo(22, -4); ctx.closePath(); ctx.fill();
+            } else {
+              ctx.fillStyle = '#2d6a4f'; ctx.beginPath(); ctx.arc(0, -22, tr.size * 0.52, 0, Math.PI * 2); ctx.fill();
+              ctx.fillStyle = '#40916c'; ctx.beginPath(); ctx.arc(-8, -24, tr.size * 0.4, 0, Math.PI * 2); ctx.fill();
+              ctx.fillStyle = '#52b788'; ctx.beginPath(); ctx.arc(8, -18, tr.size * 0.36, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.restore();
+          }
+        });
+      });
+    }
+
+    // 2. Treasure Chests
+    treasureChests.forEach(chest => {
+      if (chest.zone !== currentZone) return;
+      yEntities.push({
+        y: chest.y + 10,
+        draw: () => {
+          ctx.save();
+          ctx.fillStyle = 'rgba(0,0,0,0.45)';
+          ctx.beginPath(); ctx.ellipse(chest.x, chest.y + 12, 14, 5, 0, 0, Math.PI * 2); ctx.fill();
+          const cCol = chest.isOpen ? (chest.col + 1) : chest.col;
+          drawAtlasTile(ctx, cCol, chest.row, chest.x - 16, chest.y - 16, 32, 32);
+          if (!chest.isOpen && Math.hypot(player.x - chest.x, player.y - chest.y) < 55) {
+            ctx.fillStyle = '#ffd700'; ctx.font = 'bold 9.5px monospace'; ctx.textAlign = 'center';
+            ctx.fillText("[F] 보물 상자 열기", chest.x, chest.y - 24);
+          }
+          ctx.restore();
+        }
       });
     });
 
-    // Return to OpenWorld Portal
-    ctx.fillStyle = 'rgba(241, 196, 15, 0.4)';
-    ctx.beginPath(); ctx.arc(0, 180, 36, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 3; ctx.stroke();
-    ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
-    ctx.fillText("☀️ 지상 탈출구 [F]", 0, 230);
-
-  } else if (currentZone === "RiftDungeon") {
-    ctx.fillStyle = '#06050e';
-    ctx.fillRect(camera.x - canvas.width, camera.y - canvas.height, canvas.width * 2, canvas.height * 2);
-
-    ctx.fillStyle = '#120d22';
-    ctx.beginPath(); ctx.ellipse(0, 0, 520, 320, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#5f27cd'; ctx.lineWidth = 4; ctx.stroke();
-
-    ctx.fillStyle = 'rgba(46, 204, 113, 0.4)';
-    ctx.beginPath(); ctx.arc(0, -160, 36, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#2ed573'; ctx.lineWidth = 3; ctx.stroke();
-    ctx.fillStyle = '#2ed573'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
-    ctx.fillText("🌀 오픈월드 귀환 [F]", 0, -210);
-
-    } else {
-    ctx.fillStyle = '#180404';
-    ctx.fillRect(camera.x - canvas.width, camera.y - canvas.height, canvas.width * 2, canvas.height * 2);
-
-    ctx.fillStyle = '#2b0909';
-    ctx.beginPath(); ctx.ellipse(0, 0, 520, 320, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#eb2f06'; ctx.lineWidth = 4; ctx.stroke();
-
-    ctx.fillStyle = 'rgba(255, 211, 42, 0.4)';
-    ctx.beginPath(); ctx.arc(0, -160, 36, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#ffd32a'; ctx.lineWidth = 3; ctx.stroke();
-    ctx.fillStyle = '#ffd32a'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
-    ctx.fillText("🌋 오픈월드 귀환 [F]", 0, -210);
-  }
-
-  // 2. Ground Decals (Frost spikes / Lava puddles)
-  groundDecals.forEach(d => {
-    ctx.save();
-    if (d.type === 'frost') {
-      ctx.fillStyle = 'rgba(0, 210, 211, 0.28)';
-      ctx.strokeStyle = '#00d2d3';
-      ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      } else {
-      ctx.fillStyle = 'rgba(231, 76, 60, 0.45)';
-      ctx.strokeStyle = '#ff4757';
-      ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    }
-    ctx.restore();
-  });
-
-  // 3. Footstep Dust
-  footstepDust.forEach(d => {
-    ctx.save();
-    ctx.fillStyle = 'rgba(200, 200, 200, ' + (d.life / 0.35 * 0.45) + ')';
-    ctx.beginPath(); ctx.arc(d.x, d.y, 4, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  });
-
-  // 4. Treasure Chests
-  treasureChests.forEach(chest => {
-    if (chest.zone !== currentZone) return;
-    ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    ctx.beginPath(); ctx.ellipse(chest.x, chest.y + 12, 14, 5, 0, 0, Math.PI * 2); ctx.fill();
-    const cCol = chest.isOpen ? (chest.col + 1) : chest.col;
-    drawAtlasTile(ctx, cCol, chest.row, chest.x - 16, chest.y - 16, 32, 32);
-
-    if (!chest.isOpen && Math.hypot(player.x - chest.x, player.y - chest.y) < 55) {
-      ctx.fillStyle = '#ffd700'; ctx.font = 'bold 9.5px monospace'; ctx.textAlign = 'center';
-      ctx.fillText("[F] 보물 상자 열기", chest.x, chest.y - 24);
-    }
-    ctx.restore();
-  });
-
-  // 5. Dungeon Traps
-  dungeonTraps.forEach(trap => {
-    if (trap.zone !== currentZone) return;
-    ctx.save();
-    ctx.translate(trap.x, trap.y);
-    const half = trap.width / 2;
-
-    if (trap.state === 'retracted') {
-      ctx.fillStyle = '#2d3436';
-      ctx.fillRect(-half, -half, trap.width, trap.height);
-      ctx.strokeStyle = '#485460'; ctx.lineWidth = 1.5;
-      ctx.strokeRect(-half, -half, trap.width, trap.height);
-    } else if (trap.state === 'warning') {
-      ctx.fillStyle = 'rgba(231, 76, 60, 0.4)';
-      ctx.fillRect(-half, -half, trap.width, trap.height);
-      ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 2;
-      ctx.strokeRect(-half, -half, trap.width, trap.height);
-      } else {
-      ctx.fillStyle = '#2d3436';
-      ctx.fillRect(-half, -half, trap.width, trap.height);
-      ctx.fillStyle = '#ecf0f1';
-      for (let rx = -half + 5; rx < half - 4; rx += 8) {
-        for (let ry = -half + 5; ry < half - 4; ry += 8) {
-          ctx.beginPath();
-          ctx.moveTo(rx, ry + 4);
-          ctx.lineTo(rx + 2, ry - 5);
-          ctx.lineTo(rx + 4, ry + 4);
-          ctx.fill();
+    // 3. Destructible Props
+    destructibleProps.forEach(p => {
+      if (p.hp <= 0) return;
+      yEntities.push({
+        y: p.y + 12,
+        draw: () => {
+          ctx.fillStyle = 'rgba(0,0,0,0.4)';
+          ctx.beginPath(); ctx.ellipse(p.x, p.y + 12, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
+          if (p.type === "crate") drawAtlasTile(ctx, 10, 8, p.x - 16, p.y - 16, 32, 32);
+          else drawAtlasTile(ctx, 9, 8, p.x - 16, p.y - 16, 32, 32);
         }
-      }
-      ctx.strokeStyle = '#ff4757'; ctx.lineWidth = 2.5;
-      ctx.strokeRect(-half, -half, trap.width, trap.height);
+      });
+    });
+
+    // 4. Town NPCs
+    if (currentZone === "OpenWorld") {
+      townNPCs.forEach(npc => {
+        yEntities.push({
+          y: npc.y + 14,
+          draw: () => {
+            ctx.save();
+            ctx.fillStyle = 'rgba(0,0,0,0.45)';
+            ctx.beginPath(); ctx.ellipse(npc.x, npc.y + 14, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
+            drawAtlasSprite(ctx, npc.col, npc.row, npc.x - 18, npc.y - 24, 36, 36, player.x < npc.x);
+            const isClose = Math.hypot(player.x - npc.x, player.y - npc.y) < 65;
+            ctx.fillStyle = isClose ? '#2ecc71' : '#f1c40f';
+            ctx.font = 'bold 9.5px monospace'; ctx.textAlign = 'center';
+            ctx.fillText(isClose ? "[F] " + npc.name : npc.name, npc.x, npc.y - 32);
+            ctx.restore();
+          }
+        });
+      });
     }
-    ctx.restore();
-  });
 
-  // 6. Destructible Props
-  destructibleProps.forEach(p => {
-    if (p.hp <= 0) return;
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.beginPath(); ctx.ellipse(p.x, p.y + 12, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
-    if (p.type === "crate") drawAtlasTile(ctx, 10, 8, p.x - 16, p.y - 16, 32, 32);
-    else drawAtlasTile(ctx, 9, 8, p.x - 16, p.y - 16, 32, 32);
-  });
+    // 5. Dropped Loot Gems & Coins
+    droppedLoot.forEach(g => {
+      yEntities.push({
+        y: g.y + 8,
+        draw: () => {
+          const bob = Math.sin(performance.now() * 0.008 + g.x) * 3;
+          let col = 25, row = 23;
+          if (g.type === "potion") { col = 33; row = 13; }
+          else if (g.type === "gem") { col = 26; row = 23; }
+          drawAtlasTile(ctx, col, row, g.x - 14, g.y - 14 + bob, 28, 28);
+        }
+      });
+    });
 
-  // 7. Town NPCs
-  if (currentZone === "OpenWorld") {
-    townNPCs.forEach(npc => {
+    // 6. Roaming Monsters
+    const currentMonsterList = getCurrentZoneMonsters();
+    currentMonsterList.forEach(m => {
+      if (m.hp <= 0) return;
+      yEntities.push({
+        y: m.y + 14,
+        draw: () => {
+          const bounce = Math.sin((m.walkTimer || 0) * 1.5) * 2;
+          const facingLeft = player.x < m.x;
+          if (m.type === "archer" && m.aimTimer && m.aimTimer > 1.2) {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255, 71, 87, 0.45)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+            ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(player.x, player.y); ctx.stroke();
+            ctx.restore();
+          }
+          ctx.save();
+          ctx.translate(m.x, m.y);
+          ctx.scale(m.squashX || 1, m.squashY || 1);
+          ctx.fillStyle = 'rgba(0,0,0,0.45)';
+          ctx.beginPath(); ctx.ellipse(0, 14, m.isBoss ? 32 : 14, 6, 0, 0, Math.PI * 2); ctx.fill();
+          const sz = m.isBoss ? 64 : (m.col === 28 ? 48 : 36);
+          drawAtlasSprite(ctx, m.col, m.row, -sz / 2, -sz / 2 - 8 + bounce, sz, sz, facingLeft, m.hitFlashTimer > 0);
+          const hpRatio = Math.max(0, m.hp / m.maxHP);
+          const bw = m.isBoss ? 60 : 28;
+          ctx.fillStyle = '#000'; ctx.fillRect(-bw / 2, -36, bw, 4);
+          ctx.fillStyle = m.isBoss ? '#e056fd' : '#ff4757'; ctx.fillRect(-bw / 2, -36, bw * hpRatio, 4);
+          ctx.fillStyle = '#fff'; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
+          ctx.fillText(m.name, 0, -40);
+          ctx.restore();
+        }
+      });
+    });
+
+    // 7. Boss Bahamut in OpenWorld
+    if (currentZone === "OpenWorld" && bossState.hp > 0) {
+      yEntities.push({
+        y: bossState.y + 45,
+        draw: () => {
+          ctx.save();
+          ctx.translate(bossState.x, bossState.y);
+          ctx.scale(bossState.squashX, bossState.squashY);
+          ctx.fillStyle = 'rgba(0,0,0,0.6)';
+          ctx.beginPath(); ctx.ellipse(0, 45, 90, 30, 0, 0, Math.PI * 2); ctx.fill();
+          drawAtlasSprite(ctx, 32, 7, -48, -60, 96, 96, false, false);
+          ctx.restore();
+        }
+      });
+    }
+
+    // 8. Mercenaries
+    mercenaries.forEach(m => {
+      yEntities.push({
+        y: m.y + 14,
+        draw: () => {
+          ctx.save();
+          ctx.fillStyle = 'rgba(0,0,0,0.45)';
+          ctx.beginPath(); ctx.ellipse(m.x, m.y + 14, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
+          drawAtlasSprite(ctx, m.col, m.row, m.x - 18, m.y - 24, 36, 36, player.x < m.x);
+          ctx.fillStyle = m.color; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
+          ctx.fillText(m.role, m.x, m.y - 30);
+          ctx.restore();
+        }
+      });
+    });
+
+    // 9. Active Companion Pet (Ignis / Fenrir / Sylph)
+    yEntities.push({
+      y: petCompanion.y + 14,
+      draw: () => {
+        ctx.save();
+        ctx.translate(petCompanion.x, petCompanion.y);
+        const petBounce = Math.sin(performance.now() * 0.008) * 3;
+        let pCol = 32, pRow = 7, pName = "이그니스", pColr = "#ff4757";
+        if (activePetType === 'fenrir') { pCol = 27; pRow = 8; pName = "펜리르"; pColr = "#00d2d3"; }
+        else if (activePetType === 'sylph') { pCol = 28; pRow = 8; pName = "실프"; pColr = "#2ecc71"; }
+        drawAtlasSprite(ctx, pCol, pRow, -14, -14 + petBounce, 28, 28, player.x < petCompanion.x);
+        ctx.fillStyle = pColr; ctx.font = 'bold 8px monospace'; ctx.textAlign = 'center';
+        ctx.fillText(pName, 0, -18);
+        ctx.restore();
+      }
+    });
+
+    // 10. Player Afterimages
+    playerAfterimages.forEach(a => {
+      yEntities.push({
+        y: a.y + 14,
+        draw: () => {
+          ctx.save();
+          ctx.globalAlpha = a.alpha;
+          ctx.fillStyle = a.color;
+          ctx.beginPath(); ctx.ellipse(a.x, a.y + 14, 16, 6, 0, 0, Math.PI * 2); ctx.fill();
+          const cDef = CLASSES_DEF[currentClassId] || CLASSES_DEF['paladin'];
+          drawAtlasSprite(ctx, cDef.col, cDef.row, a.x - 21, a.y - 28, 42, 42, false);
+          ctx.restore();
+        }
+      });
+    });
+
+    // 11. Player Character with Dynamic Rotating Weapon Swing & Archetypes
+    yEntities.push({
+      y: player.y + 16,
+      draw: () => {
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        ctx.scale(player.squashX, player.squashY);
+
+        const facingLeft = Math.cos(Math.atan2(mousePos.y - canvas.height / 2, mousePos.x - canvas.width / 2)) < 0;
+        if (player.lean) ctx.rotate(facingLeft ? -player.lean : player.lean);
+
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.beginPath(); ctx.ellipse(0, 16, 16, 6, 0, 0, Math.PI * 2); ctx.fill();
+
+        // Ascension Aura beneath feet
+        const auraRot = performance.now() * 0.0015;
+        ctx.save();
+        ctx.rotate(auraRot);
+        ctx.strokeStyle = currentClassId === 'paladin' ? 'rgba(255, 215, 0, 0.45)' : (currentClassId === 'rogue' ? 'rgba(224, 86, 253, 0.45)' : 'rgba(0, 210, 211, 0.45)');
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(0, 16, 24, 0, Math.PI * 2); ctx.stroke();
+        for (let g = 0; g < 4; g++) {
+          const ga = (Math.PI / 2) * g;
+          ctx.fillRect(Math.cos(ga) * 24 - 1.5, 16 + Math.sin(ga) * 24 - 1.5, 3, 3);
+        }
+        ctx.restore();
+
+        // Level 5+ Wings / Ascension Orbs
+        if (player.level >= 5) {
+          ctx.save();
+          const wingFlap = Math.sin(performance.now() * 0.006) * 4;
+          if (currentClassId === 'paladin') {
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.55)';
+            ctx.beginPath(); ctx.moveTo(-6, -14); ctx.lineTo(-24 - wingFlap, -30); ctx.lineTo(-18, -6); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(6, -14); ctx.lineTo(24 + wingFlap, -30); ctx.lineTo(18, -6); ctx.fill();
+          } else if (currentClassId === 'rogue') {
+            ctx.fillStyle = 'rgba(155, 89, 182, 0.55)';
+            ctx.beginPath(); ctx.moveTo(-6, -12); ctx.lineTo(-22 - wingFlap, -24); ctx.lineTo(-14, -4); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(6, -12); ctx.lineTo(22 + wingFlap, -24); ctx.lineTo(14, -4); ctx.fill();
+          } else {
+            for (let o = 0; o < 3; o++) {
+              const oAngle = performance.now() * 0.004 + (Math.PI * 2 / 3) * o;
+              const ox = Math.cos(oAngle) * 22;
+              const oy = -14 + Math.sin(oAngle) * 10;
+              ctx.fillStyle = '#00d2d3';
+              ctx.beginPath(); ctx.arc(ox, oy, 3.5, 0, Math.PI * 2); ctx.fill();
+            }
+          }
+          ctx.restore();
+        }
+
+        const cDef = CLASSES_DEF[currentClassId] || CLASSES_DEF['paladin'];
+        const pBounce = player.hp <= 0 ? 0 : Math.sin(player.walkTimer) * 2;
+        drawAtlasSprite(ctx, cDef.col, cDef.row, -21, -28 + pBounce, 42, 42, facingLeft);
+
+        // Dynamic In-Hand Weapon with Rotation Arc & Archetype
+        let weaponCol = WEAPON_SPRITE_COLS[inventory.weaponLevel || 0] || cDef.weaponSpriteCol;
+        if (currentWeaponArchetype === "daggers") weaponCol = 29;
+        else if (currentWeaponArchetype === "staff") weaponCol = 32;
+
+        ctx.save();
+        if (player.attackSwingTimer > 0) {
+          const swingProg = 1.0 - (player.attackSwingTimer / 0.20);
+          const swingAngle = facingLeft ? (0.6 - swingProg * 1.6) : (-0.6 + swingProg * 1.6);
+          ctx.translate(facingLeft ? -12 : 12, -4 + pBounce);
+          ctx.rotate(swingAngle);
+          drawAtlasSprite(ctx, weaponCol, 14, -10, -20, 20, 20, facingLeft);
+
+          // Glowing Arc Trail Polygon
+          ctx.strokeStyle = activeEnchantment === 'flame' ? '#ff4757' : (activeEnchantment === 'frost' ? '#00d2d3' : (activeEnchantment === 'thunder' ? '#ffd32a' : (activeEnchantment === 'blood' ? '#e056fd' : WEAPON_COLORS[inventory.weaponLevel || 0])));
+          ctx.lineWidth = 4;
+          ctx.beginPath(); ctx.arc(0, 0, 36, -0.7, 0.7); ctx.stroke();
+        } else {
+          const wx = facingLeft ? -22 : 6;
+          const wy = -14 + pBounce;
+          drawAtlasSprite(ctx, weaponCol, 14, wx, wy, 20, 20, facingLeft);
+        }
+        ctx.restore();
+        ctx.restore();
+      }
+    });
+
+    // 🌟 EXECUTE 2.5D DEPTH-SORTED RENDER QUEUE
+    yEntities.sort((a, b) => a.y - b.y);
+    yEntities.forEach(e => e.draw());
+
+    // 🧭 Dynamic Story Navigation Pointer Arrow
+    const curStoryChapter = MAIN_STORY_CHAPTERS[storyChapter - 1];
+    if (curStoryChapter) {
+      let navTarget = null;
+      if (storyChapter === 1) {
+        if (storyProgress.killCount < 5) {
+          const monsters = fieldMonsters.filter(m => m.hp > 0);
+          if (monsters.length > 0) navTarget = monsters[0];
+        } else {
+          navTarget = { x: 0, y: -45 }; // Elder Valdor
+        }
+      } else if (storyChapter === 2) {
+        if (storyProgress.essenceCount < 3) navTarget = { x: -160, y: -90 }; // Rift portal
+        else navTarget = { x: -220, y: -20 }; // Blacksmith
+      } else if (storyChapter === 3) {
+        if (!storyProgress.ramsesDefeated) navTarget = catacombDoorPos;
+        else navTarget = { x: -170, y: 75 }; // Alchemist
+      } else if (storyChapter === 4) {
+        if (!storyProgress.bahamutDefeated) navTarget = { x: bossState.x, y: bossState.y };
+        else navTarget = { x: 0, y: -45 };
+      }
+
+      if (navTarget) {
+        ctx.save();
+        const navAng = Math.atan2(navTarget.y - player.y, navTarget.x - player.x);
+        const ax = player.x + Math.cos(navAng) * 44;
+        const ay = player.y + Math.sin(navAng) * 44;
+        ctx.translate(ax, ay);
+        ctx.rotate(navAng);
+        ctx.fillStyle = '#ffd700';
+        ctx.shadowColor = '#ffd700';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.moveTo(9, 0); ctx.lineTo(-6, -5); ctx.lineTo(-2, 0); ctx.lineTo(-6, 5); ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // Render Active Hit Sparks
+    activeHitSparks.forEach(spk => {
       ctx.save();
-      ctx.fillStyle = 'rgba(0,0,0,0.45)';
-      ctx.beginPath(); ctx.ellipse(npc.x, npc.y + 14, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
-      drawAtlasSprite(ctx, npc.col, npc.row, npc.x - 18, npc.y - 24, 36, 36, player.x < npc.x);
-
-      const isClose = Math.hypot(player.x - npc.x, player.y - npc.y) < 65;
-      ctx.fillStyle = isClose ? '#2ecc71' : '#f1c40f';
-      ctx.font = 'bold 9.5px monospace'; ctx.textAlign = 'center';
-      ctx.fillText(isClose ? "[F] " + npc.name : npc.name, npc.x, npc.y - 32);
+      ctx.fillStyle = spk.color || '#00d2d3';
+      ctx.beginPath();
+      ctx.arc(spk.x, spk.y, Math.max(1, (spk.size || 2.5) * (spk.life / (spk.maxLife || 0.35))), 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     });
-  }
 
-  // 8. Dropped Loot Gems & Coins
-  droppedLoot.forEach(g => {
-    const bob = Math.sin(performance.now() * 0.008 + g.x) * 3;
-    let col = 25, row = 23;
-    if (g.type === "potion") { col = 33; row = 13; }
-    else if (g.type === "gem") { col = 26; row = 23; }
-    drawAtlasTile(ctx, col, row, g.x - 14, g.y - 14 + bob, 28, 28);
-  });
-
-  // 9. Roaming Monsters with Squash & Hit Flash
-  const currentMonsterList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : (currentZone === "MagmaAbyss" ? magmaMonsters : catacombMonsters));
-  currentMonsterList.forEach(m => {
-    if (m.hp <= 0) return;
-    const bounce = Math.sin((m.walkTimer || 0) * 1.5) * 2;
-    const facingLeft = player.x < m.x;
-
-    if (m.type === "archer" && m.aimTimer && m.aimTimer > 1.2) {
+    // Render Arcane Staff Homing Star Projectiles
+    activeArcaneStaffProjectiles.forEach(p => {
       ctx.save();
-      ctx.strokeStyle = 'rgba(255, 71, 87, 0.45)';
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([4, 4]);
-      ctx.beginPath();
-      ctx.moveTo(m.x, m.y);
-      ctx.lineTo(player.x, player.y);
-      ctx.stroke();
+      ctx.fillStyle = '#00d2d3';
+      ctx.shadowColor = '#00d2d3'; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 4.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
-    }
+    });
 
-    ctx.save();
-    ctx.translate(m.x, m.y);
-    ctx.scale(m.squashX || 1, m.squashY || 1);
-
-    ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    ctx.beginPath(); ctx.ellipse(0, 14, m.isBoss ? 32 : 14, 6, 0, 0, Math.PI * 2); ctx.fill();
-
-    const sz = m.isBoss ? 64 : (m.col === 28 ? 48 : 36);
-    drawAtlasSprite(ctx, m.col, m.row, -sz / 2, -sz / 2 - 8 + bounce, sz, sz, facingLeft, m.hitFlashTimer > 0);
-
-    const hpRatio = Math.max(0, m.hp / m.maxHP);
-    const bw = m.isBoss ? 60 : 28;
-    ctx.fillStyle = '#000'; ctx.fillRect(-bw / 2, -36, bw, 4);
-    ctx.fillStyle = m.isBoss ? '#e056fd' : '#ff4757'; ctx.fillRect(-bw / 2, -36, bw * hpRatio, 4);
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
-    ctx.fillText(m.name, 0, -40);
-    ctx.restore();
-  });
-
-  // 10. Boss Bahamut in OpenWorld
-  if (currentZone === "OpenWorld" && bossState.hp > 0) {
-    ctx.save();
-    ctx.translate(bossState.x, bossState.y);
-    ctx.scale(bossState.squashX, bossState.squashY);
-
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    ctx.beginPath(); ctx.ellipse(0, 45, 90, 30, 0, 0, Math.PI * 2); ctx.fill();
-
-    drawAtlasSprite(ctx, 32, 7, -48, -60, 96, 96, false, false);
-    ctx.restore();
-  }
-
-  // 11. Mercenaries
-  mercenaries.forEach(m => {
-    ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    ctx.beginPath(); ctx.ellipse(m.x, m.y + 14, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
-    drawAtlasSprite(ctx, m.col, m.row, m.x - 18, m.y - 24, 36, 36, player.x < m.x);
-    ctx.fillStyle = m.color; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
-    ctx.fillText(m.role, m.x, m.y - 30);
-    ctx.restore();
-  });
-
-  // 12. Active Companion Pet (Ignis / Fenrir / Sylph)
-  ctx.save();
-  ctx.translate(petCompanion.x, petCompanion.y);
-  const petBounce = Math.sin(performance.now() * 0.008) * 3;
-  let pCol = 32, pRow = 7, pName = "이그니스", pColr = "#ff4757";
-  if (activePetType === 'fenrir') { pCol = 27; pRow = 8; pName = "펜리르"; pColr = "#00d2d3"; }
-  else if (activePetType === 'sylph') { pCol = 28; pRow = 8; pName = "실프"; pColr = "#2ecc71"; }
-
-  drawAtlasSprite(ctx, pCol, pRow, -14, -14 + petBounce, 28, 28, player.x < petCompanion.x);
-  ctx.fillStyle = pColr; ctx.font = 'bold 8px monospace'; ctx.textAlign = 'center';
-  ctx.fillText(pName, 0, -18);
-  ctx.restore();
-
-  // 13. Player Afterimages
-  playerAfterimages.forEach(a => {
-    ctx.save();
-    ctx.globalAlpha = a.alpha;
-    ctx.fillStyle = a.color;
-    ctx.beginPath(); ctx.ellipse(a.x, a.y + 14, 16, 6, 0, 0, Math.PI * 2); ctx.fill();
-    const cDef = CLASSES_DEF[currentClassId] || CLASSES_DEF['paladin'];
-    drawAtlasSprite(ctx, cDef.col, cDef.row, a.x - 21, a.y - 28, 42, 42, false);
-    ctx.restore();
-  });
-
-  // 14. Player Character with Dynamic Rotating Weapon Swing
-  ctx.save();
-  ctx.translate(player.x, player.y);
-  ctx.scale(player.squashX, player.squashY);
-
-  const facingLeft = Math.cos(Math.atan2(mousePos.y - canvas.height / 2, mousePos.x - canvas.width / 2)) < 0;
-  if (player.lean) ctx.rotate(facingLeft ? -player.lean : player.lean);
-
-  ctx.fillStyle = 'rgba(0,0,0,0.5)';
-  ctx.beginPath(); ctx.ellipse(0, 16, 16, 6, 0, 0, Math.PI * 2); ctx.fill();
-
-    // Ascension Aura beneath feet
-  const auraRot = performance.now() * 0.0015;
-  ctx.save();
-  ctx.rotate(auraRot);
-  ctx.strokeStyle = currentClassId === 'paladin' ? 'rgba(255, 215, 0, 0.45)' : (currentClassId === 'rogue' ? 'rgba(224, 86, 253, 0.45)' : 'rgba(0, 210, 211, 0.45)');
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.arc(0, 16, 24, 0, Math.PI * 2);
-  ctx.stroke();
-  for (let g = 0; g < 4; g++) {
-    const ga = (Math.PI / 2) * g;
-    ctx.fillRect(Math.cos(ga) * 24 - 1.5, 16 + Math.sin(ga) * 24 - 1.5, 3, 3);
-  }
-  ctx.restore();
-
-  // Level 5+ Wings / Ascension Orbs
-  if (player.level >= 5) {
-    ctx.save();
-    const wingFlap = Math.sin(performance.now() * 0.006) * 4;
-    if (currentClassId === 'paladin') {
-      ctx.fillStyle = 'rgba(255, 215, 0, 0.55)';
-      ctx.beginPath();
-      ctx.moveTo(-6, -14); ctx.lineTo(-24 - wingFlap, -30); ctx.lineTo(-18, -6); ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(6, -14); ctx.lineTo(24 + wingFlap, -30); ctx.lineTo(18, -6); ctx.fill();
-    } else if (currentClassId === 'rogue') {
-      ctx.fillStyle = 'rgba(155, 89, 182, 0.55)';
-      ctx.beginPath();
-      ctx.moveTo(-6, -12); ctx.lineTo(-22 - wingFlap, -24); ctx.lineTo(-14, -4); ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(6, -12); ctx.lineTo(22 + wingFlap, -24); ctx.lineTo(14, -4); ctx.fill();
-      } else {
-      for (let o = 0; o < 3; o++) {
-        const oAngle = performance.now() * 0.004 + (Math.PI * 2 / 3) * o;
-        const ox = Math.cos(oAngle) * 22;
-        const oy = -14 + Math.sin(oAngle) * 10;
-        ctx.fillStyle = '#00d2d3';
-        ctx.beginPath(); ctx.arc(ox, oy, 3.5, 0, Math.PI * 2); ctx.fill();
-      }
-    }
-    ctx.restore();
-  }
-
-  const cDef = CLASSES_DEF[currentClassId] || CLASSES_DEF['paladin'];
-  const pBounce = player.hp <= 0 ? 0 : Math.sin(player.walkTimer) * 2;
-  drawAtlasSprite(ctx, cDef.col, cDef.row, -21, -28 + pBounce, 42, 42, facingLeft);
-
-  // Dynamic In-Hand Weapon with Rotation Arc
-  const weaponCol = WEAPON_SPRITE_COLS[inventory.weaponLevel || 0] || cDef.weaponSpriteCol;
-  ctx.save();
-  if (player.attackSwingTimer > 0) {
-    const swingProg = 1.0 - (player.attackSwingTimer / 0.20);
-    const swingAngle = facingLeft ? (0.6 - swingProg * 1.6) : (-0.6 + swingProg * 1.6);
-    ctx.translate(facingLeft ? -12 : 12, -4 + pBounce);
-    ctx.rotate(swingAngle);
-    drawAtlasSprite(ctx, weaponCol, 14, -10, -20, 20, 20, facingLeft);
-
-    // Glowing Arc Trail Polygon
-    ctx.strokeStyle = WEAPON_COLORS[inventory.weaponLevel || 0];
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(0, 0, 36, -0.7, 0.7);
-    ctx.stroke();
-    } else {
-    const wx = facingLeft ? -22 : 6;
-    const wy = -14 + pBounce;
-    drawAtlasSprite(ctx, weaponCol, 14, wx, wy, 20, 20, facingLeft);
-  }
-  ctx.restore();
-
-  ctx.restore();
 
   // 15. Parry Barrier
   if (parryTimer > 0) {
@@ -5425,7 +5641,7 @@ function drawMiniMap(ctx) {
     ctx.beginPath(); ctx.arc(bx, by, 5, 0, Math.PI * 2); ctx.fill();
   }
 
-  const currentList = currentZone === "OpenWorld" ? fieldMonsters : (currentZone === "RiftDungeon" ? riftMonsters : (currentZone === "MagmaAbyss" ? magmaMonsters : catacombMonsters));
+  const currentList = getCurrentZoneMonsters();
   currentList.forEach(m => {
     if (m.hp > 0) {
       const mx = centerMapX + (m.x - player.x) * worldScale;
@@ -5453,6 +5669,40 @@ function updateHUD() {
   document.getElementById('goldCount').innerText = inventory.gold;
   document.getElementById('gemCount').innerText = inventory.gems;
   document.getElementById('potionCountText').innerText = potionCharges;
+
+  // Update Story HUD Card
+  const chData = MAIN_STORY_CHAPTERS[storyChapter - 1];
+  if (chData) {
+    const titleEl = document.getElementById('storyChapterTitle');
+    const objEl = document.getElementById('storyObjectiveText');
+    const giverEl = document.getElementById('storyGiverText');
+    const readyEl = document.getElementById('storyRewardReadyNotice');
+    if (titleEl) titleEl.innerText = chData.title;
+    if (giverEl) giverEl.innerText = "의뢰인: " + chData.giver + " [F]";
+
+    let isReady = false;
+    if (storyChapter === 1) {
+      if (objEl) objEl.innerText = "⚔️ 들판 몬스터: " + storyProgress.killCount + " / 5";
+      isReady = storyProgress.killCount >= 5;
+    } else if (storyChapter === 2) {
+      if (objEl) objEl.innerText = "🔮 심연의 정수: " + storyProgress.essenceCount + " / 3";
+      isReady = storyProgress.essenceCount >= 3;
+    } else if (storyChapter === 3) {
+      if (objEl) objEl.innerText = "👑 파라오 람세스 토벌: " + (storyProgress.ramsesDefeated ? "완료" : "미완료");
+      isReady = storyProgress.ramsesDefeated;
+    } else if (storyChapter === 4) {
+      if (objEl) objEl.innerText = "🔥 고룡 바하무트 토벌: " + (storyProgress.bahamutDefeated ? "완료" : "미완료");
+      isReady = storyProgress.bahamutDefeated;
+    }
+    if (readyEl) readyEl.style.display = isReady ? 'block' : 'none';
+  }
+
+  // Update Weapon Archetype Badge in HUD
+  const arcBadge = document.getElementById('weaponArchetypeBadge');
+  if (arcBadge) {
+    const arc = WEAPON_ARCHETYPES[currentWeaponArchetype] || WEAPON_ARCHETYPES.greatsword;
+    arcBadge.innerText = arc.icon + " " + arc.name + " [Tab]";
+  }
 
   // Quest Text
   if (quests[0]) document.getElementById('quest1Text').innerText = quests[0].title + ": " + quests[0].current + " / " + quests[0].target;
@@ -5839,6 +6089,7 @@ function toggleHallOfFameModal() {
 }
 
 // Town NPC Modal
+// Town NPC Modal with Narrative Story & Dialogue Portraits
 function openNPCModal(npcId) {
   const npc = townNPCs.find(n => n.id === npcId);
   if (!npc) return;
@@ -5848,9 +6099,104 @@ function openNPCModal(npcId) {
   const actionContainer = document.getElementById('npcModalActionContainer');
   actionContainer.innerHTML = '';
 
-  if (npcId === 'blacksmith') {
+  // Render NPC Portrait
+  let portraitEmoji = "🧙‍♂️";
+  if (npcId === 'blacksmith') portraitEmoji = "🔨";
+  else if (npcId === 'alchemist') portraitEmoji = "🧪";
+  else if (npcId === 'elder') portraitEmoji = "👑";
+
+  let portraitHtml = '<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px; border-bottom:1px solid #444; padding-bottom:8px;">' +
+    '<div style="width:48px; height:48px; border-radius:8px; background:#1e272e; border:2px solid #ffd700; display:flex; align-items:center; justify-content:center; font-size:26px; box-shadow:0 0 10px rgba(255,215,0,0.3);">' + portraitEmoji + '</div>' +
+    '<div><div style="font-weight:bold; font-size:12px; color:#ffd700;">' + npc.name + '</div><div style="font-size:9.5px; color:#bdc3c7;">에델가르드 성채 주요 인물</div></div>' +
+  '</div>';
+
+  if (npcId === 'elder') {
+    let storyContent = "";
+    if (storyChapter === 1) {
+      if (storyProgress.killCount < 5) {
+        storyContent = "젊은 용사여, 별빛의 계시를 받고 깨어났군.<br>성채 외곽 들판에 어둠의 해골 마물들이 출몰하여 주민들이 떨고 있네.<br><b>들판의 몬스터 5마리</b>를 소탕하고 내게 보고하게나!<br><br><span style='color:#f1c40f;'>진행 상황: " + storyProgress.killCount + " / 5 처치</span>";
+      } else {
+        storyContent = "오오! 들판의 마물들을 훌륭히 소탕했군!<br>주민들이 자네를 칭송하고 있네. 약속된 보상을 받게나.<br><br><span style='color:#2ecc71; font-weight:bold;'>보상: 250 Gold, 400 EXP, 영웅의 은화</span>";
+        const claimBtn = document.createElement('button');
+        claimBtn.className = 'rpg-btn';
+        claimBtn.innerText = "🏆 [1장 완료] 보상 수령 및 2장 개방";
+        claimBtn.onclick = () => {
+          inventory.gold += 250;
+          gainXP(400);
+          storyChapter = 2;
+          SoundEngine.playAchievementFanfare();
+          flashScreen('#ffd700', 0.4);
+          doShake(10);
+          addDamageText(player.x, player.y - 35, "👑 제 2장: 심연의 룬 강철 개방!", true, '#ffd700');
+          saveGame();
+          updateHUD();
+          closeNPCModal();
+        };
+        actionContainer.appendChild(claimBtn);
+      }
+    } else if (storyChapter === 4) {
+      if (!storyProgress.bahamutDefeated) {
+        storyContent = "성채의 모든 준비는 끝났네 용사여!<br>북쪽 분화구에서 태고의 화염룡 <b>바하무트</b>가 깨어났다네!<br>온 대륙의 운명이 자네 손에 달렸네. 바하무트를 토벌하여 영원한 평화를 증명하라!";
+      } else {
+        storyContent = "해냈군, 에델가르드의 진정한 수호자여!<br>바하무트를 물리치고 온 대륙에 평화를 되찾아주었네!<br><br><span style='color:#ffd700; font-size:11px; font-weight:bold;'>👑 최종 보상: 3000 Gold, 5000 EXP, 신화 칭호 '에델가르드의 수호자'</span>";
+        const winBtn = document.createElement('button');
+        winBtn.className = 'rpg-btn';
+        winBtn.innerText = "👑 [전설 달성] 축복 수령";
+        winBtn.onclick = () => {
+          inventory.gold += 3000;
+          gainXP(5000);
+          SoundEngine.playAchievementFanfare();
+          flashScreen('#ffd700', 0.5);
+          doShake(15);
+          saveGame();
+          updateHUD();
+          closeNPCModal();
+        };
+        actionContainer.appendChild(winBtn);
+      }
+    } else {
+      storyContent = "에델가르드 성채에 어서 오게나.<br>현재 진행 중인 퀘스트를 완수하고 성채의 번영을 이끌어주게!";
+    }
+    textEl.innerHTML = portraitHtml + "<div>" + storyContent + "</div>";
+  } else if (npcId === 'blacksmith') {
     const cost = (inventory.weaponLevel + 1) * 120;
-    textEl.innerHTML = "어서오게 용사여! 대장간의 모루는 항상 뜨겁게 달궈져 있네.<br>골드를 투자하여 무기를 강화하거나 룬 보석을 각인할 수 있다네.<br>현재 무기: <b>" + WEAPON_NAMES[inventory.weaponLevel || 0] + "</b><br>다음 강화 비용: <b style='color:#ffd700;'>" + cost + "G</b>";
+    let storySection = "";
+    if (storyChapter === 2) {
+      if (storyProgress.essenceCount < 3) {
+        storySection = "<div style='background:rgba(155,89,182,0.15); border:1px solid #9b59b6; border-radius:4px; padding:6px; margin:8px 0;'>" +
+          "<span style='color:#e056fd; font-weight:bold;'>📜 [스토리 2장] 심연의 룬 강철</span><br>" +
+          "차원 균열 또는 마그마 심연에서 마물을 처치해 <b>심연의 정수 3개</b>를 모아오게나!<br>" +
+          "<span style='color:#ffd32a;'>수집 현황: " + storyProgress.essenceCount + " / 3</span>" +
+        "</div>";
+      } else {
+        storySection = "<div style='background:rgba(46,204,113,0.15); border:1px solid #2ecc71; border-radius:4px; padding:6px; margin:8px 0;'>" +
+          "<span style='color:#2ecc71; font-weight:bold;'>📜 [스토리 2장 완료 대기]</span><br>" +
+          "심연의 정수를 모두 모아왔군! 무기에 룬을 각인할 준비가 끝났네!<br>" +
+          "<span style='color:#ffd700;'>보상: 500 Gold, 800 EXP, 영구 무기 공격력 +15%</span>" +
+        "</div>";
+        const forgeStoryBtn = document.createElement('button');
+        forgeStoryBtn.className = 'rpg-btn';
+        forgeStoryBtn.innerText = "🏆 [2장 완료] 룬 각인 & 3장 개방";
+        forgeStoryBtn.onclick = () => {
+          inventory.gold += 500;
+          gainXP(800);
+          player.str += 5;
+          storyChapter = 3;
+          SoundEngine.playAchievementFanfare();
+          flashScreen('#ffd700', 0.4);
+          doShake(10);
+          addDamageText(player.x, player.y - 35, "⚔️ 룬 강철 각인 완료! 제 3장 개방!", true, '#9b59b6');
+          saveGame();
+          updateHUD();
+          closeNPCModal();
+        };
+        actionContainer.appendChild(forgeStoryBtn);
+      }
+    }
+    textEl.innerHTML = portraitHtml +
+      "<div>어서오게 용사여! 대장간의 모루는 항상 뜨겁게 달궈져 있네.<br>현재 무기: <b>" + WEAPON_NAMES[inventory.weaponLevel] + "</b> (Lv." + inventory.weaponLevel + ")</div>" +
+      storySection;
+
     const upgBtn = document.createElement('button');
     upgBtn.className = 'rpg-btn';
     upgBtn.innerText = "무기 강화 (" + cost + "G)";
@@ -5876,7 +6222,45 @@ function openNPCModal(npcId) {
     };
     actionContainer.appendChild(upgBtn);
   } else if (npcId === 'alchemist') {
-    textEl.innerHTML = "지친 몸을 치유하고 버프를 획득하세요.<br>물약 충전 (50G) 또는 버서커 물약(공격력 +40%, 60s)을 구매하시겠습니까?";
+    let storySection = "";
+    if (storyChapter === 3) {
+      if (!storyProgress.ramsesDefeated) {
+        storySection = "<div style='background:rgba(0,210,211,0.15); border:1px solid #00d2d3; border-radius:4px; padding:6px; margin:8px 0;'>" +
+          "<span style='color:#00d2d3; font-weight:bold;'>📜 [스토리 3장] 파라오의 저주</span><br>" +
+          "남쪽 비밀 입구의 <b>고대 지하묘지</b>로 내려가 <b>파라오 람세스</b>를 정화해주세요!<br>" +
+          "<span style='color:#ff7675;'>목표: 파라오 람세스 토벌</span>" +
+        "</div>";
+      } else {
+        storySection = "<div style='background:rgba(46,204,113,0.15); border:1px solid #2ecc71; border-radius:4px; padding:6px; margin:8px 0;'>" +
+          "<span style='color:#2ecc71; font-weight:bold;'>📜 [스토리 3장 완료 대기]</span><br>" +
+          "람세스를 물리치고 성스러운 심장석을 정화하셨군요!<br>" +
+          "<span style='color:#ffd700;'>보상: 800 Gold, 1500 EXP, 영생의 비약 (최대 HP +150)</span>" +
+        "</div>";
+        const alcStoryBtn = document.createElement('button');
+        alcStoryBtn.className = 'rpg-btn';
+        alcStoryBtn.innerText = "🏆 [3장 완료] 영생의 비약 수령 & 최종장 개방";
+        alcStoryBtn.onclick = () => {
+          inventory.gold += 800;
+          gainXP(1500);
+          player.maxHP += 150;
+          player.hp = player.maxHP;
+          storyChapter = 4;
+          SoundEngine.playAchievementFanfare();
+          flashScreen('#00d2d3', 0.4);
+          doShake(10);
+          addDamageText(player.x, player.y - 35, "🧪 최대 체력 +150 증가! 제 4장 개방!", true, '#00d2d3');
+          saveGame();
+          updateHUD();
+          closeNPCModal();
+        };
+        actionContainer.appendChild(alcStoryBtn);
+      }
+    }
+
+    textEl.innerHTML = portraitHtml +
+      "<div>지친 몸을 치유하고 버프를 획득하세요.<br>물약 충전 (50G) 또는 버서커 물약(공격력 +40%, 60s)을 구매하시겠습니까?</div>" +
+      storySection;
+
     const potBtn = document.createElement('button');
     potBtn.className = 'rpg-btn';
     potBtn.innerText = "생명 물약 충전 (50G)";
@@ -5907,8 +6291,6 @@ function openNPCModal(npcId) {
       closeNPCModal();
     };
     actionContainer.appendChild(bskBtn);
-    } else {
-    textEl.innerHTML = "에델가르드 성채에 어서 오게나.<br>북쪽 분화구에는 고대 화염 군주 바하무트가 잠들어 있고, 동쪽 호수에서는 평화롭게 낚시를 즐길 수 있다네.<br>또한 보라색 균열을 통해 심연의 시련에 도전할 수 있지.";
   }
 
   modal.style.display = 'block';
@@ -6677,5 +7059,40 @@ loadGame();
 updateHUD();
 requestAnimationFrame(gameLoop);
 </script>
+
+<!-- Controls & Help Modal [U] -->
+<div id="helpModal" class="rpg-modal" style="display:none; width:440px;">
+  <div class="modal-header">
+    <span style="font-size:13px; font-weight:bold; color:#ffd700;">📖 영웅의 조작 가이드 & 단축키</span>
+    <span class="modal-close-btn" onclick="toggleQuickHelpModal()">&times;</span>
+  </div>
+  <div style="font-size:10px; line-height:1.7; color:#ddd; max-height:360px; overflow-y:auto;">
+    <div style="background:#222f3e; padding:6px 10px; border-radius:4px; margin-bottom:6px; border-left:3px solid #ffd700;">
+      <b>🎮 기본 전투 및 모션</b><br>
+      • <b>[WASD] / 방향키</b>: 4방향 자유 이동 & 달리기 보빙<br>
+      • <b>[Space]</b>: 회피 구르기 (무적 프레임 및 모션 블러)<br>
+      • <b>[마우스 좌클릭]</b>: 일반 공격 (콤보 3타 광역 휘두르기)<br>
+      • <b>[마우스 우클릭]</b>: 완벽 패링 (적 공격 반사 및 불릿 타임)
+    </div>
+    <div style="background:#222f3e; padding:6px 10px; border-radius:4px; margin-bottom:6px; border-left:3px solid #00d2d3;">
+      <b>⚔️ 무기 & 원소 각인 시스템</b><br>
+      • <b>[Tab]</b>: <b>무기 아키타입 실시간 스왑</b> (대검 ↔ 쌍단검 ↔ 비전 마법봉)<br>
+      • <b>[V]</b>: 4대 원소 인챈트 (화염 폭발 / 빙결 감속 / 연쇄 번개 / 흡혈 저주)<br>
+      • <b>[X]</b>: 클래스 궁극 웨폰 아트 (대지 균열 / 칼날 소용돌이 / 시간 정지 돔)
+    </div>
+    <div style="background:#222f3e; padding:6px 10px; border-radius:4px; margin-bottom:6px; border-left:3px solid #2ecc71;">
+      <b>🏰 성채 콘텐츠 & 편의성 단축키</b><br>
+      • <b>[F]</b>: 상호작용 (NPC 대화 / 낚시 / 캠프파이어 요리 / 상자 열기)<br>
+      • <b>[C]</b>: 챔피언 투기장 (5대 시련 웨이브 & 아레스 보스 레이드)<br>
+      • <b>[P]</b>: 동행 고양이 모찌 유대감 & 5단 진화 공방<br>
+      • <b>[Z]</b>: 서브 모니터 타깃 AFK 자동 낚시 모드<br>
+      • <b>[K]</b>: 50레벨 15종 마스터리 스킬 퍽 트리<br>
+      • <b>[N]</b>: 코지 항구 무역선 화물 납품 계약소<br>
+      • <b>[B]</b>: 모험가 길드 몬스터 현상금 의뢰 게시판<br>
+      • <b>[I]</b>: 영웅 장비창, 룬 보석 소켓 & 배낭 인벤토리<br>
+      • <b>[H]</b>: 즉시 생명 물약 복용
+    </div>
+  </div>
+</div>
 </body>
 </html>
