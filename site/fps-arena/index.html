@@ -2880,9 +2880,9 @@ function update(dt) {
   document.getElementById('hit-indicator').style.opacity = indicatorAlpha;
 
   // 스킬 쿨타임 표시
-  document.getElementById('cd-q').textContent = P.droneCd > 0 ? `${Math.ceil(P.droneCd)}s` : '적 탐지';
-  document.getElementById('cd-e').textContent = P.stimCd > 0 ? `${Math.ceil(P.stimCd)}s` : '실드충전';
-  document.getElementById('cnt-g').textContent = `${P.grenades}개 소지`;
+  const elCdQ = document.getElementById('cd-q'); if (elCdQ) elCdQ.textContent = P.droneCd > 0 ? `${Math.ceil(P.droneCd)}s` : '적 탐지';
+  const elCdE = document.getElementById('cd-e'); if (elCdE) elCdE.textContent = P.stimCd > 0 ? `${Math.ceil(P.stimCd)}s` : '실드충전';
+  const elCntG = document.getElementById('cnt-g'); if (elCntG) elCntG.textContent = `${P.grenades}개 소지`;
 
   // 실드 자동재생
   P.shieldRegenTimer += dt;
@@ -2991,12 +2991,12 @@ function update(dt) {
       alpha1.z += (aDz / aDist) * spd * dt;
       alpha1.mesh.position.set(alpha1.x, 0, alpha1.z);
       alpha1.mesh.rotation.y = Math.atan2(aDx, aDz);
-      document.getElementById('sq-status').textContent = '동행 전진 중 [FOLLOWING]';
+      const sqEl1 = document.getElementById('sq-status'); if (sqEl1) sqEl1.textContent = '동행 전진 중 [FOLLOWING]';
     } else {
       alpha1.legL.rotation.x = 0;
       alpha1.legR.rotation.x = 0;
       alpha1.armL.rotation.x = 0;
-      document.getElementById('sq-status').textContent = '엄호 태세 [COVERING]';
+      const sqEl2 = document.getElementById('sq-status'); if (sqEl2) sqEl2.textContent = '엄호 태세 [COVERING]';
     }
 
     // 적 발견 시 엄호 사격
@@ -3008,7 +3008,7 @@ function update(dt) {
 
     if (nearestBot) {
       alpha1.mesh.rotation.y = Math.atan2(nearestBot.x - alpha1.x, nearestBot.z - alpha1.z);
-      document.getElementById('sq-status').textContent = '교전 사격 중 [ENGAGING]';
+      const sqEl3 = document.getElementById('sq-status'); if (sqEl3) sqEl3.textContent = '교전 사격 중 [ENGAGING]';
       if (alpha1.fireCd <= 0) {
         alpha1.fireCd = 1.1;
         SND.m4Shot();
