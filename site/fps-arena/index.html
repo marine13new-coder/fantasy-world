@@ -402,6 +402,88 @@
   }
   .modal-close-btn:hover { color: #fff; }
 
+  /* Inventory & Equipment Loadout Modal */
+  .inventory-modal-body {
+    display: flex; gap: 20px; padding: 18px 22px; max-height: 520px; overflow-y: auto;
+  }
+  .equipment-column {
+    flex: 1.1; display: flex; flex-direction: column; gap: 10px;
+  }
+  .backpack-column {
+    flex: 1.4; display: flex; flex-direction: column; gap: 10px;
+  }
+  .sub-head {
+    font-size: 13px; font-weight: 900; color: var(--accent-cyan); letter-spacing: 0.5px; margin-bottom: 4px;
+  }
+  .equip-slot-card {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 10px 14px;
+  }
+  .slot-icon { font-size: 24px; min-width: 32px; text-align: center; }
+  .slot-info { flex: 1; }
+  .slot-label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
+  .slot-val { font-size: 13px; font-weight: 900; color: #f8fafc; margin: 2px 0; }
+  .slot-desc { font-size: 10px; color: #64748b; }
+
+  /* 20-slot Inventory Grid */
+  .inventory-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+    background: rgba(10,15,24,0.6); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);
+  }
+  .inv-slot {
+    aspect-ratio: 1; background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: relative; cursor: pointer; transition: 0.15s ease; padding: 4px; text-align: center;
+  }
+  .inv-slot:hover {
+    border-color: var(--accent-cyan); background: rgba(30,41,59,0.9); transform: scale(1.04);
+  }
+  .inv-slot.empty {
+    border-style: dashed; border-color: rgba(255,255,255,0.05); cursor: default;
+  }
+  .inv-slot.empty:hover {
+    border-color: rgba(255,255,255,0.05); transform: none; background: rgba(15,23,42,0.8);
+  }
+  .inv-slot-icon { font-size: 22px; }
+  .inv-slot-count {
+    position: absolute; top: 2px; right: 4px; font-size: 10px; font-weight: 800;
+    color: var(--accent-gold); font-family: 'JetBrains Mono', monospace;
+  }
+  .inv-slot-name {
+    font-size: 9px; font-weight: 700; color: #cbd5e1; margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+  }
+
+  /* Crafting Workshop List */
+  .crafting-list {
+    display: flex; flex-direction: column; gap: 8px; max-height: 190px; overflow-y: auto; padding-right: 4px;
+  }
+  .craft-card {
+    background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .craft-card-info { flex: 1; margin-right: 10px; }
+  .craft-title { font-size: 12px; font-weight: 800; color: #fff; }
+  .craft-desc { font-size: 10px; color: #94a3b8; margin: 2px 0 4px; }
+  .craft-req-row { font-size: 10px; font-weight: 700; color: #64748b; font-family: 'JetBrains Mono', monospace; }
+  .craft-req-row span.ready { color: #22c55e; }
+  .craft-req-row span.missing { color: #ef4444; }
+
+  /* Looting Container Modal */
+  .loot-items-container {
+    display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto;
+  }
+  .loot-item-row {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px; padding: 10px 14px;
+  }
+  .loot-item-info { display: flex; align-items: center; gap: 10px; }
+  .loot-item-icon { font-size: 22px; }
+  .loot-item-title { font-size: 12px; font-weight: 800; color: #fff; }
+  .loot-item-sub { font-size: 10px; color: var(--accent-gold); }
+
  </style>
 </head>
 <body>
@@ -523,6 +605,7 @@
    <button class="nav-tab-btn" onclick="switchLobbyTab('hideout')">🏛️ HIDEOUT 은신처 기지</button>
    <button class="nav-tab-btn" onclick="switchLobbyTab('controls')">⌨️ CONTROLS 조작 가이드</button>
    <button class="nav-tab-btn" onclick="switchLobbyTab('settings')">⚙️ SETTINGS 환경 설정</button>
+   <button class="nav-tab-btn" onclick="switchLobbyTab('inventory')">🎒 INVENTORY & WORKSHOP 인벤토리 & 작업대</button>
    <button class="nav-tab-btn" onclick="switchLobbyTab('career')">🎖️ CAREER 100시간 전적</button>
   </div>
 
@@ -721,6 +804,24 @@
     </div>
    </div>
   </div>
+
+  <!-- TAB 7: INVENTORY & WORKSHOP -->
+  <div id="tab-inventory" class="tab-panel">
+   <div style="display:flex;gap:20px;height:100%">
+    <div style="flex:1.2;background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:18px;display:flex;flex-direction:column">
+     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h4 style="font-size:15px;font-weight:900;color:var(--accent-cyan);margin:0">🎒 기지 은신처 보관함 (STASH)</h4>
+      <button class="upgrade-btn" style="padding:6px 14px;background:rgba(234,179,8,0.15);border-color:#eab308;color:#eab308" onclick="sellAllValuablesToTrader()">💰 귀중품 프라포르에게 일괄 판매</button>
+     </div>
+     <div id="lobby-inventory-grid" class="inventory-grid" style="grid-template-columns:repeat(5,1fr);flex:1;max-height:440px;overflow-y:auto"></div>
+    </div>
+    <div style="flex:1;background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:18px;display:flex;flex-direction:column">
+     <h4 style="font-size:15px;font-weight:900;color:var(--accent-gold);margin:0 0 12px 0">🛠️ 은신처 전술 작업대 (WORKBENCH)</h4>
+     <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">전장에서 파밍한 부품과 탄피를 조합하여 최고급 특수 탄약과 6클래스 방탄판을 제작하십시오.</div>
+     <div id="lobby-crafting-list" class="crafting-list" style="max-height:420px;flex:1"></div>
+    </div>
+   </div>
+  </div>
  </div>
 </div>
 
@@ -776,6 +877,94 @@
  <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06)"><span>사살 기록</span><span id="res-kills" style="color:var(--accent-gold);font-weight:800">0 명</span></div>
  <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06)"><span>획득 경험치</span><span id="res-exp" style="color:#22c55e;font-weight:800">+0 EXP</span></div>
  <button class="deploy-main-btn" style="margin-top:20px;width:100%" onclick="returnToMainLobby()">메인 로비로 복귀</button>
+</div>
+
+<!-- 인게임 Tab/I 전술 인벤토리 & 간이 작업대 (#inventory-modal) -->
+<div id="inventory-modal" class="tactical-modal" style="width:780px;max-width:95vw">
+ <div class="modal-head">
+  <h3>🎒 TACTICAL LOADOUT & BACKPACK (전술 인벤토리 & 은신처 작업대)</h3>
+  <button class="modal-close-btn" onclick="toggleInventory()">✕</button>
+ </div>
+ <div class="inventory-modal-body">
+  <!-- 좌측: 전술 장비 착용 슬롯 (Paperdoll) -->
+  <div class="equipment-column">
+   <div class="sub-head">🪖 착용 전술 장비 (LOADOUT)</div>
+   <div class="equip-slot-card" id="slot-helmet">
+    <div class="slot-icon">🪖</div>
+    <div class="slot-info">
+     <div class="slot-label">방탄 헬멧 (HEAD)</div>
+     <div class="slot-val" id="eq-helmet-name">알틴 티타늄 헬멧 (Class 5)</div>
+     <div class="slot-desc">헤드샷 대미지 55% 흡수</div>
+    </div>
+   </div>
+   <div class="equip-slot-card" id="slot-armor">
+    <div class="slot-icon">🎽</div>
+    <div class="slot-info">
+     <div class="slot-label">방탄복 (BODY ARMOR)</div>
+     <div class="slot-val" id="eq-armor-name">슬릭 플레이트 캐리어 (Class 6)</div>
+     <div class="slot-desc">상체 관통 대미지 75% 방호</div>
+    </div>
+   </div>
+   <div class="equip-slot-card" id="slot-rig">
+    <div class="slot-icon">🥋</div>
+    <div class="slot-info">
+     <div class="slot-label">체스트 리그 (TACTICAL RIG)</div>
+     <div class="slot-val" id="eq-rig-name">블랙호크 체스트 리그</div>
+     <div class="slot-desc">신속 재장전 +25% 및 예비 탄약 수납</div>
+    </div>
+   </div>
+   <div class="equip-slot-card" id="slot-backpack">
+    <div class="slot-icon">🎒</div>
+    <div class="slot-info">
+     <div class="slot-label">전술 배낭 (BACKPACK)</div>
+     <div class="slot-val" id="eq-backpack-name">트라이집 전술 배낭 (30칸)</div>
+     <div class="slot-desc">파밍 전리품 최대 20슬롯 적재</div>
+    </div>
+   </div>
+   <div class="equip-slot-card" id="slot-wep">
+    <div class="slot-icon">🔫</div>
+    <div class="slot-info">
+     <div class="slot-label">주무기 1 (PRIMARY)</div>
+     <div class="slot-val" id="eq-primary-name">M4A1 전술 소총</div>
+     <div class="slot-desc" id="eq-primary-ammo">잔탄: 30 / 180발</div>
+    </div>
+   </div>
+  </div>
+
+  <!-- 우측: 20칸 배낭 인벤토리 그리드 & 현장 간이 조합 -->
+  <div class="backpack-column">
+   <div class="sub-head" style="display:flex;justify-content:space-between">
+    <span>🎒 배낭 보관함 (<span id="inv-count-badge">5/20</span>)</span>
+    <span style="color:var(--accent-gold);font-size:12px">총 자산: <b id="inv-total-value">₽ 0</b></span>
+   </div>
+   <div id="backpack-grid" class="inventory-grid"></div>
+
+   <div class="sub-head" style="margin-top:14px">🛠️ 현장 간이 조합 (FIELD CRAFTING)</div>
+   <div id="field-crafting-list" class="crafting-list"></div>
+  </div>
+ </div>
+ <div style="padding:10px 20px;background:rgba(0,0,0,0.4);border-top:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#94a3b8">
+  <span>💡 팁: [Tab] 또는 [I] 키를 눌러 창을 닫고 전투에 즉시 복귀할 수 있습니다.</span>
+  <button class="upgrade-btn" style="padding:6px 14px" onclick="toggleInventory()">창 닫기 (✕)</button>
+ </div>
+</div>
+
+<!-- 인게임 F 전리품 상자 파밍 모달 (#loot-modal) -->
+<div id="loot-modal" class="tactical-modal" style="width:520px">
+ <div class="modal-head">
+  <h3 id="loot-modal-title">📦 군용 보급 상자 파밍</h3>
+  <button class="modal-close-btn" onclick="closeLootModal()">✕</button>
+ </div>
+ <div style="padding:16px">
+  <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">
+   상자 안의 전리품을 클릭하여 개별 획득하거나, [모두 배낭으로 획득] 버튼을 누르십시오.
+  </div>
+  <div id="loot-items-list" class="loot-items-container"></div>
+  <div style="display:flex;gap:10px;margin-top:16px">
+   <button class="deploy-main-btn" style="flex:1;padding:12px" onclick="lootAllCurrentContainer()">⚡ 모두 배낭으로 획득 (LOOT ALL)</button>
+   <button class="upgrade-btn" style="padding:12px 18px" onclick="closeLootModal()">닫기</button>
+  </div>
+ </div>
 </div>
 
 
@@ -928,7 +1117,7 @@ const SND = new Proxy(_SND_DEF, {
 
 
 // ==========================================
-// 2. 16종 현대식 전술 무기 카탈로그 & 작전 전역 데이터
+// 2. 16종 현대식 전술 무기 & 작전 전역 데이터
 // ==========================================
 const WEAPONS = [
   // 돌격소총 (Assault Rifles)
@@ -958,7 +1147,7 @@ const WEAPONS = [
   { name: 'MGL-32 REVOLVER LAUNCHER', mag: 6, dmg: 230, cd: 0.85, recoil: 0.07, tier: '⭐⭐⭐⭐⭐ LEGENDARY 고폭유탄', desc: '40MM HE 고폭 유탄 · 범위 폭발 타격' }
 ];
 
-// 3대 작전 전역 데이터
+// 3대 작전 전역 데이터 (안전한 오픈 스폰 좌표)
 const OPERATIONS = [
   {
     id: 0,
@@ -978,7 +1167,7 @@ const OPERATIONS = [
     boss: '타구야 (산탄총 & 슬레지해머)',
     fogColor: 0x2d1810, fogDensity: 0.010,
     skyColor: 0x451a03, sunColor: 0xfb923c, sunIntensity: 1.35,
-    spawnX: -120, spawnZ: -120
+    spawnX: 80, spawnZ: -30
   },
   {
     id: 2,
@@ -988,7 +1177,76 @@ const OPERATIONS = [
     boss: '사령관 글루하 (M249 SAW 2인 호위대)',
     fogColor: 0x020617, fogDensity: 0.015,
     skyColor: 0x020617, sunColor: 0x38bdf8, sunIntensity: 0.35,
-    spawnX: 140, spawnZ: -140
+    spawnX: -100, spawnZ: 70
+  }
+];
+
+// ==========================================
+// 타르코프 스타일 파밍 & 전술 아이템 데이터베이스
+// ==========================================
+const ITEM_DATABASE = {
+  gpu: { id: 'gpu', name: '그래픽카드 (RTX 4090)', val: 180000, type: 'valuable', icon: '📟', desc: '초고가 군용 AI 가속 그래픽카드. 비트코인 제작 및 고액 판매 가능.' },
+  bitcoin: { id: 'bitcoin', name: '물리 비트코인 (0.2 BTC)', val: 250000, type: 'valuable', icon: '🪙', desc: '고대 암호화폐 물리 토큰. 상인에게 즉시 최고가 판매.' },
+  ledx: { id: 'ledx', name: '레덱스 LEDX 검안기', val: 320000, type: 'valuable', icon: '💉', desc: '초희귀 군용 의료 기기. 은신처 및 의무실 핵심 재료.' },
+  intel: { id: 'intel', name: '군용 기밀 문서 (Intel)', val: 120000, type: 'valuable', icon: '📁', desc: '노르빈스크 사령부의 일급 기밀 군사 작전 지도.' },
+  
+  ifak: { id: 'ifak', name: 'IFAK 군용 응급키트', val: 18000, type: 'med', icon: '🩹', heal: 80, desc: '지혈대와 붕대가 포함된 미군 제식 응급처치 키트. HP +80 즉시 회복.' },
+  salewa: { id: 'salewa', name: '살레와 응급키트', val: 24000, type: 'med', icon: '🧰', heal: 100, desc: '다목적 군용 의료 키트. HP +100 완전 회복.' },
+  morphine: { id: 'morphine', name: '모르핀 진통 주사기', val: 35000, type: 'med', icon: '🧪', buff: 'stamina', desc: '60초간 전력질주 스태미나 무제한 및 통증 무시.' },
+  goldenstar: { id: 'goldenstar', name: '골든 스타 밤', val: 85000, type: 'med', icon: '⭐', buff: 'full', desc: '전설의 밤. HP 및 방탄판 내구도 100% 완전 회복.' },
+
+  circuit: { id: 'circuit', name: '군용 고성능 회로 기판', val: 40000, type: 'part', icon: '🖲️', desc: 'EMP 드론 및 전술 전자 장비 조합 핵심 부품.' },
+  cable: { id: 'cable', name: '고전압 전선 다발', val: 15000, type: 'part', icon: '🔌', desc: '은신처 발전기 및 통신 장비 제작 재료.' },
+  battery: { id: 'battery', name: '군용 고밀도 배터리', val: 50000, type: 'part', icon: '🔋', desc: '중장비 전력 공급 및 비트코인 채굴 필수 배터리.' },
+  shards: { id: 'shards', name: '세라믹 방탄판 파편', val: 25000, type: 'part', icon: '🛡️', desc: '6클래스 고경도 방탄판 제작 핵심 복합 재료.' },
+  gunpowder: { id: 'gunpowder', name: '고폭 군용 화약 (Hawk)', val: 22000, type: 'part', icon: '🧨', desc: '7N39 철갑탄 및 수류탄 조합 탄약 재료.' },
+  brass: { id: 'brass', name: '황동 탄피 묶음', val: 12000, type: 'part', icon: '✨', desc: '탄약 재생 및 리로딩 프레스 제작 재료.' },
+
+  ap_pack: { id: 'ap_pack', name: '7N39 이골닉 AP 탄약팩 (60발)', val: 45000, type: 'ammo', icon: '📦', ammoAdd: 60, desc: '중장갑 헬멧과 보스를 분쇄하는 최고급 철갑탄.' },
+  rip_pack: { id: 'rip_pack', name: 'RIP 고살상 탄약팩 (60발)', val: 40000, type: 'ammo', icon: '💥', ammoAdd: 60, desc: '비방탄 부위에 치명적 과다출혈을 입히는 파편탄.' }
+};
+
+// 조합 제작 레시피
+const CRAFT_RECIPES = [
+  {
+    id: 'craft_ifak',
+    name: 'IFAK 군용 응급키트 제작',
+    desc: '붕대와 알코올을 조합하여 고효율 군용 구급키트 제작',
+    req: [{ id: 'cable', count: 1 }, { id: 'brass', count: 1 }],
+    result: 'ifak',
+    resultCount: 1
+  },
+  {
+    id: 'craft_ap_ammo',
+    name: '7N39 이골닉 철갑탄 60발 제작',
+    desc: '군용 화약과 황동 탄피로 고관통 철갑탄 팩 압축',
+    req: [{ id: 'gunpowder', count: 2 }, { id: 'brass', count: 2 }],
+    result: 'ap_pack',
+    resultCount: 1
+  },
+  {
+    id: 'craft_armor_plate',
+    name: '6클래스 티타늄 방탄판 제작',
+    desc: '세라믹 파편을 고열 압축하여 방탄판 최대치 보충',
+    req: [{ id: 'shards', count: 2 }, { id: 'circuit', count: 1 }],
+    result: 'goldenstar',
+    resultCount: 1
+  },
+  {
+    id: 'craft_emp_battery',
+    name: '전술 EMP 드론 배터리 제작',
+    desc: '군용 배터리와 기판을 결합하여 고출력 전력 셀 제작',
+    req: [{ id: 'battery', count: 1 }, { id: 'cable', count: 2 }, { id: 'circuit', count: 1 }],
+    result: 'morphine',
+    resultCount: 2
+  },
+  {
+    id: 'craft_bitcoin_pack',
+    name: '물리 비트코인 암호화폐 팩 가공',
+    desc: '고성능 GPU와 군용 인텔 문서로 최고가 비트코인 추출',
+    req: [{ id: 'gpu', count: 1 }, { id: 'intel', count: 1 }],
+    result: 'bitcoin',
+    resultCount: 1
   }
 ];
 
@@ -1028,7 +1286,7 @@ function getRankTitle(lvl) {
 // 영구 플레이어 상태 & 로컬 세이브 시스템
 // ==========================================
 let currentOperation = 0;
-let currentGameMode = 0; // 0: Standard, 1: Hardcore, 2: Firing Range
+let currentGameMode = 0;
 let masterVolume = 0.8;
 let mouseSensitivity = 1.0;
 let playerFOV = 75;
@@ -1052,16 +1310,31 @@ let P = {
   wep: 0,
   ammo: [30, 30, 20, 30, 5, 10, 10, 8, 20, 33, 50, 33, 7, 95, 100, 6],
   reserve: [120, 120, 80, 120, 25, 40, 30, 32, 60, 132, 150, 99, 28, 190, 200, 18],
-  inventory: [],
+  
+  // 타르코프 인벤토리 & 장비 슬롯
+  inventory: [
+    { id: 'ifak', count: 2 },
+    { id: 'ap_pack', count: 1 },
+    { id: 'circuit', count: 2 },
+    { id: 'gunpowder', count: 2 },
+    { id: 'brass', count: 3 }
+  ],
+  equipment: {
+    helmet: { name: '알틴 티타늄 헬멧 (Class 5)', def: 0.55, icon: '🪖' },
+    armor: { name: '슬릭 플레이트 캐리어 (Class 6)', def: 0.75, icon: '🎽' },
+    backpack: { name: '트라이집 전술 배낭 (30칸)', icon: '🎒' },
+    rig: { name: '블랙호크 체스트 리그', icon: '🥋' }
+  },
+
   grenades: 3,
   droneCd: 0, stimCd: 0,
   reloading: 0, cool: 0, recoil: 0, bob: 0, swayX: 0, swayY: 0,
   recoilSpring: 0, recoilVelocity: 0,
   crouching: false, isADS: false, isHoldingBreath: false, isJammed: false,
   leaning: 0, leanAngle: 0, leanOffset: 0,
-  fireMode: 0, // 0: Auto, 1: 3-Round Burst, 2: Semi
+  fireMode: 0,
   burstRemaining: 0, burstCooldown: 0,
-  ammoType: 0, // 0: FMJ, 1: AP (Armor Piercing), 2: RIP (Flesh Carnage)
+  ammoType: 0,
   nvgActive: false, flashlightActive: false, camoSkin: 0,
   kills: 0, cratesOpened: 0, bossKilled: false,
   hideout: { workbench: 0, medlab: 0, ammopress: 0, solar: 0, radio: 0 },
@@ -1074,6 +1347,7 @@ function savePlayerData() {
     const data = {
       level: P.level, exp: P.exp, walletRub: P.walletRub,
       wep: P.wep, hideout: P.hideout, career: P.career,
+      inventory: P.inventory, equipment: P.equipment,
       sens: mouseSensitivity, fov: playerFOV, vol: masterVolume, chColor: crosshairColor
     };
     localStorage.setItem('fps_arena_master_save', JSON.stringify(data));
@@ -1090,6 +1364,8 @@ function loadPlayerData() {
     if (d.wep !== undefined) P.wep = Math.min(15, d.wep);
     if (d.hideout) P.hideout = Object.assign(P.hideout, d.hideout);
     if (d.career) P.career = Object.assign(P.career, d.career);
+    if (d.inventory && Array.isArray(d.inventory)) P.inventory = d.inventory;
+    if (d.equipment) P.equipment = Object.assign(P.equipment, d.equipment);
     if (d.sens) mouseSensitivity = d.sens;
     if (d.fov) playerFOV = d.fov;
     if (d.vol !== undefined) masterVolume = d.vol;
@@ -1341,39 +1617,62 @@ function buildFPSGun() {
 
 
 // ==========================================
-// 4. 고디테일 실내 진입 가능 건물 & 3D 다층 건축 시스템
+// 4. AAA 오픈월드 전장 (배그/타르코프급 디테일 & 실내 구조)
 // ==========================================
 const wallMeshes = [];
-const lootCrates = [];
-const explosiveBarrels = [];
-let exfilZone = { x: 0, z: 95, rad: 8.5 };
+let explosiveBarrels = [];
+let lootCrates = [];
+let exfilZone = { x: 0, z: 95, rad: 9.5 };
 
-// 정밀 PBR 3D 박스 헬퍼 (userData에 정확한 크기 저장)
 function createPBRBox(x, z, w, h, d, col, rough=0.75, metal=0.2, y=null) {
   const geo = new THREE.BoxGeometry(w, h, d);
-  const mat = new THREE.MeshStandardMaterial({ color: col, roughness: rough, metalness: metal });
+  const mat = new THREE.MeshStandardMaterial({
+    color: col,
+    roughness: rough,
+    metalness: metal,
+    side: THREE.DoubleSide
+  });
   const mesh = new THREE.Mesh(geo, mat);
-  const posY = (y !== null) ? y : h / 2;
-  mesh.position.set(x, posY, z);
-  mesh.castShadow = true; mesh.receiveShadow = true;
+  mesh.position.set(x, (y !== null ? y : h / 2), z);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
   mesh.userData = { width: w, height: h, depth: d };
   scene.add(mesh);
   wallMeshes.push(mesh);
   return mesh;
 }
 
-// 600M 초대형 지형 평원
-const groundGeo = new THREE.PlaneGeometry(640, 640, 32, 32);
-const groundMat = new THREE.MeshStandardMaterial({ color: 0x18201a, roughness: 0.9, metalness: 0.05 });
-const ground = new THREE.Mesh(groundGeo, groundMat);
-ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true;
-scene.add(ground);
+// -------------------------------------------------------------
+// [지형 & 도로망] 400x400M 대형 전술 지형
+// -------------------------------------------------------------
+const terrainGeo = new THREE.PlaneGeometry(420, 420, 32, 32);
+const terrainMat = new THREE.MeshStandardMaterial({
+  color: 0x1c2419,
+  roughness: 0.95,
+  metalness: 0.05
+});
+const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
+terrainMesh.rotation.x = -Math.PI / 2;
+terrainMesh.position.y = 0;
+terrainMesh.receiveShadow = true;
+scene.add(terrainMesh);
 
-// 아스팔트 고속도로
-const hway = new THREE.Mesh(new THREE.PlaneGeometry(28, 620), new THREE.MeshStandardMaterial({ color: 0x1a2129, roughness: 0.7 }));
-hway.rotation.x = -Math.PI / 2; hway.position.set(0, 0.02, 0); hway.receiveShadow = true; scene.add(hway);
-const hwayLine = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 620), new THREE.MeshBasicMaterial({ color: 0xf59e0b }));
-hwayLine.rotation.x = -Math.PI / 2; hwayLine.position.set(0, 0.03, 0); scene.add(hwayLine);
+// 중앙 아스팔트 주 도로
+const roadGeo = new THREE.PlaneGeometry(16, 320);
+const roadMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
+const roadMesh = new THREE.Mesh(roadGeo, roadMat);
+roadMesh.rotation.x = -Math.PI / 2;
+roadMesh.position.set(0, 0.02, 0);
+roadMesh.receiveShadow = true;
+scene.add(roadMesh);
+
+// 도로 중앙 노란색 점선 차선
+for (let rz = -140; rz <= 140; rz += 8) {
+  const stripe = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 4.0), new THREE.MeshBasicMaterial({ color: 0xf59e0b }));
+  stripe.rotation.x = -Math.PI / 2;
+  stripe.position.set(0, 0.03, rz);
+  scene.add(stripe);
+}
 
 // =============================================================
 // [건물 1] 2층 실내 진입 본부 건물 (FOB Command Headquarters) (0, -84)
@@ -1384,8 +1683,7 @@ createPBRBox(0, -84, 22, 0.3, 16, 0x1e293b, 0.8, 0.1, 0.15);
 // 1층 전면 외벽 (중앙 5.0m 개방형 출입문)
 createPBRBox(-7.2, -76.2, 7.6, 3.8, 0.6, 0x334155, 0.7, 0.2, 1.9); // 전면 좌측
 createPBRBox(7.2, -76.2, 7.6, 3.8, 0.6, 0x334155, 0.7, 0.2, 1.9);  // 전면 우측
-// 출입문 상단 린텔 (Lintel)
-createPBRBox(0, -76.2, 5.0, 1.0, 0.6, 0x1e293b, 0.7, 0.2, 3.3);
+createPBRBox(0, -76.2, 5.0, 1.0, 0.6, 0x1e293b, 0.7, 0.2, 3.3);     // 출입문 상단 린텔
 
 // 1층 후면 외벽 (후면 3.6m 개방형 비상 탈출구)
 createPBRBox(-6.8, -91.8, 8.4, 3.8, 0.6, 0x334155, 0.7, 0.2, 1.9);
@@ -1396,24 +1694,22 @@ createPBRBox(0, -91.8, 3.6, 1.0, 0.6, 0x1e293b, 0.7, 0.2, 3.3);
 createPBRBox(-10.7, -84, 0.6, 3.8, 16, 0x334155, 0.7, 0.2, 1.9);
 createPBRBox(10.7, -84, 0.6, 3.8, 16, 0x334155, 0.7, 0.2, 1.9);
 
-// 1층 내부 격벽 (무기고 & 의무실 분리, 통과 가능한 2.5m 문 개구부)
+// 1층 내부 격벽 (무기고 & 의무실 분리)
 createPBRBox(-3.5, -84, 0.4, 3.8, 6.0, 0x475569, 0.8, 0.1, 1.9); // 무기고 벽
 createPBRBox(3.5, -84, 0.4, 3.8, 6.0, 0x475569, 0.8, 0.1, 1.9);  // 의무실 벽
 
-// 1층 실내 디테일 가구 (무기 거치대, 의무실 침상, 책상, 탄약 선반)
+// 1층 가구 & 인테리어 디테일
 createPBRBox(-7.0, -84, 3.0, 1.2, 0.8, 0x0f172a, 0.6, 0.6, 0.6); // 무기 랙
 createPBRBox(-9.5, -82, 0.6, 2.2, 2.5, 0x475569, 0.5, 0.5, 1.1); // 금속 보관함
 createPBRBox(7.0, -84, 1.5, 0.9, 2.8, 0x15803d, 0.7, 0.1, 0.45); // 의무 침상
-createPBRBox(9.5, -86, 0.6, 2.0, 1.8, 0xdcfce7, 0.4, 0.2, 1.0);  // 구급 보관 캐비닛
+createPBRBox(9.5, -86, 0.6, 2.0, 1.8, 0xdcfce7, 0.4, 0.2, 1.0);  // 구급 보관함
 
-// 1층 상인 프라포르 데스크 & 암시장 라디오
+// 상인 프라포르 데스크
 createPBRBox(0, -87.5, 4.0, 1.0, 1.4, 0x451a03, 0.6, 0.1, 0.5);
 const traderRadio = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.45, 0.5), new THREE.MeshStandardMaterial({ color: 0x1e3a1e }));
 traderRadio.position.set(-1.1, 1.2, -87.5); scene.add(traderRadio);
 
-// -------------------------------------------------------------
 // 1층 -> 2층 보행 계단 (Walkable Staircase: 6단계 스텝업)
-// -------------------------------------------------------------
 for (let s = 0; s < 6; s++) {
   const stepY = 0.35 + s * 0.60;
   const stepZ = -88.5 + s * 1.35;
@@ -1422,53 +1718,42 @@ for (let s = 0; s < 6; s++) {
 
 // 2층 바닥 슬래브 (계단 개구부 제외, y: 3.9)
 createPBRBox(-2.5, -84, 16.5, 0.4, 15.5, 0x1e293b, 0.8, 0.1, 3.9);
-createPBRBox(8.0, -78.5, 5.5, 0.4, 6.5, 0x1e293b, 0.8, 0.1, 3.9); // 계단 옆 바닥
+createPBRBox(8.0, -78.5, 5.5, 0.4, 6.5, 0x1e293b, 0.8, 0.1, 3.9);
 
-// 2층 외벽 (4개 개방형 저격 창문: 창틀 너머로 외부 사격 및 시야 확보)
-// 전면: 창문 2개 (좌우 2.4m 개구부)
+// 2층 외벽 (4개 개방형 저격 창문)
 createPBRBox(-8.0, -76.2, 5.5, 3.6, 0.6, 0x334155, 0.7, 0.2, 5.7);
 createPBRBox(0, -76.2, 4.0, 3.6, 0.6, 0x334155, 0.7, 0.2, 5.7);
 createPBRBox(8.0, -76.2, 5.5, 3.6, 0.6, 0x334155, 0.7, 0.2, 5.7);
-// 창틀 하단 난간 (저격 거치대)
 createPBRBox(-4.2, -76.2, 2.6, 1.0, 0.6, 0x1e293b, 0.6, 0.2, 4.4);
 createPBRBox(4.2, -76.2, 2.6, 1.0, 0.6, 0x1e293b, 0.6, 0.2, 4.4);
 
-// 2층 후면 외벽 & 창문
 createPBRBox(-8.0, -91.8, 5.5, 3.6, 0.6, 0x334155, 0.7, 0.2, 5.7);
 createPBRBox(0, -91.8, 4.0, 3.6, 0.6, 0x334155, 0.7, 0.2, 5.7);
 createPBRBox(8.0, -91.8, 5.5, 3.6, 0.6, 0x334155, 0.7, 0.2, 5.7);
 createPBRBox(-4.2, -91.8, 2.6, 1.0, 0.6, 0x1e293b, 0.6, 0.2, 4.4);
 createPBRBox(4.2, -91.8, 2.6, 1.0, 0.6, 0x1e293b, 0.6, 0.2, 4.4);
 
-// 2층 측면 외벽
 createPBRBox(-10.7, -84, 0.6, 3.6, 16, 0x334155, 0.7, 0.2, 5.7);
 createPBRBox(10.7, -84, 0.6, 3.6, 16, 0x334155, 0.7, 0.2, 5.7);
 
-// 2층 작전 회의실 중앙 홀로그램 워테이블
-const warTable = createPBRBox(0, -84, 4.2, 0.9, 2.6, 0x0f172a, 0.5, 0.8, 4.35);
+// 2층 워테이블
+createPBRBox(0, -84, 4.2, 0.9, 2.6, 0x0f172a, 0.5, 0.8, 4.35);
 const holoLight = new THREE.PointLight(0x00f0ff, 2.5, 14);
 holoLight.position.set(0, 5.2, -84); scene.add(holoLight);
 
-// -------------------------------------------------------------
-// 옥상 테라스 (Rooftop Sniper Terrace, y: 7.6)
-// -------------------------------------------------------------
+// 옥상 테라스 (y: 7.6)
 createPBRBox(0, -84, 22.5, 0.5, 16.5, 0x1e293b, 0.8, 0.1, 7.6);
-// 옥상 흉벽 방호 난간 (Parapet 1.1m)
 createPBRBox(0, -76.0, 22.5, 1.1, 0.5, 0x475569, 0.8, 0.1, 8.4);
 createPBRBox(0, -92.0, 22.5, 1.1, 0.5, 0x475569, 0.8, 0.1, 8.4);
 createPBRBox(-11.0, -84, 0.5, 1.1, 16.5, 0x475569, 0.8, 0.1, 8.4);
 createPBRBox(11.0, -84, 0.5, 1.1, 16.5, 0x475569, 0.8, 0.1, 8.4);
-
-// 옥상 샌드백 진지
-createPBRBox(-4.0, -77.0, 3.5, 0.9, 0.8, 0x78716c, 0.9, 0.0, 8.3);
-createPBRBox(4.0, -77.0, 3.5, 0.9, 0.8, 0x78716c, 0.9, 0.0, 8.3);
 
 // 안전 구역 발광 비콘
 const safeBeacon = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 8, 8), new THREE.MeshBasicMaterial({ color: 0x00f0ff }));
 safeBeacon.position.set(0, 8.0, -84); scene.add(safeBeacon);
 
 // =============================================================
-// [건물 2] 40여 개 화물 컨테이너 터미널 미로 (-85, -20)
+// [건물 2] 36개 화물 컨테이너 터미널 (-85, -20)
 // =============================================================
 const contColors = [0x0284c7, 0xd97706, 0x16a34a, 0xdc2626, 0x475569];
 for (let i = 0; i < 36; i++) {
@@ -1482,55 +1767,105 @@ for (let i = 0; i < 36; i++) {
 }
 
 // =============================================================
-// [건물 3] 16M 거대 등대 및 보행 가능한 헬리패드 (0, 95)
+// [건물 3] 해안 절벽 16M 등대 (75, 110)
 // =============================================================
-// 등대 기단 출입구 (1층 문 개구부 포함)
-createPBRBox(-2.5, 95, 2.0, 4.0, 5.0, 0x64748b, 0.7, 0.2, 2.0);
-createPBRBox(2.5, 95, 2.0, 4.0, 5.0, 0x64748b, 0.7, 0.2, 2.0);
-createPBRBox(0, 97.5, 5.0, 4.0, 2.0, 0x64748b, 0.7, 0.2, 2.0);
-createPBRBox(0, 93.0, 5.0, 1.2, 1.5, 0x334155, 0.7, 0.2, 3.4); // 출입문 린텔
-
-// 등대 원기둥 타워 본체
-const lhTower = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 3.8, 14, 16), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.6 }));
-lhTower.position.set(0, 11, 95); lhTower.castShadow = true; lhTower.receiveShadow = true;
-lhTower.userData = { width: 4.8, height: 14, depth: 4.8 };
+createPBRBox(75, 110, 6.0, 3.0, 6.0, 0x64748b, 0.7, 0.2, 1.5);
+const lhTower = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 3.4, 14, 16), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.6 }));
+lhTower.position.set(75, 10, 110); lhTower.castShadow = true; lhTower.receiveShadow = true;
+lhTower.userData = { width: 4.4, height: 14, depth: 4.4 };
 scene.add(lhTower); wallMeshes.push(lhTower);
 
-// 등대 상부 전망 데크 (Walkable)
-createPBRBox(0, 95, 8.5, 0.6, 8.5, 0x0f172a, 0.6, 0.3, 18.3);
-const lhLightHouseBeam = new THREE.SpotLight(0xfff5ea, 5.0, 120, 0.35, 0.4, 1.2);
-lhLightHouseBeam.position.set(0, 19.5, 95); scene.add(lhLightHouseBeam);
-const lhTarget = new THREE.Object3D(); scene.add(lhTarget);
+createPBRBox(75, 110, 7.5, 0.6, 7.5, 0x0f172a, 0.6, 0.3, 17.3);
+const lhLightHouseBeam = new THREE.SpotLight(0xfff5ea, 5.0, 140, 0.35, 0.4, 1.2);
+lhLightHouseBeam.position.set(75, 18.5, 110); scene.add(lhLightHouseBeam);
+const lhTarget = new THREE.Object3D(); lhTarget.position.set(0, 0, 0); scene.add(lhTarget);
 lhLightHouseBeam.target = lhTarget;
 
-// 헬리패드 생환 플랫폼 (스텝업 가능한 0.25m 완경사 데크)
-createPBRBox(0, 95, 17.0, 0.25, 17.0, 0x1e293b, 0.8, 0.1, 0.125);
-const hMark = new THREE.Mesh(new THREE.RingGeometry(4.0, 4.5, 24), new THREE.MeshBasicMaterial({ color: 0xf59e0b, side: THREE.DoubleSide }));
-hMark.rotation.x = -Math.PI / 2; hMark.position.set(0, 0.28, 95); scene.add(hMark);
+// =============================================================
+// [탈출 구역] 전술 헬리패드 & 착륙한 UH-60 블랙호크 수송 헬기 (0, 95)
+// =============================================================
+// 26M 대형 콘크리트 패드 (y: 0.08, 높이 0.15m: 스텝업 100% 매끄러움)
+createPBRBox(0, 95, 26, 0.15, 26, 0x1e293b, 0.8, 0.1, 0.075);
+
+// 4방향 완경사 진입 램프
+createPBRBox(0, 81.5, 26, 0.1, 2.0, 0x334155, 0.8, 0.1, 0.05);
+createPBRBox(0, 108.5, 26, 0.1, 2.0, 0x334155, 0.8, 0.1, 0.05);
+createPBRBox(-13.5, 95, 2.0, 0.1, 26, 0x334155, 0.8, 0.1, 0.05);
+createPBRBox(13.5, 95, 2.0, 0.1, 26, 0x334155, 0.8, 0.1, 0.05);
+
+// 헬리패드 외곽 황색 원 & 중앙 백색 'H' 마킹
+const hRing = new THREE.Mesh(new THREE.RingGeometry(6.2, 6.8, 32), new THREE.MeshBasicMaterial({ color: 0xf59e0b, side: THREE.DoubleSide }));
+hRing.rotation.x = -Math.PI / 2; hRing.position.set(0, 0.16, 95); scene.add(hRing);
+
+const hLine1 = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 4.5), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
+hLine1.rotation.x = -Math.PI / 2; hLine1.position.set(-1.8, 0.165, 95); scene.add(hLine1);
+const hLine2 = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 4.5), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
+hLine2.rotation.x = -Math.PI / 2; hLine2.position.set(1.8, 0.165, 95); scene.add(hLine2);
+const hCross = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 0.8), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
+hCross.rotation.x = -Math.PI / 2; hCross.position.set(0, 0.165, 95); scene.add(hCross);
+
+// 3D 착륙 블랙호크 헬리콥터 (UH-60)
+const heliMat = new THREE.MeshStandardMaterial({ color: 0x1f2e1e, roughness: 0.6, metalness: 0.4 });
+const glassMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.65 });
+
+const heliGroup = new THREE.Group();
+heliGroup.position.set(0, 0.15, 95);
+
+// 동체 캐빈
+const fuselage = new THREE.Mesh(new THREE.BoxGeometry(2.6, 2.2, 7.8), heliMat);
+fuselage.position.set(0, 1.8, 0); fuselage.castShadow = true;
+// 조종석 콕핏 캐노피
+const cockpit = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.2, 2.2), glassMat);
+cockpit.position.set(0, 2.0, -3.8);
+// 테일 붐 & 수직 꼬리 날개
+const tailBoom = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.8, 7.2), heliMat);
+tailBoom.position.set(0, 2.1, 7.0); tailBoom.castShadow = true;
+const fin = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.2, 1.5), heliMat);
+fin.position.set(0, 3.2, 10.2);
+
+// 착륙 스키드/바퀴
+const skidL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.25, 6.2), new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.8 }));
+skidL.position.set(-1.4, 0.2, -0.5);
+const skidR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.25, 6.2), new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.8 }));
+skidR.position.set(1.4, 0.2, -0.5);
+
+// 회전 메인 로터 블레이드
+const rotorGroup = new THREE.Group();
+rotorGroup.position.set(0, 3.1, -0.5);
+const bladeGeo = new THREE.BoxGeometry(11.0, 0.05, 0.4);
+const bladeMat = new THREE.MeshStandardMaterial({ color: 0x09090b, metalness: 0.7 });
+const blade1 = new THREE.Mesh(bladeGeo, bladeMat);
+const blade2 = new THREE.Mesh(bladeGeo, bladeMat); blade2.rotation.y = Math.PI / 2;
+rotorGroup.add(blade1, blade2);
+
+heliGroup.add(fuselage, cockpit, tailBoom, fin, skidL, skidR, rotorGroup);
+scene.add(heliGroup);
+
+// 로터 회전 애니메이션 훅
+function animateHelicopterRotors(dt) {
+  if (rotorGroup) rotorGroup.rotation.y += dt * 5.0;
+}
+
+// 헬리패드 녹색 탈출 연막탄 & 스트로브 조명
+const extractSmokeLight = new THREE.PointLight(0x22c55e, 3.0, 22);
+extractSmokeLight.position.set(-5.5, 0.6, 92); scene.add(extractSmokeLight);
 
 // =============================================================
-// [건물 4] 4층 높이 파괴된 도심 빌딩 (Urban Warzone) (120, -60)
+// [건물 4] 4층 도심 빌딩 (Urban Highrise) (120, -60)
 // =============================================================
 for (let fl = 0; fl < 4; fl++) {
   const fy = fl * 4.2;
-  // 각 층 바닥 슬래브 (계단실 개구부 5m 제외)
   createPBRBox(118, -60, 22, 0.4, 20, 0x475569, 0.8, 0.1, fy + 0.2);
-
-  // 층간 보행 계단
   if (fl < 3) {
     for (let st = 0; st < 6; st++) {
       createPBRBox(130, -66 + st * 1.4, 3.0, 0.35, 1.2, 0x64748b, 0.7, 0.2, fy + 0.5 + st * 0.65);
     }
   }
-
-  // 기둥 4개
   createPBRBox(108, -70, 1.4, 4.2, 1.4, 0x334155, 0.8, 0.1, fy + 2.1);
   createPBRBox(128, -70, 1.4, 4.2, 1.4, 0x334155, 0.8, 0.1, fy + 2.1);
   createPBRBox(108, -50, 1.4, 4.2, 1.4, 0x334155, 0.8, 0.1, fy + 2.1);
   createPBRBox(128, -50, 1.4, 4.2, 1.4, 0x334155, 0.8, 0.1, fy + 2.1);
-
-  // 개방형 창문 벽 (발코니 저격)
-  createPBRBox(118, -70.5, 14, 1.1, 0.6, 0x334155, 0.7, 0.1, fy + 0.75); // 저격 난간
+  createPBRBox(118, -70.5, 14, 1.1, 0.6, 0x334155, 0.7, 0.1, fy + 0.75);
 }
 
 // =============================================================
@@ -1538,32 +1873,41 @@ for (let fl = 0; fl < 4; fl++) {
 // =============================================================
 for (let p = 0; p < 5; p++) {
   const px = 60 + p * 18;
-  createPBRBox(px, 40, 2.2, 7.5, 2.2, 0x334155, 0.8, 0.1, 3.75); // 교각
+  createPBRBox(px, 40, 2.2, 7.5, 2.2, 0x334155, 0.8, 0.1, 3.75);
 }
-// 육교 상판 (플레이어가 아래로 통과 가능하도록 y: 8.0 배치)
 createPBRBox(96, 40, 92, 1.2, 10, 0x1e293b, 0.8, 0.1, 8.1);
 
-// [건물 6] 장갑차 (BTR Wreck) 및 유류 드럼통
+// BTR 장갑차 잔해
 createPBRBox(45, -20, 4.2, 2.0, 8.5, 0x223526, 0.8, 0.6, 1.0);
-const btrTurret = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.6, 1.2, 8), new THREE.MeshStandardMaterial({ color: 0x19271c, roughness: 0.7 }));
+const btrTurret = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.8, 1.2, 8), new THREE.MeshStandardMaterial({ color: 0x1a291e, roughness: 0.7 }));
 btrTurret.position.set(45, 2.6, -20); btrTurret.userData = { width: 3, height: 1.2, depth: 3 };
 scene.add(btrTurret); wallMeshes.push(btrTurret);
 
-// [건물 7] 지하 비밀 연구소 진입 벙커 (-140, 120)
+// [건물 6] 지하 비밀 연구소 진입 벙커 (-140, 120)
 createPBRBox(-140, 120, 22, 5.0, 16, 0x0f172a, 0.8, 0.3, 2.5);
-// 진입 경사로 (Sloped Entrance)
 for (let r = 0; r < 5; r++) {
   createPBRBox(-140, 111.5 - r * 1.5, 4.0, 0.35, 1.6, 0x334155, 0.7, 0.2, 1.5 - r * 0.3);
 }
 
-// 전장 전역 군용 전리품 상자 & 폭발 드럼통 스폰
-function spawnCrate(x, z, title='군용 보급 탄약 상자') {
+// =============================================================
+// [파밍 시스템] 10개 군용 전리품 상자 & 폭발 드럼통 동적 스폰
+// =============================================================
+function spawnCrate(x, z, title='군용 보급 탄약함', items=null, y=0) {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.8, 1.0), new THREE.MeshStandardMaterial({ color: 0x1e3a1e, roughness: 0.7 }));
-  mesh.position.set(x, 0.4, z); mesh.castShadow = true;
+  mesh.position.set(x, (y || 0) + 0.4, z); mesh.castShadow = true;
   const trim = new THREE.Mesh(new THREE.BoxGeometry(1.34, 0.1, 1.04), new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.3 }));
-  trim.position.set(x, 0.75, z);
+  trim.position.set(x, (y || 0) + 0.75, z);
   scene.add(mesh, trim);
-  lootCrates.push({ mesh, x, z, title, opened: false });
+
+  if (!items) {
+    items = [
+      { id: 'ifak', count: 1 },
+      { id: 'ap_pack', count: 1 },
+      { id: 'circuit', count: 1 }
+    ];
+  }
+
+  lootCrates.push({ mesh, trim, x, y: (y || 0), z, title, items, opened: false });
 }
 
 function spawnBarrel(x, z) {
@@ -1577,17 +1921,52 @@ function spawnBarrel(x, z) {
   explosiveBarrels.push(ref);
 }
 
-// 실내 및 전장 보급 상자 배치
-spawnCrate(0, -82, '본부 1층 전술 탄약함');
-spawnCrate(-7.0, -84, '본부 무기고 특수 장비함');
-spawnCrate(0, -84, '본부 2층 작전 기밀 데이터함');
-spawnCrate(-4.0, -77, '본부 옥상 스나이퍼 보급함');
-spawnCrate(-62, -20, '컨테이너 터미널 무기함');
-spawnCrate(118, -60, '파괴된 빌딩 2층 보급함');
-spawnCrate(118, -60, '파괴된 빌딩 옥상 저격함');
-spawnCrate(-140, 120, '연구소 지하 기밀 실험 상자');
-spawnCrate(0, 93, '등대 탈출 보급함');
+// 10대 핵심 전술 요충지 파밍 보급함 배치 (풍성한 고가치 아이템 탑재)
+spawnCrate(-7.0, -84, '본부 무기고 특수 무기함', [
+  { id: 'ap_pack', count: 2 }, { id: 'gunpowder', count: 3 }, { id: 'brass', count: 4 }
+], 0.2);
 
+spawnCrate(7.0, -84, '본부 의무실 응급 의약품 보급함', [
+  { id: 'ledx', count: 1 }, { id: 'salewa', count: 2 }, { id: 'morphine', count: 2 }
+], 0.2);
+
+spawnCrate(0, -84, '본부 2층 작전 기밀 데이터함', [
+  { id: 'intel', count: 1 }, { id: 'circuit', count: 2 }, { id: 'cable', count: 3 }
+], 3.9);
+
+spawnCrate(-4.0, -77, '본부 옥상 스나이퍼 보급함', [
+  { id: 'rip_pack', count: 2 }, { id: 'ap_pack', count: 1 }
+], 7.6);
+
+spawnCrate(-65.25, -27.5, '컨테이너 터미널 밀수품 은닉함', [
+  { id: 'gpu', count: 1 }, { id: 'bitcoin', count: 1 }, { id: 'battery', count: 2 }
+], 0);
+
+spawnCrate(-86.5, 2.5, '컨테이너 터미널 군용 공구 상자', [
+  { id: 'cable', count: 3 }, { id: 'circuit', count: 2 }, { id: 'shards', count: 3 }
+], 0);
+
+spawnCrate(118, -60, '파괴된 빌딩 2층 보급함', [
+  { id: 'gpu', count: 1 }, { id: 'salewa', count: 1 }, { id: 'brass', count: 2 }
+], 4.4);
+
+spawnCrate(118, -60, '파괴된 빌딩 옥상 저격함', [
+  { id: 'ap_pack', count: 2 }, { id: 'morphine', count: 2 }, { id: 'intel', count: 1 }
+], 12.8);
+
+spawnCrate(85, 40, '고속도로 육교 폐기 수송차 보급함', [
+  { id: 'goldenstar', count: 1 }, { id: 'battery', count: 1 }, { id: 'rip_pack', count: 1 }
+], 8.6);
+
+spawnCrate(-140, 120, '연구소 벙커 비밀 실험 상자', [
+  { id: 'ledx', count: 1 }, { id: 'bitcoin', count: 1 }, { id: 'circuit', count: 3 }
+], 0.5);
+
+spawnCrate(-6.0, 95, '헬리패드 수송기 긴급 보급함', [
+  { id: 'goldenstar', count: 1 }, { id: 'ifak', count: 2 }, { id: 'ap_pack', count: 2 }
+], 0.15);
+
+// 폭발 드럼통 배치
 spawnBarrel(-60, -25);
 spawnBarrel(115, -65);
 spawnBarrel(125, -65);
@@ -1819,7 +2198,13 @@ function makeAnimatedSoldierMesh(type = 'scav') {
   return root;
 }
 
-function spawnBot(x, z, type='scav') {
+function spawnBot(x, y, z, type='scav') {
+  // 인자 3개 전달 시 호환성 처리: spawnBot(x, z, type)
+  if (typeof z === 'string') {
+    type = z;
+    z = y;
+    y = 0;
+  }
   const isKilla = (type === 'killa');
   const isTagilla = (type === 'tagilla');
   const isGlukhar = (type === 'glukhar');
@@ -1835,11 +2220,11 @@ function spawnBot(x, z, type='scav') {
   else if (isRaider) { maxHp = 180; cd = 0.85; }
 
   const mesh = makeAnimatedSoldierMesh(type);
-  mesh.position.set(x, 0, z);
+  mesh.position.set(x, y || 0, z);
   scene.add(mesh);
 
   bots.push({
-    mesh, x, z,
+    mesh, x, y: y || 0, z,
     hp: maxHp, maxHp,
     type,
     isBoss: isKilla || isTagilla || isGlukhar,
@@ -1856,28 +2241,35 @@ function spawnOperationEnemies(opId) {
   bots = [];
 
   if (opId === 0) {
-    // OPERATION 1: HARBOR OUTPOST (보스 킬라)
-    spawnBot(0, 15, 'killa');
-    spawnBot(-6, 12, 'raider'); spawnBot(6, 12, 'raider');
-    spawnBot(-62, -22, 'scav'); spawnBot(-70, -10, 'scav'); spawnBot(-58, -5, 'raider');
-    spawnBot(62, -34, 'scav'); spawnBot(70, -26, 'raider');
-    spawnBot(-68, 52, 'scav'); spawnBot(60, 45, 'raider');
-    spawnBot(0, 80, 'raider'); spawnBot(-15, 85, 'scav');
+    // OPERATION 1: HARBOR OUTPOST (보스 킬라) - 컨테이너 외부 및 완전 개방 도로 스폰
+    spawnBot(0, 0, 15, 'killa');
+    spawnBot(-12, 0, 20, 'raider'); spawnBot(12, 0, 20, 'raider');
+    // 컨테이너 구역 외곽 개방 콘크리트 광장 (벽 간섭 0%)
+    spawnBot(-48, 0, -20, 'scav'); spawnBot(-48, 0, 10, 'raider');
+    spawnBot(-86.5, 0, 2.5, 'scav'); // 컨테이너 사이 3.5m 보행 통로 중앙
+    // 동측 부두 도로 및 해안선 초소
+    spawnBot(45, 0, -15, 'scav'); spawnBot(50, 0, -35, 'raider');
+    // 헬리패드 외곽 경계병 (헬리패드 진입로 확보)
+    spawnBot(-18, 0, 85, 'scav'); spawnBot(18, 0, 85, 'raider');
+    spawnBot(0, 0, 75, 'raider');
   } else if (opId === 1) {
-    // OPERATION 2: FALLEN CITY WARZONE (보스 타구야)
-    spawnBot(120, -50, 'tagilla'); // 빌딩 내부 출현
-    spawnBot(120, -55, 'raider'); spawnBot(120, -65, 'raider');
-    spawnBot(108, -60, 'sniper'); // 옥상 저격수
-    spawnBot(90, 40, 'raider'); spawnBot(100, 40, 'sniper');
-    spawnBot(45, -15, 'scav'); spawnBot(50, -25, 'scav');
-    spawnBot(0, 0, 'raider'); spawnBot(-20, 20, 'scav');
+    // OPERATION 2: FALLEN CITY WARZONE (보스 타길라) - 도심 빌딩 광장, 발코니, 고속도로 상판
+    spawnBot(120, 0.2, -40, 'tagilla'); // 빌딩 정문 앞 광장
+    spawnBot(118, 4.4, -60, 'raider'); // 빌딩 2층 발코니
+    spawnBot(126, 4.4, -60, 'raider');
+    spawnBot(118, 12.8, -60, 'sniper'); // 빌딩 4층 옥상 저격수
+    spawnBot(85, 8.6, 40, 'sniper');  // 고속도로 육교 상판 위
+    spawnBot(105, 8.6, 40, 'raider'); // 고속도로 육교 상판 위
+    spawnBot(45, 0, -15, 'scav'); spawnBot(50, 0, -25, 'scav');
+    spawnBot(0, 0, -10, 'raider'); spawnBot(-20, 0, 20, 'scav');
   } else {
-    // OPERATION 3: BLACKOUT STORM LAB (보스 글루하)
-    spawnBot(-140, 115, 'glukhar'); // 연구소 벙커 수비
-    spawnBot(-134, 112, 'raider'); spawnBot(-146, 112, 'raider');
-    spawnBot(-120, 90, 'sniper'); spawnBot(-150, 85, 'raider');
-    spawnBot(0, 95, 'raider'); spawnBot(20, 80, 'sniper');
-    spawnBot(80, 0, 'scav'); spawnBot(0, 0, 'raider');
+    // OPERATION 3: BLACKOUT STORM LAB (보스 글루하) - 연구소 지하 벙커 앞마당 및 레이더 기지
+    spawnBot(-120, 0, 105, 'glukhar'); // 벙커 진입 광장
+    spawnBot(-112, 0, 100, 'raider'); spawnBot(-128, 0, 100, 'raider');
+    spawnBot(-140, 5.2, 120, 'sniper'); // 벙커 지붕 위 관측소
+    spawnBot(-90, 0, 70, 'raider'); spawnBot(-60, 0, 50, 'scav');
+    spawnBot(0, 0, 80, 'raider'); spawnBot(20, 0, 80, 'sniper');
+    spawnBot(40, 0, 20, 'scav');
   }
 }
 
@@ -2024,7 +2416,7 @@ function shoot() {
 
       const targets = [...wallMeshes];
       bots.forEach(b => b.mesh.traverse(c => { if (c.isMesh) targets.push(c); }));
-      const hits = raycaster.intersectObjects(targets, false);
+      const hits = raycaster.intersectObjects(targets, true);
 
       let endPt = raycaster.ray.at(120, new THREE.Vector3());
       let baseDmg = Math.round(w.dmg * (1 + P.dmgBonus));
@@ -2083,7 +2475,17 @@ function shoot() {
             P.career.kills++;
             triggerBotRagdoll(bot);
             const lootTitle = bot.isBoss ? `👑 ${bot.type.toUpperCase()}의 황금 보급함` : '군용 전리품 주머니';
-            spawnCrate(bot.x, bot.z, lootTitle);
+            const dropItems = bot.isBoss ? [
+              { id: 'bitcoin', count: 1 },
+              { id: 'gpu', count: 1 },
+              { id: 'goldenstar', count: 1 },
+              { id: 'ap_pack', count: 2 }
+            ] : [
+              { id: Math.random() < 0.5 ? 'ifak' : 'salewa', count: 1 },
+              { id: Math.random() < 0.5 ? 'gunpowder' : 'brass', count: Math.floor(Math.random() * 2) + 1 },
+              { id: Math.random() < 0.5 ? 'circuit' : 'cable', count: 1 }
+            ];
+            spawnCrate(bot.x, bot.z, lootTitle, dropItems, bot.y || 0);
 
             if (bot.isBoss) {
               P.bossKilled = true;
@@ -2401,6 +2803,7 @@ function switchLobbyTab(tabName) {
 
   if (tabName === 'arsenal') renderArsenalCards();
   if (tabName === 'hideout') renderHideoutCards();
+  if (tabName === 'inventory') { renderLobbyInventory(); renderLobbyCrafting(); }
   if (tabName === 'career') renderCareerStats();
 }
 
@@ -2596,6 +2999,409 @@ function resumeRaidGame() {
   if (cv && cv.requestPointerLock) try { cv.requestPointerLock(); } catch(e){}
 }
 
+// ==========================================
+// 8. 인벤토리, 파밍 전리품, 조합 작업대 컨트롤러
+// ==========================================
+let currentOpenCrate = null;
+
+function toggleInventory() {
+  if (inMainMenu) return;
+  const modal = document.getElementById('inventory-modal');
+  if (!modal) return;
+  const isShow = (modal.style.display === 'flex');
+  modal.style.display = isShow ? 'none' : 'flex';
+
+  if (!isShow) {
+    if (document.exitPointerLock) try { document.exitPointerLock(); } catch(e){}
+    renderInventoryModal();
+    SND.inspectClick();
+  } else {
+    const cv = document.getElementById('c');
+    if (cv && cv.requestPointerLock && !raidOver && !isModalOpen()) {
+      try { cv.requestPointerLock(); } catch(e){}
+    }
+  }
+}
+
+function renderInventoryModal() {
+  // 1. 착용 전술 장비 (Paperdoll) 정보 갱신
+  if (P.equipment) {
+    const hEl = document.getElementById('eq-helmet-name');
+    if (hEl) hEl.textContent = P.equipment.helmet ? P.equipment.helmet.name : '미착용';
+    const aEl = document.getElementById('eq-armor-name');
+    if (aEl) aEl.textContent = P.equipment.armor ? P.equipment.armor.name : '미착용';
+    const rEl = document.getElementById('eq-rig-name');
+    if (rEl) rEl.textContent = P.equipment.rig ? P.equipment.rig.name : '미착용';
+    const bEl = document.getElementById('eq-backpack-name');
+    if (bEl) bEl.textContent = P.equipment.backpack ? P.equipment.backpack.name : '기본 배낭';
+  }
+  const w = WEAPONS[P.wep];
+  const pName = document.getElementById('eq-primary-name');
+  if (pName && w) pName.textContent = `${w.name} (${w.tier.split(' ')[1]})`;
+  const pAmmo = document.getElementById('eq-primary-ammo');
+  if (pAmmo && w) pAmmo.textContent = `잔탄: ${P.ammo[P.wep]} / ${P.reserve[P.wep]}발 (연사력 ${Math.round(60/w.cd)} RPM)`;
+
+  // 2. 배낭 그리드 20칸 렌더링
+  const grid = document.getElementById('backpack-grid');
+  if (grid) {
+    grid.innerHTML = '';
+    let totalVal = 0;
+    const maxSlots = 20;
+
+    for (let i = 0; i < maxSlots; i++) {
+      const itemEntry = P.inventory[i];
+      const slot = document.createElement('div');
+
+      if (itemEntry) {
+        const itemDef = ITEM_DATABASE[itemEntry.id] || { name: itemEntry.id, icon: '📦', val: 1000, desc: '' };
+        totalVal += (itemDef.val || 0) * (itemEntry.count || 1);
+        slot.className = 'inv-slot';
+        slot.title = `${itemDef.name}
+${itemDef.desc}
+클릭 시 즉시 사용 / 적용`;
+        slot.innerHTML = `
+          <div class="inv-slot-icon">${itemDef.icon}</div>
+          <div class="inv-slot-count">x${itemEntry.count}</div>
+          <div class="inv-slot-name">${itemDef.name.split(' ')[0]}</div>
+        `;
+        slot.onclick = () => useInventoryItem(i);
+      } else {
+        slot.className = 'inv-slot empty';
+      }
+      grid.appendChild(slot);
+    }
+
+    const badge = document.getElementById('inv-count-badge');
+    if (badge) badge.textContent = `${P.inventory.length}/${maxSlots}`;
+    const vEl = document.getElementById('inv-total-value');
+    if (vEl) vEl.textContent = `₽ ${totalVal.toLocaleString()}`;
+  }
+
+  // 3. 현장 간이 조합 레시피 렌더링
+  renderCraftingList('field-crafting-list');
+}
+
+function renderCraftingList(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+
+  CRAFT_RECIPES.forEach(recipe => {
+    let canCraft = true;
+    const reqSpans = recipe.req.map(r => {
+      const itemDef = ITEM_DATABASE[r.id] || { name: r.id };
+      const currentCount = getItemCount(r.id);
+      const isReady = currentCount >= r.count;
+      if (!isReady) canCraft = false;
+      return `<span class="${isReady ? 'ready' : 'missing'}">${itemDef.name.split(' ')[0]} (${currentCount}/${r.count})</span>`;
+    });
+
+    const card = document.createElement('div');
+    card.className = 'craft-card';
+    card.innerHTML = `
+      <div class="craft-card-info">
+        <div class="craft-title">${recipe.name}</div>
+        <div class="craft-desc">${recipe.desc}</div>
+        <div class="craft-req-row">필요: ${reqSpans.join(' + ')}</div>
+      </div>
+      <button class="upgrade-btn" style="padding:6px 12px;font-size:11px;${canCraft ? 'border-color:var(--accent-cyan);color:var(--accent-cyan)' : 'opacity:0.5'}" onclick="executeCraft('${recipe.id}')">
+        ${canCraft ? '⚡ 조합 제작' : '재료 부족'}
+      </button>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function getItemCount(itemId) {
+  let cnt = 0;
+  P.inventory.forEach(entry => {
+    if (entry.id === itemId) cnt += (entry.count || 1);
+  });
+  return cnt;
+}
+
+function consumeItem(itemId, count) {
+  for (let i = P.inventory.length - 1; i >= 0; i--) {
+    const entry = P.inventory[i];
+    if (entry.id === itemId) {
+      if (entry.count > count) {
+        entry.count -= count;
+        return true;
+      } else {
+        count -= entry.count;
+        P.inventory.splice(i, 1);
+        if (count <= 0) return true;
+      }
+    }
+  }
+  return false;
+}
+
+function addItemToInventory(itemId, count = 1) {
+  const existing = P.inventory.find(e => e.id === itemId);
+  if (existing) {
+    existing.count += count;
+    return true;
+  }
+  if (P.inventory.length < 20) {
+    P.inventory.push({ id: itemId, count });
+    return true;
+  }
+  return false;
+}
+
+function useInventoryItem(idx) {
+  const entry = P.inventory[idx];
+  if (!entry) return;
+  const def = ITEM_DATABASE[entry.id];
+  if (!def) return;
+
+  if (def.heal) {
+    P.hp = Math.min(100, P.hp + def.heal);
+    SND.lootBox();
+    banner(`🩹 [${def.name}] 사용: HP +${def.heal} 회복 완료!`);
+    consumeItem(entry.id, 1);
+  } else if (def.buff === 'stamina') {
+    P.stamina = P.staminaMax;
+    SND.lootBox();
+    banner(`🧪 [${def.name}] 주사: 스태미나 최대치 충전 및 진통 효과 발동!`);
+    consumeItem(entry.id, 1);
+  } else if (def.buff === 'full') {
+    P.hp = 100;
+    P.shield = 100;
+    P.stamina = P.staminaMax;
+    SND.lootBox();
+    banner(`⭐ [${def.name}] 도포: HP 및 방탄판 내구도 100% 완전 회복!`);
+    consumeItem(entry.id, 1);
+  } else if (def.ammoAdd) {
+    P.reserve[P.wep] += def.ammoAdd;
+    SND.magIn();
+    banner(`📦 [${def.name}] 개봉: 예비 탄약 +${def.ammoAdd}발 지급 완료!`);
+    consumeItem(entry.id, 1);
+  } else {
+    banner(`ℹ️ [${def.name}] 은신처 작업대 조합 재료 또는 고가치 전리품입니다.`);
+    return;
+  }
+
+  savePlayerData();
+  updateHUD();
+  renderInventoryModal();
+}
+
+function executeCraft(recipeId) {
+  const recipe = CRAFT_RECIPES.find(r => r.id === recipeId);
+  if (!recipe) return;
+
+  for (const r of recipe.req) {
+    if (getItemCount(r.id) < r.count) {
+      SND.dryFire();
+      banner('⚠️ [조합 실패] 필요한 재료가 부족합니다!');
+      return;
+    }
+  }
+
+  // 재료 차감
+  recipe.req.forEach(r => {
+    consumeItem(r.id, r.count);
+  });
+
+  // 제작 아이템 추가
+  addItemToInventory(recipe.result, recipe.resultCount || 1);
+  SND.lootBox();
+  banner(`✨ [조합 성공] ${recipe.name} 완료!`);
+  savePlayerData();
+
+  renderInventoryModal();
+  renderLobbyInventory();
+  renderLobbyCrafting();
+}
+
+// 컨테이너 파밍 모달 제어
+function openLootContainer(crate) {
+  currentOpenCrate = crate;
+  const modal = document.getElementById('loot-modal');
+  if (!modal) return;
+
+  const tEl = document.getElementById('loot-modal-title');
+  if (tEl) tEl.textContent = `📦 [${crate.title}]`;
+
+  modal.style.display = 'flex';
+  if (document.exitPointerLock) try { document.exitPointerLock(); } catch(e){}
+
+  renderLootModalItems();
+  SND.inspectClick();
+}
+
+function closeLootModal() {
+  const modal = document.getElementById('loot-modal');
+  if (modal) modal.style.display = 'none';
+  currentOpenCrate = null;
+  const cv = document.getElementById('c');
+  if (cv && cv.requestPointerLock && !raidOver && !isModalOpen()) {
+    try { cv.requestPointerLock(); } catch(e){}
+  }
+}
+
+function renderLootModalItems() {
+  const container = document.getElementById('loot-items-list');
+  if (!container || !currentOpenCrate) return;
+  container.innerHTML = '';
+
+  if (!currentOpenCrate.items || currentOpenCrate.items.length === 0) {
+    container.innerHTML = '<div style="text-align:center;color:#64748b;padding:24px;font-size:13px">상자가 비어 있습니다.</div>';
+    return;
+  }
+
+  currentOpenCrate.items.forEach((itemEntry, idx) => {
+    const def = ITEM_DATABASE[itemEntry.id] || { name: itemEntry.id, icon: '📦', val: 1000, desc: '' };
+    const row = document.createElement('div');
+    row.className = 'loot-item-row';
+    row.innerHTML = `
+      <div class="loot-item-info">
+        <div class="loot-item-icon">${def.icon}</div>
+        <div>
+          <div class="loot-item-title">${def.name} x${itemEntry.count}</div>
+          <div class="loot-item-sub">가치: ₽ ${(def.val * itemEntry.count).toLocaleString()} • ${def.desc || ''}</div>
+        </div>
+      </div>
+      <button class="upgrade-btn" style="padding:8px 14px;border-color:var(--accent-cyan);color:var(--accent-cyan)" onclick="lootSingleItem(${idx})">
+        📥 획득
+      </button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function lootSingleItem(idx) {
+  if (!currentOpenCrate || !currentOpenCrate.items || !currentOpenCrate.items[idx]) return;
+  const item = currentOpenCrate.items[idx];
+
+  if (!addItemToInventory(item.id, item.count)) {
+    SND.dryFire();
+    banner('⚠️ [인벤토리 부족] 배낭 공간이 가득 찼습니다! (최대 20칸)');
+    return;
+  }
+
+  const def = ITEM_DATABASE[item.id] || { name: item.id };
+  currentOpenCrate.items.splice(idx, 1);
+  SND.lootBox();
+  banner(`📥 [전리품 획득] ${def.name} x${item.count} 배낭 적재 완료!`);
+
+  if (currentOpenCrate.items.length === 0) {
+    currentOpenCrate.opened = true;
+    closeLootModal();
+    banner('✅ 보급 상자의 모든 물품을 파밍했습니다!');
+  } else {
+    renderLootModalItems();
+  }
+  savePlayerData();
+}
+
+function lootAllCurrentContainer() {
+  if (!currentOpenCrate || !currentOpenCrate.items) return;
+  let lootedCount = 0;
+
+  for (let i = currentOpenCrate.items.length - 1; i >= 0; i--) {
+    const item = currentOpenCrate.items[i];
+    if (addItemToInventory(item.id, item.count)) {
+      currentOpenCrate.items.splice(i, 1);
+      lootedCount++;
+    } else {
+      break;
+    }
+  }
+
+  if (lootedCount > 0) {
+    SND.lootBox();
+    banner(`📥 [일괄 획득] 총 ${lootedCount}종의 전리품을 배낭에 적재했습니다!`);
+  }
+
+  if (currentOpenCrate.items.length === 0) {
+    currentOpenCrate.opened = true;
+    closeLootModal();
+  } else {
+    renderLootModalItems();
+    banner('⚠️ [인벤토리 부족] 일부 아이템을 남겨두고 배낭이 가득 찼습니다!');
+  }
+  savePlayerData();
+}
+
+// 로비 은신처 인벤토리 & 작업대 렌더링
+function renderLobbyInventory() {
+  const grid = document.getElementById('lobby-inventory-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const maxSlots = 25;
+
+  for (let i = 0; i < maxSlots; i++) {
+    const entry = P.inventory[i];
+    const slot = document.createElement('div');
+    if (entry) {
+      const def = ITEM_DATABASE[entry.id] || { name: entry.id, icon: '📦', val: 1000 };
+      slot.className = 'inv-slot';
+      slot.title = `${def.name} (₽ ${def.val.toLocaleString()})
+클릭 시 프라포르에게 개별 판매`;
+      slot.innerHTML = `
+        <div class="inv-slot-icon">${def.icon}</div>
+        <div class="inv-slot-count">x${entry.count}</div>
+        <div class="inv-slot-name">${def.name.split(' ')[0]}</div>
+      `;
+      slot.onclick = () => sellSingleItem(i);
+    } else {
+      slot.className = 'inv-slot empty';
+    }
+    grid.appendChild(slot);
+  }
+}
+
+function renderLobbyCrafting() {
+  renderCraftingList('lobby-crafting-list');
+}
+
+function sellSingleItem(idx) {
+  const entry = P.inventory[idx];
+  if (!entry) return;
+  const def = ITEM_DATABASE[entry.id] || { name: entry.id, val: 1000 };
+  const earned = def.val * entry.count;
+  P.walletRub += earned;
+  P.inventory.splice(idx, 1);
+
+  SND.lootBox();
+  banner(`💰 [판매 완료] ${def.name} 판매로 +₽ ${earned.toLocaleString()} 획득!`);
+  savePlayerData();
+  updateLobbyHeader();
+  renderLobbyInventory();
+  renderLobbyCrafting();
+}
+
+function sellAllValuablesToTrader() {
+  let earned = 0;
+  let count = 0;
+
+  for (let i = P.inventory.length - 1; i >= 0; i--) {
+    const entry = P.inventory[i];
+    const def = ITEM_DATABASE[entry.id];
+    if (def && def.type === 'valuable') {
+      earned += def.val * entry.count;
+      count += entry.count;
+      P.inventory.splice(i, 1);
+    }
+  }
+
+  if (count > 0) {
+    P.walletRub += earned;
+    SND.winFanfare();
+    banner(`👑 [일괄 판매 성공] 고가치 귀중품 ${count}개 처분: +₽ ${earned.toLocaleString()} 입금!`);
+    savePlayerData();
+    updateLobbyHeader();
+    renderLobbyInventory();
+    renderLobbyCrafting();
+  } else {
+    SND.dryFire();
+    banner('보관함에 즉시 판매할 수 있는 고가치 귀중품(GPU, Bitcoin, LEDX, Intel)이 없습니다.');
+  }
+}
+
 
 // ==========================================
 // 8. 1인칭 총기 리그 부착, 물리 루프 & 입력 시스템
@@ -2629,6 +3435,8 @@ function normalizeKey(e) {
   if (code === 'keyj' || k === 'j' || k === 'ㅓ') return 'j';
   if (code === 'keyy' || k === 'y' || k === 'ㅛ') return 'y';
   if (code === 'keym' || k === 'm' || k === 'ㅡ') return 'm';
+  if (code === 'tab' || k === 'tab') return 'tab';
+  if (code === 'keyi' || k === 'i' || k === 'ㅑ') return 'i';
   if (code === 'escape') return 'escape';
   return k;
 }
@@ -2646,7 +3454,13 @@ addEventListener('keydown', e => {
   keys[k] = true;
 
   if (k === 'escape') {
+    if (closeAnySubModal()) return;
     toggleTacticalPause();
+    return;
+  }
+  if (k === 'tab' || k === 'i') {
+    e.preventDefault();
+    if (!inMainMenu) toggleInventory();
     return;
   }
   if (inMainMenu || isModalOpen()) return;
@@ -2706,16 +3520,12 @@ addEventListener('keydown', e => {
       toggleTrader();
     } else {
       // 보급 상자 파밍
-      lootCrates.forEach(cr => {
-        if (!cr.opened && Math.hypot(cr.x - P.x, cr.z - P.z) < 3.0) {
-          cr.opened = true;
-          P.walletRub += 25000;
-          P.reserve[P.wep] += WEAPONS[P.wep].mag * 2;
-          SND.lootBox();
-          banner(`📦 [${cr.title}] 개봉 완료! (+₽25,000, 탄약 보급)`);
-          updateHUD();
-        }
-      });
+      const nearbyCrate = lootCrates.find(cr => !cr.opened && Math.hypot(cr.x - P.x, cr.z - P.z) < 3.5);
+      if (nearbyCrate) {
+        openLootContainer(nearbyCrate);
+      } else {
+        banner('주변에 열 수 있는 보급 상자나 상인이 없습니다.');
+      }
     }
   }
   if (k === 'c') { P.crouching = !P.crouching; updateHUD(); }
@@ -2834,11 +3644,26 @@ function setGraphicsPreset(preset) {
 }
 
 function isModalOpen() {
-  const ids = ['tactical-pause-modal', 'trader-modal', 'sat-map-modal', 'result-modal'];
+  const ids = ['tactical-pause-modal', 'trader-modal', 'sat-map-modal', 'result-modal', 'inventory-modal', 'loot-modal'];
   return ids.some(id => {
     const el = document.getElementById(id);
     return el && el.style.display === 'flex';
   });
+}
+
+function closeAnySubModal() {
+  const subIds = ['inventory-modal', 'loot-modal', 'sat-map-modal', 'trader-modal'];
+  for (const id of subIds) {
+    const el = document.getElementById(id);
+    if (el && el.style.display === 'flex') {
+      el.style.display = 'none';
+      if (!isModalOpen() && cv && cv.requestPointerLock && !raidOver) {
+        try { cv.requestPointerLock(); } catch(e){}
+      }
+      return true;
+    }
+  }
+  return false;
 }
 
 function triggerBotRagdoll(bot) {
@@ -3000,22 +3825,23 @@ function loop(now) {
       if (!inVehicle) {
         // 점프 입력 (바닥 접지 시 Space)
         if (keys[' '] && P.isGrounded) {
-          P.vy = 7.0; // 점프 도약 충격량
+          P.vy = 8.5; // 점프 도약 충격량 (턱과 장애물을 시원하게 극복)
           P.isGrounded = false;
           SND.footstepConcrete(true);
         }
 
         // 수직 중력 가속도 적용
-        P.vy -= 19.0 * dt;
+        P.vy -= 22.0 * dt;
         let nextY = P.y + P.vy * dt;
 
-        let moveX = 0, moveZ = 0;
-        if (keys['w']) moveZ -= 1;
-        if (keys['s']) moveZ += 1;
-        if (keys['a']) moveX -= 1;
-        if (keys['d']) moveX += 1;
+        let moveForward = 0;
+        let moveRight = 0;
+        if (keys['w']) moveForward += 1;
+        if (keys['s']) moveForward -= 1;
+        if (keys['d']) moveRight += 1;
+        if (keys['a']) moveRight -= 1;
 
-        P.isSprinting = (keys['shift'] && moveZ < 0 && P.stamina > 5 && !P.crouching && !P.isADS);
+        P.isSprinting = (keys['shift'] && moveForward > 0 && P.stamina > 5 && !P.crouching && !P.isADS);
         if (P.isSprinting) {
           P.stamina = Math.max(0, P.stamina - dt * 25);
         } else {
@@ -3026,17 +3852,25 @@ function loop(now) {
         let nextX = P.x;
         let nextZ = P.z;
 
-        if (moveX !== 0 || moveZ !== 0) {
-          const len = Math.hypot(moveX, moveZ);
-          moveX /= len; moveZ /= len;
+        if (moveForward !== 0 || moveRight !== 0) {
+          const len = Math.hypot(moveForward, moveRight);
+          moveForward /= len;
+          moveRight /= len;
 
-          const forward = new THREE.Vector3(0, 0, -1).applyEuler(new THREE.Euler(0, P.yaw, 0));
-          const right = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, P.yaw, 0));
+          // 카메라 시야 방향으로부터 절대적인 수평 전진 벡터 계산 (W 전진, S 후진 완벽 동기화)
+          const forward = new THREE.Vector3();
+          camera.getWorldDirection(forward);
+          forward.y = 0;
+          forward.normalize();
 
-          const deltaX = (right.x * moveX + forward.x * moveZ) * spd * dt;
-          const deltaZ = (right.z * moveX + forward.z * moveZ) * spd * dt;
-          nextX += deltaX;
-          nextZ += deltaZ;
+          const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+
+          const moveVec = new THREE.Vector3()
+            .addScaledVector(forward, moveForward)
+            .addScaledVector(right, moveRight);
+
+          nextX += moveVec.x * spd * dt;
+          nextZ += moveVec.z * spd * dt;
 
           P.bob += dt * (P.isSprinting ? 14 : 9);
         }
@@ -3050,13 +3884,14 @@ function loop(now) {
         const playerHeight = 1.8;
 
         for (const wall of wallMeshes) {
+          if (!wall || !wall.position) continue;
           const wx = wall.position.x;
           const wy = wall.position.y;
           const wz = wall.position.z;
 
-          const w = wall.userData.width || (wall.geometry.parameters ? (wall.geometry.parameters.width || wall.geometry.parameters.radiusTop * 2 || 2) : 2);
-          const h = wall.userData.height || (wall.geometry.parameters ? (wall.geometry.parameters.height || 2) : 2);
-          const d = wall.userData.depth || (wall.geometry.parameters ? (wall.geometry.parameters.depth || wall.geometry.parameters.radiusTop * 2 || 2) : 2);
+          const w = wall.userData && wall.userData.width ? wall.userData.width : (wall.geometry && wall.geometry.parameters ? (wall.geometry.parameters.width || wall.geometry.parameters.radiusTop * 2 || 2) : 2);
+          const h = wall.userData && wall.userData.height ? wall.userData.height : (wall.geometry && wall.geometry.parameters ? (wall.geometry.parameters.height || 2) : 2);
+          const d = wall.userData && wall.userData.depth ? wall.userData.depth : (wall.geometry && wall.geometry.parameters ? (wall.geometry.parameters.depth || wall.geometry.parameters.radiusTop * 2 || 2) : 2);
 
           const hw = w / 2 + playerRadius;
           const hd = d / 2 + playerRadius;
@@ -3070,20 +3905,22 @@ function loop(now) {
           const currInZ = Math.abs(P.z - wz) < hd;
 
           if (inX && inZ) {
-            // Case 1: 플레이어가 해당 바닥/계단 윗면에 서 있거나 걸어 올라감
-            if (P.y >= wallTop - 0.55) {
+            const footY = Math.max(P.y, nextY);
+
+            // Case 1: 이미 윗면 높이에 도달했거나 점프로 턱/바닥 위에 올라섬
+            if (footY >= wallTop - 0.25) {
               targetFloorY = Math.max(targetFloorY, wallTop);
             }
-            // Case 2: 머리 위 천장/육교/지붕 아래로 통과 중 (머리 높이보다 높음)
+            // Case 2: 머리 위 육교나 천장 아래를 통과 중
             else if (P.y + playerHeight <= wallBottom + 0.1) {
-              // 통과 가능!
+              // 머리 위 장애물이므로 수평 통과 가능!
             }
-            // Case 3: 낮은 턱/계단/연석 스텝업 (높이 차이 0.65m 이하)
-            else if (wallTop - P.y <= 0.65 && wallTop > P.y) {
+            // Case 3: 낮은 연석, 계단, 낮은 턱 스텝업 (높이 차이 0.75m 이하)
+            else if (wallTop - P.y <= 0.75 && wallTop > P.y) {
               targetFloorY = Math.max(targetFloorY, wallTop);
               nextY = Math.max(nextY, wallTop);
             }
-            // Case 4: 측면 충돌 (벽체 통과 불가)
+            // Case 4: 측면 충돌 (벽체 통과 차단)
             else {
               if (inX && !currInX) blockedX = true;
               if (inZ && !currInZ) blockedZ = true;
@@ -3221,21 +4058,23 @@ function loop(now) {
       bots.forEach(b => {
         if (b.hp <= 0) return;
         const dist = Math.hypot(P.x - b.x, P.z - b.z);
-        b.mesh.lookAt(P.x, 0, P.z);
-        b.mesh.userData.hpBar.lookAt(camera.position);
+        b.mesh.lookAt(P.x, b.y || 0, P.z);
+        if (b.mesh.userData && b.mesh.userData.hpBar) {
+          b.mesh.userData.hpBar.lookAt(camera.position);
+        }
 
         const aggroDist = (b.isSniper ? 95 : b.isBoss ? 75 : 55);
 
         if (dist < aggroDist) {
           // 시선(LOS) 레이캐스트 검사: 봇 머리 높이 -> 플레이어 가슴 높이
-          const botEye = new THREE.Vector3(b.x, 1.4, b.z);
+          const botEye = new THREE.Vector3(b.x, (b.y || 0) + 1.4, b.z);
           const playerChest = new THREE.Vector3(P.x, P.y + 1.2, P.z);
           const toPlayer = playerChest.clone().sub(botEye);
           const rayDist = toPlayer.length();
           const rayDir = toPlayer.clone().normalize();
 
           losRay.set(botEye, rayDir);
-          const hits = losRay.intersectObjects(wallMeshes, false);
+          const hits = losRay.intersectObjects(wallMeshes, true);
 
           let hasLOS = true;
           if (hits.length > 0 && hits[0].distance < rayDist - 0.4) {
@@ -3251,10 +4090,12 @@ function loop(now) {
               b.fireT = 0;
               // 적 실탄 격발
               SND.scavGun();
-              addTracer(b.x, 1.2, b.z, P.x, P.y + 1.2, P.z, 0xff5533);
+              addTracer(b.x, (b.y || 0) + 1.2, b.z, P.x, P.y + 1.2, P.z, 0xff5533);
 
               if (Math.random() < 0.38) {
-                const dmg = Math.round(15 + Math.random() * 12);
+                const defMult = P.equipment && P.equipment.armor ? (1 - P.equipment.armor.def * 0.5) : 1.0;
+                let dmg = Math.round((15 + Math.random() * 12) * defMult);
+
                 if (P.shield > 0) {
                   P.shield = Math.max(0, P.shield - dmg);
                   SND.armorClang();
