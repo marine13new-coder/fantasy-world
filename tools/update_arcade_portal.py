@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw, ImageFont
 site_dir = Path("site")
 site_dir.mkdir(exist_ok=True)
 
-# 17 Games Definition
+# 18 Games Definition
 GAMES = [
     {
         "session": "01",
@@ -279,6 +279,22 @@ GAMES = [
         "desc": "손흥민, 홀란드, 음바페, 메시 등 16개 명문 클럽 300+ 글로벌 스타 실명 데이터베이스 탑재! 4-3-3 티키타카 / 4-2-3-1 게겐프레싱 정밀 전술판, 22명 선수 실시간 2D 피치 패스/슈팅/인터셉트 시뮬레이션, 스카우트 이적시장 및 16강 토너먼트 챔피언스 컵을 구현한 궁극의 풋볼 매니저.",
         "icon": "⚽",
         "theme_color": "#10b981"
+    },
+    {
+        "session": "18",
+        "slug": "f1-apex-manager",
+        "title": "F1 에이펙스 매니저 & 3D 그랑프리",
+        "sub_title": "F1 Apex Motorsport Manager & 3D Grand Prix",
+        "category": "strategy",
+        "category_name": "전략/시뮬레이션",
+        "genre": "3D 레이싱 & 모터스포츠 매니지먼트",
+        "platform": "Web HTML5 · Three.js 3D",
+        "tech": "Three.js 3D Circuit Engine · V10/V6 Turbo Synth Audio · Pit-wall Strategy AI",
+        "score": 100,
+        "fun": 100,
+        "desc": "2025 FIA F1 공식 10개 컨스트럭터(페라리, 레드불, 맥라렌, 메르세데스 등) 및 20명 탑 드라이버 실명 탑재! Three.js 3D 서킷 실시간 레이싱 시뮬레이션, 타이어 컴파운드(소프트/미디엄/하드/인터/웻) 전략, ERS 오버테이크 부스트, 실시간 피트스톱 피트월 오더, R&D 공기역학/파워유닛 팩토리 개발 및 드라이버 이적시장을 집대성한 궁극의 3D 모터스포츠 매니저.",
+        "icon": "🏎️",
+        "theme_color": "#e10600"
     }
 ]
 
@@ -382,7 +398,7 @@ portal_html = f"""<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Game Arcade Hub - 17 Games Showcase</title>
+<title>AI Game Arcade Hub - 18 Games Showcase</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">

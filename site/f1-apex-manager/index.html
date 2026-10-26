@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 에이펙스 매니저 & 3D 그랑프리 시뮬레이터 (F1 Apex Motorsport Manager)</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%200%20100%20100%22><text y=%22.9em%22 font-size=%2290%22>🏎️</text></svg>">
+</head>
+<body>
+
+    <!-- =====================================================================
+         TOP GLOBAL HEADER & NAVIGATION
+    ===================================================================== -->
+    <header class="f1-top-header">
+        <div class="f1-brand">
+            <div class="f1-logo-badge">F1 APEX</div>
+            <div>
+                <div class="f1-brand-title">MOTORSPORT MANAGER & 3D GRAND PRIX</div>
+                <div class="f1-brand-sub" id="headerRoundBanner">2025 FIA FORMULA 1 WORLD CHAMPIONSHIP • ROUND 1/10</div>
+            </div>
+        </div>
+
+        <nav class="f1-nav-tabs">
+            <button class="f1-tab-btn active" data-tab="hq">
+                <span>🏢</span> 패독 본부 & 예선
+            </button>
+            <button class="f1-tab-btn" data-tab="race3d">
+                <span>🏎️</span> 3D 그랑프리 & 피트월
+            </button>
+            <button class="f1-tab-btn" data-tab="rd">
+                <span>🔬</span> R&D 테크트리 & 팩토리
+            </button>
+            <button class="f1-tab-btn" data-tab="drivers">
+                <span>👨‍🚀</span> 드라이버 & 이적시장
+            </button>
+            <button class="f1-tab-btn" data-tab="standings">
+                <span>🏆</span> 월드 챔피언십 순위
+            </button>
+            <button class="f1-tab-btn" data-tab="finance">
+                <span>💼</span> 스폰서 & 재정
+            </button>
+        </nav>
+
+        <div class="f1-header-status">
+            <div class="f1-budget-pill" id="headerBudgetDisplay">💰 $145.0M</div>
+            <button class="f1-team-selector-btn" id="openTeamSelectModalBtn" title="클릭하여 10개 F1 컨스트럭터 구단 즉시 변경">
+                <span id="headerTeamColorDot" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#dc0000;"></span>
+                <span id="headerTeamName">Scuderia Ferrari HP</span>
+                <span style="font-size:0.7rem;color:#94a3b8;">▼ 구단변경</span>
+            </button>
+            <button class="btn-f1-secondary" id="toggleAudioMuteBtn" style="padding:6px 10px;">🔊 사운드</button>
+        </div>
+    </header>
+
+    <!-- =====================================================================
+         MAIN WORKSPACE
+    ===================================================================== -->
+    <main class="f1-main-container">
+
+        <!-- =================================================================
+             TAB 1: PADDOCK HQ, NEXT GRAND PRIX BRIEFING & QUALIFYING (Q1/Q2/Q3)
+        ================================================================== -->
+        <section id="tab-hq" class="f1-tab-panel active">
+            <div class="grid-2col">
+                <!-- Left Column: Team Overview + Next Circuit Briefing -->
+                <div style="display:flex; flex-direction:column; gap:20px;">
+                    <div class="f1-card" id="hqTeamHeroCard">
+                        <!-- Dynamically populated by app.js -->
+                    </div>
+
+                    <div class="f1-card" id="hqNextCircuitCard">
+                        <!-- Dynamically populated by app.js -->
+                    </div>
+                </div>
+
+                <!-- Right Column: Qualifying Shootout & Starting Grid Setup -->
+                <div style="display:flex; flex-direction:column; gap:20px;">
+                    <div class="f1-card">
+                        <div class="f1-card-header">
+                            <div class="f1-card-title">⏱️ 예선 플라잉 랩 (Qualifying Shootout) & 그리드 설정</div>
+                            <span id="qualiStatusBadge" style="font-size:0.78rem; padding:4px 10px; border-radius:4px; background:rgba(250,204,21,0.15); color:#facc15; font-weight:700;">예선 대기중</span>
+                        </div>
+
+                        <p style="font-size:0.84rem; color:#94a3b8; margin-bottom:14px;">
+                            예선 플라잉 랩 에어로/ERS 어택 모드를 선택하여 20대 그리드 출발 순위를 결정하거나, 곧바로 3D 그랑프리 본선 레이스로 출격할 수 있습니다.
+                        </p>
+
+                        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px;">
+                            <button class="btn-f1-secondary active" data-quali-setup="BALANCED" onclick="window.F1App.selectQualiSetup('BALANCED', this)">
+                                ⚖️ 밸런스 셋업<br><span style="font-size:0.7rem;color:#94a3b8;">안정적 섹터 주파</span>
+                            </button>
+                            <button class="btn-f1-secondary" data-quali-setup="LOW_DRAG" onclick="window.F1App.selectQualiSetup('LOW_DRAG', this)">
+                                🚀 로우 드래그<br><span style="font-size:0.7rem;color:#94a3b8;">고속 직선 서킷 특화</span>
+                            </button>
+                            <button class="btn-f1-secondary" data-quali-setup="MAX_ATTACK" onclick="window.F1App.selectQualiSetup('MAX_ATTACK', this)">
+                                🔥 맥스 어택 (Q3)<br><span style="font-size:0.7rem;color:#94a3b8;">폴 포지션 승부수</span>
+                            </button>
+                        </div>
+
+                        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+                            <button class="btn-f1-secondary" style="flex:1; border-color:#38bdf8; color:#38bdf8;" onclick="window.F1App.runQualifying()">
+                                ⏱️ Q1/Q2/Q3 예선 시뮬레이션 실행
+                            </button>
+                            <button class="btn-f1-primary" style="flex:1.3;" onclick="window.F1App.launch3DGrandPrix()">
+                                🏎️ 3D 그랑프리 본선 출격 (START GP)
+                            </button>
+                        </div>
+
+                        <!-- Race Options: Laps & Control Mode + Starting Tires -->
+                        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-line); border-radius:8px; padding:12px; margin-bottom:14px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                                <div>
+                                    <span style="font-size:0.78rem; color:#94a3b8; font-weight:700;">주행 모드:</span>
+                                    <button class="btn-f1-secondary active" id="modeManualBtn" style="padding:5px 10px; font-size:0.76rem;" onclick="window.F1App.setDriveMode('MANUAL')">🎮 직접 주행 + 피트월</button>
+                                    <button class="btn-f1-secondary" id="modeDirectorBtn" style="padding:5px 10px; font-size:0.76rem;" onclick="window.F1App.setDriveMode('DIRECTOR')">🎧 피트월 감독 전술전</button>
+                                </div>
+                                <div>
+                                    <span style="font-size:0.78rem; color:#94a3b8; font-weight:700;">레이스 랩 수:</span>
+                                    <select id="raceLapsSelect" style="background:#0f131d; color:#fff; border:1px solid #334155; padding:5px 8px; border-radius:5px; font-weight:700;" onchange="window.F1App.setRaceLaps(this.value)">
+                                        <option value="3">3 Laps (스프린트)</option>
+                                        <option value="5" selected>5 Laps (스탠다드 GP)</option>
+                                        <option value="8">8 Laps (인듀어런스 GP)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="qualifyingResultsContainer" style="max-height:310px; overflow-y:auto;">
+                            <!-- Populated with Starting Grid / Qualifying Times -->
+                        </div>
+                    </div>
+
+                    <!-- FIA Paddock Inbox Messages -->
+                    <div class="f1-card">
+                        <div class="f1-card-header">
+                            <div class="f1-card-title">📨 FIA 패독 & 이사회 텔레그램</div>
+                        </div>
+                        <div id="hqInboxList" style="display:flex; flex-direction:column; gap:10px; max-height:220px; overflow-y:auto;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================
+             TAB 2: 3D GRAND PRIX CIRCUIT & PIT WALL LIVE STRATEGY COMMAND
+        ================================================================== -->
+        <section id="tab-race3d" class="f1-tab-panel">
+            <div class="race-cockpit-wrapper">
+                <!-- Three.js WebGL 3D Canvas -->
+                <div id="race3dCanvasContainer"></div>
+
+                <!-- FIA 5 Red Lights Start Gantry Overlay -->
+                <div id="fiaStartLightsOverlay">
+                    <div class="fia-light-pod"><div class="fia-red-light"></div><div class="fia-red-light" id="fiaLight1"></div></div>
+                    <div class="fia-light-pod"><div class="fia-red-light"></div><div class="fia-red-light" id="fiaLight2"></div></div>
+                    <div class="fia-light-pod"><div class="fia-red-light"></div><div class="fia-red-light" id="fiaLight3"></div></div>
+                    <div class="fia-light-pod"><div class="fia-red-light"></div><div class="fia-red-light" id="fiaLight4"></div></div>
+                    <div class="fia-light-pod"><div class="fia-red-light"></div><div class="fia-red-light" id="fiaLight5"></div></div>
+                </div>
+
+                <!-- Top Broadcast HUD Bar -->
+                <div class="broadcast-top-bar">
+                    <div class="f1-lap-counter-box">
+                        <div>
+                            <div style="font-size:0.68rem; color:#94a3b8; font-weight:700;" id="hudCircuitTitle">BAHRAIN GP</div>
+                            <div class="lap-main-text" id="hudLapCounter">LAP 1 / 5</div>
+                        </div>
+                        <div class="weather-pill-box" id="hudWeatherPill">
+                            ☀️ DRY (노면 수막 0%)
+                        </div>
+                    </div>
+
+                    <div class="race-sim-controls">
+                        <span style="font-size:0.74rem; color:#94a3b8; margin-right:4px;">배속:</span>
+                        <button class="sim-ctrl-btn" data-speed="0" onclick="window.F1App.setSimSpeed(0, this)">⏸ 일시정지</button>
+                        <button class="sim-ctrl-btn active" data-speed="1" onclick="window.F1App.setSimSpeed(1, this)">▶ 1x</button>
+                        <button class="sim-ctrl-btn" data-speed="2" onclick="window.F1App.setSimSpeed(2, this)">⏩ 2x</button>
+                        <button class="sim-ctrl-btn" data-speed="4" onclick="window.F1App.setSimSpeed(4, this)">⚡ 4x</button>
+
+                        <span style="margin:0 6px; color:#334155;">|</span>
+                        <button class="sim-ctrl-btn" onclick="window.F1App.cycleCamera()" id="hudCameraBtn">🎥 카메라: CHASE [C]</button>
+                        <button class="sim-ctrl-btn" id="hudDriveModeBtn" onclick="window.F1App.toggleInRaceDriveMode()">🎮 수동주행 ON</button>
+                        <button class="sim-ctrl-btn" style="background:rgba(59,130,246,0.2); border-color:#3b82f6; color:#93c5fd;" onclick="window.F1App.cycleWeatherDebug()">🌧️ 기상변화 테스트</button>
+                        <button class="sim-ctrl-btn" style="background:rgba(16,185,129,0.2); border-color:#10b981; color:#6ee7b7;" onclick="window.F1App.instantFinishRace()">🏁 즉시 완주 결과</button>
+                    </div>
+                </div>
+
+                <!-- Left FIA 20-Driver Live Timing Tower -->
+                <aside class="fia-timing-tower">
+                    <div class="timing-tower-header">
+                        <span>FIA LIVE TIMING</span>
+                        <span style="font-size:0.65rem; opacity:0.85;">클릭 시 카메라 추적</span>
+                    </div>
+                    <div class="timing-tower-list" id="hudTimingTowerList">
+                        <!-- 20 drivers rows updated live -->
+                    </div>
+                </aside>
+
+                <!-- Right Pit Wall Dual-Car Strategy Console & Team Radio -->
+                <aside class="pitwall-right-panel">
+                    <div id="pitwallCar1Card" class="driver-strategy-card"></div>
+                    <div id="pitwallCar2Card" class="driver-strategy-card"></div>
+
+                    <div class="team-radio-box">
+                        <div class="radio-wave-header">
+                            <span>📻 PIT WALL TEAM RADIO</span>
+                            <span>LIVE CH.1</span>
+                        </div>
+                        <div class="radio-messages-list" id="hudRadioMessages">
+                            <div style="color:#94a3b8;">[ENG] 그리드 정렬 완료. 스타트 시그널을 주시하십시오.</div>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Bottom Center Halo Telemetry HUD -->
+                <div class="halo-telemetry-hud">
+                    <div class="rpm-leds-strip" id="hudRpmLeds">
+                        <div class="rpm-led"></div><div class="rpm-led"></div><div class="rpm-led"></div><div class="rpm-led"></div><div class="rpm-led"></div>
+                        <div class="rpm-led"></div><div class="rpm-led"></div><div class="rpm-led"></div><div class="rpm-led"></div><div class="rpm-led"></div>
+                        <div class="rpm-led"></div><div class="rpm-led"></div><div class="rpm-led"></div><div class="rpm-led"></div><div class="rpm-led"></div>
+                    </div>
+
+                    <div class="halo-main-row">
+                        <div class="telemetry-speed-block">
+                            <div class="telemetry-speed-val" id="hudSpeedVal">0</div>
+                            <div style="font-size:0.68rem; color:#94a3b8; font-weight:700;">KM/H • <span id="hudRpmVal">4200</span> RPM</div>
+                        </div>
+
+                        <div class="telemetry-gear-box">
+                            <div style="font-size:0.6rem; color:#94a3b8;">GEAR</div>
+                            <div class="telemetry-gear-num" id="hudGearVal">N</div>
+                        </div>
+
+                        <div style="flex:1;">
+                            <div style="display:flex; justify-content:space-between; font-size:0.72rem; margin-bottom:3px;">
+                                <span style="color:#fde047; font-weight:800;">⚡ ERS BATTERY</span>
+                                <span id="hudErsPct" style="font-family:var(--font-mono); font-weight:800;">100%</span>
+                            </div>
+                            <div class="spec-bar-track" style="height:8px; margin-bottom:7px;">
+                                <div class="spec-bar-fill" id="hudErsBar" style="width:100%; background:linear-gradient(90deg,#facc15,#22c55e);"></div>
+                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <button class="drs-indicator-pill" id="hudDrsBtn" onclick="window.F1App.toggleManualDrs()" style="cursor:pointer;">
+                                    DRS [SHIFT]
+                                </button>
+                                <span style="font-size:0.72rem; color:#94a3b8;" id="hudWatchedDriverLabel">추적: #16 LEC</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top:6px; text-align:center; font-size:0.68rem; color:#64748b;">
+                        조작: <b>[W/S]</b> 가속/브레이크 • <b>[A/D]</b> 조향/추월 라인 • <b>[SPACE]</b> ERS 오버테이크 부스트 • <b>[SHIFT]</b> DRS 플랩 개방 • <b>[B]</b> 피트인 호출 • <b>[C]</b> 카메라 전환
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================
+             TAB 3: R&D TECH TREE & WIND TUNNEL FACTORY UPGRADES
+        ================================================================== -->
+        <section id="tab-rd" class="f1-tab-panel">
+            <div class="f1-card" style="margin-bottom:20px;">
+                <div class="f1-card-header">
+                    <div class="f1-card-title">🔬 마라넬로 / 브래클리 R&D 기술 연구소 & 풍동(Wind Tunnel) 센터</div>
+                    <div id="rdBudgetLabel" style="font-family:var(--font-mono); color:#34d399; font-weight:800;">가용 Cost Cap: $145.0M</div>
+                </div>
+                <p style="font-size:0.86rem; color:#94a3b8;">
+                    4대 핵심 엔지니어링 부서(에어로다이내믹, 파워유닛, 섀시 경량화, 내구성/피트스톱)의 파츠를 연구 개발하면 즉시 3D 레이스 머신의 최고속도, 코너링 그립, 타이어 수명, 피트스톱 속도에 반영됩니다.
+                </p>
+            </div>
+
+            <div class="grid-4col" id="rdBranchesGrid" style="margin-bottom:24px;">
+                <!-- Populated dynamically with 4 R&D Department Trees -->
+            </div>
+
+            <div class="f1-card">
+                <div class="f1-card-header">
+                    <div class="f1-card-title">🏭 팩토리 인프라 시설 & 피트크루 훈련소</div>
+                </div>
+                <div class="grid-4col" id="facilitiesGrid">
+                    <!-- Wind Tunnel, CFD, Simulator, Pit Crew cards -->
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================
+             TAB 4: DRIVER SQUAD & BLOCKBUSTER TRANSFER MARKET
+        ================================================================== -->
+        <section id="tab-drivers" class="f1-tab-panel">
+            <div class="f1-card" style="margin-bottom:20px;">
+                <div class="f1-card-header">
+                    <div class="f1-card-title">👨‍🚀 우리 구단 시트 드라이버 라인업 (Car #1 & Car #2)</div>
+                </div>
+                <div class="grid-2col" id="myDriversGrid"></div>
+            </div>
+
+            <div class="f1-card">
+                <div class="f1-card-header">
+                    <div class="f1-card-title">🌍 FIA 슈퍼라이선스 드라이버 이적 시장 (자유계약 & 타 구단 바이아웃 영입)</div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="f1-table" id="driverMarketTable"></table>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================
+             TAB 5: FIA WORLD CHAMPIONSHIP STANDINGS & 10-ROUND CALENDAR
+        ================================================================== -->
+        <section id="tab-standings" class="f1-tab-panel">
+            <div class="grid-2col" style="margin-bottom:20px;">
+                <div class="f1-card">
+                    <div class="f1-card-header">
+                        <div class="f1-card-title">🏆 월드 드라이버 챔피언십 (WDC) 순위표</div>
+                    </div>
+                    <div style="max-height:520px; overflow-y:auto;">
+                        <table class="f1-table" id="wdcTable"></table>
+                    </div>
+                </div>
+
+                <div class="f1-card">
+                    <div class="f1-card-header">
+                        <div class="f1-card-title">🛠️ 월드 컨스트럭터 챔피언십 (WCC) 순위표 & 머신 퍼포먼스 지수</div>
+                    </div>
+                    <div style="max-height:520px; overflow-y:auto;">
+                        <table class="f1-table" id="wccTable"></table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="f1-card">
+                <div class="f1-card-header">
+                    <div class="f1-card-title">🗓️ 월드 챔피언십 10대 그랑프리 서킷 캘린더</div>
+                </div>
+                <div class="grid-3col" id="calendarCardsGrid"></div>
+            </div>
+        </section>
+
+        <!-- =================================================================
+             TAB 6: SPONSORS, COST CAP FINANCE & RACE HISTORY
+        ================================================================== -->
+        <section id="tab-finance" class="f1-tab-panel">
+            <div class="grid-2col">
+                <div class="f1-card" id="financeSponsorsCard"></div>
+                <div class="f1-card">
+                    <div class="f1-card-header">
+                        <div class="f1-card-title">📜 시즌 그랑프리 참가 및 재정 정산 기록</div>
+                        <button class="btn-f1-secondary" style="color:#fca5a5; border-color:#ef4444;" onclick="window.F1App.resetSeasonConfirm()">🔄 새 시즌 초기화</button>
+                    </div>
+                    <div id="raceHistoryList"></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- =====================================================================
+         MODAL 1: CONSTRUCTOR TEAM SELECTION MODAL
+    ===================================================================== -->
+    <div class="f1-modal-backdrop" id="teamSelectModal">
+        <div class="f1-modal-box">
+            <div class="f1-card-header">
+                <div class="f1-card-title">🏁 지휘할 F1 컨스트럭터 구단 선택 (10개 공식 팀)</div>
+                <button class="btn-f1-secondary" onclick="document.getElementById('teamSelectModal').style.display='none'">✕ 닫기</button>
+            </div>
+            <p style="font-size:0.85rem; color:#94a3b8; margin-bottom:16px;">
+                원하는 구단을 선택하면 즉시 해당 팀의 총감독(Team Principal)으로 부임하며, 3D 차량 리버리와 R&D 예산, 드라이버를 지휘합니다.
+            </p>
+            <div class="grid-2col" id="modalTeamListGrid"></div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 2: POST-RACE PODIUM & FIA PRIZE SETTLEMENT MODAL
+    ===================================================================== -->
+    <div class="f1-modal-backdrop" id="postRaceModal">
+        <div class="f1-modal-box" id="postRaceModalContent"></div>
+    </div>
+
+    <!-- Three.js CDN + Game Modules -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="data.js"></script>
+    <script src="audio.js"></script>
+    <script src="career.js"></script>
+    <script src="engine3d.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
