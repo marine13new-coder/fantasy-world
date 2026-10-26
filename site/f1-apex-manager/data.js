@@ -1,816 +1,569 @@
-// =========================================================================
-// F1 APEX MOTORSPORT MANAGER & 3D GRAND PRIX SIMULATOR - DATA & DATABASE
-// =========================================================================
+// ============================================================================
+// F1 MANAGER & LIVE TELEMETRY SIMULATOR - AUTHENTIC FIA DATA & 24-RACE CALENDAR
+// 10 Constructors, 26 Drivers, 24 Official Grand Prix Circuits (Full Laps),
+// 5 Pirelli Compounds, 4 Race Distances, Realistic SVG Circuit Coordinates
+// ============================================================================
 
 window.F1Data = {
-    // 10 Constructors (2025/26 Grid + Authentic Performance & Livery Colors)
+    // Race Distance Presets
+    raceFormats: {
+        SPRINT: { id: 'SPRINT', label: 'SPRINT (25% 거리)', scale: 0.25, wearMult: 2.6, fuelMult: 2.6, desc: '실제 그랑프리의 25% 랩 수로 압축된 고속 전술 레이스' },
+        HALF:   { id: 'HALF',   label: 'STANDARD (50% 거리)', scale: 0.50, wearMult: 1.5, fuelMult: 1.5, desc: '1~2스톱 언더컷/오버컷 전략이 가장 치열한 50% 레이스' },
+        FULL:   { id: 'FULL',   label: 'FULL GP (100% 실제 랩수)', scale: 1.00, wearMult: 0.85, fuelMult: 1.0, desc: '실제 FIA F1 규정과 100% 동일한 풀 랩수(50~78랩) 하드코어 그랑프리' },
+        QUICK:  { id: 'QUICK',  label: 'SHAKEDOWN (5 Laps)', scale: 0.0, fixedLaps: 5, wearMult: 5.5, fuelMult: 5.5, desc: '즉각적인 승부와 테스트를 위한 5랩 초단기 결전' }
+    },
+
+    // 10 Official Formula 1 Constructors
     teams: [
-        {
-            id: 'redbull',
-            name: 'Oracle Red Bull Racing',
-            shortName: 'Red Bull',
-            code: 'RBR',
-            country: '🇦🇹 오스트리아',
-            principal: '크리스티안 호너',
-            engine: 'Honda RBPT',
-            primaryColor: '#0600ef',
-            secondaryColor: '#ef1a2d',
-            accentColor: '#ffd700',
-            carHex: 0x0a1142,
-            wingHex: 0xef1a2d,
-            haloHex: 0x0a1142,
-            budget: 145000000, // $145M Cost Cap
-            prestige: 98,
-            specs: {
-                aero: 95,       // Downforce & cornering
-                powertrain: 96, // Top speed & acceleration
-                chassis: 93,    // Tire wear & weight
-                durability: 91  // Reliability & ERS cooling
-            },
-            facilities: {
-                windTunnel: 5,
-                cfd: 5,
-                simulator: 5,
-                pitCrew: 96
-            },
-            sponsors: {
-                title: { name: 'Oracle Cloud', payoutPerRace: 4200000, bonusTarget: 3, bonusAmount: 1800000 },
-                secondary: [
-                    { name: 'Bybit', payoutPerRace: 1200000 },
-                    { name: 'Tag Heuer', payoutPerRace: 950000 },
-                    { name: 'Mobil 1', payoutPerRace: 850000 }
-                ]
-            },
-            desc: '최강의 에어로다이내믹 효율과 직선 가속력을 자랑하는 디펜딩 챔피언 컨스트럭터.'
-        },
         {
             id: 'ferrari',
             name: 'Scuderia Ferrari HP',
             shortName: 'Ferrari',
             code: 'FER',
-            country: '🇮🇹 이탈리아',
-            principal: '프레데릭 바수르',
-            engine: 'Ferrari 066/12',
-            primaryColor: '#dc0000',
-            secondaryColor: '#fff200',
-            accentColor: '#ffffff',
-            carHex: 0xd40000,
+            country: 'ITA',
+            hq: 'Maranello, Italy',
+            principal: 'Fred Vasseur',
+            powerUnit: 'Ferrari 066/12',
+            primaryColor: '#E8002D',
+            secondaryColor: '#FFF200',
+            carHex: 0xd4001a,
             wingHex: 0x111111,
             haloHex: 0x111111,
             budget: 145000000,
             prestige: 99,
-            specs: {
-                aero: 94,
-                powertrain: 96,
-                chassis: 94,
-                durability: 90
-            },
-            facilities: {
-                windTunnel: 5,
-                cfd: 4,
-                simulator: 5,
-                pitCrew: 93
-            },
+            specs: { aero: 95, powertrain: 96, chassis: 94, durability: 91 },
+            facilities: { windTunnel: 5, cfd: 4, simulator: 5, pitCrew: 94 },
             sponsors: {
-                title: { name: 'HP Enterprise', payoutPerRace: 4500000, bonusTarget: 2, bonusAmount: 2000000 },
-                secondary: [
-                    { name: 'Shell V-Power', payoutPerRace: 1400000 },
-                    { name: 'Santander', payoutPerRace: 1100000 },
-                    { name: 'Puma Motorsport', payoutPerRace: 800000 }
+                title: { name: 'HP Enterprise', perRace: 4500000, targetPos: 2, bonus: 2200000 },
+                partners: [
+                    { name: 'Shell V-Power', perRace: 1400000 },
+                    { name: 'UniCredit', perRace: 1100000 },
+                    { name: 'Puma Motorsport', perRace: 850000 }
                 ]
-            },
-            desc: '마라넬로의 자존심. 르클레르와 해밀턴이라는 역사상 가장 화려한 슈퍼스타 듀오를 보유한 명문.'
+            }
+        },
+        {
+            id: 'redbull',
+            name: 'Oracle Red Bull Racing',
+            shortName: 'Red Bull Racing',
+            code: 'RBR',
+            country: 'AUT',
+            hq: 'Milton Keynes, UK',
+            principal: 'Christian Horner',
+            powerUnit: 'Honda RBPT',
+            primaryColor: '#3671C6',
+            secondaryColor: '#EF1A2D',
+            carHex: 0x0a1338,
+            wingHex: 0xef1a2d,
+            haloHex: 0x0a1338,
+            budget: 145000000,
+            prestige: 98,
+            specs: { aero: 96, powertrain: 96, chassis: 93, durability: 92 },
+            facilities: { windTunnel: 5, cfd: 5, simulator: 5, pitCrew: 97 },
+            sponsors: {
+                title: { name: 'Oracle Cloud', perRace: 4400000, targetPos: 2, bonus: 2100000 },
+                partners: [
+                    { name: 'Tag Heuer', perRace: 1200000 },
+                    { name: 'Mobil 1', perRace: 1050000 },
+                    { name: 'Visa', perRace: 900000 }
+                ]
+            }
         },
         {
             id: 'mclaren',
             name: 'McLaren Formula 1 Team',
             shortName: 'McLaren',
             code: 'MCL',
-            country: '🇬🇧 영국',
-            principal: '안드레아 스텔라',
-            engine: 'Mercedes-AMG M15',
-            primaryColor: '#ff8000',
-            secondaryColor: '#111111',
-            accentColor: '#00c8ff',
+            country: 'GBR',
+            hq: 'Woking, UK',
+            principal: 'Andrea Stella',
+            powerUnit: 'Mercedes-AMG M15',
+            primaryColor: '#FF8000',
+            secondaryColor: '#00C8FF',
             carHex: 0xff7700,
-            wingHex: 0x18181b,
-            haloHex: 0x18181b,
-            budget: 142000000,
-            prestige: 96,
-            specs: {
-                aero: 96,
-                powertrain: 94,
-                chassis: 95,
-                durability: 93
-            },
-            facilities: {
-                windTunnel: 5,
-                cfd: 5,
-                simulator: 4,
-                pitCrew: 95
-            },
+            wingHex: 0x16181d,
+            haloHex: 0x16181d,
+            budget: 143000000,
+            prestige: 97,
+            specs: { aero: 97, powertrain: 95, chassis: 96, durability: 94 },
+            facilities: { windTunnel: 5, cfd: 5, simulator: 5, pitCrew: 96 },
             sponsors: {
-                title: { name: 'Mastercard & OKX', payoutPerRace: 3900000, bonusTarget: 3, bonusAmount: 1600000 },
-                secondary: [
-                    { name: 'Google Chrome', payoutPerRace: 1300000 },
-                    { name: 'Dell Technologies', payoutPerRace: 950000 },
-                    { name: 'Monster Energy', payoutPerRace: 750000 }
+                title: { name: 'Mastercard & OKX', perRace: 4200000, targetPos: 2, bonus: 2000000 },
+                partners: [
+                    { name: 'Google Chrome', perRace: 1350000 },
+                    { name: 'Dell Technologies', perRace: 950000 },
+                    { name: 'Monster Energy', perRace: 800000 }
                 ]
-            },
-            desc: '파파야 오렌지 돌풍! 가장 완벽한 고속 코너링 밸런스와 타이어 관리 능력을 갖춘 컨스트럭터 챔피언.'
+            }
         },
         {
             id: 'mercedes',
             name: 'Mercedes-AMG PETRONAS F1',
             shortName: 'Mercedes',
             code: 'MER',
-            country: '🇩🇪 독일',
-            principal: '토토 볼프',
-            engine: 'Mercedes-AMG M15',
-            primaryColor: '#00d2be',
-            secondaryColor: '#111827',
-            accentColor: '#c0c0c0',
-            carHex: 0x101820,
+            country: 'GER',
+            hq: 'Brackley, UK',
+            principal: 'Toto Wolff',
+            powerUnit: 'Mercedes-AMG M15',
+            primaryColor: '#27F4D2',
+            secondaryColor: '#C0C0C0',
+            carHex: 0x111720,
             wingHex: 0x00d2be,
             haloHex: 0xc0c0c0,
-            budget: 140000000,
+            budget: 141000000,
             prestige: 95,
-            specs: {
-                aero: 91,
-                powertrain: 95,
-                chassis: 92,
-                durability: 95
-            },
-            facilities: {
-                windTunnel: 5,
-                cfd: 4,
-                simulator: 5,
-                pitCrew: 94
-            },
+            specs: { aero: 92, powertrain: 95, chassis: 93, durability: 95 },
+            facilities: { windTunnel: 5, cfd: 4, simulator: 5, pitCrew: 94 },
             sponsors: {
-                title: { name: 'PETRONAS Syntium', payoutPerRace: 4000000, bonusTarget: 4, bonusAmount: 1500000 },
-                secondary: [
-                    { name: 'INEOS', payoutPerRace: 1250000 },
-                    { name: 'TeamViewer', payoutPerRace: 900000 },
-                    { name: 'IWC Schaffhausen', payoutPerRace: 700000 }
+                title: { name: 'PETRONAS Syntium', perRace: 4000000, targetPos: 3, bonus: 1700000 },
+                partners: [
+                    { name: 'INEOS', perRace: 1300000 },
+                    { name: 'SAP', perRace: 950000 },
+                    { name: 'IWC Schaffhausen', perRace: 750000 }
                 ]
-            },
-            desc: '실버 애로우의 부활을 노리는 브래클리 군단. 조지 러셀과 천재 루키 안토넬리의 신구 조화.'
+            }
         },
         {
             id: 'astonmartin',
             name: 'Aston Martin Aramco F1',
             shortName: 'Aston Martin',
             code: 'AMR',
-            country: '🇬🇧 영국',
-            principal: '마이크 크랙',
-            engine: 'Mercedes-AMG M15',
-            primaryColor: '#006f62',
-            secondaryColor: '#cedc00',
-            accentColor: '#ffffff',
+            country: 'GBR',
+            hq: 'Silverstone, UK',
+            principal: 'Andy Cowell',
+            powerUnit: 'Mercedes-AMG M15',
+            primaryColor: '#229971',
+            secondaryColor: '#CEDC00',
             carHex: 0x00594f,
             wingHex: 0xcedc00,
             haloHex: 0x00594f,
             budget: 136000000,
-            prestige: 86,
-            specs: {
-                aero: 87,
-                powertrain: 92,
-                chassis: 86,
-                durability: 90
-            },
-            facilities: {
-                windTunnel: 5,
-                cfd: 4,
-                simulator: 4,
-                pitCrew: 88
-            },
+            prestige: 87,
+            specs: { aero: 88, powertrain: 93, chassis: 87, durability: 90 },
+            facilities: { windTunnel: 5, cfd: 4, simulator: 4, pitCrew: 89 },
             sponsors: {
-                title: { name: 'Aramco Racing', payoutPerRace: 3500000, bonusTarget: 6, bonusAmount: 1200000 },
-                secondary: [
-                    { name: 'Cognizant', payoutPerRace: 1000000 },
-                    { name: 'Valvoline', payoutPerRace: 750000 }
+                title: { name: 'Aramco', perRace: 3600000, targetPos: 5, bonus: 1300000 },
+                partners: [
+                    { name: 'Cognizant', perRace: 1050000 },
+                    { name: 'Valvoline', perRace: 800000 }
                 ]
-            },
-            desc: '실버스톤 최신예 풍동 시설과 아드리안 뉴이의 합류로 도약을 준비하는 브리티시 레이싱 그린.'
+            }
+        },
+        {
+            id: 'williams',
+            name: 'Atlassian Williams Racing',
+            shortName: 'Williams',
+            code: 'WIL',
+            country: 'GBR',
+            hq: 'Grove, UK',
+            principal: 'James Vowles',
+            powerUnit: 'Mercedes-AMG M15',
+            primaryColor: '#64C4FF',
+            secondaryColor: '#005AFF',
+            carHex: 0x0046ad,
+            wingHex: 0x00a0de,
+            haloHex: 0x0046ad,
+            budget: 126000000,
+            prestige: 85,
+            specs: { aero: 85, powertrain: 93, chassis: 86, durability: 88 },
+            facilities: { windTunnel: 3, cfd: 4, simulator: 3, pitCrew: 87 },
+            sponsors: {
+                title: { name: 'Atlassian & Komatsu', perRace: 2800000, targetPos: 7, bonus: 1100000 },
+                partners: [
+                    { name: 'Duracell', perRace: 850000 },
+                    { name: 'Gulf Oil', perRace: 750000 }
+                ]
+            }
         },
         {
             id: 'alpine',
             name: 'BWT Alpine F1 Team',
             shortName: 'Alpine',
             code: 'ALP',
-            country: '🇫🇷 프랑스',
-            principal: '올리버 오크스',
-            engine: 'Renault E-Tech',
-            primaryColor: '#0090ff',
-            secondaryColor: '#ff66b2',
-            accentColor: '#ffffff',
+            country: 'FRA',
+            hq: 'Enstone, UK',
+            principal: 'Oliver Oakes',
+            powerUnit: 'Renault E-Tech',
+            primaryColor: '#0093CC',
+            secondaryColor: '#FF87BC',
             carHex: 0x0055b3,
             wingHex: 0xff4da6,
             haloHex: 0x111111,
-            budget: 125000000,
-            prestige: 80,
-            specs: {
-                aero: 84,
-                powertrain: 83,
-                chassis: 85,
-                durability: 84
-            },
-            facilities: {
-                windTunnel: 3,
-                cfd: 3,
-                simulator: 3,
-                pitCrew: 85
-            },
+            budget: 124000000,
+            prestige: 81,
+            specs: { aero: 85, powertrain: 84, chassis: 85, durability: 85 },
+            facilities: { windTunnel: 3, cfd: 3, simulator: 3, pitCrew: 85 },
             sponsors: {
-                title: { name: 'BWT Water', payoutPerRace: 2600000, bonusTarget: 8, bonusAmount: 900000 },
-                secondary: [
-                    { name: 'Castrol Edge', payoutPerRace: 800000 },
-                    { name: 'MSV Crypto', payoutPerRace: 600000 }
+                title: { name: 'BWT Water', perRace: 2600000, targetPos: 8, bonus: 950000 },
+                partners: [
+                    { name: 'Castrol', perRace: 800000 },
+                    { name: 'Eni', perRace: 650000 }
                 ]
-            },
-            desc: '프랑스 엔스톤의 중위권 강자. 파워유닛의 열세를 섀시 경량화와 과감한 전략으로 극복한다.'
-        },
-        {
-            id: 'williams',
-            name: 'Williams Racing',
-            shortName: 'Williams',
-            code: 'WIL',
-            country: '🇬🇧 영국',
-            principal: '제임스 바울스',
-            engine: 'Mercedes-AMG M15',
-            primaryColor: '#005aff',
-            secondaryColor: '#00a0de',
-            accentColor: '#ffffff',
-            carHex: 0x0046ad,
-            wingHex: 0x00a0de,
-            haloHex: 0x0046ad,
-            budget: 122000000,
-            prestige: 84,
-            specs: {
-                aero: 83,
-                powertrain: 92,
-                chassis: 84,
-                durability: 87
-            },
-            facilities: {
-                windTunnel: 3,
-                cfd: 4,
-                simulator: 3,
-                pitCrew: 86
-            },
-            sponsors: {
-                title: { name: 'Atlassian & Komatsu', payoutPerRace: 2500000, bonusTarget: 8, bonusAmount: 950000 },
-                secondary: [
-                    { name: 'Duracell', payoutPerRace: 850000 },
-                    { name: 'Gulf Oil', payoutPerRace: 700000 }
-                ]
-            },
-            desc: '알본과 사인츠라는 최정상급 드라이버 라인업을 구축하며 과거 명가의 영광을 되찾고 있는 그로브 팀.'
+            }
         },
         {
             id: 'rb',
             name: 'Visa Cash App Racing Bulls',
             shortName: 'Racing Bulls',
-            code: 'VCARB',
-            country: '🇮🇹 이탈리아',
-            principal: '로랑 메키스',
-            engine: 'Honda RBPT',
-            primaryColor: '#1634cb',
-            secondaryColor: '#ffffff',
-            accentColor: '#ff0040',
+            code: 'RB',
+            country: 'ITA',
+            hq: 'Faenza, Italy',
+            principal: 'Laurent Mekies',
+            powerUnit: 'Honda RBPT',
+            primaryColor: '#6692FF',
+            secondaryColor: '#FFFFFF',
             carHex: 0x1634cb,
             wingHex: 0xffffff,
             haloHex: 0xff0040,
-            budget: 118000000,
-            prestige: 78,
-            specs: {
-                aero: 84,
-                powertrain: 93,
-                chassis: 83,
-                durability: 86
-            },
-            facilities: {
-                windTunnel: 3,
-                cfd: 3,
-                simulator: 3,
-                pitCrew: 84
-            },
+            budget: 120000000,
+            prestige: 79,
+            specs: { aero: 84, powertrain: 93, chassis: 84, durability: 86 },
+            facilities: { windTunnel: 3, cfd: 3, simulator: 3, pitCrew: 85 },
             sponsors: {
-                title: { name: 'Visa Cash App', payoutPerRace: 2400000, bonusTarget: 9, bonusAmount: 850000 },
-                secondary: [
-                    { name: 'Hugo Boss', payoutPerRace: 700000 },
-                    { name: 'Orlen', payoutPerRace: 550000 }
+                title: { name: 'Visa Cash App', perRace: 2450000, targetPos: 8, bonus: 900000 },
+                partners: [
+                    { name: 'Hugo Boss', perRace: 720000 },
+                    { name: 'Tudor', perRace: 600000 }
                 ]
-            },
-            desc: '이탈리아 파엔차에 기반을 둔 레드불 패밀리 팀. 날카로운 중속 코너링과 공격적인 언더컷 전략이 특징.'
+            }
         },
         {
             id: 'haas',
             name: 'MoneyGram Haas F1 Team',
             shortName: 'Haas',
             code: 'HAA',
-            country: '🇺🇸 미국',
-            principal: '아야오 코마츠',
-            engine: 'Ferrari 066/12',
-            primaryColor: '#e6002b',
-            secondaryColor: '#1f2937',
-            accentColor: '#ffffff',
-            carHex: 0x18181b,
+            country: 'USA',
+            hq: 'Kannapolis, USA',
+            principal: 'Ayao Komatsu',
+            powerUnit: 'Ferrari 066/12',
+            primaryColor: '#B6BABD',
+            secondaryColor: '#E6002B',
+            carHex: 0x1a1c20,
             wingHex: 0xe6002b,
             haloHex: 0xffffff,
-            budget: 115000000,
-            prestige: 75,
-            specs: {
-                aero: 82,
-                powertrain: 93,
-                chassis: 82,
-                durability: 85
-            },
-            facilities: {
-                windTunnel: 3,
-                cfd: 3,
-                simulator: 2,
-                pitCrew: 81
-            },
+            budget: 118000000,
+            prestige: 76,
+            specs: { aero: 83, powertrain: 94, chassis: 83, durability: 86 },
+            facilities: { windTunnel: 3, cfd: 3, simulator: 3, pitCrew: 82 },
             sponsors: {
-                title: { name: 'MoneyGram & Toyota Gazoo', payoutPerRace: 2300000, bonusTarget: 9, bonusAmount: 800000 },
-                secondary: [
-                    { name: 'Haas Automation', payoutPerRace: 650000 },
-                    { name: 'Chipotle', payoutPerRace: 500000 }
+                title: { name: 'MoneyGram & Toyota Gazoo', perRace: 2350000, targetPos: 9, bonus: 850000 },
+                partners: [
+                    { name: 'Haas Automation', perRace: 700000 },
+                    { name: 'Chipotle', perRace: 550000 }
                 ]
-            },
-            desc: '실용주의 엔지니어링과 토요타 가주 레이싱 기술 제휴로 중위권 반란을 일으키는 미국 F1 팀.'
+            }
         },
         {
             id: 'sauber',
-            name: 'Stake F1 Team Kick Sauber (Audi)',
+            name: 'Stake F1 Team Kick Sauber',
             shortName: 'Kick Sauber',
             code: 'SAU',
-            country: '🇨🇭 스위스',
-            principal: '마티아 비노토',
-            engine: 'Ferrari / Audi Dev',
-            primaryColor: '#52e252',
-            secondaryColor: '#090d16',
-            accentColor: '#ffffff',
+            country: 'SUI',
+            hq: 'Hinwil, Switzerland',
+            principal: 'Mattia Binotto',
+            powerUnit: 'Ferrari 066/12',
+            primaryColor: '#52E252',
+            secondaryColor: '#090D16',
             carHex: 0x11151c,
             wingHex: 0x00ff44,
             haloHex: 0x00ff44,
-            budget: 116000000,
-            prestige: 76,
-            specs: {
-                aero: 80,
-                powertrain: 89,
-                chassis: 81,
-                durability: 83
-            },
-            facilities: {
-                windTunnel: 3,
-                cfd: 3,
-                simulator: 3,
-                pitCrew: 79
-            },
+            budget: 118000000,
+            prestige: 77,
+            specs: { aero: 81, powertrain: 90, chassis: 82, durability: 84 },
+            facilities: { windTunnel: 3, cfd: 3, simulator: 3, pitCrew: 80 },
             sponsors: {
-                title: { name: 'Stake & Kick Streaming', payoutPerRace: 2200000, bonusTarget: 10, bonusAmount: 900000 },
-                secondary: [
-                    { name: 'Audi Sport', payoutPerRace: 750000 },
-                    { name: 'Pirelli Partner', payoutPerRace: 450000 }
+                title: { name: 'Stake & Audi Sport', perRace: 2300000, targetPos: 10, bonus: 900000 },
+                partners: [
+                    { name: 'Kick Streaming', perRace: 750000 },
+                    { name: 'Pirelli Partner', perRace: 500000 }
                 ]
-            },
-            desc: '아우디 팩토리 워크스 전환을 앞두고 대대적인 R&D 투자를 감행 중인 스위스 힌빌 팀.'
+            }
         }
     ],
 
-    // 20 Active Grid Drivers + 6 Reserve/Market Drivers
+    // 20 Official Grid Drivers + 6 Reserve/Free Agent Drivers
     drivers: [
-        // Red Bull
-        { id: 'verstappen', name: '막스 베르스타펜', engName: 'Max Verstappen', code: 'VER', number: 1, teamId: 'redbull', role: 1, country: '🇳🇱', age: 27, ovr: 97, pace: 98, racecraft: 97, awareness: 93, tireMgmt: 96, wetSkill: 98, salary: 1850000, contractYears: 3, morale: 95, points: 0, wins: 0, podiums: 0, poles: 0 },
-        { id: 'lawson', name: '리암 로슨', engName: 'Liam Lawson', code: 'LAW', number: 30, teamId: 'redbull', role: 2, country: '🇳🇿', age: 23, ovr: 84, pace: 85, racecraft: 86, awareness: 82, tireMgmt: 82, wetSkill: 84, salary: 350000, contractYears: 2, morale: 88, points: 0, wins: 0, podiums: 0, poles: 0 },
-
         // Ferrari
-        { id: 'leclerc', name: '샤를 르클레르', engName: 'Charles Leclerc', code: 'LEC', number: 16, teamId: 'ferrari', role: 1, country: '🇲🇨', age: 27, ovr: 95, pace: 98, racecraft: 94, awareness: 93, tireMgmt: 92, wetSkill: 92, salary: 1500000, contractYears: 4, morale: 94, points: 0, wins: 0, podiums: 0, poles: 0 },
-        { id: 'hamilton', name: '루이스 해밀턴', engName: 'Lewis Hamilton', code: 'HAM', number: 44, teamId: 'ferrari', role: 2, country: '🇬🇧', age: 40, ovr: 94, pace: 93, racecraft: 96, awareness: 95, tireMgmt: 97, wetSkill: 97, salary: 1750000, contractYears: 2, morale: 96, points: 0, wins: 0, podiums: 0, poles: 0 },
+        { id: 'leclerc', name: 'Charles Leclerc', korName: '샤를 르클레르', code: 'LEC', number: 16, teamId: 'ferrari', role: 1, nat: 'MON', age: 27, ovr: 95, pace: 98, racecraft: 94, consistency: 92, tireMgmt: 92, wetSkill: 93, salary: 1550000 },
+        { id: 'hamilton', name: 'Lewis Hamilton', korName: '루이스 해밀턴', code: 'HAM', number: 44, teamId: 'ferrari', role: 2, nat: 'GBR', age: 40, ovr: 94, pace: 93, racecraft: 96, consistency: 95, tireMgmt: 97, wetSkill: 97, salary: 1750000 },
+
+        // Red Bull
+        { id: 'verstappen', name: 'Max Verstappen', korName: '막스 베르스타펜', code: 'VER', number: 1, teamId: 'redbull', role: 1, nat: 'NED', age: 27, ovr: 98, pace: 99, racecraft: 97, consistency: 97, tireMgmt: 96, wetSkill: 98, salary: 1900000 },
+        { id: 'lawson', name: 'Liam Lawson', korName: '리암 로슨', code: 'LAW', number: 30, teamId: 'redbull', role: 2, nat: 'NZL', age: 23, ovr: 84, pace: 85, racecraft: 86, consistency: 82, tireMgmt: 82, wetSkill: 84, salary: 360000 },
 
         // McLaren
-        { id: 'norris', name: '랜도 노리스', engName: 'Lando Norris', code: 'NOR', number: 4, teamId: 'mclaren', role: 1, country: '🇬🇧', age: 25, ovr: 95, pace: 96, racecraft: 93, awareness: 94, tireMgmt: 95, wetSkill: 95, salary: 1350000, contractYears: 3, morale: 95, points: 0, wins: 0, podiums: 0, poles: 0 },
-        { id: 'piastri', name: '오스카 피아스트리', engName: 'Oscar Piastri', code: 'PIA', number: 81, teamId: 'mclaren', role: 2, country: '🇦🇺', age: 24, ovr: 92, pace: 93, racecraft: 94, awareness: 93, tireMgmt: 90, wetSkill: 91, salary: 950000, contractYears: 3, morale: 93, points: 0, wins: 0, podiums: 0, poles: 0 },
+        { id: 'norris', name: 'Lando Norris', korName: '랜도 노리스', code: 'NOR', number: 4, teamId: 'mclaren', role: 1, nat: 'GBR', age: 25, ovr: 95, pace: 96, racecraft: 93, consistency: 94, tireMgmt: 95, wetSkill: 95, salary: 1400000 },
+        { id: 'piastri', name: 'Oscar Piastri', korName: '오스카 피아스트리', code: 'PIA', number: 81, teamId: 'mclaren', role: 2, nat: 'AUS', age: 24, ovr: 93, pace: 94, racecraft: 94, consistency: 94, tireMgmt: 91, wetSkill: 91, salary: 1050000 },
 
         // Mercedes
-        { id: 'russell', name: '조지 러셀', engName: 'George Russell', code: 'RUS', number: 63, teamId: 'mercedes', role: 1, country: '🇬🇧', age: 27, ovr: 92, pace: 94, racecraft: 91, awareness: 90, tireMgmt: 91, wetSkill: 92, salary: 1100000, contractYears: 2, morale: 91, points: 0, wins: 0, podiums: 0, poles: 0 },
-        { id: 'antonelli', name: '키미 안토넬리', engName: 'Kimi Antonelli', code: 'ANT', number: 12, teamId: 'mercedes', role: 2, country: '🇮🇹', age: 18, ovr: 83, pace: 88, racecraft: 82, awareness: 79, tireMgmt: 80, wetSkill: 85, salary: 280000, contractYears: 3, morale: 92, points: 0, wins: 0, podiums: 0, poles: 0 },
+        { id: 'russell', name: 'George Russell', korName: '조지 러셀', code: 'RUS', number: 63, teamId: 'mercedes', role: 1, nat: 'GBR', age: 27, ovr: 92, pace: 94, racecraft: 91, consistency: 91, tireMgmt: 91, wetSkill: 92, salary: 1150000 },
+        { id: 'antonelli', name: 'Kimi Antonelli', korName: '키미 안토넬리', code: 'ANT', number: 12, teamId: 'mercedes', role: 2, nat: 'ITA', age: 18, ovr: 84, pace: 88, racecraft: 83, consistency: 80, tireMgmt: 81, wetSkill: 85, salary: 300000 },
 
         // Aston Martin
-        { id: 'alonso', name: '페르난도 알론소', engName: 'Fernando Alonso', code: 'ALO', number: 14, teamId: 'astonmartin', role: 1, country: '🇪🇸', age: 43, ovr: 91, pace: 90, racecraft: 96, awareness: 95, tireMgmt: 94, wetSkill: 95, salary: 1150000, contractYears: 2, morale: 87, points: 0, wins: 0, podiums: 0, poles: 0 },
-        { id: 'stroll', name: '랜스 스트롤', engName: 'Lance Stroll', code: 'STR', number: 18, teamId: 'astonmartin', role: 2, country: '🇨🇦', age: 26, ovr: 80, pace: 80, racecraft: 81, awareness: 77, tireMgmt: 81, wetSkill: 86, salary: 320000, contractYears: 3, morale: 82, points: 0, wins: 0, podiums: 0, poles: 0 },
-
-        // Alpine
-        { id: 'gasly', name: '피에르 가슬리', engName: 'Pierre Gasly', code: 'GAS', number: 10, teamId: 'alpine', role: 1, country: '🇫🇷', age: 29, ovr: 87, pace: 88, racecraft: 87, awareness: 86, tireMgmt: 86, wetSkill: 88, salary: 650000, contractYears: 2, morale: 85, points: 0, wins: 0, podiums: 0, poles: 0 },
-        { id: 'doohan', name: '잭 두한', engName: 'Jack Doohan', code: 'DOO', number: 7, teamId: 'alpine', role: 2, country: '🇦🇺', age: 22, ovr: 79, pace: 81, racecraft: 79, awareness: 78, tireMgmt: 78, wetSkill: 79, salary: 200000, contractYears: 1, morale: 84, points: 0, wins: 0, podiums: 0, poles: 0 },
+        { id: 'alonso', name: 'Fernando Alonso', korName: '페르난도 알론소', code: 'ALO', number: 14, teamId: 'astonmartin', role: 1, nat: 'ESP', age: 43, ovr: 91, pace: 90, racecraft: 96, consistency: 95, tireMgmt: 94, wetSkill: 95, salary: 1150000 },
+        { id: 'stroll', name: 'Lance Stroll', korName: '랜스 스트롤', code: 'STR', number: 18, teamId: 'astonmartin', role: 2, nat: 'CAN', age: 26, ovr: 80, pace: 80, racecraft: 81, consistency: 77, tireMgmt: 81, wetSkill: 86, salary: 320000 },
 
         // Williams
-        { id: 'sainz', name: '카를로스 사인츠', engName: 'Carlos Sainz', code: 'SAI', number: 55, teamId: 'williams', role: 1, country: '🇪🇸', age: 30, ovr: 91, pace: 91, racecraft: 92, awareness: 93, tireMgmt: 91, wetSkill: 90, salary: 980000, contractYears: 2, morale: 90, points: 0, wins: 0, podiums: 0, poles: 0 },
-        { id: 'albon', name: '알렉산더 알본', engName: 'Alexander Albon', code: 'ALB', number: 23, teamId: 'williams', role: 2, country: '🇹🇭', age: 29, ovr: 87, pace: 88, racecraft: 87, awareness: 87, tireMgmt: 88, wetSkill: 86, salary: 620000, contractYears: 2, morale: 89, points: 0, wins: 0, podiums: 0, poles: 0 },
+        { id: 'sainz', name: 'Carlos Sainz', korName: '카를로스 사인츠', code: 'SAI', number: 55, teamId: 'williams', role: 1, nat: 'ESP', age: 30, ovr: 91, pace: 91, racecraft: 92, consistency: 93, tireMgmt: 91, wetSkill: 90, salary: 980000 },
+        { id: 'albon', name: 'Alexander Albon', korName: '알렉산더 알본', code: 'ALB', number: 23, teamId: 'williams', role: 2, nat: 'THA', age: 29, ovr: 87, pace: 88, racecraft: 87, consistency: 87, tireMgmt: 88, wetSkill: 86, salary: 620000 },
+
+        // Alpine
+        { id: 'gasly', name: 'Pierre Gasly', korName: '피에르 가슬리', code: 'GAS', number: 10, teamId: 'alpine', role: 1, nat: 'FRA', age: 29, ovr: 87, pace: 88, racecraft: 87, consistency: 86, tireMgmt: 86, wetSkill: 88, salary: 650000 },
+        { id: 'doohan', name: 'Jack Doohan', korName: '잭 두한', code: 'DOO', number: 7, teamId: 'alpine', role: 2, nat: 'AUS', age: 22, ovr: 79, pace: 81, racecraft: 79, consistency: 78, tireMgmt: 78, wetSkill: 79, salary: 210000 },
 
         // Racing Bulls
-        { id: 'tsunoda', name: '츠노다 유키', engName: 'Yuki Tsunoda', code: 'TSU', number: 22, teamId: 'rb', role: 1, country: '🇯🇵', age: 24, ovr: 85, pace: 87, racecraft: 85, awareness: 82, tireMgmt: 83, wetSkill: 84, salary: 450000, contractYears: 1, morale: 85, points: 0, wins: 0, podiums: 0, poles: 0 },
-        { id: 'hadjar', name: '아이작 하자르', engName: 'Isack Hadjar', code: 'HAD', number: 6, teamId: 'rb', role: 2, country: '🇫🇷', age: 20, ovr: 79, pace: 82, racecraft: 80, awareness: 76, tireMgmt: 77, wetSkill: 79, salary: 190000, contractYears: 2, morale: 86, points: 0, wins: 0, podiums: 0, poles: 0 },
+        { id: 'tsunoda', name: 'Yuki Tsunoda', korName: '츠노다 유키', code: 'TSU', number: 22, teamId: 'rb', role: 1, nat: 'JPN', age: 24, ovr: 86, pace: 87, racecraft: 85, consistency: 83, tireMgmt: 84, wetSkill: 84, salary: 480000 },
+        { id: 'hadjar', name: 'Isack Hadjar', korName: '아이작 하자르', code: 'HAD', number: 6, teamId: 'rb', role: 2, nat: 'FRA', age: 20, ovr: 80, pace: 83, racecraft: 80, consistency: 77, tireMgmt: 78, wetSkill: 79, salary: 200000 },
 
         // Haas
-        { id: 'ocon', name: '에스테반 오콘', engName: 'Esteban Ocon', code: 'OCO', number: 31, teamId: 'haas', role: 1, country: '🇫🇷', age: 28, ovr: 86, pace: 86, racecraft: 87, awareness: 83, tireMgmt: 86, wetSkill: 88, salary: 550000, contractYears: 2, morale: 86, points: 0, wins: 0, podiums: 0, poles: 0 },
-        { id: 'bearman', name: '올리버 베어먼', engName: 'Oliver Bearman', code: 'BEA', number: 87, teamId: 'haas', role: 2, country: '🇬🇧', age: 19, ovr: 81, pace: 84, racecraft: 82, awareness: 80, tireMgmt: 79, wetSkill: 81, salary: 230000, contractYears: 2, morale: 90, points: 0, wins: 0, podiums: 0, poles: 0 },
+        { id: 'ocon', name: 'Esteban Ocon', korName: '에스테반 오콘', code: 'OCO', number: 31, teamId: 'haas', role: 1, nat: 'FRA', age: 28, ovr: 86, pace: 86, racecraft: 87, consistency: 84, tireMgmt: 86, wetSkill: 88, salary: 550000 },
+        { id: 'bearman', name: 'Oliver Bearman', korName: '올리버 베어먼', code: 'BEA', number: 87, teamId: 'haas', role: 2, nat: 'GBR', age: 19, ovr: 82, pace: 84, racecraft: 83, consistency: 80, tireMgmt: 79, wetSkill: 81, salary: 240000 },
 
         // Kick Sauber
-        { id: 'hulkenberg', name: '니코 휠켄베르크', engName: 'Nico Hulkenberg', code: 'HUL', number: 27, teamId: 'sauber', role: 1, country: '🇩🇪', age: 37, ovr: 86, pace: 88, racecraft: 85, awareness: 88, tireMgmt: 85, wetSkill: 87, salary: 580000, contractYears: 2, morale: 85, points: 0, wins: 0, podiums: 0, poles: 0 },
-        { id: 'bortoleto', name: '가브리엘 보르톨레토', engName: 'Gabriel Bortoleto', code: 'BOR', number: 5, teamId: 'sauber', role: 2, country: '🇧🇷', age: 20, ovr: 81, pace: 83, racecraft: 82, awareness: 81, tireMgmt: 80, wetSkill: 80, salary: 220000, contractYears: 2, morale: 89, points: 0, wins: 0, podiums: 0, poles: 0 },
+        { id: 'hulkenberg', name: 'Nico Hulkenberg', korName: '니코 휠켄베르크', code: 'HUL', number: 27, teamId: 'sauber', role: 1, nat: 'GER', age: 37, ovr: 86, pace: 88, racecraft: 85, consistency: 88, tireMgmt: 85, wetSkill: 87, salary: 580000 },
+        { id: 'bortoleto', name: 'Gabriel Bortoleto', korName: '가브리엘 보르톨레토', code: 'BOR', number: 5, teamId: 'sauber', role: 2, nat: 'BRA', age: 20, ovr: 81, pace: 83, racecraft: 82, consistency: 81, tireMgmt: 80, wetSkill: 80, salary: 220000 },
 
-        // Free Agents & Reserve Market Stars
-        { id: 'perez', name: '세르히오 페레즈', engName: 'Sergio Perez', code: 'PER', number: 11, teamId: null, role: 0, country: '🇲🇽', age: 35, ovr: 86, pace: 84, racecraft: 88, awareness: 86, tireMgmt: 92, wetSkill: 83, salary: 720000, contractYears: 0, morale: 80, points: 0, wins: 0, podiums: 0, poles: 0 },
-        { id: 'bottas', name: '발테리 보타스', engName: 'Valtteri Bottas', code: 'BOT', number: 77, teamId: null, role: 0, country: '🇫🇮', age: 35, ovr: 85, pace: 87, racecraft: 83, awareness: 89, tireMgmt: 85, wetSkill: 82, salary: 520000, contractYears: 0, morale: 82, points: 0, wins: 0, podiums: 0, poles: 0 },
-        { id: 'colapinto', name: '프랑코 콜라핀토', engName: 'Franco Colapinto', code: 'COL', number: 43, teamId: null, role: 0, country: '🇦🇷', age: 21, ovr: 82, pace: 84, racecraft: 83, awareness: 80, tireMgmt: 81, wetSkill: 82, salary: 260000, contractYears: 0, morale: 92, points: 0, wins: 0, podiums: 0, poles: 0 },
-        { id: 'ricciardo', name: '다니엘 리카도', engName: 'Daniel Ricciardo', code: 'RIC', number: 3, teamId: null, role: 0, country: '🇦🇺', age: 35, ovr: 84, pace: 83, racecraft: 87, awareness: 86, tireMgmt: 84, wetSkill: 84, salary: 500000, contractYears: 0, morale: 85, points: 0, wins: 0, podiums: 0, poles: 0 },
-        { id: 'magnussen', name: '케빈 마그누센', engName: 'Kevin Magnussen', code: 'MAG', number: 20, teamId: null, role: 0, country: '🇩🇰', age: 32, ovr: 83, pace: 83, racecraft: 88, awareness: 78, tireMgmt: 81, wetSkill: 85, salary: 420000, contractYears: 0, morale: 83, points: 0, wins: 0, podiums: 0, poles: 0 },
-        { id: 'kangmin', name: '강민수 (K-Wonderkid)', engName: 'Minsu Kang', code: 'KAN', number: 99, teamId: null, role: 0, country: '🇰🇷', age: 19, ovr: 85, pace: 89, racecraft: 86, awareness: 84, tireMgmt: 83, wetSkill: 88, salary: 310000, contractYears: 0, morale: 98, points: 0, wins: 0, podiums: 0, poles: 0 }
+        // Free Agents / Reserve Drivers
+        { id: 'perez', name: 'Sergio Perez', korName: '세르히오 페레즈', code: 'PER', number: 11, teamId: null, role: 0, nat: 'MEX', age: 35, ovr: 86, pace: 84, racecraft: 88, consistency: 86, tireMgmt: 92, wetSkill: 83, salary: 720000 },
+        { id: 'bottas', name: 'Valtteri Bottas', korName: '발테리 보타스', code: 'BOT', number: 77, teamId: null, role: 0, nat: 'FIN', age: 35, ovr: 85, pace: 87, racecraft: 83, consistency: 89, tireMgmt: 85, wetSkill: 82, salary: 520000 },
+        { id: 'colapinto', name: 'Franco Colapinto', korName: '프랑코 콜라핀토', code: 'COL', number: 43, teamId: null, role: 0, nat: 'ARG', age: 21, ovr: 83, pace: 85, racecraft: 84, consistency: 81, tireMgmt: 81, wetSkill: 82, salary: 270000 },
+        { id: 'ricciardo', name: 'Daniel Ricciardo', korName: '다니엘 리카도', code: 'RIC', number: 3, teamId: null, role: 0, nat: 'AUS', age: 35, ovr: 84, pace: 83, racecraft: 87, consistency: 85, tireMgmt: 84, wetSkill: 84, salary: 500000 },
+        { id: 'magnussen', name: 'Kevin Magnussen', korName: '케빈 마그누센', code: 'MAG', number: 20, teamId: null, role: 0, nat: 'DEN', age: 32, ovr: 83, pace: 83, racecraft: 88, consistency: 79, tireMgmt: 81, wetSkill: 85, salary: 420000 },
+        { id: 'kangmin', name: 'Minsu Kang', korName: '강민수 (KOR 루키)', code: 'KAN', number: 99, teamId: null, role: 0, nat: 'KOR', age: 19, ovr: 86, pace: 89, racecraft: 86, consistency: 84, tireMgmt: 84, wetSkill: 88, salary: 320000 }
     ],
 
-    // 10 Iconic Grand Prix Calendar Circuits (Procedural 3D Spline Control Points + Environment)
+    // 24 Official FIA Formula 1 World Championship Calendar Circuits with Authentic Laps & Track Geometries
     circuits: [
         {
-            id: 'bahrain',
-            round: 1,
-            name: '바레인 인터내셔널 서킷',
-            engName: 'Bahrain International GP',
-            country: '🇧🇭 바레인 사키르',
-            laps: 5, // Scaled for dynamic high-intensity gameplay (configurable 3/5/10 laps)
-            realLaps: 57,
-            baseLapTime: 91.4,
-            lengthKm: 5.412,
-            timeOfDay: 'night',
-            skyColor: 0x050814,
-            groundColor: 0x2b2318,
-            rainChance: 0.05,
-            tireWearRate: 1.35, // High rear thermal degradation
-            aeroImportance: 0.45,
-            powerImportance: 0.55,
-            drsZones: [[0.0, 0.14], [0.58, 0.72]],
-            desc: '사막의 밤을 가르는 개막전. 긴 직선 구간과 급격한 브레이킹 존이 많아 ERS 전개와 리어 타이어 열관리가 승부를 가른다.',
-            // Normalized control points around a ~650x650m scaled 3D world loop
-            waypoints: [
-                [0, -260], [210, -260], [260, -210], [210, -120],
-                [90, -80], [40, 10], [150, 90], [240, 180],
-                [170, 260], [-80, 250], [-230, 190], [-260, 40],
-                [-190, -140], [-230, -240]
-            ]
+            id: 'australia', round: 1, code: 'AUS', name: '호주 그랑프리 (멜버른 알버트 파크)', engName: 'Australian Grand Prix', location: 'Melbourne',
+            realLaps: 58, baseLapTime: 79.8, lengthKm: 5.278, timeOfDay: 'day', skyColor: 0x2563eb, groundColor: 0x16301b,
+            rainChance: 0.18, tireWearRate: 1.05, aeroWeight: 0.52, powerWeight: 0.48, pitLossSec: 21.5,
+            drsZones: [[0.0, 0.12], [0.24, 0.36], [0.68, 0.81]],
+            waypoints: [[0,-250],[190,-245],[255,-175],[240,-60],[160,-20],[220,85],[250,190],[140,255],[-30,240],[-180,220],[-255,120],[-230,-30],[-160,-150],[-200,-240]]
         },
         {
-            id: 'monaco',
-            round: 2,
-            name: '모나코 시가지 서킷',
-            engName: 'Circuit de Monaco GP',
-            country: '🇲🇨 모나코 몬테카를로',
-            laps: 5,
-            realLaps: 78,
-            baseLapTime: 71.8,
-            lengthKm: 3.337,
-            timeOfDay: 'day',
-            skyColor: 0x3b82f6,
-            groundColor: 0x1e293b,
-            rainChance: 0.20,
-            tireWearRate: 0.75,
-            aeroImportance: 0.85,
-            powerImportance: 0.15,
-            drsZones: [[0.0, 0.11]],
-            desc: 'F1의 보석. 좁고 굽이치는 가드레일 시가지 트랙으로 추월이 극도로 어려우며 최대 다운포스 세팅과 예선 그리드가 절대적이다.',
-            waypoints: [
-                [0, -220], [160, -210], [220, -130], [180, -30],
-                [80, -20], [40, 40], [120, 110], [190, 190],
-                [60, 230], [-110, 210], [-210, 120], [-180, -20],
-                [-120, -120], [-170, -210]
-            ]
+            id: 'china', round: 2, code: 'CHN', name: '중국 그랑프리 (상하이 인터내셔널)', engName: 'Chinese Grand Prix', location: 'Shanghai',
+            realLaps: 56, baseLapTime: 93.6, lengthKm: 5.451, timeOfDay: 'day', skyColor: 0x3b82f6, groundColor: 0x1e293b,
+            rainChance: 0.25, tireWearRate: 1.32, aeroWeight: 0.55, powerWeight: 0.45, pitLossSec: 23.0,
+            drsZones: [[0.0, 0.14], [0.62, 0.84]],
+            waypoints: [[0,-260],[220,-260],[260,-150],[140,-80],[70,-130],[50,-30],[190,40],[250,170],[110,250],[-220,250],[-260,140],[-170,10],[-230,-140],[-210,-250]]
         },
         {
-            id: 'silverstone',
-            round: 3,
-            name: '실버스톤 서킷',
-            engName: 'British Grand Prix (Silverstone)',
-            country: '🇬🇧 영국 노샘프턴셔',
-            laps: 5,
-            realLaps: 52,
-            baseLapTime: 87.2,
-            lengthKm: 5.891,
-            timeOfDay: 'day',
-            skyColor: 0x475569,
-            groundColor: 0x14331b,
-            rainChance: 0.42,
-            tireWearRate: 1.25,
-            aeroImportance: 0.65,
-            powerImportance: 0.35,
-            drsZones: [[0.22, 0.36], [0.64, 0.79]],
-            desc: '모터스포츠의 발상지. 매고츠-베케츠-채플로 이어지는 초고속 연속 코너에서 공력 성능의 진가가 드러나며 변덕스러운 영국 날씨가 변수다.',
-            waypoints: [
-                [0, -280], [230, -270], [280, -150], [220, -20],
-                [270, 110], [200, 250], [30, 270], [-90, 180],
-                [-180, 240], [-270, 120], [-240, -60], [-160, -180],
-                [-190, -260]
-            ]
-        },
-        {
-            id: 'spa',
-            round: 4,
-            name: '스파-프랑코르샹 서킷',
-            engName: 'Belgian Grand Prix (Spa)',
-            country: '🇧🇪 벨기에 아르덴',
-            laps: 5,
-            realLaps: 44,
-            baseLapTime: 104.5,
-            lengthKm: 7.004,
-            timeOfDay: 'day',
-            skyColor: 0x334155,
-            groundColor: 0x0f2917,
-            rainChance: 0.48,
-            tireWearRate: 1.20,
-            aeroImportance: 0.50,
-            powerImportance: 0.50,
-            drsZones: [[0.14, 0.32], [0.85, 0.99]],
-            desc: '오 루즈와 라디용에 이어지는 켐멜 스트레이트가 압권인 드라이버들의 성지. 아르덴 숲의 국지성 폭우를 대비한 기상 레이더 주시가 필수.',
-            waypoints: [
-                [0, -300], [180, -290], [290, -160], [310, 40],
-                [210, 220], [60, 290], [-70, 210], [-170, 270],
-                [-290, 150], [-260, -40], [-190, -170], [-220, -280]
-            ]
-        },
-        {
-            id: 'monza',
-            round: 5,
-            name: '몬차 국립 서킷',
-            engName: 'Italian Grand Prix (Monza)',
-            country: '🇮🇹 이탈리아 몬차',
-            laps: 5,
-            realLaps: 53,
-            baseLapTime: 80.1,
-            lengthKm: 5.793,
-            timeOfDay: 'day',
-            skyColor: 0x2563eb,
-            groundColor: 0x1b3b1f,
-            rainChance: 0.12,
-            tireWearRate: 0.95,
-            aeroImportance: 0.20,
-            powerImportance: 0.80,
-            drsZones: [[0.0, 0.18], [0.55, 0.72]],
-            desc: '스피드의 사원(Temple of Speed). 랩의 80%를 풀 스로틀로 주파하며 로우 다운포스 세팅과 슬립스트림 + DRS 열차 싸움이 치열하다.',
-            waypoints: [
-                [-40, -290], [250, -290], [290, -210], [260, -40],
-                [230, 170], [150, 270], [-120, 260], [-270, 180],
-                [-280, -80], [-240, -270]
-            ]
-        },
-        {
-            id: 'singapore',
-            round: 6,
-            name: '마리나 베이 시가지 서킷',
-            engName: 'Singapore Night Grand Prix',
-            country: '🇸🇬 싱가포르 마리나베이',
-            laps: 5,
-            realLaps: 62,
-            baseLapTime: 90.8,
-            lengthKm: 4.940,
-            timeOfDay: 'night',
-            skyColor: 0x030712,
-            groundColor: 0x0f172a,
-            rainChance: 0.30,
-            tireWearRate: 1.15,
-            aeroImportance: 0.78,
-            powerImportance: 0.22,
-            drsZones: [[0.0, 0.13], [0.46, 0.59]],
-            desc: '화려한 네온 야경 속 세이프티카 출동 확률 100%에 육박하는 극한의 시가지 나이트 레이스.',
-            waypoints: [
-                [0, -250], [200, -240], [240, -120], [140, -50],
-                [230, 40], [210, 190], [80, 250], [-60, 170],
-                [-180, 240], [-250, 110], [-190, -30], [-240, -170],
-                [-150, -240]
-            ]
-        },
-        {
-            id: 'suzuka',
-            round: 7,
-            name: '스즈카 인터내셔널 서킷',
-            engName: 'Japanese Grand Prix (Suzuka)',
-            country: '🇯🇵 일본 미에현 스즈카',
-            laps: 5,
-            realLaps: 53,
-            baseLapTime: 89.5,
-            lengthKm: 5.807,
-            timeOfDay: 'day',
-            skyColor: 0x38bdf8,
-            groundColor: 0x163820,
-            rainChance: 0.35,
-            tireWearRate: 1.30,
-            aeroImportance: 0.70,
-            powerImportance: 0.30,
+            id: 'japan', round: 3, code: 'JPN', name: '일본 그랑프리 (스즈카 서킷)', engName: 'Japanese Grand Prix', location: 'Suzuka',
+            realLaps: 53, baseLapTime: 89.5, lengthKm: 5.807, timeOfDay: 'day', skyColor: 0x2563eb, groundColor: 0x14331b,
+            rainChance: 0.35, tireWearRate: 1.35, aeroWeight: 0.72, powerWeight: 0.28, pitLossSec: 22.5,
             drsZones: [[0.0, 0.14]],
-            desc: '섹터 1 S자 커브와 130R 초고속 코너가 드라이버의 한계를 시험하는 테크니컬 서킷의 교과서.',
-            waypoints: [
-                [0, -270], [190, -260], [260, -150], [170, -40],
-                [250, 70], [210, 220], [50, 260], [-80, 140],
-                [-200, 230], [-270, 90], [-210, -80], [-240, -220]
-            ]
+            waypoints: [[0,-270],[190,-260],[265,-150],[170,-40],[255,75],[210,220],[50,260],[-80,140],[-200,230],[-270,90],[-210,-80],[-240,-220]]
         },
         {
-            id: 'interlagos',
-            round: 8,
-            name: '인테르라고스 서킷',
-            engName: 'São Paulo Grand Prix (Brazil)',
-            country: '🇧🇷 브라질 상파울루',
-            laps: 5,
-            realLaps: 71,
-            baseLapTime: 70.9,
-            lengthKm: 4.309,
-            timeOfDay: 'day',
-            skyColor: 0x2563eb,
-            groundColor: 0x1c3d1e,
-            rainChance: 0.45,
-            tireWearRate: 1.15,
-            aeroImportance: 0.55,
-            powerImportance: 0.45,
+            id: 'bahrain', round: 4, code: 'BHR', name: '바레인 그랑프리 (사키르 인터내셔널)', engName: 'Bahrain Grand Prix', location: 'Sakhir',
+            realLaps: 57, baseLapTime: 91.4, lengthKm: 5.412, timeOfDay: 'night', skyColor: 0x050814, groundColor: 0x2b2318,
+            rainChance: 0.04, tireWearRate: 1.38, aeroWeight: 0.45, powerWeight: 0.55, pitLossSec: 23.2,
+            drsZones: [[0.0, 0.14], [0.35, 0.47], [0.60, 0.74]],
+            waypoints: [[0,-260],[210,-260],[260,-210],[210,-120],[90,-80],[40,10],[150,90],[240,180],[170,260],[-80,250],[-230,190],[-260,40],[-190,-140],[-230,-240]]
+        },
+        {
+            id: 'saudi', round: 5, code: 'KSA', name: '사우디아라비아 그랑프리 (제다 코니쉬)', engName: 'Saudi Arabian Grand Prix', location: 'Jeddah',
+            realLaps: 50, baseLapTime: 88.2, lengthKm: 6.174, timeOfDay: 'night', skyColor: 0x040711, groundColor: 0x161922,
+            rainChance: 0.02, tireWearRate: 0.92, aeroWeight: 0.35, powerWeight: 0.65, pitLossSec: 20.8,
+            drsZones: [[0.0, 0.15], [0.42, 0.55], [0.75, 0.90]],
+            waypoints: [[-20,-290],[260,-280],[295,-180],[210,-60],[275,90],[250,240],[90,280],[-140,240],[-280,170],[-260,10],[-210,-120],[-270,-250]]
+        },
+        {
+            id: 'miami', round: 6, code: 'MIA', name: '마이애미 그랑프리 (오토드롬 인터내셔널)', engName: 'Miami Grand Prix', location: 'Miami',
+            realLaps: 57, baseLapTime: 89.7, lengthKm: 5.412, timeOfDay: 'day', skyColor: 0x0ea5e9, groundColor: 0x132a2e,
+            rainChance: 0.22, tireWearRate: 1.10, aeroWeight: 0.48, powerWeight: 0.52, pitLossSec: 21.8,
+            drsZones: [[0.0, 0.13], [0.38, 0.54], [0.74, 0.89]],
+            waypoints: [[0,-255],[235,-250],[275,-140],[190,-30],[250,110],[180,240],[-60,255],[-245,220],[-270,80],[-180,-40],[-240,-180]]
+        },
+        {
+            id: 'imola', round: 7, code: 'IMO', name: '에밀리아 로마냐 그랑프리 (이몰라)', engName: 'Emilia Romagna Grand Prix', location: 'Imola',
+            realLaps: 63, baseLapTime: 75.8, lengthKm: 4.909, timeOfDay: 'day', skyColor: 0x2563eb, groundColor: 0x16361c,
+            rainChance: 0.28, tireWearRate: 1.05, aeroWeight: 0.64, powerWeight: 0.36, pitLossSec: 24.5,
+            drsZones: [[0.0, 0.16]],
+            waypoints: [[0,-240],[220,-230],[260,-110],[190,30],[220,170],[90,245],[-90,230],[-230,150],[-250,-20],[-180,-150],[-210,-230]]
+        },
+        {
+            id: 'monaco', round: 8, code: 'MON', name: '모나코 그랑프리 (몬테카를로 시가지)', engName: 'Monaco Grand Prix', location: 'Monte Carlo',
+            realLaps: 78, baseLapTime: 71.4, lengthKm: 3.337, timeOfDay: 'day', skyColor: 0x0284c7, groundColor: 0x1e293b,
+            rainChance: 0.20, tireWearRate: 0.72, aeroWeight: 0.88, powerWeight: 0.12, pitLossSec: 19.8,
+            drsZones: [[0.0, 0.11]],
+            waypoints: [[0,-220],[160,-210],[220,-130],[180,-30],[80,-20],[40,40],[120,110],[190,190],[60,230],[-110,210],[-210,120],[-180,-20],[-120,-120],[-170,-210]]
+        },
+        {
+            id: 'spain', round: 9, code: 'ESP', name: '스페인 그랑프리 (바르셀로나-카탈루냐)', engName: 'Spanish Grand Prix', location: 'Barcelona',
+            realLaps: 66, baseLapTime: 76.5, lengthKm: 4.657, timeOfDay: 'day', skyColor: 0x2563eb, groundColor: 0x1f361d,
+            rainChance: 0.14, tireWearRate: 1.36, aeroWeight: 0.68, powerWeight: 0.32, pitLossSec: 22.0,
+            drsZones: [[0.0, 0.16], [0.56, 0.69]],
+            waypoints: [[0,-250],[230,-250],[260,-140],[170,-40],[245,80],[210,220],[50,250],[-140,230],[-250,120],[-220,-60],[-200,-230]]
+        },
+        {
+            id: 'canada', round: 10, code: 'CAN', name: '캐나다 그랑프리 (몬트리올 질 빌뇌브)', engName: 'Canadian Grand Prix', location: 'Montreal',
+            realLaps: 70, baseLapTime: 73.1, lengthKm: 4.361, timeOfDay: 'day', skyColor: 0x3b82f6, groundColor: 0x143322,
+            rainChance: 0.38, tireWearRate: 0.95, aeroWeight: 0.38, powerWeight: 0.62, pitLossSec: 19.2,
+            drsZones: [[0.0, 0.14], [0.68, 0.86]],
+            waypoints: [[0,-250],[230,-240],[270,-120],[210,40],[250,190],[120,250],[-160,240],[-265,140],[-240,-60],[-190,-220]]
+        },
+        {
+            id: 'austria', round: 11, code: 'AUT', name: '오스트리아 그랑프리 (레드불 링)', engName: 'Austrian Grand Prix', location: 'Spielberg',
+            realLaps: 71, baseLapTime: 65.8, lengthKm: 4.318, timeOfDay: 'day', skyColor: 0x2563eb, groundColor: 0x12381c,
+            rainChance: 0.32, tireWearRate: 1.12, aeroWeight: 0.42, powerWeight: 0.58, pitLossSec: 20.5,
+            drsZones: [[0.0, 0.16], [0.22, 0.38], [0.44, 0.58]],
+            waypoints: [[0,-230],[220,-225],[250,-60],[160,120],[60,80],[-20,190],[-180,220],[-245,60],[-210,-180]]
+        },
+        {
+            id: 'silverstone', round: 12, code: 'GBR', name: '영국 그랑프리 (실버스톤 서킷)', engName: 'British Grand Prix', location: 'Silverstone',
+            realLaps: 52, baseLapTime: 87.2, lengthKm: 5.891, timeOfDay: 'day', skyColor: 0x475569, groundColor: 0x14331b,
+            rainChance: 0.42, tireWearRate: 1.32, aeroWeight: 0.68, powerWeight: 0.32, pitLossSec: 20.2,
+            drsZones: [[0.22, 0.36], [0.64, 0.79]],
+            waypoints: [[0,-280],[230,-270],[280,-150],[220,-20],[270,110],[200,250],[30,270],[-90,180],[-180,240],[-270,120],[-240,-60],[-160,-180],[-190,-260]]
+        },
+        {
+            id: 'spa', round: 13, code: 'BEL', name: '벨기에 그랑프리 (스파-프랑코르샹)', engName: 'Belgian Grand Prix', location: 'Spa-Francorchamps',
+            realLaps: 44, baseLapTime: 104.5, lengthKm: 7.004, timeOfDay: 'day', skyColor: 0x334155, groundColor: 0x0f2917,
+            rainChance: 0.48, tireWearRate: 1.25, aeroWeight: 0.50, powerWeight: 0.50, pitLossSec: 23.0,
+            drsZones: [[0.14, 0.32], [0.85, 0.99]],
+            waypoints: [[0,-300],[180,-290],[290,-160],[310,40],[210,220],[60,290],[-70,210],[-170,270],[-290,150],[-260,-40],[-190,-170],[-220,-280]]
+        },
+        {
+            id: 'hungary', round: 14, code: 'HUN', name: '헝가리 그랑프리 (헝가로링)', engName: 'Hungarian Grand Prix', location: 'Budapest',
+            realLaps: 70, baseLapTime: 76.9, lengthKm: 4.381, timeOfDay: 'day', skyColor: 0x2563eb, groundColor: 0x1e381d,
+            rainChance: 0.20, tireWearRate: 1.18, aeroWeight: 0.80, powerWeight: 0.20, pitLossSec: 21.0,
+            drsZones: [[0.0, 0.15], [0.18, 0.29]],
+            waypoints: [[0,-240],[200,-235],[240,-110],[130,-30],[220,70],[180,210],[30,240],[-100,150],[-210,210],[-245,70],[-180,-80],[-210,-220]]
+        },
+        {
+            id: 'zandvoort', round: 15, code: 'NED', name: '네덜란드 그랑프리 (잔드보르트 서킷)', engName: 'Dutch Grand Prix', location: 'Zandvoort',
+            realLaps: 72, baseLapTime: 71.2, lengthKm: 4.259, timeOfDay: 'day', skyColor: 0x0284c7, groundColor: 0x2b291e,
+            rainChance: 0.35, tireWearRate: 1.28, aeroWeight: 0.74, powerWeight: 0.26, pitLossSec: 19.5,
+            drsZones: [[0.0, 0.14], [0.76, 0.90]],
+            waypoints: [[0,-235],[195,-230],[240,-100],[150,10],[220,140],[100,235],[-80,220],[-220,130],[-235,-40],[-175,-195]]
+        },
+        {
+            id: 'monza', round: 16, code: 'ITA', name: '이탈리아 그랑프리 (몬차 국립 서킷)', engName: 'Italian Grand Prix', location: 'Monza',
+            realLaps: 53, baseLapTime: 80.1, lengthKm: 5.793, timeOfDay: 'day', skyColor: 0x2563eb, groundColor: 0x1b3b1f,
+            rainChance: 0.12, tireWearRate: 0.92, aeroWeight: 0.18, powerWeight: 0.82, pitLossSec: 24.0,
+            drsZones: [[0.0, 0.18], [0.55, 0.72]],
+            waypoints: [[-40,-290],[250,-290],[290,-210],[260,-40],[230,170],[150,270],[-120,260],[-270,180],[-280,-80],[-240,-270]]
+        },
+        {
+            id: 'baku', round: 17, code: 'AZE', name: '아제르바이잔 그랑프리 (바쿠 시가지)', engName: 'Azerbaijan Grand Prix', location: 'Baku',
+            realLaps: 51, baseLapTime: 102.8, lengthKm: 6.003, timeOfDay: 'day', skyColor: 0x0284c7, groundColor: 0x1e2430,
+            rainChance: 0.06, tireWearRate: 0.98, aeroWeight: 0.28, powerWeight: 0.72, pitLossSec: 20.5,
+            drsZones: [[0.0, 0.22], [0.27, 0.39]],
+            waypoints: [[-60,-290],[270,-290],[290,-160],[160,-150],[150,-20],[270,30],[260,230],[70,270],[-150,250],[-280,140],[-285,-180],[-220,-285]]
+        },
+        {
+            id: 'singapore', round: 18, code: 'SIN', name: '싱가포르 그랑프리 (마리나 베이 야간)', engName: 'Singapore Grand Prix', location: 'Marina Bay',
+            realLaps: 62, baseLapTime: 90.8, lengthKm: 4.940, timeOfDay: 'night', skyColor: 0x030712, groundColor: 0x0f172a,
+            rainChance: 0.30, tireWearRate: 1.16, aeroWeight: 0.78, powerWeight: 0.22, pitLossSec: 28.0,
+            drsZones: [[0.0, 0.13], [0.46, 0.59], [0.74, 0.85]],
+            waypoints: [[0,-250],[200,-240],[240,-120],[140,-50],[230,40],[210,190],[80,250],[-60,170],[-180,240],[-250,110],[-190,-30],[-240,-170],[-150,-240]]
+        },
+        {
+            id: 'austin', round: 19, code: 'USA', name: '미국 그랑프리 (COTA 오스틴)', engName: 'United States Grand Prix', location: 'Austin',
+            realLaps: 56, baseLapTime: 95.4, lengthKm: 5.513, timeOfDay: 'day', skyColor: 0x2563eb, groundColor: 0x24331c,
+            rainChance: 0.15, tireWearRate: 1.30, aeroWeight: 0.60, powerWeight: 0.40, pitLossSec: 20.8,
+            drsZones: [[0.0, 0.12], [0.52, 0.70]],
+            waypoints: [[0,-265],[210,-255],[270,-130],[170,-20],[255,120],[190,255],[-80,250],[-260,180],[-240,20],[-150,-80],[-230,-220]]
+        },
+        {
+            id: 'mexico', round: 20, code: 'MEX', name: '멕시코시티 그랑프리 (에르마노스 로드리게스)', engName: 'Mexico City Grand Prix', location: 'Mexico City',
+            realLaps: 71, baseLapTime: 77.6, lengthKm: 4.304, timeOfDay: 'day', skyColor: 0x0284c7, groundColor: 0x1c3320,
+            rainChance: 0.16, tireWearRate: 1.05, aeroWeight: 0.58, powerWeight: 0.42, pitLossSec: 22.2,
+            drsZones: [[0.0, 0.19], [0.34, 0.48]],
+            waypoints: [[-30,-250],[245,-250],[265,-120],[170,10],[235,160],[110,245],[-90,220],[-230,130],[-245,-90],[-195,-240]]
+        },
+        {
+            id: 'interlagos', round: 21, code: 'BRA', name: '상파울루 그랑프리 (인테르라고스)', engName: 'São Paulo Grand Prix', location: 'Interlagos',
+            realLaps: 71, baseLapTime: 70.9, lengthKm: 4.309, timeOfDay: 'day', skyColor: 0x2563eb, groundColor: 0x1c3d1e,
+            rainChance: 0.46, tireWearRate: 1.18, aeroWeight: 0.55, powerWeight: 0.45, pitLossSec: 20.5,
             drsZones: [[0.0, 0.16], [0.28, 0.43]],
-            desc: '세나 S 커브와 긴 오르막 직선이 공존하는 드라마의 산실. 짧은 랩타임 속에서 쉴 새 없는 배틀이 펼쳐진다.',
-            waypoints: [
-                [0, -240], [210, -230], [240, -90], [160, 40],
-                [60, 10], [20, 110], [140, 200], [30, 250],
-                [-170, 210], [-240, 60], [-190, -140]
-            ]
+            waypoints: [[0,-240],[210,-230],[240,-90],[160,40],[60,10],[20,110],[140,200],[30,250],[-170,210],[-240,60],[-190,-140]]
         },
         {
-            id: 'lasvegas',
-            round: 9,
-            name: '라스베이거스 스트립 서킷',
-            engName: 'Las Vegas Strip Grand Prix',
-            country: '🇺🇸 미국 네바다 라스베이거스',
-            laps: 5,
-            realLaps: 50,
-            baseLapTime: 93.2,
-            lengthKm: 6.201,
-            timeOfDay: 'night',
-            skyColor: 0x04060e,
-            groundColor: 0x11131a,
-            rainChance: 0.05,
-            tireWearRate: 0.90,
-            aeroImportance: 0.30,
-            powerImportance: 0.70,
+            id: 'lasvegas', round: 22, code: 'LVG', name: '라스베이거스 그랑프리 (스트립 야간)', engName: 'Las Vegas Grand Prix', location: 'Las Vegas',
+            realLaps: 50, baseLapTime: 93.2, lengthKm: 6.201, timeOfDay: 'night', skyColor: 0x04060e, groundColor: 0x11131a,
+            rainChance: 0.04, tireWearRate: 0.90, aeroWeight: 0.25, powerWeight: 0.75, pitLossSec: 21.0,
             drsZones: [[0.0, 0.13], [0.52, 0.78]],
-            desc: '라스베이거스 스트립 야경을 시속 350km/h로 질주하는 초고속 야간 시가지 서킷. 차가운 노면에서 타이어 예열이 핵심이다.',
-            waypoints: [
-                [-20, -280], [240, -270], [280, -140], [220, 10],
-                [260, 170], [140, 270], [-180, 260], [-290, 180],
-                [-280, -120], [-210, -260]
-            ]
+            waypoints: [[-20,-280],[240,-270],[280,-140],[220,10],[260,170],[140,270],[-180,260],[-290,180],[-280,-120],[-210,-260]]
         },
         {
-            id: 'abudhabi',
-            round: 10,
-            name: '야스 마리나 서킷',
-            engName: 'Abu Dhabi Finale Grand Prix',
-            country: '🇦🇪 UAE 아부다비',
-            laps: 5,
-            realLaps: 58,
-            baseLapTime: 84.6,
-            lengthKm: 5.281,
-            timeOfDay: 'sunset',
-            skyColor: 0x1e1b4b,
-            groundColor: 0x1f242d,
-            rainChance: 0.02,
-            tireWearRate: 1.10,
-            aeroImportance: 0.55,
-            powerImportance: 0.45,
+            id: 'qatar', round: 23, code: 'QAT', name: '카타르 그랑프리 (루사일 인터내셔널)', engName: 'Qatar Grand Prix', location: 'Lusail',
+            realLaps: 57, baseLapTime: 82.4, lengthKm: 5.419, timeOfDay: 'night', skyColor: 0x050814, groundColor: 0x292116,
+            rainChance: 0.02, tireWearRate: 1.42, aeroWeight: 0.68, powerWeight: 0.32, pitLossSec: 24.5,
+            drsZones: [[0.0, 0.17]],
+            waypoints: [[0,-260],[230,-255],[265,-120],[180,0],[255,130],[170,250],[0,260],[-120,150],[-230,220],[-265,60],[-200,-90],[-230,-240]]
+        },
+        {
+            id: 'abudhabi', round: 24, code: 'ABU', name: '아부다비 그랑프리 (야스 마리나 피날레)', engName: 'Abu Dhabi Grand Prix', location: 'Yas Marina',
+            realLaps: 58, baseLapTime: 84.6, lengthKm: 5.281, timeOfDay: 'sunset', skyColor: 0x1e1b4b, groundColor: 0x1f242d,
+            rainChance: 0.02, tireWearRate: 1.12, aeroWeight: 0.55, powerWeight: 0.45, pitLossSec: 21.5,
             drsZones: [[0.25, 0.44], [0.49, 0.65]],
-            desc: '월드 챔피언이 결정되는 시즌 최종전. 2개의 연속 DRS 스트레이트와 호텔 밑을 지나는 테크니컬 섹터 3가 조화를 이룬다.',
-            waypoints: [
-                [0, -260], [210, -250], [270, -110], [250, 120],
-                [150, 250], [-20, 260], [-110, 160], [-220, 220],
-                [-270, 70], [-210, -110], [-230, -230]
-            ]
+            waypoints: [[0,-260],[210,-250],[270,-110],[250,120],[150,250],[-20,260],[-110,160],[-220,220],[-270,70],[-210,-110],[-230,-230]]
         }
     ],
 
     // 5 Official Pirelli Tire Compounds
     tireCompounds: {
-        SOFT: {
-            id: 'SOFT',
-            name: '소프트 (Soft C5)',
-            short: 'S',
-            color: '#ef4444',
-            hex: 0xef4444,
-            paceBonus: 1.028,     // Fastest grip on dry
-            wearPerLap: 14.5,     // High wear
-            optimalTemp: [95, 110],
-            wetGrip: 0.40,
-            desc: '최고의 접지력과 랩타임을 제공하지만 수명이 짧아 공격적인 언더컷이나 예선에 적합합니다.'
-        },
-        MEDIUM: {
-            id: 'MEDIUM',
-            name: '미디엄 (Medium C3)',
-            short: 'M',
-            color: '#facc15',
-            hex: 0xfacc15,
-            paceBonus: 1.000,     // Balanced baseline
-            wearPerLap: 9.2,
-            optimalTemp: [90, 105],
-            wetGrip: 0.42,
-            desc: '속도와 내구성의 완벽한 균형. 대부분의 그랑프리에서 메인 스틴트를 담당하는 표준 컴파운드.'
-        },
-        HARD: {
-            id: 'HARD',
-            name: '하드 (Hard C1)',
-            short: 'H',
-            color: '#f8fafc',
-            hex: 0xf8fafc,
-            paceBonus: 0.978,     // Slower warmup & grip
-            wearPerLap: 5.8,      // Long stint durability
-            optimalTemp: [85, 100],
-            wetGrip: 0.38,
-            desc: '마모도가 가장 낮아 원스톱(1-Stop) 장기 스틴트 전략에 필수적인 고내구 컴파운드.'
-        },
-        INTER: {
-            id: 'INTER',
-            name: '인터미디어트 (Intermediate)',
-            short: 'I',
-            color: '#22c55e',
-            hex: 0x22c55e,
-            paceBonus: 0.935,
-            wearPerLap: 8.5,
-            optimalTemp: [65, 85],
-            wetGrip: 0.92,
-            desc: '노면 수막(10%~55%)이 형성된 약한 비/젖은 노면에서 압도적인 그립을 발휘합니다.'
-        },
-        WET: {
-            id: 'WET',
-            name: '풀 웨트 (Full Wet)',
-            short: 'W',
-            color: '#3b82f6',
-            hex: 0x3b82f6,
-            paceBonus: 0.885,
-            wearPerLap: 6.5,
-            optimalTemp: [55, 75],
-            wetGrip: 1.00,
-            desc: '폭우(수막 55% 이상) 상황에서 초당 85리터의 물을 배수하여 하이드로플레이닝 스핀을 방지합니다.'
-        }
+        SOFT:   { id: 'SOFT',   name: 'Soft (C5)',         short: 'S', color: '#E10600', hex: 0xe10600, paceDelta: -0.65, baseWearPerLap: 3.1, optimalTemp: 102, wetGrip: 0.35 },
+        MEDIUM: { id: 'MEDIUM', name: 'Medium (C3)',       short: 'M', color: '#FFD100', hex: 0xffd100, paceDelta: 0.00,  baseWearPerLap: 1.85, optimalTemp: 96,  wetGrip: 0.38 },
+        HARD:   { id: 'HARD',   name: 'Hard (C1)',         short: 'H', color: '#F0F4F8', hex: 0xf0f4f8, paceDelta: +0.55, baseWearPerLap: 1.15, optimalTemp: 90,  wetGrip: 0.34 },
+        INTER:  { id: 'INTER',  name: 'Intermediate',      short: 'I', color: '#00D65B', hex: 0x00d65b, paceDelta: +2.80, baseWearPerLap: 1.70, optimalTemp: 75,  wetGrip: 0.94 },
+        WET:    { id: 'WET',    name: 'Full Wet (Extreme)', short: 'W', color: '#0088FF', hex: 0x0088ff, paceDelta: +5.40, baseWearPerLap: 1.30, optimalTemp: 62,  wetGrip: 1.00 }
     },
 
-    // R&D Tech Tree Nodes (4 Departments x 5 Tiers)
+    // R&D Engineering Tree
     rdTree: {
         aero: {
-            name: '에어로다이내믹 (공력부)',
-            icon: '🌪️',
-            color: '#38bdf8',
-            desc: '코너링 한계 속도와 DRS 직선 효율을 극대화합니다.',
+            name: 'Aerodynamics (공력 설계부)',
+            code: 'AERO',
+            color: '#00D2BE',
             upgrades: [
-                { level: 1, name: '카본 프론트 윙 플랩 최적화', cost: 4500000, gain: 2, desc: '저속 코너 프론트 그립 +2 증가' },
-                { level: 2, name: '벤투리 언더플로어 보텍스 터널', cost: 7200000, gain: 3, desc: '그라운드 이펙트 다운포스 +3 증가' },
-                { level: 3, name: '언더컷 사이드포드 패키징', cost: 11000000, gain: 3, desc: '공기저항 감소 및 중고속 코너링 +3' },
-                { level: 4, name: '빔 윙 & 디퓨저 스톨 제어', cost: 15500000, gain: 4, desc: '고속 안정성 및 DRS 효율 +4 증가' },
-                { level: 5, name: '액티브 에어로 플렉시 윙 마스터피스', cost: 22000000, gain: 5, desc: '에어로다이내믹 궁극 진화 (+5)' }
+                { level: 1, name: 'Front Wing Endplate Outwash Spec', cost: 4500000, gain: 2, desc: '프론트 윙 엔드플레이트 와류 제어 (+2 AERO)' },
+                { level: 2, name: 'Venturi Floor Edge Wing Spec-B', cost: 7200000, gain: 3, desc: '언더플로어 벤투리 터널 다운포스 증대 (+3 AERO)' },
+                { level: 3, name: 'Deep Undercut Sidepod Packaging', cost: 11000000, gain: 3, desc: '사이드포드 공기저항 계수 감소 (+3 AERO)' },
+                { level: 4, name: 'Low-Drag Beam Wing & Diffuser', cost: 15500000, gain: 4, desc: 'DRS 개방 시 직선 최고속도 및 리어 안정성 (+4 AERO)' },
+                { level: 5, name: 'Aero Elasticity Spec-Final', cost: 22000000, gain: 5, desc: '고속 플렉시 윙 밸런스 완성 (+5 AERO)' }
             ]
         },
         powertrain: {
-            name: '파워유닛 & ERS (동력부)',
-            icon: '⚡',
-            color: '#f59e0b',
-            desc: '직선 최고 속도와 MGU-K 하이브리드 배터리 회생/출력 효율을 강화합니다.',
+            name: 'Power Unit & ERS (파워유닛 연구부)',
+            code: 'POWR',
+            color: '#FF8000',
             upgrades: [
-                { level: 1, name: '터보차저 인터쿨러 맵핑', cost: 4800000, gain: 2, desc: '가속 응답성 및 파워트레인 +2' },
-                { level: 2, name: 'MGU-K 고밀도 리튬배터리 셀', cost: 7600000, gain: 3, desc: 'ERS 배터리 회생량 +15% 및 파워 +3' },
-                { level: 3, name: '초고압 직분사 연소실 개량', cost: 11500000, gain: 3, desc: '직선 구간 최고속도 +4km/h 및 파워 +3' },
-                { level: 4, name: 'e-연료 합성 윤활 아키텍처', cost: 16000000, gain: 4, desc: '오버테이크 모드 출력 지속시간 +4' },
-                { level: 5, name: '하이퍼 MGU-H/K 통합 맵핑', cost: 23000000, gain: 5, desc: '파워유닛 궁극 출력 달성 (+5)' }
+                { level: 1, name: 'MGU-K Deployment Calibration', cost: 4800000, gain: 2, desc: '하이브리드 전기모터 출력 전개 최적화 (+2 POWR)' },
+                { level: 2, name: 'High-Density ES Battery Cell', cost: 7600000, gain: 3, desc: '랩당 배터리 회생 충전 효율 15% 향상 (+3 POWR)' },
+                { level: 3, name: 'Turbo Plenum Cooling Architecture', cost: 11500000, gain: 3, desc: '열효율 개선 및 직선 구간 가속력 증가 (+3 POWR)' },
+                { level: 4, name: 'Synthetic E-Fuel Combustion Map', cost: 16000000, gain: 4, desc: '퀄리파잉 및 오버테이크 출력 모드 강화 (+4 POWR)' },
+                { level: 5, name: 'Works Spec Phase-5 ICE Package', cost: 23000000, gain: 5, desc: '챔피언십 사양 궁극 파워유닛 (+5 POWR)' }
             ]
         },
         chassis: {
-            name: '섀시 & 서스펜션 (차체부)',
-            icon: '🛞',
-            color: '#10b981',
-            desc: '차량 중량을 줄이고 피렐리 타이어 마모율과 연석 충격 흡수를 개선합니다.',
+            name: 'Chassis & Suspension (섀시/서스펜션)',
+            code: 'CHAS',
+            color: '#3671C6',
             upgrades: [
-                { level: 1, name: '티타늄 위시본 경량화', cost: 4200000, gain: 2, desc: '차량 최소중량 감량 및 섀시 +2' },
-                { level: 2, name: '푸시로드/풀로드 지오메트리 재설계', cost: 6900000, gain: 3, desc: '타이어 마모율 -6% 감소 및 섀시 +3' },
-                { level: 3, name: '카본 모노코크 강성 밸런싱', cost: 10500000, gain: 3, desc: '연석(Kerb) 돌파 안정성 및 섀시 +3' },
-                { level: 4, name: '브레이크 덕트 열관리 시스템', cost: 14800000, gain: 4, desc: '타이어 과열 방지 및 섀시 +4' },
-                { level: 5, name: '제로-웨이트 울트라 카본 섀시', cost: 20500000, gain: 5, desc: '타이어 수명 극대화 및 섀시 (+5)' }
+                { level: 1, name: 'Carbon Wishbone Weight Reduction', cost: 4200000, gain: 2, desc: '차량 중량 798kg 미니멈 달성 (+2 CHAS)' },
+                { level: 2, name: 'Anti-Dive Suspension Kinematics', cost: 6900000, gain: 3, desc: '브레이킹 피칭 억제 및 타이어 마모 -8% (+3 CHAS)' },
+                { level: 3, name: 'Rear Tire Thermal Duct Routing', cost: 10500000, gain: 3, desc: '리어 타이어 열화(Blistering) 억제 (+3 CHAS)' },
+                { level: 4, name: 'Monocoque Torsional Rigidity Spec', cost: 14800000, gain: 4, desc: '고속 연석 공략 응답성 극대화 (+4 CHAS)' },
+                { level: 5, name: 'Zero-Blister Tyre Preservation Spec', cost: 20500000, gain: 5, desc: '원스톱 장기 스틴트 마스터 섀시 (+5 CHAS)' }
             ]
         },
         durability: {
-            name: '내구성 & 피트스톱 (신뢰부)',
-            icon: '🔧',
-            color: '#a855f7',
-            desc: '기계적 고장률을 낮추고 휠건 피트크루의 2초대 칼같은 피트스톱을 완성합니다.',
+            name: 'Operations & Pit Stop (내구/피트스톱)',
+            code: 'DURA',
+            color: '#E8002D',
             upgrades: [
-                { level: 1, name: '하이드롤릭 기어박스 실링', cost: 3800000, gain: 2, desc: '기어박스 트러블 방지 및 내구성 +2' },
-                { level: 2, name: '자동화 레이저 휠건 도입', cost: 6400000, gain: 3, desc: '평균 피트스톱 시간 -0.25초 단축' },
-                { level: 3, name: '세라믹 카본 브레이크 로터', cost: 9800000, gain: 3, desc: '브레이크 페이드 방지 및 내구성 +3' },
-                { level: 4, name: '피트크루 바이오메카닉 훈련', cost: 13800000, gain: 4, desc: '피트스톱 실수율 80% 감소 및 1.9초대 진입' },
-                { level: 5, name: '완전 무결점 팩토리 QC 공정', cost: 19000000, gain: 5, desc: '최고 수준의 신뢰도 및 피트스톱 (+5)' }
+                { level: 1, name: 'Seamless Shift Gearbox Sealing', cost: 3800000, gain: 2, desc: '기어박스 신뢰도 향상 (+2 DURA)' },
+                { level: 2, name: 'Automated Laser Wheel Gun System', cost: 6400000, gain: 3, desc: '피트스톱 정지 시간 -0.25초 단축 (+3 DURA)' },
+                { level: 3, name: 'Carbon-Carbon Brake Cooling Spec', cost: 9800000, gain: 3, desc: '브레이크 락업 및 실수율 감소 (+3 DURA)' },
+                { level: 4, name: 'Pit Crew Biomechanics Sync', cost: 13800000, gain: 4, desc: '1.9초대 칼같은 더블 스택 피트스톱 (+4 DURA)' },
+                { level: 5, name: 'Zero-Fault Race Operations Spec', cost: 19000000, gain: 5, desc: '최고 수준의 레이스 오퍼레이션 완성 (+5 DURA)' }
             ]
         }
     },
 
-    // FIA Points System (Top 10 + Fastest Lap)
     pointsTable: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
 };

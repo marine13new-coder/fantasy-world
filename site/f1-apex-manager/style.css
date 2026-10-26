@@ -1,23 +1,36 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Pretendard:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&display=swap');
+/* ============================================================================
+   F1 MANAGER & FIA PIT WALL TELEMETRY UI - BROADCAST GRADE DESIGN SYSTEM
+   Inspired by F1 Manager 2024 & Official Formula 1 TV Timing Graphics
+   No neon AI gradients, no emojis in headers, crisp carbon & matte slate finish
+============================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,700;1,800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&display=swap');
 
 :root {
-    --f1-red: #e10600;
-    --f1-red-glow: rgba(225, 6, 0, 0.45);
-    --bg-dark: #07090e;
-    --bg-panel: #0f131d;
-    --bg-card: #151b28;
-    --bg-card-hover: #1c2436;
-    --border-line: #232d42;
-    --text-main: #f8fafc;
-    --text-sub: #94a3b8;
-    --text-muted: #64748b;
-    --accent-cyan: #00f0ff;
-    --accent-green: #22c55e;
-    --accent-yellow: #facc15;
-    --accent-purple: #a855f7;
-    --font-display: 'Orbitron', 'Pretendard', sans-serif;
-    --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --f1-red: #E10600;
+    --bg-base: #0B0D12;
+    --bg-surface: #12151E;
+    --bg-elevated: #181C28;
+    --bg-row-alt: #151924;
+    --border-subtle: #23293A;
+    --border-strong: #323B52;
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+
+    --sector-purple: #A855F7;
+    --sector-green: #22C55E;
+    --sector-yellow: #FACC15;
+
+    --tire-soft: #E10600;
+    --tire-med: #FFD100;
+    --tire-hard: #F0F4F8;
+    --tire-inter: #00D65B;
+    --tire-wet: #0088FF;
+
+    --font-Broadcast: 'Barlow Condensed', 'Inter', sans-serif;
+    --font-UI: 'Inter', -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-serif;
+    --font-Telemetry: 'JetBrains Mono', monospace;
 }
 
 * {
@@ -27,831 +40,815 @@
     user-select: none;
 }
 
-body, html {
+html, body {
     width: 100%;
     height: 100%;
-    background: var(--bg-dark);
-    color: var(--text-main);
-    font-family: var(--font-sans);
-    overflow-x: hidden;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-UI);
+    font-size: 13px;
+    line-height: 1.4;
+    overflow: hidden;
 }
 
-/* =========================================================================
-   TOP TELEMETRY HEADER BAR
-========================================================================= */
-.f1-top-header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
+/* ============================================================================
+   TOP FIA CHAMPIONSHIP TELEMETRY BAR (48px Fixed)
+============================================================================ */
+.fia-top-bar {
+    height: 48px;
+    background: #080A0E;
+    border-bottom: 2px solid var(--f1-red);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 24px;
-    background: rgba(10, 13, 20, 0.95);
-    border-bottom: 2px solid var(--f1-red);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.65);
-    flex-wrap: wrap;
-    gap: 12px;
+    padding: 0 18px;
+    z-index: 100;
 }
 
-.f1-brand {
+.fia-brand-cluster {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
 }
 
-.f1-logo-badge {
+.fia-f1-tag {
     background: var(--f1-red);
     color: #fff;
-    font-family: var(--font-display);
-    font-weight: 900;
+    font-family: var(--font-Broadcast);
     font-style: italic;
-    font-size: 1.35rem;
-    padding: 4px 12px;
-    border-radius: 4px;
-    letter-spacing: 1px;
-    box-shadow: 0 0 16px var(--f1-red-glow);
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: 0.8px;
+    padding: 2px 10px;
+    clip-path: polygon(0 0, 100% 0, 92% 100%, 0% 100%);
 }
 
-.f1-brand-title {
-    font-family: var(--font-display);
-    font-size: 1.05rem;
-    font-weight: 800;
-    letter-spacing: 0.5px;
+.fia-series-title {
+    font-family: var(--font-Broadcast);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
     color: #fff;
 }
 
-.f1-brand-sub {
-    font-size: 0.72rem;
-    color: var(--text-sub);
-    letter-spacing: 0.06em;
+.fia-round-pill {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    color: var(--text-secondary);
+    font-family: var(--font-Telemetry);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 2px;
 }
 
 /* Navigation Tabs */
-.f1-nav-tabs {
+.fia-nav {
     display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-}
-
-.f1-tab-btn {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid var(--border-line);
-    color: var(--text-sub);
-    padding: 8px 15px;
-    border-radius: 6px;
-    font-family: var(--font-sans);
-    font-size: 0.86rem;
-    font-weight: 700;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    transition: all 0.18s ease;
-}
-
-.f1-tab-btn:hover {
-    background: rgba(255, 255, 255, 0.09);
-    color: #fff;
-}
-
-.f1-tab-btn.active {
-    background: linear-gradient(135deg, var(--f1-red) 0%, #990000 100%);
-    border-color: #ff4d4d;
-    color: #fff;
-    box-shadow: 0 0 14px var(--f1-red-glow);
-}
-
-/* Header Right Team & Budget Pill */
-.f1-header-status {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-
-.f1-budget-pill {
-    background: rgba(16, 185, 129, 0.12);
-    border: 1px solid rgba(16, 185, 129, 0.4);
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    color: #34d399;
-    font-weight: 700;
-}
-
-.f1-team-selector-btn {
-    background: var(--bg-card);
-    border: 1px solid var(--border-line);
-    color: #fff;
-    padding: 6px 14px;
-    border-radius: 6px;
-    font-weight: 700;
-    font-size: 0.85rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.f1-team-selector-btn:hover {
-    border-color: var(--accent-cyan);
-}
-
-/* =========================================================================
-   MAIN WORKSPACE & TAB PANELS
-========================================================================= */
-.f1-main-container {
-    max-width: 1560px;
-    margin: 0 auto;
-    padding: 20px 24px 60px;
-}
-
-.f1-tab-panel {
-    display: none;
-    animation: fadeIn 0.22s ease;
-}
-
-.f1-tab-panel.active {
-    display: block;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Grid Layouts & Cards */
-.grid-2col {
-    display: grid;
-    grid-template-columns: 1.35fr 1fr;
-    gap: 20px;
-}
-
-.grid-3col {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 18px;
-}
-
-.grid-4col {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 16px;
-}
-
-.f1-card {
-    background: var(--bg-panel);
-    border: 1px solid var(--border-line);
-    border-radius: 10px;
-    padding: 20px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-}
-
-.f1-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.f1-card-title {
-    font-size: 1.05rem;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #fff;
-}
-
-/* Spec Progress Bars */
-.spec-bar-row {
-    margin-bottom: 12px;
-}
-
-.spec-bar-label {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.82rem;
-    font-weight: 700;
-    margin-bottom: 5px;
-    color: var(--text-sub);
-}
-
-.spec-bar-track {
-    width: 100%;
-    height: 9px;
-    background: rgba(255, 255, 255, 0.07);
-    border-radius: 5px;
-    overflow: hidden;
-}
-
-.spec-bar-fill {
     height: 100%;
-    border-radius: 5px;
-    transition: width 0.35s ease;
 }
 
-/* Action Buttons */
-.btn-f1-primary {
-    background: linear-gradient(135deg, var(--f1-red) 0%, #b30000 100%);
-    color: #fff;
-    border: 1px solid #ff4d4d;
-    padding: 11px 22px;
-    border-radius: 7px;
-    font-weight: 800;
-    font-size: 0.92rem;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    box-shadow: 0 4px 16px var(--f1-red-glow);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.btn-f1-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 22px rgba(225, 6, 0, 0.65);
-}
-
-.btn-f1-secondary {
-    background: var(--bg-card);
-    color: var(--text-main);
-    border: 1px solid var(--border-line);
-    padding: 9px 16px;
-    border-radius: 7px;
+.fia-nav-item {
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-Broadcast);
+    font-size: 14px;
     font-weight: 700;
-    font-size: 0.84rem;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.btn-f1-secondary:hover {
-    border-color: var(--accent-cyan);
-    background: var(--bg-card-hover);
-}
-
-.btn-f1-secondary.active {
-    background: rgba(0, 240, 255, 0.16);
-    border-color: var(--accent-cyan);
-    color: var(--accent-cyan);
-}
-
-/* =========================================================================
-   3D GRAND PRIX RACE VIEWPORT & BROADCAST OVERLAYS
-========================================================================= */
-.race-cockpit-wrapper {
-    position: relative;
-    width: 100%;
-    height: calc(100vh - 86px);
-    min-height: 660px;
-    background: #05070b;
-    border: 1px solid var(--border-line);
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-#race3dCanvasContainer {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-}
-
-/* FIA 5 Red Lights Start Gantry Overlay */
-#fiaStartLightsOverlay {
-    position: absolute;
-    top: 72px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 35;
-    background: #090b10;
-    border: 2px solid #2d3748;
-    border-radius: 12px;
-    padding: 14px 26px;
-    display: none;
-    gap: 18px;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9);
-}
-
-.fia-light-pod {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    background: #141821;
-    padding: 8px;
-    border-radius: 6px;
-}
-
-.fia-red-light {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: #2a0a0a;
-    border: 2px solid #1a202c;
-    transition: all 0.08s ease;
-}
-
-.fia-red-light.lit {
-    background: #ff1100;
-    box-shadow: 0 0 24px #ff1100, inset 0 0 8px #ffffff;
-}
-
-/* Top Broadcast Race Banner (Lap Counter, Weather, Speed Controls, Camera) */
-.broadcast-top-bar {
-    position: absolute;
-    top: 14px;
-    left: 16px;
-    right: 16px;
-    z-index: 20;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    pointer-events: none;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.broadcast-top-bar > * {
-    pointer-events: auto;
-}
-
-.f1-lap-counter-box {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    background: rgba(10, 13, 20, 0.92);
-    border-left: 4px solid var(--f1-red);
-    border-top: 1px solid rgba(255,255,255,0.12);
-    border-right: 1px solid rgba(255,255,255,0.12);
-    border-bottom: 1px solid rgba(255,255,255,0.12);
-    padding: 8px 18px;
-    border-radius: 6px;
-    backdrop-filter: blur(10px);
-}
-
-.lap-main-text {
-    font-family: var(--font-display);
-    font-size: 1.15rem;
-    font-weight: 900;
-    color: #fff;
-}
-
-.weather-pill-box {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.82rem;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.07);
-}
-
-.race-sim-controls {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(10, 13, 20, 0.92);
-    padding: 6px 10px;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(10px);
-}
-
-.sim-ctrl-btn {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    color: #cbd5e1;
-    padding: 6px 11px;
-    border-radius: 5px;
-    font-size: 0.78rem;
-    font-weight: 800;
-    cursor: pointer;
-    font-family: var(--font-sans);
-}
-
-.sim-ctrl-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
-    color: #fff;
-}
-
-.sim-ctrl-btn.active {
-    background: var(--f1-red);
-    border-color: #ff6666;
-    color: #fff;
-}
-
-/* Left FIA Live Timing Tower (20 Drivers Leaderboard) */
-.fia-timing-tower {
-    position: absolute;
-    top: 72px;
-    left: 16px;
-    bottom: 16px;
-    width: 278px;
-    z-index: 20;
-    background: rgba(9, 12, 18, 0.90);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 8px;
-    backdrop-filter: blur(10px);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.timing-tower-header {
-    background: linear-gradient(90deg, var(--f1-red) 0%, #8a0400 100%);
-    padding: 7px 12px;
-    font-family: var(--font-display);
-    font-size: 0.76rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.timing-tower-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 4px 0;
-}
-
-.timing-row {
-    display: grid;
-    grid-template-columns: 26px 5px 46px 1fr 24px 36px;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 8px;
-    font-size: 0.76rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-    cursor: pointer;
-    transition: background 0.12s;
-}
-
-.timing-row:hover {
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.timing-row.player-car-row {
-    background: rgba(225, 6, 0, 0.22);
-    border-left: 2px solid var(--accent-yellow);
-}
-
-.timing-row.followed-car-row {
-    outline: 1px solid var(--accent-cyan);
-}
-
-.t-pos {
-    font-family: var(--font-mono);
-    font-weight: 800;
-    color: #cbd5e1;
-    text-align: center;
-}
-
-.t-team-stripe {
-    width: 4px;
-    height: 16px;
-    border-radius: 2px;
-}
-
-.t-code {
-    font-family: var(--font-mono);
-    font-weight: 800;
-    color: #fff;
-}
-
-.t-gap {
-    font-family: var(--font-mono);
-    font-size: 0.71rem;
-    color: var(--text-sub);
-    text-align: right;
-}
-
-.t-tire-badge {
-    width: 19px;
-    height: 19px;
-    border-radius: 50%;
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    font-weight: 900;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #111;
-    border: 2px solid #fff;
-}
-
-.t-tire-wear {
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    text-align: right;
-}
-
-/* Right Pit Wall Strategy & Team Radio Console */
-.pitwall-right-panel {
-    position: absolute;
-    top: 72px;
-    right: 16px;
-    width: 345px;
-    z-index: 20;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    max-height: calc(100% - 88px);
-    overflow-y: auto;
-}
-
-.driver-strategy-card {
-    background: rgba(9, 12, 18, 0.92);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 8px;
-    padding: 11px 13px;
-    backdrop-filter: blur(10px);
-}
-
-.strat-driver-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-}
-
-.strat-cmd-group {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 4px;
-    margin-bottom: 6px;
-}
-
-.strat-btn {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: #cbd5e1;
-    padding: 5px 4px;
-    border-radius: 4px;
-    font-size: 0.71rem;
-    font-weight: 700;
-    cursor: pointer;
-    text-align: center;
-}
-
-.strat-btn.active-push {
-    background: rgba(239, 68, 68, 0.28);
-    border-color: #ef4444;
-    color: #fca5a5;
-}
-
-.strat-btn.active-std {
-    background: rgba(56, 189, 248, 0.25);
-    border-color: #38bdf8;
-    color: #bae6fd;
-}
-
-.strat-btn.active-conserve {
-    background: rgba(34, 197, 94, 0.25);
-    border-color: #22c55e;
-    color: #bbf7d0;
-}
-
-.pit-tire-row {
-    display: flex;
-    gap: 4px;
-    margin-top: 6px;
-}
-
-.pit-compound-btn {
-    flex: 1;
-    padding: 5px 2px;
-    font-size: 0.7rem;
-    font-weight: 800;
-    border-radius: 4px;
-    background: #141923;
-    border: 1px solid #2d3748;
-    color: #fff;
-    cursor: pointer;
-}
-
-.pit-compound-btn.selected {
-    outline: 2px solid var(--accent-cyan);
-    background: #1e293b;
-}
-
-.box-call-btn {
-    width: 100%;
-    margin-top: 7px;
-    padding: 7px;
-    border-radius: 5px;
-    font-weight: 900;
-    font-size: 0.78rem;
-    cursor: pointer;
-    border: 1px solid #f59e0b;
-    background: rgba(245, 158, 11, 0.18);
-    color: #fde047;
-}
-
-.box-call-btn.active {
-    background: #e10600;
-    border-color: #ff6666;
-    color: #fff;
-    animation: pulseBox 0.9s infinite alternate;
-}
-
-@keyframes pulseBox {
-    from { opacity: 0.85; }
-    to { opacity: 1; box-shadow: 0 0 14px #e10600; }
-}
-
-/* Team Radio Feed Box */
-.team-radio-box {
-    background: rgba(9, 12, 18, 0.92);
-    border: 1px solid rgba(0, 240, 255, 0.3);
-    border-radius: 8px;
-    padding: 10px 12px;
-    backdrop-filter: blur(10px);
-}
-
-.radio-wave-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-family: var(--font-display);
-    font-size: 0.74rem;
-    color: var(--accent-cyan);
-    margin-bottom: 6px;
-}
-
-.radio-messages-list {
-    max-height: 115px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    font-size: 0.75rem;
-}
-
-/* Bottom Center F1 Halo Telemetry Gauge (Speed, Gear, RPM LEDs, ERS, DRS) */
-.halo-telemetry-hud {
-    position: absolute;
-    bottom: 16px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 20;
-    width: 520px;
-    max-width: calc(100vw - 640px);
-    background: rgba(8, 11, 18, 0.92);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-top: 3px solid var(--f1-red);
-    border-radius: 14px;
-    padding: 10px 20px;
-    backdrop-filter: blur(12px);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.85);
-}
-
-.rpm-leds-strip {
-    display: grid;
-    grid-template-columns: repeat(15, 1fr);
-    gap: 4px;
-    margin-bottom: 8px;
-}
-
-.rpm-led {
-    height: 7px;
-    border-radius: 2px;
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.rpm-led.on-green { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
-.rpm-led.on-red { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
-.rpm-led.on-blue { background: #38bdf8; box-shadow: 0 0 10px #38bdf8; }
-
-.halo-main-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-}
-
-.telemetry-speed-block {
-    text-align: center;
-    min-width: 110px;
-}
-
-.telemetry-speed-val {
-    font-family: var(--font-display);
-    font-size: 2.1rem;
-    font-weight: 900;
-    line-height: 1;
-    color: #fff;
-}
-
-.telemetry-gear-box {
-    width: 54px;
-    height: 54px;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-.telemetry-gear-num {
-    font-family: var(--font-display);
-    font-size: 1.65rem;
-    font-weight: 900;
-    color: var(--accent-yellow);
-    line-height: 1;
-}
-
-.drs-indicator-pill {
-    padding: 5px 12px;
-    border-radius: 5px;
-    font-family: var(--font-display);
-    font-size: 0.78rem;
-    font-weight: 900;
-    background: rgba(255, 255, 255, 0.06);
-    color: #64748b;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.drs-indicator-pill.eligible {
-    border-color: var(--accent-yellow);
-    color: var(--accent-yellow);
-}
-
-.drs-indicator-pill.active {
-    background: rgba(34, 197, 94, 0.25);
-    border-color: #22c55e;
-    color: #4ade80;
-    box-shadow: 0 0 14px rgba(34, 197, 94, 0.5);
-}
-
-/* =========================================================================
-   TABLES & MODALS
-========================================================================= */
-.f1-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.86rem;
-}
-
-.f1-table th {
-    text-align: left;
-    padding: 10px 12px;
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--text-sub);
-    font-size: 0.76rem;
+    letter-spacing: 0.7px;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border-bottom: 1px solid var(--border-line);
+    padding: 0 16px;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
 }
 
-.f1-table td {
-    padding: 10px 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.f1-table tr:hover td {
+.fia-nav-item:hover {
+    color: #fff;
     background: rgba(255, 255, 255, 0.03);
 }
 
-.f1-modal-backdrop {
+.fia-nav-item.active {
+    color: #fff;
+    border-bottom-color: var(--f1-red);
+    background: rgba(225, 6, 0, 0.10);
+}
+
+/* Right Status Cluster */
+.fia-status-cluster {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cost-cap-indicator {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    padding: 4px 10px;
+    font-family: var(--font-Telemetry);
+    font-size: 11px;
+    font-weight: 700;
+    color: #10B981;
+}
+
+.team-switch-btn {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    color: #fff;
+    padding: 5px 12px;
+    font-family: var(--font-UI);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.team-switch-btn:hover {
+    border-color: #fff;
+}
+
+/* ============================================================================
+   MAIN WORKSPACE PANELS (Full Height under 48px Header)
+============================================================================ */
+.fia-workspace {
+    width: 100%;
+    height: calc(100vh - 48px);
+    position: relative;
+    overflow: hidden;
+}
+
+.fia-view {
+    width: 100%;
+    height: 100%;
+    display: none;
+    overflow-y: auto;
+}
+
+.fia-view.active {
+    display: block;
+}
+
+/* ============================================================================
+   VIEW 1: LIVE RACE & PIT WALL TELEMETRY SCREEN (Zero-Scroll Fullscreen)
+============================================================================ */
+#view-race {
+    position: relative;
+    overflow: hidden;
+    background: #06080C;
+}
+
+/* 3D / Trackside Main Viewport fills entire screen */
+#race3dViewport {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+/* Top Race Control Bar */
+.race-control-header {
+    position: absolute;
+    top: 10px;
+    left: 266px;
+    right: 332px;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(11, 13, 18, 0.92);
+    border: 1px solid var(--border-strong);
+    border-top: 2px solid var(--f1-red);
+    padding: 6px 14px;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.rc-lap-block {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.rc-gp-code {
+    font-family: var(--font-Broadcast);
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--f1-red);
+    letter-spacing: 0.6px;
+}
+
+.rc-lap-counter {
+    font-family: var(--font-Telemetry);
+    font-size: 15px;
+    font-weight: 800;
+    color: #fff;
+}
+
+.rc-flag-badge {
+    font-family: var(--font-Broadcast);
+    font-weight: 800;
+    font-size: 13px;
+    padding: 2px 8px;
+    letter-spacing: 0.5px;
+    background: #16A34A;
+    color: #fff;
+}
+
+.rc-flag-badge.vsc, .rc-flag-badge.sc {
+    background: #FACC15;
+    color: #000;
+}
+
+.rc-weather-telemetry {
+    font-family: var(--font-Telemetry);
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.rc-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.rc-btn {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    color: var(--text-secondary);
+    font-family: var(--font-Telemetry);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+.rc-btn:hover {
+    color: #fff;
+    border-color: #64748B;
+}
+
+.rc-btn.active {
+    background: var(--f1-red);
+    border-color: var(--f1-red);
+    color: #fff;
+}
+
+/* LEFT FIA TIMING TOWER (Official Broadcast Style: 244px wide) */
+.fia-timing-tower {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    bottom: 10px;
+    width: 246px;
+    z-index: 20;
+    background: rgba(10, 12, 17, 0.94);
+    border: 1px solid var(--border-strong);
+    display: flex;
+    flex-direction: column;
+}
+
+.tower-head {
+    background: #050608;
+    border-bottom: 2px solid var(--f1-red);
+    padding: 6px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-Broadcast);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+}
+
+.tower-cols-label {
+    display: grid;
+    grid-template-columns: 24px 4px 42px 1fr 22px 34px 24px;
+    gap: 4px;
+    padding: 4px 8px;
+    background: #0D1017;
+    border-bottom: 1px solid var(--border-subtle);
+    font-family: var(--font-Telemetry);
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.tower-rows-container {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.tower-row {
+    display: grid;
+    grid-template-columns: 24px 4px 42px 1fr 22px 34px 24px;
+    align-items: center;
+    gap: 4px;
+    height: 25px;
+    padding: 0 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    font-family: var(--font-Telemetry);
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.tower-row:nth-child(even) {
+    background: rgba(255, 255, 255, 0.015);
+}
+
+.tower-row:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.tower-row.is-player {
+    background: rgba(225, 6, 0, 0.16);
+}
+
+.tower-row.is-watched {
+    outline: 1px solid #fff;
+    outline-offset: -1px;
+}
+
+.tr-pos {
+    font-weight: 800;
+    color: #E2E8F0;
+    text-align: center;
+}
+
+.tr-bar {
+    width: 3px;
+    height: 15px;
+}
+
+.tr-code {
+    font-weight: 800;
+    color: #fff;
+}
+
+.tr-gap {
+    text-align: right;
+    color: var(--text-secondary);
+    font-size: 10px;
+}
+
+.tr-tire {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 800;
+    margin: 0 auto;
+}
+
+.tr-wear {
+    text-align: right;
+    font-size: 10px;
+}
+
+.tr-pits {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 10px;
+}
+
+/* RIGHT PIT WALL STRATEGY & LIVE 2D CIRCUIT MAP (312px wide) */
+.pitwall-sidebar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    bottom: 10px;
+    width: 312px;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pw-map-panel {
+    background: rgba(10, 12, 17, 0.94);
+    border: 1px solid var(--border-strong);
+    height: 195px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.pw-panel-header {
+    background: #080A0E;
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 4px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-Broadcast);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+#circuitMap2dCanvas {
+    width: 100%;
+    flex: 1;
+    display: block;
+    cursor: pointer;
+}
+
+/* Dual Driver Pit-Wall Control Boxes */
+.pw-driver-box {
+    background: rgba(10, 12, 17, 0.94);
+    border: 1px solid var(--border-strong);
+    padding: 8px 10px;
+}
+
+.pw-drv-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.pw-cmd-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3px;
+    margin-bottom: 5px;
+}
+
+.pw-cmd-btn {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-family: var(--font-Telemetry);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 2px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.pw-cmd-btn:hover {
+    color: #fff;
+    border-color: var(--border-strong);
+}
+
+.pw-cmd-btn.active-attack {
+    background: rgba(225, 6, 0, 0.28);
+    border-color: var(--f1-red);
+    color: #fff;
+}
+
+.pw-cmd-btn.active-bal {
+    background: rgba(54, 113, 198, 0.28);
+    border-color: #3671C6;
+    color: #fff;
+}
+
+.pw-cmd-btn.active-save {
+    background: rgba(34, 197, 94, 0.25);
+    border-color: #22C55E;
+    color: #fff;
+}
+
+.pw-compound-bar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 3px;
+    margin-bottom: 5px;
+}
+
+.pw-comp-btn {
+    background: #0D1017;
+    border: 1px solid var(--border-subtle);
+    color: #fff;
+    font-family: var(--font-Telemetry);
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 0;
+    cursor: pointer;
+}
+
+.pw-comp-btn.selected {
+    border-color: #fff;
+    background: var(--bg-elevated);
+}
+
+.pw-box-btn {
+    width: 100%;
+    padding: 5px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    color: #FACC15;
+    font-family: var(--font-Broadcast);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+.pw-box-btn.called {
+    background: var(--f1-red);
+    border-color: #fff;
+    color: #fff;
+}
+
+/* Race Engineer Radio Log */
+.pw-radio-feed {
+    flex: 1;
+    min-height: 85px;
+    background: rgba(10, 12, 17, 0.94);
+    border: 1px solid var(--border-strong);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.pw-radio-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 8px;
+    font-family: var(--font-UI);
+    font-size: 11px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* BOTTOM CENTER TELEMETRY CLUSTER (Official F1 Broadcast Speed/RPM/Gear/ERS/DRS) */
+.fia-telemetry-pod {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    width: 490px;
+    background: rgba(8, 10, 14, 0.94);
+    border: 1px solid var(--border-strong);
+    border-top: 2px solid var(--f1-red);
+    padding: 8px 16px;
+}
+
+.rev-lights-bar {
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    gap: 3px;
+    margin-bottom: 6px;
+}
+
+.rev-led {
+    height: 5px;
+    background: #1C2230;
+}
+
+.rev-led.g { background: #22C55E; }
+.rev-led.r { background: #E10600; }
+.rev-led.b { background: #38BDF8; }
+
+.telemetry-pod-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.tp-speed {
+    min-width: 105px;
+}
+
+.tp-speed-num {
+    font-family: var(--font-Telemetry);
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1;
+    color: #fff;
+}
+
+.tp-gear {
+    width: 44px;
+    height: 44px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-strong);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.tp-gear-num {
+    font-family: var(--font-Telemetry);
+    font-size: 20px;
+    font-weight: 800;
+    color: #FFD100;
+    line-height: 1;
+}
+
+.tp-drs-badge {
+    font-family: var(--font-Broadcast);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    padding: 3px 10px;
+    background: #151922;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.tp-drs-badge.ready {
+    border-color: #FFD100;
+    color: #FFD100;
+}
+
+.tp-drs-badge.open {
+    background: #16A34A;
+    border-color: #22C55E;
+    color: #fff;
+}
+
+/* ============================================================================
+   FIA 5 RED LIGHTS GANTRY OVERLAY
+============================================================================ */
+#fiaStartGantryModal {
+    position: absolute;
+    top: 68px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 40;
+    background: #07090D;
+    border: 2px solid #2D3648;
+    padding: 12px 22px;
+    display: none;
+    gap: 16px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.95);
+}
+
+.gantry-column {
+    background: #11151E;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fia-gantry-bulb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #220909;
+    border: 2px solid #161B26;
+}
+
+.fia-gantry-bulb.on {
+    background: #FF0800;
+    box-shadow: 0 0 20px #FF0800;
+}
+
+/* ============================================================================
+   MANAGEMENT VIEWS (RACE WEEKEND PREP, STANDINGS, R&D, DRIVERS)
+============================================================================ */
+.mgmt-container {
+    max-width: 1480px;
+    margin: 0 auto;
+    padding: 18px 22px 48px;
+}
+
+.mgmt-grid-2 {
+    display: grid;
+    grid-template-columns: 1.25fr 1fr;
+    gap: 16px;
+}
+
+.mgmt-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+.fia-panel {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    padding: 16px;
+}
+
+.fia-panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.fia-panel-title {
+    font-family: var(--font-Broadcast);
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: #fff;
+}
+
+/* Data Tables */
+.fia-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.fia-data-table th {
+    background: #0D1017;
+    color: var(--text-muted);
+    font-family: var(--font-Telemetry);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-strong);
+}
+
+.fia-data-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.fia-data-table tr:nth-child(even) td {
+    background: var(--bg-row-alt);
+}
+
+.fia-data-table tr.highlight-team td {
+    background: rgba(225, 6, 0, 0.14);
+}
+
+/* Buttons */
+.fia-btn-red {
+    background: var(--f1-red);
+    border: 1px solid #FF3B30;
+    color: #fff;
+    font-family: var(--font-Broadcast);
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    padding: 9px 18px;
+    cursor: pointer;
+}
+
+.fia-btn-red:hover {
+    background: #B80500;
+}
+
+.fia-btn-slate {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    color: var(--text-primary);
+    font-family: var(--font-UI);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 8px 14px;
+    cursor: pointer;
+}
+
+.fia-btn-slate:hover {
+    border-color: #94A3B8;
+}
+
+.fia-btn-slate.active {
+    border-color: var(--f1-red);
+    background: rgba(225, 6, 0, 0.16);
+    color: #fff;
+}
+
+/* Modals */
+.fia-modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(3, 5, 10, 0.85);
-    backdrop-filter: blur(8px);
-    z-index: 200;
+    background: rgba(4, 6, 10, 0.88);
+    z-index: 300;
     display: none;
     align-items: center;
     justify-content: center;
     padding: 20px;
 }
 
-.f1-modal-box {
-    background: var(--bg-panel);
-    border: 1px solid var(--border-line);
-    border-top: 4px solid var(--f1-red);
-    border-radius: 12px;
-    max-width: 880px;
+.fia-modal-window {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-strong);
+    border-top: 3px solid var(--f1-red);
+    max-width: 920px;
     width: 100%;
     max-height: 88vh;
     overflow-y: auto;
-    padding: 24px;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9);
-}
-
-@media (max-width: 1180px) {
-    .grid-2col { grid-template-columns: 1fr; }
-    .halo-telemetry-hud { max-width: 420px; bottom: 10px; }
-    .fia-timing-tower { width: 220px; }
-    .pitwall-right-panel { width: 270px; }
+    padding: 20px;
 }
