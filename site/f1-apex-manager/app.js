@@ -26,6 +26,10 @@ class F1ManagerApp {
         this.engine.onTelemetryTick = (snap) => this.updateLiveTelemetryHUD(snap);
         this.engine.onRaceEventLog = (tag, msg) => this.appendRadioLog(tag, msg);
         this.engine.onRaceCompleted = (ordered) => this.showPostRaceClassification(ordered);
+        this.engine.onRedFlagTriggered = (reason, curLap, totalLaps) => this.showRedFlagGarageModal(reason, curLap, totalLaps);
+
+        this.redFlagTire1 = 'SOFT';
+        this.redFlagTire2 = 'MEDIUM';
 
         this.refreshAllViews();
 
@@ -453,8 +457,8 @@ class F1ManagerApp {
             : `LAP ${snap.lap} / ${snap.totalLaps}`;
         const flagEl = document.getElementById('rcFlagBadge');
         if (flagEl) {
-            flagEl.textContent = snap.trackFlag;
-            flagEl.className = 'rc-flag-badge' + (snap.trackFlag !== 'GREEN' ? ' vsc' : '');
+            flagEl.textContent = snap.trackFlag === 'RED' ? 'RED FLAG' : (snap.trackFlag === 'SC' ? 'SAFETY CAR' : snap.trackFlag);
+            flagEl.className = 'rc-flag-badge' + (snap.trackFlag === 'RED' ? ' red' : (snap.trackFlag !== 'GREEN' ? ' vsc' : ''));
         }
         document.getElementById('rcWeatherText').textContent =
             `${snap.weather} • TRACK ${snap.trackTemp}°C • WATER ${snap.trackWater}%`;
@@ -494,6 +498,45 @@ class F1ManagerApp {
         this.updateStaticPitWallDriverBox('pwDriverBox1', snap.playerCar1);
         this.updateStaticPitWallDriverBox('pwDriverBox2', snap.playerCar2);
 
+        // Update Team Orders Buttons
+        const toMode = snap.teamOrderMode || 'FREE';
+        const toStatusEl = document.getElementById('pwTeamOrderStatus');
+        if (toStatusEl) {
+            toStatusEl.textContent = toMode === 'SWAP' ? 'MULTI-21 SWAP' : (toMode === 'HOLD' ? 'HOLD STATION' : 'FREE TO RACE');
+            toStatusEl.style.color = toMode === 'SWAP' ? '#EF4444' : (toMode === 'HOLD' ? '#38BDF8' : '#22C55E');
+        }
+        ['FREE', 'HOLD', 'SWAP'].forEach(m => {
+            const b = document.getElementById(`toBtn_${m}`);
+            if (b) {
+                const cls = m === 'SWAP' ? 'active-attack' : (m === 'HOLD' ? 'active-bal' : 'active-save');
+                b.className = 'pw-cmd-btn' + (toMode === m ? ` ${cls}` : '');
+            }
+        });
+
+        // Update 360° Proximity Radar Indicators
+        if (snap.proximity) {
+            const pL = document.getElementById('proxLeft');
+            const pA = document.getElementById('proxAhead');
+            const pR = document.getElementById('proxRear');
+            const pRt = document.getElementById('proxRight');
+            if (pL) {
+                pL.className = 'prox-pill' + (snap.proximity.left ? ' danger' : '');
+                pL.textContent = snap.proximity.left ? '◀ CAR LEFT!' : '◀ LEFT CLEAR';
+            }
+            if (pA) {
+                pA.className = 'prox-pill' + (snap.proximity.aheadClose ? ' warn' : '');
+                pA.textContent = snap.proximity.aheadClose ? '▲ SLIPSTREAM / CLOSE' : '▲ AHEAD CLEAR';
+            }
+            if (pR) {
+                pR.className = 'prox-pill' + (snap.proximity.rear ? ' warn' : '');
+                pR.textContent = snap.proximity.rear ? '▼ RIVAL ATTACKING!' : '▼ REAR CLEAR';
+            }
+            if (pRt) {
+                pRt.className = 'prox-pill' + (snap.proximity.right ? ' danger' : '');
+                pRt.textContent = snap.proximity.right ? 'CAR RIGHT! ▶' : 'RIGHT CLEAR ▶';
+            }
+        }
+
         // Update Bottom Center Telemetry Pod
         const fc = snap.followedCar || snap.playerCar1;
         if (fc) {
@@ -530,6 +573,12 @@ class F1ManagerApp {
     setDriverCmd(driverId, pace, ers) {
         window.f1Audio.playUiClick(false);
         this.engine.setCarCommands(driverId, pace, ers);
+        this.updateLiveTelemetryHUD(this.engine.getSnapshot());
+    }
+
+    setTeamOrder(mode) {
+        window.f1Audio.playUiClick(true);
+        this.engine.setTeamOrder(mode);
         this.updateLiveTelemetryHUD(this.engine.getSnapshot());
     }
 
@@ -580,8 +629,118 @@ class F1ManagerApp {
         this.appendRadioLog('METEO FRANCE', `기상 레이더 업데이트: [${next}] 상태로 전환되었습니다.`);
     }
 
+    triggerFlashbackLive() {
+        window.f1Audio.playUiClick(true);
+        const ok = this.engine.triggerFlashback();
+        if (ok) {
+            this.notify('⏪ FLASHBACK: 주행 시점을 5초 전으로 되감았습니다!');
+        } else {
+            this.notify('아직 되감기할 이전 주행 스냅샷이 부족합니다 (최소 2초 주행 후 사용 가능).');
+        }
+    }
+
     triggerVscLive() {
-        this.engine.triggerSafetyCar('SC', '트랙 위 카본 데브리 수거!');
+        window.f1Audio.playUiClick(true);
+        const nextType = this.engine.trackFlag === 'SC' ? 'VSC' : 'SC';
+        this.engine.triggerSafetyCar(nextType, '트랙 위 카본 데브리 수거 및 세이프티카 선도 주행!');
+        this.notify(`🟡 ${nextType === 'SC' ? 'SAFETY CAR 출동! 선두에 실제 세이프티카가 배치되었습니다.' : 'VIRTUAL SAFETY CAR 발령!'}`);
+    }
+
+    triggerRedFlagLive() {
+        window.f1Audio.playUiClick(true);
+        this.engine.triggerRedFlag('레이스 디렉터 적기(RED FLAG) 발령 — 트랙 배리어 점검 및 전 차량 그리드 정렬');
+    }
+
+    showRedFlagGarageModal(reason, curLap, totalLaps) {
+        const modal = document.getElementById('redFlagGarageModal');
+        const body = document.getElementById('redFlagGarageBody');
+        if (!modal || !body) return;
+
+        const c1 = this.engine.playerCar1;
+        const c2 = this.engine.playerCar2;
+        if (c1) this.redFlagTire1 = c1.tireCompound;
+        if (c2) this.redFlagTire2 = c2.tireCompound;
+
+        this.renderRedFlagGarageContent(reason, curLap, totalLaps);
+        modal.style.display = 'flex';
+    }
+
+    renderRedFlagGarageContent(reason, curLap, totalLaps) {
+        const body = document.getElementById('redFlagGarageBody');
+        if (!body) return;
+        const c1 = this.engine.playerCar1;
+        const c2 = this.engine.playerCar2;
+
+        const renderCarBox = (car, slotNum, selectedTire) => {
+            if (!car) return '';
+            return `
+                <div style="background:#0D1017;border:1px solid var(--border-strong);border-left:4px solid ${car.team.primaryColor};padding:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <strong style="font-size:15px;">P${car.position} • #${car.driver.number} ${car.driver.korName} (${car.driver.code})</strong>
+                        <span style="font-family:var(--font-Telemetry);font-size:11px;color:#22C55E;font-weight:800;">
+                            ${car.dnf ? 'RETIRED (DNF)' : 'WING REPAIRED 100%'}
+                        </span>
+                    </div>
+                    <div style="font-size:11px;color:#94A3B8;margin-bottom:10px;">
+                        레드플래그 규정(Article 57.4)에 따라 피트스톱 시간 손실 없이 새 타이어 세트로 무료 교체할 수 있습니다:
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;">
+                        ${Object.keys(window.F1Data.tireCompounds).map(tk => {
+                            const tc = window.F1Data.tireCompounds[tk];
+                            const isSel = selectedTire === tk;
+                            return `
+                                <button class="pw-comp-btn ${isSel ? 'selected' : ''}"
+                                        style="border-bottom:3px solid ${tc.color};padding:8px 0;font-size:11px;${isSel ? 'outline:2px solid #fff;' : ''}"
+                                        onclick="window.F1App.selectRedFlagTire(${slotNum}, '${tk}')">
+                                    <div>${tc.short}</div>
+                                    <div style="font-size:9px;color:#94A3B8;">100% NEW</div>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        };
+
+        body.innerHTML = `
+            <div class="fia-panel-head" style="border-bottom:2px solid #EF4444;">
+                <div>
+                    <div style="font-family:var(--font-Telemetry);font-size:11px;color:#EF4444;font-weight:800;">FIA RACE CONTROL — SESSION SUSPENDED</div>
+                    <div class="fia-panel-title" style="font-size:22px;color:#EF4444;">🔴 RED FLAG — PARC FERMÉ &amp; STANDING RESTART</div>
+                </div>
+                <span style="font-family:var(--font-Telemetry);font-size:13px;color:#FFD100;font-weight:800;">
+                    LAP ${curLap} / ${totalLaps} • WEATHER: ${this.engine.weather}
+                </span>
+            </div>
+
+            <div style="background:rgba(239,68,68,0.12);border:1px solid #EF4444;padding:12px 14px;margin-bottom:16px;font-size:12px;color:#FCA5A5;">
+                <strong>적기 발령 사유:</strong> ${reason}<br>
+                모든 생존 차량이 현재 순위대로 스타트/피니시 그리드에 재정렬되었으며, 파손된 프론트 윙이 100% 수리되었습니다. 재출발에 사용할 타이어 컴파운드를 선택하십시오.
+            </div>
+
+            <div class="mgmt-grid-2" style="margin-bottom:18px;">
+                ${renderCarBox(c1, 1, this.redFlagTire1)}
+                ${renderCarBox(c2, 2, this.redFlagTire2)}
+            </div>
+
+            <button class="fia-btn-red" style="width:100%;font-size:16px;padding:12px;" onclick="window.F1App.confirmRedFlagRestart()">
+                🟢 PROCEED TO STANDING RESTART (5 RED LIGHTS 그리드 재출발)
+            </button>
+        `;
+    }
+
+    selectRedFlagTire(slotNum, compKey) {
+        window.f1Audio.playUiClick(false);
+        if (slotNum === 1) this.redFlagTire1 = compKey;
+        else this.redFlagTire2 = compKey;
+        const snap = this.engine.getSnapshot();
+        this.renderRedFlagGarageContent('트랙 정비 완료 대기 중', snap.lap, snap.totalLaps);
+    }
+
+    confirmRedFlagRestart() {
+        window.f1Audio.playUiClick(true);
+        document.getElementById('redFlagGarageModal').style.display = 'none';
+        this.engine.resumeFromRedFlag(this.redFlagTire1, this.redFlagTire2);
     }
 
     manualDrsClick() {

@@ -263,6 +263,12 @@ html, body {
     color: #000;
 }
 
+.rc-flag-badge.red {
+    background: #EF4444;
+    color: #fff;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.8);
+}
+
 .rc-weather-telemetry {
     font-family: var(--font-Telemetry);
     font-size: 11px;
@@ -597,6 +603,37 @@ html, body {
     border: 1px solid var(--border-strong);
     border-top: 2px solid var(--f1-red);
     padding: 8px 16px;
+}
+
+.proximity-radar-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    margin-bottom: 5px;
+}
+
+.prox-pill {
+    background: #11151E;
+    border: 1px solid #1E2536;
+    color: #475569;
+    font-family: var(--font-Telemetry);
+    font-size: 9px;
+    font-weight: 800;
+    text-align: center;
+    padding: 2px 4px;
+    transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+
+.prox-pill.warn {
+    background: rgba(250, 204, 21, 0.22);
+    border-color: #FACC15;
+    color: #FACC15;
+}
+
+.prox-pill.danger {
+    background: rgba(239, 68, 68, 0.35);
+    border-color: #EF4444;
+    color: #FFF;
 }
 
 .rev-lights-bar {

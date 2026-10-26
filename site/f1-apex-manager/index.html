@@ -80,8 +80,10 @@
 
                     <button class="rc-btn" id="rcCamBtn" onclick="window.F1App.cycleCamera()">CAM: CHASE [C]</button>
                     <button class="rc-btn active" id="rcControlModeBtn" onclick="window.F1App.toggleDriveControlMode()">MODE: MANUAL DRIVE</button>
+                    <button class="rc-btn" style="border-color:#38BDF8;color:#38BDF8;" onclick="window.F1App.triggerFlashbackLive()" title="사고 발생 시 5초 전으로 되감기 [R]">⏪ FLASHBACK [R]</button>
                     <button class="rc-btn" onclick="window.F1App.cycleWeatherLive()">WEATHER</button>
-                    <button class="rc-btn" onclick="window.F1App.triggerVscLive()">VSC/SC</button>
+                    <button class="rc-btn" style="border-color:#FACC15;color:#FACC15;" onclick="window.F1App.triggerVscLive()">SAFETY CAR</button>
+                    <button class="rc-btn" style="border-color:#EF4444;color:#EF4444;" onclick="window.F1App.triggerRedFlagLive()">🔴 RED FLAG</button>
                     <button class="rc-btn" style="border-color:#E10600;color:#FCA5A5;" onclick="window.F1App.finishRaceNow()">FINISH GP</button>
                 </div>
             </div>
@@ -120,6 +122,19 @@
                 <!-- Car 2 Strategy Box -->
                 <div class="pw-driver-box" id="pwDriverBox2"></div>
 
+                <!-- Team Orders (MULTI-21 / Hold / Swap) -->
+                <div class="pw-driver-box" style="padding:6px 10px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                        <span style="font-family:var(--font-Broadcast);font-size:11px;font-weight:800;color:#FFD100;letter-spacing:0.5px;">TEAM ORDERS (팀 오더 • MULTI-21)</span>
+                        <span id="pwTeamOrderStatus" style="font-family:var(--font-Telemetry);font-size:9px;color:#22C55E;">FREE TO RACE</span>
+                    </div>
+                    <div class="pw-cmd-grid" style="margin-bottom:0;">
+                        <button id="toBtn_FREE" class="pw-cmd-btn active-save" onclick="window.F1App.setTeamOrder('FREE')">FREE TO RACE</button>
+                        <button id="toBtn_HOLD" class="pw-cmd-btn" onclick="window.F1App.setTeamOrder('HOLD')">HOLD POSITIONS</button>
+                        <button id="toBtn_SWAP" class="pw-cmd-btn" onclick="window.F1App.setTeamOrder('SWAP')">SWAP POSITIONS</button>
+                    </div>
+                </div>
+
                 <!-- Race Engineer Radio Log -->
                 <div class="pw-radio-feed">
                     <div class="pw-panel-header">
@@ -132,6 +147,13 @@
 
             <!-- Bottom Center Telemetry Pod -->
             <div class="fia-telemetry-pod">
+                <!-- 360° Wheel-to-Wheel Proximity Radar Strip -->
+                <div class="proximity-radar-strip">
+                    <span class="prox-pill" id="proxLeft">◀ LEFT CLEAR</span>
+                    <span class="prox-pill" id="proxAhead">▲ AHEAD CLEAR</span>
+                    <span class="prox-pill" id="proxRear">▼ REAR CLEAR</span>
+                    <span class="prox-pill" id="proxRight">RIGHT CLEAR ▶</span>
+                </div>
                 <div class="rev-lights-bar" id="revLightsBar">
                     <div class="rev-led"></div><div class="rev-led"></div><div class="rev-led"></div><div class="rev-led"></div><div class="rev-led"></div>
                     <div class="rev-led"></div><div class="rev-led"></div><div class="rev-led"></div><div class="rev-led"></div><div class="rev-led"></div>
@@ -163,7 +185,7 @@
                     </div>
                 </div>
                 <div style="margin-top:5px;border-top:1px solid #1C2230;padding-top:4px;font-family:var(--font-Telemetry);font-size:9px;color:#64748B;text-align:center;">
-                    MANUAL DRIVE: [W/S] 가속/브레이크 • [A/D] 에이펙스 조향/추월 • [SPACE] ERS 오버테이크 • [SHIFT] DRS 개방 • [B] BOX 피트인 • [C] 카메라
+                    [W/S] 가속/브레이크 • [A/D] 조향/추월 • [SPACE] ERS • [SHIFT] DRS • [B] BOX 피트인 • [R] 5초 되감기(Flashback) • [C] 카메라
                 </div>
             </div>
         </section>
@@ -338,6 +360,13 @@
     ===================================================================== -->
     <div class="fia-modal-overlay" id="postRaceClassificationModal">
         <div class="fia-modal-window" id="postRaceClassificationBody"></div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 3: FIA RED FLAG — SESSION SUSPENDED & STANDING RESTART GARAGE
+    ===================================================================== -->
+    <div class="fia-modal-overlay" id="redFlagGarageModal">
+        <div class="fia-modal-window" id="redFlagGarageBody"></div>
     </div>
 
     <!-- Hidden File Input for Importing Save .json -->
