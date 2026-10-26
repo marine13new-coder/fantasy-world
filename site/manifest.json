@@ -238,5 +238,21 @@
     "desc": "헤드샷 3.5배 데미지, 부위별 피격 경직 및 절단, 0.05초 역경직(Hit-stop), 50종 무기 스위칭과 물리 래그돌을 탑재한 스팀 퀄리티 3D 하드코어 좀비 액션.",
     "icon": "🧟",
     "theme_color": "#ff3b30"
+  },
+  {
+    "session": "16",
+    "slug": "souls-borne",
+    "title": "블러드 소울: 재의 사냥꾼",
+    "sub_title": "Blood Souls : Ashen Hunter",
+    "category": "action",
+    "category_name": "아케이드/액션",
+    "genre": "3D 하드코어 소울라이크",
+    "platform": "Web HTML5 · Three.js 3D",
+    "tech": "Three.js · Procedural Synth Audio · Soulsborne Combat Engine",
+    "score": 100,
+    "fun": 100,
+    "desc": "다크소울 & 블러드본의 완벽한 오마주! 변형 톱단도 [Z] 접힘/펼침 모드, 왼손 사냥꾼 단총 공격 윈드업 패링, 무릎 꿇린 적 대상 내장뽑기(Visceral Attack) 피분수 치명타, 블러드본 리게인(Rally) 체력 회수 시스템, 화톳불 휴식과 2페이즈 심연의 기사 말라코르 보스전을 구현한 3D 소울라이크 걸작.",
+    "icon": "🩸",
+    "theme_color": "#e11d48"
   }
 ]

@@ -1,0 +1,2154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>블러드 소울: 재의 사냥꾼 (Blood Souls: Ashen Hunter) - 3D Soulsborne Action</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cinzel+Decorative:wght@700;900&family=Pretendard:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #050305; font-family: 'Cinzel', 'Pretendard', serif; color: #e2e8f0; }
+    #canvas-container { width: 100%; height: 100%; position: absolute; left: 0; top: 0; z-index: 1; }
+
+    /* HUD UI */
+    #hud { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+
+    /* 좌상단 체력 / 리게인 / 스태미너 바 (Authentic Dark Souls & Bloodborne HUD) */
+    #vitals-container {
+      position: absolute; top: 28px; left: 32px;
+      display: flex; flex-direction: column; gap: 7px;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.8));
+    }
+    .bar-frame {
+      position: relative; width: 320px; height: 14px;
+      background: rgba(12, 10, 14, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 2px; overflow: hidden;
+      box-shadow: inset 0 0 6px rgba(0,0,0,0.9);
+    }
+    .bar-frame.stamina { width: 260px; height: 10px; }
+    
+    /* 체력바: 실제 체력(레드) + 블러드본 리게인 잠재력(오렌지) */
+    #hp-rally-bar {
+      position: absolute; top: 0; left: 0; height: 100%; width: 100%;
+      background: linear-gradient(90deg, #d97706, #b45309);
+      transition: width 0.3s ease;
+    }
+    #hp-bar {
+      position: absolute; top: 0; left: 0; height: 100%; width: 100%;
+      background: linear-gradient(90deg, #dc2626, #991b1b);
+      transition: width 0.08s ease-out;
+      box-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
+    }
+    #stamina-bar {
+      position: absolute; top: 0; left: 0; height: 100%; width: 100%;
+      background: linear-gradient(90deg, #10b981, #047857);
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+    }
+    .vitals-label {
+      position: absolute; right: 6px; top: -1px; font-size: 9px;
+      font-family: 'Cinzel', serif; font-weight: 700; color: rgba(255,255,255,0.7);
+      letter-spacing: 1px;
+    }
+
+    /* 좌하단 4방향 D-패드 퀵슬롯 장비창 */
+    #dpad-slots {
+      position: absolute; left: 32px; bottom: 32px;
+      width: 130px; height: 130px;
+    }
+    .slot-box {
+      position: absolute; width: 52px; height: 52px;
+      background: rgba(14, 11, 16, 0.88);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 4px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.8);
+      backdrop-filter: blur(6px); transition: border-color 0.2s;
+    }
+    .slot-top { top: 0; left: 39px; }       /* 주무기: 톱단도 / 월광검 */
+    .slot-left { top: 39px; left: 0; }      /* 보조무기: 사냥꾼 단총 (패링) */
+    .slot-bottom { bottom: 0; left: 39px; }  /* 소모품: 수혈액 / 에스트병 */
+    .slot-right { top: 39px; right: 0; }    /* 아이템: 투척골 / 화염부적 */
+
+    .slot-icon { font-size: 20px; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.9)); }
+    .slot-name { font-size: 8px; font-weight: 700; color: #d4af37; margin-top: 2px; text-transform: uppercase; }
+    .slot-key {
+      position: absolute; top: -6px; right: -6px;
+      background: #7f1d1d; color: #fff; font-size: 8px; font-weight: 900;
+      padding: 1px 4px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.3);
+    }
+    .slot-count {
+      position: absolute; bottom: 1px; right: 3px;
+      font-size: 11px; font-weight: 900; color: #fef08a; font-family: 'Cinzel', serif;
+    }
+    .trick-tag {
+      position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);
+      font-size: 7px; color: #f59e0b; background: rgba(0,0,0,0.8); padding: 0 4px; border-radius: 2px; white-space: nowrap;
+    }
+
+    /* 우하단 피의 유지 / 소울 카운터 */
+    #souls-panel {
+      position: absolute; right: 36px; bottom: 36px;
+      display: flex; align-items: baseline; gap: 10px;
+      background: rgba(14, 11, 16, 0.85); padding: 8px 18px;
+      border: 1px solid rgba(212, 175, 55, 0.35); border-radius: 4px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+    }
+    .souls-icon { font-size: 20px; color: #f43f5e; text-shadow: 0 0 10px rgba(244, 63, 94, 0.8); }
+    .souls-val { font-size: 24px; font-weight: 900; color: #f8fafc; font-family: 'Cinzel', serif; letter-spacing: 2px; }
+
+    /* 화면 하단 보스 체력바 (Boss Gauge) */
+    #boss-hud {
+      position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%);
+      width: 680px; max-width: 90%; display: none; flex-direction: column; align-items: center;
+      transition: opacity 0.5s ease;
+    }
+    .boss-name {
+      font-size: 16px; font-weight: 700; color: #e2e8f0; font-family: 'Cinzel', serif;
+      letter-spacing: 4px; text-shadow: 0 0 12px rgba(225, 29, 72, 0.8); margin-bottom: 6px;
+    }
+    .boss-bar-wrap {
+      width: 100%; height: 16px; background: rgba(10, 8, 12, 0.95);
+      border: 1px solid rgba(225, 29, 72, 0.6); border-radius: 2px;
+      position: relative; overflow: hidden; box-shadow: 0 0 20px rgba(159, 18, 57, 0.4);
+    }
+    #boss-bar-fill {
+      height: 100%; width: 100%; background: linear-gradient(90deg, #be123c, #e11d48, #9f1239);
+      transition: width 0.15s ease-out;
+    }
+    .boss-phase-tag {
+      font-size: 10px; font-weight: 700; color: #fda4af; letter-spacing: 2px; margin-top: 4px;
+    }
+
+    /* 화면 중앙 상호작용 프롬프트 */
+    #prompt-box {
+      position: absolute; top: 68%; left: 50%; transform: translate(-50%, -50%);
+      background: rgba(12, 9, 15, 0.92); border: 1px solid rgba(212, 175, 55, 0.45);
+      padding: 10px 24px; border-radius: 4px; display: none; align-items: center; gap: 10px;
+      font-size: 14px; font-weight: 600; color: #f1f5f9; letter-spacing: 1px;
+      box-shadow: 0 0 24px rgba(0,0,0,0.8);
+    }
+    .prompt-key {
+      background: #831843; color: #fff; padding: 2px 7px; border-radius: 3px;
+      font-weight: 900; font-family: 'Cinzel', serif; font-size: 13px;
+    }
+    #prompt-box.visceral {
+      border-color: #f43f5e; box-shadow: 0 0 30px rgba(244, 63, 94, 0.8);
+      animation: pulseVisceral 0.8s infinite alternate;
+    }
+    @keyframes pulseVisceral {
+      from { transform: translate(-50%, -50%) scale(1); }
+      to { transform: translate(-50%, -50%) scale(1.08); }
+    }
+
+    /* 타겟 락온 서클 */
+    #lockon-reticle {
+      position: absolute; width: 34px; height: 34px;
+      border: 2px solid rgba(244, 63, 94, 0.85); border-radius: 50%;
+      transform: translate(-50%, -50%) rotate(45deg);
+      pointer-events: none; display: none;
+      box-shadow: 0 0 14px rgba(244, 63, 94, 0.8);
+      transition: width 0.1s, height 0.1s;
+    }
+    #lockon-reticle::before {
+      content: ''; position: absolute; inset: 6px;
+      border: 1px solid rgba(254, 205, 211, 0.7); border-radius: 50%;
+    }
+
+    /* 플로팅 데미지 텍스트 풀 컨테이너 */
+    #floating-damage-container { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+    .damage-popup {
+      position: absolute; font-family: 'Cinzel', serif; font-weight: 900;
+      color: #fff; transform: translate(-50%, -50%); pointer-events: none;
+      text-shadow: 0 2px 6px #000, 0 0 10px rgba(239, 68, 68, 0.8);
+      animation: floatUp 0.8s ease-out forwards;
+    }
+    .damage-popup.crit {
+      font-size: 32px; color: #f43f5e;
+      text-shadow: 0 0 18px rgba(244, 63, 94, 1), 0 0 30px rgba(225, 29, 72, 0.9);
+    }
+    .damage-popup.heal {
+      font-size: 20px; color: #34d399; text-shadow: 0 0 12px rgba(52, 211, 153, 0.8);
+    }
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+      70% { opacity: 1; }
+      100% { opacity: 0; transform: translate(-50%, -90px) scale(0.9); }
+    }
+
+    /* 피격 비네트 & 패링 플래시 */
+    #damage-flash {
+      position: absolute; inset: 0; pointer-events: none;
+      box-shadow: inset 0 0 120px rgba(185, 28, 28, 0.85);
+      opacity: 0; transition: opacity 0.1s ease-out;
+    }
+    #parry-flash {
+      position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(212, 175, 55, 0.3) 50%, transparent 80%);
+      opacity: 0; transition: opacity 0.05s ease-out;
+    }
+
+    /* 풀스크린 배너 오버레이 (YOU DIED / BONFIRE LIT / PREY SLAUGHTERED) */
+    #banner-screen {
+      position: absolute; inset: 0; z-index: 60; pointer-events: none;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: transparent; opacity: 0; transition: opacity 1.2s ease, background 1.5s ease;
+    }
+    .banner-text {
+      font-family: 'Cinzel Decorative', 'Cinzel', serif; font-size: 64px; font-weight: 900;
+      letter-spacing: 12px; text-transform: uppercase; text-align: center;
+      margin-bottom: 12px; transform: scale(0.92); transition: transform 2.5s ease-out;
+    }
+    .banner-sub {
+      font-size: 16px; letter-spacing: 6px; font-family: 'Cinzel', serif;
+      color: #94a3b8; text-transform: uppercase;
+    }
+
+    /* 배너별 스타일 */
+    .banner-died .banner-text {
+      color: #991b1b; text-shadow: 0 0 40px rgba(153, 27, 27, 0.9), 0 0 80px rgba(127, 29, 29, 0.6);
+    }
+    .banner-bonfire .banner-text {
+      color: #f59e0b; text-shadow: 0 0 35px rgba(245, 158, 11, 0.9), 0 0 70px rgba(217, 119, 6, 0.6);
+    }
+    .banner-prey .banner-text {
+      color: #38bdf8; text-shadow: 0 0 40px rgba(56, 189, 248, 0.9), 0 0 80px rgba(14, 165, 233, 0.7);
+    }
+
+    /* 게임 시작 / 일시정지 오버레이 */
+    #start-overlay {
+      position: absolute; inset: 0; z-index: 80;
+      background: radial-gradient(circle at 50% 40%, rgba(20, 14, 24, 0.96) 0%, rgba(5, 3, 6, 0.99) 80%);
+      backdrop-filter: blur(12px); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center; padding: 24px;
+    }
+    .main-title {
+      font-family: 'Cinzel Decorative', serif; font-size: 46px; font-weight: 900;
+      background: linear-gradient(180deg, #fef08a 0%, #d4af37 40%, #854d0e 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: 6px; margin-bottom: 8px; filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.4));
+    }
+    .main-sub {
+      font-size: 14px; font-family: 'Cinzel', serif; color: #94a3b8;
+      letter-spacing: 3px; margin-bottom: 30px; max-width: 640px; line-height: 1.6;
+    }
+    .play-btn {
+      padding: 16px 54px; font-size: 18px; font-family: 'Cinzel', serif; font-weight: 900;
+      letter-spacing: 4px; color: #fef08a; background: linear-gradient(180deg, #7f1d1d, #450a0a);
+      border: 1px solid rgba(212, 175, 55, 0.6); border-radius: 4px; cursor: pointer;
+      box-shadow: 0 8px 30px rgba(127, 29, 29, 0.8); transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .play-btn:hover {
+      transform: scale(1.05); box-shadow: 0 12px 40px rgba(185, 28, 28, 1);
+      border-color: #fef08a;
+    }
+    .controls-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+      margin-top: 36px; max-width: 720px; font-size: 12px; color: #cbd5e1;
+      background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(212, 175, 55, 0.2);
+      padding: 18px 24px; border-radius: 6px; text-align: left;
+    }
+    .ctrl-item { display: flex; align-items: center; gap: 8px; }
+    .ctrl-badge {
+      font-family: 'Cinzel', serif; font-weight: 900; color: #f59e0b;
+      background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4);
+      padding: 2px 7px; border-radius: 3px; font-size: 11px; white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas-container"></div>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div id="damage-flash"></div>
+    <div id="parry-flash"></div>
+    <div id="lockon-reticle"></div>
+    <div id="floating-damage-container"></div>
+
+    <!-- 좌상단 생명력/리게인/스태미너 -->
+    <div id="vitals-container">
+      <div class="bar-frame">
+        <div id="hp-rally-bar"></div>
+        <div id="hp-bar"></div>
+        <span class="vitals-label" id="hp-num">HP 650 / 650</span>
+      </div>
+      <div class="bar-frame stamina">
+        <div id="stamina-bar"></div>
+        <span class="vitals-label" id="stamina-num">SP 120 / 120</span>
+      </div>
+    </div>
+
+    <!-- 좌하단 장비 퀵슬롯 D-패드 -->
+    <div id="dpad-slots">
+      <!-- 위: 주무기 -->
+      <div class="slot-box slot-top">
+        <span class="slot-key">1/2</span>
+        <div class="slot-icon" id="main-wep-icon">🪓</div>
+        <div class="slot-name" id="main-wep-name">톱단도</div>
+        <div class="trick-tag" id="trick-mode-tag">접힘 [Z]</div>
+      </div>
+      <!-- 좌: 사냥꾼 단총 -->
+      <div class="slot-box slot-left">
+        <span class="slot-key">RMB</span>
+        <div class="slot-icon">🔫</div>
+        <div class="slot-name">단총</div>
+        <div class="slot-count" id="bullet-count">12</div>
+      </div>
+      <!-- 하: 수혈액 / 에스트병 -->
+      <div class="slot-box slot-bottom">
+        <span class="slot-key">R</span>
+        <div class="slot-icon">🧪</div>
+        <div class="slot-name">수혈액</div>
+        <div class="slot-count" id="vial-count">5</div>
+      </div>
+      <!-- 우: 비전 투척구 -->
+      <div class="slot-box slot-right">
+        <span class="slot-key">F</span>
+        <div class="slot-icon">✨</div>
+        <div class="slot-name">월광비전</div>
+        <div class="slot-count">∞</div>
+      </div>
+    </div>
+
+    <!-- 우하단 피의 유지 / 소울 -->
+    <div id="souls-panel">
+      <div class="souls-icon">🩸</div>
+      <div class="souls-val" id="souls-display">4,280</div>
+    </div>
+
+    <!-- 보스 체력바 -->
+    <div id="boss-hud">
+      <div class="boss-name" id="boss-title">심연의 기사 말라코르 (Lord Malakor)</div>
+      <div class="boss-bar-wrap">
+        <div id="boss-bar-fill"></div>
+      </div>
+      <div class="boss-phase-tag" id="boss-subtitle">PHASE 1 : THE CORRUPTED SWORDSMAN</div>
+    </div>
+
+    <!-- 상호작용 프롬프트 -->
+    <div id="prompt-box">
+      <span class="prompt-key">E</span>
+      <span id="prompt-desc">화톳불에 불을 붙인다</span>
+    </div>
+  </div>
+
+  <!-- 배너 오버레이 (YOU DIED / BONFIRE LIT / PREY SLAUGHTERED) -->
+  <div id="banner-screen">
+    <div class="banner-text" id="banner-title">YOU DIED</div>
+    <div class="banner-sub" id="banner-subtitle">사냥꾼이 심연으로 쓰러졌습니다</div>
+  </div>
+
+  <!-- 시작 화면 -->
+  <div id="start-overlay">
+    <div class="main-title">BLOOD SOULS</div>
+    <div class="main-sub">
+      다크소울의 묵직한 구르기·스태미너·화톳불 & 블러드본의 변형 톱단도·총기 패링·내장뽑기·리게인 흡혈 시스템을 완벽히 계승한 3D 소울라이크 하드코어 액션
+    </div>
+    <button class="play-btn" id="btn-play">사냥을 시작한다 (HUNT BEGINS)</button>
+    
+    <div class="controls-grid">
+      <div class="ctrl-item"><span class="ctrl-badge">[W A S D]</span> 전술 이동</div>
+      <div class="ctrl-item"><span class="ctrl-badge">[마우스 좌클릭]</span> 공격 / 콤보</div>
+      <div class="ctrl-item"><span class="ctrl-badge">[마우스 우클릭]</span> 총기 패링 사격</div>
+      <div class="ctrl-item"><span class="ctrl-badge">[SPACE]</span> 롤링 구르기 / 퀵스텝</div>
+      <div class="ctrl-item"><span class="ctrl-badge">[Q] / [휠클릭]</span> 타겟 락온 (조준)</div>
+      <div class="ctrl-item"><span class="ctrl-badge">[Z]</span> 톱단도 무기 변형</div>
+      <div class="ctrl-item"><span class="ctrl-badge">[1] / [2]</span> 톱단도 ↔ 월광검 교체</div>
+      <div class="ctrl-item"><span class="ctrl-badge">[R]</span> 수혈액(에스트) 섭취</div>
+      <div class="ctrl-item"><span class="ctrl-badge">[E]</span> 화톳불 휴식 / 안개벽 진입 / 내장뽑기</div>
+    </div>
+  </div>
+
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <script>
+    // ==========================================
+    // 1. PROCEDURAL WEB AUDIO SYNTHESIZER
+    // ==========================================
+    class SoulsAudioSynthesizer {
+      constructor() {
+        this.ctx = null;
+        this.ambientGain = null;
+        this.bossGain = null;
+        this.bossTimer = null;
+        this.isBossMusicPlaying = false;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+          this.startAmbientDrone();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      // 고딕 다크 앰비언트 (Dark Souls Cathedral Ambience)
+      startAmbientDrone() {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const master = this.ctx.createGain();
+        master.gain.setValueAtTime(0.18, now);
+        master.connect(this.ctx.destination);
+        this.ambientGain = master;
+
+        // 서브 베이스 패드 (55Hz)
+        const oscLow = this.ctx.createOscillator();
+        oscLow.type = 'sawtooth';
+        oscLow.frequency.setValueAtTime(55, now);
+
+        const filterLow = this.ctx.createBiquadFilter();
+        filterLow.type = 'lowpass';
+        filterLow.frequency.setValueAtTime(140, now);
+
+        oscLow.connect(filterLow);
+        filterLow.connect(master);
+        oscLow.start();
+
+        // 콰이어 앰비언트 (110Hz + 165Hz)
+        const oscChoir = this.ctx.createOscillator();
+        oscChoir.type = 'triangle';
+        oscChoir.frequency.setValueAtTime(110, now);
+        const choirGain = this.ctx.createGain();
+        choirGain.gain.setValueAtTime(0.3, now);
+        oscChoir.connect(choirGain);
+        choirGain.connect(master);
+        oscChoir.start();
+      }
+
+      // 보스전 오케스트라 전투 테마 (Bloodborne Boss Fight Theme)
+      startBossMusic(phase2 = false) {
+        if (!this.ctx || this.isBossMusicPlaying) return;
+        this.isBossMusicPlaying = true;
+        let step = 0;
+        const bpm = phase2 ? 144 : 120;
+        const interval = (60 / bpm) * 1000 * 0.5;
+
+        this.bossTimer = setInterval(() => {
+          if (!this.ctx) return;
+          const t = this.ctx.currentTime;
+          // 팀파니 북소리
+          if (step % 4 === 0 || (phase2 && step % 2 === 0)) {
+            this.playTimpaniBeat(step % 8 === 0 ? 65 : 82);
+          }
+          // 바이올린 스타카토 / 불협화음 아르페지오
+          if (step % 2 === 1) {
+            const freqs = phase2 ? [220, 233, 293, 311, 440] : [196, 220, 261, 293, 392];
+            const f = freqs[step % freqs.length];
+            this.playStringStaccato(f);
+          }
+          step++;
+        }, interval);
+      }
+
+      stopBossMusic() {
+        if (this.bossTimer) clearInterval(this.bossTimer);
+        this.isBossMusicPlaying = false;
+      }
+
+      playTimpaniBeat(freq) {
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq * 1.8, t);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.5, t + 0.35);
+        gain.gain.setValueAtTime(0.5, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.4);
+      }
+
+      playStringStaccato(freq) {
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, t);
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(freq * 1.5, t);
+        filter.Q.value = 4;
+        gain.gain.setValueAtTime(0.08, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.18);
+      }
+
+      // 무기 휘두르기 (Whoosh)
+      playWhoosh(pitch = 1.0) {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const bufferSize = this.ctx.sampleRate * 0.18;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(320 * pitch, t);
+        filter.frequency.exponentialRampToValueAtTime(750 * pitch, t + 0.08);
+        filter.frequency.exponentialRampToValueAtTime(150 * pitch, t + 0.18);
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.28, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        noise.start(t);
+      }
+
+      // 강철 칼날 타격음 (Blade Clang)
+      playBladeHit(isHeavy = false) {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(isHeavy ? 280 : 540, t);
+        osc.frequency.exponentialRampToValueAtTime(80, t + 0.12);
+        gain.gain.setValueAtTime(isHeavy ? 0.6 : 0.4, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.2);
+      }
+
+      // 톱단도 무기 변형 메커니즘 찰칵음 (Trick Transform Click)
+      playTrickTransform() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        [0, 0.08, 0.15].forEach((offset, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(900 + idx * 350, t + offset);
+          osc.frequency.exponentialRampToValueAtTime(200, t + offset + 0.05);
+          gain.gain.setValueAtTime(0.25, t + offset);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + offset + 0.06);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(t + offset);
+          osc.stop(t + offset + 0.06);
+        });
+      }
+
+      // 사냥꾼 단총 사격음 (Gunshot)
+      playGunshot() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        // 화약 폭발 노이즈
+        const bufferSize = this.ctx.sampleRate * 0.22;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1200, t);
+        filter.frequency.exponentialRampToValueAtTime(200, t + 0.2);
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.8, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        noise.start(t);
+
+        // 총구 격발 펀치
+        const osc = this.ctx.createOscillator();
+        const punchGain = this.ctx.createGain();
+        osc.frequency.setValueAtTime(180, t);
+        osc.frequency.exponentialRampToValueAtTime(40, t + 0.15);
+        punchGain.gain.setValueAtTime(0.6, t);
+        punchGain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+        osc.connect(punchGain);
+        punchGain.connect(this.ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.15);
+      }
+
+      // 블러드본 패링 성공 종소리 (Iconic Bloodborne Parry Bell Chime)
+      playParryBell() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        // 고음의 은빛 벨 배음
+        [1760, 2637, 3520].forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, t);
+          gain.gain.setValueAtTime(0.35 / (idx + 1), t);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(t);
+          osc.stop(t + 1.2);
+        });
+      }
+
+      // 내장 뽑기 (Visceral Attack Squish & Blood Burst)
+      playVisceralAttack() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        // 깊숙한 뼈 으스러지는 저음 펀치
+        const punch = this.ctx.createOscillator();
+        const punchGain = this.ctx.createGain();
+        punch.type = 'triangle';
+        punch.frequency.setValueAtTime(140, t);
+        punch.frequency.exponentialRampToValueAtTime(25, t + 0.4);
+        punchGain.gain.setValueAtTime(0.9, t);
+        punchGain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+        punch.connect(punchGain);
+        punchGain.connect(this.ctx.destination);
+        punch.start(t);
+        punch.stop(t + 0.45);
+
+        // 살점 파열 노이즈 (Squish)
+        const bufferSize = this.ctx.sampleRate * 0.4;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * Math.sin(i * 0.08);
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(800, t);
+        filter.frequency.linearRampToValueAtTime(300, t + 0.35);
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.7, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        noise.start(t);
+      }
+
+      // 수혈액 섭취 (Blood Vial / Estus Sip)
+      playHeal() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, t);
+        osc.frequency.exponentialRampToValueAtTime(880, t + 0.3);
+        gain.gain.setValueAtTime(0.25, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.45);
+      }
+
+      // 회피 (Dodge Roll / Quickstep)
+      playDodge() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(240, t);
+        osc.frequency.exponentialRampToValueAtTime(70, t + 0.22);
+        gain.gain.setValueAtTime(0.2, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.25);
+      }
+
+      // 화톳불 점화 (Bonfire Lit)
+      playBonfireLit() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        [220, 277, 330, 440, 554].forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, t + idx * 0.12);
+          gain.gain.setValueAtTime(0.25, t + idx * 0.12);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + idx * 0.12 + 1.5);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(t + idx * 0.12);
+          osc.stop(t + idx * 0.12 + 1.5);
+        });
+      }
+
+      // 사망 징 소리 (YOU DIED Gong)
+      playYouDied() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        [55, 82.4, 110].forEach(freq => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, t);
+          gain.gain.setValueAtTime(0.4, t);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + 3.2);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(t);
+          osc.stop(t + 3.2);
+        });
+      }
+
+      // 보스 격파 (PREY SLAUGHTERED)
+      playPreySlaughtered() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        [261, 329, 392, 523, 659].forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, t + idx * 0.1);
+          gain.gain.setValueAtTime(0.3, t + idx * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + idx * 0.1 + 3.5);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(t + idx * 0.1);
+          osc.stop(t + idx * 0.1 + 3.5);
+        });
+      }
+    }
+
+    const audio = new SoulsAudioSynthesizer();
+
+    // ==========================================
+    // 2. THREE.JS PROCEDURAL 3D WORLD & GRAPHICS
+    // ==========================================
+    let scene, camera, renderer;
+    let clock = new THREE.Clock();
+    let player, enemies = [], boss = null;
+    let bonfire, fogGate;
+    let bloodParticles = [];
+    let emberParticles = [];
+
+    // 플레이어 스탯 및 상태 머신
+    const PlayerStats = {
+      maxHp: 650,
+      hp: 650,
+      rallyHp: 650,       // 블러드본 리게인 잠재 체력
+      rallyTimer: 0,      // 리게인 유지 시간 (초)
+      maxStamina: 120,
+      stamina: 120,
+      souls: 4280,
+      bloodVials: 5,
+      maxVials: 10,
+      bullets: 12,
+      maxBullets: 20,
+      
+      currentWeapon: 'saw_cleaver', // 'saw_cleaver' or 'moonlight'
+      isTricked: false,             // 톱단도 변형 상태
+      
+      isLockedOn: false,
+      lockedTarget: null,
+      
+      state: 'IDLE',      // IDLE, MOVE, DODGE, ATTACK, PARRY, VISCERAL, HEAL, HIT, DEAD
+      stateTimer: 0,
+      comboStep: 0,
+      iFrames: 0,         // 무적 시간
+      isExhausted: false  // 스태미너 소진 상태
+    };
+
+    const keys = {};
+    const mouse = { x: 0, y: 0, isDown: false, rmbDown: false };
+    let cameraAngle = { yaw: 0, pitch: 0.28, distance: 7.5 };
+
+    // 절차적 텍스처 생성기 (Procedural Cobblestone & Stone Tile)
+    function createCobbleTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512; canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#181418';
+      ctx.fillRect(0, 0, 512, 512);
+
+      // 불규칙 돌 블록 그리기
+      ctx.strokeStyle = '#09070a';
+      ctx.lineWidth = 3;
+      for (let y = 0; y < 512; y += 32) {
+        const offset = (y % 64 === 0) ? 0 : 16;
+        for (let x = offset; x < 512 + 32; x += 32) {
+          const shade = 28 + Math.floor(Math.random() * 25);
+          ctx.fillStyle = `rgb(${shade+4}, ${shade}, ${shade+2})`;
+          ctx.fillRect(x - 30, y + 2, 28, 28);
+          ctx.strokeRect(x - 30, y + 2, 28, 28);
+        }
+      }
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    function init3D() {
+      const container = document.getElementById('canvas-container');
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x070408);
+      scene.fog = new THREE.FogExp2(0x0a0508, 0.016); // 짙은 고딕 핏빛 안개
+
+      camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 300);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.1;
+      container.appendChild(renderer.domElement);
+
+      buildLighting();
+      buildGothicCourtyard();
+      buildBloodMoon();
+      buildBonfire();
+      fogGate = buildFogGate();
+      buildPlayer();
+      spawnEnemies();
+      spawnBoss();
+      initEmberParticles();
+
+      window.addEventListener('resize', onWindowResize);
+      setupInputs();
+    }
+
+    // 고딕 조명 및 월광
+    function buildLighting() {
+      // 은은한 어스름 달빛
+      const hemiLight = new THREE.HemisphereLight(0x475569, 0x180c14, 0.45);
+      scene.add(hemiLight);
+
+      // 붉은 월식의 메인 디렉셔널 라이트 (Blood Moon Directional Light)
+      const moonLight = new THREE.DirectionalLight(0xe11d48, 1.2);
+      moonLight.position.set(40, 70, -60);
+      moonLight.castShadow = true;
+      moonLight.shadow.mapSize.width = 2048;
+      moonLight.shadow.mapSize.height = 2048;
+      moonLight.shadow.camera.near = 10;
+      moonLight.shadow.camera.far = 250;
+      const d = 50;
+      moonLight.shadow.camera.left = -d;
+      moonLight.shadow.camera.right = d;
+      moonLight.shadow.camera.top = d;
+      moonLight.shadow.camera.bottom = -d;
+      scene.add(moonLight);
+    }
+
+    // 거대한 붉은 월식 (The Bloodborne Blood Moon)
+    function buildBloodMoon() {
+      const moonGeo = new THREE.SphereGeometry(18, 32, 32);
+      const moonMat = new THREE.MeshBasicMaterial({
+        color: 0x9f1239,
+        wireframe: false
+      });
+      const moon = new THREE.Mesh(moonGeo, moonMat);
+      moon.position.set(80, 110, -140);
+      scene.add(moon);
+
+      // 달 주변 붉은 오라 글로우 링
+      const ringGeo = new THREE.RingGeometry(19, 28, 32);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0xf43f5e,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.35
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.position.copy(moon.position);
+      ring.lookAt(0, 0, 0);
+      scene.add(ring);
+    }
+
+    // 고딕 양식 성당 및 폐허 안마당 건축
+    function buildGothicCourtyard() {
+      const cobbleTex = createCobbleTexture();
+      cobbleTex.wrapS = THREE.RepeatWrapping;
+      cobbleTex.wrapT = THREE.RepeatWrapping;
+      cobbleTex.repeat.set(30, 45);
+
+      // 1. 바닥 석판
+      const groundGeo = new THREE.PlaneGeometry(160, 240);
+      const groundMat = new THREE.MeshStandardMaterial({
+        map: cobbleTex,
+        roughness: 0.85,
+        metalness: 0.2
+      });
+      const ground = new THREE.Mesh(groundGeo, groundMat);
+      ground.rotation.x = -Math.PI / 2;
+      ground.receiveShadow = true;
+      scene.add(ground);
+
+      // 2. 외벽 및 고딕 기둥 회랑
+      const stoneMat = new THREE.MeshStandardMaterial({ color: 0x241d24, roughness: 0.9 });
+      
+      // 좌우 긴 성벽
+      [-40, 40].forEach(x => {
+        const wallGeo = new THREE.BoxGeometry(4, 18, 240);
+        const wall = new THREE.Mesh(wallGeo, stoneMat);
+        wall.position.set(x, 9, 0);
+        wall.receiveShadow = true;
+        wall.castShadow = true;
+        scene.add(wall);
+
+        // 성벽 위 흉벽 (Crenellations)
+        for (let z = -110; z <= 110; z += 12) {
+          const battGeo = new THREE.BoxGeometry(4.2, 4, 6);
+          const batt = new THREE.Mesh(battGeo, stoneMat);
+          batt.position.set(x, 20, z);
+          scene.add(batt);
+        }
+      });
+
+      // 후방 폐허 입구 벽
+      const backWallGeo = new THREE.BoxGeometry(84, 18, 4);
+      const backWall = new THREE.Mesh(backWallGeo, stoneMat);
+      backWall.position.set(0, 9, 118);
+      scene.add(backWall);
+
+      // 전방 대성당 입구 파사드 (Gothic Cathedral Façade)
+      const frontWallL = new THREE.Mesh(new THREE.BoxGeometry(32, 28, 6), stoneMat);
+      frontWallL.position.set(-26, 14, -50);
+      scene.add(frontWallL);
+
+      const frontWallR = new THREE.Mesh(new THREE.BoxGeometry(32, 28, 6), stoneMat);
+      frontWallR.position.set(26, 14, -50);
+      scene.add(frontWallR);
+
+      // 중앙 고딕 뾰족 아치 입구
+      const archTop = new THREE.Mesh(new THREE.BoxGeometry(24, 10, 6), stoneMat);
+      archTop.position.set(0, 23, -50);
+      scene.add(archTop);
+
+      // 대성당 내부 보스 아레나 성벽 (안개문 너머)
+      [-40, 40].forEach(x => {
+        const bossWall = new THREE.Mesh(new THREE.BoxGeometry(4, 28, 80), stoneMat);
+        bossWall.position.set(x, 14, -90);
+        scene.add(bossWall);
+      });
+      const bossFarWall = new THREE.Mesh(new THREE.BoxGeometry(84, 28, 4), stoneMat);
+      bossFarWall.position.set(0, 14, -130);
+      scene.add(bossFarWall);
+
+      // 고딕 기둥 (Gothic Arched Pillars)
+      for (let z = -40; z <= 80; z += 30) {
+        [-24, 24].forEach(x => {
+          buildPillar(x, z);
+        });
+      }
+
+      // 고딕 가스 가등 (Street Lanterns)
+      [-16, 16].forEach(x => {
+        [20, 60].forEach(z => {
+          buildGothicLantern(x, z);
+        });
+      });
+    }
+
+    function buildPillar(x, z) {
+      const mat = new THREE.MeshStandardMaterial({ color: 0x1f1920, roughness: 0.85 });
+      const base = new THREE.Mesh(new THREE.BoxGeometry(3.6, 2, 3.6), mat);
+      base.position.set(x, 1, z);
+      scene.add(base);
+
+      const col = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.4, 20, 8), mat);
+      col.position.set(x, 11, z);
+      col.castShadow = true;
+      col.receiveShadow = true;
+      scene.add(col);
+
+      const top = new THREE.Mesh(new THREE.BoxGeometry(3.6, 2.5, 3.6), mat);
+      top.position.set(x, 21.5, z);
+      scene.add(top);
+    }
+
+    function buildGothicLantern(x, z) {
+      const poleMat = new THREE.MeshStandardMaterial({ color: 0x111, metalness: 0.8, roughness: 0.3 });
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 7), poleMat);
+      pole.position.set(x, 3.5, z);
+      scene.add(pole);
+
+      const lampGeo = new THREE.BoxGeometry(0.8, 1.2, 0.8);
+      const lampMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+      const lamp = new THREE.Mesh(lampGeo, lampMat);
+      lamp.position.set(x, 7, z);
+      scene.add(lamp);
+
+      const light = new THREE.PointLight(0xf59e0b, 1.4, 18);
+      light.position.set(x, 7, z);
+      scene.add(light);
+    }
+
+    // 화톳불 (Bonfire - Coiled Sword & Embers)
+    function buildBonfire() {
+      bonfire = new THREE.Group();
+      bonfire.position.set(0, 0, 80);
+
+      // 뼈와 잿더미
+      const ashMat = new THREE.MeshStandardMaterial({ color: 0x261a1a, roughness: 0.9 });
+      const ashPile = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 3.2, 0.6, 12), ashMat);
+      ashPile.position.y = 0.3;
+      bonfire.add(ashPile);
+
+      // 나선검 (Coiled Sword)
+      const swordMat = new THREE.MeshStandardMaterial({ color: 0x78716c, metalness: 0.7, roughness: 0.4 });
+      const blade = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.18, 3.4, 5), swordMat);
+      blade.position.set(0.1, 1.8, 0);
+      blade.rotation.z = 0.18;
+      blade.rotation.x = -0.15;
+      bonfire.add(blade);
+
+      // 타오르는 화톳불 불꽃
+      const flameMat = new THREE.MeshBasicMaterial({ color: 0xf97316 });
+      const flame = new THREE.Mesh(new THREE.ConeGeometry(0.7, 1.8, 8), flameMat);
+      flame.position.set(0, 1.2, 0);
+      bonfire.add(flame);
+
+      const fireLight = new THREE.PointLight(0xf97316, 2.2, 16);
+      fireLight.position.set(0, 1.8, 0);
+      bonfire.add(fireLight);
+
+      scene.add(bonfire);
+    }
+
+    // 안개벽 (Fog Gate to Boss Room)
+    function buildFogGate() {
+      const fogPlaneGeo = new THREE.PlaneGeometry(16, 16);
+      const fogMat = new THREE.MeshBasicMaterial({
+        color: 0xf1f5f9,
+        transparent: true,
+        opacity: 0.75,
+        side: THREE.DoubleSide
+      });
+      const gate = new THREE.Mesh(fogPlaneGeo, fogMat);
+      gate.position.set(0, 8, -50);
+      scene.add(gate);
+      return gate;
+    }
+
+    // 잿더미 / 불티 파티클 시스템 (Ambient Embers)
+    function initEmberParticles() {
+      const emberCount = 300;
+      const geom = new THREE.BufferGeometry();
+      const positions = new Float32Array(emberCount * 3);
+      const velocities = [];
+
+      for (let i = 0; i < emberCount; i++) {
+        positions[i * 3] = (Math.random() - 0.5) * 80;
+        positions[i * 3 + 1] = Math.random() * 20;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 160;
+        velocities.push({
+          x: (Math.random() - 0.5) * 0.04,
+          y: 0.02 + Math.random() * 0.05,
+          z: (Math.random() - 0.5) * 0.04
+        });
+      }
+      geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const mat = new THREE.PointsMaterial({
+        color: 0xf97316,
+        size: 0.22,
+        transparent: true,
+        opacity: 0.8
+      });
+      const pSystem = new THREE.Points(geom, mat);
+      scene.add(pSystem);
+      emberParticles = { system: pSystem, velocities: velocities, count: emberCount };
+    }
+
+    // ==========================================
+    // 3. PLAYER & WEAPON RIGGING (Hunter & Trick Weapon)
+    // ==========================================
+    function buildPlayer() {
+      player = new THREE.Group();
+      player.position.set(0, 0, 70);
+
+      // 본체(몸통)
+      const coatMat = new THREE.MeshStandardMaterial({ color: 0x1c1917, roughness: 0.8 });
+      const torso = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.25, 0.45), coatMat);
+      torso.position.y = 1.35;
+      torso.castShadow = true;
+      player.add(torso);
+
+      // 코트 자락 (Trench Coat Tails)
+      const tailGeo = new THREE.BoxGeometry(0.88, 1.1, 0.1);
+      const coatTail = new THREE.Mesh(tailGeo, coatMat);
+      coatTail.position.set(0, 0.8, -0.22);
+      player.add(coatTail);
+      player.coatTail = coatTail;
+
+      // 머리 & 사냥꾼의 깃털 삼각 모자 (Hunter's Tricorn Hat)
+      const headMat = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.7 });
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), headMat);
+      head.position.y = 2.2;
+      player.add(head);
+
+      const hatBrim = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.65, 0.08, 3), coatMat);
+      hatBrim.position.set(0, 2.38, 0);
+      player.add(hatBrim);
+
+      const hatTop = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.55, 3), coatMat);
+      hatTop.position.set(0, 2.65, 0);
+      player.add(hatTop);
+
+      // 사지 (Legs & Arms)
+      const limbMat = new THREE.MeshStandardMaterial({ color: 0x181414, roughness: 0.9 });
+      
+      const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.28, 1.0, 0.32), limbMat);
+      leftLeg.position.set(-0.25, 0.5, 0);
+      player.add(leftLeg);
+      player.leftLeg = leftLeg;
+
+      const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.28, 1.0, 0.32), limbMat);
+      rightLeg.position.set(0.25, 0.5, 0);
+      player.add(rightLeg);
+      player.rightLeg = rightLeg;
+
+      // 오른팔 (무기 장착)
+      const rightArm = new THREE.Group();
+      rightArm.position.set(0.55, 1.8, 0);
+      const armMesh = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.9, 0.24), limbMat);
+      armMesh.position.y = -0.4;
+      rightArm.add(armMesh);
+      player.add(rightArm);
+      player.rightArm = rightArm;
+
+      // 왼팔 (사냥꾼 단총)
+      const leftArm = new THREE.Group();
+      leftArm.position.set(-0.55, 1.8, 0);
+      const leftArmMesh = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.9, 0.24), limbMat);
+      leftArmMesh.position.y = -0.4;
+      leftArm.add(leftArmMesh);
+      player.add(leftArm);
+      player.leftArm = leftArm;
+
+      // 무기 조립
+      buildSawCleaver(rightArm);
+      buildMoonlightSword(rightArm);
+      buildHunterPistol(leftArm);
+
+      scene.add(player);
+    }
+
+    // 톱단도 (Saw Cleaver - Trick Weapon)
+    function buildSawCleaver(parentArm) {
+      const cleaverGroup = new THREE.Group();
+      cleaverGroup.position.set(0, -0.85, 0.2);
+
+      // 손잡이
+      const handleMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.9 });
+      const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.9), handleMat);
+      handle.rotation.x = Math.PI / 2;
+      cleaverGroup.add(handle);
+
+      // 톱날 블레이드 (Saw Blade Hinge)
+      const bladeHinge = new THREE.Group();
+      bladeHinge.position.set(0, 0, 0.45);
+
+      const bladeMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.85, roughness: 0.35 });
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.35, 1.1), bladeMat);
+      blade.position.set(0, 0.12, 0.55);
+      bladeHinge.add(blade);
+
+      // 톱날 이빨 (Serrated Teeth)
+      for (let i = -0.4; i <= 0.4; i += 0.16) {
+        const tooth = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.18, 3), bladeMat);
+        tooth.rotation.x = Math.PI / 2;
+        tooth.position.set(0, 0.32, 0.55 + i);
+        bladeHinge.add(tooth);
+      }
+
+      cleaverGroup.add(bladeHinge);
+      parentArm.add(cleaverGroup);
+      player.sawCleaver = cleaverGroup;
+      player.bladeHinge = bladeHinge;
+    }
+
+    // 월광의 대검 (Holy Moonlight Greatsword)
+    function buildMoonlightSword(parentArm) {
+      const mlGroup = new THREE.Group();
+      mlGroup.position.set(0, -0.85, 0.2);
+      mlGroup.visible = false; // 기본은 톱단도
+
+      // 자루
+      const hiltMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.9, roughness: 0.2 });
+      const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.2), hiltMat);
+      hilt.rotation.x = Math.PI / 2;
+      mlGroup.add(hilt);
+
+      // 에메랄드 푸른 발광 검신 (Ethereal Moonlight Blade)
+      const mlMat = new THREE.MeshStandardMaterial({
+        color: 0x06b6d4,
+        emissive: 0x0891b2,
+        emissiveIntensity: 0.8,
+        metalness: 0.5,
+        roughness: 0.2,
+        transparent: true,
+        opacity: 0.92
+      });
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.5, 2.2), mlMat);
+      blade.position.set(0, 0.1, 1.2);
+      mlGroup.add(blade);
+
+      // 검신 라이트
+      const swordGlow = new THREE.PointLight(0x22d3ee, 1.6, 6);
+      swordGlow.position.set(0, 0.1, 1.5);
+      mlGroup.add(swordGlow);
+
+      parentArm.add(mlGroup);
+      player.moonlightSword = mlGroup;
+    }
+
+    // 사냥꾼 단총 (Hunter Pistol)
+    function buildHunterPistol(parentArm) {
+      const pistolGroup = new THREE.Group();
+      pistolGroup.position.set(0, -0.85, 0.2);
+
+      const metalMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.9, roughness: 0.3 });
+      const woodMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.8 });
+
+      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.35, 0.18), woodMat);
+      grip.rotation.x = 0.3;
+      pistolGroup.add(grip);
+
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.75), metalMat);
+      barrel.rotation.x = Math.PI / 2;
+      barrel.position.set(0, 0.12, 0.35);
+      pistolGroup.add(barrel);
+
+      parentArm.add(pistolGroup);
+      player.pistol = pistolGroup;
+    }
+
+    // ==========================================
+    // 4. ENEMIES & THE BOSS (Malakor, Blood Knight)
+    // ==========================================
+    function spawnEnemies() {
+      // 1. 망자 기사 (Hollow Knight 1, 2)
+      createHollowKnight(-12, 35);
+      createHollowKnight(12, 20);
+
+      // 2. 야수 주민 (Beast Villager)
+      createBeastPatient(0, 48);
+    }
+
+    function createHollowKnight(x, z) {
+      const mob = new THREE.Group();
+      mob.position.set(x, 0, z);
+
+      const armorMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8, roughness: 0.4 });
+      const clothMat = new THREE.MeshStandardMaterial({ color: 0x1e1b4b, roughness: 0.9 });
+
+      const torso = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.3, 0.5), armorMat);
+      torso.position.y = 1.4;
+      torso.castShadow = true;
+      mob.add(torso);
+
+      const helm = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.7, 0.6), armorMat);
+      helm.position.y = 2.3;
+      mob.add(helm);
+
+      // 검 & 방패
+      const sword = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 1.8), armorMat);
+      sword.position.set(0.6, 1.3, 0.6);
+      mob.add(sword);
+      mob.sword = sword;
+
+      const shield = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.2, 0.7), clothMat);
+      shield.position.set(-0.6, 1.3, 0.3);
+      mob.add(shield);
+
+      mob.userData = {
+        type: 'hollow_knight',
+        name: '망자 성당 기사',
+        hp: 220,
+        maxHp: 220,
+        damage: 130,
+        state: 'IDLE',   // IDLE, CHASE, WINDUP, ATTACK, GROGGY, DEAD
+        timer: 0,
+        speed: 3.2,
+        attackRange: 2.8,
+        soulsReward: 450
+      };
+
+      scene.add(mob);
+      enemies.push(mob);
+    }
+
+    function createBeastPatient(x, z) {
+      const beast = new THREE.Group();
+      beast.position.set(x, 0, z);
+
+      const furMat = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 1.0 });
+      const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.1, 0.6), furMat);
+      torso.position.y = 1.1;
+      torso.rotation.x = 0.35; // 앞으로 구부정한 야수 자세
+      beast.add(torso);
+
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), furMat);
+      head.position.set(0, 1.8, 0.4);
+      beast.add(head);
+
+      // 빛나는 붉은 눈
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+      [-0.12, 0.12].forEach(ex => {
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.06), eyeMat);
+        eye.position.set(ex, 1.85, 0.7);
+        beast.add(eye);
+      });
+
+      beast.userData = {
+        type: 'beast_patient',
+        name: '변종 야수',
+        hp: 160,
+        maxHp: 160,
+        damage: 95,
+        state: 'IDLE',
+        timer: 0,
+        speed: 4.8,
+        attackRange: 2.4,
+        soulsReward: 320
+      };
+
+      scene.add(beast);
+      enemies.push(beast);
+    }
+
+    // 에픽 보스: 심연의 기사 말라코르 (Lord Malakor)
+    function spawnBoss() {
+      boss = new THREE.Group();
+      boss.position.set(0, 0, -90); // 안개벽 너머 보스 체임버
+
+      const bossArmorMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.95, roughness: 0.25 });
+      const capeMat = new THREE.MeshStandardMaterial({ color: 0x450a0a, roughness: 0.95 });
+
+      // 거대한 3.2m 체구
+      const torso = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.2, 0.9), bossArmorMat);
+      torso.position.y = 2.4;
+      torso.castShadow = true;
+      boss.add(torso);
+
+      const cape = new THREE.Mesh(new THREE.BoxGeometry(1.8, 2.6, 0.15), capeMat);
+      cape.position.set(0, 1.9, -0.5);
+      boss.add(cape);
+
+      // 가시 숄더 가드
+      [-1.1, 1.1].forEach(sx => {
+        const pauldron = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.9, 4), bossArmorMat);
+        pauldron.position.set(sx, 3.4, 0);
+        boss.add(pauldron);
+      });
+
+      // 투구 & 핏빛 바이저
+      const helm = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.0, 0.9), bossArmorMat);
+      helm.position.y = 3.8;
+      boss.add(helm);
+
+      const visorMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+      const visor = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.12, 0.2), visorMat);
+      visor.position.set(0, 3.8, 0.45);
+      boss.add(visor);
+
+      // 거대한 대검 (Abyss Greatsword 3.2m)
+      const swordMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.9, roughness: 0.2 });
+      const sword = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.6, 3.6), swordMat);
+      sword.position.set(1.4, 2.2, 1.2);
+      boss.add(sword);
+      boss.sword = sword;
+
+      // 2페이즈용 검 붉은 불꽃 라이트
+      const flameLight = new THREE.PointLight(0xe11d48, 0, 12);
+      flameLight.position.set(1.4, 2.2, 2.6);
+      boss.add(flameLight);
+      boss.flameLight = flameLight;
+
+      boss.userData = {
+        isBoss: true,
+        name: '심연의 기사 말라코르',
+        hp: 1800,
+        maxHp: 1800,
+        damage: 180,
+        phase: 1,
+        state: 'IDLE',   // IDLE, CHASE, WINDUP, ATTACK, PLUNGE, GROGGY, DEAD
+        timer: 0,
+        speed: 3.8,
+        attackRange: 4.2,
+        soulsReward: 25000
+      };
+
+      scene.add(boss);
+      enemies.push(boss);
+    }
+
+    // ==========================================
+    // 5. COMBAT & PARTICLES ENGINE
+    // ==========================================
+    // 혈흔 폭발 파티클 (Blood Fountain Burst for Visceral Attack)
+    function spawnBloodBurst(pos, count = 40, isCrit = false) {
+      const mat = new THREE.MeshBasicMaterial({ color: isCrit ? 0xbe123c : 0x881337 });
+      for (let i = 0; i < count; i++) {
+        const size = 0.08 + Math.random() * (isCrit ? 0.22 : 0.12);
+        const p = new THREE.Mesh(new THREE.SphereGeometry(size, 4, 4), mat);
+        p.position.copy(pos);
+        p.position.x += (Math.random() - 0.5) * 0.4;
+        p.position.y += (Math.random() - 0.5) * 0.4;
+        p.position.z += (Math.random() - 0.5) * 0.4;
+
+        const vel = new THREE.Vector3(
+          (Math.random() - 0.5) * (isCrit ? 12 : 6),
+          Math.random() * (isCrit ? 14 : 7) + 2,
+          (Math.random() - 0.5) * (isCrit ? 12 : 6)
+        );
+        bloodParticles.push({ mesh: p, vel: vel, life: 0.8 + Math.random() * 0.4 });
+        scene.add(p);
+      }
+    }
+
+    // 플로팅 데미지 숫자 생성
+    function showFloatingDamage(text, pos, type = 'normal') {
+      const container = document.getElementById('floating-damage-container');
+      const el = document.createElement('div');
+      el.className = `damage-popup ${type}`;
+      el.textContent = text;
+
+      // 3D 월드 좌표 -> 2D 화면 좌표 변환
+      const screenPos = pos.clone().project(camera);
+      const x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
+      const y = (-(screenPos.y * 0.5) + 0.5) * window.innerHeight;
+
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+      container.appendChild(el);
+
+      setTimeout(() => {
+        if (el.parentNode) el.parentNode.removeChild(el);
+      }, 800);
+    }
+
+    // ==========================================
+    // 6. INPUTS & CONTROLS
+    // ==========================================
+    function setupInputs() {
+      window.addEventListener('keydown', (e) => {
+        keys[e.code] = true;
+
+        if (e.code === 'KeyE') handleInteraction();
+        if (e.code === 'KeyQ') toggleLockOn();
+        if (e.code === 'KeyZ' || e.code === 'KeyT') toggleTrickWeapon();
+        if (e.code === 'Digit1') switchWeapon('saw_cleaver');
+        if (e.code === 'Digit2') switchWeapon('moonlight');
+        if (e.code === 'KeyR') drinkBloodVial();
+        if (e.code === 'Space') performDodge();
+      });
+
+      window.addEventListener('keyup', (e) => {
+        keys[e.code] = false;
+      });
+
+      window.addEventListener('mousedown', (e) => {
+        audio.init();
+        if (e.button === 0) performAttack();
+        if (e.button === 2) performPistolParry();
+      });
+
+      // 우클릭 컨텍스트 메뉴 방지
+      window.addEventListener('contextmenu', e => e.preventDefault());
+
+      window.addEventListener('mousemove', (e) => {
+        if (document.pointerLockElement === document.body) {
+          const sens = 0.0022;
+          cameraAngle.yaw -= e.movementX * sens;
+          cameraAngle.pitch -= e.movementY * sens;
+          cameraAngle.pitch = Math.max(0.08, Math.min(1.1, cameraAngle.pitch));
+        }
+      });
+
+      document.getElementById('btn-play').addEventListener('click', () => {
+        audio.init();
+        document.body.requestPointerLock();
+        document.getElementById('start-overlay').style.display = 'none';
+      });
+    }
+
+    // 무기 변형 (Trick Weapon Transform)
+    function toggleTrickWeapon() {
+      if (PlayerStats.currentWeapon !== 'saw_cleaver' || PlayerStats.state !== 'IDLE') return;
+      PlayerStats.isTricked = !PlayerStats.isTricked;
+      audio.playTrickTransform();
+
+      const tag = document.getElementById('trick-mode-tag');
+      if (PlayerStats.isTricked) {
+        player.bladeHinge.rotation.x = Math.PI * 0.95; // 톱단도 길게 펼침
+        tag.textContent = '펼침 [Z]';
+        tag.style.color = '#ef4444';
+      } else {
+        player.bladeHinge.rotation.x = 0; // 접힘
+        tag.textContent = '접힘 [Z]';
+        tag.style.color = '#f59e0b';
+      }
+    }
+
+    // 주무기 교체 (1: 톱단도, 2: 월광검)
+    function switchWeapon(wep) {
+      if (PlayerStats.state !== 'IDLE') return;
+      PlayerStats.currentWeapon = wep;
+      audio.playBladeHit(true);
+
+      const nameEl = document.getElementById('main-wep-name');
+      const iconEl = document.getElementById('main-wep-icon');
+      const trickTag = document.getElementById('trick-mode-tag');
+
+      if (wep === 'saw_cleaver') {
+        player.sawCleaver.visible = true;
+        player.moonlightSword.visible = false;
+        nameEl.textContent = '톱단도';
+        iconEl.textContent = '🪓';
+        trickTag.style.display = 'block';
+      } else {
+        player.sawCleaver.visible = false;
+        player.moonlightSword.visible = true;
+        nameEl.textContent = '월광의 대검';
+        iconEl.textContent = '🗡️';
+        trickTag.style.display = 'none';
+      }
+    }
+
+    // 락온 토글
+    function toggleLockOn() {
+      if (PlayerStats.isLockedOn) {
+        PlayerStats.isLockedOn = false;
+        PlayerStats.lockedTarget = null;
+        document.getElementById('lockon-reticle').style.display = 'none';
+      } else {
+        // 가장 가까운 적 탐색
+        let closest = null;
+        let minDist = 35;
+        enemies.forEach(en => {
+          if (en.userData.hp > 0) {
+            const dist = player.position.distanceTo(en.position);
+            if (dist < minDist) {
+              minDist = dist;
+              closest = en;
+            }
+          }
+        });
+        if (closest) {
+          PlayerStats.isLockedOn = true;
+          PlayerStats.lockedTarget = closest;
+          document.getElementById('lockon-reticle').style.display = 'block';
+        }
+      }
+    }
+
+    // 회피 (스페이스바: 락온 시 퀵스텝, 비락온 시 롤링)
+    function performDodge() {
+      if (PlayerStats.state === 'DODGE' || PlayerStats.state === 'VISCERAL' || PlayerStats.state === 'DEAD') return;
+      if (PlayerStats.stamina < 20 || PlayerStats.isExhausted) return;
+
+      PlayerStats.stamina -= 20;
+      PlayerStats.state = 'DODGE';
+      PlayerStats.stateTimer = 0.45;
+      PlayerStats.iFrames = 0.35; // 무적 프레임
+      audio.playDodge();
+    }
+
+    // 공격 (좌클릭)
+    function performAttack() {
+      if (PlayerStats.state === 'DODGE' || PlayerStats.state === 'DEAD' || PlayerStats.state === 'HEAL') return;
+
+      // 1. 혹시 그로기 상태 적 앞이면 내장뽑기(Visceral Attack) 우선 발동!
+      const groggyTarget = checkGroggyTargetInRange();
+      if (groggyTarget) {
+        executeVisceralAttack(groggyTarget);
+        return;
+      }
+
+      // 일반 공격
+      if (PlayerStats.stamina < 18 || PlayerStats.isExhausted) return;
+      PlayerStats.stamina -= 18;
+      PlayerStats.state = 'ATTACK';
+      PlayerStats.stateTimer = 0.38;
+      PlayerStats.comboStep = (PlayerStats.comboStep + 1) % 3;
+
+      const isTricked = PlayerStats.isTricked;
+      const isMoonlight = PlayerStats.currentWeapon === 'moonlight';
+      audio.playWhoosh(isMoonlight ? 0.8 : (isTricked ? 0.9 : 1.2));
+
+      // 전방 적 타격 판정 (Hitbox Sphere Sweep)
+      setTimeout(() => {
+        checkPlayerAttackHit();
+      }, 140);
+    }
+
+    // 사냥꾼 단총 사격 & 패링 판정 (Right Click)
+    function performPistolParry() {
+      if (PlayerStats.state !== 'IDLE' && PlayerStats.state !== 'MOVE') return;
+      if (PlayerStats.bullets <= 0) return;
+
+      PlayerStats.bullets--;
+      document.getElementById('bullet-count').textContent = PlayerStats.bullets;
+      PlayerStats.state = 'PARRY';
+      PlayerStats.stateTimer = 0.4;
+      audio.playGunshot();
+
+      // 총구 화염 및 총알 발사
+      const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(player.quaternion);
+      
+      // 적 공격 윈드업 타이밍 패링 판정!
+      enemies.forEach(en => {
+        if (en.userData.hp <= 0) return;
+        const dist = player.position.distanceTo(en.position);
+        if (dist < 14) {
+          const toEnemy = en.position.clone().sub(player.position).normalize();
+          if (forward.dot(toEnemy) > 0.6) {
+            // 적이 WINDUP(공격 전 선딜레이) 상태일 때 패링 성공!
+            if (en.userData.state === 'WINDUP') {
+              triggerParrySuccess(en);
+            } else {
+              // 일반 피격
+              en.userData.hp -= 25;
+              showFloatingDamage('25', en.position, 'normal');
+            }
+          }
+        }
+      });
+    }
+
+    // 패링 성공 처리 (그로기 유발)
+    function triggerParrySuccess(enemy) {
+      enemy.userData.state = 'GROGGY';
+      enemy.userData.timer = 4.0; // 4초간 그로기 상태 유지
+      audio.playParryBell();
+
+      // 화면 패링 플래시
+      const pFlash = document.getElementById('parry-flash');
+      pFlash.style.opacity = '1';
+      setTimeout(() => { pFlash.style.opacity = '0'; }, 100);
+
+      showFloatingDamage('PARRIED!', enemy.position, 'crit');
+    }
+
+    // 내장 뽑기 (Visceral Attack / 치명타)
+    function executeVisceralAttack(target) {
+      PlayerStats.state = 'VISCERAL';
+      PlayerStats.stateTimer = 1.2;
+      PlayerStats.iFrames = 1.4; // 시네마틱 동안 완전 무적
+
+      // 카메라 슬로우모션 연출
+      audio.playVisceralAttack();
+
+      // 대상 회전 정렬
+      player.lookAt(target.position.x, player.position.y, target.position.z);
+
+      setTimeout(() => {
+        // 막대한 치명타 데미지 (보스는 25% HP, 일반몹은 즉사)
+        const dmg = target.userData.isBoss ? Math.floor(target.userData.maxHp * 0.28) : 999;
+        target.userData.hp -= dmg;
+        showFloatingDamage(dmg.toString(), target.position, 'crit');
+
+        // 피분수 대폭발
+        spawnBloodBurst(target.position.clone().add(new THREE.Vector3(0, 1.8, 0)), 70, true);
+
+        // 리게인 체력 회수
+        PlayerStats.hp = Math.min(PlayerStats.maxHp, PlayerStats.hp + 180);
+        PlayerStats.rallyHp = PlayerStats.hp;
+
+        if (target.userData.hp <= 0) {
+          handleEnemyDeath(target);
+        } else {
+          target.userData.state = 'IDLE';
+        }
+      }, 400);
+    }
+
+    function checkGroggyTargetInRange() {
+      for (let en of enemies) {
+        if (en.userData.hp > 0 && en.userData.state === 'GROGGY') {
+          if (player.position.distanceTo(en.position) < 3.2) {
+            return en;
+          }
+        }
+      }
+      return null;
+    }
+
+    // 플레이어 공격 적중 검사
+    function checkPlayerAttackHit() {
+      const isMoonlight = PlayerStats.currentWeapon === 'moonlight';
+      const isTricked = PlayerStats.isTricked;
+      const reach = isMoonlight ? 3.8 : (isTricked ? 3.4 : 2.5);
+      const baseDmg = isMoonlight ? 160 : (isTricked ? 120 : 85);
+
+      const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(player.quaternion);
+
+      enemies.forEach(en => {
+        if (en.userData.hp <= 0) return;
+        const dist = player.position.distanceTo(en.position);
+        if (dist <= reach) {
+          const toEnemy = en.position.clone().sub(player.position).normalize();
+          if (fwd.dot(toEnemy) > 0.4) {
+            // 적중!
+            en.userData.hp -= baseDmg;
+            audio.playBladeHit(isTricked || isMoonlight);
+            spawnBloodBurst(en.position.clone().add(new THREE.Vector3(0, 1.4, 0)), 18);
+            showFloatingDamage(baseDmg.toString(), en.position, 'normal');
+
+            // 블러드본 리게인(Rally) 체력 회수!
+            if (PlayerStats.hp < PlayerStats.rallyHp) {
+              const heal = Math.min(35, PlayerStats.rallyHp - PlayerStats.hp);
+              PlayerStats.hp += heal;
+              showFloatingDamage(`+${heal}`, player.position, 'heal');
+            }
+
+            if (en.userData.hp <= 0) {
+              handleEnemyDeath(en);
+            }
+          }
+        }
+      });
+    }
+
+    // 적 처치 처리
+    function handleEnemyDeath(enemy) {
+      enemy.userData.state = 'DEAD';
+      PlayerStats.souls += enemy.userData.soulsReward;
+      document.getElementById('souls-display').textContent = PlayerStats.souls.toLocaleString();
+      showFloatingDamage(`+${enemy.userData.soulsReward}🩸`, enemy.position, 'heal');
+
+      if (enemy.userData.isBoss) {
+        audio.stopBossMusic();
+        audio.playPreySlaughtered();
+        showBanner('PREY SLAUGHTERED', '위대한 사냥을 완수했습니다', 'banner-prey');
+      }
+
+      // 바닥으로 쓰러지는 애니메이션
+      enemy.rotation.x = Math.PI / 2;
+      enemy.position.y = 0.2;
+    }
+
+    // 수혈액 섭취 (R)
+    function drinkBloodVial() {
+      if (PlayerStats.state !== 'IDLE' && PlayerStats.state !== 'MOVE') return;
+      if (PlayerStats.bloodVials <= 0 || PlayerStats.hp >= PlayerStats.maxHp) return;
+
+      PlayerStats.bloodVials--;
+      document.getElementById('vial-count').textContent = PlayerStats.bloodVials;
+      PlayerStats.state = 'HEAL';
+      PlayerStats.stateTimer = 0.8;
+      audio.playHeal();
+
+      const recover = Math.floor(PlayerStats.maxHp * 0.45);
+      PlayerStats.hp = Math.min(PlayerStats.maxHp, PlayerStats.hp + recover);
+      PlayerStats.rallyHp = PlayerStats.hp;
+      showFloatingDamage(`+${recover}`, player.position, 'heal');
+    }
+
+    // 상호작용 (E: 화톳불 휴식, 안개벽 통과)
+    function handleInteraction() {
+      // 1. 화톳불
+      if (player.position.distanceTo(bonfire.position) < 4.5) {
+        audio.playBonfireLit();
+        showBanner('BONFIRE LIT', '등불에 불을 붙여 상처를 치유했습니다', 'banner-bonfire');
+        PlayerStats.hp = PlayerStats.maxHp;
+        PlayerStats.rallyHp = PlayerStats.maxHp;
+        PlayerStats.bloodVials = 5;
+        document.getElementById('vial-count').textContent = 5;
+        // 일반 몬스터 부활
+        enemies.forEach(en => {
+          if (!en.userData.isBoss && en.userData.state === 'DEAD') {
+            en.userData.hp = en.userData.maxHp;
+            en.userData.state = 'IDLE';
+            en.rotation.x = 0;
+            en.position.y = 0;
+          }
+        });
+        return;
+      }
+
+      // 2. 안개벽 (보스방 진입)
+      if (player.position.distanceTo(fogGate.position) < 5.0 && player.position.z > -50) {
+        player.position.z = -56; // 안개문 안쪽으로 통과
+        document.getElementById('boss-hud').style.display = 'flex';
+        audio.startBossMusic(false);
+      }
+    }
+
+    // 풀스크린 배너 팝업 (YOU DIED 등)
+    function showBanner(title, sub, styleClass) {
+      const banner = document.getElementById('banner-screen');
+      const bTitle = document.getElementById('banner-title');
+      const bSub = document.getElementById('banner-subtitle');
+
+      banner.className = styleClass;
+      bTitle.textContent = title;
+      bSub.textContent = sub;
+
+      banner.style.opacity = '1';
+      banner.style.background = (styleClass === 'banner-died') ? 'rgba(5,2,5,0.92)' : 'rgba(0,0,0,0.4)';
+
+      setTimeout(() => {
+        banner.style.opacity = '0';
+        banner.style.background = 'transparent';
+      }, 3500);
+    }
+
+    // 플레이어 피격
+    function damagePlayer(amount) {
+      if (PlayerStats.iFrames > 0 || PlayerStats.state === 'DEAD') return;
+
+      PlayerStats.hp -= amount;
+      PlayerStats.rallyTimer = 3.2; // 3.2초 동안 리게인 잠재력 유지
+      audio.playBladeHit(true);
+
+      // 화면 붉은 비네트 플래시
+      const dFlash = document.getElementById('damage-flash');
+      dFlash.style.opacity = '1';
+      setTimeout(() => { dFlash.style.opacity = '0'; }, 180);
+
+      if (PlayerStats.hp <= 0) {
+        PlayerStats.hp = 0;
+        PlayerStats.state = 'DEAD';
+        audio.playYouDied();
+        showBanner('YOU DIED', '사냥꾼의 의식이 심연으로 가라앉았습니다', 'banner-died');
+
+        // 4초 후 화톳불에서 부활
+        setTimeout(() => {
+          respawnAtBonfire();
+        }, 4000);
+      }
+    }
+
+    function respawnAtBonfire() {
+      PlayerStats.hp = PlayerStats.maxHp;
+      PlayerStats.rallyHp = PlayerStats.maxHp;
+      PlayerStats.bloodVials = 5;
+      document.getElementById('vial-count').textContent = 5;
+      PlayerStats.state = 'IDLE';
+      player.position.set(0, 0, 72);
+      player.rotation.set(0, 0, 0);
+      document.getElementById('boss-hud').style.display = 'none';
+      audio.stopBossMusic();
+    }
+
+    // ==========================================
+    // 7. GAME LOOP & ANIMATION UPDATE
+    // ==========================================
+    function update(dt) {
+      // 1. 스태미너 회복
+      if (PlayerStats.state !== 'ATTACK' && PlayerStats.state !== 'DODGE' && !keys['ShiftLeft']) {
+        PlayerStats.stamina = Math.min(PlayerStats.maxStamina, PlayerStats.stamina + 35 * dt);
+        if (PlayerStats.stamina > 25) PlayerStats.isExhausted = false;
+      }
+      if (PlayerStats.stamina <= 0) {
+        PlayerStats.stamina = 0;
+        PlayerStats.isExhausted = true;
+      }
+
+      // 2. 무적 프레임 및 상태 타이머 갱신
+      if (PlayerStats.iFrames > 0) PlayerStats.iFrames -= dt;
+      if (PlayerStats.stateTimer > 0) {
+        PlayerStats.stateTimer -= dt;
+        if (PlayerStats.stateTimer <= 0) {
+          PlayerStats.state = 'IDLE';
+        }
+      }
+
+      // 3. 리게인 바(Rally) 타이머 감쇠
+      if (PlayerStats.rallyTimer > 0) {
+        PlayerStats.rallyTimer -= dt;
+      } else {
+        if (PlayerStats.rallyHp > PlayerStats.hp) {
+          PlayerStats.rallyHp = Math.max(PlayerStats.hp, PlayerStats.rallyHp - 60 * dt);
+        }
+      }
+
+      // 4. 플레이어 이동 및 회전
+      updatePlayerMovement(dt);
+
+      // 5. 카메라 궤도 추적
+      updateCamera();
+
+      // 6. 적 및 보스 FSM 인공지능
+      updateEnemies(dt);
+
+      // 7. 파티클 업데이트
+      updateParticles(dt);
+
+      // 8. HUD 인터페이스 갱신
+      updateHUD();
+    }
+
+    function updatePlayerMovement(dt) {
+      if (PlayerStats.state === 'DEAD' || PlayerStats.state === 'VISCERAL' || PlayerStats.state === 'HEAL') return;
+
+      const moveDir = new THREE.Vector3();
+      if (keys['KeyW']) moveDir.z -= 1;
+      if (keys['KeyS']) moveDir.z += 1;
+      if (keys['KeyA']) moveDir.x -= 1;
+      if (keys['KeyD']) moveDir.x += 1;
+
+      const isMoving = moveDir.lengthSq() > 0;
+
+      if (isMoving && PlayerStats.state !== 'DODGE' && PlayerStats.state !== 'ATTACK') {
+        moveDir.normalize();
+
+        // 카메라 방향 기준 변환
+        const camEuler = new THREE.Euler(0, cameraAngle.yaw, 0, 'YXZ');
+        moveDir.applyEuler(camEuler);
+
+        const isSprinting = keys['ShiftLeft'] && PlayerStats.stamina > 5;
+        if (isSprinting) {
+          PlayerStats.stamina -= 15 * dt;
+        }
+        const speed = isSprinting ? 7.5 : 4.4;
+
+        player.position.addScaledVector(moveDir, speed * dt);
+
+        // 회전 (락온 중에는 타겟 주시, 아닐 때는 이동 방향 주시)
+        if (PlayerStats.isLockedOn && PlayerStats.lockedTarget) {
+          const targetPos = PlayerStats.lockedTarget.position;
+          player.lookAt(targetPos.x, player.position.y, targetPos.z);
+        } else {
+          const targetAngle = Math.atan2(moveDir.x, moveDir.z);
+          player.rotation.y = THREE.MathUtils.lerp(player.rotation.y, targetAngle + Math.PI, 0.2);
+        }
+
+        // 달리기 다리 애니메이션
+        const walkCycle = Math.sin(clock.getElapsedTime() * (isSprinting ? 14 : 9));
+        player.leftLeg.rotation.x = walkCycle * 0.55;
+        player.rightLeg.rotation.x = -walkCycle * 0.55;
+        player.coatTail.rotation.x = Math.abs(walkCycle) * 0.4;
+      } else {
+        player.leftLeg.rotation.x = 0;
+        player.rightLeg.rotation.x = 0;
+      }
+
+      // 회피 (Dodge Roll / Quickstep) 이동
+      if (PlayerStats.state === 'DODGE') {
+        const dodgeDir = new THREE.Vector3(0, 0, -1).applyQuaternion(player.quaternion);
+        player.position.addScaledVector(dodgeDir, 11.0 * dt);
+      }
+
+      // 공격 팔 휘두르기 애니메이션
+      if (PlayerStats.state === 'ATTACK') {
+        player.rightArm.rotation.x = -Math.sin(PlayerStats.stateTimer * 12) * 1.5;
+      } else {
+        player.rightArm.rotation.x = 0;
+      }
+
+      // 경계 제한 (Courtyard Bounds)
+      player.position.x = Math.max(-38, Math.min(38, player.position.x));
+      player.position.z = Math.max(-126, Math.min(114, player.position.z));
+    }
+
+    function updateCamera() {
+      let targetPos;
+      if (PlayerStats.isLockedOn && PlayerStats.lockedTarget) {
+        // 락온 모드: 플레이어와 타겟의 중간을 주시
+        const tPos = PlayerStats.lockedTarget.position;
+        targetPos = player.position.clone().add(tPos).multiplyScalar(0.5).add(new THREE.Vector3(0, 1.8, 0));
+        
+        // 카메라 각도를 적 방향으로 자동 부드럽게 조정
+        const toTarget = player.position.clone().sub(tPos);
+        cameraAngle.yaw = Math.atan2(toTarget.x, toTarget.z);
+      } else {
+        targetPos = player.position.clone().add(new THREE.Vector3(0, 1.8, 0));
+      }
+
+      const cx = targetPos.x + Math.sin(cameraAngle.yaw) * Math.cos(cameraAngle.pitch) * cameraAngle.distance;
+      const cy = targetPos.y + Math.sin(cameraAngle.pitch) * cameraAngle.distance;
+      const cz = targetPos.z + Math.cos(cameraAngle.yaw) * Math.cos(cameraAngle.pitch) * cameraAngle.distance;
+
+      camera.position.lerp(new THREE.Vector3(cx, cy, cz), 0.15);
+      camera.lookAt(targetPos);
+    }
+
+    // 적 & 보스 인공지능 (FSM AI)
+    function updateEnemies(dt) {
+      enemies.forEach(en => {
+        if (en.userData.hp <= 0) return;
+
+        const dist = en.position.distanceTo(player.position);
+        const data = en.userData;
+
+        // 그로기 상태 처리
+        if (data.state === 'GROGGY') {
+          data.timer -= dt;
+          en.rotation.x = 0.45; // 무릎 꿇는 포즈
+          if (data.timer <= 0) {
+            data.state = 'IDLE';
+            en.rotation.x = 0;
+          }
+          return;
+        }
+
+        // 보스 2페이즈 각성 (체력 50% 이하 시 Blood Eclipse Phase 2)
+        if (data.isBoss && data.phase === 1 && data.hp < data.maxHp * 0.5) {
+          data.phase = 2;
+          data.damage = 240;
+          data.speed = 5.2;
+          document.getElementById('boss-subtitle').textContent = 'PHASE 2 : BLOOD ECLIPSE AWAKENING';
+          document.getElementById('boss-subtitle').style.color = '#ef4444';
+          en.flameLight.intensity = 3.5;
+          audio.startBossMusic(true);
+          showFloatingDamage('PHASE 2 AWAKENED!', en.position, 'crit');
+          spawnBloodBurst(en.position.clone().add(new THREE.Vector3(0, 2, 0)), 50, true);
+        }
+
+        // 플레이어 주시
+        en.lookAt(player.position.x, en.position.y, player.position.z);
+
+        // FSM 상태 머신
+        if (data.state === 'IDLE') {
+          if (dist < 26) {
+            data.state = 'CHASE';
+          }
+        } else if (data.state === 'CHASE') {
+          if (dist > data.attackRange) {
+            const toPlayer = player.position.clone().sub(en.position).normalize();
+            en.position.addScaledVector(toPlayer, data.speed * dt);
+          } else {
+            // 공격 시작 -> 윈드업(패링 가능 타이밍!)
+            data.state = 'WINDUP';
+            data.timer = data.isBoss ? (data.phase === 2 ? 0.45 : 0.65) : 0.55;
+          }
+        } else if (data.state === 'WINDUP') {
+          // 검을 번쩍 치켜듦 (패링 타이밍 시각적 인지)
+          if (en.sword) en.sword.position.y = 2.4;
+          data.timer -= dt;
+          if (data.timer <= 0) {
+            // 실제 공격 타격
+            data.state = 'ATTACK';
+            data.timer = 0.35;
+            audio.playWhoosh(1.0);
+            if (en.sword) en.sword.position.y = 1.3;
+
+            // 플레이어가 사거리 안에 있으면 피격!
+            if (dist <= data.attackRange + 0.8) {
+              damagePlayer(data.damage);
+            }
+          }
+        } else if (data.state === 'ATTACK') {
+          data.timer -= dt;
+          if (data.timer <= 0) {
+            data.state = 'CHASE';
+          }
+        }
+      });
+    }
+
+    // 파티클 시스템 갱신
+    function updateParticles(dt) {
+      // 1. 혈흔 파티클
+      for (let i = bloodParticles.length - 1; i >= 0; i--) {
+        const bp = bloodParticles[i];
+        bp.mesh.position.addScaledVector(bp.vel, dt);
+        bp.vel.y -= 20 * dt; // 중력
+        bp.life -= dt;
+        if (bp.mesh.position.y <= 0.05) {
+          bp.mesh.position.y = 0.05;
+          bp.vel.set(0, 0, 0);
+        }
+        if (bp.life <= 0) {
+          scene.remove(bp.mesh);
+          bloodParticles.splice(i, 1);
+        }
+      }
+
+      // 2. 잿더미 / 불티 앰비언트 파티클
+      if (emberParticles && emberParticles.system) {
+        const posAttr = emberParticles.system.geometry.attributes.position;
+        for (let i = 0; i < emberParticles.count; i++) {
+          let y = posAttr.getY(i) + emberParticles.velocities[i].y;
+          if (y > 25) y = 0.2;
+          posAttr.setY(i, y);
+        }
+        posAttr.needsUpdate = true;
+      }
+    }
+
+    // HUD 갱신
+    function updateHUD() {
+      // 체력 및 리게인 게이지
+      const hpPct = Math.max(0, (PlayerStats.hp / PlayerStats.maxHp) * 100);
+      const rallyPct = Math.max(0, (PlayerStats.rallyHp / PlayerStats.maxHp) * 100);
+      document.getElementById('hp-bar').style.width = `${hpPct}%`;
+      document.getElementById('hp-rally-bar').style.width = `${rallyPct}%`;
+      document.getElementById('hp-num').textContent = `HP ${Math.ceil(PlayerStats.hp)} / ${PlayerStats.maxHp}`;
+
+      // 스태미너 게이지
+      const spPct = Math.max(0, (PlayerStats.stamina / PlayerStats.maxStamina) * 100);
+      document.getElementById('stamina-bar').style.width = `${spPct}%`;
+      document.getElementById('stamina-num').textContent = `SP ${Math.ceil(PlayerStats.stamina)} / ${PlayerStats.maxStamina}`;
+
+      // 보스 체력바
+      if (boss && boss.userData.hp > 0 && document.getElementById('boss-hud').style.display !== 'none') {
+        const bPct = Math.max(0, (boss.userData.hp / boss.userData.maxHp) * 100);
+        document.getElementById('boss-bar-fill').style.width = `${bPct}%`;
+      }
+
+      // 락온 조준점 화면 위치 동기화
+      if (PlayerStats.isLockedOn && PlayerStats.lockedTarget) {
+        const tPos = PlayerStats.lockedTarget.position.clone().add(new THREE.Vector3(0, 1.8, 0));
+        const proj = tPos.project(camera);
+        const x = (proj.x * 0.5 + 0.5) * window.innerWidth;
+        const y = (-(proj.y * 0.5) + 0.5) * window.innerHeight;
+        const ret = document.getElementById('lockon-reticle');
+        ret.style.left = `${x}px`;
+        ret.style.top = `${y}px`;
+      }
+
+      // 상호작용 프롬프트 안내
+      const promptBox = document.getElementById('prompt-box');
+      const promptDesc = document.getElementById('prompt-desc');
+
+      const groggyTarget = checkGroggyTargetInRange();
+      if (groggyTarget) {
+        promptBox.style.display = 'flex';
+        promptBox.className = 'visceral';
+        promptDesc.textContent = '내장 뽑기 (VISCERAL ATTACK)';
+      } else if (player.position.distanceTo(bonfire.position) < 4.5) {
+        promptBox.style.display = 'flex';
+        promptBox.className = '';
+        promptDesc.textContent = '화톳불에서 휴식한다';
+      } else if (player.position.distanceTo(fogGate.position) < 5.0 && player.position.z > -50) {
+        promptBox.style.display = 'flex';
+        promptBox.className = '';
+        promptDesc.textContent = '안개벽을 가르고 들어간다';
+      } else {
+        promptBox.style.display = 'none';
+      }
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    // 메인 루프
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = Math.min(clock.getDelta(), 0.1);
+      update(dt);
+      renderer.render(scene, camera);
+    }
+
+    window.onload = () => {
+      init3D();
+      animate();
+    };
+  </script>
+</body>
+</html>
