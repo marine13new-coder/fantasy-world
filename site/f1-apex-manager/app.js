@@ -1,7 +1,7 @@
 // ============================================================================
 // F1 MANAGER & FIA PIT WALL TELEMETRY UI CONTROLLER (app.js)
-// Auto-launches Live Grand Prix on load, binds Pit Wall controls, Q1/Q2/Q3,
-// 24-Race Calendar, R&D Engineering, and Driver Contract Market.
+// Zero-lag static DOM Pit-Wall controls, Main Menu, Save/Load Slots + File I/O,
+// Dyno & Wind Tunnel Equipment Test Bench, and 24-Race Full Season Controller
 // ============================================================================
 
 class F1ManagerApp {
@@ -10,6 +10,9 @@ class F1ManagerApp {
         this.engine = null;
         this.activeView = 'race';
         this.qualiSetupMode = 'BALANCED';
+        this.dynoTireCompound = 'SOFT';
+        this.newCareerSelectedTeam = this.career.state.playerTeamId || 'ferrari';
+        this.newCareerSelectedFormat = this.career.state.raceFormat || 'FULL';
 
         this.init();
     }
@@ -26,8 +29,8 @@ class F1ManagerApp {
 
         this.refreshAllViews();
 
-        // Immediately start the current Grand Prix in the active Live Race view so the user sees live driving right away!
-        this.launchLiveGrandPrix();
+        // Start live race in background immediately so 3D track is always rendered and alive
+        this.launchLiveGrandPrix(false);
     }
 
     bindNavigation() {
@@ -52,7 +55,7 @@ class F1ManagerApp {
         if (viewName === 'race') {
             setTimeout(() => this.engine.resizeViewports(), 40);
             if (!this.engine.isRunning || this.engine.racePhase === 'FINISHED') {
-                this.launchLiveGrandPrix();
+                this.launchLiveGrandPrix(false);
             }
         } else {
             window.f1Audio.stopEngineSound();
@@ -83,13 +86,13 @@ class F1ManagerApp {
         if (!box) {
             box = document.createElement('div');
             box.id = 'fiaToastBanner';
-            box.style.cssText = 'position:fixed;bottom:16px;left:16px;z-index:500;background:#0D1017;border:1px solid #323B52;border-left:4px solid #E10600;color:#fff;padding:10px 16px;font-family:var(--font-UI);font-size:12px;font-weight:700;box-shadow:0 12px 30px rgba(0,0,0,0.9);transition:opacity 0.2s;';
+            box.style.cssText = 'position:fixed;bottom:16px;left:16px;z-index:600;background:#0D1017;border:1px solid #323B52;border-left:4px solid #E10600;color:#fff;padding:10px 16px;font-family:var(--font-UI);font-size:12px;font-weight:700;box-shadow:0 12px 30px rgba(0,0,0,0.9);transition:opacity 0.2s;';
             document.body.appendChild(box);
         }
         box.textContent = text;
         box.style.opacity = '1';
         clearTimeout(this.toastTimer);
-        this.toastTimer = setTimeout(() => { box.style.opacity = '0'; }, 3000);
+        this.toastTimer = setTimeout(() => { box.style.opacity = '0'; }, 3200);
     }
 
     refreshAllViews() {
@@ -106,7 +109,7 @@ class F1ManagerApp {
         const s = this.career.state;
 
         document.getElementById('topRoundBadge').textContent =
-            `${s.seasonYear} R${String(circuit.round).padStart(2, '0')}/24 • ${circuit.code}`;
+            `${s.seasonYear} R${String(circuit.round).padStart(2, '0')}/24 • ${circuit.code} (${circuit.realLaps}L)`;
         document.getElementById('topBudgetBadge').textContent =
             `COST CAP: $${(team.budget / 1e6).toFixed(2)}M`;
         document.getElementById('topTeamDot').style.background = team.primaryColor;
@@ -114,14 +117,186 @@ class F1ManagerApp {
     }
 
     // =========================================================================
-    // VIEW 1: LIVE GRAND PRIX & PIT WALL TELEMETRY
+    // MAIN MENU & SAVE / LOAD SYSTEM (3 SLOTS + JSON EXPORT/IMPORT)
     // =========================================================================
-    launchLiveGrandPrix() {
+    openMainMenu() {
+        window.f1Audio.playUiClick(false);
+        if (this.engine && this.engine.isRunning) {
+            this.engine.timeScale = 0;
+        }
+        this.renderMainMenuContent();
+        document.getElementById('fiaMainMenuScreen').style.display = 'flex';
+    }
+
+    openSaveLoadModal() {
+        this.openMainMenu();
+    }
+
+    closeMainMenuAndResume() {
+        window.f1Audio.playUiClick(false);
+        document.getElementById('fiaMainMenuScreen').style.display = 'none';
+        if (this.engine && this.activeView === 'race' && this.engine.timeScale === 0) {
+            this.engine.timeScale = 1;
+            document.querySelectorAll('[data-sim-speed]').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('data-sim-speed') === '1');
+            });
+        }
+    }
+
+    renderMainMenuContent() {
+        const ctrlEl = document.getElementById('mainMenuNewCareerControls');
+        if (ctrlEl) {
+            ctrlEl.innerHTML = `
+                <div style="margin-bottom:10px;">
+                    <div style="font-family:var(--font-Telemetry);font-size:10px;color:#64748B;margin-bottom:4px;">1. SELECT CONSTRUCTOR TEAM:</div>
+                    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;max-height:210px;overflow-y:auto;">
+                        ${window.F1Data.teams.map(t => `
+                            <div style="background:#141824;border:1px solid ${this.newCareerSelectedTeam === t.id ? '#E10600' : 'var(--border-subtle)'};border-left:4px solid ${t.primaryColor};padding:7px 10px;cursor:pointer;"
+                                 onclick="window.F1App.selectNewCareerTeam('${t.id}')">
+                                <div style="font-weight:800;font-size:12px;">${t.name}</div>
+                                <div style="font-family:var(--font-Telemetry);font-size:10px;color:#94A3B8;">AERO ${t.specs.aero} • POWR ${t.specs.powertrain}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div style="margin-bottom:12px;">
+                    <div style="font-family:var(--font-Telemetry);font-size:10px;color:#64748B;margin-bottom:4px;">2. SELECT RACE DISTANCE FORMAT:</div>
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+                        ${Object.keys(window.F1Data.raceFormats).map(fk => {
+                            const f = window.F1Data.raceFormats[fk];
+                            return `
+                                <button class="fia-btn-slate ${this.newCareerSelectedFormat === fk ? 'active' : ''}"
+                                        style="padding:6px 4px;font-size:10px;"
+                                        onclick="window.F1App.selectNewCareerFormat('${fk}')">
+                                    ${f.id}
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+
+                <button class="fia-btn-red" style="width:100%;" onclick="window.F1App.startFreshCareerFromMenu()">
+                    START NEW 2025 CHAMPIONSHIP SEASON (처음부터 새로 시작)
+                </button>
+            `;
+        }
+
+        const slotsEl = document.getElementById('mainMenuSaveSlotsArea');
+        if (slotsEl) {
+            slotsEl.innerHTML = `
+                <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+                    ${[1, 2, 3].map(slotNum => {
+                        const meta = this.career.getSlotMeta(slotNum);
+                        return `
+                            <div style="background:#141824;border:1px solid var(--border-subtle);padding:10px 12px;display:flex;justify-content:space-between;align-items:center;">
+                                <div>
+                                    <div style="font-family:var(--font-Telemetry);font-size:11px;color:#FFD100;font-weight:800;">SAVE SLOT #${slotNum}</div>
+                                    ${meta ? `
+                                        <div style="font-weight:700;font-size:12px;color:#fff;">${meta.teamName} • ${meta.roundStr}</div>
+                                        <div style="font-family:var(--font-Telemetry);font-size:10px;color:#94A3B8;">${meta.budgetStr} • 저장시각: ${meta.savedAt}</div>
+                                    ` : `
+                                        <div style="font-size:11px;color:#64748B;">비어 있는 슬롯 (Empty Slot)</div>
+                                    `}
+                                </div>
+                                <div style="display:flex;gap:6px;">
+                                    <button class="fia-btn-slate" style="padding:5px 10px;font-size:11px;border-color:#22C55E;color:#22C55E;"
+                                            onclick="window.F1App.saveCareerSlot(${slotNum})">SAVE</button>
+                                    <button class="fia-btn-slate" style="padding:5px 10px;font-size:11px;${meta ? 'border-color:#38BDF8;color:#38BDF8;' : 'opacity:0.4;'}"
+                                            ${meta ? '' : 'disabled'}
+                                            onclick="window.F1App.loadCareerSlot(${slotNum})">LOAD</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+
+                <div style="border-top:1px solid var(--border-subtle);padding-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <button class="fia-btn-slate" style="border-color:#FFD100;color:#FFD100;" onclick="window.F1App.exportSaveFile()">
+                        EXPORT SAVE FILE (.JSON 다운로드)
+                    </button>
+                    <button class="fia-btn-slate" style="border-color:#38BDF8;color:#38BDF8;" onclick="document.getElementById('saveFileInput').click()">
+                        IMPORT SAVE FILE (.JSON 불러오기)
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    selectNewCareerTeam(teamId) {
+        window.f1Audio.playUiClick(false);
+        this.newCareerSelectedTeam = teamId;
+        this.renderMainMenuContent();
+    }
+
+    selectNewCareerFormat(fmtKey) {
+        window.f1Audio.playUiClick(false);
+        this.newCareerSelectedFormat = fmtKey;
+        this.renderMainMenuContent();
+    }
+
+    startFreshCareerFromMenu() {
+        window.f1Audio.playUiClick(true);
+        this.career.startNewSeason(this.newCareerSelectedTeam, this.newCareerSelectedFormat);
+        document.getElementById('fiaMainMenuScreen').style.display = 'none';
+        this.refreshAllViews();
+        this.switchView('race');
+        this.launchLiveGrandPrix(false);
+        this.notify(`새 시즌 개막! ${this.career.getPlayerTeam().name} (${this.newCareerSelectedFormat} 거리 포맷)`);
+    }
+
+    saveCareerSlot(slotNum) {
+        window.f1Audio.playUiClick(true);
+        const res = this.career.saveToSlot(slotNum);
+        this.renderMainMenuContent();
+        this.notify(res.msg);
+    }
+
+    loadCareerSlot(slotNum) {
+        window.f1Audio.playUiClick(true);
+        const res = this.career.loadFromSlot(slotNum);
+        if (res.ok) {
+            document.getElementById('fiaMainMenuScreen').style.display = 'none';
+            this.refreshAllViews();
+            this.launchLiveGrandPrix(false);
+        }
+        this.notify(res.msg);
+    }
+
+    exportSaveFile() {
+        window.f1Audio.playUiClick(true);
+        const fname = this.career.exportSaveToFile();
+        this.notify(`세이브 파일 다운로드 완료: ${fname}`);
+    }
+
+    handleSaveFileUpload(event) {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const res = this.career.importSaveFromJsonString(e.target.result);
+            this.notify(res.msg);
+            if (res.ok) {
+                document.getElementById('fiaMainMenuScreen').style.display = 'none';
+                this.refreshAllViews();
+                this.launchLiveGrandPrix(false);
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    }
+
+    // =========================================================================
+    // VIEW 1: LIVE GRAND PRIX & PIT WALL TELEMETRY (STATIC BUTTONS, ZERO CLICK LOSS)
+    // =========================================================================
+    launchLiveGrandPrix(isTestMode = false) {
         const circuit = this.career.getCurrentCircuit();
         const gridOrder = this.career.getStartingGridDrivers();
 
-        document.getElementById('rcGpCode').textContent = `R${String(circuit.round).padStart(2, '0')} ${circuit.code}`;
-        document.getElementById('pwCircuitMapTitle').textContent = `${circuit.location.toUpperCase()} GPS TELEMETRY`;
+        document.getElementById('rcGpCode').textContent = isTestMode
+            ? `TEST • ${circuit.code}`
+            : `R${String(circuit.round).padStart(2, '0')} ${circuit.code}`;
+        document.getElementById('pwCircuitMapTitle').textContent = `${circuit.location.toUpperCase()} (${circuit.realLaps}L CIRCUIT)`;
         document.getElementById('liveRadioList').innerHTML = '';
 
         this.engine.setupGrandPrix(
@@ -129,19 +304,153 @@ class F1ManagerApp {
             gridOrder,
             this.career.state.playerTeamId,
             {
-                raceFormat: this.career.state.raceFormat || 'SPRINT',
+                isTestTrackMode: isTestMode,
+                raceFormat: this.career.state.raceFormat || 'FULL',
                 driveControlMode: this.career.state.driveControlMode || 'MANUAL',
-                startingTires: this.career.state.startingTires || {}
+                startingTires: this.career.state.startingTires || {},
+                tuning: this.career.state.tuning
             }
         );
 
-        this.appendRadioLog('RACE ENGINEER', `${circuit.name} 그리드 정렬 완료. 타이어 온도와 ERS 전개 모드를 점검하십시오.`);
+        // Build static Pit Wall Driver Control Cards once per race so button clicks NEVER fail!
+        this.buildStaticPitWallDriverBox('pwDriverBox1', this.engine.playerCar1);
+        this.buildStaticPitWallDriverBox('pwDriverBox2', this.engine.playerCar2);
+        this.buildStaticTimingTowerRows(this.engine.getSnapshot().standings);
+
+        this.appendRadioLog('RACE ENGINEER', `${circuit.name} (${this.engine.totalLaps} Laps) 세션 시작. 트랙 위의 초록/노랑/빨강 레코드 라인을 따라 브레이킹과 에이펙스를 공략하십시오.`);
         this.syncDriveModeButton();
     }
 
+    buildStaticTimingTowerRows(standings) {
+        const towerEl = document.getElementById('liveTimingRows');
+        if (!towerEl) return;
+        towerEl.innerHTML = standings.map((_, idx) => `
+            <div class="tower-row" id="towerSlot_${idx}" data-driver-id="" onclick="window.F1App.onTowerRowClick(this)">
+                <span class="tr-pos" id="tsPos_${idx}">${idx + 1}</span>
+                <span class="tr-bar" id="tsBar_${idx}"></span>
+                <span class="tr-code" id="tsCode_${idx}">---</span>
+                <span class="tr-gap" id="tsGap_${idx}">-</span>
+                <span class="tr-tire" id="tsTire_${idx}">S</span>
+                <span class="tr-wear" id="tsWear_${idx}">100%</span>
+                <span class="tr-pits" id="tsPits_${idx}">0P</span>
+            </div>
+        `).join('');
+    }
+
+    onTowerRowClick(rowEl) {
+        const drvId = rowEl.getAttribute('data-driver-id');
+        if (drvId) {
+            this.focusDriverCamera(drvId);
+        }
+    }
+
+    // Build static DOM structure for Pit Wall Strategy Box once; update only classes & text on tick
+    buildStaticPitWallDriverBox(elId, car) {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        if (!car) {
+            el.style.display = 'none';
+            return;
+        }
+        el.style.display = 'block';
+        const dId = car.driver.id;
+
+        el.innerHTML = `
+            <div class="pw-drv-top">
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <span id="${elId}_pos" style="background:${car.team.primaryColor};color:#fff;font-family:var(--font-Telemetry);font-size:10px;font-weight:800;padding:1px 5px;">P${car.position}</span>
+                    <span style="font-weight:800;font-size:12px;cursor:pointer;" onclick="window.F1App.focusDriverCamera('${dId}')">#${car.driver.number} ${car.driver.korName}</span>
+                </div>
+                <span id="${elId}_telemetry" style="font-family:var(--font-Telemetry);font-size:10px;font-weight:700;">
+                    S 100% • WING 100%
+                </span>
+            </div>
+
+            <div class="pw-cmd-grid">
+                <button id="${elId}_pace_ATTACK" class="pw-cmd-btn" onclick="window.F1App.setDriverCmd('${dId}','ATTACK',null)">PACE: ATTACK</button>
+                <button id="${elId}_pace_BALANCED" class="pw-cmd-btn" onclick="window.F1App.setDriverCmd('${dId}','BALANCED',null)">PACE: BALANCED</button>
+                <button id="${elId}_pace_CONSERVE" class="pw-cmd-btn" onclick="window.F1App.setDriverCmd('${dId}','CONSERVE',null)">PACE: CONSERVE</button>
+            </div>
+
+            <div class="pw-cmd-grid">
+                <button id="${elId}_ers_OVERTAKE" class="pw-cmd-btn" onclick="window.F1App.setDriverCmd('${dId}',null,'OVERTAKE')">ERS: OVERTAKE</button>
+                <button id="${elId}_ers_BALANCED" class="pw-cmd-btn" onclick="window.F1App.setDriverCmd('${dId}',null,'BALANCED')">ERS: AUTO</button>
+                <button id="${elId}_ers_HARVEST" class="pw-cmd-btn" onclick="window.F1App.setDriverCmd('${dId}',null,'HARVEST')">ERS: HARVEST</button>
+            </div>
+
+            <div class="pw-compound-bar">
+                ${['SOFT', 'MEDIUM', 'HARD', 'INTER', 'WET'].map(k => {
+                    const tc = window.F1Data.tireCompounds[k];
+                    return `
+                        <button id="${elId}_comp_${k}" class="pw-comp-btn"
+                                style="border-bottom:2px solid ${tc.color};"
+                                onclick="window.F1App.setPitCompound('${dId}','${k}')">
+                            ${tc.short}
+                        </button>
+                    `;
+                }).join('')}
+            </div>
+
+            <button id="${elId}_boxBtn" class="pw-box-btn" onclick="window.F1App.toggleBoxCall('${dId}')">
+                BOX THIS LAP
+            </button>
+        `;
+    }
+
+    updateStaticPitWallDriverBox(elId, car) {
+        if (!car) return;
+        const posEl = document.getElementById(`${elId}_pos`);
+        const telEl = document.getElementById(`${elId}_telemetry`);
+        if (!posEl || !telEl) return;
+
+        const comp = window.F1Data.tireCompounds[car.tireCompound];
+        const wearCol = car.tireHealth > 60 ? '#22C55E' : (car.tireHealth > 32 ? '#FACC15' : '#EF4444');
+        posEl.textContent = car.dnf ? 'DNF' : `P${car.position}`;
+        telEl.style.color = wearCol;
+        telEl.textContent = `${comp.short} ${Math.round(car.tireHealth)}% • WING ${Math.round(car.frontWingHealth)}%`;
+
+        ['ATTACK', 'BALANCED', 'CONSERVE'].forEach(pm => {
+            const btn = document.getElementById(`${elId}_pace_${pm}`);
+            if (btn) {
+                const cls = pm === 'ATTACK' ? 'active-attack' : (pm === 'BALANCED' ? 'active-bal' : 'active-save');
+                btn.className = 'pw-cmd-btn' + (car.paceMode === pm ? ` ${cls}` : '');
+            }
+        });
+
+        ['OVERTAKE', 'BALANCED', 'HARVEST'].forEach(em => {
+            const btn = document.getElementById(`${elId}_ers_${em}`);
+            if (btn) {
+                const cls = em === 'OVERTAKE' ? 'active-attack' : (em === 'BALANCED' ? 'active-bal' : 'active-save');
+                btn.className = 'pw-cmd-btn' + (car.ersMode === em ? ` ${cls}` : '');
+            }
+        });
+
+        ['SOFT', 'MEDIUM', 'HARD', 'INTER', 'WET'].forEach(k => {
+            const btn = document.getElementById(`${elId}_comp_${k}`);
+            if (btn) {
+                btn.className = 'pw-comp-btn' + (car.nextPitTire === k ? ' selected' : '');
+            }
+        });
+
+        const boxBtn = document.getElementById(`${elId}_boxBtn`);
+        if (boxBtn) {
+            boxBtn.className = 'pw-box-btn' + (car.pitRequested ? ' called' : '');
+            if (car.dnf) {
+                boxBtn.textContent = `RETIRED (${car.dnfReason})`;
+            } else if (car.inPitLane) {
+                boxBtn.textContent = `IN PIT LANE (${car.pitState})...`;
+            } else if (car.pitRequested) {
+                boxBtn.textContent = `BOX THIS LAP → ${car.nextPitTire} (CANCEL)`;
+            } else {
+                boxBtn.textContent = `BOX THIS LAP → FIT ${car.nextPitTire}`;
+            }
+        }
+    }
+
     updateLiveTelemetryHUD(snap) {
-        // 1. Race Control Header
-        document.getElementById('rcLapCounter').textContent = `LAP ${snap.lap} / ${snap.totalLaps}`;
+        document.getElementById('rcLapCounter').textContent = snap.isTestTrackMode
+            ? `TEST LAP ${snap.lap}`
+            : `LAP ${snap.lap} / ${snap.totalLaps}`;
         const flagEl = document.getElementById('rcFlagBadge');
         if (flagEl) {
             flagEl.textContent = snap.trackFlag;
@@ -150,43 +459,51 @@ class F1ManagerApp {
         document.getElementById('rcWeatherText').textContent =
             `${snap.weather} • TRACK ${snap.trackTemp}°C • WATER ${snap.trackWater}%`;
 
-        // 2. Left FIA 20-Car Timing Tower
-        const towerEl = document.getElementById('liveTimingRows');
-        if (towerEl) {
-            towerEl.innerHTML = snap.standings.map(c => {
-                const comp = window.F1Data.tireCompounds[c.tireCompound] || window.F1Data.tireCompounds.MEDIUM;
-                const isWatched = (snap.followedCar && snap.followedCar.driver.id === c.driver.id);
-                const gapTxt = c.position === 1 ? 'LEADER' : (c.inPitLane ? 'IN PIT' : `+${c.intervalAhead.toFixed(1)}s`);
-                const wearCol = c.tireHealth > 60 ? '#22C55E' : (c.tireHealth > 32 ? '#FACC15' : '#EF4444');
-                return `
-                    <div class="tower-row ${c.isPlayerTeam ? 'is-player' : ''} ${isWatched ? 'is-watched' : ''}"
-                         onclick="window.F1App.focusDriverCamera('${c.driver.id}')">
-                        <span class="tr-pos">${c.position}</span>
-                        <span class="tr-bar" style="background:${c.team.primaryColor};"></span>
-                        <span class="tr-code">${c.driver.code}</span>
-                        <span class="tr-gap" style="${c.inPitLane ? 'color:#FFD100;font-weight:800;' : ''}">${gapTxt}</span>
-                        <span class="tr-tire" style="border-color:${comp.color};color:${comp.color};">${comp.short}</span>
-                        <span class="tr-wear" style="color:${wearCol};">${Math.round(c.tireHealth)}%</span>
-                        <span class="tr-pits">${c.pitStops}P</span>
-                    </div>
-                `;
-            }).join('');
-        }
+        // Update Static Timing Tower Slots (No DOM destruction!)
+        snap.standings.forEach((c, idx) => {
+            const rowEl = document.getElementById(`towerSlot_${idx}`);
+            if (!rowEl) return;
+            const comp = window.F1Data.tireCompounds[c.tireCompound] || window.F1Data.tireCompounds.MEDIUM;
+            const isWatched = (snap.followedCar && snap.followedCar.driver.id === c.driver.id);
+            const gapTxt = c.dnf ? 'DNF' : (c.position === 1 ? 'LEADER' : (c.inPitLane ? 'IN PIT' : `+${c.intervalAhead.toFixed(1)}s`));
+            const wearCol = c.tireHealth > 60 ? '#22C55E' : (c.tireHealth > 32 ? '#FACC15' : '#EF4444');
 
-        // 3. Right Pit Wall Driver Strategy Boxes
-        this.renderPitWallDriverBox('pwDriverBox1', snap.playerCar1);
-        this.renderPitWallDriverBox('pwDriverBox2', snap.playerCar2);
+            rowEl.setAttribute('data-driver-id', c.driver.id);
+            rowEl.className = `tower-row${c.isPlayerTeam ? ' is-player' : ''}${isWatched ? ' is-watched' : ''}`;
 
-        // 4. Bottom Center Telemetry Pod
+            document.getElementById(`tsPos_${idx}`).textContent = c.dnf ? 'OUT' : c.position;
+            document.getElementById(`tsBar_${idx}`).style.background = c.team.primaryColor;
+            document.getElementById(`tsCode_${idx}`).textContent = c.driver.code;
+            const gapEl = document.getElementById(`tsGap_${idx}`);
+            gapEl.textContent = gapTxt;
+            gapEl.style.color = c.dnf ? '#EF4444' : (c.inPitLane ? '#FFD100' : '#94A3B8');
+
+            const tireEl = document.getElementById(`tsTire_${idx}`);
+            tireEl.textContent = comp.short;
+            tireEl.style.borderColor = comp.color;
+            tireEl.style.color = comp.color;
+
+            const wearEl = document.getElementById(`tsWear_${idx}`);
+            wearEl.textContent = `${Math.round(c.tireHealth)}%`;
+            wearEl.style.color = wearCol;
+
+            document.getElementById(`tsPits_${idx}`).textContent = `${c.pitStops}P`;
+        });
+
+        // Update Static Pit Wall Driver Cards
+        this.updateStaticPitWallDriverBox('pwDriverBox1', snap.playerCar1);
+        this.updateStaticPitWallDriverBox('pwDriverBox2', snap.playerCar2);
+
+        // Update Bottom Center Telemetry Pod
         const fc = snap.followedCar || snap.playerCar1;
         if (fc) {
             document.getElementById('podSpeed').textContent = Math.round(fc.speedKmh);
             document.getElementById('podRpm').textContent = fc.rpm;
             document.getElementById('podGear').textContent = fc.inPitLane ? 'P' : fc.gear;
-            document.getElementById('podErsPct').textContent = `${Math.round(fc.ersBattery)}%`;
+            document.getElementById('podErsPct').textContent = `ERS ${Math.round(fc.ersBattery)}% • WING ${Math.round(fc.frontWingHealth)}%`;
             document.getElementById('podErsFill').style.width = `${fc.ersBattery}%`;
             document.getElementById('podWatchedLabel').textContent =
-                `ONBOARD: #${fc.driver.number} ${fc.driver.code} (P${fc.position} • ${fc.tireAgeLaps}L TIRES)`;
+                `ONBOARD: #${fc.driver.number} ${fc.driver.code} (P${fc.position} • BEST ${this.career.formatLapTime(fc.bestLapTime)})`;
 
             const drsBtn = document.getElementById('podDrsBtn');
             if (drsBtn) {
@@ -205,61 +522,6 @@ class F1ManagerApp {
         }
     }
 
-    renderPitWallDriverBox(elId, car) {
-        const el = document.getElementById(elId);
-        if (!el || !car) return;
-        const comp = window.F1Data.tireCompounds[car.tireCompound];
-        const wearCol = car.tireHealth > 60 ? '#22C55E' : (car.tireHealth > 32 ? '#FACC15' : '#EF4444');
-
-        el.innerHTML = `
-            <div class="pw-drv-top">
-                <div style="display:flex;align-items:center;gap:6px;">
-                    <span style="background:${car.team.primaryColor};color:#fff;font-family:var(--font-Telemetry);font-size:10px;font-weight:800;padding:1px 5px;">P${car.position}</span>
-                    <span style="font-weight:800;font-size:12px;">#${car.driver.number} ${car.driver.korName}</span>
-                </div>
-                <span style="font-family:var(--font-Telemetry);font-size:10px;color:${wearCol};font-weight:700;">
-                    ${comp.short} ${Math.round(car.tireHealth)}% (${car.tireAgeLaps}L) • ${Math.round(car.tireTemp)}°C
-                </span>
-            </div>
-
-            <div class="pw-cmd-grid">
-                <button class="pw-cmd-btn ${car.paceMode === 'ATTACK' ? 'active-attack' : ''}"
-                        onclick="window.F1App.setDriverCmd('${car.driver.id}','ATTACK',null)">PACE: ATTACK</button>
-                <button class="pw-cmd-btn ${car.paceMode === 'BALANCED' ? 'active-bal' : ''}"
-                        onclick="window.F1App.setDriverCmd('${car.driver.id}','BALANCED',null)">PACE: BALANCED</button>
-                <button class="pw-cmd-btn ${car.paceMode === 'CONSERVE' ? 'active-save' : ''}"
-                        onclick="window.F1App.setDriverCmd('${car.driver.id}','CONSERVE',null)">PACE: CONSERVE</button>
-            </div>
-
-            <div class="pw-cmd-grid">
-                <button class="pw-cmd-btn ${car.ersMode === 'OVERTAKE' ? 'active-attack' : ''}"
-                        onclick="window.F1App.setDriverCmd('${car.driver.id}',null,'OVERTAKE')">ERS: OVERTAKE</button>
-                <button class="pw-cmd-btn ${car.ersMode === 'BALANCED' ? 'active-bal' : ''}"
-                        onclick="window.F1App.setDriverCmd('${car.driver.id}',null,'BALANCED')">ERS: AUTO</button>
-                <button class="pw-cmd-btn ${car.ersMode === 'HARVEST' ? 'active-save' : ''}"
-                        onclick="window.F1App.setDriverCmd('${car.driver.id}',null,'HARVEST')">ERS: HARVEST</button>
-            </div>
-
-            <div class="pw-compound-bar">
-                ${['SOFT', 'MEDIUM', 'HARD', 'INTER', 'WET'].map(k => {
-                    const tc = window.F1Data.tireCompounds[k];
-                    return `
-                        <button class="pw-comp-btn ${car.nextPitTire === k ? 'selected' : ''}"
-                                style="border-bottom:2px solid ${tc.color};"
-                                onclick="window.F1App.setPitCompound('${car.driver.id}','${k}')">
-                            ${tc.short}
-                        </button>
-                    `;
-                }).join('')}
-            </div>
-
-            <button class="pw-box-btn ${car.pitRequested ? 'called' : ''}"
-                    onclick="window.F1App.toggleBoxCall('${car.driver.id}')">
-                ${car.inPitLane ? 'IN PIT LANE — CHANGING TYRES...' : (car.pitRequested ? 'BOX THIS LAP (CLICK TO CANCEL)' : `BOX THIS LAP → FIT ${car.nextPitTire}`)}
-            </button>
-        `;
-    }
-
     focusDriverCamera(driverId) {
         window.f1Audio.playUiClick(false);
         this.engine.setFollowedDriver(driverId);
@@ -268,15 +530,18 @@ class F1ManagerApp {
     setDriverCmd(driverId, pace, ers) {
         window.f1Audio.playUiClick(false);
         this.engine.setCarCommands(driverId, pace, ers);
+        this.updateLiveTelemetryHUD(this.engine.getSnapshot());
     }
 
     setPitCompound(driverId, compKey) {
         window.f1Audio.playUiClick(false);
         this.engine.setNextPitCompound(driverId, compKey);
+        this.updateLiveTelemetryHUD(this.engine.getSnapshot());
     }
 
     toggleBoxCall(driverId) {
         this.engine.togglePitCall(driverId);
+        this.updateLiveTelemetryHUD(this.engine.getSnapshot());
     }
 
     setSimSpeed(spd, btn) {
@@ -312,11 +577,11 @@ class F1ManagerApp {
         const states = ['DRY', 'INTER_RAIN', 'HEAVY_RAIN'];
         const next = states[(states.indexOf(this.engine.weather) + 1) % states.length];
         this.engine.weather = next;
-        this.appendRadioLog('METEO FRANCE', `기상 레이더 변화: [${next}] 상태로 전환되었습니다. 타이어 크로스오버 타이밍을 계산하십시오!`);
+        this.appendRadioLog('METEO FRANCE', `기상 레이더 업데이트: [${next}] 상태로 전환되었습니다.`);
     }
 
     triggerVscLive() {
-        this.engine.triggerSafetyCar('VSC');
+        this.engine.triggerSafetyCar('SC', '트랙 위 카본 데브리 수거!');
     }
 
     manualDrsClick() {
@@ -325,7 +590,12 @@ class F1ManagerApp {
 
     finishRaceNow() {
         window.f1Audio.playUiClick(true);
-        this.engine.completeRaceSession();
+        if (this.engine.isTestTrackMode) {
+            this.switchView('engineering');
+            this.notify('성능 테스트 트랙 주행을 종료하고 R&D 연구소로 복귀했습니다.');
+        } else {
+            this.engine.completeRaceSession();
+        }
     }
 
     appendRadioLog(tag, msg) {
@@ -344,24 +614,24 @@ class F1ManagerApp {
         const circuit = this.career.getCurrentCircuit();
         const team = this.career.getPlayerTeam();
         const drivers = this.career.getTeamDrivers(team.id);
-        const curFmt = this.career.state.raceFormat || 'SPRINT';
+        const curFmt = this.career.state.raceFormat || 'FULL';
 
         const briefEl = document.getElementById('weekendGpBriefingPanel');
         if (briefEl) {
             briefEl.innerHTML = `
                 <div class="fia-panel-head">
                     <div>
-                        <div style="font-family:var(--font-Telemetry);font-size:11px;color:#E10600;font-weight:800;">ROUND ${circuit.round} OF 24 • ${circuit.location.toUpperCase()}</div>
+                        <div style="font-family:var(--font-Telemetry);font-size:11px;color:#E10600;font-weight:800;">ROUND ${circuit.round} OF 24 • ${circuit.location.toUpperCase()} (${circuit.biome})</div>
                         <div class="fia-panel-title" style="font-size:20px;">${circuit.name}</div>
                     </div>
-                    <span style="font-family:var(--font-Telemetry);font-size:12px;color:#94A3B8;">
-                        FULL DISTANCE: ${circuit.realLaps} LAPS (${circuit.lengthKm} KM)
+                    <span style="font-family:var(--font-Telemetry);font-size:12px;color:#FFD100;font-weight:800;">
+                        OFFICIAL FIA DISTANCE: ${circuit.realLaps} LAPS (${circuit.lengthKm} KM)
                     </span>
                 </div>
 
                 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
                     <div style="background:#0D1017;padding:10px;border:1px solid var(--border-subtle);">
-                        <div style="font-size:10px;color:#64748B;">OFFICIAL LAPS</div>
+                        <div style="font-size:10px;color:#64748B;">100% REAL LAPS</div>
                         <div style="font-family:var(--font-Telemetry);font-size:16px;font-weight:800;margin-top:2px;">${circuit.realLaps} LAPS</div>
                     </div>
                     <div style="background:#0D1017;padding:10px;border:1px solid var(--border-subtle);">
@@ -379,7 +649,7 @@ class F1ManagerApp {
                 </div>
 
                 <div style="margin-bottom:14px;">
-                    <div style="font-family:var(--font-Telemetry);font-size:11px;color:#94A3B8;margin-bottom:6px;">SELECT GRAND PRIX DISTANCE FORMAT (실제 경기 바퀴수 비율 선택):</div>
+                    <div style="font-family:var(--font-Telemetry);font-size:11px;color:#94A3B8;margin-bottom:6px;">SELECT GRAND PRIX DISTANCE FORMAT (실제 경기 바퀴수 선택 — 기본 100% 실제 랩수):</div>
                     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
                         ${Object.keys(window.F1Data.raceFormats).map(fk => {
                             const f = window.F1Data.raceFormats[fk];
@@ -388,7 +658,7 @@ class F1ManagerApp {
                                 <button class="fia-btn-slate ${curFmt === fk ? 'active' : ''}"
                                         onclick="window.F1App.selectRaceFormat('${fk}')">
                                     <div>${f.label}</div>
-                                    <div style="font-family:var(--font-Telemetry);font-size:11px;color:#FFD100;margin-top:2px;">${lapsCount} LAPS</div>
+                                    <div style="font-family:var(--font-Telemetry);font-size:12px;color:#FFD100;margin-top:3px;">${lapsCount} LAPS</div>
                                 </button>
                             `;
                         }).join('')}
@@ -443,6 +713,7 @@ class F1ManagerApp {
         this.career.state.raceFormat = fmtKey;
         this.career.save();
         this.renderWeekendView();
+        this.notify(`레이스 거리 포맷이 [${window.F1Data.raceFormats[fmtKey].label}]로 변경되었습니다.`);
     }
 
     setDriverStartCompound(driverId, compKey) {
@@ -502,7 +773,7 @@ class F1ManagerApp {
     startGrandPrixFromWeekend() {
         window.f1Audio.playUiClick(true);
         this.switchView('race');
-        this.launchLiveGrandPrix();
+        this.launchLiveGrandPrix(false);
     }
 
     // =========================================================================
@@ -595,8 +866,8 @@ class F1ManagerApp {
                     <div style="background:#0D1017;border:1px solid ${isCur ? '#E10600' : 'var(--border-subtle)'};padding:12px;cursor:pointer;"
                          onclick="window.F1App.jumpToCircuitRound(${idx})">
                         <div style="display:flex;justify-content:space-between;font-family:var(--font-Telemetry);font-size:10px;color:${isCur ? '#E10600' : '#64748B'};margin-bottom:4px;">
-                            <span>R${String(c.round).padStart(2, '0')} • ${c.code}</span>
-                            <span>${c.realLaps} LAPS (${c.lengthKm}KM)</span>
+                            <span>R${String(c.round).padStart(2, '0')} • ${c.code} (${c.biome})</span>
+                            <span style="color:#FFD100;font-weight:800;">${c.realLaps} LAPS (${c.lengthKm}KM)</span>
                         </div>
                         <div style="font-weight:800;font-size:13px;margin-bottom:6px;">${c.name}</div>
                         ${done ? `
@@ -605,7 +876,7 @@ class F1ManagerApp {
                             </div>
                         ` : `
                             <div style="font-family:var(--font-Telemetry);font-size:10px;color:#94A3B8;">
-                                AERO ${Math.round(c.aeroWeight * 100)}% • POWER ${Math.round(c.powerWeight * 100)}% • RAIN ${Math.round(c.rainChance * 100)}%
+                                AERO ${Math.round(c.aeroWeight * 100)}% • POWER ${Math.round(c.powerWeight * 100)}% • DRS ${c.drsZones.length} ZONES
                             </div>
                         `}
                     </div>
@@ -615,23 +886,136 @@ class F1ManagerApp {
     }
 
     jumpToCircuitRound(roundIdx) {
-        window.f1Audio.playUiClick(false);
+        window.f1Audio.playUiClick(true);
         this.career.state.currentRoundIndex = roundIdx;
         this.career.state.qualifyingOrder = null;
         this.career.save();
         this.refreshAllViews();
         const c = this.career.getCurrentCircuit();
-        this.notify(`선택된 그랑프리: R${c.round} ${c.name} (${c.realLaps} Laps)`);
+        this.notify(`선택된 그랑프리: R${c.round} ${c.name} (실제 ${c.realLaps} Laps)`);
     }
 
     // =========================================================================
-    // VIEW 4: R&D ENGINEERING
+    // VIEW 4: R&D ENGINEERING + EQUIPMENT / TIRE DYNO TEST BENCH
     // =========================================================================
     renderEngineeringView() {
         const team = this.career.getPlayerTeam();
+        const circuit = this.career.getCurrentCircuit();
         const levels = this.career.state.rdLevels[team.id] || { aero: 0, powertrain: 0, chassis: 0, durability: 0 };
+        const tuning = this.career.state.tuning || window.F1Data.defaultTuning;
+        const dyno = this.career.computeDynoTelemetry(circuit, this.dynoTireCompound);
 
-        document.getElementById('engBudgetLabel').textContent = `AVAILABLE COST CAP: $${(team.budget / 1e6).toFixed(2)}M`;
+        document.getElementById('engBudgetLabel').textContent = `COST CAP: $${(team.budget / 1e6).toFixed(2)}M`;
+
+        const benchEl = document.getElementById('dynoTestBenchContainer');
+        if (benchEl) {
+            benchEl.innerHTML = `
+                <!-- Left: Mechanical & Aero Setup Sliders -->
+                <div style="background:#0D1017;border:1px solid var(--border-subtle);padding:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <span style="font-family:var(--font-Broadcast);font-size:14px;font-weight:800;color:#FFD100;">MECHANICAL &amp; AERO SETUP TUNING (기계/윙/타이어 셋업)</span>
+                        <span style="font-family:var(--font-Telemetry);font-size:10px;color:#22C55E;">${circuit.code} 권장 윙 각도: ${dyno.idealWingForCircuit}</span>
+                    </div>
+
+                    <div class="tuning-slider-row">
+                        <div class="tuning-slider-label">
+                            <span>FRONT WING ANGLE (프론트 윙 각도: 직선속도 ↔ 코너그립)</span>
+                            <strong style="color:#fff;">LEVEL ${tuning.frontWingAngle} / 11</strong>
+                        </div>
+                        <input type="range" min="1" max="11" step="1" value="${tuning.frontWingAngle}" class="tuning-range"
+                               oninput="window.F1App.updateTuningParam('frontWingAngle', this.value)">
+                    </div>
+
+                    <div class="tuning-slider-row">
+                        <div class="tuning-slider-label">
+                            <span>REAR WING ANGLE (리어 윙 &amp; DRS 드래그 밸런스)</span>
+                            <strong style="color:#fff;">LEVEL ${tuning.rearWingAngle} / 11</strong>
+                        </div>
+                        <input type="range" min="1" max="11" step="1" value="${tuning.rearWingAngle}" class="tuning-range"
+                               oninput="window.F1App.updateTuningParam('rearWingAngle', this.value)">
+                    </div>
+
+                    <div class="tuning-slider-row">
+                        <div class="tuning-slider-label">
+                            <span>SUSPENSION STIFFNESS (서스펜션 강성: 연석 흡수 ↔ 응답성)</span>
+                            <strong style="color:#fff;">LEVEL ${tuning.suspensionStiffness} / 10</strong>
+                        </div>
+                        <input type="range" min="1" max="10" step="1" value="${tuning.suspensionStiffness}" class="tuning-range"
+                               oninput="window.F1App.updateTuningParam('suspensionStiffness', this.value)">
+                    </div>
+
+                    <div class="tuning-slider-row">
+                        <div class="tuning-slider-label">
+                            <span>BRAKE BIAS (브레이크 밸런스: 50% Rear ↔ 62% Front)</span>
+                            <strong style="color:#fff;">${tuning.brakeBias}% FRONT</strong>
+                        </div>
+                        <input type="range" min="50" max="62" step="1" value="${tuning.brakeBias}" class="tuning-range"
+                               oninput="window.F1App.updateTuningParam('brakeBias', this.value)">
+                    </div>
+
+                    <div class="tuning-slider-row" style="margin-bottom:0;">
+                        <div class="tuning-slider-label">
+                            <span>TYRE PRESSURE PSI (피렐리 타이어 공기압: 온도/마모 제어)</span>
+                            <strong style="color:#fff;">${tuning.tirePressurePsi} PSI</strong>
+                        </div>
+                        <input type="range" min="20.0" max="25.0" step="0.5" value="${tuning.tirePressurePsi}" class="tuning-range"
+                               oninput="window.F1App.updateTuningParam('tirePressurePsi', this.value)">
+                    </div>
+                </div>
+
+                <!-- Right: Live Wind Tunnel & Tire Compound Dyno Output -->
+                <div style="background:#0D1017;border:1px solid var(--border-subtle);padding:14px;display:flex;flex-direction:column;justify-content:space-between;">
+                    <div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                            <span style="font-family:var(--font-Broadcast);font-size:14px;font-weight:800;color:#38BDF8;">LIVE DYNO &amp; TYRE COMPOUND BENCHMARK</span>
+                            <div style="display:flex;gap:4px;">
+                                ${['SOFT', 'MEDIUM', 'HARD', 'INTER', 'WET'].map(tk => {
+                                    const tc = window.F1Data.tireCompounds[tk];
+                                    return `
+                                        <button class="pw-comp-btn ${this.dynoTireCompound === tk ? 'selected' : ''}"
+                                                style="border-bottom:2px solid ${tc.color};padding:3px 7px;"
+                                                onclick="window.F1App.selectDynoCompound('${tk}')">${tc.short}</button>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">
+                            <div style="background:#141824;padding:10px;border:1px solid var(--border-subtle);">
+                                <div style="font-size:10px;color:#64748B;">TOP SPEED (DRS OPEN)</div>
+                                <div style="font-family:var(--font-Telemetry);font-size:16px;font-weight:800;color:#22C55E;">${dyno.topSpeedDrsKmh} KM/H</div>
+                                <div style="font-family:var(--font-Telemetry);font-size:10px;color:#94A3B8;">NO DRS: ${dyno.topSpeedKmh} KM/H</div>
+                            </div>
+                            <div style="background:#141824;padding:10px;border:1px solid var(--border-subtle);">
+                                <div style="font-size:10px;color:#64748B;">MAX CORNERING FORCE</div>
+                                <div style="font-family:var(--font-Telemetry);font-size:16px;font-weight:800;color:#38BDF8;">${dyno.corneringG} G</div>
+                                <div style="font-family:var(--font-Telemetry);font-size:10px;color:#94A3B8;">0-200 KM/H: ${dyno.zeroTo200Sec}s</div>
+                            </div>
+                            <div style="background:#141824;padding:10px;border:1px solid var(--border-subtle);">
+                                <div style="font-size:10px;color:#64748B;">100-0 BRAKING DIST</div>
+                                <div style="font-family:var(--font-Telemetry);font-size:16px;font-weight:800;color:#FFD100;">${dyno.braking100To0Meters} M</div>
+                                <div style="font-family:var(--font-Telemetry);font-size:10px;color:#94A3B8;">EFF AERO/PWR: ${dyno.effAero}/${dyno.effPower}</div>
+                            </div>
+                        </div>
+
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <div style="background:#141824;padding:10px;border-left:3px solid #A855F7;">
+                                <div style="font-size:10px;color:#94A3B8;">PREDICTED ${circuit.code} QUALI LAP (${this.dynoTireCompound})</div>
+                                <div style="font-family:var(--font-Telemetry);font-size:18px;font-weight:800;color:#fff;margin-top:2px;">${dyno.predictedLapStr}</div>
+                            </div>
+                            <div style="background:#141824;padding:10px;border-left:3px solid #E10600;">
+                                <div style="font-size:10px;color:#94A3B8;">ESTIMATED TYRE WEAR &amp; STINT LIFE</div>
+                                <div style="font-family:var(--font-Telemetry);font-size:15px;font-weight:800;color:#FFD100;margin-top:2px;">${dyno.wearPerLapPct}% / LAP (약 ${dyno.estimatedStintLaps} LAPS)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="font-size:11px;color:#94A3B8;margin-top:10px;">
+                        * 슬라이더를 조절하면 즉시 위 다이노 시뮬레이션 수치가 갱신되며, 우측 상단 <b>[LAUNCH 3D SHAKEDOWN TEST TRACK]</b>을 누르면 현재 셋업과 타이어로 서킷을 단독 주행하며 테스트할 수 있습니다.
+                    </div>
+                </div>
+            `;
+        }
 
         const grid = document.getElementById('engineeringDeptsGrid');
         if (!grid) return;
@@ -673,6 +1057,34 @@ class F1ManagerApp {
                 </div>
             `;
         }).join('');
+    }
+
+    updateTuningParam(key, val) {
+        if (!this.career.state.tuning) {
+            this.career.state.tuning = JSON.parse(JSON.stringify(window.F1Data.defaultTuning));
+        }
+        this.career.state.tuning[key] = parseFloat(val);
+        this.career.save();
+        if (this.engine) {
+            this.engine.playerTuning = this.career.state.tuning;
+        }
+        this.renderEngineeringView();
+    }
+
+    selectDynoCompound(compKey) {
+        window.f1Audio.playUiClick(false);
+        this.dynoTireCompound = compKey;
+        this.renderEngineeringView();
+    }
+
+    launchShakedownTestTrack() {
+        window.f1Audio.playUiClick(true);
+        const drivers = this.career.getTeamDrivers(this.career.state.playerTeamId);
+        if (drivers.length) {
+            this.career.state.startingTires[drivers[0].id] = this.dynoTireCompound;
+        }
+        this.switchView('race');
+        this.launchLiveGrandPrix(true);
     }
 
     developRdPart(deptKey) {
@@ -720,7 +1132,7 @@ class F1ManagerApp {
             spPanel.innerHTML = `
                 <div class="fia-panel-head">
                     <span class="fia-panel-title">TITLE SPONSOR &amp; COMMERCIAL AGREEMENTS</span>
-                    <button class="fia-btn-slate" style="padding:4px 10px;font-size:11px;" onclick="window.F1App.resetFullSeason()">RESET 2025 SEASON</button>
+                    <button class="fia-btn-slate" style="padding:4px 10px;font-size:11px;" onclick="window.F1App.openMainMenu()">MAIN MENU / SAVE &amp; RESET</button>
                 </div>
                 <div style="background:#0D1017;border:1px solid var(--border-strong);padding:12px;margin-bottom:10px;">
                     <div style="font-family:var(--font-Telemetry);font-size:10px;color:#E10600;">PRIMARY TITLE PARTNER</div>
@@ -826,7 +1238,7 @@ class F1ManagerApp {
         document.getElementById('teamPickerModal').style.display = 'none';
         this.refreshAllViews();
         if (this.activeView === 'race') {
-            this.launchLiveGrandPrix();
+            this.launchLiveGrandPrix(false);
         }
         this.notify(`TEAM PRINCIPAL APPOINTED: ${this.career.getPlayerTeam().name}`);
     }
@@ -861,7 +1273,7 @@ class F1ManagerApp {
                             <th>GRID</th>
                             <th>STINTS / PITS</th>
                             <th>BEST LAP</th>
-                            <th>GAP</th>
+                            <th>STATUS / GAP</th>
                             <th>PTS</th>
                         </tr>
                     </thead>
@@ -870,7 +1282,7 @@ class F1ManagerApp {
                             const isMine = r.teamId === this.career.state.playerTeamId;
                             return `
                                 <tr class="${isMine ? 'highlight-team' : ''}">
-                                    <td style="font-family:var(--font-Telemetry);font-weight:800;">P${r.pos}</td>
+                                    <td style="font-family:var(--font-Telemetry);font-weight:800;color:${r.pos === 'DNF' ? '#EF4444' : '#fff'};">${r.pos === 'DNF' ? 'DNF' : 'P' + r.pos}</td>
                                     <td>
                                         <strong>${r.korName}</strong>
                                         <span style="font-family:var(--font-Telemetry);color:#64748B;">${r.code}</span>
@@ -880,7 +1292,7 @@ class F1ManagerApp {
                                     <td style="font-family:var(--font-Telemetry);">P${r.gridPos}</td>
                                     <td style="font-family:var(--font-Telemetry);">${r.stints.map(s => s[0]).join('→')} (${r.pits})</td>
                                     <td style="font-family:var(--font-Telemetry);">${r.bestLapStr}</td>
-                                    <td style="font-family:var(--font-Telemetry);">${r.gapStr}</td>
+                                    <td style="font-family:var(--font-Telemetry);color:${r.pos === 'DNF' ? '#EF4444' : '#94A3B8'};">${r.gapStr}</td>
                                     <td style="font-family:var(--font-Telemetry);font-weight:800;color:#FFD100;">${r.pts > 0 ? '+' + r.pts : '0'}</td>
                                 </tr>
                             `;
@@ -893,19 +1305,13 @@ class F1ManagerApp {
                 <button class="fia-btn-slate" onclick="document.getElementById('postRaceClassificationModal').style.display='none';window.F1App.switchView('standings');">
                     VIEW 24-RACE STANDINGS
                 </button>
-                <button class="fia-btn-red" onclick="document.getElementById('postRaceClassificationModal').style.display='none';window.F1App.launchLiveGrandPrix();">
+                <button class="fia-btn-red" onclick="document.getElementById('postRaceClassificationModal').style.display='none';window.F1App.launchLiveGrandPrix(false);">
                     PROCEED TO NEXT GRAND PRIX →
                 </button>
             </div>
         `;
 
         modal.style.display = 'flex';
-    }
-
-    resetFullSeason() {
-        this.career.startNewSeason(this.career.state.playerTeamId);
-        this.refreshAllViews();
-        this.notify('2025 FIA Formula 1 World Championship 24-Race Season Reset.');
     }
 }
 

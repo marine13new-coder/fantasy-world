@@ -1,30 +1,34 @@
-// FM Dream Club & Kickru Master Application Controller
-// Complete Living Football Universe, Squad Builder, Live 2D Match Engine, 32 Real Clubs, 433+ Real Stars & Regens
+// ============================================================================
+// FM Dream Club & Kickru Master Application Controller (app.js)
+// - 10 Global Leagues, 78 Authentic Clubs, 960+ Real Players & Procedural Newgens
+// - Interactive 2D Match Console, Squad Builder, Scouting Recruitment & Career Mode
+// ============================================================================
 
-var App = window.App = class App {
+var App = (typeof window !== 'undefined' ? window : global).App = class App {
     constructor() {
         this.pitchCanvas = null;
         this.matchEngine = null;
         this.currentTab = 'playerCareer';
         this.selectedLeagueId = 'kleague';
         this.swapSlotA = null;
+        this.tacticsSwapSlotA = null;
+        this.currentDetailPlayerId = null;
 
-        // Initialize Career Engine
         this.career = new CareerEngine();
 
-        // Current Active Club for Manager/Tactics Mode
-        this.activeClubId = localStorage.getItem('fm_active_club_id') || 'ulsan';
+        this.activeClubId = (typeof localStorage !== 'undefined' && localStorage.getItem('fm_active_club_id')) || 'ulsan';
+        if (this.activeClubId !== 'custom' && typeof CLUB_MAP !== 'undefined' && !CLUB_MAP[this.activeClubId]) {
+            this.activeClubId = 'ulsan';
+        }
         this.myClub = this.loadClub(this.activeClubId);
-
-        // Current Opponent for the round
         this.currentOpponent = this.pickNextRoundOpponent();
     }
 
     init() {
-        // Initialize 2D Pitch Canvas
+        if (typeof document === 'undefined') return;
+
         this.pitchCanvas = new PitchCanvas('livePitchCanvas');
 
-        // Setup All UI Handlers
         this.setupNavigation();
         this.setupCareerUI();
         this.setupLeagueUI();
@@ -32,7 +36,6 @@ var App = window.App = class App {
         this.setupTacticsUI();
         this.setupScoutingUI();
 
-        // Initial Renders
         this.renderPlayerCareer();
         this.renderCareerSquad();
         this.renderLeagueStandings(this.selectedLeagueId);
@@ -42,37 +45,58 @@ var App = window.App = class App {
         this.renderScoutingList();
         this.updateHeaderClubBadge();
 
-        // Unlock Web Audio on first interaction
-        document.body.addEventListener('click', () => sounds.init(), { once: true });
+        if (typeof sounds !== 'undefined') {
+            document.body.addEventListener('click', () => sounds.init(), { once: true });
+        }
 
-        // Ensure canvas has correct sizing
-        setTimeout(() => this.pitchCanvas.resize(), 100);
+        setTimeout(() => {
+            if (this.pitchCanvas) this.pitchCanvas.resize();
+        }, 100);
     }
 
-    // Load either a Real Club or Custom Team
     loadClub(clubId) {
         if (clubId === 'custom') {
-            const saved = localStorage.getItem('fm_custom_club_data');
-            if (saved) {
-                try { return JSON.parse(saved); } catch (e) {}
+            if (typeof localStorage !== 'undefined') {
+                const saved = localStorage.getItem('fm_custom_club_data');
+                if (saved) {
+                    try {
+                        const parsed = JSON.parse(saved);
+                        if (parsed && Array.isArray(parsed.starters) && parsed.starters.every(id => PLAYER_MAP[id])) {
+                            return parsed;
+                        }
+                    } catch (e) {}
+                }
             }
             return {
                 id: 'custom',
                 name: '나만의 드림 클럽',
                 shortName: 'DRM',
+                league: 'epl',
                 emblem: '👑',
-                color1: '#0ea5e9',
+                color1: '#0284c7',
                 color2: '#f59e0b',
                 stadium: '드림 아레나',
                 formation: '4-3-3',
-                starters: ['mancity_haaland', 'tottenham_son', 'real_mbappe', 'mancity_debruyne', 'mancity_rodri', 'real_bellingham', 'liv_trent', 'bayern_kimminjae', 'liv_vandijk', 'mancity_gvardiol', 'liv_alisson'],
-                bench: ['kor_chohyunwoo', 'psg_leekangin', 'real_vinicius', 'bayern_kane', 'leg_messi']
+                starters: ['liv_alisson', 'liv_trent', 'bayern_kimminjae', 'liv_vandijk', 'mancity_gvardiol', 'mancity_rodri', 'mancity_debruyne', 'real_bellingham', 'psg_leekangin', 'tottenham_son', 'mancity_haaland'],
+                bench: ['kor_chohyunwoo', 'real_mbappe', 'real_vinicius', 'bayern_kane', 'leg_messi']
             };
         }
 
-        const realClub = CLUB_MAP[clubId] || CLUBS[0];
+        const realClub = (typeof CLUB_MAP !== 'undefined' && CLUB_MAP[clubId]) || CLUBS[0];
         const starters = [...(realClub.starters || [])];
         const bench = [...(realClub.bench || [])];
+
+        // Ensure user career player is present if this is their club
+        const myP = this.career ? this.career.playerProfile : null;
+        if (myP && myP.clubId === realClub.id) {
+            if (!starters.includes('my_career_player') && !bench.includes('my_career_player')) {
+                if (myP.managerTrust >= 60) {
+                    starters[starters.length - 1] = 'my_career_player';
+                } else {
+                    bench.unshift('my_career_player');
+                }
+            }
+        }
 
         return {
             id: realClub.id,
@@ -90,24 +114,31 @@ var App = window.App = class App {
     }
 
     saveCurrentClub() {
-        if (this.myClub.id === 'custom') {
-            localStorage.setItem('fm_custom_club_data', JSON.stringify(this.myClub));
+        if (typeof CLUB_MAP !== 'undefined' && CLUB_MAP[this.myClub.id]) {
+            CLUB_MAP[this.myClub.id].starters = [...this.myClub.starters];
+            CLUB_MAP[this.myClub.id].bench = [...this.myClub.bench];
+            CLUB_MAP[this.myClub.id].formation = this.myClub.formation;
         }
-        localStorage.setItem('fm_active_club_id', this.activeClubId);
+        if (typeof localStorage !== 'undefined') {
+            if (this.myClub.id === 'custom') {
+                localStorage.setItem('fm_custom_club_data', JSON.stringify(this.myClub));
+            }
+            localStorage.setItem('fm_active_club_id', this.activeClubId);
+        }
         this.updateHeaderClubBadge();
     }
 
     pickNextRoundOpponent() {
         const myLeague = this.myClub.league || 'kleague';
-        const leagueClubs = CLUBS.filter(c => c.league === myLeague && c.id !== this.myClub.id);
+        const leagueClubs = CLUBS.filter(c => c.league === myLeague && c.id !== this.myClub.id && !c.isHistoricalTeam);
         if (leagueClubs.length > 0) {
             return leagueClubs[Math.floor(Math.random() * leagueClubs.length)];
         }
-        return CLUBS.find(c => c.id !== this.myClub.id) || CLUBS[1];
+        return CLUBS.find(c => c.id !== this.myClub.id && !c.isHistoricalTeam) || CLUBS[1];
     }
 
-    // Top Header Badge Update
     updateHeaderClubBadge() {
+        if (typeof document === 'undefined') return;
         const logoEl = document.getElementById('headerClubLogo');
         const nameEl = document.getElementById('headerClubName');
         const badgeEl = document.getElementById('headerClubBadge');
@@ -124,14 +155,13 @@ var App = window.App = class App {
         }
     }
 
-    // Navigation Tabs Setup
     setupNavigation() {
         const navBtns = document.querySelectorAll('.nav-tab-btn');
         navBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const target = btn.dataset.tab;
                 this.switchTab(target);
-                sounds.playClick();
+                if (typeof sounds !== 'undefined') sounds.playClick();
             });
         });
     }
@@ -158,40 +188,55 @@ var App = window.App = class App {
     }
 
     // ========================================================================
-    // 1. KICKRU PLAYER CAREER & LIVE 2D MATCH SITUATION
+    // 1. KICKRU PLAYER CAREER, CUSTOMIZATION, AGENT TRANSFERS & LIVE 2D MATCH
     // ========================================================================
     setupCareerUI() {
-        // Kickoff Live 2D Match Button
         const kickoffBtn = document.getElementById('careerKickoffMatchBtn');
-        if (kickoffBtn) {
-            kickoffBtn.addEventListener('click', () => this.startCareerLiveMatch());
-        }
+        if (kickoffBtn) kickoffBtn.addEventListener('click', () => this.startCareerLiveMatch());
 
-        // Training Button
         const trainBtn = document.getElementById('careerDoTrainBtn');
-        if (trainBtn) {
-            trainBtn.addEventListener('click', () => this.trainCareerPlayer());
-        }
+        if (trainBtn) trainBtn.addEventListener('click', () => this.trainCareerPlayer());
 
-        // Fast Sim Season Button
         const simSeasonBtn = document.getElementById('careerSimSeasonBtn');
-        if (simSeasonBtn) {
-            simSeasonBtn.addEventListener('click', () => this.simulateCareerSeason());
-        }
+        if (simSeasonBtn) simSeasonBtn.addEventListener('click', () => this.simulateCareerSeason());
 
-        // Return from match report
         const returnBtn = document.getElementById('careerReturnBtn');
         if (returnBtn) {
             returnBtn.addEventListener('click', () => {
                 document.getElementById('careerMatchReportCard').style.display = 'none';
                 document.getElementById('liveMatchContainer').style.display = 'none';
-                sounds.playClick();
+                if (typeof sounds !== 'undefined') sounds.playClick();
                 this.renderPlayerCareer();
                 this.renderCareerSquad();
             });
         }
 
-        // Match Speed Buttons inside Live Match Container
+        // Live Match Interactive Command Buttons (PASS_TO_ME, SHOOT, THROUGH_PASS, DRIBBLE_PRESS)
+        const cmdBtns = document.querySelectorAll('.live-cmd-btn');
+        cmdBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const cmd = btn.dataset.cmd;
+                if (this.matchEngine) {
+                    this.matchEngine.triggerUserCommand(cmd);
+                }
+            });
+        });
+
+        // Live Match Tactical Mentality Buttons
+        const tacticBtns = document.querySelectorAll('.live-tactic-btn');
+        tacticBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tacticBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const mode = btn.dataset.tactic;
+                if (this.matchEngine) {
+                    this.matchEngine.setTacticalMentality(mode);
+                }
+                if (typeof sounds !== 'undefined') sounds.playClick();
+            });
+        });
+
+        // Match Speed Buttons
         const speedBtns = document.querySelectorAll('#liveMatchContainer .match-speed-btn');
         speedBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -203,27 +248,17 @@ var App = window.App = class App {
                 } else {
                     if (this.matchEngine) this.matchEngine.setSpeed(spd);
                 }
-                sounds.playClick();
+                if (typeof sounds !== 'undefined') sounds.playClick();
             });
         });
 
         // Club Switcher in Career Mode
         const clubSelect = document.getElementById('careerClubSelector');
         if (clubSelect) {
-            clubSelect.innerHTML = CLUBS.filter(c => c.league !== 'legends' && c.league !== 'national').map(c => 
-                `<option value="${c.id}">${c.emblem} ${c.name}</option>`
-            ).join('');
+            this.populateClubSelector(clubSelect, true);
             clubSelect.value = this.activeClubId;
             clubSelect.addEventListener('change', (e) => {
-                this.activeClubId = e.target.value;
-                this.myClub = this.loadClub(this.activeClubId);
-                this.career.playerProfile.clubId = this.myClub.id;
-                this.career.playerProfile.clubName = this.myClub.name;
-                this.currentOpponent = this.pickNextRoundOpponent();
-                this.saveCurrentClub();
-                this.renderPlayerCareer();
-                this.renderCareerSquad();
-                sounds.playWhistle('short');
+                this.switchActiveClub(e.target.value);
             });
         }
 
@@ -233,27 +268,158 @@ var App = window.App = class App {
             formSelect.value = this.myClub.formation || '4-3-3';
             formSelect.addEventListener('change', (e) => {
                 this.myClub.formation = e.target.value;
+                const tacForm = document.getElementById('tacticsFormationSelect');
+                if (tacForm) tacForm.value = e.target.value;
                 this.saveCurrentClub();
                 this.renderCareerSquad();
-                sounds.playClick();
+                this.renderStandaloneTactics();
+                if (typeof sounds !== 'undefined') sounds.playClick();
             });
         }
 
-        // Auto Pick Best XI in Career Mode
         const autoBtn = document.getElementById('careerAutoPickBtn');
         if (autoBtn) {
             autoBtn.addEventListener('click', () => {
                 this.autoPickBestXI();
                 this.renderCareerSquad();
-                sounds.playWhistle('short');
+                this.renderStandaloneTactics();
+                if (typeof sounds !== 'undefined') sounds.playWhistle('short');
             });
+        }
+
+        // Custom Player Modal Setup
+        const customBtn = document.getElementById('careerCustomizeBtn');
+        const customModal = document.getElementById('customPlayerModal');
+        const closeCustomBtn = document.getElementById('closeCustomPlayerBtn');
+        const saveCustomBtn = document.getElementById('saveCustomPlayerBtn');
+        const customClubSelect = document.getElementById('customClubSelect');
+
+        if (customClubSelect) {
+            this.populateClubSelector(customClubSelect, false);
+        }
+
+        if (customBtn && customModal) {
+            customBtn.addEventListener('click', () => {
+                const p = this.career.playerProfile;
+                document.getElementById('customNameInput').value = p.name;
+                document.getElementById('customNationSelect').value = p.nation;
+                document.getElementById('customPosSelect').value = p.pos;
+                document.getElementById('customStyleSelect').value = p.style;
+                if (customClubSelect) customClubSelect.value = p.clubId;
+                customModal.style.display = 'flex';
+                if (typeof sounds !== 'undefined') sounds.playClick();
+            });
+        }
+        if (closeCustomBtn && customModal) {
+            closeCustomBtn.addEventListener('click', () => { customModal.style.display = 'none'; });
+        }
+        if (saveCustomBtn && customModal) {
+            saveCustomBtn.addEventListener('click', () => {
+                const name = document.getElementById('customNameInput').value;
+                const nation = document.getElementById('customNationSelect').value;
+                const pos = document.getElementById('customPosSelect').value;
+                const style = document.getElementById('customStyleSelect').value;
+                const clubId = customClubSelect ? customClubSelect.value : this.activeClubId;
+
+                this.career.customizePlayerProfile({ name, nation, pos, style, clubId });
+                this.switchActiveClub(clubId);
+                customModal.style.display = 'none';
+                if (typeof sounds !== 'undefined') sounds.playWhistle('short');
+            });
+        }
+
+        // Agent Transfer Offers Modal Setup
+        const transferBtn = document.getElementById('careerTransferOfferBtn');
+        const transferModal = document.getElementById('transferOffersModal');
+        const closeTransferBtn = document.getElementById('closeTransferModalBtn');
+
+        if (transferBtn && transferModal) {
+            transferBtn.addEventListener('click', () => {
+                this.openTransferOffersModal();
+            });
+        }
+        if (closeTransferBtn && transferModal) {
+            closeTransferBtn.addEventListener('click', () => { transferModal.style.display = 'none'; });
         }
     }
 
+    populateClubSelector(selectEl, includeCustom = true) {
+        if (!selectEl) return;
+        const customOpt = includeCustom ? `<option value="custom">👑 [나만의 커스텀 드림팀]</option>` : '';
+        const clubOpts = CLUBS.filter(c => !c.isHistoricalTeam && c.league !== 'legends').map(c =>
+            `<option value="${c.id}">${c.emblem} ${c.name} (${c.shortName})</option>`
+        ).join('');
+        selectEl.innerHTML = customOpt + clubOpts;
+    }
+
+    switchActiveClub(newClubId) {
+        this.activeClubId = newClubId;
+        this.myClub = this.loadClub(this.activeClubId);
+        if (newClubId !== 'custom') {
+            this.career.playerProfile.clubId = this.myClub.id;
+            this.career.playerProfile.clubName = this.myClub.name;
+            this.career.syncUserPlayerIntoClubSquad();
+            this.myClub = this.loadClub(this.activeClubId);
+        }
+        this.currentOpponent = this.pickNextRoundOpponent();
+        this.saveCurrentClub();
+
+        if (typeof document !== 'undefined') {
+            const cSel1 = document.getElementById('careerClubSelector');
+            const cSel2 = document.getElementById('activeClubSelect');
+            if (cSel1) cSel1.value = this.activeClubId;
+            if (cSel2) cSel2.value = this.activeClubId;
+        }
+
+        this.renderPlayerCareer();
+        this.renderCareerSquad();
+        this.renderStandaloneTactics();
+        if (typeof sounds !== 'undefined') sounds.playWhistle('short');
+    }
+
+    openTransferOffersModal() {
+        const modal = document.getElementById('transferOffersModal');
+        const listEl = document.getElementById('transferOffersList');
+        if (!modal || !listEl) return;
+
+        const offers = this.career.getTransferOffers();
+        listEl.innerHTML = '';
+
+        offers.forEach(offer => {
+            const btn = document.createElement('button');
+            btn.className = 'story-choice-btn';
+            btn.innerHTML = `
+                <div class="choice-text">${offer.emblem} ${offer.clubName} (구단 명성 ${offer.reputation})</div>
+                <div class="choice-effect">💰 주급 ${offer.weeklyWage.toLocaleString()}만원 • 계약금 ${offer.signingBonus.toLocaleString()}만원 • ${offer.roleOffer}</div>
+            `;
+            btn.addEventListener('click', () => {
+                const res = this.career.transferPlayerToClub(offer);
+                modal.style.display = 'none';
+                this.switchActiveClub(offer.clubId);
+
+                const newsFeed = document.getElementById('careerNewsFeed');
+                if (newsFeed) {
+                    const item = document.createElement('div');
+                    item.style.padding = '10px';
+                    item.style.background = 'rgba(16, 185, 129, 0.15)';
+                    item.style.border = '1px solid #10b981';
+                    item.style.borderRadius = '8px';
+                    item.style.fontSize = '0.84rem';
+                    item.innerHTML = `<b style="color:#10b981;">${res.message}</b>`;
+                    newsFeed.insertBefore(item, newsFeed.firstChild);
+                }
+            });
+            listEl.appendChild(btn);
+        });
+
+        modal.style.display = 'flex';
+        if (typeof sounds !== 'undefined') sounds.playClick();
+    }
+
     renderPlayerCareer() {
+        if (typeof document === 'undefined') return;
         const p = this.career.playerProfile;
 
-        // Player Info
         document.getElementById('careerPlayerName').textContent = p.name;
         document.getElementById('careerPlayerOvr').textContent = `OVR ${p.ovr}`;
         document.getElementById('careerPlayerNation').textContent = `${p.flag} ${p.nation}`;
@@ -262,18 +428,16 @@ var App = window.App = class App {
         document.getElementById('careerPlayerStyle').textContent = p.style;
         document.getElementById('careerPlayerClub').textContent = p.clubName;
 
-        // Financials & Military
         document.getElementById('careerWeeklyWage').textContent = p.weeklyWage.toLocaleString();
         document.getElementById('careerBankBalance').textContent = p.bankBalance.toLocaleString();
-        
+
         const milEl = document.getElementById('careerMilitaryStatus');
         if (milEl) {
-            milEl.innerHTML = p.militaryExempt 
-                ? '<span style="color:#10b981; font-weight:800;">🥇 병역 면제 (체육요원 특례 달성)</span>' 
+            milEl.innerHTML = p.militaryExempt
+                ? '<span style="color:#10b981; font-weight:800;">🥇 병역 면제 (체육요원 특례 달성)</span>'
                 : '🎖️ 병역: 미필 (아시안게임 금메달 시 면제)';
         }
 
-        // Vital Metrics
         document.getElementById('careerTrustVal').textContent = `${p.managerTrust}%`;
         document.getElementById('careerFameVal').textContent = `${p.fanPopularity}%`;
         document.getElementById('careerFameTitle').textContent = p.fameLevel;
@@ -283,12 +447,11 @@ var App = window.App = class App {
         document.getElementById('careerAppsVal').textContent = `총 ${p.careerStats.appearances}경기 출전`;
         document.getElementById('careerTrophiesVal').textContent = `🏆 ${p.careerStats.trophies} / 🥇 ${p.careerStats.ballonDor}`;
 
-        // Match Role Status
         const roleStatusEl = document.getElementById('careerMatchRoleStatus');
         if (roleStatusEl) {
-            if (p.managerTrust >= 65 && p.ovr >= 70) {
+            if (p.managerTrust >= 60 || p.ovr >= 72) {
                 roleStatusEl.innerHTML = '<span style="color:#10b981; font-weight:800;">주전 선발 (STARTER)</span>';
-            } else if (p.managerTrust >= 40) {
+            } else if (p.managerTrust >= 38) {
                 roleStatusEl.innerHTML = '<span style="color:#f59e0b; font-weight:800;">후반 조커 (SUB IN)</span>';
             } else {
                 roleStatusEl.innerHTML = '<span style="color:#94a3b8;">후보 벤치 (BENCH)</span>';
@@ -299,11 +462,13 @@ var App = window.App = class App {
     }
 
     // ========================================================================
-    // SQUAD BUILDER INTEGRATION (스쿼드 꾸리기)
+    // SQUAD BUILDER & LINEUP BOARD (스쿼드 꾸리기)
     // ========================================================================
     renderCareerSquad() {
+        if (typeof document === 'undefined') return;
         this.renderCareerPitchSlots();
         this.renderCareerBenchSlots();
+        this.updateSquadAnalytics();
     }
 
     renderCareerPitchSlots() {
@@ -316,26 +481,27 @@ var App = window.App = class App {
         const myP = this.career.playerProfile;
 
         this.myClub.starters.slice(0, 11).forEach((pId, idx) => {
-            const player = PLAYER_MAP[pId] || { name: '선수', ovr: 75, pos: 'MF' };
+            const player = PLAYER_MAP[pId] || { name: '선수', koreanName: '선수', ovr: 75, pos: 'MF' };
             const coord = coords[idx] || { x: 50, y: 50 };
-            const isMe = (pId === 'my_career_player' || player.name === myP.name || player.koreanName === myP.name);
+            const isMe = (pId === 'my_career_player' || player.isPlayerCharacter || player.name === myP.name || player.koreanName === myP.name);
 
             const node = document.createElement('div');
             node.className = `player-pitch-node ${this.swapSlotA === idx ? 'selected-swap' : ''} ${isMe ? 'user-player-node' : ''}`;
             node.style.left = `${coord.x}%`;
             node.style.top = `${coord.y}%`;
 
-            const ovrClass = player.ovr >= 85 ? 'ovr-world-class' : (player.ovr >= 78 ? 'ovr-elite' : 'ovr-regular');
+            const displayOvr = isMe ? myP.ovr : player.ovr;
+            const ovrClass = displayOvr >= 85 ? 'ovr-world-class' : (displayOvr >= 78 ? 'ovr-elite' : 'ovr-regular');
 
             node.innerHTML = `
                 <div class="node-token" style="background:${isMe ? '#f59e0b' : (this.myClub.color1 || '#0284c7')}; border-color:${isMe ? '#ffffff' : (this.myClub.color2 || '#ffffff')};">
                     ${isMe ? '★' : (player.pos || 'MF')}
                 </div>
                 <div class="node-name" style="${isMe ? 'color:#fef08a; font-weight:900;' : ''}">${isMe ? `★ ${myP.name}` : (player.koreanName || player.name)}</div>
-                <div class="node-ovr-tag ${ovrClass}">${isMe ? myP.ovr : player.ovr}</div>
+                <div class="node-ovr-tag ${ovrClass}">${displayOvr}</div>
             `;
 
-            node.addEventListener('click', () => this.handleCareerSquadClick(idx, 'starter'));
+            node.addEventListener('click', () => this.handleCareerSquadClick(idx));
             container.appendChild(node);
         });
     }
@@ -348,9 +514,10 @@ var App = window.App = class App {
         const myP = this.career.playerProfile;
 
         this.myClub.bench.forEach((pId, idx) => {
-            const player = PLAYER_MAP[pId] || { name: '후보', ovr: 70, pos: 'SUB' };
-            const isMe = (pId === 'my_career_player' || player.name === myP.name || player.koreanName === myP.name);
+            const player = PLAYER_MAP[pId] || { name: '후보', koreanName: '후보', ovr: 70, pos: 'SUB' };
+            const isMe = (pId === 'my_career_player' || player.isPlayerCharacter || player.name === myP.name || player.koreanName === myP.name);
             const isSelected = this.swapSlotA === (idx + 100);
+            const displayOvr = isMe ? myP.ovr : player.ovr;
 
             const card = document.createElement('div');
             card.className = `bench-item-card ${isSelected ? 'selected-swap' : ''} ${isMe ? 'user-player-bench' : ''}`;
@@ -367,62 +534,104 @@ var App = window.App = class App {
                     </span>
                 </div>
                 <div style="display:flex; align-items:center; gap:6px;">
-                    <span class="node-ovr-tag ${player.ovr >= 85 ? 'ovr-world-class' : 'ovr-elite'}">
-                        ${isMe ? myP.ovr : player.ovr}
+                    <span class="node-ovr-tag ${displayOvr >= 85 ? 'ovr-world-class' : 'ovr-elite'}">
+                        ${displayOvr}
                     </span>
                 </div>
             `;
 
-            card.addEventListener('click', () => this.handleCareerSquadClick(idx + 100, 'bench'));
+            card.addEventListener('click', () => this.handleCareerSquadClick(idx + 100));
             container.appendChild(card);
         });
     }
 
-    handleCareerSquadClick(slotIndex, type) {
-        sounds.playClick();
+    handleCareerSquadClick(slotIndex) {
+        if (typeof sounds !== 'undefined') sounds.playClick();
         if (this.swapSlotA === null) {
             this.swapSlotA = slotIndex;
             this.renderCareerSquad();
+            this.renderStandaloneTactics();
         } else {
             const slotA = this.swapSlotA;
             const slotB = slotIndex;
             this.swapSlotA = null;
 
-            if (slotA === slotB) {
-                this.renderCareerSquad();
-                return;
+            if (slotA !== slotB) {
+                const getRef = (s) => (s < 100 ? { arr: this.myClub.starters, idx: s } : { arr: this.myClub.bench, idx: s - 100 });
+                const refA = getRef(slotA);
+                const refB = getRef(slotB);
+
+                const temp = refA.arr[refA.idx];
+                refA.arr[refA.idx] = refB.arr[refB.idx];
+                refB.arr[refB.idx] = temp;
+
+                this.saveCurrentClub();
+                if (typeof sounds !== 'undefined') sounds.playWhistle('short');
             }
-
-            const getRef = (s) => (s < 100 ? { arr: this.myClub.starters, idx: s } : { arr: this.myClub.bench, idx: s - 100 });
-            const refA = getRef(slotA);
-            const refB = getRef(slotB);
-
-            const temp = refA.arr[refA.idx];
-            refA.arr[refA.idx] = refB.arr[refB.idx];
-            refB.arr[refB.idx] = temp;
-
-            this.saveCurrentClub();
             this.renderCareerSquad();
-            sounds.playWhistle('short');
+            this.renderStandaloneTactics();
         }
     }
 
+    // Sign any player from Scouting directly into user's active squad!
+    signPlayerToMySquad(playerId) {
+        const p = PLAYER_MAP[playerId];
+        if (!p) return { success: false };
+
+        if (this.myClub.starters.includes(playerId) || this.myClub.bench.includes(playerId)) {
+            return { success: false, message: `이미 [${this.myClub.name}] 스쿼드에 소속된 선수입니다!` };
+        }
+
+        // Put into starters if higher OVR than lowest non-GK starter, else bench
+        this.myClub.bench.unshift(playerId);
+        this.saveCurrentClub();
+        this.renderCareerSquad();
+        this.renderStandaloneTactics();
+
+        if (typeof sounds !== 'undefined') sounds.playWhistle('short');
+        return {
+            success: true,
+            message: `🎉 [${p.koreanName || p.name} (OVR ${p.ovr})] 선수를 [${this.myClub.name}] 스쿼드에 전격 영입했습니다! 스쿼드 보드에서 선발로 배치해 보세요!`
+        };
+    }
+
+    updateSquadAnalytics() {
+        if (typeof document === 'undefined') return;
+        const starters = this.myClub.starters.slice(0, 11).map(id => PLAYER_MAP[id]).filter(Boolean);
+        if (starters.length === 0) return;
+
+        const avg = (arr) => arr.length ? Math.round(arr.reduce((s, x) => s + (x.ovr || 75), 0) / arr.length) : 78;
+        const fw = starters.filter(p => ['ST', 'CF', 'LW', 'RW', 'FW'].includes(p.pos));
+        const mf = starters.filter(p => ['CAM', 'CM', 'CDM', 'RM', 'LM', 'MF'].includes(p.pos));
+        const df = starters.filter(p => ['CB', 'LB', 'RB', 'LWB', 'RWB', 'DF', 'GK'].includes(p.pos));
+
+        const ovrEl = document.getElementById('squadAvgOvr');
+        const attEl = document.getElementById('squadAvgAtt');
+        const midEl = document.getElementById('squadAvgMid');
+        const defEl = document.getElementById('squadAvgDef');
+
+        const teamAvg = avg(starters);
+        if (ovrEl) ovrEl.textContent = teamAvg;
+        if (attEl) attEl.textContent = fw.length ? avg(fw) : teamAvg;
+        if (midEl) midEl.textContent = mf.length ? avg(mf) : teamAvg;
+        if (defEl) defEl.textContent = df.length ? avg(df) : teamAvg;
+    }
+
     // ========================================================================
-    // START 2D LIVE MATCH (게임 상황 볼 수 있게)
+    // START 2D LIVE MATCH (플레이해보고 / 게임 상황 보기)
     // ========================================================================
     startCareerLiveMatch() {
-        sounds.playWhistle('short');
+        if (typeof sounds !== 'undefined') sounds.playWhistle('short');
 
-        // Opponent
         const opp = this.currentOpponent || this.pickNextRoundOpponent();
 
-        // Reveal Live Match Container
         const matchContainer = document.getElementById('liveMatchContainer');
-        matchContainer.style.display = 'block';
-        document.getElementById('careerMatchReportCard').style.display = 'none';
-        matchContainer.scrollIntoView({ behavior: 'smooth' });
+        if (matchContainer) {
+            matchContainer.style.display = 'block';
+            document.getElementById('careerMatchReportCard').style.display = 'none';
+            if (matchContainer.scrollIntoView) matchContainer.scrollIntoView({ behavior: 'smooth' });
+        }
 
-        // Update Scorebug
         document.getElementById('liveHomeEmblem').textContent = this.myClub.emblem || '⚽';
         document.getElementById('liveHomeName').textContent = this.myClub.name;
         document.getElementById('liveAwayEmblem').textContent = opp.emblem || '⚽';
@@ -431,11 +640,11 @@ var App = window.App = class App {
         document.getElementById('liveClockText').textContent = '00:00 (전반)';
         document.getElementById('liveCommentaryFeed').innerHTML = '';
 
-        // Prepare Starters
         const myP = this.career.playerProfile;
         const homeStarters = this.myClub.starters.slice(0, 11).map((id, idx) => {
             if (id === 'my_career_player' || id === myP.name) {
                 return {
+                    id: 'my_career_player',
                     name: myP.name,
                     koreanName: myP.name,
                     ovr: myP.ovr,
@@ -445,19 +654,23 @@ var App = window.App = class App {
                     stats: myP.stats
                 };
             }
-            const p = PLAYER_MAP[id] || { name: '선수', ovr: 75, pos: 'MF' };
+            const p = PLAYER_MAP[id] || { name: '선수', koreanName: '선수', ovr: 75, pos: 'MF' };
             return {
+                id: p.id,
                 name: p.koreanName || p.name,
+                koreanName: p.koreanName || p.name,
                 ovr: p.ovr,
                 pos: p.pos,
                 num: idx + 1,
+                isPlayerCharacter: !!p.isPlayerCharacter,
                 stats: p.stats
             };
         });
 
-        // Ensure user is in the match if they have high manager trust
-        if (myP.managerTrust >= 65 && !homeStarters.some(p => p.isPlayerCharacter)) {
+        // Guarantee ★ ME is on the pitch during live matches so user can always control & watch them!
+        if (!homeStarters.some(p => p.isPlayerCharacter)) {
             homeStarters[homeStarters.length - 1] = {
+                id: 'my_career_player',
                 name: myP.name,
                 koreanName: myP.name,
                 ovr: myP.ovr,
@@ -468,10 +681,12 @@ var App = window.App = class App {
             };
         }
 
-        const awayStarters = opp.starters.slice(0, 11).map((id, idx) => {
-            const p = PLAYER_MAP[id] || { name: '상대선수', ovr: 75, pos: 'MF' };
+        const awayStarters = (opp.starters || []).slice(0, 11).map((id, idx) => {
+            const p = PLAYER_MAP[id] || { name: '상대선수', koreanName: '상대선수', ovr: 75, pos: 'MF' };
             return {
+                id: p.id,
                 name: p.koreanName || p.name,
+                koreanName: p.koreanName || p.name,
                 ovr: p.ovr,
                 pos: p.pos,
                 num: idx + 1,
@@ -495,13 +710,11 @@ var App = window.App = class App {
             startingXI: awayStarters
         };
 
-        // Resize Canvas & Sync Formations
-        setTimeout(() => {
+        if (this.pitchCanvas) {
             this.pitchCanvas.resize();
             this.pitchCanvas.syncTeamFormation(homeTeam, awayTeam);
-        }, 50);
+        }
 
-        // Instantiate Engine
         this.matchEngine = new MatchEngine(homeTeam, awayTeam, {
             speed: 1,
             pitchCanvas: this.pitchCanvas,
@@ -514,8 +727,10 @@ var App = window.App = class App {
                 item.className = `comm-item comm-type-${ev.type.toLowerCase()}`;
                 item.innerHTML = `<span class="comm-minute">${ev.minute}'</span> <span class="comm-text">${ev.text}</span>`;
                 const feed = document.getElementById('liveCommentaryFeed');
-                feed.appendChild(item);
-                feed.scrollTop = feed.scrollHeight;
+                if (feed) {
+                    feed.appendChild(item);
+                    feed.scrollTop = feed.scrollHeight;
+                }
             },
             onComplete: (summary) => {
                 this.handleCareerMatchCompletion(summary);
@@ -526,10 +741,11 @@ var App = window.App = class App {
     }
 
     handleCareerMatchCompletion(summary) {
-        // Show Report Card
         const reportCard = document.getElementById('careerMatchReportCard');
-        reportCard.style.display = 'block';
-        reportCard.scrollIntoView({ behavior: 'smooth' });
+        if (reportCard) {
+            reportCard.style.display = 'block';
+            if (reportCard.scrollIntoView) reportCard.scrollIntoView({ behavior: 'smooth' });
+        }
 
         document.getElementById('reportHomeName').textContent = summary.homeTeam.name;
         document.getElementById('reportAwayName').textContent = summary.awayTeam.name;
@@ -554,18 +770,15 @@ var App = window.App = class App {
             `).join('') : '<div style="color:#64748b; font-size:0.85rem;">득점 없음</div>';
         }
 
-        // Advance Career round progression in engine
         const res = this.career.advanceRound();
 
-        // Check if user scored or assisted in this live match
         const myP = this.career.playerProfile;
-        const userGoalsInMatch = summary.scorers.filter(s => s.scorerName.includes(myP.name)).length;
+        const userGoalsInMatch = summary.scorers.filter(s => s.scorerName && s.scorerName.includes(myP.name)).length;
         if (userGoalsInMatch > 0) {
             myP.careerStats.goals += userGoalsInMatch;
             myP.seasonStats.goals += userGoalsInMatch;
         }
 
-        // Append to Match Log
         const feed = document.getElementById('careerMatchLogFeed');
         if (feed) {
             const item = document.createElement('div');
@@ -579,7 +792,7 @@ var App = window.App = class App {
                     <span style="font-weight:800; color:#ffffff;">[${this.career.currentSeason} ${this.career.currentRound}R] ${summary.homeTeam.name} ${summary.homeScore} : ${summary.awayScore} ${summary.awayTeam.name}</span>
                     <span style="color:#f59e0b; font-weight:800;">MOM: ${mom ? (mom.koreanName || mom.name) : '선수'}</span>
                 </div>
-                <div style="color:#cbd5e1;">2D 실시간 매치 종료. 내 활약 및 경기 결과가 리그 순위표에 반영되었습니다.</div>
+                <div style="color:#cbd5e1;">2D 실시간 매치 종료. 경기 결과 및 활약도가 리그 순위표와 커리어 스탯에 반영되었습니다.</div>
             `;
             feed.insertBefore(item, feed.firstChild);
         }
@@ -588,26 +801,24 @@ var App = window.App = class App {
         this.renderPlayerCareer();
         this.renderLeagueStandings(this.selectedLeagueId);
 
-        // Check if random story event triggered
         if (res && res.storyEvent) {
-            setTimeout(() => this.openStoryModal(res.storyEvent), 500);
+            setTimeout(() => this.openStoryModal(res.storyEvent), 400);
         } else if (res && res.isSeasonEnd) {
-            setTimeout(() => this.handleSeasonEndNotification(res), 500);
+            setTimeout(() => this.handleSeasonEndNotification(res), 400);
         }
     }
 
     trainCareerPlayer() {
         const focus = document.getElementById('careerTrainSelect').value;
         const res = this.career.trainPlayer(focus);
-        sounds.playWhistle('short');
-        alert(res.message);
+        if (typeof sounds !== 'undefined') sounds.playWhistle('short');
+        if (typeof alert !== 'undefined') alert(res.message);
         this.renderPlayerCareer();
         this.renderCareerSquad();
+        this.renderStandaloneTactics();
     }
 
     simulateCareerSeason() {
-        if (!confirm("현재 시즌을 마지막 라운드까지 고속 시뮬레이션 하시겠습니까?")) return;
-
         let endRes = null;
         while (this.career.currentRound <= this.career.totalRounds) {
             const res = this.career.advanceRound();
@@ -616,20 +827,21 @@ var App = window.App = class App {
                 break;
             }
         }
-
         if (!endRes) {
             endRes = this.career.endSeasonTransition();
         }
-
+        this.myClub = this.loadClub(this.activeClubId);
         this.handleSeasonEndNotification(endRes);
     }
 
     handleSeasonEndNotification(endRes) {
-        sounds.playWhistle('triple');
+        if (typeof sounds !== 'undefined') sounds.playWhistle('triple');
         this.renderPlayerCareer();
         this.renderCareerSquad();
+        this.renderStandaloneTactics();
         this.renderHallOfFame();
         this.renderLeagueStandings(this.selectedLeagueId);
+        this.renderScoutingList();
 
         const newsFeed = document.getElementById('careerNewsFeed');
         if (newsFeed) {
@@ -640,25 +852,20 @@ var App = window.App = class App {
             item.style.borderRadius = '8px';
             item.style.fontSize = '0.85rem';
             item.innerHTML = `
-                <div style="font-weight:800; color:#f59e0b; margin-bottom:4px;">🏆 [시즌 종료 리포트] ${endRes.newSeason} 시즌 돌입</div>
+                <div style="font-weight:800; color:#f59e0b; margin-bottom:4px;">🏆 [시즌 종료 리포트] ${endRes.newSeason} 시즌 개막</div>
                 <div style="color:#ffffff;">🥇 올해의 발롱도르 수상자: <b>${endRes.summary.ballonDor}</b></div>
                 <div style="font-size:0.78rem; color:#94a3b8; margin-top:4px;">
-                    은퇴 스타: ${endRes.retirements.length}명 / 신규 유스 원더키드: ${endRes.newgens.length}명 입단
+                    베테랑 은퇴: ${endRes.retirements.length}명 / 신규 생성선수 & 원더키드: 대거 콜업 완료
                 </div>
             `;
             newsFeed.insertBefore(item, newsFeed.firstChild);
         }
-
-        alert(`🎉 [${endRes.newSeason} 새로운 시즌 개막!]
-
-🥇 올해의 발롱도르: ${endRes.summary.ballonDor}
-
-모든 선수의 나이가 1살 증가하였으며, 은퇴한 베테랑을 대신하여 전 세계 아카데미에서 신인 생성 선수(Regens/Wonderkids)들이 대거 유입되었습니다!`);
     }
 
     openStoryModal(ev) {
-        sounds.playWhistle('short');
+        if (typeof sounds !== 'undefined') sounds.playWhistle('short');
         const modal = document.getElementById('storyEventModal');
+        if (!modal) return;
         document.getElementById('storyModalCategory').textContent = `[${ev.category}]`;
         document.getElementById('storyModalTitle').textContent = ev.title;
         document.getElementById('storyModalDesc').textContent = ev.desc;
@@ -675,7 +882,7 @@ var App = window.App = class App {
             `;
             btn.addEventListener('click', () => {
                 choice.apply();
-                sounds.playClick();
+                if (typeof sounds !== 'undefined') sounds.playClick();
                 modal.style.display = 'none';
                 this.renderPlayerCareer();
                 this.renderCareerSquad();
@@ -708,12 +915,13 @@ var App = window.App = class App {
                 b.classList.add('active');
                 this.selectedLeagueId = b.dataset.league;
                 this.renderLeagueStandings(this.selectedLeagueId);
-                sounds.playClick();
+                if (typeof sounds !== 'undefined') sounds.playClick();
             });
         });
     }
 
     renderLeagueStandings(leagueId) {
+        if (typeof document === 'undefined') return;
         const tbody = document.getElementById('leagueTableBody');
         if (!tbody) return;
 
@@ -750,6 +958,7 @@ var App = window.App = class App {
     setupShopUI() {}
 
     renderShopCatalog() {
+        if (typeof document === 'undefined') return;
         const grid = document.getElementById('shopCatalogGrid');
         if (!grid) return;
 
@@ -772,7 +981,7 @@ var App = window.App = class App {
                 <div class="shop-title">${item.name}</div>
                 <div class="shop-cost">${item.cost.toLocaleString()}만원</div>
                 <div class="shop-desc">${item.desc} (명성 +${item.fameBonus})</div>
-                <button class="shop-buy-btn ${isOwned ? 'disabled' : (!canAfford ? 'disabled' : '')}" ${isOwned || !canAfford ? 'disabled' : ''}>
+                <button class="shop-buy-btn ${isOwned || !canAfford ? 'disabled' : ''}" ${isOwned || !canAfford ? 'disabled' : ''}>
                     ${isOwned ? '✅ 보유 중' : (canAfford ? '💳 즉시 구매' : '잔액 부족')}
                 </button>
             `;
@@ -782,8 +991,8 @@ var App = window.App = class App {
                 btn.addEventListener('click', () => {
                     const res = this.career.buyAsset(item.id);
                     if (res.success) {
-                        sounds.playWhistle('short');
-                        alert(res.message);
+                        if (typeof sounds !== 'undefined') sounds.playWhistle('short');
+                        if (typeof alert !== 'undefined') alert(res.message);
                         this.renderShopCatalog();
                         this.renderPlayerCareer();
                     }
@@ -798,13 +1007,14 @@ var App = window.App = class App {
     // 4. HALL OF FAME & RETIREMENT MEMORIAL
     // ========================================================================
     renderHallOfFame() {
+        if (typeof document === 'undefined') return;
         const retireList = document.getElementById('hofRetireesList');
         if (retireList) {
             retireList.innerHTML = '';
             if (this.career.retiredLegends.length === 0) {
                 retireList.innerHTML = '<div style="color:#64748b; font-size:0.85rem; padding:20px 0; text-align:center;">시즌이 경과하면 베테랑 선수들의 공식 은퇴 기록이 등재됩니다.</div>';
             } else {
-                this.career.retiredLegends.slice(0, 30).forEach(r => {
+                this.career.retiredLegends.slice(0, 40).forEach(r => {
                     const item = document.createElement('div');
                     item.style.padding = '8px 12px';
                     item.style.background = 'rgba(30, 41, 59, 0.6)';
@@ -855,19 +1065,10 @@ var App = window.App = class App {
     setupTacticsUI() {
         const selector = document.getElementById('activeClubSelect');
         if (selector) {
-            selector.innerHTML = `
-                <option value="custom">👑 [나만의 커스텀 드림팀]</option>
-                ${CLUBS.map(c => `<option value="${c.id}">${c.emblem} ${c.name} (${c.shortName})</option>`).join('')}
-            `;
+            this.populateClubSelector(selector, true);
             selector.value = this.activeClubId;
             selector.addEventListener('change', (e) => {
-                this.activeClubId = e.target.value;
-                this.myClub = this.loadClub(this.activeClubId);
-                this.saveCurrentClub();
-                this.renderStandaloneTactics();
-                this.renderCareerSquad();
-                this.updateHeaderClubBadge();
-                sounds.playWhistle('short');
+                this.switchActiveClub(e.target.value);
             });
         }
 
@@ -876,10 +1077,12 @@ var App = window.App = class App {
             formSelect.value = this.myClub.formation || '4-3-3';
             formSelect.addEventListener('change', (e) => {
                 this.myClub.formation = e.target.value;
+                const cForm = document.getElementById('careerFormationSelect');
+                if (cForm) cForm.value = e.target.value;
                 this.saveCurrentClub();
                 this.renderStandaloneTactics();
                 this.renderCareerSquad();
-                sounds.playClick();
+                if (typeof sounds !== 'undefined') sounds.playClick();
             });
         }
 
@@ -889,18 +1092,24 @@ var App = window.App = class App {
                 this.autoPickBestXI();
                 this.renderStandaloneTactics();
                 this.renderCareerSquad();
-                sounds.playWhistle('short');
+                if (typeof sounds !== 'undefined') sounds.playWhistle('short');
             });
         }
     }
 
     autoPickBestXI() {
-        const allIds = [...this.myClub.starters, ...this.myClub.bench];
+        const allIds = [...new Set([...this.myClub.starters, ...this.myClub.bench])];
         const allPlayers = allIds.map(id => PLAYER_MAP[id]).filter(Boolean);
-        allPlayers.sort((a, b) => b.ovr - a.ovr);
 
-        const newStarters = allPlayers.slice(0, 11).map(p => p.id);
-        const newBench = allPlayers.slice(11).map(p => p.id);
+        // Keep 1 GK first, then best 10 outfield players
+        const gks = allPlayers.filter(p => p.pos === 'GK').sort((a, b) => b.ovr - a.ovr);
+        const outfield = allPlayers.filter(p => p.pos !== 'GK').sort((a, b) => b.ovr - a.ovr);
+
+        const bestGK = gks[0] || outfield.shift();
+        const remainingPool = [...outfield, ...gks.slice(1)];
+
+        const newStarters = [bestGK, ...remainingPool.slice(0, 10)].filter(Boolean).map(p => p.id);
+        const newBench = remainingPool.slice(10).map(p => p.id);
 
         this.myClub.starters = newStarters;
         this.myClub.bench = newBench;
@@ -908,48 +1117,60 @@ var App = window.App = class App {
     }
 
     renderStandaloneTactics() {
+        if (typeof document === 'undefined') return;
+        this.updateSquadAnalytics();
+
         const container = document.getElementById('tacticsPitchSlots');
         if (!container) return;
         container.innerHTML = '';
 
         const formation = this.myClub.formation || '4-3-3';
         const coords = this.getFormationCoordinates(formation);
+        const myP = this.career.playerProfile;
 
         this.myClub.starters.slice(0, 11).forEach((pId, idx) => {
-            const player = PLAYER_MAP[pId] || { name: '선수', ovr: 75, pos: 'MF' };
+            const player = PLAYER_MAP[pId] || { name: '선수', koreanName: '선수', ovr: 75, pos: 'MF' };
             const coord = coords[idx] || { x: 50, y: 50 };
+            const isMe = (pId === 'my_career_player' || player.isPlayerCharacter);
+            const displayOvr = isMe ? myP.ovr : player.ovr;
 
             const node = document.createElement('div');
-            node.className = 'player-pitch-node';
+            node.className = `player-pitch-node ${this.swapSlotA === idx ? 'selected-swap' : ''}`;
             node.style.left = `${coord.x}%`;
             node.style.top = `${coord.y}%`;
 
-            const ovrClass = player.ovr >= 85 ? 'ovr-world-class' : (player.ovr >= 78 ? 'ovr-elite' : 'ovr-regular');
+            const ovrClass = displayOvr >= 85 ? 'ovr-world-class' : (displayOvr >= 78 ? 'ovr-elite' : 'ovr-regular');
 
             node.innerHTML = `
-                <div class="node-token" style="background:${this.myClub.color1 || '#0284c7'}; border-color:${this.myClub.color2 || '#ffffff'};">
-                    ${player.pos || 'MF'}
+                <div class="node-token" style="background:${isMe ? '#f59e0b' : (this.myClub.color1 || '#0284c7')}; border-color:${this.myClub.color2 || '#ffffff'};">
+                    ${isMe ? '★' : (player.pos || 'MF')}
                 </div>
-                <div class="node-name">${player.koreanName || player.name}</div>
-                <div class="node-ovr-tag ${ovrClass}">${player.ovr}</div>
+                <div class="node-name">${isMe ? `★ ${myP.name}` : (player.koreanName || player.name)}</div>
+                <div class="node-ovr-tag ${ovrClass}">${displayOvr}</div>
             `;
+            node.addEventListener('click', () => this.handleCareerSquadClick(idx));
             container.appendChild(node);
         });
 
         const benchContainer = document.getElementById('tacticsBenchSlots');
         if (benchContainer) {
             benchContainer.innerHTML = '';
-            this.myClub.bench.forEach((pId) => {
-                const player = PLAYER_MAP[pId] || { name: '후보', ovr: 70, pos: 'SUB' };
+            this.myClub.bench.forEach((pId, idx) => {
+                const player = PLAYER_MAP[pId] || { name: '후보', koreanName: '후보', ovr: 70, pos: 'SUB' };
+                const isMe = (pId === 'my_career_player' || player.isPlayerCharacter);
+                const displayOvr = isMe ? myP.ovr : player.ovr;
+                const isSelected = this.swapSlotA === (idx + 100);
+
                 const card = document.createElement('div');
-                card.className = 'bench-item-card';
+                card.className = `bench-item-card ${isSelected ? 'selected-swap' : ''}`;
                 card.innerHTML = `
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="font-weight:800; font-size:0.75rem; color:#94a3b8; width:28px;">${player.pos}</span>
-                        <span style="font-weight:800; font-size:0.85rem; color:#ffffff;">${player.koreanName || player.name}</span>
+                        <span style="font-weight:800; font-size:0.75rem; color:#94a3b8; width:28px;">${isMe ? '★' : player.pos}</span>
+                        <span style="font-weight:800; font-size:0.85rem; color:#ffffff;">${isMe ? `★ ${myP.name}` : (player.koreanName || player.name)}</span>
                     </div>
-                    <span class="node-ovr-tag ${player.ovr >= 85 ? 'ovr-world-class' : 'ovr-elite'}">${player.ovr}</span>
+                    <span class="node-ovr-tag ${displayOvr >= 85 ? 'ovr-world-class' : 'ovr-elite'}">${displayOvr}</span>
                 `;
+                card.addEventListener('click', () => this.handleCareerSquadClick(idx + 100));
                 benchContainer.appendChild(card);
             });
         }
@@ -988,28 +1209,43 @@ var App = window.App = class App {
     }
 
     // ========================================================================
-    // 6. SCOUTING & FM STATS MODAL
+    // 6. SCOUTING, NEWGEN FILTER & 1-CLICK SQUAD RECRUITMENT
     // ========================================================================
     setupScoutingUI() {
         const searchInput = document.getElementById('scoutSearchInput');
         const leagueFilter = document.getElementById('scoutLeagueFilter');
         const posFilter = document.getElementById('scoutPosFilter');
+        const typeFilter = document.getElementById('scoutTypeFilter');
 
         const trigger = () => this.renderScoutingList();
         if (searchInput) searchInput.addEventListener('input', trigger);
         if (leagueFilter) leagueFilter.addEventListener('change', trigger);
         if (posFilter) posFilter.addEventListener('change', trigger);
+        if (typeFilter) typeFilter.addEventListener('change', trigger);
+
+        const modalSignBtn = document.getElementById('modalSignPlayerBtn');
+        if (modalSignBtn) {
+            modalSignBtn.addEventListener('click', () => {
+                if (!this.currentDetailPlayerId) return;
+                const res = this.signPlayerToMySquad(this.currentDetailPlayerId);
+                if (typeof alert !== 'undefined' && res.message) alert(res.message);
+                this.closePlayerDetailModal();
+                this.renderScoutingList();
+            });
+        }
     }
 
     renderScoutingList() {
+        if (typeof document === 'undefined') return;
         const grid = document.getElementById('scoutingPlayerGrid');
         if (!grid) return;
 
         const query = (document.getElementById('scoutSearchInput')?.value || '').trim().toLowerCase();
         const league = document.getElementById('scoutLeagueFilter')?.value || 'all';
         const pos = document.getElementById('scoutPosFilter')?.value || 'all';
+        const pType = document.getElementById('scoutTypeFilter')?.value || 'all';
 
-        let list = [...PLAYERS].filter(p => !p.retired);
+        let list = PLAYERS.filter(p => league === 'legends' ? p.league === 'legends' : !p.retired);
 
         if (league !== 'all') {
             list = list.filter(p => p.league === league);
@@ -1022,8 +1258,14 @@ var App = window.App = class App {
             else if (pos === 'GK') list = list.filter(p => p.pos === 'GK');
         }
 
+        if (pType === 'newgen') {
+            list = list.filter(p => p.isNewgen);
+        } else if (pType === 'wonderkid') {
+            list = list.filter(p => p.isWonderkid || (p.age <= 21 && (p.pot >= 85 || p.pa >= 170)));
+        }
+
         if (query) {
-            list = list.filter(p => 
+            list = list.filter(p =>
                 (p.koreanName && p.koreanName.toLowerCase().includes(query)) ||
                 (p.name && p.name.toLowerCase().includes(query)) ||
                 (p.team && p.team.toLowerCase().includes(query))
@@ -1036,7 +1278,8 @@ var App = window.App = class App {
         if (countEl) countEl.textContent = `검색 결과: 총 ${list.length}명 등록됨`;
 
         grid.innerHTML = '';
-        list.slice(0, 60).forEach(p => {
+        list.slice(0, 72).forEach(p => {
+            const inMySquad = this.myClub.starters.includes(p.id) || this.myClub.bench.includes(p.id);
             const card = document.createElement('div');
             card.className = 'scout-card';
             card.innerHTML = `
@@ -1053,17 +1296,32 @@ var App = window.App = class App {
                 </div>
 
                 <div style="margin:10px 0; font-size:0.82rem; color:#cbd5e1; display:flex; justify-content:space-between;">
-                    <span>소속: <b>${p.team}</b></span>
+                    <span>소속: <b>${p.team || p.club}</b></span>
                     <span style="color:#38bdf8; font-weight:800;">${p.pos} (${p.age}세)</span>
                 </div>
 
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; border-top:1px solid rgba(51,65,85,0.4); padding-top:8px;">
-                    <span style="font-size:0.75rem; color:#10b981; font-weight:800;">주급: 약 ${p.wage || 20}만</span>
-                    <button class="action-btn-secondary" style="padding:4px 10px; font-size:0.75rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; border-top:1px solid rgba(51,65,85,0.4); padding-top:8px; gap:6px;">
+                    <button class="action-btn-secondary scout-detail-btn" style="padding:5px 10px; font-size:0.74rem;">
                         📊 FM 상세 스탯
+                    </button>
+                    <button class="sign-squad-btn" style="${inMySquad ? 'background:#334155; border-color:#475569; color:#94a3b8;' : ''}">
+                        ${inMySquad ? '✅ 내 스쿼드 소속' : '➕ 내 스쿼드에 영입'}
                     </button>
                 </div>
             `;
+
+            card.querySelector('.scout-detail-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.openPlayerDetailModal(p.id);
+            });
+
+            card.querySelector('.sign-squad-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (inMySquad) return;
+                const res = this.signPlayerToMySquad(p.id);
+                if (typeof alert !== 'undefined' && res.message) alert(res.message);
+                this.renderScoutingList();
+            });
 
             card.addEventListener('click', () => this.openPlayerDetailModal(p.id));
             grid.appendChild(card);
@@ -1073,9 +1331,10 @@ var App = window.App = class App {
     openPlayerDetailModal(playerId) {
         const p = PLAYER_MAP[playerId];
         if (!p) return;
+        this.currentDetailPlayerId = playerId;
 
         document.getElementById('modalPlayerName').textContent = `${p.koreanName || p.name} (${p.name})`;
-        document.getElementById('modalPlayerMeta').textContent = `${p.flag} ${p.nation} • ${p.team} • ${p.pos} • ${p.age}세 • OVR ${p.ovr}`;
+        document.getElementById('modalPlayerMeta').textContent = `${p.flag} ${p.nation} • ${p.team || p.club} • ${p.pos} • ${p.age}세 • OVR ${p.ovr} (POT ${p.pot || p.ovr})`;
 
         const renderStatGroup = (containerId, statsList) => {
             const el = document.getElementById(containerId);
@@ -1109,7 +1368,7 @@ var App = window.App = class App {
 
         const traitsBox = document.getElementById('modalTraitsBox');
         if (traitsBox) {
-            traitsBox.innerHTML = (p.traits || ['기본 플레이']).map(t => `
+            traitsBox.innerHTML = (p.traits && p.traits.length ? p.traits : ['밸런스형 플레이어']).map(t => `
                 <span style="background:rgba(2,132,199,0.2); color:#38bdf8; border:1px solid #0284c7; padding:2px 8px; border-radius:6px; font-size:0.75rem; font-weight:700; margin-right:6px; display:inline-block; margin-bottom:4px;">
                     ${t}
                 </span>
@@ -1117,15 +1376,14 @@ var App = window.App = class App {
         }
 
         document.getElementById('playerDetailModal').style.display = 'flex';
-        sounds.playClick();
+        if (typeof sounds !== 'undefined') sounds.playClick();
     }
 
     closePlayerDetailModal() {
         document.getElementById('playerDetailModal').style.display = 'none';
     }
-}
+};
 
-// Global Instant Initialization
 if (typeof window !== 'undefined' && window.addEventListener) {
     window.addEventListener('DOMContentLoaded', () => {
         window.app = new window.App();
@@ -1133,5 +1391,5 @@ if (typeof window !== 'undefined' && window.addEventListener) {
     });
 }
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { App: window.App };
+    module.exports = { App };
 }

@@ -228,6 +228,59 @@ class F1AudioEngine {
             osc.stop(t + i * 0.06 + 0.2);
         });
     }
+
+    // Carbon-Fiber Crash & Collision Impact Sound
+    playCrashImpact(severity = 0.6) {
+        this.init();
+        if (!this.ctx || this.muted) return;
+        const t = this.ctx.currentTime;
+
+        // Low thump
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(135, t);
+        osc.frequency.exponentialRampToValueAtTime(28, t + 0.35);
+        gain.gain.setValueAtTime(Math.min(0.45, 0.2 + severity * 0.25), t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.4);
+
+        // Carbon debris noise burst
+        const bufSize = Math.floor(this.ctx.sampleRate * 0.28);
+        const buf = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < bufSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufSize * 0.35));
+        }
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buf;
+        const ng = this.ctx.createGain();
+        ng.gain.setValueAtTime(0.28, t);
+        noise.connect(ng);
+        ng.connect(this.masterGain);
+        noise.start(t);
+    }
+
+    // Tire Lockup / Spin Screech Sound
+    playTireScreech() {
+        this.init();
+        if (!this.ctx || this.muted) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(1180, t);
+        osc.frequency.linearRampToValueAtTime(920, t + 0.26);
+        gain.gain.setValueAtTime(0.14, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.3);
+    }
 }
 
 window.f1Audio = new F1AudioEngine();

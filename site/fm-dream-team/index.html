@@ -15,7 +15,7 @@
             <span style="font-size:1.8rem;">⚽</span>
             <div>
                 <h1 class="brand-title">FM DREAM & KICKRU</h1>
-                <div class="brand-subtitle">LIVING FOOTBALL CAREER & 2D ENGINE</div>
+                <div class="brand-subtitle">78 REAL CLUBS • 960+ STARS & NEWGENS • 2D LIVE ENGINE</div>
             </div>
             <span class="brand-badge" id="currentSeasonBadge">2024/25 시즌 (1R)</span>
         </div>
@@ -64,15 +64,23 @@
                         <div class="career-name-box">
                             <h2>
                                 <span id="careerPlayerName">이유찬</span>
-                                <span class="career-ovr-badge" id="careerPlayerOvr">OVR 64</span>
+                                <span class="career-ovr-badge" id="careerPlayerOvr">OVR 68</span>
                                 <span class="wonderkid-badge" id="careerWonderkidTag">✨ WONDERKID</span>
                             </h2>
                             <div style="font-size:0.85rem; color:#94a3b8; margin-top:4px;">
                                 <span id="careerPlayerNation">🇰🇷 대한민국</span> • 
                                 <span id="careerPlayerAge">17세 (2007년생)</span> • 
-                                <span id="careerPlayerPos">ST (스트라이커)</span> • 
+                                <span id="careerPlayerPos">ST</span> • 
                                 <span id="careerPlayerStyle" style="color:#38bdf8;">컴플리트 포워드</span> • 
                                 <span id="careerPlayerClub" style="color:#f59e0b; font-weight:800;">울산 HD FC</span>
+                            </div>
+                            <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                                <button id="careerCustomizeBtn" class="action-btn-secondary" style="font-size:0.75rem; padding:4px 10px; border-color:#38bdf8; color:#38bdf8;">
+                                    ✏️ 내 선수 이름/포지션/팀 설정
+                                </button>
+                                <button id="careerTransferOfferBtn" class="action-btn-secondary" style="font-size:0.75rem; padding:4px 10px; border-color:#10b981; color:#10b981;">
+                                    ✈️ 에이전트 이적 오퍼 (타 구단 이적)
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -80,7 +88,7 @@
                     <div style="text-align:right;">
                         <div style="font-size:0.8rem; color:#94a3b8;">주급 / 누적 자산</div>
                         <div style="font-size:1.3rem; font-weight:900; color:#10b981; font-family:var(--font-mono);">
-                            <span id="careerWeeklyWage">25</span>만원 / <span id="careerBankBalance">120</span>만원
+                            <span id="careerWeeklyWage">35</span>만원 / <span id="careerBankBalance">300</span>만원
                         </div>
                         <div style="font-size:0.75rem; color:#64748b; margin-top:2px;" id="careerMilitaryStatus">
                             🎖️ 병역: 미필 (아시안게임 금메달 시 면제)
@@ -92,22 +100,22 @@
                 <div class="career-metrics-row">
                     <div class="career-metric-card">
                         <div class="career-metric-label">감독 신뢰도</div>
-                        <div class="career-metric-val" id="careerTrustVal" style="color:#38bdf8;">45%</div>
-                        <div style="font-size:0.7rem; color:#64748b;">(70% 이상 선발)</div>
+                        <div class="career-metric-val" id="careerTrustVal" style="color:#38bdf8;">65%</div>
+                        <div style="font-size:0.7rem; color:#64748b;">(60% 이상 선발)</div>
                     </div>
                     <div class="career-metric-card">
                         <div class="career-metric-label">팬덤 인기</div>
-                        <div class="career-metric-val" id="careerFameVal" style="color:#f59e0b;">30%</div>
-                        <div style="font-size:0.7rem; color:#64748b;" id="careerFameTitle">유망주 벤치워머</div>
+                        <div class="career-metric-val" id="careerFameVal" style="color:#f59e0b;">35%</div>
+                        <div style="font-size:0.7rem; color:#64748b;" id="careerFameTitle">슈퍼 루키 유망주</div>
                     </div>
                     <div class="career-metric-card">
                         <div class="career-metric-label">팀 사기/케미</div>
-                        <div class="career-metric-val" id="careerMoraleVal" style="color:#10b981;">80%</div>
+                        <div class="career-metric-val" id="careerMoraleVal" style="color:#10b981;">82%</div>
                         <div style="font-size:0.7rem; color:#64748b;">라커룸 분위기 양호</div>
                     </div>
                     <div class="career-metric-card">
                         <div class="career-metric-label">잠재력 (PA)</div>
-                        <div class="career-metric-val" id="careerPaVal" style="color:#ec4899;">188</div>
+                        <div class="career-metric-val" id="careerPaVal" style="color:#ec4899;">192</div>
                         <div style="font-size:0.7rem; color:#64748b;">월드클래스 잠재력</div>
                     </div>
                     <div class="career-metric-card">
@@ -126,7 +134,7 @@
                 <div class="career-actions-bar">
                     <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
                         <button id="careerKickoffMatchBtn" class="action-btn-primary" style="font-size:1.15rem; padding:14px 28px;">
-                            <span>⚽</span> 이번 경기 킥오프 (실시간 2D 게임 상황 관전)!
+                            <span>⚽</span> 이번 경기 킥오프 (실시간 2D 매치 플레이 & 지시)!
                         </button>
 
                         <div style="display:flex; align-items:center; gap:6px;">
@@ -143,7 +151,7 @@
                     </div>
 
                     <button id="careerSimSeasonBtn" class="action-btn-secondary" style="border-color:#f59e0b; color:#f59e0b;">
-                        ⏩ 1시즌 일괄 시뮬레이션
+                        ⏩ 1시즌 일괄 시뮬레이션 (은퇴 & 생성선수 유입)
                     </button>
                 </div>
             </div>
@@ -153,14 +161,14 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
                     <div>
                         <h3 style="font-size:1.25rem; font-weight:900; color:#38bdf8; display:flex; align-items:center; gap:8px;">
-                            <span>📋</span> 나의 팀 스쿼드 라인업 & 전술 편성
+                            <span>📋</span> 나의 팀 스쿼드 라인업 & 전술 편성 (78개 전세계 구단 선택 가능)
                         </h3>
                         <div style="font-size:0.82rem; color:#94a3b8;">
-                            선수를 클릭하여 선발 11명과 교체 명단을 자유롭게 교체하고 포메이션을 설정하세요. (<b style="color:#f59e0b;">★ ME</b>: 내 커리어 선수)
+                            선수를 클릭하여 선발 11명과 교체 명단을 자유롭게 바꾸고, <b style="color:#10b981;">[이적 & 스카우트]</b> 탭에서 원하는 선수를 영입해 나만의 드림 스쿼드를 꾸리세요! (<b style="color:#f59e0b;">★ ME</b>: 내 커리어 선수)
                         </div>
                     </div>
 
-                    <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                         <select id="careerClubSelector" class="fm-select" style="font-weight:800; font-size:0.9rem; background:#0f172a; border-color:#38bdf8;"></select>
                         <select id="careerFormationSelect" class="fm-select" style="font-weight:800; font-size:0.9rem;">
                             <option value="4-3-3">4-3-3 (공격형)</option>
@@ -197,20 +205,20 @@
                             <span>교체 명단 (Bench)</span>
                             <span style="font-size:0.75rem; color:#94a3b8;">클릭하여 선발과 교체</span>
                         </div>
-                        <div id="careerBenchSlots" style="display:flex; flex-direction:column; gap:8px; max-height:360px; overflow-y:auto;"></div>
+                        <div id="careerBenchSlots" style="display:flex; flex-direction:column; gap:8px; max-height:480px; overflow-y:auto;"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- 3. LIVE GAME SITUATION (실시간 게임 상황 2D 관전 화면) -->
+            <!-- 3. LIVE GAME SITUATION (실시간 게임 상황 2D 관전 & 직접 개입 콘솔) -->
             <div id="liveMatchContainer" class="glass-panel" style="margin-bottom:24px; display:none;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid rgba(51,65,85,0.6); padding-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid rgba(51,65,85,0.6); padding-bottom:12px; flex-wrap:wrap; gap:8px;">
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span style="font-size:1.3rem;">⚔️</span>
-                        <h3 style="font-size:1.25rem; font-weight:900; color:#ffffff;">실시간 경기 상황 (Live Match Engine)</h3>
+                        <h3 style="font-size:1.25rem; font-weight:900; color:#ffffff;">실시간 2D 매치 엔진 & 전술/플레이 개입 콘솔</h3>
                     </div>
                     <div style="font-size:0.85rem; color:#38bdf8; font-weight:700;">
-                        *내 선수는 그라운드 위 <b style="color:#f59e0b;">'★ ME'</b> 황금 링으로 표시됩니다!
+                        *내 선수는 그라운드 위 <b style="color:#f59e0b;">'★ ME'</b> 황금 크라운으로 표시되며, 아래 버튼으로 직접 패스/슈팅/돌파를 지시할 수 있습니다!
                     </div>
                 </div>
 
@@ -239,21 +247,39 @@
                             <canvas id="livePitchCanvas"></canvas>
                         </div>
 
-                        <!-- Match Speed Controls -->
-                        <div class="match-controls-bar glass-panel" style="padding:10px 16px; margin-top:10px;">
-                            <div class="speed-btns">
-                                <span style="font-size:0.8rem; font-weight:700; color:#94a3b8; margin-right:6px;">경기 속도:</span>
-                                <button class="match-speed-btn active" data-speed="1">1x (표준)</button>
-                                <button class="match-speed-btn" data-speed="2">2x (빠르게)</button>
-                                <button class="match-speed-btn" data-speed="5">5x (초고속)</button>
-                                <button class="match-speed-btn" data-speed="0" style="color:#f59e0b; font-weight:900;">⏩ 스킵 (즉시결과)</button>
+                        <!-- Interactive Player & Tactical Command Console -->
+                        <div class="live-command-console">
+                            <div class="live-cmd-row">
+                                <span style="font-size:0.8rem; font-weight:800; color:#f59e0b;">🎮 실시간 플레이 지시:</span>
+                                <button class="live-cmd-btn" data-cmd="PASS_TO_ME">🎯 내 선수(★ME)에게 패스</button>
+                                <button class="live-cmd-btn shoot-btn" data-cmd="SHOOT">💥 즉시 슈팅 지시</button>
+                                <button class="live-cmd-btn" data-cmd="THROUGH_PASS">⚡ 킬패스/스루패스</button>
+                                <button class="live-cmd-btn" data-cmd="DRIBBLE_PRESS">💨 드리블 돌파 / 강압박</button>
+                            </div>
+                            <div class="live-cmd-row" style="border-top:1px solid rgba(51,65,85,0.5); padding-top:8px;">
+                                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                    <span style="font-size:0.78rem; font-weight:700; color:#94a3b8;">전술 성향:</span>
+                                    <button class="live-tactic-btn active" data-tactic="BALANCED">⚖️ 밸런스</button>
+                                    <button class="live-tactic-btn" data-tactic="ATTACK">🔥 전원 공격</button>
+                                    <button class="live-tactic-btn" data-tactic="GEGENPRESS">⚡ 게겐프레싱</button>
+                                    <button class="live-tactic-btn" data-tactic="TIKITAKA">🧠 티키타카</button>
+                                    <button class="live-tactic-btn" data-tactic="COUNTER">🛡️ 선수비 역습</button>
+                                </div>
+
+                                <div class="speed-btns">
+                                    <span style="font-size:0.78rem; font-weight:700; color:#94a3b8; margin-right:4px;">속도:</span>
+                                    <button class="match-speed-btn active" data-speed="1">1x</button>
+                                    <button class="match-speed-btn" data-speed="2">2x</button>
+                                    <button class="match-speed-btn" data-speed="5">5x</button>
+                                    <button class="match-speed-btn" data-speed="0" style="color:#f59e0b; font-weight:900;">⏩ 즉시결과</button>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Live Commentary Feed -->
                     <div class="live-commentary-box">
-                        <div class="comm-header">📢 FM 실시간 문자 중계</div>
+                        <div class="comm-header">📢 FM 실시간 중계 & 전술 로그</div>
                         <div id="liveCommentaryFeed" class="comm-feed"></div>
                     </div>
                 </div>
@@ -284,11 +310,11 @@
                 <div class="glass-panel">
                     <h3 style="font-size:1.05rem; font-weight:800; color:#38bdf8; margin-bottom:12px; display:flex; justify-content:space-between;">
                         <span>📋 최근 출전 기록 & 상태</span>
-                        <span id="careerMatchRoleStatus" style="font-size:0.8rem; color:#f59e0b;">후보 명단 (BENCH)</span>
+                        <span id="careerMatchRoleStatus" style="font-size:0.8rem; color:#10b981;">주전 선발 (STARTER)</span>
                     </h3>
                     <div id="careerMatchLogFeed" style="display:flex; flex-direction:column; gap:8px; max-height:320px; overflow-y:auto; padding-right:4px;">
                         <div style="color:#64748b; font-size:0.85rem; text-align:center; padding:30px 0;">
-                            '이번 경기 킥오프' 버튼을 눌러 첫 프로 데뷔전을 치르세요!
+                            '이번 경기 킥오프' 버튼을 눌러 2D 실시간 경기를 시작하세요!
                         </div>
                     </div>
                 </div>
@@ -296,12 +322,12 @@
                 <!-- Right: World Headlines & Season Chronicle -->
                 <div class="glass-panel">
                     <h3 style="font-size:1.05rem; font-weight:800; color:#f59e0b; margin-bottom:12px;">
-                        📰 세계 축구 소식 & 이적/은퇴 브리핑
+                        📰 세계 축구 소식 & 이적/은퇴/생성선수 브리핑
                     </h3>
                     <div id="careerNewsFeed" style="display:flex; flex-direction:column; gap:10px; max-height:320px; overflow-y:auto; padding-right:4px;">
                         <div style="padding:10px; background:rgba(30,41,59,0.5); border-radius:8px; font-size:0.85rem;">
                             <span style="color:#38bdf8; font-weight:800;">[2024/25 시즌 개막]</span> 
-                            전 세계 32개 명문 구단들이 새로운 우승 트로피를 향한 대장정을 시작합니다.
+                            전 세계 10대 리그 78개 구단, 960명 이상의 실제 선수들이 새로운 시즌에 돌입합니다.
                         </div>
                     </div>
                 </div>
@@ -314,7 +340,7 @@
         <section id="tab-tactics" class="tab-panel">
             <div class="squad-top-bar glass-panel">
                 <div class="club-switch-box">
-                    <label style="font-size:0.8rem; font-weight:700; color:#94a3b8; display:block; margin-bottom:4px;">팀 선택:</label>
+                    <label style="font-size:0.8rem; font-weight:700; color:#94a3b8; display:block; margin-bottom:4px;">팀 선택 (78개 전세계 구단 & 나만의 드림팀):</label>
                     <select id="activeClubSelect" class="fm-select" style="font-size:1rem; font-weight:800; background:#0f172a; border-color:#38bdf8;"></select>
                 </div>
 
@@ -380,7 +406,7 @@
                         <span style="font-size:0.75rem; color:#94a3b8;">클릭하여 선발과 교체</span>
                     </div>
 
-                    <div id="tacticsBenchSlots" style="display:flex; flex-direction:column; gap:8px; max-height:280px; overflow-y:auto;"></div>
+                    <div id="tacticsBenchSlots" style="display:flex; flex-direction:column; gap:8px; max-height:360px; overflow-y:auto;"></div>
                 </div>
             </div>
         </section>
@@ -392,8 +418,8 @@
             <div class="glass-panel" style="margin-bottom:20px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
                     <div>
-                        <h2 style="font-size:1.3rem; font-weight:900; color:#ffffff;">실시간 리그 순위표</h2>
-                        <div style="font-size:0.8rem; color:#94a3b8;">시즌 진행에 따라 승점과 골득실이 실시간 갱신됩니다.</div>
+                        <h2 style="font-size:1.3rem; font-weight:900; color:#ffffff;">실시간 9대 글로벌 리그 순위표</h2>
+                        <div style="font-size:0.8rem; color:#94a3b8;">시즌 진행에 따라 전 세계 리그 승점과 골득실이 실시간 갱신됩니다.</div>
                     </div>
 
                     <div style="display:flex; gap:8px; flex-wrap:wrap;" id="leagueTabButtons">
@@ -402,8 +428,10 @@
                         <button class="action-btn-secondary" data-league="laliga">🇪🇸 라리가</button>
                         <button class="action-btn-secondary" data-league="bundesliga">🇩🇪 분데스리가</button>
                         <button class="action-btn-secondary" data-league="seriea">🇮🇹 세리에 A</button>
+                        <button class="action-btn-secondary" data-league="ligue1">🇫🇷 리그 1</button>
+                        <button class="action-btn-secondary" data-league="europe">🌍 유럽 명문</button>
                         <button class="action-btn-secondary" data-league="jleague">🇯🇵 J1 리그</button>
-                        <button class="action-btn-secondary" data-league="mls">🇺🇸 MLS</button>
+                        <button class="action-btn-secondary" data-league="mls">🇺🇸 MLS & 사우디</button>
                     </div>
                 </div>
             </div>
@@ -430,25 +458,26 @@
         </section>
 
         <!-- ==============================================
-             TAB 3: SCOUTING & TRANSFERS (433+ REAL PLAYERS)
+             TAB 3: SCOUTING & TRANSFERS (960+ REAL PLAYERS + NEWGENS)
         =============================================== -->
         <section id="tab-scouting" class="tab-panel">
             <div class="glass-panel" style="margin-bottom:20px;">
-                <div class="scouting-filters-bar">
-                    <input type="text" id="scoutSearchInput" class="fm-input" placeholder="🔍 선수 실명, 구단명 검색 (예: 손흥민, 홀란드, 메시, 음바페, 조현우, 김민재...)">
+                <div class="scouting-filters-bar" style="grid-template-columns: 2fr 1fr 1fr 1fr;">
+                    <input type="text" id="scoutSearchInput" class="fm-input" placeholder="🔍 선수 실명, 구단명 검색 (예: 손흥민, 홀란드, 메시, 음바페, 양민혁, 이강인, 생성...)">
                     
                     <select id="scoutLeagueFilter" class="fm-select">
-                        <option value="all">🌍 모든 리그 전체</option>
-                        <option value="kleague">🇰🇷 K리그 1 (대한민국)</option>
+                        <option value="all">🌍 모든 리그 전체 (960+명)</option>
+                        <option value="kleague">🇰🇷 K리그 1 (12개 전 구단)</option>
                         <option value="epl">🏴󠁧󠁢󠁥󠁮󠁧󠁿 프리미어리그 (EPL)</option>
                         <option value="laliga">🇪🇸 라리가 (La Liga)</option>
                         <option value="bundesliga">🇩🇪 분데스리가 (Bundesliga)</option>
                         <option value="seriea">🇮🇹 세리에 A (Serie A)</option>
                         <option value="ligue1">🇫🇷 리그 1 (Ligue 1)</option>
+                        <option value="europe">🌍 유럽 명문 & 주요 리그</option>
                         <option value="jleague">🇯🇵 J1 리그 (일본)</option>
-                        <option value="mls">🇺🇸 MLS (미국)</option>
-                        <option value="national">🌐 국가대표팀</option>
-                        <option value="legends">🏆 월드 레전드 (아이콘 헌정관)</option>
+                        <option value="mls">🇺🇸 미국 MLS & 사우디</option>
+                        <option value="national">🌐 국가대표팀 (한/일)</option>
+                        <option value="legends">🏆 월드 레전드 (전시 매치 전용)</option>
                     </select>
 
                     <select id="scoutPosFilter" class="fm-select">
@@ -458,11 +487,17 @@
                         <option value="DF">수비수 (DF: CB, LB, RB)</option>
                         <option value="GK">골키퍼 (GK)</option>
                     </select>
+
+                    <select id="scoutTypeFilter" class="fm-select">
+                        <option value="all">전체 선수 (현역 + 생성선수)</option>
+                        <option value="newgen">🌱 생성선수 (Newgens)만 보기</option>
+                        <option value="wonderkid">✨ 원더키드 유망주만 보기</option>
+                    </select>
                 </div>
 
-                <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                     <span id="scoutResultCount" style="font-size:0.85rem; font-weight:700; color:#38bdf8;">선수 검색 결과</span>
-                    <span style="font-size:0.8rem; color:#94a3b8;">*공식 FC 24/25 & FM 24 데이터베이스 + 매 시즌 생성되는 신인 원더키드 포함</span>
+                    <span style="font-size:0.8rem; color:#10b981; font-weight:700;">💡 [➕ 내 스쿼드에 영입] 버튼을 누르면 즉시 현재 내 팀 스쿼드에 합류하여 경기에 뛸 수 있습니다!</span>
                 </div>
             </div>
 
@@ -476,10 +511,10 @@
             <div class="glass-panel" style="margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
                 <div>
                     <h2 style="font-size:1.3rem; font-weight:900; color:#f59e0b;">🛍️ 럭셔리 라이프 & 개인 자산 상점</h2>
-                    <div style="font-size:0.8rem; color:#94a3b8;">축구선수로서 벌어들인 연봉으로 슈퍼카, 펜트하우스, 전용기를 구매하세요!</div>
+                    <div style="font-size:0.8rem; color:#94a3b8;">축구선수로서 벌어들인 연봉과 이적 계약금으로 슈퍼카, 펜트하우스, 전용기를 구매하세요!</div>
                 </div>
                 <div style="font-size:1.2rem; font-weight:900; color:#10b981; font-family:var(--font-mono);">
-                    보유 잔액: <span id="shopBankBalanceDisplay">120</span>만원
+                    보유 잔액: <span id="shopBankBalanceDisplay">300</span>만원
                 </div>
             </div>
 
@@ -493,7 +528,7 @@
             <div class="glass-panel" style="margin-bottom:20px;">
                 <h2 style="font-size:1.4rem; font-weight:900; color:#f59e0b; margin-bottom:6px;">👑 명예의 전당 & 은퇴 레전드 기념관</h2>
                 <div style="font-size:0.85rem; color:#94a3b8;">
-                    시간이 흐름에 따라 은퇴한 전설적인 현역 선수들의 마지막 순간과 역대 발롱도르 수상자를 기록합니다.
+                    시즌이 진행됨에 따라 현역에서 은퇴한 베테랑 스타들의 기록과 역대 발롱도르(현역 클럽 선수 한정) 수상자를 보존합니다.
                 </div>
             </div>
 
@@ -528,12 +563,86 @@
     <!-- KICKRU INTERACTIVE STORY MODAL -->
     <div id="storyEventModal" class="story-backdrop" style="display:none;">
         <div class="story-card">
-            <span class="story-category-pill" id="storyModalCategory">[락커룸 이벤트]</span>
+            <span class="story-category-pill" id="storyModalCategory">[라커룸 이벤트]</span>
             <h3 class="story-title" id="storyModalTitle">선배의 조언</h3>
             <div class="story-desc" id="storyModalDesc">
                 훈련 종료 후 선배 선수가 다가옵니다.
             </div>
             <div class="story-choices" id="storyModalChoices"></div>
+        </div>
+    </div>
+
+    <!-- CUSTOM PLAYER PROFILE MODAL (킥루 스타일 내 선수 생성/수정) -->
+    <div id="customPlayerModal" class="story-backdrop" style="display:none;">
+        <div class="story-card" style="max-width:520px;">
+            <span class="story-category-pill">[킥루 커리어 프로필 설정]</span>
+            <h3 class="story-title">✏️ 내 커리어 선수 커스터마이징</h3>
+            <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
+                <div>
+                    <label style="font-size:0.8rem; color:#94a3b8; display:block; margin-bottom:4px;">선수 이름 (한글)</label>
+                    <input type="text" id="customNameInput" class="fm-input" value="이유찬" style="width:100%;">
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div>
+                        <label style="font-size:0.8rem; color:#94a3b8; display:block; margin-bottom:4px;">국적</label>
+                        <select id="customNationSelect" class="fm-select" style="width:100%;">
+                            <option value="대한민국">🇰🇷 대한민국</option>
+                            <option value="일본">🇯🇵 일본</option>
+                            <option value="잉글랜드">🏴󠁧󠁢󠁥󠁮󠁧󠁿 잉글랜드</option>
+                            <option value="스페인">🇪🇸 스페인</option>
+                            <option value="독일">🇩🇪 독일</option>
+                            <option value="브라질">🇧🇷 브라질</option>
+                            <option value="프랑스">🇫🇷 프랑스</option>
+                            <option value="미국">🇺🇸 미국</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem; color:#94a3b8; display:block; margin-bottom:4px;">포지션</label>
+                        <select id="customPosSelect" class="fm-select" style="width:100%;">
+                            <option value="ST">ST (스트라이커)</option>
+                            <option value="LW">LW (왼쪽 윙어)</option>
+                            <option value="RW">RW (오른쪽 윙어)</option>
+                            <option value="CAM">CAM (공격형 미드필더)</option>
+                            <option value="CM">CM (중앙 미드필더)</option>
+                            <option value="CB">CB (중앙 수비수)</option>
+                            <option value="GK">GK (골키퍼)</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size:0.8rem; color:#94a3b8; display:block; margin-bottom:4px;">플레이 스타일</label>
+                    <select id="customStyleSelect" class="fm-select" style="width:100%;">
+                        <option value="컴플리트 포워드">컴플리트 포워드 (만능형 골잡이)</option>
+                        <option value="인사이드 포워드">인사이드 포워드 (측면 파괴자 & 감아차기)</option>
+                        <option value="어드밴스드 플레이메이커">어드밴스드 플레이메이커 (천재 패서)</option>
+                        <option value="박스 투 박스 미드필더">박스 투 박스 미드필더 (중원 사령관)</option>
+                        <option value="볼 플레잉 디펜더">볼 플레잉 디펜더 (통곡의 벽)</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:0.8rem; color:#94a3b8; display:block; margin-bottom:4px;">소속 구단 선택</label>
+                    <select id="customClubSelect" class="fm-select" style="width:100%;"></select>
+                </div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button id="closeCustomPlayerBtn" class="action-btn-secondary">취소</button>
+                <button id="saveCustomPlayerBtn" class="action-btn-primary" style="padding:10px 22px;">✅ 프로필 적용</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AGENT TRANSFER OFFERS MODAL -->
+    <div id="transferOffersModal" class="story-backdrop" style="display:none;">
+        <div class="story-card" style="max-width:620px;">
+            <span class="story-category-pill">[공식 에이전트 오퍼]</span>
+            <h3 class="story-title">✈️ 도착한 구단 이적 제안서</h3>
+            <div class="story-desc">
+                현재 선수의 활약상과 오버롤(OVR)을 바탕으로 전 세계 구단에서 공식 영입 오퍼를 보냈습니다. 원하는 구단과 계약하면 즉시 이적하며 계약금을 수령합니다.
+            </div>
+            <div id="transferOffersList" class="story-choices"></div>
+            <div style="margin-top:16px; text-align:right;">
+                <button id="closeTransferModalBtn" class="action-btn-secondary">현 소속팀 잔류 (닫기)</button>
+            </div>
         </div>
     </div>
 
@@ -545,7 +654,10 @@
                     <h2 id="modalPlayerName" style="font-size:1.3rem; font-weight:900; color:#ffffff;"></h2>
                     <div id="modalPlayerMeta" style="font-size:0.8rem; color:#94a3b8; margin-top:4px;"></div>
                 </div>
-                <button class="modal-close-btn" onclick="app.closePlayerDetailModal()">✕</button>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <button id="modalSignPlayerBtn" class="sign-squad-btn" style="padding:8px 14px; font-size:0.85rem;">➕ 내 스쿼드에 영입</button>
+                    <button class="modal-close-btn" onclick="app.closePlayerDetailModal()">✕</button>
+                </div>
             </div>
 
             <div class="fm-stats-three-cols">

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FIA FORMULA 1 WORLD CHAMPIONSHIP — PIT WALL & TEAM MANAGER</title>
+    <title>FIA FORMULA 1 WORLD CHAMPIONSHIP — PIT WALL &amp; 3D GRAND PRIX</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,17 +13,17 @@
     ===================================================================== -->
     <header class="fia-top-bar">
         <div class="fia-brand-cluster">
-            <div class="fia-f1-tag">F1</div>
+            <button class="fia-f1-tag" style="border:none;cursor:pointer;" onclick="window.F1App.openMainMenu()" title="메인 메뉴 / 세이브 관리 열기">F1 MENU</button>
             <div class="fia-series-title">PIT WALL &amp; TEAM PRINCIPAL</div>
-            <div class="fia-round-pill" id="topRoundBadge">2025 R1/24 • AUS</div>
+            <div class="fia-round-pill" id="topRoundBadge">2025 R01/24 • AUS</div>
         </div>
 
         <nav class="fia-nav">
-            <button class="fia-nav-item active" data-view="race">LIVE GRAND PRIX (실시간 주행 &amp; 피트월)</button>
-            <button class="fia-nav-item" data-view="weekend">RACE WEEKEND &amp; QUALIFYING (예선/셋업)</button>
-            <button class="fia-nav-item" data-view="standings">24-RACE SEASON &amp; STANDINGS (시즌/순위)</button>
-            <button class="fia-nav-item" data-view="engineering">R&amp;D ENGINEERING (기술 개발)</button>
-            <button class="fia-nav-item" data-view="contracts">DRIVER CONTRACTS &amp; FINANCE (드라이버/재정)</button>
+            <button class="fia-nav-item active" data-view="race">LIVE GRAND PRIX (주행 &amp; 피트월)</button>
+            <button class="fia-nav-item" data-view="weekend">RACE WEEKEND &amp; QUALI (예선/바퀴수)</button>
+            <button class="fia-nav-item" data-view="standings">24-RACE SEASON (시즌/순위)</button>
+            <button class="fia-nav-item" data-view="engineering">R&amp;D &amp; DYNO TEST BENCH (기술/성능테스트)</button>
+            <button class="fia-nav-item" data-view="contracts">DRIVERS &amp; FINANCE (계약/재정)</button>
         </nav>
 
         <div class="fia-status-cluster">
@@ -31,8 +31,9 @@
             <button class="team-switch-btn" id="openTeamPickerBtn">
                 <span id="topTeamDot" style="width:10px;height:10px;display:inline-block;background:#E8002D;"></span>
                 <span id="topTeamName">Scuderia Ferrari HP</span>
-                <span style="color:#64748B;font-size:10px;">CHANGE TEAM</span>
+                <span style="color:#64748B;font-size:10px;">TEAM</span>
             </button>
+            <button class="rc-btn" onclick="window.F1App.openSaveLoadModal()" style="padding:5px 10px;color:#38BDF8;border-color:#38BDF8;">SAVE / LOAD</button>
             <button class="rc-btn" id="topAudioBtn" style="padding:5px 10px;">AUDIO: ON</button>
         </div>
     </header>
@@ -46,7 +47,7 @@
              VIEW 1: LIVE GRAND PRIX & PIT WALL TELEMETRY (DEFAULT ACTIVE VIEW)
         ================================================================== -->
         <section id="view-race" class="fia-view active">
-            <!-- 3D Onboard / Chase / TV Broadcast Viewport (with automatic 2D Track Camera fallback) -->
+            <!-- 3D Onboard / Chase / TV Broadcast Viewport -->
             <div id="race3dViewport"></div>
 
             <!-- FIA 5 Red Lights Start Gantry -->
@@ -62,7 +63,7 @@
             <div class="race-control-header">
                 <div class="rc-lap-block">
                     <span class="rc-gp-code" id="rcGpCode">R01 AUS</span>
-                    <span class="rc-lap-counter" id="rcLapCounter">LAP 1 / 15</span>
+                    <span class="rc-lap-counter" id="rcLapCounter">LAP 1 / 58</span>
                     <span class="rc-flag-badge" id="rcFlagBadge">GREEN</span>
                 </div>
 
@@ -80,8 +81,8 @@
                     <button class="rc-btn" id="rcCamBtn" onclick="window.F1App.cycleCamera()">CAM: CHASE [C]</button>
                     <button class="rc-btn active" id="rcControlModeBtn" onclick="window.F1App.toggleDriveControlMode()">MODE: MANUAL DRIVE</button>
                     <button class="rc-btn" onclick="window.F1App.cycleWeatherLive()">WEATHER</button>
-                    <button class="rc-btn" onclick="window.F1App.triggerVscLive()">VSC</button>
-                    <button class="rc-btn" style="border-color:#E10600;color:#FCA5A5;" onclick="window.F1App.finishRaceNow()">SKIP TO CHECKERED FLAG</button>
+                    <button class="rc-btn" onclick="window.F1App.triggerVscLive()">VSC/SC</button>
+                    <button class="rc-btn" style="border-color:#E10600;color:#FCA5A5;" onclick="window.F1App.finishRaceNow()">FINISH GP</button>
                 </div>
             </div>
 
@@ -108,12 +109,12 @@
                 <div class="pw-map-panel">
                     <div class="pw-panel-header">
                         <span id="pwCircuitMapTitle">CIRCUIT GPS TELEMETRY</span>
-                        <span style="font-family:var(--font-Telemetry);font-size:10px;">20 CARS LIVE</span>
+                        <span style="font-family:var(--font-Telemetry);font-size:10px;color:#22C55E;">DRS ZONES GREEN</span>
                     </div>
                     <canvas id="circuitMap2dCanvas"></canvas>
                 </div>
 
-                <!-- Car 1 Strategy Box -->
+                <!-- Car 1 Strategy Box (Static container, targeted value updates so buttons never miss clicks) -->
                 <div class="pw-driver-box" id="pwDriverBox1"></div>
 
                 <!-- Car 2 Strategy Box -->
@@ -150,7 +151,7 @@
                     <div style="flex:1;">
                         <div style="display:flex;justify-content:space-between;font-family:var(--font-Telemetry);font-size:10px;margin-bottom:3px;">
                             <span style="color:#FFD100;font-weight:700;">ERS BATTERY DEPLOY</span>
-                            <span id="podErsPct">100%</span>
+                            <span id="podErsPct">100% • WING 100%</span>
                         </div>
                         <div style="width:100%;height:6px;background:#181C28;margin-bottom:6px;">
                             <div id="podErsFill" style="width:100%;height:100%;background:#22C55E;"></div>
@@ -162,7 +163,7 @@
                     </div>
                 </div>
                 <div style="margin-top:5px;border-top:1px solid #1C2230;padding-top:4px;font-family:var(--font-Telemetry);font-size:9px;color:#64748B;text-align:center;">
-                    CONTROLS: [W/S] THROTTLE/BRAKE • [A/D] STEER/OVERTAKE • [SPACE] ERS OVERTAKE • [SHIFT] DRS FLAP • [B] BOX PIT CALL • [C] CAMERA
+                    MANUAL DRIVE: [W/S] 가속/브레이크 • [A/D] 에이펙스 조향/추월 • [SPACE] ERS 오버테이크 • [SHIFT] DRS 개방 • [B] BOX 피트인 • [C] 카메라
                 </div>
             </div>
         </section>
@@ -220,7 +221,7 @@
                 <div class="fia-panel">
                     <div class="fia-panel-head">
                         <span class="fia-panel-title">2025 FIA FORMULA 1 WORLD CHAMPIONSHIP — 24 GRAND PRIX CALENDAR</span>
-                        <span style="font-family:var(--font-Telemetry);font-size:11px;color:#94A3B8;">CLICK ANY CIRCUIT TO JUMP OR INSPECT</span>
+                        <span style="font-family:var(--font-Telemetry);font-size:11px;color:#94A3B8;">서킷 클릭 시 즉시 해당 라운드로 이동 및 트랙 로드</span>
                     </div>
                     <div class="mgmt-grid-4" id="seasonCalendarGrid"></div>
                 </div>
@@ -228,18 +229,25 @@
         </section>
 
         <!-- =================================================================
-             VIEW 4: R&D ENGINEERING & WIND TUNNEL DEVELOPMENT
+             VIEW 4: R&D ENGINEERING + EQUIPMENT / TIRE DYNO TEST BENCH
         ================================================================== -->
         <section id="view-engineering" class="fia-view">
             <div class="mgmt-container">
-                <div class="fia-panel" style="margin-bottom:16px;">
+                <!-- Equipment, Wing, Suspension & Tire Compound Performance Test Bench -->
+                <div class="fia-panel" style="margin-bottom:16px;border-top:3px solid #E10600;">
                     <div class="fia-panel-head">
-                        <span class="fia-panel-title">CAR DEVELOPMENT &amp; CFD / WIND TUNNEL ALLOCATION</span>
-                        <span id="engBudgetLabel" style="font-family:var(--font-Telemetry);color:#10B981;font-weight:800;">AVAILABLE COST CAP: $145.00M</span>
+                        <div>
+                            <span class="fia-panel-title">SHAKEDOWN DYNO &amp; WIND TUNNEL PERFORMANCE TEST BENCH (장비/기계/타이어 성능 테스트실)</span>
+                        </div>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <span id="engBudgetLabel" style="font-family:var(--font-Telemetry);color:#10B981;font-weight:800;margin-right:10px;">COST CAP: $145.00M</span>
+                            <button class="fia-btn-red" onclick="window.F1App.launchShakedownTestTrack()">LAUNCH 3D SHAKEDOWN TEST TRACK (트랙 직접 시운전)</button>
+                        </div>
                     </div>
-                    <p style="color:#94A3B8;font-size:12px;">
-                        공력(AERO), 파워유닛(POWR), 섀시 경량화/타이어 보존(CHAS), 피트스톱 오퍼레이션(DURA) 4개 부서의 신규 파츠를 개발하면 즉시 차량 최고속도와 코너링 속도, 타이어 마모율에 반영됩니다.
-                    </p>
+
+                    <div class="mgmt-grid-2" id="dynoTestBenchContainer">
+                        <!-- Populated with Mechanical Tuning Sliders & Live Telemetry Dyno Output -->
+                    </div>
                 </div>
 
                 <div class="mgmt-grid-4" id="engineeringDeptsGrid"></div>
@@ -270,6 +278,49 @@
     </main>
 
     <!-- =====================================================================
+         MAIN MENU / TITLE SCREEN OVERLAY (CONTINUE / NEW CAREER / SAVE & LOAD)
+    ===================================================================== -->
+    <div class="fia-title-screen" id="fiaMainMenuScreen">
+        <div class="fia-title-box">
+            <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-strong);padding-bottom:16px;margin-bottom:20px;">
+                <div>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <span class="fia-f1-tag" style="font-size:24px;padding:3px 14px;">F1 2025</span>
+                        <h1 style="font-family:var(--font-Broadcast);font-size:28px;font-weight:800;letter-spacing:1px;">WORLD CHAMPIONSHIP — PIT WALL &amp; 3D GRAND PRIX</h1>
+                    </div>
+                    <p style="color:#94A3B8;font-size:12px;margin-top:6px;">
+                        24개 공식 그랑프리 풀 시즌(실제 바퀴수 44~78 Laps) • 10개 컨스트럭터 &amp; 26명 드라이버 • 충돌/파손/스핀/DNF 물리엔진 &amp; 장비 성능 테스트 벤치
+                    </p>
+                </div>
+                <button class="fia-btn-red" style="font-size:16px;padding:12px 24px;" onclick="window.F1App.closeMainMenuAndResume()">
+                    RESUME / CONTINUE SEASON →
+                </button>
+            </div>
+
+            <div class="mgmt-grid-2">
+                <!-- Left: Current Career Summary & New Career Constructor Setup -->
+                <div class="fia-panel" style="background:#0D1017;">
+                    <div class="fia-panel-head">
+                        <span class="fia-panel-title">START NEW SEASON / SELECT CONSTRUCTOR</span>
+                    </div>
+                    <p style="font-size:11px;color:#94A3B8;margin-bottom:10px;">
+                        새로 시작할 구단과 기본 레이스 거리(100% 실제 랩수 / 50% / 25% 스프린트)를 선택하고 [START NEW CAREER]를 누르면 Round 1 호주 멜버른부터 새 시즌이 시작됩니다.
+                    </p>
+                    <div id="mainMenuNewCareerControls"></div>
+                </div>
+
+                <!-- Right: 3 Save Slots + JSON Save File Export / Import -->
+                <div class="fia-panel" style="background:#0D1017;">
+                    <div class="fia-panel-head">
+                        <span class="fia-panel-title">SAVE SLOTS &amp; FILE BACKUP (.JSON)</span>
+                    </div>
+                    <div id="mainMenuSaveSlotsArea"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
          MODAL 1: CONSTRUCTOR TEAM PICKER
     ===================================================================== -->
     <div class="fia-modal-overlay" id="teamPickerModal">
@@ -288,6 +339,9 @@
     <div class="fia-modal-overlay" id="postRaceClassificationModal">
         <div class="fia-modal-window" id="postRaceClassificationBody"></div>
     </div>
+
+    <!-- Hidden File Input for Importing Save .json -->
+    <input type="file" id="saveFileInput" accept=".json" style="display:none;" onchange="window.F1App.handleSaveFileUpload(event)">
 
     <!-- Three.js CDN + Modules -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
