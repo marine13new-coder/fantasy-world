@@ -640,6 +640,21 @@ class PitchCanvas {
                 ctx.stroke();
             }
 
+            // Career Player Character Highlight (Pulsing Golden Aura + Floating ★ ME Marker)
+            const isUserPlayer = p.isPlayerCharacter || (typeof window !== 'undefined' && window.app && window.app.career && (p.name === window.app.career.playerProfile.name || p.name === window.app.career.playerProfile.englishName || p.koreanName === window.app.career.playerProfile.name));
+            if (isUserPlayer) {
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(px, py, radius + 7, 0, Math.PI * 2);
+                ctx.stroke();
+
+                ctx.fillStyle = '#f59e0b';
+                ctx.font = `900 ${Math.round(radius * 0.85)}px Pretendard, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.fillText('★ ME', px, py - radius - 15);
+            }
+
             // Drop shadow
             ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
             ctx.beginPath();
@@ -669,7 +684,7 @@ class PitchCanvas {
             ctx.shadowColor = '#000000';
             ctx.shadowBlur = 4;
             const displayName = p.name.length > 5 ? p.name.slice(0, 4) + '..' : p.name;
-            ctx.fillText(`${displayName} ${p.ovr}`, px, py - radius - 4);
+            ctx.fillText(`${isUserPlayer ? '★ ' : ''}${displayName} ${p.ovr}`, px, py - radius - 4);
             ctx.shadowBlur = 0;
         });
 

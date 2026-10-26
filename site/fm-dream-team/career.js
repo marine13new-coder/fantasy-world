@@ -577,16 +577,26 @@ class CareerEngine {
         };
     }
 
-    // Calculate Ballon d'Or and League Champions
+    // Calculate Ballon d'Or and League Champions (STRICT: Active living club stars only!)
     calculateSeasonAwards(year) {
-        // Find highest rated active players for Ballon d'Or
-        const eligible = [...PLAYERS].filter(p => !p.retired).sort((a, b) => b.ovr - a.ovr);
-        const winner = eligible[0] || { koreanName: "엘링 홀란드", team: "맨체스터 시티", ovr: 91 };
+        // STRICT FILTER: Absolutely NO deceased, retired or historical icon legends!
+        const eligible = [...PLAYERS].filter(p => 
+            !p.retired && 
+            !p.isHistorical && 
+            p.league !== 'legends' && 
+            p.league !== 'national'
+        ).sort((a, b) => b.ovr - a.ovr);
+
+        // Pick top active contender among the world's best (Vinicius, Rodri, Haaland, Mbappe, Bellingham, Kane, etc.)
+        const topPool = eligible.slice(0, 5);
+        const winner = topPool.length > 0 
+            ? topPool[Math.floor(Math.random() * topPool.length)] 
+            : { koreanName: "로드리", team: "맨체스터 시티", ovr: 91 };
 
         // If playerProfile had a godly season, they can win Ballon d'Or!
         const p = this.playerProfile;
         let pWonBallon = false;
-        if (p.ovr >= 89 && p.seasonStats.goals + p.seasonStats.assists >= 40) {
+        if (p.ovr >= 87 && p.seasonStats.goals + p.seasonStats.assists >= 35) {
             p.careerStats.ballonDor++;
             pWonBallon = true;
         }
@@ -596,7 +606,7 @@ class CareerEngine {
 
         return {
             year: year,
-            ballonDor: pWonBallon ? `${p.koreanName} (${p.clubName})` : `${winner.koreanName} (${winner.team})`,
+            ballonDor: pWonBallon ? `${p.koreanName || p.name} (${p.clubName})` : `${winner.koreanName || winner.name} (${winner.team})`,
             pWonBallon: pWonBallon
         };
     }
@@ -614,9 +624,9 @@ class CareerEngine {
             myP.stats.stamina = Math.max(8, myP.stats.stamina - 1);
         }
 
-        // 2. All 400+ world players aging
+        // 2. All 400+ world players aging (Strictly skip historical icons!)
         PLAYERS.forEach(p => {
-            if (p.retired) return;
+            if (p.retired || p.isHistorical || p.league === 'legends') return;
 
             p.age++;
 

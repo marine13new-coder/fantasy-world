@@ -26992,6 +26992,8 @@ var PLAYERS = window.PLAYERS = [
   },
   {
     "id": "leg_yashin",
+    "isHistorical": true,
+    "retired": true,
     "name": "Lev Yashin",
     "koreanName": "레프 야신",
     "team": "월드 레전드 올스타",
@@ -27054,6 +27056,8 @@ var PLAYERS = window.PLAYERS = [
   },
   {
     "id": "leg_cafu",
+    "isHistorical": true,
+    "retired": true,
     "name": "Cafu",
     "koreanName": "카푸",
     "team": "월드 레전드 올스타",
@@ -27116,6 +27120,8 @@ var PLAYERS = window.PLAYERS = [
   },
   {
     "id": "leg_maldini",
+    "isHistorical": true,
+    "retired": true,
     "name": "Paolo Maldini",
     "koreanName": "파올로 말디니",
     "team": "월드 레전드 올스타",
@@ -27178,6 +27184,8 @@ var PLAYERS = window.PLAYERS = [
   },
   {
     "id": "leg_beckenbauer",
+    "isHistorical": true,
+    "retired": true,
     "name": "Franz Beckenbauer",
     "koreanName": "프란츠 베켄바워",
     "team": "월드 레전드 올스타",
@@ -27240,6 +27248,8 @@ var PLAYERS = window.PLAYERS = [
   },
   {
     "id": "leg_carlos",
+    "isHistorical": true,
+    "retired": true,
     "name": "Roberto Carlos",
     "koreanName": "호베르투 카를루스",
     "team": "월드 레전드 올스타",
@@ -27302,6 +27312,8 @@ var PLAYERS = window.PLAYERS = [
   },
   {
     "id": "leg_zidane",
+    "isHistorical": true,
+    "retired": true,
     "name": "Zinedine Zidane",
     "koreanName": "지네딘 지단",
     "team": "월드 레전드 올스타",
@@ -27364,6 +27376,8 @@ var PLAYERS = window.PLAYERS = [
   },
   {
     "id": "leg_maradona",
+    "isHistorical": true,
+    "retired": true,
     "name": "Diego Maradona",
     "koreanName": "디에고 마라도나",
     "team": "월드 레전드 올스타",
@@ -27426,6 +27440,8 @@ var PLAYERS = window.PLAYERS = [
   },
   {
     "id": "leg_ronaldinho",
+    "isHistorical": true,
+    "retired": true,
     "name": "Ronaldinho",
     "koreanName": "호나우지뉴",
     "team": "월드 레전드 올스타",
@@ -27488,6 +27504,8 @@ var PLAYERS = window.PLAYERS = [
   },
   {
     "id": "leg_pele",
+    "isHistorical": true,
+    "retired": true,
     "name": "Pelé",
     "koreanName": "펠레",
     "team": "월드 레전드 올스타",
@@ -27550,6 +27568,8 @@ var PLAYERS = window.PLAYERS = [
   },
   {
     "id": "leg_ronaldo_r9",
+    "isHistorical": true,
+    "retired": true,
     "name": "Ronaldo Nazário",
     "koreanName": "호나우두 (R9)",
     "team": "월드 레전드 올스타",
@@ -27612,6 +27632,8 @@ var PLAYERS = window.PLAYERS = [
   },
   {
     "id": "leg_henry",
+    "isHistorical": true,
+    "retired": true,
     "name": "Thierry Henry",
     "koreanName": "티에리 앙리",
     "team": "월드 레전드 올스타",
@@ -27674,6 +27696,8 @@ var PLAYERS = window.PLAYERS = [
   },
   {
     "id": "leg_parkjisung",
+    "isHistorical": true,
+    "retired": true,
     "name": "Park Ji-sung",
     "koreanName": "박지성",
     "team": "월드 레전드 올스타",
@@ -27736,6 +27760,8 @@ var PLAYERS = window.PLAYERS = [
   },
   {
     "id": "leg_chabumkun",
+    "isHistorical": true,
+    "retired": true,
     "name": "Cha Bum-kun",
     "koreanName": "차범근",
     "team": "월드 레전드 올스타",
