@@ -32,9 +32,11 @@ class F1ManagerApp {
         this.redFlagTire2 = 'MEDIUM';
 
         this.refreshAllViews();
+        this.updateTopAudioButtonLabel();
 
-        // Start live race in background immediately so 3D track is always rendered and alive
-        this.launchLiveGrandPrix(false);
+        // Start live 3D race in background (paused while Main Menu is open on startup)
+        this.launchLiveGrandPrix(false, true);
+        this.renderMainMenuContent();
     }
 
     bindNavigation() {
@@ -79,10 +81,182 @@ class F1ManagerApp {
         const audioBtn = document.getElementById('topAudioBtn');
         if (audioBtn) {
             audioBtn.addEventListener('click', () => {
-                const muted = window.f1Audio.toggleMute();
-                audioBtn.textContent = muted ? 'AUDIO: MUTE' : 'AUDIO: ON';
+                window.f1Audio.toggleMute();
+                this.updateTopAudioButtonLabel();
             });
         }
+    }
+
+    updateTopAudioButtonLabel() {
+        const audioBtn = document.getElementById('topAudioBtn');
+        if (!audioBtn) return;
+        if (window.f1Audio.isMuted) {
+            audioBtn.textContent = '🔇 AUDIO: MUTE';
+            audioBtn.style.color = '#EF4444';
+        } else {
+            const pct = Math.round((window.f1Audio.masterVolume ?? 0.8) * 100);
+            audioBtn.textContent = `🔊 AUDIO: ${pct}%`;
+            audioBtn.style.color = '#22C55E';
+        }
+    }
+
+    // =========================================================================
+    // SETTINGS & SOUND VOLUME MODAL CONTROLLER
+    // =========================================================================
+    openSettingsModal() {
+        window.f1Audio.playUiClick(false);
+        this.syncSettingsModalUI();
+        const modal = document.getElementById('fiaSettingsModal');
+        if (modal) modal.style.display = 'flex';
+    }
+
+    closeSettingsModal() {
+        window.f1Audio.playUiClick(true);
+        const modal = document.getElementById('fiaSettingsModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    syncSettingsModalUI() {
+        const mPct = Math.round((window.f1Audio.masterVolume ?? 0.80) * 100);
+        const ePct = Math.round((window.f1Audio.engineVolume ?? 0.85) * 100);
+        const sPct = Math.round((window.f1Audio.sfxVolume ?? 0.90) * 100);
+
+        const sM = document.getElementById('sliderMasterVol');
+        const sE = document.getElementById('sliderEngineVol');
+        const sS = document.getElementById('sliderSfxVol');
+        if (sM) sM.value = mPct;
+        if (sE) sE.value = ePct;
+        if (sS) sS.value = sPct;
+
+        const lM = document.getElementById('lblMasterVol');
+        const lE = document.getElementById('lblEngineVol');
+        const lS = document.getElementById('lblSfxVol');
+        if (lM) lM.textContent = `${mPct}%`;
+        if (lE) lE.textContent = `${ePct}%`;
+        if (lS) lS.textContent = `${sPct}%`;
+
+        const muteBtn = document.getElementById('settingsMuteToggleBtn');
+        if (muteBtn) {
+            muteBtn.textContent = window.f1Audio.isMuted ? '🔇 전체 음소거 상태 (클릭 시 켜기)' : '🔊 사운드 켜짐 (클릭 시 음소거)';
+            muteBtn.style.color = window.f1Audio.isMuted ? '#EF4444' : '#22C55E';
+            muteBtn.style.borderColor = window.f1Audio.isMuted ? '#EF4444' : '#22C55E';
+        }
+
+        ['CHASE', 'T_CAM', 'COCKPIT', 'TV_HELI'].forEach(cm => {
+            const btn = document.getElementById(`setCam_${cm}`);
+            if (btn && this.engine) {
+                btn.classList.toggle('active', this.engine.cameraMode === cm);
+            }
+        });
+
+        const rlBtn = document.getElementById('setRacingLineBtn');
+        if (rlBtn && this.engine) {
+            rlBtn.classList.toggle('active', !!this.engine.showRacingLine);
+            rlBtn.textContent = this.engine.showRacingLine
+                ? '3D RACING LINE CHEVRONS: ON (켜짐)'
+                : '3D RACING LINE CHEVRONS: OFF (꺼짐)';
+        }
+
+        const scBtn = document.getElementById('setSceneryBtn');
+        if (scBtn && this.engine) {
+            const isHigh = this.engine.sceneryDensity !== 'MEDIUM';
+            scBtn.classList.toggle('active', isHigh);
+            scBtn.textContent = isHigh
+                ? 'SCENERY DENSITY: HIGH (최고 품질)'
+                : 'SCENERY DENSITY: MEDIUM (퍼포먼스)';
+        }
+    }
+
+    onSoundSliderChange() {
+        const mVal = parseFloat(document.getElementById('sliderMasterVol')?.value ?? 80) / 100;
+        const eVal = parseFloat(document.getElementById('sliderEngineVol')?.value ?? 85) / 100;
+        const sVal = parseFloat(document.getElementById('sliderSfxVol')?.value ?? 90) / 100;
+
+        window.f1Audio.setVolumes({ master: mVal, engine: eVal, sfx: sVal });
+        this.syncSettingsModalUI();
+        this.updateTopAudioButtonLabel();
+    }
+
+    toggleMuteFromSettings() {
+        window.f1Audio.toggleMute();
+        this.syncSettingsModalUI();
+        this.updateTopAudioButtonLabel();
+    }
+
+    testAudioSample() {
+        window.f1Audio.init();
+        if (window.f1Audio.isMuted) {
+            window.f1Audio.toggleMute();
+        }
+        window.f1Audio.playRadioBeep();
+        window.f1Audio.playGearShift(true);
+        this.syncSettingsModalUI();
+        this.updateTopAudioButtonLabel();
+        this.notify('🔊 사운드 테스트: 팀 무전 비프음 및 기어 변속 효과음이 재생되었습니다.');
+    }
+
+    setCameraFromSettings(mode) {
+        window.f1Audio.playUiClick(false);
+        if (this.engine) {
+            const m = this.engine.setCameraMode(mode);
+            const rcCam = document.getElementById('rcCamBtn');
+            if (rcCam) rcCam.textContent = `CAM: ${m} [C]`;
+        }
+        this.syncSettingsModalUI();
+    }
+
+    toggleRacingLineFromSettings() {
+        window.f1Audio.playUiClick(false);
+        if (this.engine) {
+            this.engine.setRacingLineVisible(!this.engine.showRacingLine);
+        }
+        this.syncSettingsModalUI();
+    }
+
+    toggleSceneryFromSettings() {
+        window.f1Audio.playUiClick(false);
+        if (this.engine) {
+            this.engine.sceneryDensity = this.engine.sceneryDensity === 'HIGH' ? 'MEDIUM' : 'HIGH';
+            if (this.engine.hasWebGL && this.engine.circuit) {
+                this.engine.build3DEnvironmentAndBiome();
+                this.engine.cars.forEach(c => {
+                    c.visual3D = this.engine.create3DCarMesh(c.team, c.driver, c.tireCompound);
+                });
+                this.engine.syncCarWorldCoordinates(0.016);
+            }
+        }
+        this.syncSettingsModalUI();
+    }
+
+    buildCircuitMiniSvg(circuit, width = 92, height = 44) {
+        const pts = circuit.waypoints || [];
+        if (!pts.length) return '';
+        let minX = 9999, maxX = -9999, minZ = 9999, maxZ = -9999;
+        pts.forEach(p => {
+            if (p[0] < minX) minX = p[0];
+            if (p[0] > maxX) maxX = p[0];
+            if (p[1] < minZ) minZ = p[1];
+            if (p[1] > maxZ) maxZ = p[1];
+        });
+        const spanX = Math.max(40, maxX - minX);
+        const spanZ = Math.max(40, maxZ - minZ);
+        const pad = 5;
+        const scale = Math.min((width - pad * 2) / spanX, (height - pad * 2) / spanZ);
+        const cx = width * 0.5;
+        const cy = height * 0.5;
+        const midX = (minX + maxX) * 0.5;
+        const midZ = (minZ + maxZ) * 0.5;
+
+        const poly = pts.map(p => {
+            const x = (cx + (p[0] - midX) * scale).toFixed(1);
+            const y = (cy + (p[1] - midZ) * scale).toFixed(1);
+            return `${x},${y}`;
+        }).join(' ');
+
+        return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="display:block;overflow:visible;">
+            <polygon points="${poly}" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="3.6" stroke-linejoin="round"/>
+            <polygon points="${poly}" fill="none" stroke="#E10600" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>`;
     }
 
     notify(text) {
@@ -148,6 +322,36 @@ class F1ManagerApp {
     }
 
     renderMainMenuContent() {
+        const curCircuit = this.career.getCurrentCircuit();
+        const curLbl = document.getElementById('mainMenuCurrentCircuitLabel');
+        if (curLbl && curCircuit) {
+            curLbl.textContent = `CURRENT: R${String(curCircuit.round).padStart(2, '0')} ${curCircuit.name} (${curCircuit.realLaps} LAPS • ${curCircuit.biome})`;
+        }
+
+        const quickGrid = document.getElementById('mainMenuCircuitQuickGrid');
+        if (quickGrid) {
+            const curIdx = this.career.state.currentRoundIndex;
+            quickGrid.innerHTML = window.F1Data.circuits.map((c, idx) => {
+                const isCur = idx === curIdx;
+                const isMonaco = c.code === 'MON';
+                return `
+                    <div style="background:#141824;border:1px solid ${isCur ? '#22C55E' : (isMonaco ? '#FFD100' : 'var(--border-subtle)')};padding:6px 8px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:6px;"
+                         onclick="window.F1App.quickSelectCircuitFromMenu(${idx})"
+                         title="${c.name} (${c.location}) — 클릭 시 즉시 해당 트랙으로 변경">
+                        <div>
+                            <div style="font-family:var(--font-Telemetry);font-size:10px;font-weight:800;color:${isCur ? '#22C55E' : (isMonaco ? '#FFD100' : '#E10600')};">
+                                R${String(c.round).padStart(2, '0')} ${c.code}
+                            </div>
+                            <div style="font-size:11px;font-weight:700;color:#F8FAFC;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:92px;">
+                                ${c.location.split(' ')[0]}
+                            </div>
+                        </div>
+                        ${this.buildCircuitMiniSvg(c, 48, 28)}
+                    </div>
+                `;
+            }).join('');
+        }
+
         const ctrlEl = document.getElementById('mainMenuNewCareerControls');
         if (ctrlEl) {
             ctrlEl.innerHTML = `
@@ -290,10 +494,23 @@ class F1ManagerApp {
         event.target.value = '';
     }
 
+    quickSelectCircuitFromMenu(roundIdx) {
+        window.f1Audio.playUiClick(true);
+        this.career.state.currentRoundIndex = roundIdx;
+        this.career.state.qualifyingOrder = null;
+        this.career.save();
+        this.refreshAllViews();
+        const isMenuOpen = document.getElementById('fiaMainMenuScreen')?.style.display !== 'none';
+        this.launchLiveGrandPrix(false, isMenuOpen);
+        this.renderMainMenuContent();
+        const c = this.career.getCurrentCircuit();
+        this.notify(`🏁 3D 서킷 로드 완료: R${c.round} ${c.name} (${c.location} • ${c.realLaps} Laps)`);
+    }
+
     // =========================================================================
     // VIEW 1: LIVE GRAND PRIX & PIT WALL TELEMETRY (STATIC BUTTONS, ZERO CLICK LOSS)
     // =========================================================================
-    launchLiveGrandPrix(isTestMode = false) {
+    launchLiveGrandPrix(isTestMode = false, startPaused = false) {
         const circuit = this.career.getCurrentCircuit();
         const gridOrder = this.career.getStartingGridDrivers();
 
@@ -309,6 +526,7 @@ class F1ManagerApp {
             this.career.state.playerTeamId,
             {
                 isTestTrackMode: isTestMode,
+                startPaused,
                 raceFormat: this.career.state.raceFormat || 'FULL',
                 driveControlMode: this.career.state.driveControlMode || 'MANUAL',
                 startingTires: this.career.state.startingTires || {},
@@ -1022,20 +1240,29 @@ class F1ManagerApp {
                 const isCur = idx === curIdx;
                 const done = this.career.state.completedRounds.find(r => r.round === c.round);
                 return `
-                    <div style="background:#0D1017;border:1px solid ${isCur ? '#E10600' : 'var(--border-subtle)'};padding:12px;cursor:pointer;"
+                    <div style="background:#0D1017;border:1px solid ${isCur ? '#E10600' : 'var(--border-subtle)'};padding:12px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;"
                          onclick="window.F1App.jumpToCircuitRound(${idx})">
-                        <div style="display:flex;justify-content:space-between;font-family:var(--font-Telemetry);font-size:10px;color:${isCur ? '#E10600' : '#64748B'};margin-bottom:4px;">
-                            <span>R${String(c.round).padStart(2, '0')} • ${c.code} (${c.biome})</span>
-                            <span style="color:#FFD100;font-weight:800;">${c.realLaps} LAPS (${c.lengthKm}KM)</span>
+                        <div>
+                            <div style="display:flex;justify-content:space-between;font-family:var(--font-Telemetry);font-size:10px;color:${isCur ? '#E10600' : '#64748B'};margin-bottom:4px;">
+                                <span>R${String(c.round).padStart(2, '0')} • ${c.code} (${c.biome})</span>
+                                <span style="color:#FFD100;font-weight:800;">${c.realLaps} LAPS (${c.lengthKm}KM)</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;">
+                                <div>
+                                    <div style="font-weight:800;font-size:13px;">${c.name}</div>
+                                    <div style="font-size:11px;color:#94A3B8;">${c.location}</div>
+                                </div>
+                                ${this.buildCircuitMiniSvg(c, 78, 38)}
+                            </div>
                         </div>
-                        <div style="font-weight:800;font-size:13px;margin-bottom:6px;">${c.name}</div>
                         ${done ? `
                             <div style="font-family:var(--font-Telemetry);font-size:11px;color:#22C55E;">
                                 WINNER: ${done.winnerName} (${done.winnerCode}) • TEAM P${done.playerBestPos}
                             </div>
                         ` : `
-                            <div style="font-family:var(--font-Telemetry);font-size:10px;color:#94A3B8;">
-                                AERO ${Math.round(c.aeroWeight * 100)}% • POWER ${Math.round(c.powerWeight * 100)}% • DRS ${c.drsZones.length} ZONES
+                            <div style="font-family:var(--font-Telemetry);font-size:10px;color:#38BDF8;display:flex;justify-content:space-between;">
+                                <span>AERO ${Math.round(c.aeroWeight * 100)}% • PWR ${Math.round(c.powerWeight * 100)}%</span>
+                                <span style="color:#22C55E;font-weight:800;">CLICK TO RACE →</span>
                             </div>
                         `}
                     </div>
@@ -1050,8 +1277,10 @@ class F1ManagerApp {
         this.career.state.qualifyingOrder = null;
         this.career.save();
         this.refreshAllViews();
+        this.switchView('race');
+        this.launchLiveGrandPrix(false, false);
         const c = this.career.getCurrentCircuit();
-        this.notify(`선택된 그랑프리: R${c.round} ${c.name} (실제 ${c.realLaps} Laps)`);
+        this.notify(`🏁 R${c.round} ${c.name} (${c.location} • 실제 ${c.realLaps} Laps) 3D 서킷으로 전환되었습니다!`);
     }
 
     // =========================================================================

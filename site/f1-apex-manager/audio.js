@@ -15,6 +15,48 @@ class F1AudioEngine {
         this.engineFilter = null;
         this.isEngineRunning = false;
         this.muted = false;
+
+        // Multi-Channel Volume Controls (0.0 ~ 1.0)
+        this.masterVolume = 0.80;
+        this.engineVolume = 0.85;
+        this.sfxVolume = 0.90;
+        this.loadSavedVolumes();
+    }
+
+    loadSavedVolumes() {
+        try {
+            const raw = localStorage.getItem('f1_apex_audio_settings_v1');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (typeof parsed.masterVolume === 'number') this.masterVolume = parsed.masterVolume;
+                if (typeof parsed.engineVolume === 'number') this.engineVolume = parsed.engineVolume;
+                if (typeof parsed.sfxVolume === 'number') this.sfxVolume = parsed.sfxVolume;
+                if (typeof parsed.muted === 'boolean') this.muted = parsed.muted;
+            }
+        } catch (e) {}
+    }
+
+    saveVolumes() {
+        try {
+            localStorage.setItem('f1_apex_audio_settings_v1', JSON.stringify({
+                masterVolume: this.masterVolume,
+                engineVolume: this.engineVolume,
+                sfxVolume: this.sfxVolume,
+                muted: this.muted
+            }));
+        } catch (e) {}
+    }
+
+    setVolumes({ master, engine, sfx }) {
+        this.init();
+        if (typeof master === 'number') this.masterVolume = Math.max(0, Math.min(1, master));
+        if (typeof engine === 'number') this.engineVolume = Math.max(0, Math.min(1, engine));
+        if (typeof sfx === 'number') this.sfxVolume = Math.max(0, Math.min(1, sfx));
+        if (this.masterGain && this.ctx) {
+            const targetMaster = this.muted ? 0 : (this.masterVolume * 0.45);
+            this.masterGain.gain.setTargetAtTime(targetMaster, this.ctx.currentTime, 0.03);
+        }
+        this.saveVolumes();
     }
 
     init() {
@@ -22,7 +64,8 @@ class F1AudioEngine {
             const AudioCtx = window.AudioContext || window.webkitAudioContext;
             this.ctx = new AudioCtx();
             this.masterGain = this.ctx.createGain();
-            this.masterGain.gain.setValueAtTime(0.32, this.ctx.currentTime);
+            const targetMaster = this.muted ? 0 : (this.masterVolume * 0.45);
+            this.masterGain.gain.setValueAtTime(targetMaster, this.ctx.currentTime);
             this.masterGain.connect(this.ctx.destination);
         }
         if (this.ctx.state === 'suspended') {
@@ -34,8 +77,10 @@ class F1AudioEngine {
         this.init();
         this.muted = !this.muted;
         if (this.masterGain) {
-            this.masterGain.gain.setValueAtTime(this.muted ? 0 : 0.32, this.ctx.currentTime);
+            const targetMaster = this.muted ? 0 : (this.masterVolume * 0.45);
+            this.masterGain.gain.setValueAtTime(targetMaster, this.ctx.currentTime);
         }
+        this.saveVolumes();
         return this.muted;
     }
 
@@ -102,10 +147,11 @@ class F1AudioEngine {
         const cutoff = 380 + (clampedRpm / 15000) * 1600 + throttle * 450;
         this.engineFilter.frequency.setTargetAtTime(cutoff, now, 0.04);
 
-        // Softer volume in Pit Wall camera vs Cockpit/Chase camera
-        const targetVol = isPlayerMode ? (0.09 + throttle * 0.08) : 0.045;
+        // Softer volume in Pit Wall camera vs Cockpit/Chase camera, scaled by engineVolume
+        const engScale = this.engineVolume;
+        const targetVol = (isPlayerMode ? (0.09 + throttle * 0.08) : 0.045) * engScale;
         this.engineGain.gain.setTargetAtTime(targetVol, now, 0.05);
-        this.turboGain.gain.setTargetAtTime(isPlayerMode ? (0.012 + throttle * 0.018) : 0.006, now, 0.05);
+        this.turboGain.gain.setTargetAtTime((isPlayerMode ? (0.012 + throttle * 0.018) : 0.006) * engScale, now, 0.05);
     }
 
     stopEngineSound() {
@@ -121,14 +167,14 @@ class F1AudioEngine {
     // Gear Shift Pop (Seamless Gearbox Ignition Cut)
     playGearShift(isUp = true) {
         this.init();
-        if (!this.ctx || this.muted) return;
+        if (!this.ctx || this.muted || this.engineVolume <= 0.01) return;
         const t = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(isUp ? 190 : 280, t);
         osc.frequency.exponentialRampToValueAtTime(isUp ? 75 : 150, t + 0.055);
-        gain.gain.setValueAtTime(0.18, t);
+        gain.gain.setValueAtTime(0.18 * this.engineVolume, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
         osc.connect(gain);
         gain.connect(this.masterGain);
@@ -139,13 +185,13 @@ class F1AudioEngine {
     // FIA Start Red Light Beep (5 Red Lights -> Lights Out High Tone)
     playStartLight(isLightsOut = false) {
         this.init();
-        if (!this.ctx || this.muted) return;
+        if (!this.ctx || this.muted || this.sfxVolume <= 0.01) return;
         const t = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'square';
         osc.frequency.setValueAtTime(isLightsOut ? 1046.5 : 523.25, t);
-        gain.gain.setValueAtTime(0.28, t);
+        gain.gain.setValueAtTime(0.28 * this.sfxVolume, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + (isLightsOut ? 0.55 : 0.22));
         osc.connect(gain);
         gain.connect(this.masterGain);
@@ -156,14 +202,14 @@ class F1AudioEngine {
     // F1 Official Team Radio Two-Tone Beep ("Beep-Boop")
     playRadioBeep() {
         this.init();
-        if (!this.ctx || this.muted) return;
+        if (!this.ctx || this.muted || this.sfxVolume <= 0.01) return;
         const t = this.ctx.currentTime;
         [1480, 1975].forEach((freq, idx) => {
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = 'sine';
             osc.frequency.setValueAtTime(freq, t + idx * 0.075);
-            gain.gain.setValueAtTime(0.24, t + idx * 0.075);
+            gain.gain.setValueAtTime(0.24 * this.sfxVolume, t + idx * 0.075);
             gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.075 + 0.07);
             osc.connect(gain);
             gain.connect(this.masterGain);
@@ -175,13 +221,13 @@ class F1AudioEngine {
     // DRS Activation Beep in Helmet
     playDrsBeep() {
         this.init();
-        if (!this.ctx || this.muted) return;
+        if (!this.ctx || this.muted || this.sfxVolume <= 0.01) return;
         const t = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(2200, t);
-        gain.gain.setValueAtTime(0.18, t);
+        gain.gain.setValueAtTime(0.18 * this.sfxVolume, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
         osc.connect(gain);
         gain.connect(this.masterGain);
@@ -192,7 +238,7 @@ class F1AudioEngine {
     // Pit Stop Pneumatic Wheel Gun Sound ("Zzzzt-Zzzzt!")
     playPitWheelGun() {
         this.init();
-        if (!this.ctx || this.muted) return;
+        if (!this.ctx || this.muted || this.sfxVolume <= 0.01) return;
         const t = this.ctx.currentTime;
         [0, 0.18, 0.36].forEach((offset) => {
             const osc = this.ctx.createOscillator();
@@ -200,7 +246,7 @@ class F1AudioEngine {
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(620, t + offset);
             osc.frequency.linearRampToValueAtTime(1450, t + offset + 0.12);
-            gain.gain.setValueAtTime(0.22, t + offset);
+            gain.gain.setValueAtTime(0.22 * this.sfxVolume, t + offset);
             gain.gain.exponentialRampToValueAtTime(0.001, t + offset + 0.14);
             osc.connect(gain);
             gain.connect(this.masterGain);
@@ -212,7 +258,7 @@ class F1AudioEngine {
     // UI Click / R&D Upgrade Chime
     playUiClick(isUpgrade = false) {
         this.init();
-        if (!this.ctx || this.muted) return;
+        if (!this.ctx || this.muted || this.sfxVolume <= 0.01) return;
         const t = this.ctx.currentTime;
         const notes = isUpgrade ? [523.25, 659.25, 783.99, 1046.5] : [880];
         notes.forEach((freq, i) => {
@@ -220,7 +266,7 @@ class F1AudioEngine {
             const gain = this.ctx.createGain();
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(freq, t + i * 0.06);
-            gain.gain.setValueAtTime(0.2, t + i * 0.06);
+            gain.gain.setValueAtTime(0.2 * this.sfxVolume, t + i * 0.06);
             gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.06 + 0.18);
             osc.connect(gain);
             gain.connect(this.masterGain);
@@ -232,7 +278,7 @@ class F1AudioEngine {
     // Carbon-Fiber Crash & Collision Impact Sound
     playCrashImpact(severity = 0.6) {
         this.init();
-        if (!this.ctx || this.muted) return;
+        if (!this.ctx || this.muted || this.sfxVolume <= 0.01) return;
         const t = this.ctx.currentTime;
 
         // Low thump
@@ -241,7 +287,7 @@ class F1AudioEngine {
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(135, t);
         osc.frequency.exponentialRampToValueAtTime(28, t + 0.35);
-        gain.gain.setValueAtTime(Math.min(0.45, 0.2 + severity * 0.25), t);
+        gain.gain.setValueAtTime(Math.min(0.45, 0.2 + severity * 0.25) * this.sfxVolume, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
         osc.connect(gain);
         gain.connect(this.masterGain);
@@ -255,10 +301,10 @@ class F1AudioEngine {
         for (let i = 0; i < bufSize; i++) {
             data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufSize * 0.35));
         }
-        const noise = this.ctx.createBufferSource();
+        const noise = this.createBufferSource ? this.createBufferSource() : this.ctx.createBufferSource();
         noise.buffer = buf;
         const ng = this.ctx.createGain();
-        ng.gain.setValueAtTime(0.28, t);
+        ng.gain.setValueAtTime(0.28 * this.sfxVolume, t);
         noise.connect(ng);
         ng.connect(this.masterGain);
         noise.start(t);
@@ -267,14 +313,14 @@ class F1AudioEngine {
     // Tire Lockup / Spin Screech Sound
     playTireScreech() {
         this.init();
-        if (!this.ctx || this.muted) return;
+        if (!this.ctx || this.muted || this.sfxVolume <= 0.01) return;
         const t = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(1180, t);
         osc.frequency.linearRampToValueAtTime(920, t + 0.26);
-        gain.gain.setValueAtTime(0.14, t);
+        gain.gain.setValueAtTime(0.14 * this.sfxVolume, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
         osc.connect(gain);
         gain.connect(this.masterGain);
