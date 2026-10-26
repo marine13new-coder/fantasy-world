@@ -361,6 +361,7 @@
       <div class="ctrl-item"><span class="ctrl-badge">[1] / [2]</span> 톱단도 ↔ 월광검 교체</div>
       <div class="ctrl-item"><span class="ctrl-badge">[R]</span> 수혈액(에스트) 섭취</div>
       <div class="ctrl-item"><span class="ctrl-badge">[E]</span> 화톳불 휴식 / 안개벽 진입 / 내장뽑기</div>
+      <div class="ctrl-item" style="grid-column: span 3; color: #f59e0b; font-weight: 700;"><span class="ctrl-badge" style="background:#854d0e; color:#fff;">[HOT-SWAP]</span> 원하는 3D 캐릭터(.glb 파일)를 화면에 드래그&드롭하면 실시간 3D 모델로 즉시 교체!</div>
     </div>
   </div>
 
@@ -372,6 +373,7 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 
   <script>
     // ==========================================
@@ -853,6 +855,7 @@
       spawnEnemies();
       spawnBoss();
       initEmberParticles();
+      initGLTFModelPipeline();
 
       window.addEventListener('resize', onWindowResize);
       setupInputs();
@@ -1184,6 +1187,171 @@
       scene.add(pSystem);
       emberParticles = { system: pSystem, velocities: velocities, count: emberCount };
     }
+
+    
+    // ==========================================
+    // 3.1 REAL 3D SKINNED MODEL & MOCAP PIPELINE (GLTFLoader)
+    // ==========================================
+    let gltfLoader = new THREE.GLTFLoader();
+    let playerMixer = null;
+    let playerActions = {};
+    let activeCustomMesh = null;
+
+    function initGLTFModelPipeline() {
+      // 1. 3D GLB 모델들 자동 로드 (Player Hunter, Enemy Knight, Boss Malakor)
+      loadHunterGLB('models/hunter.glb');
+      loadEnemyKnightsGLB('models/enemy_knight.glb');
+      loadBossMalakorGLB('models/boss_malakor.glb');
+
+      // 2. 브라우저 실시간 3D 모델 (.glb) 드래그 & 드롭 핫스왑 리스너!
+      window.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+      });
+
+      window.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          const file = e.dataTransfer.files[0];
+          if (file.name.toLowerCase().endsWith('.glb') || file.name.toLowerCase().endsWith('.gltf')) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+              const buffer = event.target.result;
+              gltfLoader.parse(buffer, '', (gltf) => {
+                applyCustomGLTFCharacter(gltf);
+                showFloatingDamage('3D MODEL HOT-SWAPPED!', player.position, 'heal');
+                showBanner('CUSTOM 3D MODEL LOADED', `${file.name} 모델 및 스켈레톤이 즉시 적용되었습니다`, 'banner-bonfire');
+              });
+            };
+            reader.readAsArrayBuffer(file);
+          }
+        }
+      });
+    }
+
+    function loadHunterGLB(url) {
+      gltfLoader.load(
+        url,
+        (gltf) => {
+          applyCustomGLTFCharacter(gltf);
+          console.log('Successfully loaded hunter.glb!');
+        },
+        undefined,
+        (err) => {
+          console.log('models/hunter.glb not found or failed, using high-detail procedural rig fallback.');
+        }
+      );
+    }
+
+    function loadEnemyKnightsGLB(url) {
+      gltfLoader.load(url, (gltf) => {
+        enemies.forEach(en => {
+          if (en.userData.type === 'gothic_knight') {
+            en.children.forEach(c => { c.visible = false; });
+            const kMesh = gltf.scene.clone();
+            kMesh.traverse(child => {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+              }
+            });
+            en.add(kMesh);
+          }
+        });
+        console.log('Successfully applied enemy_knight.glb!');
+      }, undefined, (e) => {});
+    }
+
+    function loadBossMalakorGLB(url) {
+      gltfLoader.load(url, (gltf) => {
+        if (boss) {
+          boss.children.forEach(c => {
+            if (c !== boss.flameLight) c.visible = false;
+          });
+          const bMesh = gltf.scene.clone();
+          bMesh.traverse(child => {
+            if (child.isMesh) {
+              child.castShadow = true;
+              child.receiveShadow = true;
+            }
+          });
+          boss.add(bMesh);
+          console.log('Successfully applied boss_malakor.glb!');
+        }
+      }, undefined, (e) => {});
+    }
+
+
+    function applyCustomGLTFCharacter(gltf) {
+      const customMesh = gltf.scene;
+      customMesh.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          if (child.material) {
+            child.material.roughness = 0.65;
+            child.material.metalness = 0.3;
+          }
+        }
+      });
+
+      // 바운딩 박스 기준 스케일 및 위치 정규화 (1.8m 표준 인체 크기로 자동 피팅)
+      const bbox = new THREE.Box3().setFromObject(customMesh);
+      const size = bbox.getSize(new THREE.Vector3());
+      const scaleFactor = 1.9 / (size.y || 1.8);
+      customMesh.scale.setScalar(scaleFactor);
+      customMesh.position.set(0, 0, 0);
+
+      // 기존 프로시저럴 메쉬 숨김 처리
+      if (player.pelvis) player.pelvis.visible = false;
+      if (player.coatTail) player.coatTail.visible = false;
+      player.coatSegments.forEach(s => s.visible = false);
+
+      if (activeCustomMesh) player.remove(activeCustomMesh);
+      player.add(customMesh);
+      activeCustomMesh = customMesh;
+
+      // 손 본(Bone) 탐색 및 무기 소켓 장착
+      let rHandBone = null;
+      let lHandBone = null;
+
+      customMesh.traverse((child) => {
+        if (child.isBone || child.type === 'Bone') {
+          const name = child.name.toLowerCase();
+          if (name.includes('righthand') || name.includes('hand.r') || name.includes('hand_r') || name.includes('wrist_r')) {
+            rHandBone = child;
+          }
+          if (name.includes('lefthand') || name.includes('hand.l') || name.includes('hand_l') || name.includes('wrist_l')) {
+            lHandBone = child;
+          }
+        }
+      });
+
+      if (rHandBone) {
+        if (player.sawCleaver) rHandBone.add(player.sawCleaver);
+        if (player.moonlightSword) rHandBone.add(player.moonlightSword);
+        player.sawCleaver.position.set(0, 0, 0);
+        player.moonlightSword.position.set(0, 0, 0);
+      }
+      if (lHandBone && player.pistol) {
+        lHandBone.add(player.pistol);
+        player.pistol.position.set(0, 0, 0);
+      }
+
+      // 믹사모 / glTF 애니메이션 믹서 연결
+      if (gltf.animations && gltf.animations.length > 0) {
+        playerMixer = new THREE.AnimationMixer(customMesh);
+        playerActions = {};
+        gltf.animations.forEach((clip) => {
+          playerActions[clip.name.toLowerCase()] = playerMixer.clipAction(clip);
+        });
+
+        // 첫 번째 애니메이션 재생 (대부분 Idle 또는 Run)
+        const firstAction = playerMixer.clipAction(gltf.animations[0]);
+        firstAction.play();
+      }
+    }
+
 
     // ==========================================
     // 3. ARTICULATED HUNTER & WEAPONS RIGGING
@@ -2089,7 +2257,8 @@
         }
       }
 
-      // 4. 플레이어 유기적 관절 모션 & 이동
+      // 4. 실제 3D 모델 스켈레톤 애니메이션 갱신
+      if (playerMixer) playerMixer.update(dt);
       updatePlayerMotion(dt);
 
       // 5. 카메라 궤도
