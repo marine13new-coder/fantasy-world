@@ -601,6 +601,18 @@
       <span class="hotbar-slot-key">U</span>
       <span class="hotbar-slot-icon">❓</span>
     </div>
+    <div class="hotbar-slot ready" onclick="toggleCodexModal()" title="전설 도감 [L]">
+      <span class="hotbar-slot-key">L</span>
+      <span class="hotbar-slot-icon">📖</span>
+    </div>
+    <div class="hotbar-slot ready" onclick="toggleAuctionModal()" title="생선 경매장 [J]">
+      <span class="hotbar-slot-key">J</span>
+      <span class="hotbar-slot-icon">⚖️</span>
+    </div>
+    <div class="hotbar-slot ready" onclick="toggleJukeboxModal()" title="로파이 주크박스 [M]">
+      <span class="hotbar-slot-key">M</span>
+      <span class="hotbar-slot-icon">🎵</span>
+    </div>
   </div>
 
   <!-- Right-hand Quest & Resource HUD -->
@@ -1147,6 +1159,130 @@ function stopProceduralBGM() {
 }
 
 const SoundEngine = {
+  playBowShot: function() {
+    if (!audioEnabled || !audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(560, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(140, audioCtx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.22, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.12);
+    } catch(e) {}
+  },
+  playStaggerBell: function() {
+    if (!audioEnabled || !audioCtx) return;
+    try {
+      [1046.50, 1318.51, 1567.98].forEach((f, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f, audioCtx.currentTime + i * 0.04);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime + i * 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i * 0.04 + 0.6);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + i * 0.04); osc.stop(audioCtx.currentTime + i * 0.04 + 0.6);
+      });
+    } catch(e) {}
+  },
+  playExecutionSlash: function() {
+    if (!audioEnabled || !audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(110, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.45);
+      gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.45);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.45);
+    } catch(e) {}
+  },
+  playForageHarvest: function() {
+    if (!audioEnabled || !audioCtx) return;
+    try {
+      [659.25, 880.00, 1174.66, 1479.98].forEach((f, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f, audioCtx.currentTime + i * 0.04);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime + i * 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i * 0.04 + 0.3);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + i * 0.04); osc.stop(audioCtx.currentTime + i * 0.04 + 0.3);
+      });
+    } catch(e) {}
+  },
+  playAuctionGavel: function() {
+    if (!audioEnabled || !audioCtx) return;
+    try {
+      [0, 0.12].forEach(timeOffset => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(180, audioCtx.currentTime + timeOffset);
+        osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + timeOffset + 0.08);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime + timeOffset);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + timeOffset + 0.08);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + timeOffset); osc.stop(audioCtx.currentTime + timeOffset + 0.08);
+      });
+    } catch(e) {}
+  },
+  playFootstepTerrain: function(terrain) {
+    if (!audioEnabled || !audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      if (terrain === 'water') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(320, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(180, audioCtx.currentTime + 0.06);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      } else if (terrain === 'wood') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+      } else if (terrain === 'stone') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(240, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+      } else {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(90, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+      }
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.06);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.06);
+    } catch(e) {}
+  },
+  playJukeboxMelody: function(track) {
+    if (!audioEnabled || !audioCtx) return;
+    try {
+      const scales = [
+        [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25],
+        [329.63, 392.00, 440.00, 493.88, 587.33, 659.25, 783.99, 880.00],
+        [220.00, 246.94, 261.63, 293.66, 329.63, 349.23, 392.00, 440.00],
+        [349.23, 392.00, 440.00, 523.25, 587.33, 659.25, 698.46, 783.99]
+      ];
+      const notes = scales[track % scales.length];
+      notes.forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.18);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime + idx * 0.18);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.18 + 0.35);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + idx * 0.18); osc.stop(audioCtx.currentTime + idx * 0.18 + 0.35);
+      });
+    } catch(e) {}
+  },
 
   playComboChirp: function(step = 1) {
     if (!audioEnabled || !audioCtx) return;
@@ -1871,6 +2007,18 @@ const MAIN_STORY_CHAPTERS = [
     goldReward: 3000,
     expReward: 5000,
     rewardDesc: "3000G, 5000 EXP, 신화 칭호 '에델가르드의 수호자'"
+  },
+  {
+    chapter: 5,
+    title: "제 5장: 성간 아스트랄 게이트 (The Astral Gate)",
+    giver: "촌장 엘더 발도르 & 천문학자",
+    npcId: "elder",
+    desc: "북쪽 정상의 아스트랄 게이트를 통과하여 차원의 지배자 '공허의 군주 말자하'를 토벌하라!",
+    objectiveText: "공허의 군주 말자하 토벌",
+    target: 1,
+    goldReward: 10000,
+    expReward: 20000,
+    rewardDesc: "10,000G, 20,000 EXP, 신화 칭호 '시공간의 지배자'"
   }
 ];
 
@@ -1881,9 +2029,32 @@ let currentWeaponArchetype = "greatsword";
 const WEAPON_ARCHETYPES = {
   greatsword: { name: "용사의 대검", icon: "⚔️", atkMult: 1.25, speedMult: 0.9, critBonus: 0.05, rangeBonus: 22, desc: "묵직한 광역 베기, 높은 경직치 및 충격파" },
   daggers: { name: "그림자 쌍단검", icon: "🗡️", atkMult: 0.85, speedMult: 1.45, critBonus: 0.25, rangeBonus: -5, desc: "초고속 3연타 난무, 높은 치명타율과 잔상" },
-  staff: { name: "비전 마법봉", icon: "🪄", atkMult: 1.05, speedMult: 1.1, critBonus: 0.12, rangeBonus: 50, isRanged: true, desc: "유도 비전 유성 탄환 발사 및 광역 마법 폭발" }
+  staff: { name: "비전 마법봉", icon: "🪄", atkMult: 1.05, speedMult: 1.1, critBonus: 0.12, rangeBonus: 50, isRanged: true, desc: "유도 비전 유성 탄환 발사 및 광역 마법 폭발" },
+  bow: { name: "폭풍의 사냥꾼 활", icon: "🏹", atkMult: 1.12, speedMult: 1.25, critBonus: 0.18, rangeBonus: 75, isRanged: true, desc: "관통 돌풍 화살 및 3타 5연발 산탄 사격 & 백덤블링 회피" }
 };
 let activeArcaneStaffProjectiles = [];
+let activeArrows = [];
+let activeSlashLines = [];
+let waterRipples = [];
+
+// NPC 5-Heart Affinity System
+let npcAffinity = { elder: 20, blacksmith: 20, alchemist: 20, morgan: 20, mochi: 35 };
+
+// Interactive Field Foraging Nodes (Sunpetal, Glowmoss, Starshroom, Moonbloom, Amethyst, Pearl)
+let interactiveForageNodes = [
+  { id: 'f1', type: 'sunpetal', name: '태양꽃', x: -280, y: -80, harvested: false, respawn: 0 },
+  { id: 'f2', type: 'glowmoss', name: '발광이끼', x: -230, y: 120, harvested: false, respawn: 0 },
+  { id: 'f3', type: 'starshroom', name: '별빛버섯', x: -320, y: 40, harvested: false, respawn: 0 },
+  { id: 'f4', type: 'moonbloom', name: '달빛초', x: -190, y: -160, harvested: false, respawn: 0 },
+  { id: 'f5', type: 'amethyst', name: '자수정 원석', x: 350, y: -50, harvested: false, respawn: 0 },
+  { id: 'f6', type: 'pearl', name: '진주조개', x: 280, y: 180, harvested: false, respawn: 0 }
+];
+
+// Tavern Jukebox & Fish Auction State
+let jukeboxTrack = 0;
+let isJukeboxPlaying = false;
+let fishAuctionState = { active: false, currentBid: 0, highestBidder: '', timer: 0, fish: null };
+
 
 let coliseumMedals = 0;
 let coliseumBannerTimer = 0;
@@ -2347,6 +2518,21 @@ window.addEventListener('keydown', e => {
     toggleQuickHelpModal();
     return;
   }
+  if (e.key.toLowerCase() === 'l') {
+    e.preventDefault();
+    toggleCodexModal();
+    return;
+  }
+  if (e.key.toLowerCase() === 'j') {
+    e.preventDefault();
+    toggleAuctionModal();
+    return;
+  }
+  if (e.key.toLowerCase() === 'm') {
+    e.preventDefault();
+    toggleJukeboxModal();
+    return;
+  }
   if (e.code === 'Space') {
     e.preventDefault();
     if (fishingState.isFishing && fishingState.hasBite) {
@@ -2369,7 +2555,11 @@ window.addEventListener('keydown', e => {
   if (e.key.toLowerCase() === 'p') { e.preventDefault(); togglePetSanctuaryQuick(); }
   if (e.key.toLowerCase() === 'f') { e.preventDefault(); handleContextFKey(); }
   if (e.key.toLowerCase() === 'q') castSkill(1);
-  if (e.key.toLowerCase() === 'e') castSkill(2);
+  if (e.key.toLowerCase() === 'e') {
+    if (!triggerExecution()) {
+      castSkill(2);
+    }
+  }
   if (e.key.toLowerCase() === 'r') castSkill(3);
   if (e.key.toLowerCase() === 'x') { e.preventDefault(); castWeaponArt(); }
 });
@@ -2399,7 +2589,7 @@ canvas.addEventListener('mousedown', e => {
 });
 
 function cycleWeaponArchetype() {
-  const types = ["greatsword", "daggers", "staff"];
+  const types = ["greatsword", "daggers", "staff", "bow"];
   const curIdx = types.indexOf(currentWeaponArchetype);
   currentWeaponArchetype = types[(curIdx + 1) % types.length];
   const arc = WEAPON_ARCHETYPES[currentWeaponArchetype];
@@ -2424,6 +2614,20 @@ function togglePetSanctuaryQuick() {
 // Dual Context F Key: Check NPC Talk -> Check Fishing -> Check Chests -> Check Campfire -> Check Portals -> Otherwise Parry!
 function handleContextFKey() {
   if (currentZone === "OpenWorld") {
+    // Check Interactive Foraging Nodes
+    for (let node of interactiveForageNodes) {
+      if (!node.harvested && Math.hypot(player.x - node.x, player.y - node.y) < 45) {
+        node.harvested = true;
+        node.respawn = 45; // 45 seconds respawn
+        SoundEngine.playForageHarvest();
+        inventory.gold += 15;
+        gainXP(25);
+        addDamageText(player.x, player.y - 30, "🌿 " + node.name + " 채집 완료! (+15G, +25EXP)", true, '#2ecc71');
+        saveGame();
+        updateHUD();
+        return;
+      }
+    }
         // Check Secret Catacomb Entrance
     if (Math.hypot(player.x - catacombDoorPos.x, player.y - catacombDoorPos.y) < 60) {
       interactCatacombs();
@@ -2783,6 +2987,38 @@ function castSkill(index) {
             angle: aimDir, damage: dmg, radius: 12, life: 1.2, homingTimer: 0.18
           });
         }
+      } else if (currentWeaponArchetype === "bow") {
+        comboTimer = 0.85;
+        player.attackSwingTimer = 0.16;
+        let dmg = Math.round(totalBaseDmg * berserkMultiplier * arc.atkMult);
+        if (comboStep === 3) {
+          // 5-arrow fan spread barrage & evasive backflip leap
+          player.vx -= Math.cos(aimDir) * 180;
+          player.vy -= Math.sin(aimDir) * 180;
+          for (let a = -2; a <= 2; a++) {
+            const spreadAngle = aimDir + a * 0.14;
+            activeArrows.push({
+              x: player.x + Math.cos(spreadAngle) * 16,
+              y: player.y + Math.sin(spreadAngle) * 16,
+              vx: Math.cos(spreadAngle) * 620,
+              vy: Math.sin(spreadAngle) * 620,
+              angle: spreadAngle, damage: Math.round(dmg * 0.8), radius: 10, life: 1.2, pierceCount: 1
+            });
+          }
+          playerAfterimages.push({ x: player.x, y: player.y, alpha: 0.7, color: '#00d2d3' });
+          SoundEngine.playBowShot();
+          doShake(6);
+        } else {
+          // Single piercing arrow
+          activeArrows.push({
+            x: player.x + Math.cos(aimDir) * 16,
+            y: player.y + Math.sin(aimDir) * 16,
+            vx: Math.cos(aimDir) * 640,
+            vy: Math.sin(aimDir) * 640,
+            angle: aimDir, damage: dmg, radius: 10, life: 1.4, pierceCount: 2
+          });
+          SoundEngine.playBowShot();
+        }
       } else {
         // Greatsword
         comboTimer = 1.0;
@@ -3130,7 +3366,61 @@ function registerCombatHit(target, isCrit, finalDamage) {
   }
 }
 
+function triggerExecution() {
+  const monsters = getCurrentZoneMonsters();
+  let groggyTarget = null;
+  let minDist = 85;
+  for (let m of monsters) {
+    if (m.hp > 0 && m.isGroggy) {
+      const d = Math.hypot(m.x - player.x, m.y - player.y);
+      if (d < minDist) { minDist = d; groggyTarget = m; }
+    }
+  }
+  if (!groggyTarget) return false;
+
+  // Execute Cinematic Flash Slash
+  SoundEngine.playExecutionSlash();
+  doShake(25);
+  flashScreen('#ffffff', 0.45);
+  bulletTimeTimer = 0.4;
+  activeSlashLines.push({ x: groggyTarget.x, y: groggyTarget.y, angle: Math.random() * Math.PI, life: 0.45 });
+  const wBonus = (inventory.equipped.weapon ? (inventory.equipped.weapon.atk || 0) : 0) + (inventory.weaponLevel || 0) * 20;
+  const execDmg = Math.round((player.str * 3 + wBonus + 80) * 5.2 * (playerBuffs.berserkTimer > 0 ? 1.4 : 1.0));
+  groggyTarget.hp -= execDmg;
+  groggyTarget.isGroggy = false;
+  groggyTarget.stagger = groggyTarget.maxStagger || 100;
+  addDamageText(groggyTarget.x, groggyTarget.y - 65, "⚡ FLASH EXECUTION! " + execDmg, true, '#ff4757');
+
+  for (let s = 0; s < 14; s++) {
+    activeHitSparks.push({
+      x: groggyTarget.x, y: groggyTarget.y,
+      vx: (Math.random() - 0.5) * 260, vy: (Math.random() - 0.5) * 260,
+      color: '#ffd700', size: 4, life: 0.5, maxLife: 0.5
+    });
+  }
+  if (groggyTarget.hp <= 0) onMonsterKilled(groggyTarget);
+  return true;
+}
+
 function hitEntity(entity, damage, isDummy = false) {
+  if (!isDummy) {
+    if (entity.stagger === undefined) {
+      entity.stagger = entity.isBoss ? 450 : (entity.isElite ? 220 : 90);
+      entity.maxStagger = entity.stagger;
+      entity.isGroggy = false;
+      entity.groggyTimer = 0;
+    }
+    const staggerDmg = (currentWeaponArchetype === "greatsword" ? 35 : (currentWeaponArchetype === "bow" ? 22 : 16));
+    entity.stagger = Math.max(0, entity.stagger - staggerDmg);
+    if (entity.stagger <= 0 && !entity.isGroggy) {
+      entity.isGroggy = true;
+      entity.groggyTimer = 3.5;
+      SoundEngine.playStaggerBell();
+      addDamageText(entity.x, entity.y - 45, "💫 STAGGER! [E] 처형!", true, '#ffd700');
+      flashScreen('#ffd700', 0.25);
+      doShake(10);
+    }
+  }
   let isCrit = Math.random() < player.critChance;
   if (bulletTimeGuaranteedCrit) {
     isCrit = true;
@@ -3433,6 +3723,65 @@ function update(dt) {
     spk.y += spk.vy * dt;
     if (spk.life <= 0) activeHitSparks.splice(i, 1);
   }
+
+  // Update Stormcaller Bow Piercing Arrows
+  for (let i = activeArrows.length - 1; i >= 0; i--) {
+    const arr = activeArrows[i];
+    arr.life -= dt;
+    arr.x += arr.vx * dt;
+    arr.y += arr.vy * dt;
+
+    const monsters = getCurrentZoneMonsters();
+    for (let m of monsters) {
+      if (m.hp > 0 && Math.hypot(m.x - arr.x, m.y - arr.y) < arr.radius + 16) {
+        hitEntity(m, arr.damage, false);
+        arr.pierceCount--;
+        for (let s = 0; s < 4; s++) {
+          activeHitSparks.push({
+            x: arr.x, y: arr.y,
+            vx: (Math.random() - 0.5) * 140, vy: (Math.random() - 0.5) * 140,
+            color: '#00d2d3', size: 3, life: 0.3, maxLife: 0.3
+          });
+        }
+        if (arr.pierceCount <= 0) { arr.life = 0; break; }
+      }
+    }
+    if (arr.life <= 0) activeArrows.splice(i, 1);
+  }
+
+  // Update Execution Slash Lines
+  for (let i = activeSlashLines.length - 1; i >= 0; i--) {
+    activeSlashLines[i].life -= dt;
+    if (activeSlashLines[i].life <= 0) activeSlashLines.splice(i, 1);
+  }
+
+  // Update Water Ripples
+  for (let i = waterRipples.length - 1; i >= 0; i--) {
+    const rip = waterRipples[i];
+    rip.radius += 24 * dt;
+    rip.alpha -= 1.2 * dt;
+    if (rip.alpha <= 0) waterRipples.splice(i, 1);
+  }
+
+  // Update Forage Nodes Respawn
+  interactiveForageNodes.forEach(node => {
+    if (node.harvested) {
+      node.respawn -= dt;
+      if (node.respawn <= 0) node.harvested = false;
+    }
+  });
+
+  // Update Monster Groggy Timers
+  getCurrentZoneMonsters().forEach(m => {
+    if (m.isGroggy) {
+      m.groggyTimer -= dt;
+      m.speed = 0;
+      if (m.groggyTimer <= 0) {
+        m.isGroggy = false;
+        m.stagger = m.maxStagger || 100;
+      }
+    }
+  });
 
   // Update Paladin Rock Fissures
   for (let i = activeFissures.length - 1; i >= 0; i--) {
@@ -5048,6 +5397,125 @@ function render() {
         }
       });
 
+      // 5. Northern Summit Astronomical Observatory & Astrolabe (0, -350)
+      yEntities.push({
+        y: -320,
+        draw: () => {
+          ctx.save(); ctx.translate(0, -350);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+          ctx.beginPath(); ctx.ellipse(0, 32, 60, 24, 0, 0, Math.PI * 2); ctx.fill();
+          // Marble Base & Pillars
+          ctx.fillStyle = '#2f3542'; ctx.fillRect(-48, -42, 96, 74);
+          ctx.fillStyle = '#57606f'; ctx.fillRect(-44, -38, 88, 66);
+          // Spinning Celestial Astrolabe Rings
+          const ringRot = performance.now() * 0.001;
+          ctx.save(); ctx.translate(0, -56); ctx.rotate(ringRot);
+          ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.arc(0, 0, 24, 0, Math.PI * 2); ctx.stroke();
+          ctx.strokeStyle = '#00d2d3'; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.ellipse(0, 0, 22, 12, ringRot * 2, 0, Math.PI * 2); ctx.stroke();
+          ctx.restore();
+          // Astral Gate Portal (If Chapter >= 4)
+          if (storyChapter >= 4) {
+            ctx.save(); ctx.translate(0, -20);
+            const portalScale = 1 + Math.sin(performance.now() * 0.004) * 0.15;
+            ctx.scale(portalScale, portalScale);
+            const pGrad = ctx.createRadialGradient(0, 0, 4, 0, 0, 26);
+            pGrad.addColorStop(0, '#ffffff'); pGrad.addColorStop(0.5, '#9b59b6'); pGrad.addColorStop(1, 'rgba(41, 128, 185, 0)');
+            ctx.fillStyle = pGrad;
+            ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+          }
+          ctx.fillStyle = '#00d2d3'; ctx.font = 'bold 9.5px monospace'; ctx.textAlign = 'center';
+          ctx.fillText("✨ 북부 천문대 & 아스트랄 게이트", 0, -88);
+          ctx.restore();
+        }
+      });
+
+      // 6. The Salty Anchor Tavern & Bistro (140, 130)
+      yEntities.push({
+        y: 155,
+        draw: () => {
+          ctx.save(); ctx.translate(140, 130);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+          ctx.beginPath(); ctx.ellipse(0, 26, 52, 18, 0, 0, Math.PI * 2); ctx.fill();
+          // Timber Cabin Walls
+          ctx.fillStyle = '#3e2723'; ctx.fillRect(-44, -30, 88, 56);
+          ctx.fillStyle = '#5d4037'; ctx.fillRect(-40, -26, 80, 48);
+          // Blue & White Striped Awning
+          for (let s = 0; s < 8; s++) {
+            ctx.fillStyle = s % 2 === 0 ? '#1e3799' : '#f5f6fa';
+            ctx.fillRect(-44 + s * 11, -38, 11, 12);
+          }
+          // Outdoor Dining Picnic Table
+          ctx.fillStyle = '#4e342e'; ctx.fillRect(-28, 14, 56, 12);
+          // Steaming Chowder Pot
+          ctx.fillStyle = '#2f3542'; ctx.beginPath(); ctx.arc(0, 14, 5, 0, Math.PI * 2); ctx.fill();
+          const steam = Math.sin(performance.now() * 0.01) * 2;
+          ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillRect(-1, 8 + steam, 2, 4);
+          ctx.fillStyle = '#f39c12'; ctx.font = 'bold 9.5px monospace'; ctx.textAlign = 'center';
+          ctx.fillText("🍺 소금물 닻 비스트로 [M]", 0, -48);
+          ctx.restore();
+        }
+      });
+
+      // 7. Secret Tidepool Grotto Cavern (350, -50)
+      yEntities.push({
+        y: -35,
+        draw: () => {
+          ctx.save(); ctx.translate(350, -50);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+          ctx.beginPath(); ctx.ellipse(0, 18, 38, 14, 0, 0, Math.PI * 2); ctx.fill();
+          // Sea-Cave Stone Arch
+          ctx.fillStyle = '#2d3436';
+          ctx.beginPath(); ctx.arc(0, -6, 28, Math.PI, 0, false); ctx.fill();
+          // Glowing Amethyst Cluster
+          ctx.fillStyle = '#9b59b6';
+          ctx.beginPath(); ctx.moveTo(-6, -2); ctx.lineTo(0, -18); ctx.lineTo(6, -2); ctx.fill();
+          ctx.fillStyle = '#e056fd';
+          ctx.beginPath(); ctx.moveTo(4, -4); ctx.lineTo(10, -16); ctx.lineTo(14, -4); ctx.fill();
+          ctx.fillStyle = '#e056fd'; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
+          ctx.fillText("💎 조수 암초 동굴", 0, -32);
+          ctx.restore();
+        }
+      });
+
+      // 8. Interactive Field Foraging Nodes
+      interactiveForageNodes.forEach(node => {
+        if (!node.harvested) {
+          yEntities.push({
+            y: node.y + 8,
+            draw: () => {
+              ctx.save(); ctx.translate(node.x, node.y);
+              ctx.fillStyle = 'rgba(0,0,0,0.35)';
+              ctx.beginPath(); ctx.ellipse(0, 6, 8, 3, 0, 0, Math.PI * 2); ctx.fill();
+              if (node.type === 'sunpetal') {
+                ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(0, -6, 6, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#e67e22'; ctx.beginPath(); ctx.arc(0, -6, 3, 0, Math.PI * 2); ctx.fill();
+              } else if (node.type === 'glowmoss') {
+                ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.arc(-3, -4, 5, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#1abc9c'; ctx.beginPath(); ctx.arc(3, -5, 4, 0, Math.PI * 2); ctx.fill();
+              } else if (node.type === 'starshroom') {
+                ctx.fillStyle = '#00d2d3'; ctx.beginPath(); ctx.arc(0, -8, 7, Math.PI, 0); ctx.fill();
+                ctx.fillStyle = '#dfe4ea'; ctx.fillRect(-2, -8, 4, 8);
+              } else if (node.type === 'moonbloom') {
+                ctx.fillStyle = '#9b59b6'; ctx.beginPath(); ctx.arc(0, -7, 6, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(0, -7, 2, 0, Math.PI * 2); ctx.fill();
+              } else if (node.type === 'amethyst') {
+                ctx.fillStyle = '#a29bfe'; ctx.beginPath(); ctx.moveTo(-4, 0); ctx.lineTo(0, -10); ctx.lineTo(4, 0); ctx.fill();
+              } else {
+                ctx.fillStyle = '#ffeaa7'; ctx.beginPath(); ctx.ellipse(0, -4, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
+              }
+              if (Math.hypot(player.x - node.x, player.y - node.y) < 45) {
+                ctx.fillStyle = '#ffd700'; ctx.font = 'bold 8.5px monospace'; ctx.textAlign = 'center';
+                ctx.fillText("[F] " + node.name + " 채집", 0, -16);
+              }
+              ctx.restore();
+            }
+          });
+        }
+      });
+
       // Procedural Trees with Swaying Foliage
       const treeTime = performance.now() * 0.001;
       worldTrees.forEach(tr => {
@@ -5173,8 +5641,28 @@ function render() {
           const bw = m.isBoss ? 60 : 28;
           ctx.fillStyle = '#000'; ctx.fillRect(-bw / 2, -36, bw, 4);
           ctx.fillStyle = m.isBoss ? '#e056fd' : '#ff4757'; ctx.fillRect(-bw / 2, -36, bw * hpRatio, 4);
+
+          // Stagger / Poise Bar
+          const stagRatio = Math.max(0, (m.stagger || 100) / (m.maxStagger || 100));
+          ctx.fillStyle = '#222'; ctx.fillRect(-bw / 2, -31, bw, 2.5);
+          ctx.fillStyle = '#f1c40f'; ctx.fillRect(-bw / 2, -31, bw * stagRatio, 2.5);
+
+          // Groggy Halo of Stars
+          if (m.isGroggy) {
+            ctx.save();
+            const haloRot = performance.now() * 0.008;
+            for (let st = 0; st < 3; st++) {
+              const sa = haloRot + (Math.PI * 2 / 3) * st;
+              ctx.fillStyle = '#ffd700';
+              ctx.fillRect(Math.cos(sa) * 16 - 2, -48 + Math.sin(sa) * 6 - 2, 4, 4);
+            }
+            ctx.fillStyle = '#ff4757'; ctx.font = 'bold 9.5px monospace'; ctx.textAlign = 'center';
+            ctx.fillText("💫 [E] 처형 가능!", 0, -56);
+            ctx.restore();
+          }
+
           ctx.fillStyle = '#fff'; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
-          ctx.fillText(m.name, 0, -40);
+          ctx.fillText(m.name, 0, -42);
           ctx.restore();
         }
       });
@@ -5388,6 +5876,32 @@ function render() {
       ctx.beginPath(); ctx.arc(p.x, p.y, 4.5, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#ffffff';
       ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    });
+
+    // Render Stormcaller Bow Arrows
+    activeArrows.forEach(arr => {
+      ctx.save();
+      ctx.translate(arr.x, arr.y);
+      ctx.rotate(arr.angle);
+      ctx.strokeStyle = '#00d2d3'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(-16, 0); ctx.lineTo(12, 0); ctx.stroke();
+      ctx.fillStyle = '#f1c40f';
+      ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(6, -4); ctx.lineTo(6, 4); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    });
+
+    // Render Flash Execution Screen Slashlines
+    activeSlashLines.forEach(sl => {
+      ctx.save();
+      ctx.translate(sl.x, sl.y);
+      ctx.rotate(sl.angle);
+      ctx.strokeStyle = "rgba(255, 255, 255, " + (sl.life / 0.45) + ")";
+      ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.moveTo(-120, 0); ctx.lineTo(120, 0); ctx.stroke();
+      ctx.strokeStyle = "rgba(255, 71, 87, " + (sl.life / 0.45 * 0.8) + ")";
+      ctx.lineWidth = 12;
+      ctx.beginPath(); ctx.moveTo(-90, 0); ctx.lineTo(90, 0); ctx.stroke();
       ctx.restore();
     });
 
@@ -6300,6 +6814,103 @@ function closeNPCModal() {
   document.getElementById('npcModal').style.display = 'none';
 }
 
+function toggleCodexModal() {
+  const m = document.getElementById('codexModal');
+  if (!m) return;
+  m.style.display = m.style.display === 'block' ? 'none' : 'block';
+  if (m.style.display === 'block') switchCodexTab('bestiary');
+}
+
+function switchCodexTab(tab) {
+  const c = document.getElementById('codexContent');
+  if (!c) return;
+  if (tab === 'bestiary') {
+    c.innerHTML = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">' +
+      '<div style="background:#2f3542; padding:6px; border-radius:4px;"><b style="color:#ff4757;">💀 들판 스켈레톤</b><br>약점: 화염 | 처치 수: ' + (hallOfFame.totalKills || 0) + '<br>드랍: 골드, 뼈가루, 낡은 단검</div>' +
+      '<div style="background:#2f3542; padding:6px; border-radius:4px;"><b style="color:#00d2d3;">🏹 그림자 팬텀 저격수</b><br>약점: 번개 | 드랍: 민첩 부츠, 암살자의 활</div>' +
+      '<div style="background:#2f3542; padding:6px; border-radius:4px;"><b style="color:#e056fd;">🔮 대강령술사 말라코르</b><br>약점: 신성 | 드랍: 심연의 룬 정수, 마법 목걸이</div>' +
+      '<div style="background:#2f3542; padding:6px; border-radius:4px;"><b style="color:#ffd700;">👑 화염 군주 바하무트</b><br>약점: 빙결 | 드랍: 전설의 화염검, 용의 심장</div>' +
+    '</div>';
+  } else if (tab === 'fish') {
+    c.innerHTML = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">' +
+      '<div style="background:#2f3542; padding:6px; border-radius:4px;"><b style="color:#2ecc71;">🐟 코지 은빛 붕어</b> [일반]<br>선창가 호수 서식, 평균 24cm, 가격: 15G</div>' +
+      '<div style="background:#2f3542; padding:6px; border-radius:4px;"><b style="color:#3498db;">🐠 에메랄드 산호 감성돔</b> [희귀]<br>동쪽 부두 서식, 평균 38cm, 가격: 45G</div>' +
+      '<div style="background:#2f3542; padding:6px; border-radius:4px;"><b style="color:#9b59b6;">🦑 심연 야광 해파리</b> [에픽]<br>고대 지하 암초, 평균 52cm, 가격: 120G</div>' +
+      '<div style="background:#2f3542; padding:6px; border-radius:4px;"><b style="color:#f1c40f;">👑 황제 황금 비단잉어</b> [전설]<br>황금 소용돌이 스팟, 가격: 500G</div>' +
+    '</div>';
+  } else {
+    c.innerHTML = '<div style="line-height:1.7;">' +
+      '<b style="color:#ffd700; font-size:11px;">📜 제 1기: 태초의 룬과 거신족 (The Age of Titans)</b><br>' +
+      '대륙이 바다 속에서 솟아오를 당시 4대 정령의 룬이 성채의 바위에 깃들었습니다.<br><br>' +
+      '<b style="color:#e056fd; font-size:11px;">📜 제 2기: 종말의 화염룡 바하무트</b><br>' +
+      '북쪽 분화구에서 솟아난 바하무트가 대지를 불태웠으나 초대 성기사가 봉인했습니다.<br><br>' +
+      '<b style="color:#00d2d3; font-size:11px;">📜 제 3기: 아스트랄 차원의 문</b><br>' +
+      '별들의 축이 일렬로 정렬될 때 북부 천문대에 성간 게이트가 열려 영웅을 기다립니다.' +
+    '</div>';
+  }
+}
+
+function toggleAuctionModal() {
+  const m = document.getElementById('auctionModal');
+  if (!m) return;
+  m.style.display = m.style.display === 'block' ? 'none' : 'block';
+}
+
+function startFishAuction() {
+  SoundEngine.playAuctionGavel();
+  fishAuctionState.active = true;
+  fishAuctionState.currentBid = 60 + Math.round(Math.random() * 40);
+  fishAuctionState.highestBidder = "캡틴 모건";
+  document.getElementById('auctionFishTitle').innerText = "🐟 특상 에메랄드 감성돔 경매 중!";
+  document.getElementById('auctionCurrentBid').innerText = "현재 입찰가: " + fishAuctionState.currentBid + " G";
+  document.getElementById('auctionBidderText').innerText = "최고 입찰자: " + fishAuctionState.highestBidder + " ('어이쿠 탐나는 월척이군!')";
+
+  // Simulate NPC bids
+  setTimeout(() => {
+    if (!fishAuctionState.active) return;
+    fishAuctionState.currentBid += 50;
+    fishAuctionState.highestBidder = "미식가 가스통";
+    SoundEngine.playCoinChime();
+    document.getElementById('auctionCurrentBid').innerText = "현재 입찰가: " + fishAuctionState.currentBid + " G";
+    document.getElementById('auctionBidderText').innerText = "최고 입찰자: " + fishAuctionState.highestBidder + " ('오늘의 저녁 스페셜 요리로 쓰겠소!')";
+  }, 1000);
+
+  setTimeout(() => {
+    if (!fishAuctionState.active) return;
+    fishAuctionState.currentBid += 80;
+    fishAuctionState.highestBidder = "펠리칸 피트";
+    SoundEngine.playCoinChime();
+    document.getElementById('auctionCurrentBid').innerText = "현재 입찰가: " + fishAuctionState.currentBid + " G (최고가 갱신!)";
+    document.getElementById('auctionBidderText').innerText = "최고 입찰자: " + fishAuctionState.highestBidder + " ('까악! 내가 꼭 사고 말겠다!')";
+  }, 2200);
+}
+
+function hammerAuctionSold() {
+  if (!fishAuctionState.active || fishAuctionState.currentBid <= 0) return;
+  SoundEngine.playAuctionGavel();
+  SoundEngine.playAchievementFanfare();
+  flashScreen('#ffd700', 0.4);
+  inventory.gold += fishAuctionState.currentBid;
+  addDamageText(player.x, player.y - 40, "🎉 경매 낙찰! +" + fishAuctionState.currentBid + " G", true, '#ffd700');
+  fishAuctionState.active = false;
+  document.getElementById('auctionFishTitle').innerText = "✅ 낙찰 완료!";
+  document.getElementById('auctionBidderText').innerText = "최종 구매자: " + fishAuctionState.highestBidder;
+  saveGame();
+  updateHUD();
+}
+
+function toggleJukeboxModal() {
+  const m = document.getElementById('jukeboxModal');
+  if (!m) return;
+  m.style.display = m.style.display === 'block' ? 'none' : 'block';
+}
+
+function playJukeboxTrack(t) {
+  jukeboxTrack = t;
+  SoundEngine.playJukeboxMelody(t);
+  addDamageText(player.x, player.y - 30, "🎵 트랙 " + (t + 1) + " 재생 중...", false, '#00d2d3');
+}
+
 // ==========================================
 // 🚀 9. MAIN GAME LOOP
 // ==========================================
@@ -7059,6 +7670,55 @@ loadGame();
 updateHUD();
 requestAnimationFrame(gameLoop);
 </script>
+
+
+<!-- In-Game Lore Codex & Encyclopedia [L] -->
+<div id="codexModal" class="rpg-modal" style="display:none; width:520px; max-height:480px; overflow-y:auto;">
+  <div class="modal-header">
+    <span style="font-size:13px; font-weight:bold; color:#ffd700;">📖 에델가르드 전설 백과사전 & 도감</span>
+    <span class="modal-close-btn" onclick="toggleCodexModal()">&times;</span>
+  </div>
+  <div style="display:flex; gap:8px; margin-bottom:10px;">
+    <button class="rpg-btn" style="flex:1;" onclick="switchCodexTab('bestiary')">💀 마물 도감 (16종)</button>
+    <button class="rpg-btn" style="flex:1;" onclick="switchCodexTab('fish')">🐟 어류 도감 (50종)</button>
+    <button class="rpg-btn" style="flex:1;" onclick="switchCodexTab('annals')">📜 대륙 연대기</button>
+  </div>
+  <div id="codexContent" style="font-size:10px; line-height:1.6; color:#ecf0f1;"></div>
+</div>
+
+<!-- Harbor Fish Auction House [J] -->
+<div id="auctionModal" class="rpg-modal" style="display:none; width:440px;">
+  <div class="modal-header">
+    <span style="font-size:13px; font-weight:bold; color:#ffd700;">⚖️ 펠리칸 피트의 실시간 생선 경매장</span>
+    <span class="modal-close-btn" onclick="toggleAuctionModal()">&times;</span>
+  </div>
+  <div style="font-size:10.5px; color:#ddd; margin-bottom:10px;">
+    낚은 물고기를 경매에 부쳐 항구 상인들과 싯가 경쟁을 펼치세요! (최대 300% 골드)
+  </div>
+  <div id="auctionItemCard" style="background:#1e272e; padding:10px; border-radius:6px; border:1px solid #ffd700; margin-bottom:10px; text-align:center;">
+    <div id="auctionFishTitle" style="font-size:13px; font-weight:bold; color:#2ecc71;">🐟 경매 대기 물고기 선택</div>
+    <div id="auctionCurrentBid" style="font-size:15px; font-weight:bold; color:#f1c40f; margin:6px 0;">현재 입찰가: 0 G</div>
+    <div id="auctionBidderText" style="font-size:9.5px; color:#bdc3c7;">최고 입찰자: 없음</div>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <button class="rpg-btn" style="flex:1;" onclick="startFishAuction()">🚀 경매 시작 (물고기 출품)</button>
+    <button class="rpg-btn" style="flex:1; background:#c0392b;" onclick="hammerAuctionSold()">🔨 낙찰 완료! (판매)</button>
+  </div>
+</div>
+
+<!-- Tavern Lo-Fi Jukebox [M] -->
+<div id="jukeboxModal" class="rpg-modal" style="display:none; width:380px;">
+  <div class="modal-header">
+    <span style="font-size:13px; font-weight:bold; color:#ffd700;">🎵 소금물 닻 로파이 축음기 (Jukebox)</span>
+    <span class="modal-close-btn" onclick="toggleJukeboxModal()">&times;</span>
+  </div>
+  <div style="display:flex; flex-direction:column; gap:6px;">
+    <button class="rpg-btn" onclick="playJukeboxTrack(0)">🎼 트랙 1: 달빛 선창의 밤 (Moonlit Harbor)</button>
+    <button class="rpg-btn" onclick="playJukeboxTrack(1)">🎼 트랙 2: 용사의 출진 (Hero's Advance)</button>
+    <button class="rpg-btn" onclick="playJukeboxTrack(2)">🎼 트랙 3: 심연의 속삭임 (Whispering Void)</button>
+    <button class="rpg-btn" onclick="playJukeboxTrack(3)">🎼 트랙 4: 축제의 바닷가 (Coastal Festival)</button>
+  </div>
+</div>
 
 <!-- Controls & Help Modal [U] -->
 <div id="helpModal" class="rpg-modal" style="display:none; width:440px;">

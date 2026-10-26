@@ -21,6 +21,7 @@
     color: #e2e8f0; width: 100vw; height: 100vh;
   }
   #c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #ui { position: absolute; inset: 0; pointer-events: none; z-index: 20; }
 
   /* 시네마틱 스크린 비네트 (Cinematic Vignette) */
   #cinematic-vignette {
@@ -3658,8 +3659,42 @@ function showKillBadge(txt) {
 // ==========================================
 // 9. 키보드 & 마우스 조작
 // ==========================================
+// ==========================================
+// 9. 한글 IME 및 하드웨어 Scancode 완벽 대응 키보드 & 마우스 시스템
+// ==========================================
+function normalizeKey(e) {
+  const code = e.code ? e.code.toLowerCase() : '';
+  const k = e.key ? e.key.toLowerCase() : '';
+  if (code === 'keyw' || k === 'w' || k === 'ㅈ') return 'w';
+  if (code === 'keys' || k === 's' || k === 'ㄴ') return 's';
+  if (code === 'keya' || k === 'a' || k === 'ㅁ') return 'a';
+  if (code === 'keyd' || k === 'd' || k === 'ㅇ') return 'd';
+  if (code === 'space' || k === ' ') return ' ';
+  if (code === 'shiftleft' || code === 'shiftright' || k === 'shift') return 'shift';
+  if (code === 'keyr' || k === 'r' || k === 'ㄱ') return 'r';
+  if (code === 'keyq' || k === 'q' || k === 'ㅂ') return 'q';
+  if (code === 'keye' || k === 'e' || k === 'ㄷ') return 'e';
+  if (code === 'keyc' || k === 'c' || k === 'ㅊ') return 'c';
+  if (code === 'keyf' || k === 'f' || k === 'ㄹ') return 'f';
+  if (code === 'keyx' || k === 'x' || k === 'ㅌ') return 'x';
+  if (code === 'keyu' || k === 'u' || k === 'ㅕ') return 'u';
+  if (code === 'keyn' || k === 'n' || k === 'ㅜ') return 'n';
+  if (code === 'keyl' || k === 'l' || k === 'ㅣ') return 'l';
+  if (code === 'keyk' || k === 'k' || k === 'ㅏ') return 'k';
+  if (code === 'keyh' || k === 'h' || k === 'ㅗ') return 'h';
+  if (code === 'keyj' || k === 'j' || k === 'ㅓ') return 'j';
+  if (code === 'keym' || k === 'm' || k === 'ㅡ') return 'm';
+  if (code === 'keyv' || k === 'v' || k === 'ㅍ') return 'v';
+  if (code === 'keyy' || k === 'y' || k === 'ㅛ') return 'y';
+  if (code === 'keyz' || k === 'z' || k === 'ㅋ') return 'z';
+  if (code === 'keyt' || k === 't' || k === 'ㅅ') return 't';
+  if (code.startsWith('digit')) return code.replace('digit', '');
+  return k;
+}
+
 addEventListener('keydown', e => {
-  const k = e.key.toLowerCase(); keys[k] = true;
+  const k = normalizeKey(e);
+  keys[k] = true;
   if (k === '1') selectWeapon(0);
   if (k === '2') selectWeapon(1);
   if (k === '3') selectWeapon(2);
@@ -3668,8 +3703,6 @@ addEventListener('keydown', e => {
   if (k === '6') selectWeapon(5);
   if (k === '7') selectWeapon(6);
   if (k === '8') selectWeapon(7);
-  if (k === '5') deploySentryTurret();
-  if (k === '6') activateReconDrone();
   if (k === 'q') P.leaning = -1;
   if (k === 'e') P.leaning = 1;
   if (k === 'x') {
@@ -3747,20 +3780,21 @@ addEventListener('keydown', e => {
   if (k === 'z') triggerTacticalPing();
   if (k === 't') toggleThermal();
   if (k === 'm') toggleSatMap();
-  if (k === 'c' && keys.shift) { triggerSlide(); }
+  if (k === 'c' && (keys.shift || e.shiftKey)) { triggerSlide(); }
   if (k === 'tab') {
     e.preventDefault();
     const modal = document.getElementById('rpg-modal');
-    if (modal.style.display === 'flex') {
+    if (modal && modal.style.display === 'flex') {
       modal.style.display = 'none'; cv.requestPointerLock();
-    } else {
+    } else if (modal) {
       modal.style.display = 'flex'; document.exitPointerLock(); renderSkillModal();
     }
   }
-  if (k === ' ' && P.y === 0 && locked) P.vy = 5.8;
+  if (k === ' ' && P.y === 0) P.vy = 5.8;
 });
+
 addEventListener('keyup', e => {
-  const k = e.key.toLowerCase();
+  const k = normalizeKey(e);
   keys[k] = false;
   if (k === 'q' || k === 'e') P.leaning = 0;
   if (k === 'alt') {
@@ -3769,31 +3803,62 @@ addEventListener('keyup', e => {
     if (bi) bi.style.display = 'none';
   }
 });
-addEventListener('mousemove', e => {
-  if (!locked) return;
-  P.yaw -= e.movementX * 0.0022 * mouseSensitivity;
-  P.swayX = Math.max(-0.04, Math.min(0.04, P.swayX - e.movementX * 0.0004));
-  P.swayY = Math.max(-0.04, Math.min(0.04, P.swayY - e.movementY * 0.0004));
-  P.pitch = Math.max(-1.35, Math.min(1.35, P.pitch - e.movementY * 0.0022 * mouseSensitivity));
-  camera.rotation.y = P.yaw; camera.rotation.x = P.pitch;
+
+// 탭 전환 시 키 고착 방지
+window.addEventListener('blur', () => {
+  keys = {};
+  isMouseDown = false;
+  P.isHoldingBreath = false;
+  P.leaning = 0;
 });
+window.addEventListener('focus', () => {
+  last = performance.now();
+});
+
+let lastMouseX = null, lastMouseY = null;
+addEventListener('mousemove', e => {
+  let dx = e.movementX;
+  let dy = e.movementY;
+  if (dx === undefined || (dx === 0 && dy === 0 && !locked)) {
+    if (lastMouseX !== null) {
+      dx = e.clientX - lastMouseX;
+      dy = e.clientY - lastMouseY;
+    }
+  }
+  lastMouseX = e.clientX;
+  lastMouseY = e.clientY;
+
+  // 포인터 락 상태이거나 마우스 버튼을 누르고 드래그할 때 시점 회전 (절대 멈추지 않음)
+  if (!locked && !isMouseDown) return;
+  if (!dx && !dy) return;
+
+  P.yaw -= dx * 0.0022 * mouseSensitivity;
+  P.pitch = Math.max(-1.35, Math.min(1.35, P.pitch - dy * 0.0022 * mouseSensitivity));
+  P.swayX = Math.max(-0.04, Math.min(0.04, P.swayX - dx * 0.0004));
+  P.swayY = Math.max(-0.04, Math.min(0.04, P.swayY - dy * 0.0004));
+  camera.rotation.y = P.yaw;
+  camera.rotation.x = P.pitch;
+});
+
 addEventListener('mousedown', e => {
   if (e.button === 0) {
     if (droneActive) { fireDroneEMP(); return; }
+    isMouseDown = true;
     if (locked) {
-      isMouseDown = true;
       shoot();
     } else if (!isModalOpen()) {
-      cv.requestPointerLock();
+      if (cv && cv.requestPointerLock) cv.requestPointerLock();
+      shoot();
     }
   } else if (e.button === 1) {
     e.preventDefault();
-    if (locked) triggerTacticalPing();
+    triggerTacticalPing();
   } else if (e.button === 2) {
     e.preventDefault();
-    if (locked) P.isADS = true;
+    P.isADS = true;
   }
 });
+
 addEventListener('mouseup', e => {
   if (e.button === 0) {
     isMouseDown = false;
@@ -3805,7 +3870,7 @@ addEventListener('mouseup', e => {
   }
 });
 addEventListener('contextmenu', e => e.preventDefault());
-document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === cv; });
+document.addEventListener('pointerlockchange', () => { locked = (document.pointerLockElement === cv || document.pointerLockElement === document.body); });
 
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
@@ -3972,10 +4037,14 @@ function drawCrosshair() {
 let last = performance.now();
 (function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
-  if (P) update(dt);
-  drawCrosshair();
-  drawMinimap(dt);
-  renderer.render(scene, camera);
+  try {
+    if (P) update(dt);
+    drawCrosshair();
+    drawMinimap(dt);
+    renderer.render(scene, camera);
+  } catch (err) {
+    console.error("Frame render error:", err);
+  }
   requestAnimationFrame(loop);
 })(last);
 
