@@ -308,7 +308,7 @@ GAMES = [
         "tech": "M-Audio CODE 61 4x4 Pad · Serum 2 Wavetable · Live Overdub Sequencer",
         "score": 100,
         "fun": 100,
-        "desc": "유튜브 아인(@aynnxox) NEON 리믹스 감성 완벽 구현! 왼손 키보드 4x4 런치패드(1234/QWER/ASDF/ZXCV)로 보컬찹·808·저지클럽 드럼을 치고, 오른손 건반으로 Serum 2 110_Splash_Bass 워블 신스를 연주하며 실시간 오버더빙으로 비트를 찍고 믹싱하는 스튜디오 워크스테이션.",
+        "desc": "네온 사이버틱 EDM & 트랩 비트메이킹 스튜디오! 왼손 키보드 4x4 런치패드(1234/QWER/ASDF/ZXCV)로 보컬찹·808·저지클럽 드럼을 치고, 오른손 건반으로 Serum 2 110_Splash_Bass 워블 신스를 연주하며 실시간 오버더빙으로 비트를 찍고 믹싱하는 스튜디오 워크스테이션.",
         "icon": "🎹",
         "theme_color": "#00f0ff"
     }

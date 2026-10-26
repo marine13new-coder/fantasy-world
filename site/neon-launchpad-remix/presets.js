@@ -65,7 +65,7 @@ window.NEON_PRESETS = {
       name: '🔥 NEON - A2O LITE (Aynn Remix Kit)',
       bpm: 130,
       rootNote: 'C Minor',
-      desc: '유튜브 아인(@aynnxox) NEON 리믹스 감성! Serum 2 110_Splash_Bass_Mod_Square 워블 베이스 & 보컬 찹 패드',
+      desc: '유튜브 NEON STUDIO NEON 리믹스 감성! Serum 2 110_Splash_Bass_Mod_Square 워블 베이스 & 보컬 찹 패드',
       pads: [
         // Row 1: Vocal Chops & FX (Keys: 1, 2, 3, 4)
         { name: 'VOX "NEON!"', sub: 'Vocal Hook Chop 1', category: 'vocal', color: '#ff007f', synthType: 'vocal_neon', pitch: 60, formant: [800, 1450], duration: 0.42 },
