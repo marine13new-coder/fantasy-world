@@ -52,15 +52,25 @@ if blood_souls_sync.exists():
     subprocess.run([sys.executable, str(blood_souls_sync)], check=True, cwd=root)
     print("✔ Synced #16 Blood Souls : Ashen Hunter (Web, 3D Models, and Portal)")
 
-# 7. Update Portal HTML
+# 7. Sync Game 17 (FM Dream Club : Tactical Manager)
+fm_src_dir = root / "games" / "fm-dream-team"
+fm_dst_dir = site / "fm-dream-team"
+if fm_src_dir.exists():
+    fm_dst_dir.mkdir(parents=True, exist_ok=True)
+    for f in fm_src_dir.glob("*"):
+        if f.is_file():
+            shutil.copy2(f, fm_dst_dir / f.name)
+    print("✔ Synced #17 FM Dream Club : Tactical Manager")
+
+# 8. Update Portal HTML
 sys.path.insert(0, str(root / "tools"))
 import update_arcade_portal
 print("✔ Rebuilt site/index.html & manifest.json")
 
-# 8. Git Commit & Push
+# 9. Git Commit & Push
 try:
     subprocess.run(["git", "add", "site/", "BloodSouls/", "SeamlessPixelRPG/pixel_rpg_playable_test.html", "tools/"], check=True, cwd=root)
-    res = subprocess.run(["git", "commit", "-m", "sync: auto-sync all 16 games including #16 Blood Souls to GitHub Pages"], capture_output=True, text=True, cwd=root)
+    res = subprocess.run(["git", "commit", "-m", "sync: auto-sync all 17 games including #17 FM Dream Club to GitHub Pages"], capture_output=True, text=True, cwd=root)
     print(res.stdout or res.stderr)
     subprocess.run(["git", "push", "origin", "main"], check=True, cwd=root)
     print("🚀 Successfully pushed to GitHub Pages! Deployment in progress.")

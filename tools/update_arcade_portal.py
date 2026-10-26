@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw, ImageFont
 site_dir = Path("site")
 site_dir.mkdir(exist_ok=True)
 
-# 16 Games Definition
+# 17 Games Definition
 GAMES = [
     {
         "session": "01",
@@ -263,6 +263,22 @@ GAMES = [
         "desc": "다크소울 & 블러드본의 완벽한 오마주! 변형 톱단도 [Z] 접힘/펼침 모드, 왼손 사냥꾼 단총 공격 윈드업 패링, 무릎 꿇린 적 대상 내장뽑기(Visceral Attack) 피분수 치명타, 블러드본 리게인(Rally) 체력 회수 시스템, 화톳불 휴식과 2페이즈 심연의 기사 말라코르 보스전을 구현한 3D 소울라이크 걸작.",
         "icon": "🩸",
         "theme_color": "#e11d48"
+    },
+    {
+        "session": "17",
+        "slug": "fm-dream-team",
+        "title": "FM 드림 클럽: 택티컬 매니저",
+        "sub_title": "FM Dream Club : Tactical Manager",
+        "category": "strategy",
+        "category_name": "전략/시뮬레이션",
+        "genre": "정통 축구 감독 시뮬레이터",
+        "platform": "Web HTML5 · Canvas 2D Pitch",
+        "tech": "FM 1-20 Stats Engine · Real-time 2D 22-Player Physics · Tactical AI",
+        "score": 100,
+        "fun": 99,
+        "desc": "손흥민, 홀란드, 음바페, 메시 등 16개 명문 클럽 300+ 글로벌 스타 실명 데이터베이스 탑재! 4-3-3 티키타카 / 4-2-3-1 게겐프레싱 정밀 전술판, 22명 선수 실시간 2D 피치 패스/슈팅/인터셉트 시뮬레이션, 스카우트 이적시장 및 16강 토너먼트 챔피언스 컵을 구현한 궁극의 풋볼 매니저.",
+        "icon": "⚽",
+        "theme_color": "#10b981"
     }
 ]
 
@@ -366,7 +382,7 @@ portal_html = f"""<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Game Arcade Hub - 16 Games Showcase</title>
+<title>AI Game Arcade Hub - 17 Games Showcase</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
