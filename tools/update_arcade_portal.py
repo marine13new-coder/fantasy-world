@@ -311,6 +311,22 @@ GAMES = [
         "desc": "네온 사이버틱 EDM & 트랩 비트메이킹 스튜디오! 왼손 키보드 4x4 런치패드(1234/QWER/ASDF/ZXCV)로 보컬찹·808·저지클럽 드럼을 치고, 오른손 건반으로 Serum 2 110_Splash_Bass 워블 신스를 연주하며 실시간 오버더빙으로 비트를 찍고 믹싱하는 스튜디오 워크스테이션.",
         "icon": "🎹",
         "theme_color": "#00f0ff"
+    },
+    {
+        "session": "20",
+        "slug": "castle-siege",
+        "title": "그레이무어 공성전",
+        "sub_title": "The Fall of Greymoor",
+        "category": "action",
+        "category_name": "아케이드/액션",
+        "genre": "3D 블록 성벽 파괴",
+        "platform": "Web HTML5 · 3D",
+        "tech": "Three.js · Cannon.js Physics",
+        "score": 95,
+        "fun": 95,
+        "desc": "투석기 각도와 화력을 조절해 블록으로 쌓인 성벽과 탑을 무너뜨리는 3D 물리 공성전.",
+        "icon": "🏰",
+        "theme_color": "#d4a353"
     }
 ]
 
@@ -407,14 +423,14 @@ for g in GAMES:
       </div>
     """)
 
-cards_rendered = "\n".join(cards_html)
+cards_rendered = "\n".join(card.rstrip() for card in cards_html)
 
 portal_html = f"""<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Game Arcade Hub - 18 Games Showcase</title>
+<title>AI Game Arcade Hub - 20 Games Showcase</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
@@ -735,9 +751,9 @@ portal_html = f"""<!DOCTYPE html>
 <body>
 
 <header class="hero">
-  <div class="eyebrow">⚡ Unified Arcade Testbed · 14 Projects</div>
+  <div class="eyebrow">⚡ Unified Arcade Testbed · 20 Projects</div>
   <h1>AI Arcade Showcase</h1>
-  <p class="lead">세션 01부터 14까지 제작된 모든 게임을 하나의 포털에서 직접 플레이하고 테스트하세요.</p>
+  <p class="lead">세션 01부터 20까지 제작된 모든 게임을 하나의 포털에서 직접 플레이하고 테스트하세요.</p>
   <div class="unity-safe-notice">
     <span>🛡️ 유니티 개발 환경 격리 보호 완료</span>
     <span style="opacity:0.6">|</span>
@@ -747,11 +763,11 @@ portal_html = f"""<!DOCTYPE html>
 
 <div class="controls-bar">
   <div class="tabs">
-    <button class="tab-btn active" data-filter="all">전체보기 (14)</button>
-    <button class="tab-btn" data-filter="action">아케이드/액션 (5)</button>
+    <button class="tab-btn active" data-filter="all">전체보기 (20)</button>
+    <button class="tab-btn" data-filter="action">아케이드/액션 (10)</button>
     <button class="tab-btn" data-filter="rpg">RPG/로그라이크 (3)</button>
     <button class="tab-btn" data-filter="horror">공포/미스터리 (3)</button>
-    <button class="tab-btn" data-filter="strategy">전략/시뮬레이션 (1)</button>
+    <button class="tab-btn" data-filter="strategy">전략/시뮬레이션 (3)</button>
     <button class="tab-btn" data-filter="cozy">코지/힐링 (1)</button>
   </div>
   <div class="search-box">

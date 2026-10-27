@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GREYMOOR — 블록 성벽 공성전</title>
+<meta name="description" content="3D 투석기로 블록 성벽을 무너뜨리는 공성 게임">
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;color:#f9f2da;background:#9dc6df}canvas{display:block}#hud{position:absolute;inset:0;pointer-events:none}#brand{position:absolute;top:20px;left:24px;text-shadow:0 2px 8px #233b3b}#brand small{display:block;letter-spacing:.25em;font-size:11px;font-weight:800;color:#fff3bd}h1{margin:0;font:900 clamp(27px,4vw,46px) Georgia,serif;letter-spacing:-.045em}#brand p{margin:4px 0;font-size:13px}.panel{pointer-events:auto;background:#172521dd;border:1px solid #e6d7a155;box-shadow:0 10px 32px #15231f66;border-radius:16px;backdrop-filter:blur(10px)}#status{position:absolute;top:20px;right:20px;padding:14px 18px;min-width:190px;font-size:13px}#status strong{display:block;color:#ffda8a;font-size:18px}#controls{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;padding:13px 16px;max-width:calc(100% - 24px);flex-wrap:wrap;justify-content:center}label{font-size:12px;font-weight:700;white-space:nowrap}input[type=range]{width:110px;accent-color:#f2bd66;vertical-align:middle}output{display:inline-block;min-width:34px;text-align:right;color:#ffda8a}button{background:#d4a353;border:0;border-radius:9px;padding:11px 18px;color:#1d261d;font-weight:900;cursor:pointer}button:hover{background:#f5c771}button:disabled{opacity:.45;cursor:default}#reset{background:#d9e3d3}#tip{position:absolute;bottom:104px;left:50%;transform:translateX(-50%);padding:7px 13px;border-radius:8px;background:#172521aa;font-size:12px;white-space:nowrap}#message{position:absolute;top:23%;left:50%;transform:translateX(-50%);font:900 clamp(22px,4vw,42px) Georgia,serif;text-shadow:0 3px 15px #1a261a;text-align:center;max-width:90%;white-space:pre-line}a{color:#fff3bd}@media(max-width:600px){#brand{top:10px;left:12px}#brand p{display:none}#status{top:10px;right:10px;min-width:125px;padding:9px;font-size:11px}#status strong{font-size:14px}#controls{bottom:8px;gap:8px;padding:10px}#tip{bottom:114px;font-size:10px}input[type=range]{width:85px}button{padding:9px 12px}}
+</style>
+</head>
+<body>
+<div id="hud"><div id="brand"><small>THE FALL OF</small><h1>GREYMOOR</h1><p>성벽의 돌 하나하나를 무너뜨리세요</p></div><div id="status" class="panel"><strong id="stage">성채 1 / 3</strong><div id="shots">포탄 0 / 8</div><div id="health">성벽 잔존 100%</div></div><div id="message" aria-live="polite"></div><div id="tip">마우스 드래그: 시점 회전 · 휠: 확대 · 슬라이더: 조준</div><div id="controls" class="panel"><label>방향 <input id="yaw" type="range" min="-26" max="26" value="0"><output id="yawValue">0°</output></label><label>각도 <input id="angle" type="range" min="25" max="65" value="30"><output id="angleValue">30°</output></label><label>화력 <input id="power" type="range" min="18" max="30" value="22"><output id="powerValue">22</output></label><button id="fire">● 발사</button><button id="reset">다시 시작</button></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="game.js"></script>
+</body></html>
