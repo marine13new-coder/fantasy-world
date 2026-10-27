@@ -2130,13 +2130,12 @@ class F1LiveRaceEngine {
                     const leadingCar = trailingCar === c1 ? c2 : c1;
 
                     // 1. Longitudinal bumper contact: Smooth velocity dampening (NO position jumping!)
-                    if (latDiff < 1.45) {
+                    if (latDiff < 1.35) {
                         if (trailingCar.speedKmh > leadingCar.speedKmh) {
-                            trailingCar.speedKmh = Math.min(trailingCar.speedKmh, leadingCar.speedKmh * 0.99);
-                            trailingCar.throttle = 0.0;
-                            trailingCar.brake = 0.75;
+                            trailingCar.speedKmh = leadingCar.speedKmh * 0.992;
+                            trailingCar.throttle = 0.4;
+                            trailingCar.brake = 0.45;
                         }
-                        trailingCar.speedKmh = Math.max(60, trailingCar.speedKmh - 16.0 * dt);
                     } else {
                         // 2. Lateral wheel-to-wheel rub: Smooth spring-velocity deflection
                         const overlap = minLateralGap - latDiff;
@@ -2315,8 +2314,8 @@ class F1LiveRaceEngine {
             const slipstreamBoost = (!this.isTestTrackMode && car.position > 1 && car.intervalAhead < 0.85 && curvature < 0.15) ? 1.022 : 1.0;
             const drsBoost = car.drsActive ? 1.046 : 1.0;
 
-            const cornerSlowdown = Math.min(0.72, Math.max(curvature, sample.aheadCurvature * 0.75) * 1.38);
-            const idealCornerSpeed = 342 * (1.0 - cornerSlowdown * (1.06 / aeroFactor));
+            const cornerSlowdown = Math.min(0.60, Math.max(curvature, sample.aheadCurvature * 0.65) * 1.15);
+            const idealCornerSpeed = 345 * (1.0 - cornerSlowdown * (0.95 / aeroFactor));
             let targetSpeed = idealCornerSpeed * powerFactor * driverFactor * compoundGrip * paceMult * ersMult * slipstreamBoost * drsBoost;
 
             if (this.trackFlag === 'VSC') targetSpeed = Math.min(targetSpeed, 185);
@@ -2404,19 +2403,21 @@ class F1LiveRaceEngine {
         car.speedKmh = Math.max(68, Math.min(368, car.speedKmh));
     }
 
-    // Pro AI Racecraft: Single-File Racing Line by Default, In-Line Slipstream, 1-on-1 Overtaking
+    // Pro AI Racecraft: Dynamic Race Spacing, In-Line Slipstream, Aggressive Braking & Overtake
     updateAiCraftAndLine(car, sample, targetSpeed, dt) {
         const trackLen = this.trackLengthMeters || 5200;
         const carLenNorm = 5.2 / trackLen;       // ~5.2m car length
-        const safeFollowNorm = 15.0 / trackLen;  // ~15m safe following gap
-        const draftZoneNorm = 55.0 / trackLen;   // ~55m slipstream draft zone
+        const minGapNorm = 3.8 / trackLen;       // Physical contact avoidance threshold (~3.8m)
+        const safeFollowNorm = 10.0 / trackLen;  // ~10m follow gap (reduced from 15m to prevent stagnation)
+        const draftZoneNorm = 65.0 / trackLen;   // ~65m slipstream draft zone
 
-        let desiredLat = sample.idealLateral;
-        const apexSide = Math.sign(sample.signedTurn || 1);
+        // Base lateral target from ideal racing line, with small driver-specific apex variance (prevents all cars following single rail)
+        const driverLineJitter = ((car.driver.number * 17) % 7 - 3) * 0.18;
+        let desiredLat = sample.idealLateral + (sample.curvature < 0.12 ? driverLineJitter : 0);
 
         let carAhead = null;
         let minAheadDist = Infinity;
-        let carsBattlingAhead = 0;
+        let carBeside = null;
 
         for (let j = 0; j < this.cars.length; j++) {
             const other = this.cars[j];
@@ -2428,85 +2429,80 @@ class F1LiveRaceEngine {
                     minAheadDist = dist;
                     carAhead = other;
                 }
+            } else if (Math.abs(dist) <= carLenNorm * 1.35) {
+                const lDiff = Math.abs(other.lateralOffset - car.lateralOffset);
+                if (lDiff < 2.8) {
+                    carBeside = other;
+                }
             }
         }
 
         if (carAhead) {
             const dist = minAheadDist;
             const latDiff = Math.abs(carAhead.lateralOffset - car.lateralOffset);
+            const isStraight = sample.curvature < 0.14;
+            const isBrakingEntry = sample.aheadCurvature > 0.18;
 
-            // Check if someone is already battling side-by-side with carAhead
-            for (let j = 0; j < this.cars.length; j++) {
-                const o = this.cars[j];
-                if (o !== carAhead && o !== car && !o.finished && !o.dnf && !o.inPitLane) {
-                    if (Math.abs(o.totalDistance - carAhead.totalDistance) < carLenNorm * 1.4) {
-                        carsBattlingAhead++;
-                    }
-                }
-            }
+            // Overtake opportunity: Can pull out if on straight, braking entry, or having pace advantage
+            const speedDiff = car.speedKmh - carAhead.speedKmh;
+            const hasPaceAdvantage = car.drsActive || (car.ersMode === 'OVERTAKE') || (speedDiff > -5) || (car.driver.pace >= carAhead.driver.pace - 3);
 
-            // 1. Closely Following behind leader (within safe follow distance)
-            if (dist < safeFollowNorm) {
-                // If a battle is already happening ahead (already 2-wide), DO NOT go 3-wide! Stay in line!
-                const isBlocked = carsBattlingAhead >= 1 || dist < carLenNorm * 1.25;
-                const canOvertakeZone = (sample.curvature < 0.10) || (sample.aheadCurvature > 0.18);
-                const hasPaceAdvantage = car.drsActive || (car.ersMode === 'OVERTAKE') || (car.driver.racecraft >= carAhead.driver.racecraft - 1);
-
-                if (isBlocked || !canOvertakeZone || !hasPaceAdvantage) {
-                    // TUCK IN SINGLE FILE on the racing line directly in the leader's slipstream
+            if (dist < safeFollowNorm && (isStraight || isBrakingEntry) && hasPaceAdvantage) {
+                // Determine clear lane (inside or outside of the car ahead)
+                const passDir = carAhead.lateralOffset >= 0 ? -1 : 1;
+                const overtakeLane = Math.max(-6.5, Math.min(6.5, carAhead.lateralOffset + passDir * 2.8));
+                
+                // PULL OUT TO OVERTAKE!
+                desiredLat = overtakeLane;
+                targetSpeed = Math.max(targetSpeed, carAhead.speedKmh + (car.drsActive ? 18 : 10));
+                car.throttle = 1.0;
+                car.brake = 0.0;
+            } else if (dist < minGapNorm) {
+                // Emergency bump avoid only when within bumper-to-bumper 3.8m
+                targetSpeed = Math.min(targetSpeed, carAhead.speedKmh * 0.98);
+                car.throttle = 0.2;
+                car.brake = 0.55;
+            } else if (dist < safeFollowNorm) {
+                // Following closely: Tuck in directly behind to draft, but maintain competitive speed
+                if (isStraight) {
                     desiredLat = carAhead.lateralOffset;
-                    targetSpeed = Math.min(targetSpeed, carAhead.speedKmh * 0.995);
-                    car.throttle = 0.55;
-
-                    if (dist < carLenNorm * 1.1) {
-                        car.brake = 0.70;
-                        targetSpeed = Math.min(targetSpeed, carAhead.speedKmh * 0.94);
-                    }
-                } else {
-                    // Attempt clean 1-on-1 Overtake: Pull out to the inside or clear side and ACCELERATE!
-                    const passSide = carAhead.lateralOffset >= 0 ? -2.6 : 2.6;
-                    desiredLat = passSide;
-                    targetSpeed = Math.max(targetSpeed, carAhead.speedKmh + 14);
-                    car.throttle = 1.0;
+                    targetSpeed = Math.min(targetSpeed, carAhead.speedKmh + 6); // Stay on rear wing!
+                    car.throttle = 0.85;
                     car.brake = 0.0;
+                } else {
+                    // In corners: Do not brake excessively! Follow apex at competitive cornering speed
+                    targetSpeed = Math.min(targetSpeed, carAhead.speedKmh * 0.99);
+                    car.throttle = 0.70;
                 }
             } else {
-                // Tucking into the slipstream on straights (single file)
-                if (sample.curvature < 0.12) {
+                // In the slipstream tow zone on straights
+                if (isStraight) {
                     desiredLat = carAhead.lateralOffset;
-                    targetSpeed += 5.0; // Slipstream tow bonus
+                    targetSpeed += 7.5; // Stronger slipstream suction
                 }
             }
         }
 
-        // Side-by-side racing room if another car is right alongside
-        for (let j = 0; j < this.cars.length; j++) {
-            const other = this.cars[j];
-            if (other === car || other.finished || other.dnf || other.inPitLane) continue;
-            const dDiff = Math.abs(other.totalDistance - car.totalDistance);
-            const lDiff = Math.abs(other.lateralOffset - car.lateralOffset);
-
-            if (dDiff < carLenNorm * 1.2 && lDiff < 2.5) {
-                // Give racing room
-                const sepDir = car.lateralOffset >= other.lateralOffset ? 1 : -1;
-                desiredLat = other.lateralOffset + sepDir * 2.35;
-                break;
-            }
+        // Side-by-side battle: Give racing room cleanly without dropping speed
+        if (carBeside) {
+            const sepDir = car.lateralOffset >= carBeside.lateralOffset ? 1 : -1;
+            desiredLat = Math.max(-7.0, Math.min(7.0, carBeside.lateralOffset + sepDir * 2.35));
         }
 
-        // Smooth steering dynamics with lateral velocity & damping (Zero position jumps!)
-        const maxTrackLat = this.circuit.isStreetCircuit ? 7.2 : 8.2;
+        // Fast & fluid steering dynamics (faster response to close gaps and lunge into corners)
+        const maxTrackLat = this.circuit.isStreetCircuit ? 7.4 : 8.6;
         car.targetLateral = Math.max(-maxTrackLat, Math.min(maxTrackLat, desiredLat));
-        car.lateralVelocity += (car.targetLateral - car.lateralOffset) * 4.2 * dt;
-        car.lateralVelocity *= Math.pow(0.12, dt);
+        car.lateralVelocity += (car.targetLateral - car.lateralOffset) * 6.5 * dt;
+        car.lateralVelocity *= Math.pow(0.08, dt);
         car.lateralOffset += car.lateralVelocity * dt;
         car.lateralOffset = Math.max(-maxTrackLat, Math.min(maxTrackLat, car.lateralOffset));
 
-        const rate = targetSpeed > car.speedKmh ? 95 : 180;
-        car.throttle = targetSpeed >= car.speedKmh ? 1.0 : (car.throttle !== undefined ? car.throttle : 0.2);
-        car.brake = targetSpeed < car.speedKmh - 15 ? 1.0 : (car.brake !== undefined ? car.brake : 0.0);
+        // High responsiveness acceleration & braking (mimicking aggressive real F1 1000hp throttle response)
+        const rate = targetSpeed > car.speedKmh ? 135 : 240;
+        car.throttle = targetSpeed >= car.speedKmh ? 1.0 : (car.throttle !== undefined ? car.throttle : 0.3);
+        car.brake = targetSpeed < car.speedKmh - 12 ? 1.0 : 0.0;
         car.speedKmh += Math.sign(targetSpeed - car.speedKmh) * Math.min(Math.abs(targetSpeed - car.speedKmh), rate * dt);
-        car.speedKmh = Math.max(70, Math.min(360, car.speedKmh));
+        car.speedKmh = Math.max(75, Math.min(368, car.speedKmh));
     }
 
     updateCarPitStopSequence(car, dt) {
@@ -2759,11 +2755,11 @@ class F1LiveRaceEngine {
 
         if (this.cameraMode === 'CHASE') {
             this.camera.position.set(
-                fc.worldX - dirX * 9.8,
-                3.6,
-                fc.worldZ - dirZ * 9.8
+                fc.worldX - dirX * 8.2,
+                3.1,
+                fc.worldZ - dirZ * 8.2
             );
-            this.camera.lookAt(fc.worldX + dirX * 16, 0.9, fc.worldZ + dirZ * 16);
+            this.camera.lookAt(fc.worldX + dirX * 22, 1.1, fc.worldZ + dirZ * 22);
         } else if (this.cameraMode === 'T_CAM') {
             // Broadcast T-Cam Onboard View (matching Image 5): mounted above roll-hoop looking over Halo, nose, front wheels & track!
             this.camera.position.set(
