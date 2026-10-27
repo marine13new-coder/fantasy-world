@@ -380,6 +380,30 @@ class F1LiveRaceEngine {
         };
     }
 
+    // High-Precision Euclidean Distance from (x, z) to Circuit Spline Centerline
+    getMinDistanceToCircuit(x, z) {
+        const pts = this.trackPoints2D;
+        if (!pts || pts.length === 0) return 9999;
+        const n = pts.length;
+        let minDistSq = Infinity;
+        for (let i = 0; i < n; i++) {
+            const a = pts[i];
+            const b = pts[(i + 1) % n];
+            const dx = b.x - a.x;
+            const dz = b.z - a.z;
+            const l2 = dx * dx + dz * dz;
+            let t = 0;
+            if (l2 > 1e-6) {
+                t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / l2));
+            }
+            const px = a.x + t * dx;
+            const pz = a.z + t * dz;
+            const dSq = (x - px) * (x - px) + (z - pz) * (z - pz);
+            if (dSq < minDistSq) minDistSq = dSq;
+        }
+        return Math.sqrt(minDistSq);
+    }
+
     // Launch Grand Prix or Shakedown Test Track Session
     setupGrandPrix(circuitData, gridOrder, playerTeamId, options = {}) {
         this.circuit = circuitData;
@@ -799,13 +823,26 @@ class F1LiveRaceEngine {
                 kerbIdx.push(kb + 2, kb + 3, kb + 6, kb + 3, kb + 7, kb + 6);
 
                 const wb = i * 4;
-                // Left wall & Right wall
+                // Left barrier wall & catch fence: Outer track boundary (Always closed)
                 wallIdx.push(wb, wb + 1, wb + 4, wb + 1, wb + 5, wb + 4);
-                wallIdx.push(wb + 2, wb + 6, wb + 3, wb + 3, wb + 6, wb + 7);
-
-                // Left catch fence & Right catch fence
                 fenceIdx.push(wb, wb + 1, wb + 4, wb + 1, wb + 5, wb + 4);
-                fenceIdx.push(wb + 2, wb + 6, wb + 3, wb + 3, wb + 6, wb + 7);
+
+                // Right barrier wall & catch fence: Pit lane entry & exit corridor
+                // Keep open gaps at Pit Entry (t=0.940..0.960) and Pit Exit (t=0.040..0.060) so fences NEVER block cars!
+                const tNorm = i / n;
+                const isPitEntryGap = (tNorm >= 0.940 && tNorm <= 0.960);
+                const isPitExitGap = (tNorm >= 0.040 && tNorm <= 0.060);
+                const isPitPerchZone = (tNorm > 0.960 || tNorm < 0.040);
+
+                if (!isPitEntryGap && !isPitExitGap) {
+                    // Right barrier wall (serves as FIA Pit Wall dividing main track from pit lane)
+                    wallIdx.push(wb + 2, wb + 6, wb + 3, wb + 3, wb + 6, wb + 7);
+
+                    // Debris catch fence only outside the pit straight so spectators can see the pit crews!
+                    if (!isPitPerchZone) {
+                        fenceIdx.push(wb + 2, wb + 6, wb + 3, wb + 3, wb + 6, wb + 7);
+                    }
+                }
             }
         }
 
@@ -995,80 +1032,205 @@ class F1LiveRaceEngine {
     }
 
     buildPitLaneAndGarages(halfW, wallOffset) {
-        const s0 = this.trackPoints2D[0];
-        const angle = Math.atan2(s0.tx, s0.tz);
-        const gantry = new THREE.Group();
-        gantry.position.set(s0.x, 0, s0.z);
-        gantry.rotation.y = angle;
+        const pitGroup = new THREE.Group();
+        this.scene.add(pitGroup);
 
-        // Start/Finish Checkered Line & Grid Boxes
-        const startLine = new THREE.Mesh(
+        // 1. Procedural Pit Road Surface (curved ribbon matching track spline from t=0.940 to t=0.060)
+        const slices = 72;
+        const pitPos = [];
+        const pitUv = [];
+        const pitIdx = [];
+
+        for (let s = 0; s <= slices; s++) {
+            const frac = s / slices;
+            // t goes from 0.940 through 1.0 to 0.060
+            const tVal = ((0.940 + frac * 0.120) % 1.0 + 1.0) % 1.0;
+            const pt = this.sampleTrackAt(tVal);
+
+            // Calculate lateral offset for pit road centerline
+            let pitCenterLat = -(wallOffset + 5.5);
+            let pitWidth = 7.5;
+
+            if (frac < 0.20) {
+                // Pit Entry taper: smooth blend from track right edge -(halfW + 0.8) to pit road center -(wallOffset + 5.5)
+                const blend = frac / 0.20;
+                const smoothB = blend * blend * (3 - 2 * blend);
+                pitCenterLat = -(halfW + 0.8) + (-(wallOffset + 5.5) - (-(halfW + 0.8))) * smoothB;
+                pitWidth = 5.2 + 2.3 * smoothB;
+            } else if (frac > 0.80) {
+                // Pit Exit taper: smooth blend from pit road center -(wallOffset + 5.5) back to track right edge -(halfW + 0.8)
+                const blend = (frac - 0.80) / 0.20;
+                const smoothB = blend * blend * (3 - 2 * blend);
+                pitCenterLat = -(wallOffset + 5.5) + (-(halfW + 0.8) - (-(wallOffset + 5.5))) * smoothB;
+                pitWidth = 7.5 - 2.3 * smoothB;
+            }
+
+            const inLat = pitCenterLat + pitWidth * 0.5;
+            const outLat = pitCenterLat - pitWidth * 0.5;
+
+            const ix = pt.x + pt.nx * inLat;
+            const iz = pt.z + pt.nz * inLat;
+            const ox = pt.x + pt.nx * outLat;
+            const oz = pt.z + pt.nz * outLat;
+
+            pitPos.push(ix, 0.05, iz, ox, 0.05, oz);
+            pitUv.push(0, frac * 10, 1, frac * 10);
+
+            if (s < slices) {
+                const b = s * 2;
+                pitIdx.push(b, b + 1, b + 2, b + 1, b + 3, b + 2);
+            }
+        }
+
+        const pitGeo = new THREE.BufferGeometry();
+        pitGeo.setAttribute('position', new THREE.Float32BufferAttribute(pitPos, 3));
+        pitGeo.setAttribute('uv', new THREE.Float32BufferAttribute(pitUv, 2));
+        pitGeo.setIndex(pitIdx);
+        pitGeo.computeVertexNormals();
+        const pitMat = new THREE.MeshLambertMaterial({ color: 0x272e3b, side: THREE.DoubleSide });
+        pitGroup.add(new THREE.Mesh(pitGeo, pitMat));
+
+        // 2. Yellow Pit Limiter Lines across Entry (t=0.960) and Exit (t=0.040)
+        [0.960, 0.040].forEach((lineT, idx) => {
+            const pLine = this.sampleTrackAt(lineT);
+            const lMat = new THREE.MeshBasicMaterial({ color: idx === 0 ? 0xfacc15 : 0x22c55e, side: THREE.DoubleSide });
+            const lineMesh = new THREE.Mesh(new THREE.PlaneGeometry(7.8, 1.2), lMat);
+            lineMesh.rotation.x = -Math.PI / 2;
+            lineMesh.rotation.z = Math.atan2(pLine.tx, pLine.tz);
+            lineMesh.position.set(pLine.x - pLine.nx * (wallOffset + 5.5), 0.08, pLine.z - pLine.nz * (wallOffset + 5.5));
+            pitGroup.add(lineMesh);
+        });
+
+        // 3. FIA Pit Wall Command Perches along the pit straight
+        const perchMat = new THREE.MeshLambertMaterial({ color: 0x1e293b });
+        const roofMat = new THREE.MeshLambertMaterial({ color: 0xe2e8f0 });
+        const screenMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+        [-0.015, 0.0, 0.015].forEach(pT => {
+            const pt = this.sampleTrackAt((pT + 1.0) % 1.0);
+            const ang = Math.atan2(pt.tx, pt.tz);
+            const perch = new THREE.Group();
+            perch.position.set(pt.x - pt.nx * (wallOffset + 1.1), 0, pt.z - pt.nz * (wallOffset + 1.1));
+            perch.rotation.y = ang;
+
+            const base = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.2, 4.8), perchMat);
+            base.position.y = 1.1;
+            const canopy = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.25, 5.2), roofMat);
+            canopy.position.set(0, 2.6, 0);
+            const monitors = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.8, 4.2), screenMat);
+            monitors.position.set(-0.6, 1.6, 0);
+            perch.add(base, canopy, monitors);
+            pitGroup.add(perch);
+        });
+
+        // 4. 10 Constructor Garages & Pit Box Markers placed dynamically along the curve
+        const teams = window.F1Data.teams || [];
+        teams.forEach((team, idx) => {
+            // Distribute garages along the straight between t=0.966 and t=0.035
+            const tBox = ((0.966 + idx * 0.0070) % 1.0 + 1.0) % 1.0;
+            const pBox = this.sampleTrackAt(tBox);
+            const ang = Math.atan2(pBox.tx, pBox.tz);
+
+            const garageGrp = new THREE.Group();
+            garageGrp.position.set(
+                pBox.x - pBox.nx * (wallOffset + 13.5),
+                0,
+                pBox.z - pBox.nz * (wallOffset + 13.5)
+            );
+            garageGrp.rotation.y = ang;
+
+            // Garage Building Block
+            const bldg = new THREE.Mesh(
+                new THREE.BoxGeometry(8.5, 7.5, 9.2),
+                new THREE.MeshLambertMaterial({ color: 0x1e293b })
+            );
+            bldg.position.set(-1.8, 3.75, 0);
+
+            // Upper Team Livery Banner with team brand color
+            const banner = new THREE.Mesh(
+                new THREE.BoxGeometry(0.4, 1.8, 9.2),
+                new THREE.MeshLambertMaterial({ color: team.carHex })
+            );
+            banner.position.set(2.6, 6.2, 0);
+
+            // Overhead Cantilever Pit Gantry Arm over the pit box
+            const arm = new THREE.Mesh(
+                new THREE.BoxGeometry(4.8, 0.35, 0.35),
+                new THREE.MeshLambertMaterial({ color: 0x64748b })
+            );
+            arm.position.set(4.8, 4.8, 0);
+
+            garageGrp.add(bldg, banner, arm);
+            pitGroup.add(garageGrp);
+
+            // Painted Pit Box on pit road surface
+            const boxMark = new THREE.Mesh(
+                new THREE.PlaneGeometry(3.8, 6.2),
+                new THREE.MeshBasicMaterial({ color: team.wingHex, side: THREE.DoubleSide })
+            );
+            boxMark.rotation.x = -Math.PI / 2;
+            boxMark.rotation.z = ang;
+            boxMark.position.set(
+                pBox.x - pBox.nx * (wallOffset + 5.5),
+                0.07,
+                pBox.z - pBox.nz * (wallOffset + 5.5)
+            );
+            pitGroup.add(boxMark);
+
+            // 3D Pit Crew Mechanics standing ready
+            const crewMat = new THREE.MeshLambertMaterial({ color: team.carHex });
+            [-1.8, 1.8].forEach(sideZ => {
+                const crew = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 1.7, 6), crewMat);
+                crew.position.set(
+                    pBox.x - pBox.nx * (wallOffset + 8.2) + pBox.tx * sideZ,
+                    0.85,
+                    pBox.z - pBox.nz * (wallOffset + 8.2) + pBox.tz * sideZ
+                );
+                pitGroup.add(crew);
+            });
+        });
+
+        // 5. Start/Finish Checkered Line & Overhead Gantry with 5 Red Starting Lights
+        const s0 = this.trackPoints2D[0];
+        const s0Ang = Math.atan2(s0.tx, s0.tz);
+
+        const sfLine = new THREE.Mesh(
             new THREE.PlaneGeometry(halfW * 2, 3.6),
             new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
         );
-        startLine.rotation.x = -Math.PI / 2;
-        startLine.position.y = 0.09;
-        gantry.add(startLine);
+        sfLine.rotation.x = -Math.PI / 2;
+        sfLine.rotation.z = s0Ang;
+        sfLine.position.set(s0.x, 0.08, s0.z);
+        pitGroup.add(sfLine);
 
-        // Pit Lane Road Surface
-        const pitRoad = new THREE.Mesh(
-            new THREE.PlaneGeometry(9.0, 120),
-            new THREE.MeshLambertMaterial({ color: 0x3b4454, side: THREE.DoubleSide })
-        );
-        pitRoad.rotation.x = -Math.PI / 2;
-        pitRoad.position.set(-(wallOffset + 6.2), 0.04, -12);
-        gantry.add(pitRoad);
+        // Overhead Bridge across track
+        const gantry = new THREE.Group();
+        gantry.position.set(s0.x, 0, s0.z);
+        gantry.rotation.y = s0Ang;
 
-        // 10 Constructor Pit Boxes & Modern Glass Garages Building
-        const pitBldg = new THREE.Mesh(
-            new THREE.BoxGeometry(13, 12, 108),
-            new THREE.MeshLambertMaterial({ color: 0x1e293b })
-        );
-        pitBldg.position.set(-(wallOffset + 16.5), 6.0, -12);
-        gantry.add(pitBldg);
-
-        // White Upper Hospitality Terrace Roof on Pit Building
-        const pitRoof = new THREE.Mesh(
-            new THREE.BoxGeometry(14.5, 1.4, 112),
-            new THREE.MeshLambertMaterial({ color: 0xf8fafc })
-        );
-        pitRoof.position.set(-(wallOffset + 16.5), 12.6, -12);
-        gantry.add(pitRoof);
-
-        window.F1Data.teams.forEach((t, idx) => {
-            const zPos = -54 + idx * 9.8;
-            const bay = new THREE.Mesh(
-                new THREE.BoxGeometry(0.6, 4.0, 8.2),
-                new THREE.MeshBasicMaterial({ color: t.carHex })
-            );
-            bay.position.set(-(wallOffset + 9.8), 2.4, zPos);
-            gantry.add(bay);
-
-            const boxMark = new THREE.Mesh(
-                new THREE.PlaneGeometry(4.0, 6.2),
-                new THREE.MeshBasicMaterial({ color: t.wingHex, side: THREE.DoubleSide })
-            );
-            boxMark.rotation.x = -Math.PI / 2;
-            boxMark.position.set(-(wallOffset + 5.8), 0.07, zPos);
-            gantry.add(boxMark);
-        });
-
-        // Overhead Start/Finish Gantry Bridge with 5 Red Light Pods
-        const bridgeSpan = (wallOffset + 2.2) * 2;
+        const bridgeSpan = (halfW + wallOffset) * 1.5;
         const arch = new THREE.Mesh(
             new THREE.BoxGeometry(bridgeSpan, 2.2, 2.0),
-            new THREE.MeshLambertMaterial({ color: 0xe10600 })
+            new THREE.MeshLambertMaterial({ color: 0x1e293b })
         );
-        arch.position.set(0, 9.2, 0);
-        gantry.add(arch);
+        arch.position.set(0, 9.4, 0);
 
-        const pL = new THREE.Mesh(new THREE.BoxGeometry(1.3, 9.6, 1.3), new THREE.MeshLambertMaterial({ color: 0x1e293b }));
-        pL.position.set(wallOffset + 1.8, 4.8, 0);
-        const pR = pL.clone();
-        pR.position.set(-(wallOffset + 1.8), 4.8, 0);
-        gantry.add(pL, pR);
+        const colL = new THREE.Mesh(new THREE.BoxGeometry(1.4, 9.6, 1.4), new THREE.MeshLambertMaterial({ color: 0x334155 }));
+        colL.position.set(halfW + 1.8, 4.8, 0);
+        const colR = colL.clone();
+        colR.position.x = -(halfW + 1.8);
+        gantry.add(arch, colL, colR);
 
-        this.scene.add(gantry);
+        // 5 Red Lights Pods
+        for (let l = 0; l < 5; l++) {
+            const lamp = new THREE.Mesh(
+                new THREE.SphereGeometry(0.45, 8, 8),
+                new THREE.MeshBasicMaterial({ color: 0xe10600 })
+            );
+            lamp.position.set(-3.0 + l * 1.5, 9.4, 1.1);
+            gantry.add(lamp);
+        }
+
+        pitGroup.add(gantry);
     }
 
     buildRegionalBiomeScenery(halfW, wallOffset) {
@@ -1123,63 +1285,94 @@ class F1LiveRaceEngine {
                 this.scene.add(brkBoard);
             }
 
-            // Trackside Floodlight / Speaker Poles right behind the catch fence
-            const poleGrp = new THREE.Group();
-            poleGrp.position.set(
-                p.x + p.nx * side * (wallOffset + 2.4),
-                0,
-                p.z + p.nz * side * (wallOffset + 2.4)
-            );
-            poleGrp.rotation.y = ang;
-            const pm = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.32, 14, 6), frameMat);
-            pm.position.y = 7.0;
-            const hm = new THREE.Mesh(
-                new THREE.BoxGeometry(2.4, 0.6, 1.1),
-                new THREE.MeshBasicMaterial({ color: 0xfffbeb })
-            );
-            hm.position.set(-side * 1.0, 14.0, 0);
-            poleGrp.add(pm, hm);
-            this.scene.add(poleGrp);
+            // Trackside Floodlight / Speaker Poles right behind the catch fence (clearance verified)
+            const poleX = p.x + p.nx * side * (wallOffset + 2.2);
+            const poleZ = p.z + p.nz * side * (wallOffset + 2.2);
+            if (this.getMinDistanceToCircuit(poleX, poleZ) >= wallOffset + 1.2) {
+                const poleGrp = new THREE.Group();
+                poleGrp.position.set(poleX, 0, poleZ);
+                poleGrp.rotation.y = ang;
+                const pm = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.32, 14, 6), frameMat);
+                pm.position.y = 7.0;
+                const hm = new THREE.Mesh(
+                    new THREE.BoxGeometry(2.4, 0.6, 1.1),
+                    new THREE.MeshBasicMaterial({ color: 0xfffbeb })
+                );
+                hm.position.set(-side * 1.0, 14.0, 0);
+                poleGrp.add(pm, hm);
+                this.scene.add(poleGrp);
+            }
 
-            // Roofed Multi-Tier Spectator Grandstands with Crowd & Canopy (matching Images 3 & 4)
+            // Roofed Multi-Tier Spectator Grandstands with Crowd & Canopy (strictly non-intersecting!)
             if (i % (step * 3) === 0) {
-                const gsGrp = new THREE.Group();
-                const gsDist = wallOffset + 12.5;
-                gsGrp.position.set(p.x + p.nx * side * gsDist, 0, p.z + p.nz * side * gsDist);
-                gsGrp.rotation.y = ang + (side < 0 ? Math.PI : 0);
+                const gsDist = wallOffset + 14.5;
+                let gsX = p.x + p.nx * side * gsDist;
+                let gsZ = p.z + p.nz * side * gsDist;
+                let chosenSide = side;
 
-                const base = new THREE.Mesh(new THREE.BoxGeometry(11, 7.5, 36), crowdMat);
-                base.position.y = 3.75;
-                const canopy = new THREE.Mesh(new THREE.BoxGeometry(13, 0.7, 38), roofMat);
-                canopy.position.set(-1.0, 9.2, 0);
-                canopy.rotation.z = -0.12;
-                const backWall = new THREE.Mesh(new THREE.BoxGeometry(0.8, 9.2, 36), frameMat);
-                backWall.position.set(5.2, 4.6, 0);
+                if (this.getMinDistanceToCircuit(gsX, gsZ) < wallOffset + 16.0) {
+                    // Try opposite side of track
+                    const altX = p.x - p.nx * side * gsDist;
+                    const altZ = p.z - p.nz * side * gsDist;
+                    if (this.getMinDistanceToCircuit(altX, altZ) >= wallOffset + 16.0) {
+                        gsX = altX;
+                        gsZ = altZ;
+                        chosenSide = -side;
+                    } else {
+                        gsX = null; // Discard: would invade track
+                    }
+                }
 
-                gsGrp.add(base, canopy, backWall);
-                this.scene.add(gsGrp);
+                if (gsX !== null) {
+                    const gsGrp = new THREE.Group();
+                    gsGrp.position.set(gsX, 0, gsZ);
+                    gsGrp.rotation.y = ang + (chosenSide < 0 ? Math.PI : 0);
+
+                    const base = new THREE.Mesh(new THREE.BoxGeometry(11, 7.5, 34), crowdMat);
+                    base.position.y = 3.75;
+                    const canopy = new THREE.Mesh(new THREE.BoxGeometry(13, 0.7, 36), roofMat);
+                    canopy.position.set(-1.0, 9.2, 0);
+                    canopy.rotation.z = -0.12;
+                    const backWall = new THREE.Mesh(new THREE.BoxGeometry(0.8, 9.2, 34), frameMat);
+                    backWall.position.set(5.2, 4.6, 0);
+
+                    gsGrp.add(base, canopy, backWall);
+                    this.scene.add(gsGrp);
+                }
             }
 
-            // White Peaked Paddock Hospitality Tents & Jumbotron Screens (matching Image 5)
+            // White Peaked Paddock Hospitality Tents & Jumbotron Screens (clearance verified)
             if (i % (step * 4) === step) {
-                const tentGrp = new THREE.Group();
-                const tDist = wallOffset + 11.0;
-                tentGrp.position.set(p.x - p.nx * side * tDist, 0, p.z - p.nz * side * tDist);
-                tentGrp.rotation.y = ang;
+                const tDist = wallOffset + 12.0;
+                const tx = p.x - p.nx * side * tDist;
+                const tz = p.z - p.nz * side * tDist;
+                if (this.getMinDistanceToCircuit(tx, tz) >= wallOffset + 8.5) {
+                    const tentGrp = new THREE.Group();
+                    tentGrp.position.set(tx, 0, tz);
+                    tentGrp.rotation.y = ang;
 
-                const tBase = new THREE.Mesh(new THREE.BoxGeometry(8, 3.8, 12), tentMat);
-                tBase.position.y = 1.9;
-                const tPeak = new THREE.Mesh(new THREE.ConeGeometry(6.8, 3.5, 4), roofMat);
-                tPeak.position.y = 5.55;
-                tPeak.rotation.y = Math.PI / 4;
-                tentGrp.add(tBase, tPeak);
-                this.scene.add(tentGrp);
+                    const tBase = new THREE.Mesh(new THREE.BoxGeometry(7.5, 3.8, 11), tentMat);
+                    tBase.position.y = 1.9;
+                    const tPeak = new THREE.Mesh(new THREE.ConeGeometry(6.5, 3.5, 4), roofMat);
+                    tPeak.position.y = 5.55;
+                    tPeak.rotation.y = Math.PI / 4;
+                    tentGrp.add(tBase, tPeak);
+                    this.scene.add(tentGrp);
+                }
             }
 
-            // Biome-Specific Perimeter Scenery (Trees, Skyscrapers, Apartments, Dunes)
-            const propDist = wallOffset + 25 + (i % 3) * 8;
-            const px = p.x + p.nx * side * propDist;
-            const pz = p.z + p.nz * side * propDist;
+            // Biome-Specific Perimeter Scenery (Trees, Skyscrapers, Apartments, Dunes) with Safe Clearance
+            const propDist = wallOffset + 24 + (i % 3) * 8;
+            let px = p.x + p.nx * side * propDist;
+            let pz = p.z + p.nz * side * propDist;
+
+            if (this.getMinDistanceToCircuit(px, pz) < wallOffset + 12.0) {
+                px = p.x + p.nx * side * (propDist + 16.0);
+                pz = p.z + p.nz * side * (propDist + 16.0);
+                if (this.getMinDistanceToCircuit(px, pz) < wallOffset + 12.0) {
+                    continue; // Discard prop to prevent track invasion
+                }
+            }
 
             if (biome === 'HARBOR_CITY') {
                 // Monaco / Monte Carlo Terraced Cream & Terracotta Hillside Apartments
@@ -1242,19 +1435,23 @@ class F1LiveRaceEngine {
 
         // 3. Iconic Regional Centerpiece Landmarks
         if (biome === 'HARBOR_CITY') {
-            // Monte Carlo Mediterranean Yacht Harbor + 3D Luxury Superyachts moored beside Sector 2/3!
+            // Monte Carlo Mediterranean Yacht Harbor + 3D Luxury Superyachts moored safely outside track
             const harborWater = new THREE.Mesh(
                 new THREE.PlaneGeometry(240, 210),
                 new THREE.MeshLambertMaterial({ color: 0x0284c7, side: THREE.DoubleSide })
             );
             harborWater.rotation.x = -Math.PI / 2;
-            harborWater.position.set(45, 0.02, 75);
+            harborWater.position.set(45, -0.05, 75);
             this.scene.add(harborWater);
 
-            // Spawn 8 3D Luxury Yachts in Monte Carlo Harbor
+            // Spawn 3D Luxury Yachts in Monte Carlo Harbor (only if clear of track)
             for (let y = 0; y < 8; y++) {
+                const yx = -10 + (y % 4) * 34;
+                const yz = 42 + Math.floor(y / 4) * 38;
+                if (this.getMinDistanceToCircuit(yx, yz) < wallOffset + 12.0) continue;
+
                 const yacht = new THREE.Group();
-                yacht.position.set(-10 + (y % 4) * 34, 0.2, 42 + Math.floor(y / 4) * 38);
+                yacht.position.set(yx, 0.2, yz);
                 yacht.rotation.y = 0.35;
                 const hull = new THREE.Mesh(new THREE.BoxGeometry(6.5, 2.4, 18), roofMat);
                 hull.position.y = 1.2;
@@ -1271,7 +1468,7 @@ class F1LiveRaceEngine {
                 new THREE.CylinderGeometry(115, 115, 0.2, 36),
                 new THREE.MeshLambertMaterial({ color: 0x0369a1 })
             );
-            lake.position.set(0, 0.01, 10);
+            lake.position.set(0, -0.10, 10);
             this.scene.add(lake);
 
             for (let s = 0; s < 12; s++) {
@@ -1920,21 +2117,21 @@ class F1LiveRaceEngine {
                 if (lapDiff > 0.5) lapDiff = 1.0 - lapDiff;
 
                 const latDiff = Math.abs(c1.lateralOffset - c2.lateralOffset);
-                const minLongitudinalGap = 0.0031; // ~5m car length
-                const minLateralGap = 2.05;        // ~2m car width
+                const minLongitudinalGap = 0.0030; // ~5.5m car length
+                const minLateralGap = 2.05;        // ~2.0m car width
 
                 // Hard-body physical separation so cars NEVER pass through each other
                 if (lapDiff < minLongitudinalGap && latDiff < minLateralGap) {
                     const trailingCar = c1.totalDistance <= c2.totalDistance ? c1 : c2;
                     const leadingCar = trailingCar === c1 ? c2 : c1;
 
-                    if (latDiff < 1.45) {
+                    if (latDiff < 1.40) {
                         // Nose-to-gearbox longitudinal block: clamp trailing car behind leading car
                         const allowedDist = leadingCar.totalDistance - minLongitudinalGap;
                         if (trailingCar.totalDistance > allowedDist) {
                             trailingCar.totalDistance = allowedDist;
                             trailingCar.lapProgress = ((allowedDist % 1) + 1) % 1;
-                            trailingCar.speedKmh = Math.min(trailingCar.speedKmh, leadingCar.speedKmh * 0.96);
+                            trailingCar.speedKmh = Math.min(trailingCar.speedKmh, leadingCar.speedKmh * 0.985);
                         }
                     } else {
                         // Side-by-side wheel-to-wheel rub: push laterally apart
@@ -1945,30 +2142,32 @@ class F1LiveRaceEngine {
                     }
 
                     if (c1.collisionCooldown <= 0 && c2.collisionCooldown <= 0) {
-                        const relSpeed = Math.abs(c1.speedKmh - c2.speedKmh) + Math.abs(c1.lateralVelocity - c2.lateralVelocity) * 14;
-                        c1.collisionCooldown = 1.8;
-                        c2.collisionCooldown = 1.8;
+                        const relSpeed = Math.abs(c1.speedKmh - c2.speedKmh) + Math.abs(c1.lateralVelocity - c2.lateralVelocity) * 10;
+                        c1.collisionCooldown = 2.0;
+                        c2.collisionCooldown = 2.0;
 
-                        if (relSpeed > 14) {
-                            const wingDmg = Math.min(42, 6 + relSpeed * 0.42);
+                        // Only apply damage on genuine high-speed impacts (> 38 km/h delta)
+                        // In real F1, light drafting and wheel-to-wheel rubs happen without breaking wings or spinning!
+                        if (relSpeed > 38) {
+                            const wingDmg = Math.min(28, (relSpeed - 35) * 0.35);
                             trailingCar.frontWingHealth = Math.max(0, trailingCar.frontWingHealth - wingDmg);
-                            trailingCar.chassisHealth = Math.max(0, trailingCar.chassisHealth - wingDmg * 0.45);
-                            leadingCar.chassisHealth = Math.max(0, leadingCar.chassisHealth - wingDmg * 0.25);
+                            trailingCar.chassisHealth = Math.max(0, trailingCar.chassisHealth - wingDmg * 0.30);
+                            leadingCar.chassisHealth = Math.max(0, leadingCar.chassisHealth - wingDmg * 0.15);
 
-                            this.spawnImpactParticles(trailingCar.worldX, trailingCar.worldZ, 0xffaa00, 14);
+                            this.spawnImpactParticles(trailingCar.worldX, trailingCar.worldZ, 0xffaa00, 10);
                             if (trailingCar === this.followedCar || leadingCar === this.followedCar) {
-                                window.f1Audio.playCrashImpact(0.75);
+                                window.f1Audio.playCrashImpact(0.65);
                             }
 
-                            if (trailingCar.chassisHealth <= 10 || (relSpeed > 56 && Math.random() < 0.24)) {
-                                this.retireCar(trailingCar, 'COLLISION DAMAGE (충돌 파손 리타이어)');
-                            } else if (relSpeed > 28 && Math.random() < 0.30) {
-                                trailingCar.spinTimer = 1.5;
+                            if (trailingCar.chassisHealth <= 8 || (relSpeed > 88 && Math.random() < 0.16)) {
+                                this.retireCar(trailingCar, 'HIGH-SPEED CRASH (고속 충돌 리타이어)');
+                            } else if (relSpeed > 58 && Math.random() < 0.12) {
+                                trailingCar.spinTimer = 1.2;
                                 window.f1Audio.playTireScreech();
-                                this.emitEventLog(trailingCar.driver.code, `💥 ${leadingCar.driver.code} 차량과 휠투휠 충돌로 스핀 및 프론트 윙 손상(잔여 ${Math.round(trailingCar.frontWingHealth)}%)!`);
-                                if (trailingCar.frontWingHealth < 65) trailingCar.pitRequested = true;
+                                this.emitEventLog(trailingCar.driver.code, `💥 ${leadingCar.driver.code} 차량과 접촉으로 스핀 (프론트 윙 잔여 ${Math.round(trailingCar.frontWingHealth)}%)`);
+                                if (trailingCar.frontWingHealth < 60) trailingCar.pitRequested = true;
                             } else if (trailingCar.isPlayerTeam || leadingCar.isPlayerTeam) {
-                                this.emitEventLog(trailingCar.driver.code, `⚠️ ${leadingCar.driver.code}와 휠투휠 접촉! 프론트 윙 ${Math.round(trailingCar.frontWingHealth)}%`);
+                                this.emitEventLog(trailingCar.driver.code, `⚠️ ${leadingCar.driver.code}와 가벼운 사이드포드 접촉! 프론트 윙 ${Math.round(trailingCar.frontWingHealth)}%`);
                             }
                         }
                     }
@@ -2033,11 +2232,11 @@ class F1LiveRaceEngine {
                 continue;
             }
 
-            // 3. Check Pit Entry Trigger near end of lap (t > 0.955)
-            if (car.pitRequested && car.lapProgress > 0.955 && car.lap < this.totalLaps) {
+            // 3. Check Pit Entry Trigger near end of lap (t between 0.940 and 0.965)
+            if (car.pitRequested && car.lapProgress > 0.940 && car.lapProgress < 0.965 && car.lap < this.totalLaps) {
                 car.inPitLane = true;
                 car.pitState = 'ENTERING';
-                car.pitTimer = 1.4;
+                car.pitTimer = 1.6;
                 if (car.isPlayerTeam) {
                     this.emitEventLog(car.driver.code, `🔧 피트 레인 진입 (80km/h 리미터 작동). 피트크루 타이어 및 프론트 윙 대기 완료!`);
                 }
@@ -2202,7 +2401,7 @@ class F1LiveRaceEngine {
         car.speedKmh = Math.max(68, Math.min(368, car.speedKmh));
     }
 
-    // Pro AI Racecraft: Slipstream Pull-Out, Inside Defensive Line, Late-Braking Divebomb & Side-by-Side Space
+    // Pro AI Racecraft: Safe Following Distance, Speed-Matching, Slipstream Tow, Clean Overtakes & Room-Leaving
     updateAiCraftAndLine(car, sample, targetSpeed, dt) {
         let desiredLat = sample.idealLateral;
         const apexSide = Math.sign(sample.signedTurn || 1);
@@ -2210,15 +2409,19 @@ class F1LiveRaceEngine {
         let carAheadClose = null;
         let carBehindClose = null;
         let carAlongside = null;
+        let minAheadDist = Infinity;
 
         for (let j = 0; j < this.cars.length; j++) {
             const other = this.cars[j];
             if (other === car || other.finished || other.dnf || other.inPitLane) continue;
             const dDiff = other.totalDistance - car.totalDistance;
-            if (Math.abs(dDiff) < 0.0034 && Math.abs(other.lateralOffset - car.lateralOffset) < 3.2) {
+            const latDiff = Math.abs(other.lateralOffset - car.lateralOffset);
+
+            if (Math.abs(dDiff) < 0.0034 && latDiff < 3.0) {
                 carAlongside = other;
-            } else if (dDiff > 0 && dDiff < 0.020) {
-                if (!carAheadClose || dDiff < (carAheadClose.totalDistance - car.totalDistance)) {
+            } else if (dDiff > 0 && dDiff < 0.024) {
+                if (dDiff < minAheadDist) {
+                    minAheadDist = dDiff;
                     carAheadClose = other;
                 }
             } else if (dDiff < 0 && dDiff > -0.012) {
@@ -2229,24 +2432,36 @@ class F1LiveRaceEngine {
         if (carAlongside) {
             // Leave racing room when side-by-side (All the time you have to leave a space!)
             const sepDir = car.lateralOffset >= carAlongside.lateralOffset ? 1 : -1;
-            desiredLat = carAlongside.lateralOffset + sepDir * 2.55;
+            desiredLat = carAlongside.lateralOffset + sepDir * 2.50;
+            // Respectful wheel-to-wheel pacing
+            targetSpeed = Math.min(targetSpeed, Math.max(car.speedKmh, carAlongside.speedKmh + 2));
         } else if (carAheadClose) {
-            const distAhead = carAheadClose.totalDistance - car.totalDistance;
-            if (distAhead < 0.009) {
-                // Pull out of slipstream to inside or outside overtaking lane
+            const distAhead = minAheadDist;
+            const latDiff = Math.abs(carAheadClose.lateralOffset - car.lateralOffset);
+
+            if (distAhead < 0.0055 && latDiff < 2.4) {
+                // In same corridor directly behind leader:
+                // Drivers match leader speed to prevent rear-ending!
+                targetSpeed = Math.min(targetSpeed, carAheadClose.speedKmh * 0.985);
+                car.throttle = 0.35;
+                if (distAhead < 0.0032) {
+                    car.brake = 0.70;
+                    targetSpeed = Math.min(targetSpeed, carAheadClose.speedKmh * 0.94);
+                }
+
+                // Attempt lateral overtake if driver has pace advantage or DRS
                 const insideCandidate = -apexSide * 4.2;
                 if (Math.abs(carAheadClose.lateralOffset - insideCandidate) > 2.2) {
                     desiredLat = insideCandidate;
                 } else {
-                    desiredLat = carAheadClose.lateralOffset > 0 ? carAheadClose.lateralOffset - 3.6 : carAheadClose.lateralOffset + 3.6;
+                    desiredLat = carAheadClose.lateralOffset > 0 ? carAheadClose.lateralOffset - 3.4 : carAheadClose.lateralOffset + 3.4;
                 }
-                if (sample.aheadCurvature > 0.16 && car.driver.racecraft >= 88) {
-                    targetSpeed *= 1.018; // Late-braking overtake divebomb
-                }
-            } else {
-                // Tuck into slipstream draft on straight
+            } else if (distAhead >= 0.0055 && distAhead < 0.018) {
+                // Slipstream draft zone on straights
                 if (sample.curvature < 0.10) {
+                    // Line up behind for slipstream tow
                     desiredLat = carAheadClose.lateralOffset;
+                    targetSpeed += 6.5; // Aerodynamic tow bonus
                 }
             }
         } else if (carBehindClose && sample.aheadCurvature > 0.15 && car.driver.racecraft >= 85) {
@@ -2259,21 +2474,42 @@ class F1LiveRaceEngine {
         car.lateralOffset += (car.targetLateral - car.lateralOffset) * Math.min(1, dt * 5.2);
 
         const rate = targetSpeed > car.speedKmh ? 88 : 165;
-        car.throttle = targetSpeed >= car.speedKmh ? 1.0 : 0.12;
-        car.brake = targetSpeed < car.speedKmh - 15 ? 1.0 : 0.0;
+        car.throttle = targetSpeed >= car.speedKmh ? 1.0 : (car.throttle !== undefined ? car.throttle : 0.15);
+        car.brake = targetSpeed < car.speedKmh - 15 ? 1.0 : (car.brake !== undefined ? car.brake : 0.0);
         car.speedKmh += Math.sign(targetSpeed - car.speedKmh) * Math.min(Math.abs(targetSpeed - car.speedKmh), rate * dt);
         car.speedKmh = Math.max(72, Math.min(364, car.speedKmh));
     }
 
     updateCarPitStopSequence(car, dt) {
+        const wallOffset = this.circuit.isStreetCircuit ? (9.6 + 1.85 + 0.35) : (10.8 + 1.85 + 3.2);
+        const pitRoadLat = -(wallOffset + 5.5);
+
         if (car.pitState === 'ENTERING') {
-            car.speedKmh = 80;
+            // Decelerate smoothly to 80 km/h pit limiter and steer towards pit road ribbon
+            car.speedKmh = Math.max(80, car.speedKmh - 110 * dt);
             car.rpm = 5800;
             car.gear = 2;
+            car.lateralOffset += (pitRoadLat - car.lateralOffset) * Math.min(1, dt * 4.2);
+
+            // Advance through pit lane entry
+            const lapAdvance = ((car.speedKmh * 0.27778) / 1450) * dt;
+            car.lapProgress = (car.lapProgress + lapAdvance) % 1;
+            car.totalDistance += lapAdvance;
             car.pitTimer -= dt;
-            car.lapProgress = (car.lapProgress + 0.006 * dt) % 1;
-            car.totalDistance += 0.006 * dt;
-            if (car.pitTimer <= 0) {
+
+            // Target garage box along pit straight for this team
+            const teamIdx = Math.max(0, (window.F1Data.teams || []).findIndex(t => t.id === car.team.id));
+            const targetBoxT = ((0.966 + teamIdx * 0.0070) % 1.0 + 1.0) % 1.0;
+
+            // Arrived at team box or entry timer elapsed
+            let atBox = false;
+            if (targetBoxT > 0.90) {
+                atBox = (car.lapProgress >= targetBoxT || car.lapProgress < 0.040);
+            } else {
+                atBox = (car.lapProgress >= targetBoxT && car.lapProgress < 0.040);
+            }
+
+            if (car.pitTimer <= 0 || atBox) {
                 car.pitState = 'BOX_STOPPED';
                 const crewBonus = (car.team.specs.durability - 80) * 0.035;
                 const wingRepairTime = car.frontWingHealth < 85 ? 2.8 : 0.0;
@@ -2284,10 +2520,13 @@ class F1LiveRaceEngine {
                 }
             }
         } else if (car.pitState === 'BOX_STOPPED') {
+            // Stationary in pit box
             car.speedKmh = 0;
-            car.rpm = 4100;
+            car.rpm = 4200;
             car.gear = 1;
+            car.lateralOffset = pitRoadLat - 1.2; // Tucked into team garage box
             car.pitTimer -= dt;
+
             if (car.pitTimer <= 0) {
                 car.tireCompound = car.nextPitTire;
                 car.tireHealth = 100.0;
@@ -2303,21 +2542,36 @@ class F1LiveRaceEngine {
                     car.visual3D.ringMat.color.setHex(compInfo.hex);
                 }
                 car.pitState = 'EXITING';
-                car.pitTimer = 1.1;
+                car.pitTimer = 2.4; // Travel down pit lane to exit blend
                 if (car.isPlayerTeam) {
-                    this.emitEventLog(car.driver.code, `🟢 피트스톱 정지 시간 ${car.lastPitDuration}초! [${compInfo.name}] 장착 및 윙 점검 완료, 트랙 합류!`);
+                    this.emitEventLog(car.driver.code, `🟢 피트스톱 완료 (${car.lastPitDuration}초)! [${compInfo.name}] 타이어 장착, 트랙 복귀!`);
                 }
             }
         } else if (car.pitState === 'EXITING') {
+            // Drive down pit road at 80 km/h limiter
             car.speedKmh = 80;
             car.rpm = 6200;
             car.gear = 2;
+            car.lateralOffset += (pitRoadLat - car.lateralOffset) * Math.min(1, dt * 5.0);
+
+            const lapAdvance = ((car.speedKmh * 0.27778) / 1450) * dt;
+            car.lapProgress = (car.lapProgress + lapAdvance) % 1;
+            car.totalDistance += lapAdvance;
             car.pitTimer -= dt;
-            car.lapProgress = (car.lapProgress + 0.008 * dt) % 1;
-            car.totalDistance += 0.008 * dt;
-            if (car.pitTimer <= 0) {
-                car.inPitLane = false;
-                car.pitState = 'NONE';
+
+            // Reached pit exit merge (t > 0.045)
+            if (car.pitTimer <= 0 || (car.lapProgress >= 0.045 && car.lapProgress < 0.20)) {
+                // Blend smoothly back into track
+                const mergeTargetLat = -(wallOffset * 0.35);
+                car.lateralOffset += (mergeTargetLat - car.lateralOffset) * Math.min(1, dt * 3.5);
+
+                if (car.lapProgress >= 0.060 || Math.abs(car.lateralOffset - mergeTargetLat) < 1.0) {
+                    car.inPitLane = false;
+                    car.pitState = 'NONE';
+                    if (car.isPlayerTeam) {
+                        this.emitEventLog(car.driver.code, `🏁 피트 리미터 해제! 트랙 합류 및 풀 스로틀 가속!`);
+                    }
+                }
             }
         }
     }
@@ -2415,7 +2669,7 @@ class F1LiveRaceEngine {
         for (let i = 0; i < this.cars.length; i++) {
             const car = this.cars[i];
             const s = this.sampleTrackAt(car.lapProgress);
-            const lat = car.inPitLane ? -16.0 : car.lateralOffset;
+            const lat = car.lateralOffset;
 
             car.worldX = s.x + s.nx * lat;
             car.worldZ = s.z + s.nz * lat;
