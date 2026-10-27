@@ -2105,11 +2105,11 @@ class F1LiveRaceEngine {
         return this.circuit.drsZones.some(z => t >= z[0] && t <= z[1]);
     }
 
-    // Solid Physics Rigid-Body Collision Resolution (Zero Ghosting / Impenetrable Hard Bounds / Momentum Transfer)
+    // Solid Physics Rigid-Body Collision Resolution (Zero Ghosting / Impenetrable Hard Bounds / True Impact Detection)
     detectAndResolveCollisions(dt) {
         const trackLen = this.trackLengthMeters || 5200;
-        const minLongDist = 5.25;  // Hard solid physical separation in meters (F1 car is ~5.2m long)
-        const minLatDist = 2.15;   // Hard solid physical separation in meters (F1 car is ~2.05m wide)
+        const hardBumperDist = 5.05; // Real physical car length contact threshold (~5.0m car length)
+        const hardWheelWidth = 2.05; // Real physical car tyre outer width contact threshold (~2.0m car width)
 
         for (let i = 0; i < this.cars.length; i++) {
             const c1 = this.cars[i];
@@ -2122,85 +2122,94 @@ class F1LiveRaceEngine {
 
                 // Fast pre-filter distance check along track spline
                 const dDiffMeters = Math.abs(c1.totalDistance - c2.totalDistance) * trackLen;
-                if (dDiffMeters > minLongDist * 2.2) continue;
+                if (dDiffMeters > hardBumperDist * 2.2) continue;
 
                 const latDiff = Math.abs(c1.lateralOffset - c2.lateralOffset);
 
-                // Physical contact check (Cars cannot occupy the same space!)
-                if (dDiffMeters < minLongDist && latDiff < minLatDist) {
+                // True physical body contact check (Cars cannot occupy the same physical space!)
+                if (dDiffMeters < hardBumperDist && latDiff < hardWheelWidth) {
                     const trailingCar = c1.totalDistance <= c2.totalDistance ? c1 : c2;
                     const leadingCar = trailingCar === c1 ? c2 : c1;
 
-                    if (latDiff < 1.70) {
+                    if (latDiff < 1.45) {
                         // 1. REAR-END CONTACT: Hard Impenetrable Separation (Zero Phasing Through!)
-                        trailingCar.totalDistance = leadingCar.totalDistance - (minLongDist / trackLen);
+                        trailingCar.totalDistance = leadingCar.totalDistance - (hardBumperDist / trackLen);
                         trailingCar.lapProgress = ((trailingCar.totalDistance % 1) + 1) % 1;
 
                         // Physical Momentum Transfer (Newton's 3rd Law):
                         const relSpeed = trailingCar.speedKmh - leadingCar.speedKmh;
                         if (relSpeed > 0) {
                             leadingCar.speedKmh += relSpeed * 0.35;
-                            trailingCar.speedKmh = Math.max(70, leadingCar.speedKmh - 6.0);
+                            trailingCar.speedKmh = Math.max(70, leadingCar.speedKmh - 4.0);
                         } else {
                             trailingCar.speedKmh = Math.max(70, leadingCar.speedKmh * 0.98);
                         }
                         trailingCar.throttle = 0.0;
-                        trailingCar.brake = 0.90;
+                        trailingCar.brake = 0.95;
 
                         // Lateral bumper deflection (forces cars slightly sideways):
                         const defDir = trailingCar.lateralOffset >= leadingCar.lateralOffset ? 1 : -1;
-                        trailingCar.lateralVelocity += defDir * 3.5;
-                        leadingCar.lateralVelocity -= defDir * 1.5;
+                        trailingCar.lateralVelocity += defDir * 2.5;
 
-                        // Impact particles, damage and crash audio
-                        if (c1.collisionCooldown <= 0 && c2.collisionCooldown <= 0) {
-                            c1.collisionCooldown = 1.2;
-                            c2.collisionCooldown = 1.2;
+                        // Only log actual damage/crash if relative speed is high (True Crash vs Gentle Touch)
+                        if (c1.collisionCooldown <= 0 && c2.collisionCooldown <= 0 && relSpeed > 26) {
+                            c1.collisionCooldown = 2.0;
+                            c2.collisionCooldown = 2.0;
+                            const dmg = Math.min(25, (relSpeed - 24) * 0.4);
+                            trailingCar.frontWingHealth = Math.max(0, trailingCar.frontWingHealth - dmg);
+                            leadingCar.chassisHealth = Math.max(0, leadingCar.chassisHealth - dmg * 0.20);
+
                             this.spawnImpactParticles(trailingCar.worldX, trailingCar.worldZ, 0xffaa00, 12);
                             if (trailingCar === this.followedCar || leadingCar === this.followedCar) {
                                 window.f1Audio.playCrashImpact(0.70);
                             }
 
-                            if (relSpeed > 25) {
-                                const dmg = Math.min(25, (relSpeed - 20) * 0.35);
-                                trailingCar.frontWingHealth = Math.max(0, trailingCar.frontWingHealth - dmg);
-                                leadingCar.chassisHealth = Math.max(0, leadingCar.chassisHealth - dmg * 0.20);
-
-                                if (relSpeed > 75 && Math.random() < 0.25) {
-                                    trailingCar.spinTimer = 1.3;
-                                    trailingCar.lateralVelocity = defDir * 4.5;
-                                    window.f1Audio.playTireScreech();
-                                    this.emitEventLog(trailingCar.driver.code, `💥 ${leadingCar.driver.code} 후방 추돌로 스핀! (프론트 윙 ${Math.round(trailingCar.frontWingHealth)}%)`);
-                                } else if (relSpeed > 120 && Math.random() < 0.20) {
-                                    this.retireCar(trailingCar, 'HIGH-SPEED REAR CRASH (고속 추돌 파손)');
-                                } else {
-                                    this.emitEventLog(trailingCar.driver.code, `⚠️ ${leadingCar.driver.code}와 후방 접촉 충격! 프론트 윙 ${Math.round(trailingCar.frontWingHealth)}%`);
-                                }
+                            if (relSpeed > 75 && Math.random() < 0.25) {
+                                trailingCar.spinTimer = 1.3;
+                                trailingCar.lateralVelocity = defDir * 4.5;
+                                window.f1Audio.playTireScreech();
+                                this.emitEventLog(trailingCar.driver.code, `💥 ${leadingCar.driver.code} 후방 추돌로 스핀! (프론트 윙 ${Math.round(trailingCar.frontWingHealth)}%)`);
+                            } else if (relSpeed > 120 && Math.random() < 0.20) {
+                                this.retireCar(trailingCar, 'HIGH-SPEED REAR CRASH (고속 추돌 파손)');
+                            } else {
+                                this.emitEventLog(trailingCar.driver.code, `💥 ${leadingCar.driver.code}와 강한 후방 추돌! 프론트 윙 ${Math.round(trailingCar.frontWingHealth)}%`);
                             }
                         }
                     } else {
                         // 2. SIDE-BY-SIDE WHEEL-TO-WHEEL CONTACT: Hard Lateral Separation (Zero Merging!)
-                        const overlapW = minLatDist - latDiff;
+                        const overlapW = hardWheelWidth - latDiff;
                         const pushDir = c1.lateralOffset >= c2.lateralOffset ? 1 : -1;
-                        c1.lateralOffset += pushDir * (overlapW * 0.55);
-                        c2.lateralOffset -= pushDir * (overlapW * 0.55);
+                        const maxLat = this.circuit.isStreetCircuit ? 7.3 : 8.5;
+
+                        // Wall-boundary aware solid lateral separation:
+                        if (c2.lateralOffset <= -maxLat || c2.lateralOffset >= maxLat) {
+                            c1.lateralOffset += pushDir * (overlapW + 0.05);
+                        } else if (c1.lateralOffset <= -maxLat || c1.lateralOffset >= maxLat) {
+                            c2.lateralOffset -= pushDir * (overlapW + 0.05);
+                        } else {
+                            c1.lateralOffset += pushDir * (overlapW * 0.55 + 0.02);
+                            c2.lateralOffset -= pushDir * (overlapW * 0.55 + 0.02);
+                        }
+                        c1.lateralOffset = Math.max(-maxLat, Math.min(maxLat, c1.lateralOffset));
+                        c2.lateralOffset = Math.max(-maxLat, Math.min(maxLat, c2.lateralOffset));
 
                         // Physical lateral elastic rebound impulse:
-                        c1.lateralVelocity += pushDir * (overlapW * 12.0 + 3.0);
-                        c2.lateralVelocity -= pushDir * (overlapW * 12.0 + 3.0);
+                        c1.lateralVelocity += pushDir * (overlapW * 6.0 + 1.0);
+                        c2.lateralVelocity -= pushDir * (overlapW * 6.0 + 1.0);
 
                         // Friction speed scrub:
-                        c1.speedKmh = Math.max(70, c1.speedKmh * 0.98);
-                        c2.speedKmh = Math.max(70, c2.speedKmh * 0.98);
+                        c1.speedKmh = Math.max(70, c1.speedKmh * 0.985);
+                        c2.speedKmh = Math.max(70, c2.speedKmh * 0.985);
 
-                        if (c1.collisionCooldown <= 0 && c2.collisionCooldown <= 0) {
-                            c1.collisionCooldown = 1.0;
-                            c2.collisionCooldown = 1.0;
+                        const relSpeed = Math.abs(c1.speedKmh - c2.speedKmh);
+                        if (c1.collisionCooldown <= 0 && c2.collisionCooldown <= 0 && relSpeed > 45) {
+                            c1.collisionCooldown = 2.5;
+                            c2.collisionCooldown = 2.5;
                             this.spawnImpactParticles((c1.worldX + c2.worldX) * 0.5, (c1.worldZ + c2.worldZ) * 0.5, 0xffbb00, 8);
                             if (c1 === this.followedCar || c2 === this.followedCar) {
                                 window.f1Audio.playCrashImpact(0.50);
                             }
-                            this.emitEventLog(c1.driver.code, `⚠️ ${c2.driver.code}와 사이드포드/휠 휠투휠 접촉!`);
+                            this.emitEventLog(c1.driver.code, `💥 ${c2.driver.code}와 고속 사이드 접촉!`);
                         }
                     }
                 }
@@ -2444,7 +2453,7 @@ class F1LiveRaceEngine {
         const maxSafeCornerSpeed = targetSpeed;  // Physical adhesion limit calculated from aero/downforce & curvature!
 
         // Base lateral target from ideal racing line, with small driver-specific apex variance (prevents all cars following single rail)
-        const driverLineJitter = ((car.driver.number * 17) % 7 - 3) * 0.16;
+        const driverLineJitter = ((car.driver.number * 17) % 7 - 3) * 0.10;
         let desiredLat = sample.idealLateral + (sample.curvature < 0.12 ? driverLineJitter : 0);
 
         let carAhead = null;
@@ -2469,9 +2478,9 @@ class F1LiveRaceEngine {
                     minAheadDistMeters = dMeters;
                     carAhead = other;
                 }
-            } else if (Math.abs(dMeters) <= carLenMeters * 1.15) {
+            } else if (Math.abs(dMeters) <= carLenMeters * 1.35) {
                 const lDiff = Math.abs(other.lateralOffset - car.lateralOffset);
-                if (lDiff < 2.8) {
+                if (lDiff < 3.2) {
                     carBeside = other;
                 }
             }
@@ -2489,7 +2498,7 @@ class F1LiveRaceEngine {
         } else if (carAhead) {
             const distMeters = minAheadDistMeters;
             const latDiff = Math.abs(carAhead.lateralOffset - car.lateralOffset);
-            const inAdjacentLane = latDiff >= 2.35; // True adjacent overtaking lane with clean air buffer
+            const inAdjacentLane = latDiff >= 2.30; // True adjacent overtaking lane with clean air buffer
             const isStraight = sample.curvature < 0.14;
             const isBrakingEntry = sample.aheadCurvature > 0.18;
 
@@ -2507,34 +2516,44 @@ class F1LiveRaceEngine {
             const speedDiff = car.speedKmh - carAhead.speedKmh;
             const hasPaceAdvantage = car.drsActive || (car.ersMode === 'OVERTAKE') || (speedDiff > -3) || (car.driver.pace >= carAhead.driver.pace - 2);
 
+            // Proactive Anticipatory Braking Buffer into Corners:
+            // Professional F1 drivers NEVER tailgate into corner entry at 5m! They preserve 8.5m buffer smoothly.
+            const isCarAheadBrakingHard = (carAhead.brake > 0.35) || (sample.aheadCurvature > 0.16 && distMeters < 25.0);
+
             if (inAdjacentLane) {
                 // In separate overtaking lane alongside: Full push up to physics limit!
                 desiredLat = car.targetLateral;
                 effectiveTargetSpeed = maxSafeCornerSpeed;
                 car.throttle = 1.0;
                 car.brake = 0.0;
+            } else if (isCarAheadBrakingHard && distMeters < 24.0) {
+                // Ahead car is braking for a turn: Match deceleration proactively (smooth 8.5m buffer, no rear-ending!)
+                effectiveTargetSpeed = Math.min(effectiveTargetSpeed, carAhead.speedKmh * 0.96);
+                car.throttle = 0.0;
+                car.brake = Math.max(car.brake || 0, Math.min(1.0, (carAhead.brake || 0.8) + 0.12));
+                desiredLat = sample.idealLateral;
             } else if (distMeters < 38.0 && distMeters > 7.5 && (isStraight || isBrakingEntry) && hasPaceAdvantage && (carsBattlingAhead === 0)) {
                 // Start aggressive 1-on-1 pull-out maneuver into clear lane
                 const passDir = carAhead.lateralOffset >= 0 ? -1 : 1;
-                desiredLat = Math.max(-6.5, Math.min(6.5, carAhead.lateralOffset + passDir * 2.75));
+                desiredLat = Math.max(-6.5, Math.min(6.5, carAhead.lateralOffset + passDir * 2.70));
                 effectiveTargetSpeed = maxSafeCornerSpeed;
                 car.throttle = 1.0;
                 car.brake = 0.0;
-            } else if (distMeters <= 5.8) {
-                // EMERGENCY BRAKE: Less than 0.6m behind rear bumper! Stamp on brakes to avoid rear-ending!
+            } else if (distMeters <= 5.5) {
+                // EMERGENCY BRAKE: Stamp on brakes & steer slightly to shoulder
                 effectiveTargetSpeed = Math.min(maxSafeCornerSpeed, carAhead.speedKmh * 0.92);
                 car.throttle = 0.0;
                 car.brake = 1.0;
                 const avoidDir = car.lateralOffset >= carAhead.lateralOffset ? 1 : -1;
-                desiredLat = carAhead.lateralOffset + avoidDir * 2.5;
-            } else if (distMeters <= 9.0) {
-                // CLOSE FOLLOWING BUFFER (0.6m to 3.8m buffer): Proactive speed match & progressive braking
+                desiredLat = carAhead.lateralOffset + avoidDir * 2.6;
+            } else if (distMeters <= 10.5) {
+                // CLOSE FOLLOWING BUFFER (preserve safe 8.5m to 10.5m gap):
                 effectiveTargetSpeed = Math.min(maxSafeCornerSpeed, carAhead.speedKmh);
-                car.throttle = 0.15;
-                car.brake = Math.min(0.85, (9.0 - distMeters) * 0.25);
+                car.throttle = 0.20;
+                car.brake = Math.min(0.85, (10.5 - distMeters) * 0.20);
                 desiredLat = sample.idealLateral;
             } else {
-                // FOLLOWING IN SLIPSTREAM (9.0m to 75m):
+                // FOLLOWING IN SLIPSTREAM (10.5m to 75m):
                 if (isStraight) {
                     desiredLat = carAhead.lateralOffset;
                     effectiveTargetSpeed = Math.min(maxSafeCornerSpeed, carAhead.speedKmh + 10);
@@ -2549,16 +2568,21 @@ class F1LiveRaceEngine {
             }
         }
 
-        // Side-by-side battle: Guarantee 2.45m of lateral racing room cleanly
+        // Side-by-side battle: Guarantee clean 2.65m of lateral racing room without touching ("대부분 아슬아슬하게 피하지")
         if (carBeside) {
             const sepDir = car.lateralOffset >= carBeside.lateralOffset ? 1 : -1;
-            desiredLat = Math.max(-7.0, Math.min(7.0, carBeside.lateralOffset + sepDir * 2.45));
+            // In corners, split the racing room around the apex cleanly
+            if (sample.curvature > 0.08) {
+                desiredLat = sample.idealLateral + sepDir * 1.35;
+            } else {
+                desiredLat = carBeside.lateralOffset + sepDir * 2.65;
+            }
         }
 
         // Fast & fluid steering dynamics
         const maxTrackLat = this.circuit.isStreetCircuit ? 7.4 : 8.6;
         car.targetLateral = Math.max(-maxTrackLat, Math.min(maxTrackLat, desiredLat));
-        car.lateralVelocity += (car.targetLateral - car.lateralOffset) * 6.5 * dt;
+        car.lateralVelocity += (car.targetLateral - car.lateralOffset) * 7.5 * dt;
         car.lateralVelocity *= Math.pow(0.08, dt);
         car.lateralOffset += car.lateralVelocity * dt;
         car.lateralOffset = Math.max(-maxTrackLat, Math.min(maxTrackLat, car.lateralOffset));
