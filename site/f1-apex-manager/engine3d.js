@@ -2407,9 +2407,8 @@ class F1LiveRaceEngine {
     updateAiCraftAndLine(car, sample, targetSpeed, dt) {
         const trackLen = this.trackLengthMeters || 5200;
         const carLenNorm = 5.2 / trackLen;       // ~5.2m car length
-        const minGapNorm = 3.8 / trackLen;       // Physical contact avoidance threshold (~3.8m)
-        const safeFollowNorm = 10.0 / trackLen;  // ~10m follow gap (reduced from 15m to prevent stagnation)
         const draftZoneNorm = 65.0 / trackLen;   // ~65m slipstream draft zone
+        const maxSafeCornerSpeed = targetSpeed;  // Physical adhesion limit calculated from aero/downforce & curvature!
 
         // Base lateral target from ideal racing line, with small driver-specific apex variance (prevents all cars following single rail)
         const driverLineJitter = ((car.driver.number * 17) % 7 - 3) * 0.18;
@@ -2437,48 +2436,61 @@ class F1LiveRaceEngine {
             }
         }
 
+        let effectiveTargetSpeed = maxSafeCornerSpeed;
+
         if (carAhead) {
-            const dist = minAheadDist;
+            const distMeters = minAheadDist * trackLen;
             const latDiff = Math.abs(carAhead.lateralOffset - car.lateralOffset);
+            const inAdjacentLane = latDiff > 1.80;
             const isStraight = sample.curvature < 0.14;
             const isBrakingEntry = sample.aheadCurvature > 0.18;
 
-            // Overtake opportunity: Can pull out if on straight, braking entry, or having pace advantage
-            const speedDiff = car.speedKmh - carAhead.speedKmh;
-            const hasPaceAdvantage = car.drsActive || (car.ersMode === 'OVERTAKE') || (speedDiff > -5) || (car.driver.pace >= carAhead.driver.pace - 3);
+            // Check if carAhead is ALREADY fighting side-by-side with another car (Strict 2-Wide Limit to prevent pileups)
+            let carsBattlingAhead = 0;
+            for (let j = 0; j < this.cars.length; j++) {
+                const o = this.cars[j];
+                if (o !== car && o !== carAhead && !o.finished && !o.dnf && !o.inPitLane) {
+                    if (Math.abs(o.totalDistance - carAhead.totalDistance) <= carLenNorm * 1.5) {
+                        carsBattlingAhead++;
+                    }
+                }
+            }
 
-            if (dist < safeFollowNorm && (isStraight || isBrakingEntry) && hasPaceAdvantage) {
-                // Determine clear lane (inside or outside of the car ahead)
-                const passDir = carAhead.lateralOffset >= 0 ? -1 : 1;
-                const overtakeLane = Math.max(-6.5, Math.min(6.5, carAhead.lateralOffset + passDir * 2.8));
-                
-                // PULL OUT TO OVERTAKE!
-                desiredLat = overtakeLane;
-                targetSpeed = Math.max(targetSpeed, carAhead.speedKmh + (car.drsActive ? 18 : 10));
+            const speedDiff = car.speedKmh - carAhead.speedKmh;
+            const hasPaceAdvantage = car.drsActive || (car.ersMode === 'OVERTAKE') || (speedDiff > -4) || (car.driver.pace >= carAhead.driver.pace - 2);
+
+            if (inAdjacentLane) {
+                // In separate overtaking lane alongside: Push up to physical cornering/straight limit!
+                desiredLat = car.targetLateral;
+                effectiveTargetSpeed = maxSafeCornerSpeed;
                 car.throttle = 1.0;
                 car.brake = 0.0;
-            } else if (dist < minGapNorm) {
-                // Emergency bump avoid only when within bumper-to-bumper 3.8m
-                targetSpeed = Math.min(targetSpeed, carAhead.speedKmh * 0.98);
+            } else if (distMeters < 38.0 && (isStraight || isBrakingEntry) && hasPaceAdvantage && (carsBattlingAhead === 0)) {
+                // Start aggressive 1-on-1 pull-out maneuver from up to 38 meters back! (Strict 2-wide limit)
+                const passDir = carAhead.lateralOffset >= 0 ? -1 : 1;
+                const overtakeLane = Math.max(-6.5, Math.min(6.5, carAhead.lateralOffset + passDir * 2.75));
+                
+                desiredLat = overtakeLane;
+                effectiveTargetSpeed = maxSafeCornerSpeed;
+                car.throttle = 1.0;
+                car.brake = 0.0;
+            } else if (distMeters < 3.2 && !inAdjacentLane) {
+                // Emergency bump avoid only when within bumper-to-bumper 3.2m in the EXACT SAME lane
+                effectiveTargetSpeed = Math.min(maxSafeCornerSpeed, carAhead.speedKmh * 0.98);
                 car.throttle = 0.2;
-                car.brake = 0.55;
-            } else if (dist < safeFollowNorm) {
-                // Following closely: Tuck in directly behind to draft, but maintain competitive speed
+                car.brake = 0.65;
+            } else {
+                // Following in slipstream: Carry high momentum without artificial corner stall
                 if (isStraight) {
                     desiredLat = carAhead.lateralOffset;
-                    targetSpeed = Math.min(targetSpeed, carAhead.speedKmh + 6); // Stay on rear wing!
-                    car.throttle = 0.85;
+                    effectiveTargetSpeed = Math.min(maxSafeCornerSpeed, carAhead.speedKmh + 12);
+                    car.throttle = 1.0;
                     car.brake = 0.0;
                 } else {
-                    // In corners: Do not brake excessively! Follow apex at competitive cornering speed
-                    targetSpeed = Math.min(targetSpeed, carAhead.speedKmh * 0.99);
-                    car.throttle = 0.70;
-                }
-            } else {
-                // In the slipstream tow zone on straights
-                if (isStraight) {
-                    desiredLat = carAhead.lateralOffset;
-                    targetSpeed += 7.5; // Stronger slipstream suction
+                    // Follow apex naturally at real cornering potential
+                    desiredLat = sample.idealLateral;
+                    effectiveTargetSpeed = Math.min(maxSafeCornerSpeed, Math.max(carAhead.speedKmh, maxSafeCornerSpeed * 0.96));
+                    car.throttle = 0.88;
                 }
             }
         }
@@ -2498,10 +2510,10 @@ class F1LiveRaceEngine {
         car.lateralOffset = Math.max(-maxTrackLat, Math.min(maxTrackLat, car.lateralOffset));
 
         // High responsiveness acceleration & braking (mimicking aggressive real F1 1000hp throttle response)
-        const rate = targetSpeed > car.speedKmh ? 135 : 240;
-        car.throttle = targetSpeed >= car.speedKmh ? 1.0 : (car.throttle !== undefined ? car.throttle : 0.3);
-        car.brake = targetSpeed < car.speedKmh - 12 ? 1.0 : 0.0;
-        car.speedKmh += Math.sign(targetSpeed - car.speedKmh) * Math.min(Math.abs(targetSpeed - car.speedKmh), rate * dt);
+        const rate = effectiveTargetSpeed > car.speedKmh ? 165 : 340;
+        car.throttle = effectiveTargetSpeed >= car.speedKmh ? 1.0 : (car.throttle !== undefined ? car.throttle : 0.3);
+        car.brake = effectiveTargetSpeed < car.speedKmh - 12 ? 1.0 : 0.0;
+        car.speedKmh += Math.sign(effectiveTargetSpeed - car.speedKmh) * Math.min(Math.abs(effectiveTargetSpeed - car.speedKmh), rate * dt);
         car.speedKmh = Math.max(75, Math.min(368, car.speedKmh));
     }
 
