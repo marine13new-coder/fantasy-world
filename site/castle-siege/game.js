@@ -1,86 +1,103 @@
 (() => {
   'use strict';
-  const THREE = window.THREE, CANNON = window.CANNON;
-  const canvasHost = document.body;
-  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x9bc5df); scene.fog = new THREE.Fog(0x9bc5df, 45, 110);
-  const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, .1, 150);
-  camera.position.set(28, 22, 34);
-  const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setSize(innerWidth, innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05; canvasHost.prepend(renderer.domElement);
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x6e774f, 1.1));
-  const sun = new THREE.DirectionalLight(0xffedc4, 1.15); sun.position.set(-16, 32, 20); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.camera.left = sun.shadow.camera.bottom = -35; sun.shadow.camera.right = sun.shadow.camera.top = 35; scene.add(sun);
-  const controls = new THREE.OrbitControls(camera, renderer.domElement); controls.target.set(0, 4, 0); controls.minDistance = 25; controls.maxDistance = 70; controls.maxPolarAngle = Math.PI / 2.1; controls.enablePan = false; controls.update();
-  const world = new CANNON.World(); world.gravity.set(0, -20, 0); world.broadphase = new CANNON.SAPBroadphase(world); world.solver.iterations = 8; world.allowSleep = true;
-  const stone = new CANNON.Material('stone'), earth = new CANNON.Material('earth'); world.addContactMaterial(new CANNON.ContactMaterial(stone, stone, { friction: .85, restitution: .03 })); world.addContactMaterial(new CANNON.ContactMaterial(stone, earth, { friction: .9, restitution: .03 }));
-  const ground = new CANNON.Body({ mass: 0, material: earth, shape: new CANNON.Plane() }); ground.quaternion.setFromEuler(-Math.PI / 2, 0, 0); world.addBody(ground);
-  const stoneColors = [0xb9b3a1,0xc8c0aa,0xaaa999,0xd0c9b4,0x9fa298];
-  const mats = stoneColors.map(c => new THREE.MeshStandardMaterial({ color:c, roughness:1 }));
-  const roofMat = new THREE.MeshStandardMaterial({color:0x9f4632,roughness:1}), wood = new THREE.MeshStandardMaterial({color:0x5a351d,roughness:1}), grass = new THREE.MeshStandardMaterial({color:0x79a85a,roughness:1}), dark = new THREE.MeshStandardMaterial({color:0x263c35,roughness:1});
-  const blocks = [], decor = [], shots = [], people = []; let level = 1, fired = 0, active = false, ended = false, initial = 0, announceUntil = 0;
+  const T = window.THREE, C = window.CANNON, settings = window.SiegeSettings;
   const $ = id => document.getElementById(id);
-  const terrain = new THREE.Mesh(new THREE.BoxGeometry(80,2,80), grass); terrain.position.y=-1.05; terrain.receiveShadow=true; scene.add(terrain);
-  function fixed(mesh, permanent=false) { mesh.castShadow=true; mesh.receiveShadow=true; scene.add(mesh); if(!permanent)decor.push(mesh); return mesh; }
-  function box(x,y,z,w,h,d,mat=wood,permanent=false){const m=fixed(new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat),permanent);m.position.set(x,y,z);return m;}
-  const water=new THREE.MeshStandardMaterial({color:0x4a93a0,roughness:.28,metalness:.1}), dirt=new THREE.MeshStandardMaterial({color:0x9c8c62,roughness:1}), canvas=new THREE.MeshStandardMaterial({color:0xc3a773,roughness:1}), blue=new THREE.MeshStandardMaterial({color:0x2c5d83,roughness:1}), red=new THREE.MeshStandardMaterial({color:0x9b4233,roughness:1});
-  for(const z of [-13,13])box(0,.02,z,31,.045,2.8,water,true);
-  for(const x of [-13,13])box(x,.02,0,2.8,.045,26,water,true);
-  box(0,.06,19,4,.09,15,dirt,true);
-  for(let z=12;z<16;z+=.55)box(0,.18,z,4.2,.2,.43,wood,true);
-  for(const x of [-2.1,2.1])box(x,.55,13.6,.15,.85,3.8,wood,true);
-  function tree(x,z,s){box(x,.55*s,z,.35*s,1.1*s,.35*s,wood,true);const crown=fixed(new THREE.Mesh(new THREE.IcosahedronGeometry(1.15*s,1),new THREE.MeshStandardMaterial({color:0x386b3f,flatShading:true})),true);crown.position.set(x,1.9*s,z)}
-  for(let i=0;i<45;i++){const a=i*2.399, r=22+(i%6)*2.5, x=Math.sin(a)*r,z=Math.cos(a)*r;if(z>14&&Math.abs(x)<8)continue;tree(x,z,.65+(i%4)*.13)}
-  function tent(x,z,color){box(x,.12,z,3,.24,2.5,dirt,true);const roof=fixed(new THREE.Mesh(new THREE.ConeGeometry(2.2,2.1,4),color),true);roof.position.set(x,1.2,z);roof.rotation.y=Math.PI/4;for(const dx of [-1.25,1.25])for(const dz of [-1,1])box(x+dx,.45,z+dz,.08,.9,.08,wood,true)}
-  for(const [x,z,c] of [[-8,22,canvas],[-13,26,red],[8,23,blue],[12,27,canvas]])tent(x,z,c);
-  for(const x of [-11,-9,9,11])for(const z of [18,19,20])box(x,.38,z,.14,.76,.14,wood,true);
-  for(const [x,z] of [[-6,20],[-5,21],[6,20],[7,22]]){const barrel=fixed(new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,.65,10),wood),true);barrel.position.set(x,.34,z)}
-  for(let i=0;i<35;i++){const a=i*2.37,r=18+i%5*3,x=Math.sin(a)*r,z=Math.cos(a)*r;if(Math.abs(x)<5&&z>13)continue;const rock=fixed(new THREE.Mesh(new THREE.DodecahedronGeometry(.25+i%3*.13,0),mats[i%5]),true);rock.position.set(x,.18,z)}
-  const skin=new THREE.MeshStandardMaterial({color:0xe0b88b,roughness:1}), iron=new THREE.MeshStandardMaterial({color:0x666d69,metalness:.35,roughness:.7});
-  function person(x,y,z,uniform,guard=false){
-    const group=new THREE.Group();group.position.set(x,y,z);scene.add(group);
-    const part=(geo,mat,px,py,pz,parent=group)=>{const m=new THREE.Mesh(geo,mat);m.position.set(px,py,pz);m.castShadow=true;parent.add(m);return m};
-    part(new THREE.BoxGeometry(.43,.58,.26),uniform,0,.85,0);
-    part(new THREE.SphereGeometry(.18,8,6),skin,0,1.3,0);
-    part(new THREE.CylinderGeometry(.22,.19,.13,8),iron,0,1.49,0);
-    const limbs=[];
-    for(const side of [-1,1]){
-      const arm=new THREE.Group();arm.position.set(side*.31,1.06,0);group.add(arm);part(new THREE.BoxGeometry(.13,.48,.14),uniform,0,-.24,0,arm);
-      const leg=new THREE.Group();leg.position.set(side*.13,.57,0);group.add(leg);part(new THREE.BoxGeometry(.15,.5,.17),dark,0,-.26,0,leg);limbs.push(arm,leg);
-    }
-    if(guard){part(new THREE.BoxGeometry(.07,1.7,.07),wood,.48,1.05,0);part(new THREE.ConeGeometry(.11,.25,4),iron,.48,2,0)}
-    people.push({group,limbs,x,z,phase:people.length*1.7,guard});
+  const scene = new T.Scene(); scene.background = new T.Color(0x9cc8df); scene.fog = new T.Fog(0x9cc8df, 60, 130);
+  const camera = new T.PerspectiveCamera(55, innerWidth/innerHeight, .1, 180);
+  const renderer = new T.WebGLRenderer({antialias:true}); renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.shadowMap.enabled=true; renderer.shadowMap.type=T.PCFSoftShadowMap; renderer.toneMapping=T.ACESFilmicToneMapping; renderer.toneMappingExposure=1.05; document.body.prepend(renderer.domElement);
+  scene.add(new T.HemisphereLight(0xffffff,0x74865b,1.15));
+  const sun=new T.DirectionalLight(0xffedc4,1.2);sun.position.set(-22,36,24);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=sun.shadow.camera.bottom=-55;sun.shadow.camera.right=sun.shadow.camera.top=55;scene.add(sun);
+  const orbit=new T.OrbitControls(camera,renderer.domElement);orbit.enablePan=false;orbit.minDistance=19;orbit.maxDistance=100;orbit.maxPolarAngle=Math.PI/2.05;
+  const world=new C.World();world.gravity.set(0,-20,0);world.broadphase=new C.SAPBroadphase(world);world.solver.iterations=8;world.allowSleep=true;
+  const stone=new C.Material('stone'),soil=new C.Material('soil');world.addContactMaterial(new C.ContactMaterial(stone,stone,{friction:.8,restitution:.04}));world.addContactMaterial(new C.ContactMaterial(stone,soil,{friction:.9,restitution:.02}));
+  const ground=new C.Body({mass:0,material:soil,shape:new C.Plane()});ground.quaternion.setFromEuler(-Math.PI/2,0,0);world.addBody(ground);
+  const groundMesh=new T.Mesh(new T.BoxGeometry(120,2,120),new T.MeshStandardMaterial({color:0x78a45f,roughness:1}));groundMesh.position.y=-1.08;groundMesh.receiveShadow=true;scene.add(groundMesh);
+  const stoneCanvas=document.createElement('canvas');stoneCanvas.width=stoneCanvas.height=128;const st=stoneCanvas.getContext('2d');st.fillStyle='#d1cbb9';st.fillRect(0,0,128,128);for(let i=0;i<420;i++){const x=(i*73)%128,y=(i*37+i*i*11)%128,a=(i%4+1)*.02;st.fillStyle=`rgba(70,63,52,${a})`;st.fillRect(x,y,1+i%3,1+i%2)}for(let i=0;i<12;i++){st.strokeStyle='rgba(70,64,55,.13)';st.beginPath();const x=(i*39)%128,y=(i*67)%128;st.moveTo(x,y);st.lineTo(x+5,y+2);st.lineTo(x+7,y+5);st.stroke()}const stoneTexture=new T.CanvasTexture(stoneCanvas);
+  const stoneColors=[0xc9c4b5,0xb9b6a9,0xd1caba,0xaaa99e,0xc1bbab];const brickMats=stoneColors.map(color=>new T.MeshStandardMaterial({color,map:stoneTexture,roughness:1}));
+  const mat=(color,roughness=1)=>new T.MeshStandardMaterial({color,roughness});
+  const wood=mat(0x603c22),iron=new T.MeshStandardMaterial({color:0x565e60,metalness:.45,roughness:.6}),roofMat=mat(0x9f4932),dark=mat(0x2d3532),dirt=mat(0x9e906a),water=new T.MeshStandardMaterial({color:0x4b98ab,roughness:.25,metalness:.1,transparent:true,opacity:.84}),red=mat(0xa64d39),blue=mat(0x305f85),canvasMat=mat(0xc7ac7b),skin=mat(0xdfb68a),leaf=mat(0x406f43);
+  const entities=[],blocks=[],people=[],shots=[],waterZones=[];let config,launcherZ,weaponEntity,shotsFired=0,lastShot=-Infinity,announced=false,noticeUntil=0;
+  const weapons={
+    catapult:{name:'투석기',speed:22,angle:30,radius:.55,mass:65,blast:4.5,force:8},
+    trebuchet:{name:'트레뷰셋',speed:25,angle:44,radius:.72,mass:110,blast:5.7,force:10},
+    ballista:{name:'발리스타',speed:38,angle:12,radius:.25,mass:28,blast:2.8,force:9},
+    cannon:{name:'대포',speed:34,angle:16,radius:.42,mass:95,blast:4.1,force:13}
+  };
+  function meshBox(w,h,d,material){return new T.Mesh(new T.BoxGeometry(w,h,d),material)}
+  function addRigid(mesh,dim,mass,score=false){
+    mesh.castShadow=mesh.receiveShadow=true;scene.add(mesh);
+    const body=new C.Body({mass:0,material:stone,shape:new C.Box(new C.Vec3(dim[0]/2,dim[1]/2,dim[2]/2)),position:new C.Vec3(mesh.position.x,mesh.position.y,mesh.position.z),linearDamping:.16,angularDamping:.35,allowSleep:true});
+    body.sleepSpeedLimit=.16;body.sleepTimeLimit=.7;world.addBody(body);
+    const entry={mesh,body,mass,score,x:mesh.position.x,y:mesh.position.y,z:mesh.position.z,fallen:false};entities.push(entry);if(score)blocks.push(entry);
+    body.addEventListener('collide',e=>{if(body.type!==C.Body.STATIC||!e.body.velocity||e.body.velocity.length()<3.3)return;activate(entry);const v=e.body.velocity;body.applyImpulse(new C.Vec3(v.x*mass*.18,Math.max(v.y,1)*mass*.18,v.z*mass*.18),body.position)});
+    return entry;
   }
-  function brick(x,y,z,w,h,d){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w-.035,h-.025,d-.035),mats[blocks.length%5]); mesh.castShadow=mesh.receiveShadow=true; scene.add(mesh);const mass=Math.max(2,w*h*d*3);const body=new CANNON.Body({mass:0,material:stone,shape:new CANNON.Box(new CANNON.Vec3(w/2,h/2,d/2)),position:new CANNON.Vec3(x,y,z),linearDamping:.18,angularDamping:.34,allowSleep:true});body.sleepSpeedLimit=.12;body.sleepTimeLimit=1;world.addBody(body);blocks.push({mesh,body,mass,x,y,z,fallen:false});return body}
-  function wall(axis,side,len,rows){const cols=Math.round(len/1.45), span=cols*1.45;for(let row=0;row<=rows;row++)for(let col=0;col<cols;col++){if(row===rows&&col%2)continue;if(axis==='z'&&side>0&&Math.abs(col-cols/2)<1&&row<4)continue;const p=(col+.5)*1.45-span/2+(row%2?.25:0);if(axis==='z')brick(p,(row+.5)*.78,side,1.45,.78,1.25);else brick(side,(row+.5)*.78,p,1.25,.78,1.45);if(row===3&&col%3===0){const slit=new THREE.Mesh(new THREE.BoxGeometry(axis==='z'?.16:.035,.42,axis==='z'?.035:.16),dark);if(axis==='z')slit.position.set(0,0,side>0?.64:-.64);else slit.position.set(side>0?.64:-.64,0,0);blocks[blocks.length-1].mesh.add(slit)}}}
-  function tower(cx,cz,rows){for(let row=0;row<rows;row++)for(let i=0;i<8;i++){const a=i*Math.PI/4+(row%2)*Math.PI/8;const x=cx+Math.cos(a)*1.8,z=cz+Math.sin(a)*1.8;brick(x,(row+.5)*.78,z,1.25,.78,1.15)}const roof=fixed(new THREE.Mesh(new THREE.ConeGeometry(2.65,3.2,8),roofMat));roof.position.set(cx,rows*.78+1.5,cz);box(cx,rows*.78+3.3,cz,.08,1,.08,iron);const flag=box(cx+.45,rows*.78+3.48,cz,.9,.42,.05,cx<0?red:blue);flag.rotation.z=-.1}
-  function castle(){
-    const rows=5+level;
-    wall('z',8.5,14,rows);wall('z',-8.5,14,rows);wall('x',-8.5,14,rows);wall('x',8.5,14,rows);
-    for(const x of [-8.5,8.5])for(const z of [-8.5,8.5])tower(x,z,rows+2);
-    for(let i=-1;i<=1;i++)box(i*.72,1.7,8.58,.1,3.4,.15,iron);
-    for(let i=0;i<4;i++)box(0,.5+i*.75,8.61,2.5,.09,.15,iron);
-    box(0,.18,0,5,.36,5,dirt);
-    for(let row=0;row<5;row++)for(let col=0;col<4;col++)for(const side of [-1,1]){
-      brick(-2.1+col*1.4,(row+.5)*.75,side*2.2,1.4,.75,.75);
-      brick(side*2.2,(row+.5)*.75,-2.1+col*1.4,.75,.75,1.4);
-    }
-    const keep=fixed(new THREE.Mesh(new THREE.ConeGeometry(3.75,3,4),roofMat));keep.position.set(0,5.2,0);keep.rotation.y=Math.PI/4;
-    box(0,5.9,0,.09,2,.09,iron);box(.55,6.45,0,1.1,.55,.05,red);
-    for(const x of [-5,-2,2,5])person(x,rows*.78-.05,7.45,blue,true);
-    for(const x of [-6,6])person(x,0,4,blue,true);
-    for(const [x,z] of [[-10,20],[-12,23],[-6,26],[6,21],[10,24],[13,25],[2,20],[-2,21]])person(x,0,z,x<0?red:blue);
-    initial=blocks.length;
+  function activate(e){if(e.body.type===C.Body.DYNAMIC)return;e.body.type=C.Body.DYNAMIC;e.body.mass=e.mass;e.body.updateMassProperties();e.body.wakeUp()}
+  function box(x,y,z,w,h,d,material=wood,mass=6){const m=meshBox(w,h,d,material);m.position.set(x,y,z);return addRigid(m,[w,h,d],mass)}
+  function visual(mesh){scene.add(mesh);return mesh}
+  function remove(e){world.removeBody(e.body);scene.remove(e.mesh);e.mesh.traverse(n=>n.geometry?.dispose());const i=entities.indexOf(e);if(i>=0)entities.splice(i,1)}
+  function clear(){for(const e of [...entities])remove(e);blocks.length=0;people.length=0;for(const s of shots){world.removeBody(s.body);scene.remove(s.mesh);s.mesh.geometry.dispose()}shots.length=0;for(const z of waterZones){scene.remove(z.mesh);z.mesh.geometry.dispose()}waterZones.length=0;weaponEntity=null}
+  function stoneBlock(x,y,z,w,h,d,slit=false){const mesh=meshBox(w-.025,h-.018,d-.025,brickMats[blocks.length%5]);mesh.position.set(x,y,z);if(slit){const mark=meshBox(.09,h*.55,.035,dark);mark.position.set(0,0,d/2);mesh.add(mark)}return addRigid(mesh,[w,h,d],Math.max(1.5,w*h*d*4),true)}
+  function wall(axis,side,half,rows,b,bh){const limit=half-(.55+half*.19)*.6,count=Math.ceil(limit*2/b),step=limit*2/count;for(let row=0;row<=rows;row++)for(let col=0;col<count;col++){
+    if(row===rows&&col%2)continue;const p=-limit+(col+.5)*step+(row%2?.08:0);if(axis==='z'&&side>0&&Math.abs(p)<1.25&&row<Math.ceil(2.6/bh))continue;
+    const x=axis==='z'?p:side*half,z=axis==='z'?side*half:p;stoneBlock(x,(row+.5)*bh,z,axis==='z'?step:.68,bh,axis==='z'?.68:step,row===Math.floor(rows*.55)&&col%4===0&&axis==='z'&&side>0);
+  }}
+  function tower(x,z,rows,b,bh,r){const sides=Math.max(8,Math.ceil(Math.PI*2*r/b));for(let row=0;row<rows;row++)for(let i=0;i<sides;i++){const a=i*Math.PI*2/sides+(row%2)*Math.PI/sides;stoneBlock(x+Math.cos(a)*r,(row+.5)*bh,z+Math.sin(a)*r,b*.9,bh,b*.8)}
+    const roof=new T.Mesh(new T.ConeGeometry(r+1,2.6,8),roofMat);roof.position.set(x,rows*bh+1.25,z);addRigid(roof,[(r+1)*1.7,2.6,(r+1)*1.7],45);
+    box(x,rows*bh+2.9,z,.09,1,.09,iron,3);box(x+.5,rows*bh+3.15,z,1,.45,.06,x<0?red:blue,2);
   }
-  const catapult = new THREE.Group(); scene.add(catapult); catapult.position.set(0,0,25);const make=(geo,mat,x,y,z,parent=catapult)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;parent.add(m);return m};
-  make(new THREE.BoxGeometry(3, .35, 4),wood,0,1,0);for(const x of [-1.65,1.65])for(const z of [-1.4,1.4]){const wheel=make(new THREE.CylinderGeometry(.8,.8,.3,12),wood,x,.85,z);wheel.rotation.z=Math.PI/2}for(const x of [-1.1,1.1]){const beam=make(new THREE.BoxGeometry(.3,2.8,.3),wood,x,2,0);beam.rotation.z=x<0?-.3:.3}const arm=new THREE.Group();arm.position.set(0,2.5,0);catapult.add(arm);make(new THREE.BoxGeometry(.28,.28,5),wood,0,.2,-1,arm);make(new THREE.CylinderGeometry(.78,.6,.35,10),dark,0,.25,-3.25,arm);
-  const aimLine = new THREE.Line(new THREE.BufferGeometry(),new THREE.LineDashedMaterial({color:0xffefb4,dashSize:.45,gapSize:.25,transparent:true,opacity:.8}));scene.add(aimLine);
-  function launch(){const yaw=+$('yaw').value*Math.PI/180, angle=+$('angle').value*Math.PI/180, power=+$('power').value;return new THREE.Vector3(Math.sin(yaw)*Math.cos(angle),Math.sin(angle),-Math.cos(yaw)*Math.cos(angle)).multiplyScalar(power)}
-  function updateAim(){for(const id of ['yaw','angle','power'])$(id+'Value').textContent=$(id).value+(id==='power'?'':'°');const v=launch(),pts=[];for(let t=0;t<2.8;t+=.07){const p=new THREE.Vector3(0,2,25).addScaledVector(v,t);p.y-=10*t*t;if(p.y<0)break;pts.push(p)}aimLine.geometry.dispose();aimLine.geometry=new THREE.BufferGeometry().setFromPoints(pts);aimLine.computeLineDistances()}
-  function message(s,ms=1800){$('message').textContent=s;announceUntil=performance.now()+ms}
-  function blast(p){for(const b of blocks){const dx=b.body.position.x-p.x,dy=b.body.position.y-p.y,dz=b.body.position.z-p.z,dist=Math.hypot(dx,dy,dz);if(dist>4.5)continue;const force=(4.5-dist)*b.mass*8;b.body.type=CANNON.Body.DYNAMIC;b.body.mass=b.mass;b.body.updateMassProperties();b.body.wakeUp();b.body.applyImpulse(new CANNON.Vec3(dx/(dist||1)*force,Math.max(.2,dy/(dist||1))*force,dz/(dist||1)*force),b.body.position)}}
-  function fire(){if(ended||active||fired>=8)return;fired++;active=true;$('fire').disabled=true;const mesh=new THREE.Mesh(new THREE.SphereGeometry(.6,16,12),new THREE.MeshStandardMaterial({color:0x262b29,roughness:1}));mesh.castShadow=true;scene.add(mesh);const body=new CANNON.Body({mass:65,material:stone,shape:new CANNON.Sphere(.6),position:new CANNON.Vec3(0,2,25),linearDamping:.005});const v=launch();body.velocity.set(v.x,v.y,v.z);world.addBody(body);let hit=false;body.addEventListener('collide',e=>{if(hit||!blocks.some(b=>b.body===e.body))return;hit=true;blast(body.position);message('성벽 명중!');});shots.push({mesh,body,born:performance.now()});arm.rotation.x=-.7;setTimeout(()=>arm.rotation.x=0,330);updateHud()}
-  function updateHud(){const fallen=blocks.filter(b=>b.fallen).length;const damage=Math.round(fallen/initial*100);$('stage').textContent=`성채 ${level} / 3`;$('shots').textContent=`포탄 ${fired} / 8`;$('health').textContent=`성벽 붕괴 ${damage}% · 목표 12%`;if(damage>=12&&!ended){ended=true;message(level===3?'그레이무어 함락! 승리':'성벽 돌파! 다음 성채로 진격',4000);$('fire').textContent=level===3?'처음부터':'다음 성채';$('fire').disabled=false}else if(fired>=8&&!active&&!ended){ended=true;message('포탄 소진 · 다시 도전',4000);$('fire').textContent='재도전';$('fire').disabled=false}}
-  function clearLevel(){for(const b of blocks){world.removeBody(b.body);scene.remove(b.mesh);b.mesh.traverse(m=>m.geometry?.dispose())}blocks.length=0;for(const s of shots){world.removeBody(s.body);scene.remove(s.mesh);s.mesh.geometry.dispose()}shots.length=0;for(const m of decor){scene.remove(m);m.geometry.dispose()}decor.length=0;for(const p of people){scene.remove(p.group);p.group.traverse(m=>m.geometry?.dispose())}people.length=0}
-  function start(next=false){if(next)level=level===3?1:level+1;else level=1;clearLevel();castle();fired=0;active=false;ended=false;$('fire').textContent='● 발사';$('fire').disabled=false;message(level===1?'투석기로 성벽을 무너뜨리세요':`성채 ${level} 공격!`,2200);updateHud()}
-  $('fire').onclick=()=>ended?start($('fire').textContent!=='재도전'):fire();$('reset').onclick=()=>start(false);for(const id of ['yaw','angle','power'])$(id).addEventListener('input',updateAim);window.addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat){e.preventDefault();$('fire').click()}});window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
-  start();updateAim();let last=performance.now(),hudAt=0;
-  function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-last)/1000,.05);last=now;world.step(1/60,dt,3);for(const b of blocks){b.mesh.position.copy(b.body.position);b.mesh.quaternion.copy(b.body.quaternion);if(!b.fallen&&(Math.hypot(b.body.position.x-b.x,b.body.position.y-b.y,b.body.position.z-b.z)>1.5||b.body.position.y<-.3))b.fallen=true}for(const p of people){const step=Math.sin(now*.003+p.phase);p.group.position.x=p.x+Math.sin(now*.0006+p.phase)*(p.guard?.1:.45);p.group.position.z=p.z+(fired&&!p.guard?Math.min(fired*.35,2):0);p.group.rotation.y=Math.sin(now*.0005+p.phase)*.3;p.limbs[0].rotation.x=step*.35;p.limbs[1].rotation.x=-step*.4;p.limbs[2].rotation.x=-step*.35;p.limbs[3].rotation.x=step*.4}for(let i=shots.length-1;i>=0;i--){const s=shots[i];s.mesh.position.copy(s.body.position);if(now-s.born>5200||s.body.position.y<-.6){world.removeBody(s.body);scene.remove(s.mesh);s.mesh.geometry.dispose();shots.splice(i,1);active=false;$('fire').disabled=false}}if(now>hudAt){updateHud();hudAt=now+250}if(now>announceUntil&&$('message').textContent)$('message').textContent='';controls.update();renderer.render(scene,camera)}requestAnimationFrame(frame);
+  function person(x,y,z,uniform,guard=false){const group=new T.Group();group.position.set(x,y+.75,z);const part=(geo,material,px,py,pz,parent=group)=>{const m=new T.Mesh(geo,material);m.position.set(px,py,pz);m.castShadow=true;parent.add(m);return m};
+    part(new T.BoxGeometry(.42,.55,.25),uniform,0,.08,0);part(new T.SphereGeometry(.18,8,6),skin,0,.51,0);part(new T.CylinderGeometry(.22,.18,.12,8),iron,0,.67,0);const limbs=[];
+    for(const side of [-1,1]){const arm=new T.Group();arm.position.set(side*.3,.32,0);group.add(arm);part(new T.BoxGeometry(.13,.48,.14),uniform,0,-.24,0,arm);const leg=new T.Group();leg.position.set(side*.12,-.22,0);group.add(leg);part(new T.BoxGeometry(.14,.5,.17),dark,0,-.25,0,leg);limbs.push(arm,leg)}
+    if(guard){part(new T.BoxGeometry(.07,1.55,.07),wood,.46,.15,0);part(new T.ConeGeometry(.1,.25,4),iron,.46,1.04,0);part(new T.BoxGeometry(.36,.46,.08),blue,-.44,-.08,.02)}
+    const e=addRigid(group,[.65,1.5,.5],8);e.person=true;e.limbs=limbs;e.phase=people.length*1.7;people.push(e);return e;
+  }
+  function tree(x,z,s){const group=new T.Group();group.position.set(x,1.35*s,z);const trunk=meshBox(.32*s,1.55*s,.32*s,wood);trunk.position.y=-.55*s;group.add(trunk);for(let j=0;j<3;j++){const crown=new T.Mesh(new T.IcosahedronGeometry((.7+j*.16)*s,1),leaf);crown.position.set((j-1)*.3*s,.15*s+(j%2)*.5*s,(j%2)*.2*s);group.add(crown)}addRigid(group,[2*s,2.7*s,2*s],25*s)}
+  function tent(x,z,color){box(x,.12,z,3,.24,2.5,dirt,20);const roof=new T.Mesh(new T.ConeGeometry(2.15,2.1,4),color);roof.position.set(x,1.3,z);roof.rotation.y=Math.PI/4;addRigid(roof,[3,2,2.5],20);for(const dx of [-1.25,1.25])for(const dz of [-1,1])box(x+dx,.55,z+dz,.08,1.1,.08,wood,2)}
+  function environment(){const h=config.half,moat=h+3.8;function channel(x,z,w,d){const mesh=new T.Mesh(new T.BoxGeometry(w,.04,d),water);mesh.position.set(x,.025,z);visual(mesh);waterZones.push({mesh,x,z,w,d})}for(const z of [-moat,moat])channel(0,z,moat*2+3,2.7);for(const x of [-moat,moat])channel(x,0,2.7,moat*2);
+    launcherZ=h+18;box(0,.055,h+10,4,.11,15,dirt,80);for(let z=moat-1.2;z<moat+1.3;z+=.48)box(0,.19,z,4.3,.22,.42,wood,5);for(const x of [-2.2,2.2])box(x,.58,moat,.14,.85,3.5,wood,8);
+    for(let i=0;i<50;i++){const a=i*2.399,r=h+11+i%6*3,x=Math.sin(a)*r,z=Math.cos(a)*r;if(z>h+8&&Math.abs(x)<7)continue;tree(x,z,.6+i%4*.12)}
+    for(const [x,z,m] of [[-8,launcherZ-3,red],[-12,launcherZ+3,canvasMat],[8,launcherZ-2,blue],[12,launcherZ+3,canvasMat]])tent(x,z,m);
+    for(const x of [-11,-9,9,11])for(const z of [launcherZ-6,launcherZ-5])box(x,.38,z,.14,.76,.14,wood,3);
+    for(const [x,z] of [[-6,launcherZ],[6,launcherZ+1],[-7,launcherZ+3]]){const barrel=new T.Mesh(new T.CylinderGeometry(.34,.34,.65,10),wood);barrel.position.set(x,.36,z);addRigid(barrel,[.7,.7,.7],8)}
+    for(let i=0;i<28;i++){const a=i*2.37,r=h+9+i%5*2.3,x=Math.sin(a)*r,z=Math.cos(a)*r;if(Math.abs(x)<5&&z>h+7)continue;const rock=new T.Mesh(new T.DodecahedronGeometry(.24+i%3*.12),brickMats[i%5]);rock.position.set(x,.25,z);addRigid(rock,[.65,.5,.65],5)}
+    for(const [x,z] of [[-9,launcherZ-1],[-11,launcherZ+2],[-5,launcherZ+4],[6,launcherZ],[10,launcherZ+1],[12,launcherZ+4],[2,launcherZ+3]])person(x,0,z,x<0?red:blue);
+  }
+  function castle(){const {half:h,rows,bh=0.48,brick:b}=config,r=.55+h*.19;for(const side of [-1,1]){wall('z',side,h,rows,b,bh);wall('x',side,h,rows,b,bh)}for(const x of [-h,h])for(const z of [-h,h])tower(x,z,rows+4,b,bh,r);
+    for(let i=-1;i<=1;i++)box(i*.72,1.4,h+.38,.1,2.8,.15,iron,7);for(let i=0;i<4;i++)box(0,.45+i*.65,h+.43,2.5,.09,.15,iron,4);
+    const kh=Math.max(2.2,h*.34),kr=Math.ceil(rows*.63),cols=Math.ceil(kh*2/b),step=kh*2/cols;box(0,.16,0,kh*2,.32,kh*2,dirt,75);
+    for(let row=0;row<kr;row++)for(let col=0;col<cols;col++)for(const side of [-1,1]){const p=-kh+(col+.5)*step;stoneBlock(p,(row+.5)*bh,side*kh,step,bh,.65);stoneBlock(side*kh,(row+.5)*bh,p,.65,bh,step)}
+    const keep=new T.Mesh(new T.ConeGeometry(kh*1.5,2.8,4),roofMat);keep.position.set(0,kr*bh+1.25,0);keep.rotation.y=Math.PI/4;addRigid(keep,[kh*2.4,2.8,kh*2.4],65);box(0,kr*bh+2.9,0,.1,1,.1,iron,3);box(.6,kr*bh+3.15,0,1.2,.45,.06,red,2);
+    for(const x of [-h*.5,0,h*.5])person(x,rows*bh,h-.65,blue,true);for(const x of [-h*.6,h*.6])person(x,0,h*.35,blue,true);
+    console.assert(blocks.length>100&&people.length>0,'Castle construction incomplete');
+  }
+  function weaponModel(){if(weaponEntity)remove(weaponEntity);const id=$('weapon').value,group=new T.Group();group.position.set(0,1,launcherZ);const part=(geo,material,x,y,z)=>{const m=new T.Mesh(geo,material);m.position.set(x,y,z);m.castShadow=true;group.add(m);return m};
+    part(new T.BoxGeometry(3.2,.35,4.3),wood,0,0,0);for(const x of [-1.6,1.6])for(const z of [-1.5,1.5]){const wheel=part(new T.CylinderGeometry(.75,.75,.28,12),wood,x,-.2,z);wheel.rotation.z=Math.PI/2}
+    if(id==='catapult'||id==='trebuchet'){for(const x of [-1,1]){const beam=part(new T.BoxGeometry(.3,id==='trebuchet'?4:2.6,.3),wood,x,id==='trebuchet'?1.8:1.1,0);beam.rotation.z=x<0?-.25:.25}const arm=part(new T.BoxGeometry(.3,.3,id==='trebuchet'?7:5),wood,0,2,id==='trebuchet'?-1.1:-.6);arm.rotation.x=.15;part(new T.BoxGeometry(1.2,1.3,1.2),iron,0,.15,2)}
+    else if(id==='ballista'){for(const x of [-1.7,1.7]){const bow=part(new T.BoxGeometry(.22,.22,2.5),wood,x,1,-2);bow.rotation.y=x<0?-.65:.65}part(new T.BoxGeometry(.35,.25,4.8),wood,0,1,-1.4);part(new T.ConeGeometry(.22,.7,6),iron,0,1,-3.9).rotation.x=-Math.PI/2}
+    else {const barrel=part(new T.CylinderGeometry(.5,.65,4.1,12),iron,0,1.05,-1.1);barrel.rotation.x=Math.PI/2;part(new T.CylinderGeometry(.68,.68,.25,12),dark,0,1.05,-3.2).rotation.x=Math.PI/2}
+    weaponEntity=addRigid(group,[3.7,3.6,5.5],180);updateAim();
+  }
+  function origin(){return new T.Vector3(weaponEntity?.body.position.x||0,2.4,launcherZ-3.5)}
+  function velocity(){const yaw=+$('yaw').value*Math.PI/180,angle=+$('angle').value*Math.PI/180,power=+$('power').value;return new T.Vector3(Math.sin(yaw)*Math.cos(angle),Math.sin(angle),-Math.cos(yaw)*Math.cos(angle)).multiplyScalar(power)}
+  const aimLine=new T.Line(new T.BufferGeometry(),new T.LineDashedMaterial({color:0xffe4aa,dashSize:.4,gapSize:.3,transparent:true,opacity:.85}));scene.add(aimLine);
+  function updateAim(){for(const id of ['yaw','angle','power'])$(id+'Value').textContent=$(id).value+(id==='power'?'':'°');if(!weaponEntity)return;const v=velocity(),o=origin(),pts=[];for(let t=0;t<3;t+=.06){const p=o.clone().addScaledVector(v,t);p.y-=10*t*t;if(p.y<0)break;pts.push(p)}aimLine.geometry.dispose();aimLine.geometry=new T.BufferGeometry().setFromPoints(pts);aimLine.computeLineDistances()}
+  function announce(text,time=1800){$('message').textContent=text;noticeUntil=performance.now()+time}
+  function blast(p,weapon){for(const e of entities){const dx=e.body.position.x-p.x,dy=e.body.position.y-p.y,dz=e.body.position.z-p.z,flat=Math.hypot(dx,dz),dist=Math.hypot(flat,dy);if(flat>weapon.blast||Math.abs(dy)>weapon.blast*1.8)continue;activate(e);const impulse=(weapon.blast-flat+1)*weapon.force*e.mass*.7;const d=dist||1;e.body.applyImpulse(new C.Vec3(dx/d*impulse,Math.max(.2,dy/d)*impulse,dz/d*impulse),e.body.position)}}
+  function fire(){const now=performance.now();if(now-lastShot<700)return;lastShot=now;shotsFired++;const id=$('weapon').value,w=weapons[id],o=origin(),v=velocity();let mesh;
+    if(id==='ballista'){mesh=new T.Mesh(new T.CylinderGeometry(.11,.15,2,8),wood);mesh.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),v.clone().normalize())}else mesh=new T.Mesh(new T.SphereGeometry(w.radius,14,10),id==='cannon'?iron:dark);
+    mesh.position.copy(o);mesh.castShadow=true;scene.add(mesh);const body=new C.Body({mass:w.mass,material:stone,shape:new C.Sphere(w.radius),position:new C.Vec3(o.x,o.y,o.z),linearDamping:.005});body.velocity.set(v.x,v.y,v.z);world.addBody(body);
+    let hit=false;body.addEventListener('collide',e=>{if(hit||e.body===weaponEntity?.body)return;hit=true;blast(body.position,w);announce('충격! 블록과 주변 물체가 무너집니다')});shots.push({body,mesh,born:now});updateHud()}
+  function updateHud(){const moved=blocks.filter(b=>b.fallen).length,percent=blocks.length?Math.round(moved/blocks.length*100):0;$('stage').textContent=`${{small:'작은 성',medium:'보통 성',large:'큰 성',huge:'아주 큰 성',custom:'맞춤 성'}[$('preset').value]} · ${blocks.length.toLocaleString()}개 블록`;$('shots').textContent=`${weapons[$('weapon').value].name} · 발사 ${shotsFired}회`;$('health').textContent=`무너진 블록 ${moved.toLocaleString()}개 (${percent}%)`;if(percent>=25&&!announced){announced=true;announce('성채가 크게 무너졌습니다!',2800)}}
+  function build(){config=settings.resolve({half:$('half').value,rows:$('rows').value,brick:$('brick').value});$('limit').textContent=config.limited?`블록 ${config.brick.toFixed(2)}로 자동 조절 · 최대 5,000개 물리 블록`:'';clear();environment();castle();weaponModel();shotsFired=0;announced=false;camera.position.set(config.half*2.8+4,config.half*2+4,launcherZ+config.half*1.5+2);orbit.target.set(0,config.rows*.25,0);orbit.update();updateAim();updateHud();announce('성채 준비 완료 · 공성병기를 발사하세요')}
+  function displaySettings(){const p=$('preset').value;if(p!=='custom'){const v=settings.presets[p];$('half').value=v.half;$('rows').value=v.rows;$('brick').value=v.brick}$('halfValue').textContent=+$('half').value*2;$('rowsValue').textContent=$('rows').value;$('brickValue').textContent=(+$('brick').value).toFixed(2)}
+  $('preset').addEventListener('change',()=>{displaySettings();build()});for(const id of ['half','rows','brick'])$(id).addEventListener('input',()=>{$('preset').value='custom';displaySettings()});$('build').onclick=build;$('reset').onclick=build;
+  $('weapon').addEventListener('change',()=>{const w=weapons[$('weapon').value];$('angle').value=w.angle;$('power').value=w.speed;weaponModel();updateHud();announce(`${w.name} 준비 완료`)});for(const id of ['yaw','angle','power'])$(id).addEventListener('input',updateAim);$('fire').onclick=fire;window.addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat&&!e.target.closest('input,select,button,summary')){e.preventDefault();fire()}});window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+  displaySettings();build();let last=performance.now(),hudAt=0;
+  function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-last)/1000,.05);last=now;world.step(1/60,dt,3);
+    for(const e of entities){if(e.body.type===C.Body.DYNAMIC){e.mesh.position.copy(e.body.position);e.mesh.quaternion.copy(e.body.quaternion);if(e.score&&!e.fallen&&Math.hypot(e.body.position.x-e.x,e.body.position.y-e.y,e.body.position.z-e.z)>1.1)e.fallen=true}else if(e.person){const step=Math.sin(now*.004+e.phase);e.limbs[0].rotation.x=step*.32;e.limbs[1].rotation.x=-step*.38;e.limbs[2].rotation.x=-step*.32;e.limbs[3].rotation.x=step*.38}}
+    for(let i=shots.length-1;i>=0;i--){const s=shots[i];s.mesh.position.copy(s.body.position);if(now-s.born>6500||s.body.position.y<-.7){world.removeBody(s.body);scene.remove(s.mesh);s.mesh.geometry.dispose();shots.splice(i,1)}}
+    for(const e of entities)if(e.body.type===C.Body.DYNAMIC&&e.body.position.y<.9&&waterZones.some(z=>Math.abs(e.body.position.x-z.x)<z.w/2&&Math.abs(e.body.position.z-z.z)<z.d/2)){e.body.velocity.x*=.985;e.body.velocity.z*=.985}
+    if(now>hudAt){updateHud();hudAt=now+300}if(now>noticeUntil&&$('message').textContent)$('message').textContent='';orbit.update();renderer.render(scene,camera)
+  }requestAnimationFrame(frame);
 })();
